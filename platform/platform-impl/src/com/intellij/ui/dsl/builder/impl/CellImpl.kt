@@ -21,6 +21,7 @@ import com.intellij.util.ui.JBFont
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.ItemSelectable
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.text.JTextComponent
@@ -55,7 +56,7 @@ internal class CellImpl<T : JComponent>(
 
   private val cellValidation = CellValidationImpl(dialogPanelConfig, component, component.interactiveComponent)
 
-  val onChangeManager = OnChangeManager(component)
+  val onChangeManager: OnChangeManager<T> = OnChangeManager(component)
 
   @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
@@ -287,6 +288,10 @@ internal class CellImpl<T : JComponent>(
     val interactiveComponent = component.interactiveComponent
     dialogPanelConfig.validationsOnApply.list(interactiveComponent)
       .addAll(validations.map { it.forComponentIfNeeded(interactiveComponent) })
+
+    // Fallback in case if no validation requestors is defined
+    guessAndInstallValidationRequestor()
+
     return this
   }
 
@@ -298,7 +303,7 @@ internal class CellImpl<T : JComponent>(
     return validationOnApply { if (condition(it)) error(message) else null }
   }
 
-  override fun errorOnApply(message: String, condition: (T) -> Boolean) = addValidationRule(message, condition)
+  override fun errorOnApply(message: String, condition: (T) -> Boolean): Cell<T> = addValidationRule(message, condition)
 
   private fun guessAndInstallValidationRequestor() {
     val stackTrace = Throwable()
@@ -310,14 +315,7 @@ internal class CellImpl<T : JComponent>(
       override fun subscribe(parentDisposable: Disposable?, validate: () -> Unit) {
         if (validationRequestors.size > 1) return
 
-        val property = property
-        val requestor = when {
-          property != null -> WHEN_PROPERTY_CHANGED(property)
-          interactiveComponent is JTextComponent -> WHEN_TEXT_CHANGED(interactiveComponent)
-          interactiveComponent is ItemSelectable -> WHEN_STATE_CHANGED(interactiveComponent)
-          interactiveComponent is EditorTextField -> WHEN_TEXT_FIELD_TEXT_CHANGED(interactiveComponent)
-          else -> null
-        }
+        val requestor = guessValidationRequestor(interactiveComponent)
         if (requestor != null) {
           requestor.subscribe(parentDisposable, validate)
         }
@@ -326,6 +324,27 @@ internal class CellImpl<T : JComponent>(
         }
       }
     })
+  }
+
+  private fun guessValidationRequestor(component: JComponent): DialogValidationRequestor? {
+    val property = property
+    if (property != null) {
+      return WHEN_PROPERTY_CHANGED(property)
+    }
+    return when (component) {
+      is JComboBox<*> -> {
+        val requestor = WHEN_STATE_CHANGED(component)
+        when (val editorComponent = component.editor?.editorComponent) {
+          is JTextComponent -> requestor and WHEN_TEXT_CHANGED(editorComponent)
+          is EditorTextField -> requestor and WHEN_DOCUMENT_CHANGED(editorComponent)
+          else -> requestor
+        }
+      }
+      is JTextComponent -> WHEN_TEXT_CHANGED(component)
+      is ItemSelectable -> WHEN_STATE_CHANGED(component)
+      is EditorTextField -> WHEN_DOCUMENT_CHANGED(component)
+      else -> null
+    }
   }
 
   override fun onApply(callback: () -> Unit): CellImpl<T> {

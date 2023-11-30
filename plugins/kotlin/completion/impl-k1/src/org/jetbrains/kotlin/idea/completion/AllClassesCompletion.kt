@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.completion
 
@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptorWithTypeParameters
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.core.KotlinIndicesHelper
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
@@ -72,7 +73,7 @@ class AllClassesCompletion(
     }
 
     private fun addAdaptedJavaCompletion(collector: (PsiClass) -> Unit) {
-        val shortNamesCache = PsiShortNamesCache.EP_NAME.getExtensions(parameters.editor.project).firstOrNull {
+        val shortNamesCache = PsiShortNamesCache.EP_NAME.getExtensionList(parameters.editor.project).firstOrNull {
             it is KotlinShortNamesCache
         } as KotlinShortNamesCache?
         shortNamesCache?.disableSearch?.set(true)

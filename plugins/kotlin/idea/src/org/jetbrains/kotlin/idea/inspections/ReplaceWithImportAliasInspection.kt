@@ -35,7 +35,10 @@ class ReplaceWithImportAliasInspection : AbstractKotlinInspection() {
 
     private fun KtNameReferenceExpression.aliasNameIdentifier(): PsiElement? {
         val name = getIdentifier()?.text ?: return null
-        val imports = containingKtFile.importDirectives.filter {
+        val ktFile = containingKtFile
+        if (!ktFile.hasImportAlias()) return null
+
+        val imports = ktFile.importDirectives.filter {
             !it.isAllUnder && it.alias != null && it.importedFqName?.shortName()?.asString() == name
         }.ifEmpty { return null }
 

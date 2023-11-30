@@ -1,11 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
+import com.intellij.codeInsight.daemon.HighlightingPassesCache
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED_INDEXES
+import com.intellij.ide.actions.SwitcherLogger.NAVIGATED_ORIGINAL_INDEXES
+import com.intellij.ide.actions.SwitcherLogger.SHOWN_TIME_ACTIVITY
 import com.intellij.ide.actions.SwitcherSpeedSearch.Companion.installOn
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.ide.lightEdit.LightEdit
@@ -36,8 +41,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
@@ -82,7 +87,7 @@ import kotlin.math.min
  * @author Konstantin Bulenkov
  */
 object Switcher : BaseSwitcherAction(null) {
-  val SWITCHER_KEY = Key.create<SwitcherPanel>("SWITCHER_KEY")
+  val SWITCHER_KEY: Key<SwitcherPanel> = Key.create("SWITCHER_KEY")
 
   @Deprecated("Please use {@link Switcher#createAndShowSwitcher(AnActionEvent, String, boolean, boolean)}")
   @JvmStatic
@@ -94,16 +99,18 @@ object Switcher : BaseSwitcherAction(null) {
     return SwitcherPanel(project, title, event, if (pinned) vFiles != null else null, event == null || !event.isShiftDown)
   }
 
-  class SwitcherPanel internal constructor(val project: Project,
-                                           title: @Nls String,
-                                           event: InputEvent?,
-                                           onlyEditedFiles: Boolean?,
-                                           forward: Boolean) : BorderLayoutPanel(), DataProvider, QuickSearchComponent, Disposable {
+  class SwitcherPanel(val project: Project,
+                      title: @Nls String,
+                      event: InputEvent?,
+                      onlyEditedFiles: Boolean?,
+                      forward: Boolean) : BorderLayoutPanel(), DataProvider, QuickSearchComponent, Disposable {
     val myPopup: JBPopup?
+    val activity = SHOWN_TIME_ACTIVITY.started(project)
+    var navigationData: SwitcherLogger.NavigationData? = null
     val toolWindows: JBList<SwitcherListItem>
     val files: JBList<SwitcherVirtualFile>
     val cbShowOnlyEditedFiles: JCheckBox?
-    val pathLabel = HintUtil.createAdComponent(
+    val pathLabel: JLabel = HintUtil.createAdComponent(
       " ",
       if (ExperimentalUI.isNewUI()) JBUI.CurrentTheme.Advertiser.border()
       else JBUI.Borders.compound(
@@ -116,7 +123,7 @@ object Switcher : BaseSwitcherAction(null) {
       : Boolean
     val pinned // false - auto closeable on modifier key release, true - default popup
       : Boolean
-    val onKeyRelease: SwitcherKeyReleaseListener
+    private val onKeyRelease: SwitcherKeyReleaseListener
     val mySpeedSearch: SwitcherSpeedSearch?
     val myTitle: String
     private var myHint: JBPopup? = null
@@ -142,7 +149,11 @@ object Switcher : BaseSwitcherAction(null) {
 
     init {
       recent = onlyEditedFiles != null
-      onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else event) { e: InputEvent? -> navigate(e) }
+      onKeyRelease = SwitcherKeyReleaseListener(if (recent) null else event) { e: InputEvent ->
+        ActionUtil.performInputEventHandlerWithCallbacks(e) {
+          navigate(e)
+        }
+      }
       pinned = !onKeyRelease.isEnabled
       val onlyEdited = true == onlyEditedFiles
       myTitle = title
@@ -243,7 +254,9 @@ object Switcher : BaseSwitcherAction(null) {
               source.selectedIndex = source.anchorSelectionIndex
             }
             if (source.selectedIndex != -1) {
-              navigate(e)
+              ActionUtil.performInputEventHandlerWithCallbacks(e) {
+                navigate(e)
+              }
             }
           }
           return true
@@ -255,10 +268,6 @@ object Switcher : BaseSwitcherAction(null) {
       val filesToShow = getFilesToShow(project, onlyEdited, toolWindows.itemsCount, recent)
       resetListModelAndUpdateNames(filesModel, filesToShow)
       val filesSelectionListener: ListSelectionListener = object : ListSelectionListener {
-        private fun getTitle2Text(fullText: String?): @NlsSafe String? {
-          return if (Strings.isEmpty(fullText)) " " else fullText
-        }
-
         override fun valueChanged(e: ListSelectionEvent) {
           if (e.valueIsAdjusting) return
           updatePathLabel()
@@ -269,10 +278,6 @@ object Switcher : BaseSwitcherAction(null) {
             DataManager.getInstance().getDataContext(this@SwitcherPanel)))
         }
 
-        private fun updatePathLabel() {
-          val values = selectedList?.selectedValuesList
-          pathLabel.text = values?.singleOrNull()?.let { getTitle2Text(it.statusText) } ?: " "
-        }
       }
       files = JBListWithOpenInRightSplit
         .createListWithOpenInRightSplitter(mySpeedSearch?.wrap(filesModel) ?: filesModel, null)
@@ -333,10 +338,28 @@ object Switcher : BaseSwitcherAction(null) {
       old?.cancel()
       project.putUserData(SWITCHER_KEY, this)
       myPopup.showCenteredInCurrentWindow(project)
+
+      if (Registry.`is`("highlighting.passes.cache")) {
+        HighlightingPassesCache.getInstance(project).schedule(getNotOpenedRecentFiles())
+      }
+    }
+    private fun getNotOpenedRecentFiles(): List<VirtualFile> {
+      val recentFiles = getInstance(project).fileList
+      val openFiles = FileEditorManager.getInstance(project).openFiles
+      return recentFiles.subtract(openFiles.toSet()).toList()
     }
 
     override fun dispose() {
       project.putUserData(SWITCHER_KEY, null)
+      activity.finished {
+        buildList {
+          NAVIGATED.with(navigationData != null && navigationData!!.navigationIndexes.isNotEmpty())
+          if (navigationData != null) {
+            NAVIGATED_ORIGINAL_INDEXES.with(navigationData!!.navigationOriginalIndexes)
+            NAVIGATED_INDEXES.with(navigationData!!.navigationIndexes)
+          }
+        }
+      }
     }
 
     val isOnlyEditedFilesShown: Boolean
@@ -353,6 +376,12 @@ object Switcher : BaseSwitcherAction(null) {
 
     override fun unregisterHint() {
       myHint = null
+    }
+
+    private fun updatePathLabel() {
+      val values = selectedList?.selectedValuesList
+      val statusText = values?.singleOrNull()?.statusText
+      pathLabel.text = if (statusText.isNullOrEmpty()) " " else statusText
     }
 
     private fun updateMnemonics(windows: List<SwitcherToolWindow>, showMnemonics: Boolean) {
@@ -434,7 +463,7 @@ object Switcher : BaseSwitcherAction(null) {
       }
     }
 
-    private fun cancel() {
+    fun cancel() {
       myPopup!!.cancel()
     }
 
@@ -476,7 +505,7 @@ object Switcher : BaseSwitcherAction(null) {
     val selectedList: JBList<out SwitcherListItem>?
       get() = getSelectedList(files)
 
-    fun getSelectedList(preferable: JBList<out SwitcherListItem>?): JBList<out SwitcherListItem>? {
+    private fun getSelectedList(preferable: JBList<out SwitcherListItem>?): JBList<out SwitcherListItem>? {
       return if (files.hasFocus()) files else if (toolWindows.hasFocus()) toolWindows else preferable
     }
 
@@ -509,24 +538,29 @@ object Switcher : BaseSwitcherAction(null) {
 
       class ListItemData(val item: SwitcherVirtualFile,
                          val mainText: String,
+                         val statusText: String,
                          val backgroundColor: Color?,
                          val foregroundTextColor: Color?)
       ReadAction.nonBlocking<List<ListItemData>> {
         items.map {
-          ListItemData(it, VfsPresentationUtil.getUniquePresentableNameForUI(it.project, it.file),
-                       VfsPresentationUtil.getFileBackgroundColor(it.project, it.file),
-                       FileStatusManager.getInstance(it.project).getStatus(it.file).color)
+          ListItemData(item = it,
+                       mainText = VfsPresentationUtil.getUniquePresentableNameForUI(it.project, it.file),
+                       statusText = FileUtil.getLocationRelativeToUserHome((it.file.parent ?: it.file).presentableUrl),
+                       backgroundColor = VfsPresentationUtil.getFileBackgroundColor(it.project, it.file),
+                       foregroundTextColor = FileStatusManager.getInstance(it.project).getStatus(it.file).color)
         }
       }
         .expireWith(this)
         .finishOnUiThread(ModalityState.any()) { list ->
           for (data in list) {
             data.item.mainText = data.mainText
+            data.item.statusText = data.statusText
             data.item.backgroundColor = data.backgroundColor
             data.item.foregroundTextColor = data.foregroundTextColor
           }
           files.invalidate()
           files.repaint()
+          updatePathLabel()
         }
         .submit(AppExecutorUtil.getAppExecutorService())
     }
@@ -535,6 +569,9 @@ object Switcher : BaseSwitcherAction(null) {
       val mode = if (e == null) FileEditorManagerImpl.OpenMode.DEFAULT else getOpenMode(e)
       val values: List<*> = selectedList!!.selectedValuesList
       val searchQuery = mySpeedSearch?.enteredPrefix
+
+      navigationData = createNavigationData(values)
+
       cancel()
       if (values.isEmpty()) {
         tryToOpenFileSearch(e, searchQuery)
@@ -587,6 +624,17 @@ object Switcher : BaseSwitcherAction(null) {
         val item = values[0] as SwitcherListItem
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown({ item.navigate(this, mode) }, ModalityState.current())
       }
+    }
+
+    private fun createNavigationData(values: List<*>): SwitcherLogger.NavigationData? {
+      if (selectedList != files) return null
+
+      val filteringListModel = files.model as? FilteringListModel<SwitcherVirtualFile> ?: return null
+      val collectionListModel = filteringListModel.originalModel as? CollectionListModel<SwitcherVirtualFile> ?: return null
+      val originalIndexes = values.filterIsInstance<SwitcherVirtualFile>().map { collectionListModel.getElementIndex(it) }
+      val navigatedIndexes = values.filterIsInstance<SwitcherVirtualFile>().map { filteringListModel.getElementIndex(it) }
+
+      return SwitcherLogger.NavigationData(originalIndexes, navigatedIndexes)
     }
 
     private fun tryToOpenFileSearch(e: InputEvent?, fileName: String?) {
@@ -644,7 +692,7 @@ object Switcher : BaseSwitcherAction(null) {
     }
 
     companion object {
-      const val SWITCHER_ELEMENTS_LIMIT = 30
+      private const val SWITCHER_ELEMENTS_LIMIT: Int = 30
       private fun collectFiles(project: Project, onlyEdited: Boolean): List<VirtualFile> {
         return if (onlyEdited) IdeDocumentHistory.getInstance(project).changedFiles else getRecentFiles(project)
       }
@@ -754,8 +802,7 @@ object Switcher : BaseSwitcherAction(null) {
       private fun addSmartShortcut(window: SwitcherToolWindow, keymap: MutableMap<String?, SwitcherToolWindow?>): Boolean {
         val title = window.mainText
         if (StringUtil.isEmpty(title)) return false
-        for (i in 0 until title.length) {
-          val c = title[i]
+        for (c in title) {
           if (Character.isUpperCase(c) && addShortcut(keymap, window, c.toString())) {
             return true
           }

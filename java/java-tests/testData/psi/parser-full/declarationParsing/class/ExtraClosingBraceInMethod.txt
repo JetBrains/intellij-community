@@ -1,45 +1,44 @@
 PsiJavaFile:ExtraClosingBraceInMethod.java
   PsiImportList
     <empty list>
-  PsiClass:Foo
-    PsiModifierList:
-      <empty list>
-    PsiKeyword:class('class')
-    PsiWhiteSpace(' ')
-    PsiIdentifier:Foo('Foo')
-    PsiTypeParameterList
-      <empty list>
-    PsiReferenceList
-      <empty list>
-    PsiReferenceList
-      <empty list>
-    PsiWhiteSpace(' ')
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace('\n   ')
-    PsiMethod:testSomething
-      PsiModifierList:public
-        PsiKeyword:public('public')
+  PsiUnnamedClass
+    PsiClass:Foo
+      PsiModifierList:
+        <empty list>
+      PsiKeyword:class('class')
+      PsiWhiteSpace(' ')
+      PsiIdentifier:Foo('Foo')
       PsiTypeParameterList
         <empty list>
-      PsiWhiteSpace(' ')
-      PsiTypeElement:void
-        PsiKeyword:void('void')
-      PsiWhiteSpace(' ')
-      PsiIdentifier:testSomething('testSomething')
-      PsiParameterList:()
-        PsiJavaToken:LPARENTH('(')
-        PsiJavaToken:RPARENTH(')')
+      PsiReferenceList
+        <empty list>
       PsiReferenceList
         <empty list>
       PsiWhiteSpace(' ')
-      PsiCodeBlock
-        PsiJavaToken:LBRACE('{')
-        PsiWhiteSpace('\n     ')
-        PsiJavaToken:RBRACE('}')
-    PsiWhiteSpace('\n   ')
-    PsiJavaToken:RBRACE('}')
-    PsiErrorElement:'class' or 'interface' expected
-      <empty list>
+      PsiJavaToken:LBRACE('{')
+      PsiWhiteSpace('\n   ')
+      PsiMethod:testSomething
+        PsiModifierList:public
+          PsiKeyword:public('public')
+        PsiTypeParameterList
+          <empty list>
+        PsiWhiteSpace(' ')
+        PsiTypeElement:void
+          PsiKeyword:void('void')
+        PsiWhiteSpace(' ')
+        PsiIdentifier:testSomething('testSomething')
+        PsiParameterList:()
+          PsiJavaToken:LPARENTH('(')
+          PsiJavaToken:RPARENTH(')')
+        PsiReferenceList
+          <empty list>
+        PsiWhiteSpace(' ')
+        PsiCodeBlock
+          PsiJavaToken:LBRACE('{')
+          PsiWhiteSpace('\n     ')
+          PsiJavaToken:RBRACE('}')
+      PsiWhiteSpace('\n   ')
+      PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n\n   ')
     PsiMethod:testSomething
       PsiModifierList:public
@@ -62,4 +61,5 @@ PsiJavaFile:ExtraClosingBraceInMethod.java
         PsiWhiteSpace('\n\n   ')
         PsiJavaToken:RBRACE('}')
     PsiWhiteSpace('\n\n')
-    PsiJavaToken:RBRACE('}')
+    PsiErrorElement:'class' or 'interface' expected
+      PsiJavaToken:RBRACE('}')

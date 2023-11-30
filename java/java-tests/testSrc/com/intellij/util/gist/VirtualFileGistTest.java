@@ -28,10 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
-import static com.intellij.util.gist.VirtualFileGistImpl.MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES;
+import static com.intellij.util.gist.storage.GistStorageImpl.MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES;
 
 public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -86,17 +84,9 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     IntRef invocationCounter = new IntRef();
     VirtualFileGist<String> gistOfFileContent = gistOfFileContent(invocationCounter);
 
-    //File checking is implementation-specific detail => skip the test if different impl is used:
-    //TODO RC: better to find a way to check it for other implementations also
-    boolean checkFilePresense = gistOfFileContent instanceof VirtualFileGistImpl;
-
     String hugeFileContent = "a".repeat(hugeGistSize);
     String notHugeFileContent = "b".repeat(notHugeGistSize);
     VirtualFile file = fileWithContent("a.txt", hugeFileContent);
-
-    Path dedicatedGistFile = checkFilePresense ?
-                             ((VirtualFileGistImpl<String>)gistOfFileContent).dedicatedGistFilePath(file) :
-                             null;
 
     final int enoughTries = 8;
     for (int i = 0; i < enoughTries; i++) {
@@ -118,13 +108,6 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
           invocationsBefore,
           invocationCounter.get()
         );
-
-        if (checkFilePresense) {
-          assertTrue(
-            "Dedicated gist file [" + dedicatedGistFile + "] must exists since Gist now is huge",
-            Files.exists(dedicatedGistFile)
-          );
-        }
       }
 
       {//Now change file content to 'not huge':
@@ -145,13 +128,6 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
           invocationsBefore,
           invocationCounter.get()
         );
-
-        if (checkFilePresense) {
-          assertFalse(
-            "Dedicated gist file [" + dedicatedGistFile + "] must be deleted since Gist now is not huge",
-            Files.exists(dedicatedGistFile)
-          );
-        }
       }
     }
   }
@@ -293,9 +269,11 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     }
 
     int hugeGistSize = MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES + 10;
+    String hugeFileContent = "a".repeat(hugeGistSize);
+    VirtualFile file = fileWithContent("a.txt", hugeFileContent);
 
     IntRef invocations = new IntRef(0);
-    VirtualFileGist.GistCalculator<String> gistCalculator = (p, f) -> {
+    VirtualFileGist.GistCalculator<String> fileContentPlusProjectNameCalculator = (p, f) -> {
       final String content = LoadTextUtil.loadText(f).toString();
       return content + "///" + (p == null ? null : p.getName());
     };
@@ -303,46 +281,43 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
       getTestName(true), 0,
       EnumeratorStringDescriptor.INSTANCE,
       wrapWithCounter(
-        gistCalculator,
+        fileContentPlusProjectNameCalculator,
         invocations
       )
     );
-    String hugeFileContent = "a".repeat(hugeGistSize);
-    VirtualFile file = fileWithContent("a.txt", hugeFileContent);
 
-    final Project project1 = getProject();
-    final Project project2 = ProjectManager.getInstance().getDefaultProject();
-
-    String project1Name = project1.getName();
-    String project2Name = project2.getName();
+    Project project1 = getProject();
+    Project project2 = ProjectManager.getInstance().getDefaultProject();
 
     assertEquals(
       "Gist calculated 1st time for project1",
-      gistCalculator.calcData(project1, file),
+      fileContentPlusProjectNameCalculator.calcData(project1, file),
       gistFileContentPlusProjectName.getFileData(project1, file)
     );
     assertEquals(1, invocations.get());
 
     assertEquals(
-      "Gist DOES recalculated for project2",
-      gistCalculator.calcData(project2, file),
+      "Gist calculated 1st time for project2",
+      fileContentPlusProjectNameCalculator.calcData(project2, file),
       gistFileContentPlusProjectName.getFileData(project2, file)
     );
     assertEquals(2, invocations.get());
 
     assertEquals(
-      "Gist does NOT recalculated for project1",
-      gistCalculator.calcData(project1, file),
+      "Gist must have same value for project1",
+      fileContentPlusProjectNameCalculator.calcData(project1, file),
       gistFileContentPlusProjectName.getFileData(project1, file)
     );
-    assertEquals(2, invocations.get());
+    assertEquals("Gist must NOT be recalculated for project1",
+                 2, invocations.get());
 
     assertEquals(
-      "Gist DOES recalculated for null project",
-      gistCalculator.calcData(null, file),
+      "Gist MUST be recalculated for null project",
+      fileContentPlusProjectNameCalculator.calcData(null, file),
       gistFileContentPlusProjectName.getFileData(null, file)
     );
-    assertEquals(3, invocations.get());
+    assertEquals("Gist must NOT be recalculated for null project",
+                 3, invocations.get());
   }
 
   public void testAttemptToCreateSecondGist_WithTheSameName_Fails() {

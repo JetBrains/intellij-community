@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -188,7 +188,7 @@ public interface AnnotationHolder {
 
   /**
    * @return true if the inspections are running in batch mode (see "Code|Inspect Code..."), false if the inspections are in the on-the-fly mode (i.e., they are run when the editor opened the file in the window).
-   * The difference is in the desired latency level which may require reducing the power of analysis in the on-the-fly mode to improve responsiveness.
+   * The difference is in the desired latency level, which may require reducing the power of analysis in the on-the-fly mode to improve responsiveness.
    */
   boolean isBatchMode();
 
@@ -205,8 +205,7 @@ public interface AnnotationHolder {
    * @return builder instance you can use to further customize your annotation
    */
   @Contract(pure = true)
-  @NotNull
-  default AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
+  default @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
                                           @NotNull @InspectionMessage String message) {
     throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
   }
@@ -223,8 +222,7 @@ public interface AnnotationHolder {
    * @return builder instance you can use to further customize your annotation
    */
   @Contract(pure = true)
-  @NotNull
-  default AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
+  default @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
     throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
   }
 }

@@ -6,7 +6,6 @@ import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.tooling.GradleConnectionException
-import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
@@ -144,9 +143,9 @@ class TestProjectResolverExtension : AbstractProjectResolverExtension() {
     buildFinished.complete(true)
   }
 
-  override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider {
-    return TestBuildObjectModelProvider()
-  }
+  override fun getModelProviders() = listOf(
+    TestBuildObjectModelProvider()
+  )
 
   companion object {
     private val extensions: MutableMap<String, TestProjectResolverExtension> = mutableMapOf()

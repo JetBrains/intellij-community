@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.CommonBundle;
@@ -285,7 +285,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
         Messages.showErrorDialog(project, VcsBundle
                                    .message("create.patch.error.title", VcsBundle.message("patch.creation.can.not.write.patch.error", file.toString())),
                                  CommonBundle.getErrorTitle());
-      }, ModalityState.NON_MODAL, project);
+      }, ModalityState.nonModal(), project);
       return false;
     }
     return true;

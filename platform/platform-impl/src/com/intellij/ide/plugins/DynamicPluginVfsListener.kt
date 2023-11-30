@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -8,7 +9,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationActivationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.PreloadingActivity
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -20,6 +20,10 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.IdeFrame
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
 private const val AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY = "idea.auto.reload.plugins"
@@ -29,24 +33,29 @@ private var initialRefreshDone = false
 private val LOG: Logger
   get() = logger<DynamicPluginVfsListener>()
 
-private class DynamicPluginVfsListenerInitializer : PreloadingActivity() {
+private class DynamicPluginVfsListenerInitializer : ApplicationInitializedListener {
   init {
-    if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
+    if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) || ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
     }
   }
 
-  override suspend fun execute() {
-    val pluginsPath = PathManager.getPluginsPath()
-    LocalFileSystem.getInstance().addRootToWatch(pluginsPath, true)
-    val pluginsRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(pluginsPath))
-    if (pluginsRoot != null) {
-      // ensure all plugins are in VFS
-      VfsUtilCore.processFilesRecursively(pluginsRoot) { true }
-      RefreshQueue.getInstance().refresh(true, true, Runnable { initialRefreshDone = true }, pluginsRoot)
-    }
-    else {
-      LOG.info("Dynamic plugin VFS listener not active, couldn't find plugins root in VFS")
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    asyncScope.launch {
+      val pluginsPath = PathManager.getPluginsPath()
+      val localFileSystem = LocalFileSystem.getInstance()
+      localFileSystem.addRootToWatch(pluginsPath, true)
+      val pluginRoot = withContext(Dispatchers.IO) {
+        localFileSystem.refreshAndFindFileByNioFile(Path.of(pluginsPath))
+      }
+      if (pluginRoot == null) {
+        LOG.info("Dynamic plugin VFS listener not active, couldn't find plugins root in VFS")
+      }
+      else {
+        // ensure all plugins are in VFS
+        VfsUtilCore.processFilesRecursively(pluginRoot) { true }
+        RefreshQueue.getInstance().refresh(true, true, Runnable { initialRefreshDone = true }, pluginRoot)
+      }
     }
   }
 }
@@ -118,10 +127,13 @@ private class DynamicPluginVfsListener : AsyncFileListener {
 }
 
 private class DynamicPluginsFrameStateListener : ApplicationActivationListener {
-  override fun applicationActivated(ideFrame: IdeFrame) {
-    if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) return
+  init {
+    if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY)) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
 
-    val pluginsRoot = LocalFileSystem.getInstance().findFileByPath(PathManager.getPluginsPath())
-    pluginsRoot?.refresh(true, true)
+  override fun applicationActivated(ideFrame: IdeFrame) {
+    LocalFileSystem.getInstance().findFileByPath(PathManager.getPluginsPath())?.refresh(true, true)
   }
 }

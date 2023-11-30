@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.IN_BACKGROUND_ASYNC
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.NO_PROGRESS_ASYNC
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory.WARNING
 import com.intellij.openapi.externalSystem.service.notification.NotificationData
@@ -22,11 +22,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.io.createFile
-import com.intellij.util.io.inputStream
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.outputStream
 import org.gradle.internal.impldep.com.google.common.base.Charsets
-import org.gradle.internal.util.PropertiesUtils
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.WrapperExecutor
 import org.jetbrains.annotations.ApiStatus
@@ -37,10 +35,13 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
+import java.io.OutputStreamWriter
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
+import kotlin.io.path.createFile
+import kotlin.io.path.inputStream
 
 /**
  * @author Vladislav.Soroka
@@ -90,14 +91,9 @@ class GradleVersionQuickFix(private val projectPath: String,
       val distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip"
       if (wrapperPropertiesFile == null) {
         val wrapperPropertiesPath = Paths.get(projectPath, "gradle", "wrapper", "gradle-wrapper.properties")
-        wrapperPropertiesPath.createFile()
+        wrapperPropertiesPath.createParentDirectories().createFile()
         wrapperPropertiesFile = wrapperPropertiesPath
-        wrapperProperties = Properties()
-        wrapperProperties[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
-        wrapperProperties[WrapperExecutor.DISTRIBUTION_BASE_PROPERTY] = "GRADLE_USER_HOME"
-        wrapperProperties[WrapperExecutor.DISTRIBUTION_PATH_PROPERTY] = "wrapper/dists"
-        wrapperProperties[WrapperExecutor.ZIP_STORE_BASE_PROPERTY] = "GRADLE_USER_HOME"
-        wrapperProperties[WrapperExecutor.ZIP_STORE_PATH_PROPERTY] = "wrapper/dists"
+        wrapperProperties = getDefaultGradleProperties(distributionUrl)
       }
       else {
         wrapperProperties = wrapperPropertiesFile.inputStream().use { stream ->
@@ -106,8 +102,10 @@ class GradleVersionQuickFix(private val projectPath: String,
         wrapperProperties[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
       }
 
-      wrapperPropertiesFile?.outputStream().use { out ->
-        PropertiesUtils.store(wrapperProperties, out, null as String?, Charsets.ISO_8859_1, "\n")
+      wrapperPropertiesFile?.outputStream()?.use { out ->
+        OutputStreamWriter(out, Charsets.ISO_8859_1).use { writer ->
+          wrapperProperties.store(writer, null)
+        }
       }
       LocalFileSystem.getInstance().refreshNioFiles(listOf(wrapperPropertiesFile))
     }
@@ -141,12 +139,19 @@ class GradleVersionQuickFix(private val projectPath: String,
               override fun onFailure() {
                 future.completeExceptionally(RuntimeException("Wrapper task failed"))
               }
-            }, IN_BACKGROUND_ASYNC, false, userData)
+            }, NO_PROGRESS_ASYNC, false, userData)
     return future
+  }
+
+  private fun getDefaultGradleProperties(distributionUrl: String): Properties = Properties().apply {
+    this[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl
+    this[WrapperExecutor.DISTRIBUTION_BASE_PROPERTY] = "GRADLE_USER_HOME"
+    this[WrapperExecutor.DISTRIBUTION_PATH_PROPERTY] = "wrapper/dists"
+    this[WrapperExecutor.ZIP_STORE_BASE_PROPERTY] = "GRADLE_USER_HOME"
+    this[WrapperExecutor.ZIP_STORE_PATH_PROPERTY] = "wrapper/dists"
   }
 
   companion object {
     private val LOG = logger<GradleVersionQuickFix>()
   }
 }
-

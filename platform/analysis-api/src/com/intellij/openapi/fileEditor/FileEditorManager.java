@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -141,8 +143,8 @@ public abstract class FileEditorManager {
    * The method returns an empty array if no editors are open.
    */
   @ApiStatus.Experimental
-  public FileEditor @NotNull [] getSelectedEditorWithRemotes() {
-    return getSelectedEditors();
+  public @NotNull Collection<FileEditor> getSelectedEditorWithRemotes() {
+    return List.of(getSelectedEditors());
   }
 
   /**
@@ -163,6 +165,10 @@ public abstract class FileEditorManager {
    * @return current editors for the specified {@code file}
    */
   public abstract FileEditor @NotNull [] getEditors(@NotNull VirtualFile file);
+
+  public @NotNull List<FileEditor> getEditorList(@NotNull VirtualFile file) {
+    return Arrays.asList(getEditors(file));
+  }
 
   /**
    * @return all editors for the specified {@code file}

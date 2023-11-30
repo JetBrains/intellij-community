@@ -36,12 +36,11 @@ abstract class JKBlock : JKTreeElement() {
     val rightBrace = JKTokenElementImpl("}")
 }
 
-
 object JKBodyStub : JKBlock() {
-    override val trailingComments: MutableList<JKComment> = mutableListOf()
-    override val leadingComments: MutableList<JKComment> = mutableListOf()
-    override var hasTrailingLineBreak = false
-    override var hasLeadingLineBreak = false
+    override val commentsBefore: MutableList<JKComment> = mutableListOf()
+    override val commentsAfter: MutableList<JKComment> = mutableListOf()
+    override var lineBreaksBefore: Int = 0
+    override var lineBreaksAfter: Int = 0
 
     override fun copy(): JKTreeElement = this
 
@@ -59,7 +58,6 @@ object JKBodyStub : JKBlock() {
     override fun attach(to: JKElement) {}
     override fun accept(visitor: JKVisitor) = Unit
 }
-
 
 class JKInheritanceInfo(
     extends: List<JKTypeElement>,
@@ -127,14 +125,26 @@ class JKNamedArgument(
     override var value by child(value)
     val name by child(name)
     override fun accept(visitor: JKVisitor) = visitor.visitNamedArgument(this)
+
+    init {
+        this.takeFormattingFrom(value)
+    }
 }
 
 class JKArgumentImpl(value: JKExpression) : JKArgument() {
     override var value by child(value)
     override fun accept(visitor: JKVisitor) = visitor.visitArgument(this)
+
+    init {
+        this.takeFormattingFrom(value)
+    }
 }
 
-class JKArgumentList(arguments: List<JKArgument> = emptyList()) : JKTreeElement() {
+/**
+ * @param hasTrailingComma - a trailing comma in Java can come from an array initializer,
+ * which is converted to a regular method call in Kotlin, so it belongs to JKArgumentList
+ */
+class JKArgumentList(arguments: List<JKArgument> = emptyList(), var hasTrailingComma: Boolean = false) : JKTreeElement() {
     constructor(vararg arguments: JKArgument) : this(arguments.toList())
     constructor(vararg values: JKExpression) : this(values.map { JKArgumentImpl(it) })
 

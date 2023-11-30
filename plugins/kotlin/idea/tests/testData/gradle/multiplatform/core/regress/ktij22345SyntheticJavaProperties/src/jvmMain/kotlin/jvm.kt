@@ -2,6 +2,7 @@
 // - hidden: line markers
 //endregion
 actual open class MyFile1 actual constructor(userPath: String): MyJavaFile(userPath)
+
 actual typealias MyFile2 = java.io.File
 
 fun testFile1(file: KotlinFile1) {

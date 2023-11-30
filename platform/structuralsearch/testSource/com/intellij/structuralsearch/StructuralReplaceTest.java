@@ -1731,13 +1731,6 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     String s6 = "a=a";
 
     try {
-      replace(s4, s5, s6);
-      fail("Undefined no ; in replace");
-    }
-    catch (UnsupportedPatternException ignored) {
-    }
-
-    try {
       replace(s4, s6, s5);
       fail("Undefined no ; in search");
     }
@@ -2055,16 +2048,18 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     final String pattern = loadFile("ReformatAndShortenClassRefPerformance_pattern.java");
     final String replacement = loadFile("ReformatAndShortenClassRefPerformance_replacement.java");
 
-    PlatformTestUtil.startPerformanceTest("SSR", 20000,
+    PlatformTestUtil.startPerformanceTest("SSR Reformat", 20000,
                                           () -> assertEquals("Reformat Performance", loadFile("ReformatPerformance_result.java"),
-                                                             replace(source, pattern, replacement, true, true))).assertTiming();
+                                                             replace(source, pattern, replacement, true, true)))
+      .assertTimingAsSubtest();
 
     options.setToReformatAccordingToStyle(false);
     options.setToShortenFQN(true);
 
-    PlatformTestUtil.startPerformanceTest("SSR", 20000,
+    PlatformTestUtil.startPerformanceTest("SSR Shorten Class Reference", 20000,
                                           () -> assertEquals("Shorten Class Ref Performance", loadFile("ShortenPerformance_result.java"),
-                                                             replace(source, pattern, replacement, true, true))).assertTiming();
+                                                             replace(source, pattern, replacement, true, true)))
+      .assertTimingAsSubtest();
   }
 
   public void testLeastSurprise() {
@@ -2464,6 +2459,14 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                               "public class A {}";
     assertEquals("Should replace unmatched annotation parameters when matching just annotation",
                  expected1d, replace(in1, "@SuppressWarnings", "@ SuppressWarnings"));
+
+    String what1 = "@SuppressWarnings(\"'value\")";
+    String by = "$lower_case$";
+    final ReplacementVariableDefinition variable = options.addNewVariableDefinition("lower_case");
+    variable.setScriptCodeConstraint("value.getText().toLowerCase()");
+    final String expected1e = "@SuppressWarnings(\"all\")\n" +
+                              "public class A {}";
+    assertEquals(expected1e, replace(in1, what1, by));
 
 
     final String in2 = """

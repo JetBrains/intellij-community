@@ -195,8 +195,8 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
       (element, info) -> info.alwaysFails());
   }
 
-  StreamEx<PsiCallExpression> alwaysFailingCalls() {
-    return StreamEx.ofKeys(myFailingCalls, v -> v).map(ContractFailureProblem::getAnchor).select(PsiCallExpression.class).distinct();
+  StreamEx<PsiExpression> alwaysFailingCalls() {
+    return StreamEx.ofKeys(myFailingCalls, v -> v).map(ContractFailureProblem::getAnchor).distinct();
   }
 
   boolean isAlwaysReturnsNotNull(Instruction[] instructions) {
@@ -326,11 +326,9 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
       myArrayStoreProblems.put(storeProblem.getAnchor(), Pair.create(storeProblem.getFromType(), storeProblem.getToType()));
     }
     else if (problem instanceof ContractFailureProblem contractFailure) {
-      if (contractFailure.getAnchor() instanceof PsiCallExpression call) {
-        Boolean isFailing = myFailingCalls.get(problem);
-        if (isFailing != null || !hasTrivialFailContract(call)) {
-          myFailingCalls.put(contractFailure, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
-        }
+      Boolean isFailing = myFailingCalls.get(problem);
+      if (isFailing != null || !hasTrivialFailContract(contractFailure.getAnchor())) {
+        myFailingCalls.put(contractFailure, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
       }
     }
     else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?> nullabilityProblem) {
@@ -352,9 +350,9 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     myEndOfInitializerStates.add(state.createCopy());
   }
 
-  private static boolean hasTrivialFailContract(PsiCallExpression call) {
-    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
-    return contracts.size() == 1 && contracts.get(0).isTrivial() && contracts.get(0).getReturnValue().isFail();
+  private static boolean hasTrivialFailContract(@NotNull PsiExpression call) {
+    List<? extends MethodContract> contracts = getContracts(call);
+    return contracts != null && contracts.size() == 1 && contracts.get(0).isTrivial() && contracts.get(0).getReturnValue().isFail();
   }
 
   private void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
@@ -372,6 +370,21 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     else {
       myArgumentMutabilityViolation.add(anchor);
     }
+  }
+
+  @Nullable
+  static List<? extends MethodContract> getContracts(@NotNull PsiExpression anchor) {
+    List<? extends MethodContract> contracts;
+    if (anchor instanceof PsiCallExpression call) {
+      contracts = JavaMethodContractUtil.getMethodCallContracts(call);
+    }
+    else if (anchor instanceof PsiMethodReferenceExpression methodRef && methodRef.resolve() instanceof PsiMethod method) {
+      contracts = JavaMethodContractUtil.getMethodContracts(method);
+    }
+    else {
+      return null;
+    }
+    return contracts;
   }
 
   private static class StateInfo {

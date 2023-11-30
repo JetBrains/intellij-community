@@ -76,15 +76,13 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     }
   }
 
-  @NotNull
   @Override
-  public T getElement() {
+  public @NotNull T getElement() {
     return myElement;
   }
 
-  @NotNull
   @Override
-  public TextRange getRangeInElement() {
+  public @NotNull TextRange getRangeInElement() {
     TextRange rangeInElement = myRangeInElement;
     if (rangeInElement == null) {
       myRangeInElement = rangeInElement = calculateDefaultRangeInElement();
@@ -128,8 +126,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return new Immediate<>(element, rangeInElement, resolveTo);
   }
 
-  @NotNull
-  private ElementManipulator<T> getManipulator() {
+  private @NotNull ElementManipulator<T> getManipulator() {
     ElementManipulator<T> manipulator = ElementManipulators.getManipulator(myElement);
     if (manipulator == null) {
       throw PluginException.createByClass(
@@ -169,8 +166,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       ResolveResult[] resolveResults = multiResolve(false);
       return resolveResults.length == 1 ? resolveResults[0].getElement() : null;
     }
@@ -201,13 +197,12 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
 
     //do nothing. the element will be renamed via PsiMetaData (com.intellij.refactoring.rename.RenameUtil.doRenameGenericNamedElement())
     @Override
-    public PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
+    public PsiElement handleElementRename(final @NotNull String newElementName) throws IncorrectOperationException {
       return getElement();
     }
 
     @Override
-    @Nullable
-    public PsiElement resolve() {
+    public @Nullable PsiElement resolve() {
       return myResolveTo;
     }
   }

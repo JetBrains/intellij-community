@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.Activity;
@@ -10,15 +10,16 @@ import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
 import com.intellij.util.indexing.impl.storage.FileBasedIndexLayoutSettings;
 import com.intellij.util.io.DataOutputStream;
@@ -64,21 +65,14 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
   private @NotNull Collection<ThrowableRunnable<?>> initAssociatedDataForExtensions() {
     Activity activity = StartUpMeasurer.startActivity("file index extensions iteration");
-    ExtensionPointImpl<FileBasedIndexExtension<?, ?>> extPoint =
-      (ExtensionPointImpl<FileBasedIndexExtension<?, ?>>)FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint();
-    Iterator<FileBasedIndexExtension<?, ?>> extensions = extPoint.iterator();
-    List<ThrowableRunnable<?>> tasks = new ArrayList<>(extPoint.size());
+    Iterator<FileBasedIndexExtension<?, ?>> extensions = FileBasedIndexExtension.EXTENSION_POINT_NAME.getIterable().iterator();
+    List<ThrowableRunnable<?>> tasks = new ArrayList<>(FileBasedIndexExtension.EXTENSION_POINT_NAME.getPoint().size());
 
     myDirtyFileIds.addAll(PersistentDirtyFilesQueue.readIndexingQueue(PersistentDirtyFilesQueue.getQueueFile(), ManagingFS.getInstance().getCreationTimestamp()));
     // todo: init contentless indices first ?
     while (extensions.hasNext()) {
       FileBasedIndexExtension<?, ?> extension = extensions.next();
-      if (extension == null) {
-        break;
-      }
       RebuildStatus.registerIndex(extension.getName());
-
-      myRegisteredIndexes.registerIndexExtension(extension);
 
       tasks.add(() -> {
         if (IOUtil.isSharedCachesEnabled()) {
@@ -90,11 +84,18 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
                                              myRegistrationResultSink,
                                              myStaleIds,
                                              myDirtyFileIds);
+
+          // FileBasedIndexImpl.registerIndexer may throw, then the line below will not be executed
+          myRegisteredIndexes.registerIndexExtension(extension);
         }
-        catch (IOException io) {
-          throw io;
+        catch (IOException | AlreadyDisposedException e) {
+          LOG.warnWithDebug("Could not register indexing extension: " + extension + ". reason: " + e, e);
+          ID.unloadId(extension.getName());
+          throw e;
         }
         catch (Throwable t) {
+          LOG.warnWithDebug("Could not register indexing extension: " + extension + ". reason: " + t, t);
+          ID.unloadId(extension.getName());
           handleComponentError(t, extension.getClass().getName(), null);
         }
         finally {
@@ -116,16 +117,10 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     // 2) we dispose FileBasedIndex before PersistentFS disposing
     PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstance();
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    // anonymous class is required to make sure the new instance is created
-    Disposable disposable = new Disposable() {
-      @Override
-      public void dispose() {
-        new FileBasedIndexImpl.MyShutDownTask().run();
-      }
-    };
+    Disposable disposable = new ShutdownTaskAsDisposable();
     ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), disposable);
     Disposer.register(fs, disposable);
-    //Generally, Index will be shutdown by Disposer -- but to be sure we'll register a shutdown task also:
+    //Generally, Index will be shutdown by Disposer -- but to be sure, we'll register a shutdown task also:
     myFileBasedIndex.setUpShutDownTask();
 
     Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions();
@@ -134,8 +129,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
     myCurrentVersionCorrupted = CorruptionMarker.requireInvalidation();
     boolean storageLayoutChanged = FileBasedIndexLayoutSettings.INSTANCE.loadUsedLayout();
-    for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
-      FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize(DefaultIndexStorageLayout.getUsedLayoutId());
+    for (FileBasedIndexInfrastructureExtension extension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
+      FileBasedIndexInfrastructureExtension.InitializationResult result = extension.initialize(DefaultIndexStorageLayout.getUsedLayoutId());
       myCurrentVersionCorrupted = myCurrentVersionCorrupted ||
                                 result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
     }
@@ -143,9 +138,18 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
 
     if (myCurrentVersionCorrupted) {
       CorruptionMarker.dropIndexes();
+      ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).invalidateAllStamps("Indexes corrupted");
     }
 
     return tasks;
+  }
+
+  // a static class is required to make sure a new instance is created and `this` is not leaked
+  private static class ShutdownTaskAsDisposable implements Disposable {
+    @Override
+    public void dispose() {
+      new FileBasedIndexImpl.MyShutDownTask(false).run();
+    }
   }
 
   @Override
@@ -169,7 +173,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
           RebuildStatus.clearIndexIfNecessary(indexId, () -> myFileBasedIndex.clearIndex(indexId));
         }
         catch (StorageException e) {
-          myFileBasedIndex.requestRebuild(indexId);
+          myFileBasedIndex.requestRebuild(indexId, e);
           FileBasedIndexImpl.LOG.error(e);
         }
       }
@@ -179,7 +183,6 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     finally {
       //CorruptionMarker.markIndexesAsDirty();
       FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCounting();
-      FileBasedIndexImpl.setupWritingIndexValuesSeparatedFromCountingForContentIndependentIndexes();
       myFileBasedIndex.addStaleIds(myStaleIds);
       myFileBasedIndex.addStaleIds(myDirtyFileIds);
       myFileBasedIndex.setUpFlusher();

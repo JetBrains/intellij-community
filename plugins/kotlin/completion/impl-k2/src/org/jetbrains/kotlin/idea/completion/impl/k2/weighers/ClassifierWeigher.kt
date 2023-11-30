@@ -22,7 +22,8 @@ internal object ClassifierWeigher {
         NON_LOCAL
     }
 
-    fun KtAnalysisSession.addWeight(lookupElement: LookupElement, symbol: KtSymbol, symbolOrigin: CompletionSymbolOrigin) {
+    context(KtAnalysisSession)
+fun addWeight(lookupElement: LookupElement, symbol: KtSymbol, symbolOrigin: CompletionSymbolOrigin) {
         if (symbol !is KtClassifierSymbol) return
 
         val isLocal = (symbol as? KtClassLikeSymbol)?.symbolKind == KtSymbolKind.LOCAL

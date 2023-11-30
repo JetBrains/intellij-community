@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.performance
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.performance.UrlHashCodeInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.performance.UrlHashCodeInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
   fun `test url hashcode call`() {
@@ -9,6 +9,7 @@ class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       import java.net.URL
       
       class UrlHashCode {
+          @Suppress("DEPRECATION")
           fun foo() {
               val url = URL("")
               url.<warning descr="Call to 'hashCode()' on URL object">hashCode</warning>()
@@ -22,6 +23,7 @@ class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       import java.net.URL
       
       class UrlHashCodeEquals {
+          @Suppress("DEPRECATION")
           fun foo() {
               val url1 = URL("")
               val url2 = URL("")
@@ -55,6 +57,7 @@ class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       class CollectionContainsUrl {
           val objMap: MutableMap<Any, Any> = HashMap()
           
+          @Suppress("DEPRECATION")
           fun foo() {
               <warning descr="'objMap' may contain URL objects">objMap</warning>.put(URL(""), "")
           }
@@ -70,9 +73,24 @@ class KotlinUrlHashCodeInspectionTest : UrlHashCodeInspectionTestBase() {
       class CollectionContainsUrl {
           val objSet: MutableSet<Any> = HashSet()
           
+          @Suppress("DEPRECATION")
           fun foo() {
               <warning descr="'objSet' may contain URL objects">objSet</warning>.add(URL(""))
           }
+      }
+    """.trimIndent())
+  }
+
+  fun `test URL doesn't highlight when comparing with null`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      import java.net.URL
+
+      @Suppress("DEPRECATION", "SENSELESS_COMPARISON")
+      fun main() {
+          val sample = URL("")
+          if (sample == null) {}
+          if (null == sample) {}
+          sample.equals(null)
       }
     """.trimIndent())
   }

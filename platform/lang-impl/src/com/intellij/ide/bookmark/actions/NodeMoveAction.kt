@@ -17,7 +17,7 @@ internal abstract class NodeMoveAction(val next: Boolean) : DumbAwareAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun update(event: AnActionEvent) = with(event.presentation) {
+  override fun update(event: AnActionEvent): Unit = with(event.presentation) {
     isEnabledAndVisible = process(event, false)
     if (!isVisible) isVisible = !ActionPlaces.isPopupPlace(event.place)
   }
@@ -57,7 +57,7 @@ internal abstract class NodeMoveAction(val next: Boolean) : DumbAwareAction() {
 }
 
 internal class NodeMoveActionPromoter : ActionPromoter {
-  override fun suppress(actions: List<AnAction>, context: DataContext) = when {
+  override fun suppress(actions: List<AnAction>, context: DataContext): List<AnAction>? = when {
     context.getData(PlatformDataKeys.TOOL_WINDOW)?.id != ToolWindowId.BOOKMARKS -> null
     actions.none { it is NodeMoveAction } -> null
     else -> actions.filter { it !is NodeMoveAction }

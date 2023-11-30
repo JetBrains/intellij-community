@@ -11,3 +11,4 @@ open class B : A {
 fun bar(a: A) {
     class C<caret> : B(), A by a
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifyOverrideExplicitlyFix

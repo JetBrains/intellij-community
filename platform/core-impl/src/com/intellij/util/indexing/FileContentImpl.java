@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.lang.FileASTNode;
@@ -30,7 +30,7 @@ import java.nio.charset.Charset;
 public final class FileContentImpl extends IndexedFileImpl implements PsiDependentFileContent {
   private final @NotNull NotNullComputable<byte[]> myContentComputable;
   private Charset myCharset;
-  private byte[] myContent;
+  private byte[] myCachedContentBytes;
   private CharSequence myContentAsText;
   private byte[] myIndexedFileHash;
   private boolean myLighterASTShouldBeThreadSafe;
@@ -52,8 +52,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   private static final Key<LighterAST> LIGHTER_AST_NODE_KEY = Key.create("lighter.ast.node");
 
   @Override
-  @NotNull
-  public LighterAST getLighterAST() {
+  public @NotNull LighterAST getLighterAST() {
     LighterAST lighterAST = getUserData(LIGHTER_AST_NODE_KEY);
     if (lighterAST == null) {
       FileASTNode node = getPsiFile().getNode();
@@ -81,9 +80,8 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return createFileFromText(project, text, (LanguageFileType)fileType, myFile, getFileName());
   }
 
-  @NotNull
-  public static PsiFile createFileFromText(@NotNull Project project, @NotNull CharSequence text, @NotNull LanguageFileType fileType,
-                                           @NotNull VirtualFile file, @NotNull String fileName) {
+  public static @NotNull PsiFile createFileFromText(@NotNull Project project, @NotNull CharSequence text, @NotNull LanguageFileType fileType,
+                                                    @NotNull VirtualFile file, @NotNull String fileName) {
     final Language language = fileType.getLanguage();
     final Language substitutedLanguage = LanguageSubstitutors.getInstance().substituteLanguage(language, file, project);
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
@@ -129,7 +127,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return content;
   }
 
-  public static @NotNull FileContent createByText(@NotNull final VirtualFile file, @NotNull final CharSequence contentAsText, @Nullable Project project) {
+  public static @NotNull FileContent createByText(final @NotNull VirtualFile file, final @NotNull CharSequence contentAsText, @Nullable Project project) {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFile(file);
     FileContentImpl content = new FileContentImpl(file,
                                                   fileType,
@@ -144,8 +142,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
     return content;
   }
 
-  @NotNull
-  public Charset getCharset() {
+  public @NotNull Charset getCharset() {
     Charset charset = myCharset;
     if (charset == null) {
       myCharset = charset = myFile.getCharset();
@@ -159,43 +156,38 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
 
   @Override
   public byte @NotNull [] getContent() {
-    if (myContent == null) {
-      if (myContentAsText != null) {
-        myContent = myContentAsText.toString().getBytes(getCharset());
-      } else {
-        myContent = myContentComputable.compute();
-        FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
-        if (!unsubstitutedFileType.isBinary()) {
-          // Normalize line-separators for textual files to ensure
-          // consistency of getContent() and getContentAsText(): both must return \n.
-          // It calls getContent() internally and assigns the myContent to null.
-          myContent = getContentAsText().toString().getBytes(getCharset());
-        }
+    if (myCachedContentBytes == null) {
+      FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
+      if (unsubstitutedFileType.isBinary()) {
+        myCachedContentBytes = computeOriginalContent();
+      }
+      else {
+        // Normalize line-separators for textual files to ensure
+        // consistency of getContent() and getContentAsText(): both must return \n.
+        myCachedContentBytes = getContentAsText().toString().getBytes(getCharset());
       }
     }
-    return myContent;
+    return myCachedContentBytes;
   }
 
-  @NotNull
   @Override
-  public CharSequence getContentAsText() {
+  public @NotNull CharSequence getContentAsText() {
     FileType unsubstitutedFileType = getFileTypeWithoutSubstitution(this);
     if (unsubstitutedFileType.isBinary()) {
       throw new UnsupportedOperationException("Cannot obtain text for binary file type : " + unsubstitutedFileType.getDescription());
     }
     final CharSequence content = getUserData(IndexingDataKeys.FILE_TEXT_CONTENT_KEY);
-    try {
-      if (content != null) {
-        return content;
-      }
-      if (myContentAsText == null) {
-        myContentAsText = LoadTextUtil.getTextByBinaryPresentation(getContent(), myFile, false, false);
-      }
-      return myContentAsText;
-    } finally {
-      // Help GC. Indexes expect either getContent() or getContentAsText().
-      myContent = null;
+    if (content != null) {
+      return content;
     }
+    if (myContentAsText == null) {
+      myContentAsText = LoadTextUtil.getTextByBinaryPresentation(computeOriginalContent(), myFile, false, false);
+    }
+    return myContentAsText;
+  }
+
+  private byte @NotNull [] computeOriginalContent() {
+    return myContentComputable.compute();
   }
 
   @Override
@@ -215,8 +207,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   }
 
   @Override
-  @NotNull
-  public PsiFile getPsiFile() {
+  public @NotNull PsiFile getPsiFile() {
     if (myTransientContent) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(getFile());
 
@@ -252,8 +243,7 @@ public final class FileContentImpl extends IndexedFileImpl implements PsiDepende
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public static FileType getFileTypeWithoutSubstitution(@NotNull IndexedFile indexedFile) {
+  public static @NotNull FileType getFileTypeWithoutSubstitution(@NotNull IndexedFile indexedFile) {
     FileType fileType = indexedFile.getFileType();
     return fileType instanceof SubstitutedFileType ? ((SubstitutedFileType)fileType).getOriginalFileType() : fileType;
   }

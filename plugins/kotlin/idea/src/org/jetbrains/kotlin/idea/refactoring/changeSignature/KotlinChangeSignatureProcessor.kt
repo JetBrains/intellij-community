@@ -16,15 +16,15 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.core.isOverridable
-import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.usages.*
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 
@@ -32,14 +32,11 @@ class KotlinChangeSignatureProcessor(
     project: Project,
     changeInfo: KotlinChangeInfo,
     @NlsContexts.Command private val commandName: String
-) : ChangeSignatureProcessorBase(project, KotlinChangeInfoWrapper(changeInfo)) {
+) : ChangeSignatureProcessorBase(project, changeInfo) {
     init {
         // we must force collecting references to other parameters now before the signature is changed
         changeInfo.newParameters.forEach { it.defaultValueParameterReferences }
     }
-
-    val ktChangeInfo: KotlinChangeInfo
-        get() = changeInfo.delegate!!
 
     override fun setPrepareSuccessfulSwingThreadCallback(callback: Runnable?) {
         val actualCallback = if (callback != null) {
@@ -52,7 +49,7 @@ class KotlinChangeSignatureProcessor(
     }
 
     override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor {
-        val subject = if (ktChangeInfo.kind.isConstructor)
+        val subject = if (changeInfo.kind.isConstructor)
             KotlinBundle.message("text.constructor")
         else
             KotlinBundle.message("text.function")
@@ -60,12 +57,12 @@ class KotlinChangeSignatureProcessor(
         return KotlinUsagesViewDescriptor(myChangeInfo.method, RefactoringBundle.message("0.to.change.signature", subject))
     }
 
-    override fun getChangeInfo(): KotlinChangeInfoWrapper = super.getChangeInfo() as KotlinChangeInfoWrapper
+    override fun getChangeInfo(): KotlinChangeInfo = super.getChangeInfo() as KotlinChangeInfo
 
     override fun findUsages(): Array<UsageInfo> {
         val allUsages = ArrayList<UsageInfo>()
         val javaUsages = mutableSetOf<UsageInfo>()
-        ktChangeInfo.getOrCreateJavaChangeInfos()?.let { javaChangeInfos ->
+        changeInfo.getOrCreateJavaChangeInfos()?.let { javaChangeInfos ->
             val javaProcessor = JavaChangeSignatureUsageProcessor()
             javaChangeInfos.mapNotNullTo(allUsages) { javaChangeInfo ->
                 val javaUsagesForKtChange = javaProcessor.findUsages(javaChangeInfo)
@@ -74,11 +71,11 @@ class KotlinChangeSignatureProcessor(
                 }.ifEmpty { return@mapNotNullTo null }
 
                 javaUsages.addAll(uniqueJavaUsagesForKtChange)
-                KotlinWrapperForJavaUsageInfos(ktChangeInfo, javaChangeInfo, uniqueJavaUsagesForKtChange.toTypedArray(), changeInfo.method)
+                KotlinWrapperForJavaUsageInfos(changeInfo, javaChangeInfo, uniqueJavaUsagesForKtChange.toTypedArray(), changeInfo.method)
             }
         }
 
-        val primaryConstructor = ktChangeInfo.method as? KtPrimaryConstructor
+        val primaryConstructor = changeInfo.method as? KtPrimaryConstructor
         if (primaryConstructor != null) {
             findConstructorPropertyUsages(primaryConstructor, allUsages)
         }
@@ -94,7 +91,7 @@ class KotlinChangeSignatureProcessor(
         for ((index, parameter) in primaryConstructor.valueParameters.withIndex()) {
             if (!parameter.isOverridable) continue
 
-            val parameterInfo = ktChangeInfo.newParameters.find { it.originalIndex == index } ?: continue
+            val parameterInfo = changeInfo.newParameters.find { it.originalIndex == index } ?: continue
             val descriptor = parameter.resolveToDescriptorIfAny() as? PropertyDescriptor ?: continue
             val methodDescriptor = KotlinChangeSignatureData(
                 descriptor,
@@ -109,7 +106,7 @@ class KotlinChangeSignatureProcessor(
                 context = parameter,
             )
 
-            ktChangeInfo.registerInnerChangeInfo(propertyChangeInfo)
+            changeInfo.registerInnerChangeInfo(propertyChangeInfo)
             KotlinChangeSignatureProcessor(myProject, propertyChangeInfo, commandName).findUsages().mapNotNullTo(allUsages) {
                 if (it is KotlinWrapperForJavaUsageInfos) return@mapNotNullTo it
 
@@ -157,7 +154,7 @@ class KotlinChangeSignatureProcessor(
 
     override fun getCommandName() = commandName
 
-    override fun performRefactoring(usages: Array<out UsageInfo>) = try {
+    override fun performRefactoring(usages: Array<out UsageInfo>) {
         super.performRefactoring(usages)
         usages.forEach {
             val callExpression = it.element as? KtCallExpression ?: return@forEach
@@ -166,8 +163,6 @@ class KotlinChangeSignatureProcessor(
             }
         }
         performDelayedRefactoringRequests(myProject)
-    } finally {
-        changeInfo.invalidate()
     }
 
     override fun doRun() = try {

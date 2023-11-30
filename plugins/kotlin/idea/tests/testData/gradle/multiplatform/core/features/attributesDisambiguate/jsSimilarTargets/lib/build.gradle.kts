@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.KotlinHierarchyTemplate
+
 plugins {
     kotlin("multiplatform")
 }
@@ -15,7 +17,7 @@ kotlin {
         attributes.attribute(attr, "v2")
     }
 
-    targetHierarchy.default {
+    applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
         common {
             group("sharedJs") {
                 withJs()

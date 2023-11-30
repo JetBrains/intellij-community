@@ -8,3 +8,5 @@
 private class PrivateInFileClass<T : <caret>PrivateInFileClass.PrivateInnerClass> {
     class PrivateInnerClass
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix

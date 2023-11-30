@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+
 package com.jetbrains
 
 import com.intellij.codeInsight.completion.CompletionResultSet
@@ -6,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.ide.util.TreeChooser
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
+import com.intellij.navigation.ChooseByNameContributor
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -20,7 +23,6 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.ui.TextAccessor
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.dsl.gridLayout.unscale
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
 import com.intellij.util.TextFieldCompletionProvider
@@ -28,6 +30,7 @@ import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.textCompletion.TextFieldWithCompletion
+import com.intellij.util.ui.JBUI
 import com.jetbrains.extensions.ContextAnchor
 import com.jetbrains.extensions.QNameResolveContext
 import com.jetbrains.extensions.getQName
@@ -81,7 +84,7 @@ class PySymbolFieldWithBrowseButton(contextAnchor: ContextAnchor,
         childComponent.setText(element.getQName()?.toString())
       }
     }
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(3, 3, 3, button.insets.right.unscale()))
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps(3, 3, 3, JBUI.unscale(button.insets.right)))
   }
 
   override fun setText(text: String?) {
@@ -159,38 +162,40 @@ private class PySymbolChooserDialog(project: Project, scope: GlobalSearchScope, 
     return PyClassNameIndex.find(name, project, searchScope) + PyFunctionNameIndex.find(name, project, searchScope)
   }
 
-  override fun createChooseByNameModel() = GotoSymbolModel2(project, arrayOf(object : PyGotoSymbolContributor(), DumbAware {
-    override fun getNames(project: Project?, includeNonProjectItems: Boolean): Array<String> {
-      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<Array<String>, RuntimeException> {
-        super.getNames(project, includeNonProjectItems)
+  override fun createChooseByNameModel(): GotoSymbolModel2 {
+    return GotoSymbolModel2(project, java.util.List.of<ChooseByNameContributor>(object : PyGotoSymbolContributor(), DumbAware {
+      override fun getNames(project: Project?, includeNonProjectItems: Boolean): Array<String> {
+        return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<Array<String>, RuntimeException> {
+          super.getNames(project, includeNonProjectItems)
+        }
       }
-    }
 
-    override fun getItemsByName(name: String?,
-                                pattern: String?,
-                                project: Project?,
-                                includeNonProjectItems: Boolean): Array<NavigationItem> {
-      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<Array<NavigationItem>, RuntimeException> {
-        super.getItemsByName(name, pattern, project, includeNonProjectItems)
+      override fun getItemsByName(name: String?,
+                                  pattern: String?,
+                                  project: Project?,
+                                  includeNonProjectItems: Boolean): Array<NavigationItem> {
+        return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<Array<NavigationItem>, RuntimeException> {
+          super.getItemsByName(name, pattern, project, includeNonProjectItems)
+        }
       }
-    }
 
-    override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
-      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
-        super.processNames(processor, scope, filter)
+      override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
+          super.processNames(processor, scope, filter)
+        }
       }
-    }
 
-    override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
-      DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
-        super.processElementsWithName(name, processor, parameters)
+      override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
+        DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
+          super.processElementsWithName(name, processor, parameters)
+        }
       }
-    }
 
-    override fun getQualifiedName(item: NavigationItem): String? {
-      return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<String?, RuntimeException> {
-        super.getQualifiedName(item)
+      override fun getQualifiedName(item: NavigationItem): String? {
+        return DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode<String?, RuntimeException> {
+          super.getQualifiedName(item)
+        }
       }
-    }
-  }), disposable)
+    }), disposable)
+  }
 }

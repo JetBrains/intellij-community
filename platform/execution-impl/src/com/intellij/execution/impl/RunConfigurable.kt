@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.Executor
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.ConfigurationFactoryEx
@@ -19,7 +18,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.Configurable
@@ -30,7 +28,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.AlignedPopup
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Trinity
 import com.intellij.openapi.wm.IdeFocusManager
@@ -46,7 +43,6 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Alarm
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SingleAlarm
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.TreeTraversal
 import com.intellij.util.ui.EditableModel
 import com.intellij.util.ui.JBUI
@@ -57,9 +53,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.datatransfer.Transferable
-import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
-import java.util.concurrent.Callable
 import java.util.function.ToIntFunction
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -90,7 +84,7 @@ fun createRunConfigurationConfigurable(project: Project): RunConfigurable {
   }
 }
 
-open class RunConfigurable @JvmOverloads constructor(protected val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable, RunConfigurationCreator {
+open class RunConfigurable constructor(protected val project: Project) : Configurable, Disposable, RunConfigurationCreator {
   @Volatile private var isDisposed: Boolean = false
 
   val root = DefaultMutableTreeNode("Root")
@@ -106,17 +100,12 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   protected val toolbarAddAction = MyToolbarAddAction()
   private var isModified = false
 
-  init {
-    runDialog?.let {
-      initTreeSelectionListener(it.getDisposable())
-    }
-  }
-
   private lateinit var changeRunConfigurationNodeAlarm: SingleAlarm
   private val changeRunConfigurationListener = TreeSelectionListener {
     if (changeRunConfigurationNodeAlarm.isDisposed) return@TreeSelectionListener
     changeRunConfigurationNodeAlarm.cancelAndRequest()
   }
+  private var dialogUpdateCallback: Runnable? = null
 
   companion object {
     fun collectNodesRecursively(parentNode: DefaultMutableTreeNode, nodes: MutableList<DefaultMutableTreeNode>, vararg allowed: RunConfigurableNodeKind) {
@@ -174,6 +163,10 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   // https://youtrack.jetbrains.com/issue/TW-61353
   fun getSelectedConfigurable() = selectedConfigurable
 
+  fun setDialogUpdateCallback(callback: Runnable) {
+    dialogUpdateCallback = callback
+  }
+
   override fun getDisplayName() = ExecutionBundle.message("run.configurable.display.name")
 
   protected fun initTree() {
@@ -217,7 +210,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       tree.addTreeSelectionListener { selectRunConfiguration() }
     }
 
-    tree.registerKeyboardAction({ clickDefaultButton() }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED)
     sortTopLevelBranches()
     tree.emptyText.appendText(ExecutionBundle.message("status.text.no.run.configurations.added")).appendLine(
       ExecutionBundle.message("status.text.add.new"), LINK_PLAIN_ATTRIBUTES) {
@@ -233,7 +225,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     val modalityState = ModalityState.stateForComponent(tree)
 
     // The listener is supposed to be registered for a dialog, so the modality state cannot be NON_MODAL
-    if (modalityState == ModalityState.NON_MODAL) return
+    if (modalityState == ModalityState.nonModal()) return
 
     changeRunConfigurationNodeAlarm = SingleAlarm(
       task = ::selectRunConfiguration,
@@ -288,7 +280,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
       }
 
       tree.requestFocusInWindow()
-      val settings = getSelectedConfiguration()
+      val settings = getInitialSelectedConfiguration()
       if (settings != null) {
         if (selectConfiguration(settings.configuration)) {
           return@invokeLater
@@ -301,7 +293,7 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     }, ModalityState.stateForComponent(wholePanel!!))
   }
 
-  protected open fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
+  protected open fun getInitialSelectedConfiguration(): RunnerAndConfigurationSettings? {
     return runManager.selectedConfiguration
   }
 
@@ -509,7 +501,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     if (SystemInfo.isMac) {
       val touchbarActions = DefaultActionGroup(toolbarAddAction)
       TouchbarActionCustomizations.setShowText(touchbarActions, true)
-      TouchbarActionCustomizations.setCombineWithDlgButtons(touchbarActions, true)
       Touchbar.setActions(wholePanel!!, touchbarActions)
     }
 
@@ -751,31 +742,14 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
   }
 
   private fun updateDialog() {
-    val runDialog = runDialog
-    val executor = runDialog?.executor ?: return
-    val buffer = StringBuilder()
-    buffer.append(executor.id)
-    val configuration = selectedConfiguration
-    if (configuration != null) {
-      buffer.append(" - ")
-      buffer.append(configuration.nameText)
-    }
-    ReadAction.nonBlocking(Callable {
-      canRunConfiguration(configuration, executor) 
-    })
-      .finishOnUiThread(ModalityState.current()) {
-        runDialog.setOKActionEnabled(it)
-      }
-      .expireWith(runDialog.getDisposable())
-      .submit(AppExecutorUtil.getAppExecutorService())
-    runDialog.setTitle(buffer.toString())
+    dialogUpdateCallback?.run()
   }
 
   private fun setupDialogBounds() {
     SwingUtilities.invokeLater { UIUtil.setupEnclosingDialogBounds(wholePanel!!) }
   }
 
-  private val selectedConfiguration: SingleConfigurationConfigurable<RunConfiguration>?
+  val selectedConfiguration: SingleConfigurationConfigurable<RunConfiguration>?
     get() {
       val selectionPath = tree.selectionPath
       if (selectionPath != null) {
@@ -794,10 +768,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
 
   override fun getHelpTopic(): String? {
     return selectedConfigurationType?.helpTopic ?: "reference.dialogs.rundebug"
-  }
-
-  private fun clickDefaultButton() {
-    runDialog?.clickDefaultButton()
   }
 
   private val selectedConfigurationTypeNode: DefaultMutableTreeNode?
@@ -1195,47 +1165,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
     return initialPosition - position
   }
 
-  protected inner class MyMoveAction(@NlsActions.ActionText text: String,
-                                     @NlsActions.ActionDescription description: String?,
-                                     icon: Icon,
-                                     private val direction: Int) :
-    AnAction(text, description, icon), AnActionButtonRunnable, AnActionButtonUpdater {
-    override fun actionPerformed(e: AnActionEvent) {
-      doMove()
-    }
-
-    private fun doMove() {
-      getAvailableDropPosition(direction)?.let {
-        treeModel.drop(it.first, it.second, it.third)
-      }
-    }
-
-    override fun run(button: AnActionButton) {
-      doMove()
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = isEnabled(e)
-    }
-
-    override fun getActionUpdateThread() = ActionUpdateThread.EDT
-
-    override fun isEnabled(e: AnActionEvent) = getAvailableDropPosition(direction) != null
-  }
-
-  protected inner class MyEditTemplatesAction : AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.text"),
-                                                         ExecutionBundle.message("run.configuration.edit.default.configuration.settings.description"),
-                                                         AllIcons.General.Settings), PossiblyDumbAware {
-    override fun actionPerformed(e: AnActionEvent) {
-      showTemplatesDialog(project, selectedConfigurationType)
-    }
-
-    override fun isDumbAware(): Boolean {
-      val configuration = selectedConfiguration
-      return configuration != null && isEditableInDumbMode(configuration.configuration)
-    }
-  }
-
   protected inner class MyCreateFolderAction : DumbAwareAction(ExecutionBundle.message("run.configuration.create.folder.text"),
                                                                ExecutionBundle.message("run.configuration.create.folder.description"),
                                                                AllIcons.Actions.NewFolder) {
@@ -1552,15 +1481,6 @@ open class RunConfigurable @JvmOverloads constructor(protected val project: Proj
         else -> if (treeNode.parent is DefaultMutableTreeNode) getType(treeNode.parent as DefaultMutableTreeNode) else null
       }
     }
-  }
-}
-
-private fun canRunConfiguration(configuration: SingleConfigurationConfigurable<RunConfiguration>?, executor: Executor): Boolean {
-  return try {
-    configuration != null && RunManagerImpl.canRunConfiguration(configuration.createSnapshot(false), executor)
-  }
-  catch (e: ConfigurationException) {
-    false
   }
 }
 

@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui.filters
 
 import com.intellij.collaboration.ui.codereview.Avatar
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.PopupItemPresentation
-import com.intellij.collaboration.ui.codereview.list.search.ChooserPopupUtil.showAsyncChooserPopup
 import com.intellij.collaboration.ui.codereview.list.search.DropDownComponentFactory
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelFactory
+import com.intellij.collaboration.ui.util.popup.ChooserPopupUtil
+import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
@@ -36,9 +37,9 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
               valuePresenter = Companion::getShortText),
     DropDownComponentFactory(vm.authorFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.author")) { point ->
-        showAsyncChooserPopup(
+        ChooserPopupUtil.showAsyncChooserPopup(
           point,
-          itemsLoader = { vm.getAuthors() },
+          itemsLoader = flow { emit(vm.getAuthors()) },
           presenter = {
             PopupItemPresentation.Simple(
               it.shortName,
@@ -49,17 +50,17 @@ internal class GHPRSearchPanelFactory(vm: GHPRSearchPanelViewModel, private val 
       },
     DropDownComponentFactory(vm.labelFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.label")) { point ->
-        showAsyncChooserPopup(
+        ChooserPopupUtil.showAsyncChooserPopup(
           point,
-          itemsLoader = { vm.getLabels() },
+          itemsLoader = flow { emit(vm.getLabels()) },
           presenter = { PopupItemPresentation.Simple(it.name) }
         )?.name
       },
     DropDownComponentFactory(vm.assigneeFilterState)
       .create(viewScope, GithubBundle.message("pull.request.list.filter.assignee")) { point ->
-        showAsyncChooserPopup(
+        ChooserPopupUtil.showAsyncChooserPopup(
           point,
-          itemsLoader = { vm.getAssignees() },
+          itemsLoader = flow { emit(vm.getAssignees()) },
           presenter = {
             PopupItemPresentation.Simple(
               it.shortName,

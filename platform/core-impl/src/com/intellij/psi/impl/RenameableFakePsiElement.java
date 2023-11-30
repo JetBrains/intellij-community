@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -48,14 +48,12 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
   public abstract String getName();
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return getContainingFile().getLanguage();
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return getParentNotNull("getProject").getProject();
   }
 
@@ -65,8 +63,7 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
   }
 
   @Override
-  @Nullable
-  public PsiMetaData getMetaData() {
+  public @Nullable PsiMetaData getMetaData() {
     return this;
   }
 
@@ -76,8 +73,7 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
   }
 
   @Override
-  @NonNls
-  public String getName(PsiElement context) {
+  public @NonNls String getName(PsiElement context) {
     return getName();
   }
 
@@ -86,14 +82,12 @@ public abstract class RenameableFakePsiElement extends FakePsiElement implements
   }
 
   @Override
-  @Nullable
-  public final Icon getIcon(boolean open) {
+  public final @Nullable Icon getIcon(boolean open) {
     return getIcon();
   }
 
   @Override
-  @Nullable
-  public TextRange getTextRange() {
+  public @Nullable TextRange getTextRange() {
     return TextRange.from(0, 0);
   }
 }

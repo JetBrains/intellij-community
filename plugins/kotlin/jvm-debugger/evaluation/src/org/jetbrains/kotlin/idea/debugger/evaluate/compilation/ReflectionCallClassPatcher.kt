@@ -13,7 +13,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.EvaluatorValueConverter
 import org.jetbrains.kotlin.idea.debugger.evaluate.variables.box
 import org.jetbrains.org.objectweb.asm.*
-import java.text.StringCharacterIterator
 
 object ReflectionCallClassPatcher {
     var isEnabled: Boolean
@@ -86,8 +85,8 @@ private class ReflectionCallMethodVisitor(
             return null
         }
 
-        val iterator = StringCharacterIterator(type.descriptor)
-        val classType = SignatureParsing.parseTypeString(iterator, StubBuildingVisitor.GUESSING_MAPPER)
+        val iterator = SignatureParsing.CharIterator(type.descriptor)
+        val classType = SignatureParsing.parseTypeStringToTypeInfo(iterator, StubBuildingVisitor.GUESSING_PROVIDER).text()
         return JavaPsiFacade.getInstance(project).findClass(classType, scope)
     }
 

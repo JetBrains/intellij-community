@@ -98,9 +98,9 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       }
     }
 
-    private Set<PyClass> suggestClassesFromUsedAttributes(@NotNull PsiElement anchor,
-                                                          @NotNull Set<String> seenAttrs,
-                                                          @NotNull TypeEvalContext context) {
+    private static Set<PyClass> suggestClassesFromUsedAttributes(@NotNull PsiElement anchor,
+                                                                 @NotNull Set<String> seenAttrs,
+                                                                 @NotNull TypeEvalContext context) {
       final Set<PyClass> candidates = new HashSet<>();
       final Map<PyClass, Set<PyClass>> ancestorsCache = Maps.newHashMap();
       for (String attribute : seenAttrs) {
@@ -135,9 +135,9 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
     }
 
     @NotNull
-    private Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
-                                                      @NotNull TypeEvalContext context,
-                                                      @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
+    private static Set<String> getAllInheritedAttributeNames(@NotNull PyClass candidate,
+                                                             @NotNull TypeEvalContext context,
+                                                             @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<String> availableAttrs = Sets.newHashSet(PyClassAttributesIndex.getAllDeclaredAttributeNames(candidate));
       for (PyClass parent : getAncestorClassesFast(candidate, context, ancestorsCache)) {
         availableAttrs.addAll(PyClassAttributesIndex.getAllDeclaredAttributeNames(parent));
@@ -151,9 +151,9 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
      * intermediate results in case of a large class hierarchy.
      */
     @NotNull
-    private Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
-                                                @NotNull TypeEvalContext context,
-                                                @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
+    private static Set<PyClass> getAncestorClassesFast(@NotNull PyClass pyClass,
+                                                       @NotNull TypeEvalContext context,
+                                                       @NotNull Map<PyClass, Set<PyClass>> ancestorsCache) {
       final Set<PyClass> ancestors = ancestorsCache.get(pyClass);
       if (ancestors != null) {
         return ancestors;

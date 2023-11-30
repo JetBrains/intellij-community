@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -20,8 +21,9 @@ import java.awt.*;
 import java.util.Map;
 import java.util.function.Supplier;
 
+// not final - used in Google's bazel plugin (in tests)
+@ApiStatus.NonExtendable
 public class HeadlessDataManager extends DataManagerImpl {
-
   private static final class HeadlessContext extends CustomizedDataContext implements UserDataHolder {
     private final DataProvider myProvider;
     private final DataContext myParent;
@@ -97,34 +99,29 @@ public class HeadlessDataManager extends DataManagerImpl {
     manager.myUseProductionDataManager = true;
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContext() {
+  public @NotNull DataContext getDataContext() {
     return new HeadlessContext(myTestDataProvider, productionDataContext(super::getDataContext));
   }
 
-  @NotNull
   @Override
-  public Promise<DataContext> getDataContextFromFocusAsync() {
+  public @NotNull Promise<DataContext> getDataContextFromFocusAsync() {
     AsyncPromise<DataContext> promise = new AsyncPromise<>();
     promise.setResult(getDataContext());
     return promise;
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContext(Component component) {
+  public @NotNull DataContext getDataContext(Component component) {
     return new HeadlessContext(myTestDataProvider, productionDataContext(() -> super.getDataContext(component)));
   }
 
-  @NotNull
   @Override
-  public DataContext getDataContext(@NotNull Component component, int x, int y) {
+  public @NotNull DataContext getDataContext(@NotNull Component component, int x, int y) {
     return new HeadlessContext(myTestDataProvider, productionDataContext(() -> super.getDataContext(component, x, y)));
   }
 
-  @Nullable
-  private DataContext productionDataContext(@NotNull Supplier<? extends @NotNull DataContext> dataContextSupplier) {
+  private @Nullable DataContext productionDataContext(@NotNull Supplier<? extends @NotNull DataContext> dataContextSupplier) {
     return myUseProductionDataManager ? dataContextSupplier.get() : null;
   }
 }

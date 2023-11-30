@@ -2,7 +2,7 @@
 package org.intellij.plugins.markdown.lang;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import org.intellij.plugins.markdown.MarkdownBundle;
+import com.intellij.openapi.util.NlsSafe;
 import org.intellij.plugins.markdown.MarkdownIcons;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,6 +10,9 @@ import javax.swing.*;
 
 public final class MarkdownFileType extends LanguageFileType {
   public static final MarkdownFileType INSTANCE = new MarkdownFileType();
+
+  @NlsSafe
+  private static final String MARKDOWN_DESCRIPTION = "Markdown";
 
   private MarkdownFileType() {
     super(MarkdownLanguage.INSTANCE);
@@ -24,7 +27,7 @@ public final class MarkdownFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return MarkdownBundle.message("filetype.markdown.description");
+    return MARKDOWN_DESCRIPTION;
   }
 
   @NotNull

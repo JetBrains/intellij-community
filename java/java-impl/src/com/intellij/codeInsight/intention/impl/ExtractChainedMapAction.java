@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.chainCall.ChainCallExtractor;
@@ -13,8 +15,6 @@ import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.stream.IntStream;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -49,7 +49,7 @@ public class ExtractChainedMapAction extends PsiUpdateModCommandAction<PsiElemen
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiLocalVariable variable =
       PsiTreeUtil.getParentOfType(element, PsiLocalVariable.class, false, PsiStatement.class, PsiLambdaExpression.class);
     ChainCallExtractor.extractMappingStep(context.project(), variable);

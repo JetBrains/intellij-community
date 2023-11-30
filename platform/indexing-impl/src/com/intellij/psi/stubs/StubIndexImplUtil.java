@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,8 +12,7 @@ import java.util.NoSuchElementException;
 import java.util.function.IntPredicate;
 
 final class StubIndexImplUtil {
-  @NotNull
-  static Iterator<VirtualFile> mapIdIterator(@NotNull IntIterator idIterator, @NotNull IntPredicate filter) {
+  static @NotNull Iterator<VirtualFile> mapIdIterator(@NotNull IntIterator idIterator, @NotNull IntPredicate filter) {
     FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
     return new Iterator<>() {
       VirtualFile next;

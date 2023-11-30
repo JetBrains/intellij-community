@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ide.ui
 
@@ -7,13 +7,11 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.ResourceUtil
+import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
@@ -23,67 +21,63 @@ class IconMapLoader {
   private val cachedResult = AtomicReference<Map<ClassLoader, Map<String, String>>>()
 
   internal suspend fun preloadIconMapping() {
-    val size = IconMapperBean.EP_NAME.point.size()
-    if (size == 0) {
+    if (!IconMapperBean.EP_NAME.hasAnyExtensions()) {
       cachedResult.compareAndSet(null, emptyMap())
       return
     }
 
-    coroutineScope {
-      val channel = Channel<Pair<ByteArray, ExtensionPointName.LazyExtension<IconMapperBean>>>(Runtime.getRuntime().availableProcessors())
-      launch {
-        for (extension in IconMapperBean.EP_NAME.filterableLazySequence()) {
-          launch t@{
-            val classLoader = extension.pluginDescriptor.pluginClassLoader ?: return@t
-            val mappingFile = extension.instance?.mappingFile ?: return@t
-            val data = withContext(Dispatchers.IO) { ResourceUtil.getResourceAsBytes (mappingFile, classLoader) }
-            if (data == null) {
-              logger<IconMapLoader>().error(PluginException("Cannot find $mappingFile", extension.pluginDescriptor.pluginId))
-            }
-            else {
-              channel.send(data to extension)
-            }
-          }
-        }
-      }.invokeOnCompletion { channel.close() }
+    val result = doLoadIconMapping()
 
-      val result = IdentityHashMap<ClassLoader, MutableMap<String, String>>(size)
-      for ((data, extension) in channel) {
-        try {
-          val classLoader = extension.pluginDescriptor.pluginClassLoader!!
-          val map = result.computeIfAbsent(classLoader) { HashMap() }
-          val parser = JsonFactory().createParser(data)
-          readDataFromJson(parser, map)
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Exception) {
-          logger<IconMapLoader>().warn("Can't process ${extension.instance?.mappingFile}",
-                                       PluginException(e, extension.pluginDescriptor.pluginId))
-        }
-      }
+    // reduce memory usage
+    result.replaceAll(BiFunction { _, value ->
+      java.util.Map.copyOf(value)
+    })
 
-      // reduce memory usage
-      result.replaceAll(BiFunction { _, value ->
-        java.util.Map.copyOf(value)
-      })
-
-      cachedResult.compareAndSet(null, result)
-    }
+    cachedResult.compareAndSet(null, result)
   }
 
-  fun loadIconMapping(): Map<ClassLoader, Map<String, String>> {
-    val result = cachedResult.getAndSet(null)
-    if (result == null) {
-      if (!ApplicationManager.getApplication().isUnitTestMode && !ApplicationManager.getApplication().isHeadlessEnvironment) {
-        logger<IconMapLoader>().error("You must call IconMapLoader.preloadIconMapping() before calling loadIconMappings()")
+  @OptIn(ExperimentalCoroutinesApi::class)
+  suspend fun doLoadIconMapping(): MutableMap<ClassLoader, MutableMap<String, String>> {
+    val list = coroutineScope {
+      val jsonFactory = JsonFactory()
+      IconMapperBean.EP_NAME.filterableLazySequence().map { extension ->
+        async {
+          val classLoader = extension.pluginDescriptor.pluginClassLoader ?: return@async null
+          val mappingFile = extension.instance?.mappingFile ?: return@async null
+          val data = withContext(Dispatchers.IO) { ResourceUtil.getResourceAsBytes(mappingFile, classLoader) }
+          if (data == null) {
+            logger<IconMapLoader>().error(PluginException("Cannot find $mappingFile", extension.pluginDescriptor.pluginId))
+            null
+          }
+          else {
+            val result = HashMap<String, String>()
+            try {
+              readDataFromJson(jsonFactory.createParser(data), result)
+            }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              logger<IconMapLoader>().warn("Can't process ${extension.instance?.mappingFile}",
+                                           PluginException(e, extension.pluginDescriptor.pluginId))
+            }
+            classLoader to result
+          }
+        }
       }
-      return emptyMap()
+        .toList()
     }
-    else {
-      return result
+      .mapNotNull { it.getCompleted() }
+
+    val result = CollectionFactory.createWeakIdentityMap<ClassLoader, MutableMap<String, String>>(50, 0.5f)
+    for (pair in list) {
+      result.computeIfAbsent(pair.first) { HashMap() }.putAll(pair.second)
     }
+    return result
+  }
+
+  fun loadIconMapping(): Map<ClassLoader, Map<String, String>>? {
+    return cachedResult.getAndSet(null) ?: return null
   }
 }
 
@@ -145,11 +139,12 @@ private fun readDataFromJson(parser: JsonParser, result: MutableMap<String, Stri
 }
 
 private fun addWithCheck(result: MutableMap<String, String>, parser: JsonParser, path: StringBuilder) {
-  val oldValue = result[parser.text]
-  if (oldValue != null && oldValue != path.toString()) {
-    logger<IconMapLoader>().error("Double icon mapping: ${parser.text} -> $oldValue or $path")
+  val key = parser.text
+  val p = path.toString()
+  val oldValue = result.put(key, p)
+  if (oldValue != null && oldValue != p) {
+    logger<IconMapLoader>().error("Double icon mapping: $key -> $oldValue or $path")
   }
-  result.put(parser.text, path.toString())
 }
 
 private fun logError(parser: JsonParser) {

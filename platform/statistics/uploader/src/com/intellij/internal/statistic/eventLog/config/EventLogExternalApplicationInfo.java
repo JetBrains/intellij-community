@@ -9,6 +9,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+/**
+ * External version of the EventLogApplicationInfo, which is provided to an 'external' uploader process (not IDEA) via arguments
+ */
 public class EventLogExternalApplicationInfo implements EventLogApplicationInfo {
   private final DataCollectorDebugLogger myLogger;
   private final DataCollectorSystemEventLogger myEventLogger;
@@ -16,25 +19,31 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   private final String myTemplateUrl;
   private final String myProductCode;
   private final String myProductVersion;
+  private final int myBaselineVersion;
   private final EventLogBasicConnectionSettings myConnectionSettings;
 
   private final boolean myIsInternal;
-  private final boolean myIsTest;
+  private final boolean myIsTestConfig;
+  private final boolean myIsTestSendEndpoint;
+
   private final boolean myIsEAP;
 
   public EventLogExternalApplicationInfo(@NotNull String templateUrl, @NotNull String productCode,
                                          @NotNull String productVersion, @Nullable String userAgent,
-                                         boolean isInternal, boolean isTest, boolean isEAP,
+                                         boolean isInternal, boolean isTestConfig, boolean isTestSendEndpoint, boolean isEAP,
                                          @NotNull Map<String, String> extraHeaders,
                                          @NotNull DataCollectorDebugLogger logger,
-                                         @NotNull DataCollectorSystemEventLogger eventLogger) {
+                                         @NotNull DataCollectorSystemEventLogger eventLogger,
+                                         int baselineVersion) {
     myTemplateUrl = templateUrl;
     myProductCode = productCode;
     myProductVersion = productVersion;
+    myBaselineVersion = baselineVersion;
     String externalUserAgent = (userAgent == null ? "IntelliJ": userAgent) + "(External)";
     myConnectionSettings = new EventLogBasicConnectionSettings(externalUserAgent, extraHeaders);
     myIsInternal = isInternal;
-    myIsTest = isTest;
+    myIsTestConfig = isTestConfig;
+    myIsTestSendEndpoint = isTestSendEndpoint;
     myIsEAP = isEAP;
     myLogger = logger;
     myEventLogger = eventLogger;
@@ -56,6 +65,11 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
     return myProductVersion;
   }
 
+  @Override
+  public int getBaselineVersion() {
+    return myBaselineVersion;
+  }
+
   @NotNull
   @Override
   public EventLogConnectionSettings getConnectionSettings() {
@@ -68,8 +82,13 @@ public class EventLogExternalApplicationInfo implements EventLogApplicationInfo 
   }
 
   @Override
-  public boolean isTest() {
-    return myIsTest;
+  public boolean isTestConfig() {
+    return myIsTestConfig;
+  }
+
+  @Override
+  public boolean isTestSendEndpoint() {
+    return myIsTestSendEndpoint;
   }
 
   @Override

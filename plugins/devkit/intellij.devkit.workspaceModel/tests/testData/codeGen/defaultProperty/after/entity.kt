@@ -1,12 +1,11 @@
 package com.intellij.workspaceModel.test.api
 
-import com.intellij.workspaceModel.deft.api.annotations.Default
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.annotations.Default
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 
 interface DefaultFieldEntity : WorkspaceEntity {
   val version: Int
@@ -17,8 +16,8 @@ interface DefaultFieldEntity : WorkspaceEntity {
     @Default get() = "Default description"
 
   //region generated code
-  @GeneratedCodeApiVersion(1)
-  interface Builder : DefaultFieldEntity, WorkspaceEntity.Builder<DefaultFieldEntity>, ObjBuilder<DefaultFieldEntity> {
+  @GeneratedCodeApiVersion(2)
+  interface Builder : DefaultFieldEntity, WorkspaceEntity.Builder<DefaultFieldEntity> {
     override var entitySource: EntitySource
     override var version: Int
     override var data: TestData
@@ -26,7 +25,7 @@ interface DefaultFieldEntity : WorkspaceEntity {
     override var description: String
   }
 
-  companion object : Type<DefaultFieldEntity, Builder>() {
+  companion object : EntityType<DefaultFieldEntity, Builder>() {
     @JvmOverloads
     @JvmStatic
     @JvmName("create")

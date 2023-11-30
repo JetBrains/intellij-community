@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.CodeStyle
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Key
@@ -20,9 +21,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 interface ReaderModeSettings : Disposable {
   companion object {
@@ -33,22 +36,22 @@ interface ReaderModeSettings : Disposable {
 
     @RequiresEdt
     fun applyReaderMode(project: Project,
-                        editor: Editor?,
-                        file: VirtualFile?,
+                        editor: Editor,
+                        file: VirtualFile,
                         fileIsOpenAlready: Boolean = false,
                         forceUpdate: Boolean = false) {
-      if (editor == null || file == null || !file.isValid) {
+      if (!file.isValid) {
         return
       }
 
       if (isBlockingApplication()) {
         val matchMode = matchMode(project, file, editor)
         if (matchMode || forceUpdate) {
-          applyModeChanged(project, editor, matchMode, fileIsOpenAlready)
+          applyModeChanged(project = project, editor = editor, matchMode = matchMode, fileIsOpenAlready = fileIsOpenAlready)
         }
       }
       else {
-        // caching is required for instant reopen of file with the previously computed mode without irritating file UI changes
+        // caching is required for instant reopening of file with the previously computed mode without irritating file UI changes
         val matchCachedValue = file.getMatchModeCached()
 
         if (!forceUpdate && matchCachedValue != null) {
@@ -66,7 +69,9 @@ interface ReaderModeSettings : Disposable {
 
             if (matchMode || forceUpdate) {
               withContext(Dispatchers.EDT) {
-                applyModeChanged(project, editor, matchMode, fileIsOpenAlready)
+                blockingContext {
+                  applyModeChanged(project = project, editor = editor, matchMode = matchMode, fileIsOpenAlready = fileIsOpenAlready)
+                }
               }
             }
           }
@@ -86,37 +91,44 @@ interface ReaderModeSettings : Disposable {
 
     @RequiresEdt
     private fun applyModeChanged(project: Project, editor: Editor, matchMode: Boolean, fileIsOpenAlready: Boolean) {
-      if (editor.isDisposed) return
+      if (editor.isDisposed) {
+        return
+      }
 
       val modeEnabledForFile = getInstance(project).enabled && matchMode
       for (provider in EP_READER_MODE_PROVIDER.extensionList) {
-        provider.applyModeChanged(project, editor, modeEnabledForFile, fileIsOpenAlready)
+        provider.applyModeChanged(project = project,
+                                  editor = editor,
+                                  readerMode = modeEnabledForFile,
+                                  fileIsOpenAlready = fileIsOpenAlready)
       }
     }
 
     @RequiresReadLock
-    fun matchMode(project: Project?, file: VirtualFile?, editor: Editor? = null): Boolean {
-      if (project == null || file == null) return false
-      if (PsiManager.getInstance(project).findFile(file) == null) return false
-      if (editor != null && editor.isDisposed) return false
-
-      return matchMode(project, file, editor, getInstance(project).mode)
+    fun matchMode(project: Project, file: VirtualFile, editor: Editor? = null): Boolean {
+      if (PsiManager.getInstance(project).findFile(file) == null || (editor != null && editor.isDisposed)) {
+        return false
+      }
+      else {
+        return matchMode(project = project, file = file, editor = editor, mode = getInstance(project).mode)
+      }
     }
 
     @RequiresReadLock
     private fun matchMode(project: Project, file: VirtualFile, editor: Editor?, mode: ReaderMode): Boolean {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+        return false
+      }
+
       for (m in EP_READER_MODE_MATCHER.lazySequence()) {
-        val matched = m.matches(project, file, editor, mode)
+        val matched = m.matches(project = project, file = file, editor = editor, mode = mode)
         if (matched != null) {
           return matched
         }
       }
 
-      if (ApplicationManager.getApplication().isHeadlessEnvironment) return false
-
       val inFileInLibraries by lazy {
-        FileIndexFacade.getInstance(project).isInLibraryClasses(file)
-        || FileIndexFacade.getInstance(project).isInLibrarySource(file)
+        FileIndexFacade.getInstance(project).isInLibrary(file)
       }
       val isWritable = file.isWritable
 

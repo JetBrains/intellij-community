@@ -56,7 +56,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
   }
 
 
-  private TextRange shiftIndentInsideWithPsi(ASTNode node, final TextRange textRange, final int shift) {
+  private static TextRange shiftIndentInsideWithPsi(ASTNode node, final TextRange textRange, final int shift) {
     if (node != null && node.getTextRange().equals(textRange) && ShiftIndentInsideHelper.mayShiftIndentInside(node)) {
       PsiFile file = node.getPsi().getContainingFile();
       return new ShiftIndentInsideHelper(file).shiftIndentInside(node, shift).getTextRange();

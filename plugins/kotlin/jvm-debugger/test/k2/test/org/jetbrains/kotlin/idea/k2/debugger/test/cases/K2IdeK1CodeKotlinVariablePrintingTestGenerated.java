@@ -62,4 +62,9 @@ public class K2IdeK1CodeKotlinVariablePrintingTestGenerated extends AbstractK2Id
     public void testReentrantInlineFunctions() throws Exception {
         runTest("../testData/variables/reentrantInlineFunctions.kt");
     }
+
+    @TestMetadata("spilledCapturedVariables.kt")
+    public void testSpilledCapturedVariables() throws Exception {
+        runTest("../testData/variables/spilledCapturedVariables.kt");
+    }
 }

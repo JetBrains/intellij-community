@@ -10,55 +10,53 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector.Companion.kotlinLanguageVersionField
+import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector.kotlinLanguageVersionField
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
+object KotlinLanguageFeaturesFUSCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    companion object {
-        // Collector ID
-        private val GROUP = EventLogGroup("kotlin.ide.inspections", 2)
+    // Collector ID
+    private val GROUP = EventLogGroup("kotlin.ide.inspections", 2)
 
-        val inspectionTypeField = EventFields.Enum<KotlinLanguageFeatureInspectionType>("inspection_type") { it.name.lowercase() }
-        val kotlinLanguageVersionField = EventFields.StringValidatedByRegexp("kotlin_language_version", "version_lang_api")
+    val inspectionTypeField = EventFields.Enum<KotlinLanguageFeatureInspectionType>("inspection_type") { it.name.lowercase() }
+    val kotlinLanguageVersionField = EventFields.StringValidatedByRegexpReference("kotlin_language_version", "version_lang_api")
 
-        val hasDeprecatedFeatureField = EventFields.Boolean("has_deprecated_feature")
-        val hasNewFeatureField = EventFields.Boolean("has_new_feature")
+    val hasDeprecatedFeatureField = EventFields.Boolean("has_deprecated_feature")
+    val hasNewFeatureField = EventFields.Boolean("has_new_feature")
 
-        private val applyQuickFixEvent = GROUP.registerVarargEvent(
-            "apply.quick_fix",
-            EventFields.AnonymizedPath,
-            inspectionTypeField
-        )
+    private val applyQuickFixEvent = GROUP.registerVarargEvent(
+        "apply.quick_fix",
+        EventFields.AnonymizedPath,
+        inspectionTypeField
+    )
 
-        private val inspectionUpdatedEvent = GROUP.registerVarargEvent(
-            "update.inspection",
-            EventFields.AnonymizedPath,
-            hasDeprecatedFeatureField,
-            hasNewFeatureField,
-            kotlinLanguageVersionField,
-            inspectionTypeField
-        )
+    private val inspectionUpdatedEvent = GROUP.registerVarargEvent(
+        "update.inspection",
+        EventFields.AnonymizedPath,
+        hasDeprecatedFeatureField,
+        hasNewFeatureField,
+        kotlinLanguageVersionField,
+        inspectionTypeField
+    )
 
-        val rangeUntilCollector = LanguageFeatureDeprecationCollector<NewAndDeprecatedFeaturesInspectionData>(
-            inspectionUpdatedEvent = inspectionUpdatedEvent,
-            inspectionAppliedEvent = applyQuickFixEvent,
-            inspectionType = KotlinLanguageFeatureInspectionType.RANGE_UNTIL
-        )
+    val rangeUntilCollector = LanguageFeatureDeprecationCollector<NewAndDeprecatedFeaturesInspectionData>(
+        inspectionUpdatedEvent = inspectionUpdatedEvent,
+        inspectionAppliedEvent = applyQuickFixEvent,
+        inspectionType = KotlinLanguageFeatureInspectionType.RANGE_UNTIL
+    )
 
-        val dataObjectCollector = LanguageFeatureDeprecationCollector<NewAndDeprecatedFeaturesInspectionData>(
-            inspectionUpdatedEvent = inspectionUpdatedEvent,
-            inspectionAppliedEvent = applyQuickFixEvent,
-            inspectionType = KotlinLanguageFeatureInspectionType.DATA_OBJECT
-        )
+    val dataObjectCollector = LanguageFeatureDeprecationCollector<NewAndDeprecatedFeaturesInspectionData>(
+        inspectionUpdatedEvent = inspectionUpdatedEvent,
+        inspectionAppliedEvent = applyQuickFixEvent,
+        inspectionType = KotlinLanguageFeatureInspectionType.DATA_OBJECT
+    )
 
-        val enumEntriesCollector = LanguageFeatureDeprecationCollector<DeprecatedFeaturesInspectionData>(
-            inspectionUpdatedEvent = inspectionUpdatedEvent,
-            inspectionAppliedEvent = applyQuickFixEvent,
-            inspectionType = KotlinLanguageFeatureInspectionType.ENUM_ENTRIES
-        )
-    }
+    val enumEntriesCollector = LanguageFeatureDeprecationCollector<DeprecatedFeaturesInspectionData>(
+        inspectionUpdatedEvent = inspectionUpdatedEvent,
+        inspectionAppliedEvent = applyQuickFixEvent,
+        inspectionType = KotlinLanguageFeatureInspectionType.ENUM_ENTRIES
+    )
 }
 
 enum class KotlinLanguageFeatureInspectionType {
@@ -136,7 +134,7 @@ class KotlinLanguageFeaturesService {
         if (existingData == state) return false // do not log the same state again
 
         recordedInspections[file.virtualFilePath] = state
-        // Do not log it if there was no previous state and we are not interested in this state
+        // Do not log it if there was no previous state, and we are not interested in this state
         return existingData != null || state.shouldLog()
     }
 }
@@ -156,6 +154,7 @@ class LanguageFeatureDeprecationCollector<T : InspectionData>(
         if (!service.recordInspection(file, inspectionType, data)) return
 
         inspectionUpdatedEvent.log(
+            file.project,
             EventFields.AnonymizedPath.with(file.virtualFilePath),
             kotlinLanguageVersionField.with(languageVersion.versionString),
             KotlinLanguageFeaturesFUSCollector.inspectionTypeField.with(inspectionType),
@@ -166,6 +165,7 @@ class LanguageFeatureDeprecationCollector<T : InspectionData>(
     fun logQuickFixApplied(file: PsiFile?) {
         if (file !is KtFile || file.virtualFile == null) return
         inspectionAppliedEvent.log(
+            file.project,
             EventFields.AnonymizedPath.with(file.virtualFilePath),
             KotlinLanguageFeaturesFUSCollector.inspectionTypeField.with(inspectionType)
         )

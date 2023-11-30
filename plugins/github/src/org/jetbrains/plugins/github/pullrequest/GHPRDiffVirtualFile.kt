@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContextRepository

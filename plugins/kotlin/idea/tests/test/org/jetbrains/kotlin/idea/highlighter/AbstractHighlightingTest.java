@@ -37,8 +37,12 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
 
         KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(fileText, getProject(), getModule(), () ->
         {
+            ExpectedHighlightingData data = new ExpectedHighlightingData(myFixture.getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos);
+            if (checkInfos) data.checkSymbolNames();
             ((CodeInsightTestFixtureImpl) myFixture).canChangeDocumentDuringHighlighting(allowDocChange);
-            return myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+            data.init();
+
+            return ((CodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
         });
     }
 

@@ -51,7 +51,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * This means that it'll be returned by {@link ProgressManager#getProgressIndicator()} inside the {@code process},
    * and {@link ProgressManager#checkCanceled()} will throw a {@link ProcessCanceledException} if the progress indicator is canceled.
    *
-   * @param progress an indicator to use, {@code null} means reuse current progress
+   * @param progress an indicator to use, {@code null} means reuse current progress.
+   *                 The progress is {@link ProgressIndicator#start started} before running {@code process} and {@link ProgressIndicator#stop() stopped} afterward.
    *
    * @see CoroutinesKt#coroutineToIndicator
    */
@@ -63,6 +64,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * and {@link ProgressManager#checkCanceled()} will throw a {@link ProcessCanceledException} if the progress indicator is canceled.
    *
    * @param progress an indicator to use, {@code null} means reuse current progress
+   *                 The progress is {@link ProgressIndicator#start started} before running {@code process} and {@link ProgressIndicator#stop() stopped} afterward.
    *
    * @see CoroutinesKt#coroutineToIndicator
    */
@@ -196,8 +198,8 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * @param task task to run (either {@link Task.Modal} or {@link Task.Backgroundable}).
    *
    * @see com.intellij.openapi.progress.TasksKt#withBackgroundProgress
-   * @see com.intellij.openapi.progress.TasksKt#withModalProgressIndicator
-   * @see com.intellij.openapi.progress.TasksKt#runBlockingModal
+   * @see com.intellij.openapi.progress.TasksKt#withModalProgress
+   * @see com.intellij.openapi.progress.TasksKt#runWithModalProgressBlocking
    */
   @RequiresBlockingContext
   public abstract void run(@NotNull Task task);
@@ -234,6 +236,7 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
 
   /**
    * @param progress an indicator to use, {@code null} means reuse current progress
+   *        The methods {@link ProgressIndicator#start()} or {@link ProgressIndicator#stop()} are not called because it's assumed the {@code progress} is already running.
    */
   public abstract void executeProcessUnderProgress(@NotNull Runnable process, @Nullable ProgressIndicator progress) throws ProcessCanceledException;
 
@@ -261,10 +264,11 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
    * <li>action started to execute, but was aborted using {@link ProcessCanceledException} when some other thread initiated
    * write action</li>
    * </ul>
-   * @param action the code to execute under read action
+   * @param process the code to execute under read action
    * @param indicator progress indicator that should be cancelled if a write action is about to start. Can be null.
+   *                 The progress is {@link ProgressIndicator#start started} before running {@code process} and {@link ProgressIndicator#stop() stopped} afterward.
    */
-  public abstract boolean runInReadActionWithWriteActionPriority(@NotNull final Runnable action, @Nullable ProgressIndicator indicator);
+  public abstract boolean runInReadActionWithWriteActionPriority(final @NotNull Runnable process, @Nullable ProgressIndicator indicator);
 
   @RequiresBlockingContext
   public abstract boolean isInNonCancelableSection();

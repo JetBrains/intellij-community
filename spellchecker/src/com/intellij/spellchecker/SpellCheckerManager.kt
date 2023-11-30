@@ -8,6 +8,7 @@ import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
@@ -39,7 +40,9 @@ import com.intellij.spellchecker.state.DictionaryStateListener
 import com.intellij.spellchecker.state.ProjectDictionaryState
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.EventDispatcher
+import com.intellij.util.application
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.Nls
 import java.io.File
 import java.util.*
@@ -67,6 +70,7 @@ class SpellCheckerManager(val project: Project) : Disposable {
   private var suggestionProvider: SuggestionProvider? = null
 
   init {
+    ensureSpellerIsLoaded()
     fullConfigurationReload()
     @Suppress("DEPRECATION")
     val projectStoreDir = project.baseDir?.let { getProjectStoreDirectory(it) }
@@ -76,6 +80,21 @@ class SpellCheckerManager(val project: Project) : Disposable {
     BUNDLED_EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
     RuntimeDictionaryProvider.EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
     CustomDictionaryProvider.EP_NAME.addChangeListener({ fillEngineDictionary(spellChecker!!) }, this)
+  }
+
+  private fun ensureSpellerIsLoaded() {
+    if (application.isUnitTestMode) {
+      when {
+        application.isReadAccessAllowed -> waitForSpeller()
+        else -> runReadAction(this::waitForSpeller)
+      }
+    }
+  }
+
+  private fun waitForSpeller() {
+    runBlocking {
+      project.service<GrazieSpellCheckerEngine>().waitForSpeller()
+    }
   }
 
   companion object {
@@ -210,7 +229,13 @@ class SpellCheckerManager(val project: Project) : Disposable {
     }
   }
 
-  fun hasProblem(word: String): Boolean = !spellChecker!!.isCorrect(word)
+  fun hasProblem(word: String): Boolean {
+    return !spellChecker!!.isCorrect(word) && !isCorrectExtensionWord(word)
+  }
+
+  private fun isCorrectExtensionWord(word: String): Boolean {
+    return DictionaryChecker.EP_NAME.extensionList.any { it.isCorrect(project, word) }
+  }
 
   fun acceptWordAsCorrect(word: String, project: Project) {
     acceptWordAsCorrect(word = word, file = null, project = project, dictionaryLevel = DictionaryLevel.PROJECT) // TODO: or default
@@ -442,10 +467,10 @@ private class StreamLoader(private val name: String, private val loaderClass: Cl
       stream.reader().useLines { it.forEach(consumer::accept) }
     }
     catch (exception: ProcessCanceledException) {
-      throw exception;
+      throw exception
     }
     catch (exception: CancellationException) {
-      throw exception;
+      throw exception
     }
     catch (e: Exception) {
       LOG.error(e)

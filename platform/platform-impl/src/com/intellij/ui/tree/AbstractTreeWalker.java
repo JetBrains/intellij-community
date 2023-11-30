@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree;
 
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +50,8 @@ public abstract class AbstractTreeWalker<N> extends TreeWalkerBase<N> {
     if (paused) processNextPath();
   }
 
-  @NotNull
   @Override
-  public Promise<TreePath> promise() {
+  public @NotNull Promise<TreePath> promise() {
     return promise;
   }
 
@@ -79,17 +78,14 @@ public abstract class AbstractTreeWalker<N> extends TreeWalkerBase<N> {
       try {
         TreePath path = TreePathUtil.createTreePath(parent, converter.apply(node));
         switch (visitor.visit(path)) {
-          case CONTINUE:
+          case CONTINUE -> {
             update(null, State.REQUESTED);
             if (processChildren(path, node)) processNextPath();
             return;
-          case INTERRUPT:
-            result = path;
-            break;
-          case SKIP_CHILDREN:
-            break;
-          case SKIP_SIBLINGS:
-            break;
+          }
+          case INTERRUPT -> result = path;
+          case SKIP_CHILDREN, SKIP_SIBLINGS -> {
+          }
         }
       }
       catch (Exception error) {
@@ -135,21 +131,20 @@ public abstract class AbstractTreeWalker<N> extends TreeWalkerBase<N> {
         else {
           TreePath path = TreePathUtil.createTreePath(current, converter.apply(node));
           switch (visitor.visit(path)) {
-            case CONTINUE:
+            case CONTINUE -> {
               update(State.STARTED, State.REQUESTED);
               if (processChildren(path, node)) break;
               return; // stop processing and wait for setChildren
-            case INTERRUPT:
+            }
+            case INTERRUPT -> {
               update(State.STARTED, State.FINISHED);
               current = null;
               stack.clear();
               promise.setResult(path);
               return; // path is found
-            case SKIP_SIBLINGS:
-              siblings.clear();
-              break;
-            case SKIP_CHILDREN:
-              break;
+            }
+            case SKIP_SIBLINGS -> siblings.clear();
+            case SKIP_CHILDREN -> {}
           }
         }
       }

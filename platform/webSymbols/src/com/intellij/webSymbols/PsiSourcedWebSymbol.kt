@@ -37,8 +37,12 @@ interface PsiSourcedWebSymbol : WebSymbol {
   override fun isEquivalentTo(symbol: Symbol): Boolean {
     if (this == symbol) return true
     val source = this.source ?: return false
-    val target = PsiSymbolService.getInstance().extractElementFromSymbol(symbol) ?: return false
-    return target.manager.areElementsEquivalent(source, target)
+    val target = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
+    return when {
+      target != null -> target.manager.areElementsEquivalent(source, target)
+      symbol is PsiSourcedWebSymbol -> source == symbol.source
+      else -> false
+    }
   }
 
 }

@@ -1,12 +1,9 @@
 val Any?.foo: Int
-    get() {
+    <info descr="null">get</info>() {
         this?.let {
-            <caret>return 1
+            <info descr="null">~return 1</info>
         }
-        return 2
+        <info descr="null">return 2</info>
     }
 
 public inline fun <T> T.let(block: (T) -> Unit) {}
-
-//HIGHLIGHTED: return 1
-//HIGHLIGHTED: return 2

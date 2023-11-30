@@ -1,20 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.settings
 
 import com.intellij.codeInsight.codeVision.CodeVisionAnchorKind
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.SettingsCategory
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.util.messages.Topic
 import java.util.*
 
 @State(name = "CodeVisionSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
 class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
-
   companion object {
-    fun instance(): CodeVisionSettings = ApplicationManager.getApplication().getService(CodeVisionSettings::class.java)
+    fun getInstance(): CodeVisionSettings = ApplicationManager.getApplication().service<CodeVisionSettings>()
+
+    @Deprecated(message = "Use CodeVisionSettings.getInstance()", ReplaceWith("getInstance()"))
+    fun instance(): CodeVisionSettings = getInstance()
 
     @Topic.AppLevel
     @JvmStatic
@@ -29,10 +28,10 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     get() = ApplicationManager.getApplication().messageBus.syncPublisher(CODE_LENS_SETTINGS_CHANGED)
 
   class State {
-    var isEnabled = true
-    var defaultPosition = "Top"
-    var visibleMetricsAboveDeclarationCount = 5
-    var visibleMetricsNextToDeclarationCount = 5
+    var isEnabled: Boolean = true
+    var defaultPosition: String = "Top"
+    var visibleMetricsAboveDeclarationCount: Int = 5
+    var visibleMetricsNextToDeclarationCount: Int = 5
 
     var disabledCodeVisionProviderIds: TreeSet<String> = sortedSetOf()
     var codeVisionGroupToPosition: MutableMap<String, String> = mutableMapOf()
@@ -76,6 +75,9 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     listener.groupPositionChanged(groupName, position)
   }
 
+  /**
+   * Ignores [State.isEnabled].
+   */
   fun isProviderEnabled(id: String): Boolean {
     return state.disabledCodeVisionProviderIds.contains(id).not()
   }
@@ -112,12 +114,11 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     }
   }
 
-
   override fun getState(): State = synchronized(stateLock) {
     return state
   }
 
-  override fun loadState(state: State) = synchronized(stateLock) {
+  override fun loadState(state: State): Unit = synchronized(stateLock) {
     this.state = state
   }
 
@@ -129,5 +130,4 @@ class CodeVisionSettings : PersistentStateComponent<CodeVisionSettings.State> {
     fun visibleMetricsAboveDeclarationCountChanged(newValue: Int) {}
     fun visibleMetricsNextToDeclarationCountChanged(newValue: Int) {}
   }
-
 }

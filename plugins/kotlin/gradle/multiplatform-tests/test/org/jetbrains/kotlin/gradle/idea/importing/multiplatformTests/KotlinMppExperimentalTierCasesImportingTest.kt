@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import com.intellij.lang.annotation.HighlightSeverity
-import org.jetbrains.kotlin.config.KotlinFacetSettings
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
@@ -22,7 +22,12 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
 
     @Test
     fun testCommonMainIsNativeShared() {
-        doTest()
+        doTest {
+            /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
+            if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {
+                disableCheckers(HighlightingChecker)
+            }
+        }
     }
 
     @Test
@@ -141,11 +146,11 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
     }
 
     @Test
-    @PluginTargetVersions(pluginVersion = "1.8.20-Beta+") // targetHierarchy used
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+") // applyHierarchyTemplate used
     fun testSimilarTargetsBamboo() {
         doTest {
             onlyCheckers(KotlinFacetSettingsChecker, OrderEntriesChecker)
-            onlyFacetFields(KotlinFacetSettings::targetPlatform)
+            onlyFacetFields(IKotlinFacetSettings::targetPlatform)
         }
     }
 }

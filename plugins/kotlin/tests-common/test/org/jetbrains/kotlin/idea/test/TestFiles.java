@@ -26,10 +26,10 @@ public final class TestFiles {
      */
     private static final String MODULE_DELIMITER = ",\\s*";
 
-    private static final Pattern MODULE_PATTERN = Pattern.compile("//\\s*MODULE:\\s*([^()\\n]+)(?:\\(([^()]+(?:" + MODULE_DELIMITER + "[^()]+)*)\\))?\\s*(?:\\(([^()]+(?:" + MODULE_DELIMITER + "[^()]+)*)\\))?\n");
-    private static final Pattern FILE_PATTERN = Pattern.compile("//\\s*FILE:\\s*(.*)\n");
+    private static final Pattern MODULE_PATTERN = Pattern.compile("//\\s*MODULE:\\s*([^()\\r\\n]+)(?:\\(([^()]+(?:" + MODULE_DELIMITER + "[^()]+)*)\\))?\\s*(?:\\(([^()]+(?:" + MODULE_DELIMITER + "[^()]+)*)\\))?\\R");
+    private static final Pattern FILE_PATTERN = Pattern.compile("//\\s*FILE:\\s*(.*)\\R");
 
-    private static final Pattern LINE_SEPARATOR_PATTERN = Pattern.compile("\\r\\n|\\r|\\n");
+    private static final Pattern LINE_SEPARATOR_PATTERN = Pattern.compile("\\R");
 
     @NotNull
     public static <M extends KotlinBaseTest.TestModule, F> List<F> createTestFiles(

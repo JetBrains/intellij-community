@@ -11,7 +11,7 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
-  private val childrenCache = NamedLayoutListBasedCache<AnAction> {
+  private val childrenCache = NamedLayoutListBasedCache<AnAction>(emptyList(), 0) {
     CustomLayoutActionGroup(it)
   }
 
@@ -23,7 +23,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
       childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
     }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -32,7 +32,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
   private class CustomLayoutActionGroup(
     @NlsSafe private val layoutName: String
-  ) : ActionGroup(ActionsBundle.message("group.CustomLayoutActionsGroup.text"), true), DumbAware {
+  ) : ActionGroup(ActionsBundle.message("group.CustomLayoutActionsGroup.text"), true), DumbAware, Toggleable {
 
     private val children = arrayOf<AnAction>(
       Apply(layoutName),
@@ -44,12 +44,9 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-      val text = if (manager.activeLayoutName == layoutName)
-        ActionsBundle.message("group.CustomLayoutActionsGroup.current.text", layoutName)
-      else
-        layoutName
-      e.presentation.setText(text, false)
+      e.presentation.setText(layoutName, false)
       e.presentation.isVisible = layoutName.isNotBlank() // Just in case the layout name is corrupted somehow.
+      Toggleable.setSelected(e.presentation, manager.activeLayoutName == layoutName)
     }
 
     override fun getChildren(e: AnActionEvent?): Array<AnAction> = children

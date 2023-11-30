@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -12,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class CollectCustomTemplateCallback extends CustomTemplateCallback {
-  @Nullable
-  private TemplateImpl myTemplate;
+  private @Nullable TemplateImpl myTemplate;
 
   public CollectCustomTemplateCallback(@NotNull Editor editor, @NotNull PsiFile file) {
     super(editor, file);
@@ -30,8 +30,7 @@ public class CollectCustomTemplateCallback extends CustomTemplateCallback {
     }
   }
   
-  @Nullable
-  public TemplateImpl getGeneratedTemplate() {
+  public @Nullable TemplateImpl getGeneratedTemplate() {
     return myTemplate;
   }
 }

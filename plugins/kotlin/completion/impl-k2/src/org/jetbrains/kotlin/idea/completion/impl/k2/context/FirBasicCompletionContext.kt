@@ -6,15 +6,16 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.openapi.project.Project
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.base.fir.codeInsight.HLIndexHelper
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 internal class FirBasicCompletionContext(
@@ -25,7 +26,6 @@ internal class FirBasicCompletionContext(
     val fakeKtFile: KtFile,
     val project: Project,
     val targetPlatform: TargetPlatform,
-    val indexHelper: HLIndexHelper,
     val symbolFromIndexProvider: KtSymbolFromIndexProvider,
     val importStrategyDetector: ImportStrategyDetector,
     val lookupElementFactory: KotlinFirLookupElementFactory = KotlinFirLookupElementFactory(),
@@ -38,9 +38,9 @@ internal class FirBasicCompletionContext(
             val parameters = firParameters.ijParameters
             val originalKtFile = parameters.originalFile as? KtFile ?: return null
             val fakeKtFile = parameters.position.containingFile as? KtFile ?: return null
+            val useSiteKtElement = parameters.position.parentOfType<KtElement>(withSelf = true) ?: return null
             val targetPlatform = originalKtFile.platform
             val project = originalKtFile.project
-            val indexHelper = createIndexHelper(parameters)
 
             return FirBasicCompletionContext(
                 parameters,
@@ -50,14 +50,9 @@ internal class FirBasicCompletionContext(
                 fakeKtFile,
                 project,
                 targetPlatform,
-                indexHelper,
-                KtSymbolFromIndexProvider(project),
+                KtSymbolFromIndexProvider.createForElement(useSiteKtElement),
                 ImportStrategyDetector(originalKtFile, project),
             )
-        }
-
-        private fun createIndexHelper(parameters: CompletionParameters): HLIndexHelper {
-            return HLIndexHelper.createForPosition(parameters.position)
         }
     }
 }

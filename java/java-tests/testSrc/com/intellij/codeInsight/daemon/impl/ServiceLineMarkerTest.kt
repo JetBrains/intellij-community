@@ -14,14 +14,14 @@ import org.assertj.core.api.Assertions.assertThat
 class ServiceLineMarkerTest : LightJavaCodeInsightFixtureTestCase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_9
 
-  override fun isIconRequired() = true
+  override fun isIconRequired(): Boolean = true
 
   override fun setUp() {
     super.setUp()
     myFixture.addFileToProject("foo/bar/MyService.java", "package foo.bar;\npublic class MyService { void doWork(); }")
   }
 
-  fun testProvidesAsSubclass() =
+  fun testProvidesAsSubclass(): Unit =
     doTestImplementer("""
         public class <caret>MyServiceImpl implements MyService {
             @Override public void doWork() {}

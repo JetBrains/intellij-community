@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/Root",
+  "definitions": {
+    "Root": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inspections": {
+          "type": "array",
+          "description": "Array with meta information about inspections",
+          "items": {
+            "$ref": "#/definitions/InspectionInfo"
+          }
+        }
+      },
+      "required": [
+        "inspections"
+      ],
+      "title": "Root",
+      "description": "Root object that holds an array of InspectionInfo objects"
+    },
+    "InspectionInfo": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Short name of inspection (inspection id). Should be unique in array. E.g: ConstantValue, NullableProblems ..."
+        },
+        "cweIds": {
+          "type": "array",
+          "description": "Array of CWE IDs associated with the inspection. Values of array must be present on https://cwe.mitre.org/data/index.html. E.g. [570, 571]",
+          "items": {
+            "type": "integer"
+          }
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "InspectionInfo",
+      "description": "Object that holds meta information about an inspection specified by property id"
+    }
+  }
+}

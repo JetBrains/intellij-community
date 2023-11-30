@@ -13,24 +13,24 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.jps.model.diagnostic.JpsMetrics
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
+import com.intellij.platform.workspace.jps.JpsMetrics
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.mutableModuleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import java.io.IOException
 import java.nio.file.Path
@@ -58,10 +58,9 @@ internal class ModifiableModuleModelBridgeImpl(
   override fun getModules(): Array<Module> = currentModuleSet.toTypedArray()
 
   override fun newNonPersistentModule(moduleName: String, moduleTypeId: String): Module {
-    val moduleEntity = diff.addModuleEntity(
-      name = moduleName,
-      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
-      source = NonPersistentEntitySource
+    val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
+                                                   dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+                                                   entitySource = NonPersistentEntitySource
     )
 
     val module = moduleManager.createModule(moduleEntity.symbolicId, moduleName, null, entityStorageOnDiff, diff)
@@ -98,12 +97,12 @@ internal class ModifiableModuleModelBridgeImpl(
       externalSource = null,
     )
 
-    val moduleEntity = diff.addModuleEntity(
-      name = moduleName,
-      dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
-      type = moduleTypeId,
-      source = entitySource
-    )
+    val moduleEntity = diff addEntity ModuleEntity(name = moduleName,
+                                                   dependencies = listOf(ModuleDependencyItem.ModuleSourceDependency),
+                                                   entitySource = entitySource
+    ) {
+      type = moduleTypeId
+    }
 
     val moduleInstance = createModuleInstance(moduleEntity, true)
     newModuleTimeMs.addElapsedTimeMs(start)
@@ -313,11 +312,11 @@ internal class ModifiableModuleModelBridgeImpl(
     // TODO How to deduplicate with ModuleCustomImlDataEntity ?
     if (moduleGroupEntity?.path != groupPathList) {
       when {
-        moduleGroupEntity == null && groupPathList != null -> diff.addModuleGroupPathEntity(
-          module = moduleEntity,
-          path = groupPathList,
-          source = moduleEntity.entitySource
-        )
+        moduleGroupEntity == null && groupPathList != null -> diff addEntity ModuleGroupPathEntity(path = groupPathList,
+                                                                                                   entitySource = moduleEntity.entitySource
+        ) {
+          this.module = moduleEntity
+        }
 
         moduleGroupEntity == null && groupPathList == null -> Unit
 

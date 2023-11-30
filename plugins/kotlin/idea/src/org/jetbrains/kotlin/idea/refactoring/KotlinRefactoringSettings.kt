@@ -56,6 +56,9 @@ class KotlinRefactoringSettings : PersistentStateComponent<KotlinRefactoringSett
     var MOVE_SEARCH_FOR_TEXT = true
 
     @JvmField
+    var MOVE_SEARCH_REFERENCES = true
+
+    @JvmField
     var MOVE_DELETE_EMPTY_SOURCE_FILES = true
 
     @JvmField
@@ -82,9 +85,14 @@ class KotlinRefactoringSettings : PersistentStateComponent<KotlinRefactoringSett
 
     var renameInheritors = true
     var renameParameterInHierarchy = true
+    var renameFileNames = true
     var renameVariables = true
     var renameTests = true
     var renameOverloads = true
+    var renameTestMethods = true
+
+    var INTRODUCE_DECLARE_WITH_VAR = false
+    var INTRODUCE_SPECIFY_TYPE_EXPLICITLY = false
 
     override fun getState() = this
 

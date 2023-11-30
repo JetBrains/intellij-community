@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ProblemsView;
@@ -66,7 +66,7 @@ final class ProblemsViewImpl extends ProblemsView {
         doUpdateIcon(panel, toolWindow, null);
 
         myPanel = panel;
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     });
   }
 

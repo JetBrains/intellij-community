@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -6,12 +6,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class WebDeploymentCredentialsHolder {
-  @NonNls private static final String SFTP_DEPLOYMENT_PREFIX = "sftp://";
+public final class WebDeploymentCredentialsHolder {
+  private static final @NonNls String SFTP_DEPLOYMENT_PREFIX = "sftp://";
 
-  @NonNls public static final String WEB_SERVER_CREDENTIALS_ID = "WEB_SERVER_CREDENTIALS_ID";
-  @NonNls public static final String WEB_SERVER_CONFIG_ID = "WEB_SERVER_CONFIG_ID";
-  @NonNls public static final String WEB_SERVER_CONFIG_NAME = "WEB_SERVER_CONFIG_NAME";
+  public static final @NonNls String WEB_SERVER_CREDENTIALS_ID = "WEB_SERVER_CREDENTIALS_ID";
+  public static final @NonNls String WEB_SERVER_CONFIG_ID = "WEB_SERVER_CONFIG_ID";
+  public static final @NonNls String WEB_SERVER_CONFIG_NAME = "WEB_SERVER_CONFIG_NAME";
 
 
   private @NotNull String myCredentialsId = "";
@@ -66,16 +66,14 @@ public class WebDeploymentCredentialsHolder {
     element.setAttribute(WEB_SERVER_CREDENTIALS_ID, StringUtil.notNullize(getCredentialsId()));
   }
 
-  @NotNull
-  public WebDeploymentCredentialsHolder copyFrom(@NotNull WebDeploymentCredentialsHolder holder) {
+  public @NotNull WebDeploymentCredentialsHolder copyFrom(@NotNull WebDeploymentCredentialsHolder holder) {
     setWebServerConfigId(holder.getWebServerConfigId());
     setWebServerConfigName(holder.getWebServerConfigName());
     myCredentialsId = holder.getCredentialsId();
     return this;
   }
 
-  @NotNull
-  private static String constructSftpCredentialsFullPath(@NotNull RemoteCredentials cred) {
+  private static @NotNull String constructSftpCredentialsFullPath(@NotNull RemoteCredentials cred) {
     return SFTP_DEPLOYMENT_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
 

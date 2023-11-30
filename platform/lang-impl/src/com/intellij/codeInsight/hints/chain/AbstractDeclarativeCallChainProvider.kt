@@ -2,7 +2,6 @@
 package com.intellij.codeInsight.hints.chain
 
 import com.intellij.codeInsight.hints.declarative.*
-import com.intellij.codeInsight.hints.declarative.impl.NoPresentableEntriesException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -63,12 +62,8 @@ abstract class AbstractDeclarativeCallChainProvider<DotQualifiedExpression : Psi
       if (reversedChain.asSequence().distinctBy { it.type }.count() < uniqueTypeCount) return
 
       for ((expression, type) in reversedChain) {
-        try {
-          sink.addPresentation(InlineInlayPosition(expression.textRange.endOffset, relatedToPrevious = true), hasBackground = true) {
-            type.buildTree(expression, file.project, context, this)
-          }
-        } catch (e: NoPresentableEntriesException) {
-          logger.warn("No presentable entries for type: ${presentableType(type)}", e)
+        sink.addPresentation(InlineInlayPosition(expression.textRange.endOffset, relatedToPrevious = true), hasBackground = true) {
+          type.buildTree(expression, file.project, context, this)
         }
       }
       return

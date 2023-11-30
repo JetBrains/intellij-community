@@ -1,15 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.StorageException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,12 +24,11 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
 
   private final ThreadLocal<Set<VirtualFile>> myFilesHavingProblems = new ThreadLocal<>();
 
-  @Nullable
-  public <Key, Psi extends PsiElement> StubIdList retrieveStubIdList(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                     @NotNull Key key,
-                                                                     @NotNull VirtualFile file,
-                                                                     @NotNull Project project,
-                                                                     boolean failOnMissedKeys) {
+  public @Nullable <Key, Psi extends PsiElement> StubIdList retrieveStubIdList(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                               @NotNull Key key,
+                                                                               @NotNull VirtualFile file,
+                                                                               @NotNull Project project,
+                                                                               boolean failOnMissedKeys) {
     int id = ((VirtualFileWithId)file).getId();
     try {
       Map<Integer, SerializedStubTree> data = StubIndexEx.getStubUpdatingIndex().getIndexedFileData(id);
@@ -80,9 +76,6 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
       myFilesHavingProblems.set(set = new HashSet<>());
     }
     set.add(file);
-    // requestReindex() may want to acquire write lock (for indices not requiring content loading)
-    // thus, because here we are under read lock, need to use invoke later
-    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().submit(() -> FileBasedIndex.getInstance().requestReindex(file));
   }
 
   @Nullable

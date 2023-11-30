@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -27,15 +27,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.concurrency.NonUrgentExecutor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public class EditorHighlighterUpdater {
-  @NotNull protected final Project myProject;
-  @NotNull protected final EditorEx myEditor;
-  @Nullable private final VirtualFile myFile;
+  protected final @NotNull Project myProject;
+  protected final @NotNull EditorEx myEditor;
+  private final @Nullable VirtualFile myFile;
 
   public EditorHighlighterUpdater(@NotNull Project project, @NotNull Disposable parentDisposable, @NotNull EditorEx editor, @Nullable VirtualFile file) {
     myProject = project;
@@ -80,7 +81,7 @@ public class EditorHighlighterUpdater {
           FileType fileType = myFile.getFileType();
           if (fileType.getClass().getClassLoader() == pluginClassLoader ||
               (fileType instanceof LanguageFileType && ((LanguageFileType) fileType).getClass().getClassLoader() == pluginClassLoader)) {
-            myEditor.setHighlighter(createHighlighter(true));
+            setupHighlighter(createHighlighter(true));
           }
         }
       }
@@ -124,18 +125,21 @@ public class EditorHighlighterUpdater {
       .expireWith(myProject)
       .expireWhen(() -> (myFile != null && !myFile.isValid()) || myEditor.isDisposed())
       .coalesceBy(EditorHighlighterUpdater.class, myEditor)
-      .finishOnUiThread(ModalityState.any(), highlighter -> myEditor.setHighlighter(highlighter))
+      .finishOnUiThread(ModalityState.any(), highlighter -> setupHighlighter(highlighter))
       .submit(NonUrgentExecutor.getInstance());
   }
 
-  @NotNull
-  protected EditorHighlighter createHighlighter(boolean forceEmpty) {
+  protected @NotNull EditorHighlighter createHighlighter(boolean forceEmpty) {
     EditorHighlighter highlighter = myFile != null && !forceEmpty
                                     ? EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile)
                                     : new EmptyEditorHighlighter(EditorColorsManager.getInstance().getGlobalScheme(),
                                                                  HighlighterColors.TEXT);
     highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
     return highlighter;
+  }
+
+  protected void setupHighlighter(@NotNull EditorHighlighter highlighter) {
+    myEditor.setHighlighter(highlighter);
   }
 
   /**
@@ -150,7 +154,7 @@ public class EditorHighlighterUpdater {
 
   private void updateHighlightersSynchronously() {
     if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-      myEditor.setHighlighter(createHighlighter(false));
+      setupHighlighter(createHighlighter(false));
     }
   }
 
@@ -165,8 +169,8 @@ public class EditorHighlighterUpdater {
    */
   private final class MyFileTypeListener implements FileTypeListener {
     @Override
-    public void fileTypesChanged(@NotNull final FileTypeEvent event) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+    public void fileTypesChanged(final @NotNull FileTypeEvent event) {
+      ThreadingAssertions.assertEventDispatchThread();
       // File can be invalid after file type changing. The editor should be removed
       // by the FileEditorManager if it's invalid.
       FileType type = event.getRemovedFileType();

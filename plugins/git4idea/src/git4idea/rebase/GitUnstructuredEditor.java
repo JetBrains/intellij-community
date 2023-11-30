@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase;
 
 import com.intellij.openapi.project.Project;
@@ -23,8 +23,8 @@ import javax.swing.*;
  * Usually it is shown to edit a commit message after choosing reword or squash interactive rebase actions.
  */
 public class GitUnstructuredEditor extends DialogWrapper {
-  @Nullable private final JBLabel myRootLabel;
-  @NotNull private final CommitMessage myTextEditor;
+  private final @Nullable JBLabel myRootLabel;
+  private final @NotNull CommitMessage myTextEditor;
 
   public GitUnstructuredEditor(@NotNull Project project,
                                @Nullable VirtualFile root,
@@ -47,8 +47,7 @@ public class GitUnstructuredEditor extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     BorderLayoutPanel rootPanel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP);
     if (myRootLabel != null) {
       rootPanel.addToTop(myRootLabel);
@@ -67,8 +66,7 @@ public class GitUnstructuredEditor extends DialogWrapper {
     return myTextEditor.getEditorField().getFocusTarget();
   }
 
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return myTextEditor.getComment();
   }
 }

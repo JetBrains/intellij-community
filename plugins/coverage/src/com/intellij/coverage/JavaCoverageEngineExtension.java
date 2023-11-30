@@ -1,5 +1,7 @@
 package com.intellij.coverage;
 
+import com.intellij.coverage.analysis.JavaCoverageAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -23,7 +25,7 @@ import java.util.Set;
 public abstract class JavaCoverageEngineExtension {
   public static final ExtensionPointName<JavaCoverageEngineExtension> EP_NAME = ExtensionPointName.create("com.intellij.javaCoverageEngineExtension");
 
-  public abstract boolean isApplicableTo(@Nullable RunConfigurationBase conf);
+  public abstract boolean isApplicableTo(@Nullable RunConfigurationBase<?> conf);
 
   /**
    * Calculates the qualified names of class files generated from a source file.
@@ -84,7 +86,7 @@ public abstract class JavaCoverageEngineExtension {
    * Returns true if this configuration requires the generation of a source map to match the compiled .class files to
    * corresponding sources.
    */
-  public boolean isSourceMapNeeded(RunConfigurationBase runConfiguration) {
+  public boolean isSourceMapNeeded(RunConfigurationBase<?> runConfiguration) {
     return false;
   }
 

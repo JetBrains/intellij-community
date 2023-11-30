@@ -29,7 +29,7 @@ public final class PreviewFeatureWarningsTest extends LightJavaCodeInsightFixtur
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return new ProjectDescriptor(LanguageLevel.JDK_17_PREVIEW);
+    return new ProjectDescriptor(LanguageLevel.JDK_21_PREVIEW);
   }
 
   private void doTest() {

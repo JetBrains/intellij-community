@@ -40,4 +40,10 @@ public interface RefactoringEventListener {
    */
   default void undoRefactoring(@NotNull String refactoringId) {
   }
+
+  /**
+   * Is fired when undoable action created on refactoring execution is redone.
+   */
+  default void redoRefactoring(@NotNull String refactoringId) {
+  }
 }

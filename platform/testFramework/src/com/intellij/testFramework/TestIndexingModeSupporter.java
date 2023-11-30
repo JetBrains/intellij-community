@@ -3,13 +3,15 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.RecursionManager;
+import com.intellij.testFramework.DumbModeTestUtils.EternalTaskShutdownToken;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.UnindexedFilesScanner;
 import junit.framework.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.internal.MethodSorter;
 import org.junit.runner.Describable;
 import org.junit.runner.Description;
@@ -29,67 +31,78 @@ public interface TestIndexingModeSupporter {
   enum IndexingMode {
     SMART {
       @Override
-      public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {}
-
-      @Override
-      public void tearDownTest(@NotNull Project project) {}
+      public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+        return new ShutdownToken(null);
+      }
     }, DUMB_FULL_INDEX {
       @Override
-      public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
-        indexEverythingAndBecomeDumb(project);
+      public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+        EternalTaskShutdownToken dumbTask = indexEverythingAndBecomeDumb(project);
         RecursionManager.disableMissedCacheAssertions(testRootDisposable);
+        return new ShutdownToken(dumbTask);
       }
 
       @Override
       public void ensureIndexingStatus(@NotNull Project project) {
-        DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          dumbService.setDumb(false);
-          new UnindexedFilesUpdater(project).queue();
-          dumbService.setDumb(true);
+          new UnindexedFilesScanner(project, "TestIndexingModeSupporter").queue();
         });
       }
     }, DUMB_RUNTIME_ONLY_INDEX {
       @Override
-      public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
-        becomeDumb(project);
+      public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+        EternalTaskShutdownToken dumbTask = becomeDumb(project);
         RecursionManager.disableMissedCacheAssertions(testRootDisposable);
+        return new ShutdownToken(dumbTask);
       }
     }, DUMB_EMPTY_INDEX {
       @Override
-      public void setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+      public @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable) {
         ServiceContainerUtil
           .replaceService(ApplicationManager.getApplication(), FileBasedIndex.class, new EmptyFileBasedIndex(), testRootDisposable);
-        becomeDumb(project);
+        EternalTaskShutdownToken dumbTask = becomeDumb(project);
         RecursionManager.disableMissedCacheAssertions(testRootDisposable);
+        return new ShutdownToken(dumbTask);
       }
     };
 
-    public abstract void setUpTest(@NotNull Project project,
-                                   @NotNull Disposable testRootDisposable);
+    public static final class ShutdownToken {
+      private final @Nullable EternalTaskShutdownToken dumbTask;
 
-    public void tearDownTest(@NotNull Project project) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        DumbServiceImpl.getInstance(project).setDumb(false);
+      private ShutdownToken(@Nullable EternalTaskShutdownToken dumbTask) {
+        this.dumbTask = dumbTask;
+      }
+    }
+
+    protected abstract @NotNull ShutdownToken setUpTestInternal(@NotNull Project project, @NotNull Disposable testRootDisposable);
+
+    public final @NotNull ShutdownToken setUpTest(@NotNull Project project, @NotNull Disposable testRootDisposable) {
+      ShutdownToken shutdownToken = setUpTestInternal(project, testRootDisposable);
+      Disposer.register(testRootDisposable, new Disposable() {
+        @Override
+        public void dispose() {
+          tearDownTest(project, shutdownToken);
+        }
       });
+      return shutdownToken;
+    }
+
+    public void tearDownTest(@NotNull Project project, @NotNull ShutdownToken token) {
+      if (token.dumbTask != null) {
+        DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, token.dumbTask);
+      }
     }
 
     public void ensureIndexingStatus(@NotNull Project project) {
     }
 
-    private static void becomeDumb(@NotNull Project project) {
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        DumbServiceImpl.getInstance(project).setDumb(true);
-      });
+    private static EternalTaskShutdownToken becomeDumb(@NotNull Project project) {
+      return DumbModeTestUtils.startEternalDumbModeTask(project);
     }
 
-    private static void indexEverythingAndBecomeDumb(@NotNull Project project) {
-      DumbServiceImpl dumbService = DumbServiceImpl.getInstance(project);
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        dumbService.setDumb(false);
-        new UnindexedFilesUpdater(project).queue();
-        dumbService.setDumb(true);
-      });
+    private static EternalTaskShutdownToken indexEverythingAndBecomeDumb(@NotNull Project project) {
+      new UnindexedFilesScanner(project, "TestIndexingModeSupporter").queue();
+      return becomeDumb(project);
     }
   }
 

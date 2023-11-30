@@ -12,13 +12,17 @@ import com.intellij.collaboration.ui.SimpleComboboxWithActionsFactory
 import com.intellij.collaboration.ui.codereview.Avatar
 import com.intellij.collaboration.ui.codereview.BaseHtmlEditorPane
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
-import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindTextIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.name
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.BrowserHyperlinkListener
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
@@ -85,6 +89,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
       val iconPanel = JPanel(BorderLayout()).apply {
         val iconLabel = JLabel(AllIcons.Ide.FatalError)
         border = JBUI.Borders.emptyRight(iconLabel.iconTextGap)
+        isOpaque = false
         add(iconLabel, BorderLayout.NORTH)
       }
 
@@ -110,6 +115,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
         })
       }
 
+      isOpaque = false
       add(iconPanel, BorderLayout.WEST)
       add(errorTextPane, BorderLayout.CENTER)
 
@@ -130,6 +136,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
 
       putClientProperty(PlatformDefaults.VISUAL_PADDING_PROPERTY, submitButton.insets)
     }
+    val labelTitle = CollaborationToolsBundle.message(if (ExperimentalUI.isNewUI()) "review.login.note.more" else "review.login.note.gear")
 
     return JPanel(null).apply {
       isOpaque = false
@@ -141,7 +148,7 @@ class RepositoryAndAccountSelectorComponentFactory<M : HostedGitRepositoryMappin
 
       add(actionsPanel, CC().newline())
       add(errorPanel, CC().newline())
-      add(JLabel(CollaborationToolsBundle.message("review.login.note")).apply {
+      add(JLabel(labelTitle).apply {
         foreground = UIUtil.getContextHelpForeground()
       }, CC().newline().minWidth("0"))
     }

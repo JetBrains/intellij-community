@@ -28,6 +28,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/annotationOnElvis.kt");
     }
 
+    @TestMetadata("build.gradle.kts")
+    public void testBuild_gradle() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/build.gradle.kts");
+    }
+
     @TestMetadata("commentsOnDataClass.kt")
     public void testCommentsOnDataClass() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/commentsOnDataClass.kt");
@@ -53,6 +58,31 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         runTest("../../uast-kotlin-fir/tests/testData/declaration/constructorWithJvmOverloads.kt");
     }
 
+    @TestMetadata("deprecatedHiddenProperty_accessors.kt")
+    public void testDeprecatedHiddenProperty_accessors() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_accessors.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_getter.kt")
+    public void testDeprecatedHiddenProperty_getter() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_getter.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_interface.kt")
+    public void testDeprecatedHiddenProperty_interface() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_interface.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_noAccesor.kt")
+    public void testDeprecatedHiddenProperty_noAccesor() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_noAccesor.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_setter.kt")
+    public void testDeprecatedHiddenProperty_setter() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/deprecatedHiddenProperty_setter.kt");
+    }
+
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/doWhile.kt");
@@ -66,6 +96,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/if.kt");
+    }
+
+    @TestMetadata("implicitItOfLambdaOverEnumEntries.kt")
+    public void testImplicitItOfLambdaOverEnumEntries() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/implicitItOfLambdaOverEnumEntries.kt");
     }
 
     @TestMetadata("importOnDemand.kt")
@@ -91,6 +126,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("mangling.kt")
     public void testMangling() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/mangling.kt");
+    }
+
+    @TestMetadata("missingNames.kt")
+    public void testMissingNames() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/missingNames.kt");
     }
 
     @TestMetadata("nullabilityOfTypeParameter.kt")
@@ -121,5 +161,10 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("returns.kt")
     public void testReturns() throws Exception {
         runTest("../../uast-kotlin-fir/tests/testData/declaration/returns.kt");
+    }
+
+    @TestMetadata("suspendReturnsResult.kt")
+    public void testSuspendReturnsResult() throws Exception {
+        runTest("../../uast-kotlin-fir/tests/testData/declaration/suspendReturnsResult.kt");
     }
 }

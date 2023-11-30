@@ -3,6 +3,7 @@ package com.intellij.util.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ContextAwareRunnable;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.util.ConcurrencyUtil;
@@ -27,12 +28,15 @@ final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements
 
   @Override
   public @NotNull ScheduledFuture<?> schedule(@NotNull Runnable command, @NotNull ModalityState modalityState, long delay, TimeUnit unit) {
-    return delayedExecute(new MyScheduledFutureTask<Void>(ClientId.decorateRunnable(command), null, triggerTime(delay, unit)) {
+    return delayedExecute(new MyScheduledFutureTask<Void>(
+      ClientId.decorateRunnable(ThreadContext.captureThreadContext(command)),
+      null,
+      triggerTime(delay, unit)) {
       @Override
       boolean executeMeInBackendExecutor() {
         // optimization: can be cancelled already
         if (!isDone()) {
-          ApplicationManager.getApplication().invokeLater((ContextAwareRunnable) () -> this.run(), modalityState, __ -> {
+          ApplicationManager.getApplication().invokeLater(this, modalityState, __ -> {
             return isCancelled();
           });
         }

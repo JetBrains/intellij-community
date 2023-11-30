@@ -15,12 +15,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.workspaceModel.core.fileIndex.impl.getOldAndNewUrls
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 import java.nio.file.Path
 import java.nio.file.Paths
 

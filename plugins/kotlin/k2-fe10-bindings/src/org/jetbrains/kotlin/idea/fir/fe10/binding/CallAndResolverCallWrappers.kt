@@ -72,7 +72,7 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
         }
 
         if (element is KtArrayAccessExpression) {
-            val receiver = element.getArrayExpression()?.toExpressionReceiverValue(context) ?: return null
+            val receiver = element.arrayExpression?.toExpressionReceiverValue(context) ?: return null
             return CallMaker.makeArrayGetCall(receiver, element, Call.CallType.ARRAY_GET_METHOD)
         }
 
@@ -146,13 +146,12 @@ class CallAndResolverCallWrappers(bindingContext: KtSymbolBasedBindingContext) {
     }
 
     private fun getConstructorResolvedDelegationCall(constructor: ConstructorDescriptor): ResolvedCall<ConstructorDescriptor>? {
-        val constructorPSI = constructor.safeAs<KtSymbolBasedConstructorDescriptor>()?.ktSymbol?.psi
-        when (constructorPSI) {
+        when (val constructorPSI = constructor.safeAs<KtSymbolBasedConstructorDescriptor>()?.ktSymbol?.psi) {
             is KtSecondaryConstructor -> {
                 val delegationCall = constructorPSI.getDelegationCall()
                 val ktCallInfo = context.withAnalysisSession { delegationCall.resolveCall() }
                 val diagnostic = ktCallInfo.safeAs<KtErrorCallInfo>()?.diagnostic
-                val constructorCall = ktCallInfo.calls.singleOrNull() ?: return null
+                val constructorCall = ktCallInfo?.calls?.singleOrNull() ?: return null
 
                 if (constructorCall !is KtFunctionCall<*>) context.errorHandling(constructorCall::class.toString())
                 val psiCall = CallMaker.makeCall(null, null, delegationCall)

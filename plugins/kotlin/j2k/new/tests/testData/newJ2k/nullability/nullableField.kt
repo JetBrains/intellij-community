@@ -3,6 +3,7 @@ package test
 class Test {
     private var myProp: String? = null
     private var myIntProp: Int? = null
+
     fun onCreate() {
         myProp = ""
         myIntProp = 1
@@ -39,7 +40,12 @@ class Test {
         list.remove(myIntProp)
     }
 
-    fun foo1(s: String) {}
-    fun foo2(s: String?) {}
-    fun foo3(s: String?) {}
+    fun foo1(s: String) {
+    }
+
+    fun foo2(s: String?) {
+    }
+
+    fun foo3(s: String?) {
+    }
 }

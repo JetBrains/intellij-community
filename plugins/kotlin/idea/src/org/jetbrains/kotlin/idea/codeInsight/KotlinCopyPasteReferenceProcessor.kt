@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parents
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.CancellablePromise
@@ -31,6 +32,7 @@ import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.caches.resolve.allowResolveInDispatchThread
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
@@ -128,9 +130,11 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
     }
 
     private fun KtFile.namedDeclarationFqName(offset: Int): String? =
-        if (offset in 0 until textLength)
-            PsiTreeUtil.getNonStrictParentOfType(this.findElementAt(offset), KtNamedDeclaration::class.java)?.fqName?.asString()
-        else null
+        if (offset in 0 until textLength) {
+            this.findElementAt(offset)?.parents(true)?.mapNotNull { it.kotlinFqName?.asString() }?.firstOrNull()
+        } else {
+            null
+        }
 
     private fun collectReferenceData(
         textRanges: List<TextRange>,

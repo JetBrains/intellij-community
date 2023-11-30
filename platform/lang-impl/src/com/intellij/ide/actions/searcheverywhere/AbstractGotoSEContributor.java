@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.actions.QualifiedNameProviderUtil;
-import com.intellij.ide.actions.SearchEverywhereClassifier;
-import com.intellij.ide.actions.SearchEverywherePsiRenderer;
+import com.intellij.ide.actions.*;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.EditSourceUtil;
@@ -48,18 +45,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting {
+public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
+                                                           SearchEverywhereExtendedInfoProvider {
   protected static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
   private static final Key<Map<String, String>> SE_SELECTED_SCOPES = Key.create("SE_SELECTED_SCOPES");
 
   private static final Pattern ourPatternToDetectLinesAndColumns = Pattern.compile(
     "(.+?)" + // name, non-greedy matching
-    "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+    "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" + // separator
     "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
     "[)\\]]?" // possible closing paren/brace
   );
@@ -185,6 +184,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
                myScopeDescriptor.scopeEquals(myProjectScope);
       }
     });
+    result.add(new PreviewAction());
     result.add(new SearchEverywhereFiltersAction<>(filter, onChanged, statisticsCollector));
     return result;
   }
@@ -267,7 +267,6 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator);
     }
   }
-
   protected boolean processElement(@NotNull ProgressIndicator progressIndicator,
                                    @NotNull Processor<? super FoundItemDescriptor<Object>> consumer,
                                    FilteringGotoByModel<?> model, Object element, int degree) {
@@ -341,26 +340,29 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       ReadAction.nonBlocking(() -> {
           PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
           Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
-          return new Pair<>(psiElement, extNavigatable);
+          VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+          Runnable command = (modifiers & InputEvent.SHIFT_MASK) != 0 && file != null
+                             ? () -> OpenInRightSplitAction.Companion.openInRightSplit(myProject, file, extNavigatable, true)
+                             : () -> doNavigate(psiElement, extNavigatable);
+          return command;
         })
-        .finishOnUiThread(ModalityState.NON_MODAL,
-                          pair -> {
-                            Navigatable extNavigatable = pair.second;
-                            PsiElement psiElement = pair.first;
-                            if (extNavigatable != null && extNavigatable.canNavigate()) {
-                              extNavigatable.navigate(true);
-                            }
-                            else {
-                              NavigationUtil.activateFileWithPsiElement(psiElement, true);
-                            }
-                          }
-        ).submit(AppExecutorUtil.getAppExecutorService());
+        .finishOnUiThread(ModalityState.nonModal(), Runnable::run)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }
     else {
       EditSourceUtil.navigate(((NavigationItem)selected), true, false);
     }
 
     return true;
+  }
+
+  private static void doNavigate(PsiElement psiElement, Navigatable extNavigatable) {
+    if (extNavigatable != null && extNavigatable.canNavigate()) {
+      extNavigatable.navigate(true);
+    }
+    else {
+      NavigationUtil.activateFileWithPsiElement(psiElement, true);
+    }
   }
 
   @Override

@@ -1,4 +1,6 @@
 // FIR_IDENTICAL
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 var x = 5
 
 val Int.sq : Int

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -31,6 +32,19 @@ public interface ExternalAnnotationsArtifactsResolver {
   boolean resolve(@NotNull Project project, @NotNull Library library, @NotNull AnnotationsLocation annotationsLocation);
 
   /**
+   * Lookup and attach external annotations from a given location to a given library using provided workspace entity storage
+   * @param project - current project
+   * @param library - a library to attach annotations' roots to
+   * @param annotationsLocation - annotations' location (including optional repositories url)
+   * @param diff - writable interface to current workspace model snapshot
+   * @return true if resolution was successful, false otherwise
+   */
+  boolean resolve(@NotNull Project project,
+                  @NotNull Library library,
+                  @NotNull AnnotationsLocation annotationsLocation,
+                  @NotNull MutableEntityStorage diff);
+
+  /**
    * Lookup and attach external annotations for given library in background.
    * @param project - current project
    * @param library - a library to attach annotations roots to
@@ -38,5 +52,4 @@ public interface ExternalAnnotationsArtifactsResolver {
    */
   @NotNull
   Promise<Library> resolveAsync(@NotNull Project project, @NotNull Library library, @Nullable String mavenId);
-
 }

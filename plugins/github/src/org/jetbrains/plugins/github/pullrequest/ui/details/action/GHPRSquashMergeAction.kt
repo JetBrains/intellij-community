@@ -3,22 +3,29 @@ package org.jetbrains.plugins.github.pullrequest.ui.details.action
 
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.pullrequest.GHPRAction
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
+import javax.swing.JButton
 
-internal class GHPRSquashMergeAction(scope: CoroutineScope, private val reviewFlowVm: GHPRReviewFlowViewModel)
+internal class GHPRSquashMergeAction(scope: CoroutineScope, private val project: Project, private val reviewFlowVm: GHPRReviewFlowViewModel)
   : AbstractAction(CollaborationToolsBundle.message("review.details.action.squash.and.merge")) {
 
   init {
     scope.launch {
-      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.isSquashMergeAllowed) { isBusy, isSquashMergeAllowed ->
-        isEnabled = !isBusy && isSquashMergeAllowed && reviewFlowVm.userCanMergeReview
+      combineAndCollect(reviewFlowVm.isBusy, reviewFlowVm.isSquashMergeEnabled) { isBusy, isSquashMergeEnabled ->
+        isEnabled = !isBusy && isSquashMergeEnabled
       }
     }
   }
 
-  override fun actionPerformed(e: ActionEvent?) = reviewFlowVm.squashAndMergeReview()
+  override fun actionPerformed(e: ActionEvent?) {
+    GHPRStatisticsCollector.logDetailsActionInvoked(project, GHPRAction.SQUASH_MERGE, e?.source is JButton)
+    reviewFlowVm.squashAndMergeReview()
+  }
 }

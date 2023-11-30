@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.navigation.NavigationItem;
@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
  * Allows to invoke and control Find, Replace and Find Usages operations.
  */
 public abstract class FindManager {
+
+  @Topic.ProjectLevel
   public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<>("FindManager's model changes", FindModelListener.class);
 
   public abstract FindModel createReplaceInFileModel();

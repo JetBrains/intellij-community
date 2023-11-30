@@ -57,7 +57,7 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
   }
 
   var selectionArc: Int = 0
-  var selectionArcCorners = SelectionArcCorners.ALL
+  var selectionArcCorners: SelectionArcCorners = SelectionArcCorners.ALL
   var selectionColor: Color? = null
     set(value) {
       if (field != value) {
@@ -72,6 +72,7 @@ open class SelectablePanel(background: Color? = null) : JPanel() {
       invalidate()
     }
 
+  @ApiStatus.Experimental
   var accessibleContextProvider: Component? = null
 
   init {

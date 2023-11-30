@@ -6,9 +6,10 @@ import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineIn
 import com.intellij.openapi.externalSystem.service.ui.command.line.CompletionTableInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
-import com.intellij.openapi.observable.properties.AtomicLazyProperty
+import com.intellij.openapi.observable.util.createTextModificationTracker
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.observable.util.whenTextChanged
+import com.intellij.openapi.util.ModificationTracker
 import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices
@@ -41,20 +42,26 @@ class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDire
     override val descriptionColumnIcon: Icon? = null
     override val descriptionColumnName: String = GradleBundle.message("gradle.run.configuration.command.line.description.column")
 
-    private val completionInfoProperty = AtomicLazyProperty { calculateCompletionInfo() }
+    override val completionModificationTracker: ModificationTracker =
+      workingDirectoryField.createTextModificationTracker()
 
-    override val completionInfo by completionInfoProperty
-    override val tableCompletionInfo by completionInfoProperty
-
-    private fun calculateCompletionInfo(): List<TextCompletionInfo> {
-      val indices = GradleTasksIndices.getInstance(project)
-      return indices.getTasksCompletionVariances(workingDirectoryField.workingDirectory)
-        .map { TextCompletionInfo(it.key, it.value.first().description) }
+    override suspend fun collectCompletionInfo(): List<TextCompletionInfo> {
+      return blockingContext {
+        val indices = GradleTasksIndices.getInstance(project)
+        indices.getTasksCompletionVariances(workingDirectoryField.workingDirectory)
+          .map { TextCompletionInfo(it.key, it.value.first().description) }
+          .sortedWith(Comparator.comparing({ it.text }, GRADLE_COMPLETION_COMPARATOR))
+      }
     }
 
-    init {
-      workingDirectoryField.whenTextChanged {
-        completionInfoProperty.reset()
+    override suspend fun collectTableCompletionInfo(): List<TextCompletionInfo> {
+      return blockingContext {
+        val indices = GradleTasksIndices.getInstance(project)
+        indices.findTasks(workingDirectoryField.workingDirectory)
+          .filterNot { it.isInherited }
+          .groupBy { it.name }
+          .map { TextCompletionInfo(it.key, it.value.first().description) }
+          .sortedWith(Comparator.comparing({ it.text }, GRADLE_COMPLETION_COMPARATOR))
       }
     }
   }
@@ -68,23 +75,44 @@ class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDire
     override val descriptionColumnIcon: Icon? = null
     override val descriptionColumnName: String = GradleBundle.message("gradle.run.configuration.command.line.description.column")
 
-    private val options: List<Option> =
-      GradleCommandLineOptionsProvider.getSupportedOptions().options
-        .filterIsInstance<Option>()
-
-    override val completionInfo: List<TextCompletionInfo> by lazy {
-      options
-        .filter { it.opt != null }
-        .map { TextCompletionInfo("-" + it.opt, it.description) }
-        .sortedBy { it.text } +
-      options
-        .filter { it.longOpt != null }
-        .map { TextCompletionInfo("--" + it.longOpt, it.description) }
-        .sortedBy { it.text }
+    private suspend fun collectOptionCompletion(isLongOption: Boolean): List<TextCompletionInfo> {
+      return blockingContext {
+        val prefix = if (isLongOption) "--" else "-"
+        fun Option.getName(): String? = if (isLongOption) longOpt else opt
+        GradleCommandLineOptionsProvider.getSupportedOptions().options
+          .filterIsInstance<Option>()
+          .filter { it.getName() != null }
+          .map { TextCompletionInfo(prefix + it.getName(), it.description) }
+          .sortedBy { it.text }
+      }
     }
 
-    override val tableCompletionInfo: List<TextCompletionInfo> by lazy {
-      completionInfo.filter { it.text.startsWith("--") }
+    override suspend fun collectCompletionInfo(): List<TextCompletionInfo> {
+      return collectOptionCompletion(isLongOption = false) +
+             collectOptionCompletion(isLongOption = true)
+    }
+
+    override suspend fun collectTableCompletionInfo(): List<TextCompletionInfo> {
+      return collectOptionCompletion(isLongOption = true)
+    }
+  }
+
+  companion object {
+
+    val GRADLE_COMPLETION_COMPARATOR = Comparator<String> { o1, o2 ->
+      when {
+        o1.startsWith("--") && o2.startsWith("--") -> o1.compareTo(o2)
+        o1.startsWith("-") && o2.startsWith("--") -> -1
+        o1.startsWith("--") && o2.startsWith("-") -> 1
+        o1.startsWith(":") && o2.startsWith(":") -> o1.compareTo(o2)
+        o1.startsWith(":") && o2.startsWith("-") -> -1
+        o1.startsWith("-") && o2.startsWith(":") -> 1
+        o2.startsWith("-") -> -1
+        o2.startsWith(":") -> -1
+        o1.startsWith("-") -> 1
+        o1.startsWith(":") -> 1
+        else -> o1.compareTo(o2)
+      }
     }
   }
 }

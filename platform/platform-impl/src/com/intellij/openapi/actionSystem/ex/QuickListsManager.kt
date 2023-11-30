@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex
 
+import com.intellij.DynamicBundle
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeDataHolder
 import com.intellij.ide.IdeBundle
@@ -18,7 +19,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
-import java.util.function.BiConsumer
 
 private var EP_NAME = ExtensionPointName<BundledQuickListsProvider>("com.intellij.bundledQuickListsProvider")
 
@@ -46,11 +46,13 @@ class QuickListsManager {
                                                                                           settingsCategory = SettingsCategory.UI)
 
   init {
-    EP_NAME.processWithPluginDescriptor(BiConsumer { provider, pluginDescriptor ->
+    EP_NAME.processWithPluginDescriptor { provider, pluginDescriptor ->
       for (path in provider.bundledListsRelativePaths) {
-        schemeManager.loadBundledScheme(if (path.endsWith(".xml")) path else "$path.xml", null, pluginDescriptor)
+        schemeManager.loadBundledScheme(resourceName = if (path.endsWith(".xml")) path else "$path.xml", requestor = null,
+                                        pluginDescriptor = pluginDescriptor)
+          ?.localizeWithBundle(DynamicBundle.getPluginBundle(pluginDescriptor))
       }
-    })
+    }
     schemeManager.loadSchemes()
   }
 
@@ -95,7 +97,7 @@ private class InvokeQuickListAction(private val quickList: QuickList) : QuickSwi
   init {
     myActionPlace = ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION
     templatePresentation.description = quickList.description
-    templatePresentation.setText(quickList.name, false)
+    templatePresentation.setText(quickList.displayName, false)
   }
 
   override fun fillActions(project: Project, group: DefaultActionGroup, dataContext: DataContext) {

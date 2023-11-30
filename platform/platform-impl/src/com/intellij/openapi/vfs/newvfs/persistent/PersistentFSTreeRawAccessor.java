@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,11 +19,14 @@ import java.util.List;
  * That storage allows raw access to the underlying {@link java.nio.ByteBuffer} -- and the subclass tries to utilize
  * that option to bypass copy into byte[], and read from it via {@link java.io.InputStream}.
  */
-public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
-  PersistentFSTreeRawAccessor(final @NotNull PersistentFSAttributeAccessor attributeAccessor,
-                              final @NotNull PersistentFSConnection connection) {
-    super(attributeAccessor, connection);
-    if (!myAttributeAccessor.supportsRawAccess()) {
+@ApiStatus.Internal
+public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
+  PersistentFSTreeRawAccessor(@NotNull PersistentFSAttributeAccessor attributeAccessor,
+                              @NotNull PersistentFSRecordAccessor recordAccessor,
+                              @NotNull PersistentFSConnection connection) {
+    super(attributeAccessor, recordAccessor, connection);
+    
+    if (!this.attributeAccessor.supportsRawAccess()) {
       throw new IllegalArgumentException("attributesAccessor must .supportsRawAccess(): " + attributeAccessor);
     }
   }
@@ -30,8 +34,13 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
   @Override
   @NotNull ListResult doLoadChildren(final int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
+    if (parentId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .doLoadChildren() with a super-root record id(=" + SUPER_ROOT_ID + "). " +
+        "Super-root is a special file record for internal use, it MUST NOT be used directly");
+    }
 
-    final PersistentFSRecordsStorage records = myFSConnection.getRecords();
+    final PersistentFSRecordsStorage records = connection.getRecords();
 
     //MAYBE RC: .listIds() and .doLoadChildren() both contains same code for reading&parsing children array. It seems
     //         they were implemented this way for optimization i.e. to avoid creating childrenIds array. Could be
@@ -49,33 +58,44 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
     //  return new ListResult(children, parentId);
     //}
 
-    final ListResult result = myAttributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
+    final int parentModCount = records.getModCount(parentId);
+    final ListResult result = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       final List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
+      final int maxID = connection.getRecords().maxAllocatedID();
       int prevId = parentId;
       for (int i = 0; i < count; i++) {
         final int childId = DataInputOutputUtil.readINT(buffer) + prevId;
+        checkChildIdValid(parentId, childId, i, maxID);
         prevId = childId;
         final int nameId = records.getNameId(childId);
         final ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
         children.add(child);
       }
-      return new ListResult(children, parentId);
+      return new ListResult(parentModCount, children, parentId);
     });
     if (result == null) {
-      return new ListResult(Collections.emptyList(), parentId);
+      return new ListResult(parentModCount, Collections.emptyList(), parentId);
     }
     return result;
   }
 
   @Override
   int @NotNull [] listIds(final int fileId) throws IOException {
-    final int[] childrenIds = myAttributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+    if (fileId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .listIds() with is a super-root record id(=" + SUPER_ROOT_ID + ") -- use .listRoots() instead");
+    }
+
+    final int[] childrenIds = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       final int[] result = ArrayUtil.newIntArray(count);
       int prevId = fileId;
+      final int maxID = connection.getRecords().maxAllocatedID();
       for (int i = 0; i < count; i++) {
         prevId = result[i] = DataInputOutputUtil.readINT(buffer) + prevId;
+        checkChildIdValid(fileId, prevId, i, maxID);
       }
       return result;
     });
@@ -87,7 +107,15 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
 
   @Override
   boolean mayHaveChildren(final int fileId) throws IOException {
-    final Boolean hasChildren = myAttributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
+    PersistentFSConnection.ensureIdIsValid(fileId);
+    if (fileId == SUPER_ROOT_ID) {
+      throw new AssertionError(
+        "Incorrect call .mayHaveChildren() with is a super-root record id(=" + SUPER_ROOT_ID + ")" +
+        "Super-root is a special file record for internal use, it MUST NOT be used directly"
+      );
+    }
+
+    final Boolean hasChildren = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       return Boolean.valueOf(count != 0);
     });

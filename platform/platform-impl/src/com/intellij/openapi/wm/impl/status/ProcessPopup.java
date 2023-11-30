@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
@@ -19,7 +21,6 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,7 +29,7 @@ import java.awt.*;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-class ProcessPopup {
+final class ProcessPopup {
   public static final Key<ProgressPanel> KEY = new Key<>("ProgressPanel");
   private static final String DIMENSION_SERVICE_KEY = "ProcessPopupWindow";
 
@@ -41,8 +42,7 @@ class ProcessPopup {
   ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
 
-    myIndicatorPanel = new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
-    myIndicatorPanel.setLayout(new VerticalLayout(0));
+    myIndicatorPanel = new JBPanelWithEmptyText(new VerticalLayout(0)).withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
     myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
     myIndicatorPanel.setFocusable(true);
     if (ExperimentalUI.isNewUI()) {
@@ -79,7 +79,7 @@ class ProcessPopup {
   }
 
   private @NotNull Rectangle calculateBounds() {
-    JFrame frame = (JFrame)UIUtil.findUltimateParent(myProgressPanel.getComponent());
+    JFrame frame = (JFrame)ComponentUtil.findUltimateParent(myProgressPanel.getComponent$intellij_platform_ide_impl());
 
     Dimension contentSize = myContentPanel.getPreferredSize();
     int contentWidth = Math.max(contentSize.width, JBUI.scale(300));
@@ -130,7 +130,7 @@ class ProcessPopup {
     Rectangle popupBounds = calculateBounds();
     myContentPanel.setPreferredSize(popupBounds.getSize());
     myPopupVisible = true;
-    myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), popupBounds.getLocation());
+    myPopup.showInScreenCoordinates(myProgressPanel.getComponent$intellij_platform_ide_impl().getRootPane(), popupBounds.getLocation());
   }
 
   public boolean isShowing() {
@@ -159,7 +159,10 @@ class ProcessPopup {
   }
 
   private static void hideSeparator(@NotNull Component component) {
-    UIUtil.getClientProperty(component, KEY).setSeparatorEnabled(false);
+    ProgressPanel panel = ClientProperty.get(component, KEY);
+    if (panel != null) {
+      panel.setSeparatorEnabled(false);
+    }
   }
 
   private void createPopup(@NotNull JComponent content, @NotNull JComponent focus, boolean requestFocus) {
@@ -179,12 +182,13 @@ class ProcessPopup {
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
     builder.setMinSize(new JBDimension(300, 100));
-    var frame = UIUtil.findUltimateParent(myProgressPanel.getComponent());
+    Component frame = ComponentUtil.findUltimateParent(myProgressPanel.getComponent$intellij_platform_ide_impl());
     Project project = null;
     if (frame instanceof IdeFrame ideFrame) {
       project = ideFrame.getProject();
     }
     builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
+    builder.setLocateWithinScreenBounds(false);
 
     builder.setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")));
 

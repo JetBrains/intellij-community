@@ -6,6 +6,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -718,6 +719,29 @@ public final class PyPsiUtils {
     }
     else {
       return element.getText();
+    }
+  }
+
+  @Nullable
+  public static String getStringValue(@Nullable PsiElement o) {
+    if (o == null) {
+      return null;
+    }
+    if (o instanceof PyStringLiteralExpression literalExpression) {
+      return literalExpression.getStringValue();
+    }
+    else {
+      return o.getText();
+    }
+  }
+
+  public static TextRange getStringValueTextRange(PsiElement element) {
+    if (element instanceof PyStringLiteralExpression) {
+      final List<TextRange> ranges = ((PyStringLiteralExpression)element).getStringValueTextRanges();
+      return ranges.get(0);
+    }
+    else {
+      return new TextRange(0, element.getTextLength());
     }
   }
 

@@ -5,30 +5,16 @@ import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.ProjectFUStateUsagesLogger
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.AbstractCommand
-import kotlinx.coroutines.future.asCompletableFuture
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.Promise
-import java.util.concurrent.CompletableFuture
+import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
+import kotlinx.coroutines.future.asDeferred
 
-internal class RecordStateCollectorsCommand(text: String, line: Int) : AbstractCommand(text, line) {
-  override fun _execute(context: PlaybackContext): Promise<Any?> {
-    return context.project.service<ProjectFUStateUsagesLogger>()
-      .scheduleLogApplicationAndProjectState()
-      .asCompletableFuture()
-      .thenCompose { FeatureUsageLogger.flush() }
-      .toPromise()
-  }
-
+internal class RecordStateCollectorsCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
     const val PREFIX = CMD_PREFIX + "recordStateCollectors"
   }
 
-}
-
-internal fun CompletableFuture<Void>.toPromise(): Promise<Any?> {
-  val promise = AsyncPromise<Any?>()
-  thenApply { promise.setResult(null) }
-    .exceptionally { throwable -> promise.setError(throwable) }
-  return promise
+  override suspend fun doExecute(context: PlaybackContext) {
+    context.project.service<ProjectFUStateUsagesLogger>().logApplicationAndProjectState()
+    FeatureUsageLogger.flush().asDeferred().join()
+  }
 }

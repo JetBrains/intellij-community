@@ -1,18 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@Service(Service.Level.PROJECT)
 @State(name = "ExportToHTMLSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class ExportToHTMLSettings implements PersistentStateComponent<ExportToHTMLSettings> {
+public final class ExportToHTMLSettings implements PersistentStateComponent<ExportToHTMLSettings> {
   public boolean PRINT_LINE_NUMBERS;
   public boolean OPEN_IN_BROWSER;
   @NonNls public String OUTPUT_DIRECTORY;

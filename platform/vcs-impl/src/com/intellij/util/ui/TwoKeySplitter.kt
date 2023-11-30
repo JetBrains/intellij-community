@@ -40,6 +40,6 @@ class TwoKeySplitter(isVertical: Boolean, private val proportionKey: ProportionK
 
 data class ProportionKey(val verticalKey: String, val verticalDefault: Float,
                          val horizontalKey: String, val horizontalDefault: Float) {
-  fun key(isVertical: Boolean) = if (isVertical) verticalKey else horizontalKey
-  fun default(isVertical: Boolean) = if (isVertical) verticalDefault else horizontalDefault
+  fun key(isVertical: Boolean): String = if (isVertical) verticalKey else horizontalKey
+  fun default(isVertical: Boolean): Float = if (isVertical) verticalDefault else horizontalDefault
 }

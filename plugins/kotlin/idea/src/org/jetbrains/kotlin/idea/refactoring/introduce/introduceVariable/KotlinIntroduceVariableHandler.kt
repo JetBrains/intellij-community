@@ -34,8 +34,11 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.compareDescriptors
 import org.jetbrains.kotlin.idea.core.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention
-import org.jetbrains.kotlin.idea.refactoring.*
+import org.jetbrains.kotlin.idea.refactoring.addTypeArgumentsIfNeeded
+import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
+import org.jetbrains.kotlin.idea.refactoring.getQualifiedTypeArgumentList
 import org.jetbrains.kotlin.idea.refactoring.introduce.*
+import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -307,7 +310,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
             commonParent.putCopyableUserData(COMMON_PARENT_KEY, true)
 
-            val newDeclaration = ConvertToBlockBodyIntention.convert(commonContainer)
+            val newDeclaration = ConvertToBlockBodyIntention.Holder.convert(commonContainer)
 
             val newCommonContainer = newDeclaration.bodyBlockExpression.sure { "New body is not found: $newDeclaration" }
 

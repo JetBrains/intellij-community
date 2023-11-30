@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("KotlinPsiUtils")
 
@@ -8,6 +8,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentsOfType
 import com.intellij.util.asSafely
 import com.intellij.util.text.CharArrayUtil
@@ -16,11 +17,9 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
-import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
@@ -222,8 +221,6 @@ fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
         visit(this@childrenDfsSequence)
     }
 
-fun KtExpression.isAnnotationArgument(): Boolean = this.parents.any { it is KtAnnotationEntry }
-
 fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
     return getArgumentExpression()
         ?.safeAs<KtStringTemplateExpression>()
@@ -231,4 +228,27 @@ fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
         ?.singleOrNull()
         ?.safeAs<KtLiteralStringTemplateEntry>()
         ?.text
+}
+
+fun PsiElement.isInsideAnnotationEntryArgumentList(): Boolean = parentOfType<KtValueArgumentList>()?.parent is KtAnnotationEntry
+
+fun KtExpression.unwrapIfLabeled(): KtExpression {
+    var statement = this
+    while (true) {
+        statement = statement.parent as? KtLabeledExpression ?: return statement
+    }
+}
+
+fun KtExpression.previousStatement(): KtExpression? {
+    val statement = unwrapIfLabeled()
+    if (statement.parent !is KtBlockExpression) return null
+    return statement.siblings(forward = false, withItself = false).firstIsInstanceOrNull()
+}
+
+fun getCallElement(argument: KtValueArgument): KtCallElement? {
+    return if (argument is KtLambdaArgument) {
+        argument.parent as? KtCallElement
+    } else {
+        argument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
+    }
 }

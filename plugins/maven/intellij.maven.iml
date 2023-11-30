@@ -34,14 +34,19 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.maven.jps" />
-    <orderEntry type="module" module-name="intellij.maven.artifactResolver.m3" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.maven.artifactResolver.m31" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.properties.psi" />
     <orderEntry type="module-library">
       <library name="plexus-archiver" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.codehaus.plexus:plexus-archiver:3.0.3" />
+        <properties include-transitive-deps="false" maven-id="org.codehaus.plexus:plexus-archiver:3.0.3">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/3.0.3/plexus-archiver-3.0.3.jar">
+              <sha256sum>779d4a6878026fdaae6786683e33883d58f77df245fe38a7b444da12772190fc</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-archiver/3.0.3/plexus-archiver-3.0.3.jar!/" />
         </CLASSES>
@@ -54,13 +59,13 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.maven.errorProne.compiler" scope="RUNTIME" />
-    <orderEntry type="library" name="NanoXML" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
+    <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.repository.search" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
@@ -73,7 +78,6 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
-    <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="module" module-name="intellij.idea.community.build.dependencies" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
@@ -81,6 +85,25 @@
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module-library">
+      <library name="jetbrains.idea.maven.indexer.api.rt" type="repository">
+        <properties maven-id="org.jetbrains.idea.maven:maven-indexer-api-rt:2023.2">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/idea/maven/maven-indexer-api-rt/2023.2/maven-indexer-api-rt-2023.2.jar">
+              <sha256sum>b9e8bb167267aa21219d9319d568d3e48198dde3756368e6102879d638248931</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/idea/maven/maven-indexer-api-rt/2023.2/maven-indexer-api-rt-2023.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
   <component name="copyright">
     <Base>

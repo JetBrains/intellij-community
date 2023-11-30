@@ -2,7 +2,6 @@
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.BoundConfigurable
@@ -42,7 +41,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
         label(IdeBundle.message("trusted.folders.settings.label"))
       }
       row {
-        val trustedPathsSettings = service<TrustedPathsSettings>()
+        val trustedPathsSettings = TrustedPathsSettings.getInstance()
         trustedLocationConfigurable(getValuesFromSettings = { trustedPathsSettings.getTrustedPaths() },
                                     setValuesToSettings = { trustedPathsSettings.setTrustedPaths(it) },
                                     getNewValueFromUser = { getPathFromUser(it) })

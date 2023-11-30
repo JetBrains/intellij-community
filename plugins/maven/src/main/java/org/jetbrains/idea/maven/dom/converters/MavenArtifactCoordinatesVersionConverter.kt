@@ -18,12 +18,12 @@ package org.jetbrains.idea.maven.dom.converters
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.xml.ConvertContext
-import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.getParentVersionForConsumerPom
-import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isConsumerPomResolutionApplicable
+import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.getAutomaticParentVersion
+import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.resolved
 import org.jetbrains.idea.reposearch.DependencySearchService
@@ -35,8 +35,8 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
       return super.fromString(s, context)
     }
 
-    if (isConsumerPomResolutionApplicable(context.project)) {
-      return getParentVersionForConsumerPom(context)
+    if (isAutomaticVersionFeatureEnabled(context)) {
+      return getAutomaticParentVersion(context)
     }
     return null
   }
@@ -47,14 +47,15 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
       return false
     }
 
-    val mavenVersion = MavenUtil.getMavenVersion(
-      MavenWorkspaceSettingsComponent.getInstance(context.project).settings.generalSettings.effectiveMavenHome)
+    val path = context.file.containingDirectory?.virtualFile?.path
+    val mavenVersion = path?.let { MavenUtil.getMavenVersion(context.project, it) } ?: MavenDistributionsCache.getInstance(
+      context.project).settingsDistribution.version
     if (VersionComparatorUtil.compare(mavenVersion, "3.6.3") <= 0 && id.version == null) {
       return false
     }
 
     if (id.version == null) {
-      return getParentVersionForConsumerPom(context) != null
+      return getAutomaticParentVersion(context) != null
     }
 
     if (id.version!!.isBlank()) {

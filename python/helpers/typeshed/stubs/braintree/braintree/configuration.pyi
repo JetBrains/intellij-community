@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from braintree.credentials_parser import CredentialsParser as CredentialsParser
@@ -29,13 +30,13 @@ class Configuration:
     wrap_http_exceptions: Any
     def __init__(
         self,
-        environment: Any | None = ...,
-        merchant_id: Any | None = ...,
-        public_key: Any | None = ...,
-        private_key: Any | None = ...,
-        client_id: Any | None = ...,
-        client_secret: Any | None = ...,
-        access_token: Any | None = ...,
+        environment: Incomplete | None = None,
+        merchant_id: Incomplete | None = None,
+        public_key: Incomplete | None = None,
+        private_key: Incomplete | None = None,
+        client_id: Incomplete | None = None,
+        client_secret: Incomplete | None = None,
+        access_token: Incomplete | None = None,
         *args,
         **kwargs,
     ) -> None: ...

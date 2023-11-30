@@ -5,6 +5,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.Location;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.filters.CompositeFilter;
 import com.intellij.execution.filters.FileHyperlinkInfo;
 import com.intellij.execution.filters.Filter;
@@ -216,5 +217,16 @@ public class SMTRunnerConsoleProperties extends TestConsoleProperties implements
    */
   public boolean isUndefined() {
     return false;
+  }
+
+  @Override
+  public @NotNull String getWindowId() {
+    if (myConfiguration instanceof RunConfiguration configuration) {
+      RunDashboardManager manager = RunDashboardManager.getInstance(getProject());
+      if (manager.isShowInDashboard(configuration)) {
+        return manager.getToolWindowId();
+      }
+    }
+    return super.getWindowId();
   }
 }

@@ -19,7 +19,6 @@ import java.util.function.ObjIntConsumer;
 import java.util.function.ToIntFunction;
 
 public final class DFSTBuilder<Node> {
-
   private final @NotNull OutboundSemiGraph<Node> myGraph;
 
   private final ToIntFunction<Node> myNodeToNNumber;
@@ -204,7 +203,7 @@ public final class DFSTBuilder<Node> {
 
         // we have returned to the node
         if (index[i] == -1) {
-          // actually we visit node first time, prepare
+          // actually, we visit node first time, prepare
           index[i] = dfsIndex;
           lowLink[i] = dfsIndex;
           dfsIndex++;

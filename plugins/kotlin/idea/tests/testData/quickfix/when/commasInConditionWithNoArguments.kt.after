@@ -13,4 +13,5 @@ fun test(i: Int, j: Int) {
         else -> { /* other code */ }
     }
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CommaInWhenConditionWithoutArgumentFix

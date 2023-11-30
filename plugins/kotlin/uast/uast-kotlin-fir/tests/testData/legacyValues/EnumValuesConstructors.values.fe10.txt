@@ -1,5 +1,5 @@
-UFile (package = ) [public enum Style {...]
-    UClass (name = Style) [public enum Style {...}]
+UFile (package = ) [public final enum Style {...]
+    UClass (name = Style) [public final enum Style {...}]
         UField (name = value) [@org.jetbrains.annotations.Nullable private final var value: java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
         UEnumConstant (name = SYSTEM) [@null SYSTEM("system")] = Undetermined

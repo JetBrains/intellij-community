@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.statistics;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,6 +15,5 @@ public abstract class Statistician<T,Loc> {
    * until any one of them returns a non-null value. An extension can return {@link StatisticsInfo#EMPTY} meaning
    * that the statistics shouldn't be tracked for {@code element}.
    */
-  @Nullable
-  public abstract StatisticsInfo serialize(@NotNull T element, @NotNull Loc location);
+  public abstract @Nullable StatisticsInfo serialize(@NotNull T element, @NotNull Loc location);
 }

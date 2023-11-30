@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.uiDslTestAction
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
 import com.intellij.ui.dsl.builder.COLUMNS_LARGE
 import com.intellij.ui.dsl.builder.columns
@@ -13,7 +14,7 @@ import javax.swing.JEditorPane
 @ApiStatus.Internal
 internal class OthersPanel {
 
-  val panel = panel {
+  val panel: DialogPanel = panel {
     group("DslLabel text update") {
       lateinit var dslText: JEditorPane
 

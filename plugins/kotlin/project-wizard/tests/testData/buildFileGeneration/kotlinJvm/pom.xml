@@ -27,6 +27,10 @@
             <url>KOTLIN_BOOTSTRAP_REPO</url>
         </repository>
         <repository>
+            <id>cache-redirector.jetbrains.maven.pkg.jetbrains.space.kotlin.p.kotlin.kotlin-ide-plugin-dependencies</id>
+            <url>KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO</url>
+        </repository>
+        <repository>
             <id>jetbrains.kotlin.p.kotlin.dev</id>
             <url>KOTLIN_REPO</url>
         </repository>
@@ -40,6 +44,10 @@
         <pluginRepository>
             <id>cache-redirector.jetbrains.maven.pkg.jetbrains.space.kotlin.p.kotlin.bootstrap</id>
             <url>KOTLIN_BOOTSTRAP_REPO</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>cache-redirector.jetbrains.maven.pkg.jetbrains.space.kotlin.p.kotlin.kotlin-ide-plugin-dependencies</id>
+            <url>KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO</url>
         </pluginRepository>
         <pluginRepository>
             <id>jetbrains.kotlin.p.kotlin.dev</id>

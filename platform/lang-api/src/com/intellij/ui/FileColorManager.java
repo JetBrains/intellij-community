@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
@@ -24,31 +24,23 @@ public abstract class FileColorManager {
 
   public abstract Project getProject();
 
-  @Nullable
-  public abstract Color getColor(@NotNull @NonNls String id);
+  public abstract @Nullable Color getColor(@NotNull @NonNls String id);
 
-  @NotNull
-  @Nls
-  public abstract String getColorName(@NotNull @NonNls String id);
+  public abstract @NotNull @Nls String getColorName(@NotNull @NonNls String id);
 
-  @Unmodifiable
-  public abstract Collection<@NonNls String> getColorIDs();
+  public abstract @Unmodifiable Collection<@NonNls String> getColorIDs();
 
   public abstract Collection<@Nls String> getColorNames();
 
-  @Nullable
-  public abstract Color getFileColor(@NotNull final VirtualFile file);
+  public abstract @Nullable Color getFileColor(final @NotNull VirtualFile file);
 
-  @Nullable
-  public abstract Color getScopeColor(@NotNull String scopeName);
+  public abstract @Nullable Color getScopeColor(@NotNull String scopeName);
 
-  public abstract boolean isShared(@NotNull final String scopeName);
+  public abstract boolean isShared(final @NotNull String scopeName);
 
-  @Nullable
-  public abstract Color getRendererBackground(VirtualFile file);
+  public abstract @Nullable Color getRendererBackground(VirtualFile file);
 
-  @Nullable
-  public abstract Color getRendererBackground(PsiFile file);
+  public abstract @Nullable Color getRendererBackground(PsiFile file);
 
   public abstract void addScopeColor(@NotNull String scopeName, @NotNull String colorName, boolean isProjectLevel);
 }

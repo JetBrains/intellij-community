@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.codeInspection.InspectionManager;
@@ -59,8 +59,7 @@ public class DefaultDomAnnotator implements Annotator {
   }
 
 
-  @NotNull
-  protected DomElementAnnotationsManagerImpl getAnnotationsManager(@NotNull Project project) {
+  protected @NotNull DomElementAnnotationsManagerImpl getAnnotationsManager(@NotNull Project project) {
     return (DomElementAnnotationsManagerImpl)DomElementAnnotationsManager.getInstance(project);
   }
 
@@ -93,8 +92,7 @@ public class DefaultDomAnnotator implements Annotator {
     }
   }
 
-  @Nullable
-  private static DomElement getDomElement(@NotNull PsiElement psiElement, @NotNull DomManager myDomManager) {
+  private static @Nullable DomElement getDomElement(@NotNull PsiElement psiElement, @NotNull DomManager myDomManager) {
     if (psiElement instanceof XmlTag) {
       return myDomManager.getDomElement((XmlTag)psiElement);
     }

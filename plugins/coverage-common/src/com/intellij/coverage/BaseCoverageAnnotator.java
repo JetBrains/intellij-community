@@ -1,7 +1,5 @@
 package com.intellij.coverage;
 
-import com.intellij.coverage.view.CoverageView;
-import com.intellij.coverage.view.CoverageViewManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -15,12 +13,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
   private final Project myProject;
-  private volatile boolean myIsLoading = false;
-
-  @Override
-  public boolean isLoading() {
-    return myIsLoading;
-  }
+  private boolean myHasVcsFilteredChildren;
 
   @Nullable
   protected abstract Runnable createRenewRequest(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager);
@@ -30,9 +23,7 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
   }
 
   @Override
-  public void onSuiteChosen(CoverageSuitesBundle newSuite) {
-    myIsLoading = false;
-  }
+  public void onSuiteChosen(@Nullable CoverageSuitesBundle newSuite) { }
 
   @Override
   public void renewCoverageData(@NotNull final CoverageSuitesBundle suite, @NotNull final CoverageDataManager dataManager) {
@@ -43,29 +34,20 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
       ProgressManager.getInstance().run(new Task.Backgroundable(project, CoverageBundle.message("coverage.view.loading.data"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
-          myIsLoading = true;
-          try {
             request.run();
-          }
-          finally {
-            myIsLoading = false;
-          }
         }
 
         @Override
         public void onSuccess() {
           if (project.isDisposed()) return;
-          final CoverageView coverageView = CoverageViewManager.getInstance(project).getToolwindow(suite);
-          if (coverageView != null) {
-            coverageView.resetView();
-          }
+          dataManager.coverageDataCalculated(suite);
         }
 
         @Override
         public void onCancel() {
           super.onCancel();
           if (project.isDisposed()) return;
-          CoverageDataManager.getInstance(project).chooseSuitesBundle(null);
+          dataManager.closeSuitesBundle(suite);
         }
       });
     }
@@ -73,6 +55,14 @@ public abstract class BaseCoverageAnnotator implements CoverageAnnotator {
 
   public Project getProject() {
     return myProject;
+  }
+
+  public boolean hasVcsFilteredChildren() {
+    return myHasVcsFilteredChildren;
+  }
+
+  public void setVcsFilteredChildren(boolean hasVcsFilteredChildren) {
+    myHasVcsFilteredChildren = hasVcsFilteredChildren;
   }
 
   public static class FileCoverageInfo {

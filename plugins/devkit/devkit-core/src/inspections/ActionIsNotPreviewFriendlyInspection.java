@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -19,7 +19,7 @@ import org.jetbrains.uast.*;
 import java.util.Set;
 import java.util.function.Predicate;
 
-public class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBase {
+final class ActionIsNotPreviewFriendlyInspection extends DevKitUastInspectionBase {
 
   private static final String[] METHODS_TO_IGNORE_CLASS = {
     "generatePreview", "getFileModifierForPreview", "applyFixForPreview", "startInWriteAction", "invokeForPreview"};

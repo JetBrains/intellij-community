@@ -6,8 +6,8 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.OptionPaneRenderer;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -24,7 +24,7 @@ import java.util.Objects;
 /**
  * @author Dmitry Batkovich
  */
-public class EditSettingsAction extends InspectionViewActionBase {
+public final class EditSettingsAction extends InspectionViewActionBase {
   private static final Logger LOG = Logger.getInstance(EditSettingsAction.class);
 
   public EditSettingsAction() {

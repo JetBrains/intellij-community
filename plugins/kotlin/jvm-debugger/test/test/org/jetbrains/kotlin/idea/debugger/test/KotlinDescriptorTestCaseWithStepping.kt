@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -15,6 +15,8 @@ import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.impl.PositionUtil
+import com.intellij.debugger.ui.impl.watch.MethodsTracker
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.jarRepository.JarRepositoryManager
@@ -28,12 +30,13 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.xdebugger.XDebuggerTestUtil
 import com.intellij.xdebugger.frame.XStackFrame
 import junit.framework.AssertionFailedError
+import junit.framework.TestCase
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
-import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider
+import org.jetbrains.kotlin.idea.debugger.getContainingMethod
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepTarget
 import org.jetbrains.kotlin.idea.debugger.test.util.KotlinOutputChecker
@@ -83,12 +86,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     private fun SuspendContextImpl.getKotlinStackFrames(): List<KotlinStackFrame> {
-        val proxy = frameProxy ?: return emptyList()
         if (myInProgress) {
-            val positionManager = KotlinPositionManager(debugProcess)
-            return positionManager.createStackFrames(
-                proxy, debugProcess, proxy.location()
-            ).filterIsInstance<KotlinStackFrame>()
+            val proxy = frameProxy ?: return emptyList()
+            return KotlinPositionManager(debugProcess)
+              .createStackFrames(StackFrameDescriptorImpl(proxy, MethodsTracker()))
+              .filterIsInstance<KotlinStackFrame>()
         }
         return emptyList()
     }
@@ -167,6 +169,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
         when (instruction.kind) {
             SteppingInstructionKind.StepInto -> loop(instruction.arg) { doStepInto(false, null) }
+            SteppingInstructionKind.StepIntoIgnoreFilters -> loop(instruction.arg) { doStepInto(true, null) }
             SteppingInstructionKind.StepOut -> loop(instruction.arg) { doStepOut() }
             SteppingInstructionKind.StepOver -> loop(instruction.arg) { doStepOver() }
             SteppingInstructionKind.ForceStepOver -> loop(instruction.arg) { doStepOver(ignoreBreakpoints = true) }
@@ -249,7 +252,10 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             try {
                 doStepInto(ignoreFilters, filters[chooseFromList - 1])
             } catch (e: IndexOutOfBoundsException) {
-                val elementText = runReadAction { debuggerContext.sourcePosition.elementAt.getElementTextWithContext() }
+                val elementText = runReadAction {
+                    val elementAt = debuggerContext.sourcePosition.elementAt ?: return@runReadAction "<no-element>"
+                    elementAt.getElementTextWithContext()
+                }
                 throw AssertionError("Couldn't find smart step into command at: \n$elementText", e)
             }
         }
@@ -261,8 +267,20 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             .findStepIntoTargets(position, debuggerSession)
             .blockingGet(XDebuggerTestUtil.TIMEOUT_MS)
             ?: error("Couldn't calculate smart step targets")
+
+        // the resulting order is different from the order in code when stepping some methods are filtered
+        // due to de-prioritisation in JvmSmartStepIntoHandler.reorderWithSteppingFilters
+        if (stepTargets.none { DebugProcessImpl.isClassFiltered(it.className)}) {
+            try {
+                TestCase.assertEquals("Smart step targets are not sorted by position in tree",
+                                      stepTargets.sortedByPositionInTree().map { runReadAction { it.presentation } },
+                                      stepTargets.map { runReadAction { it.presentation } })
+            } catch (e: AssertionFailedError) {
+                thrownExceptions.add(e)
+            }
+        }
         return runReadAction {
-            stepTargets.sortedByPositionInTree().mapNotNull { stepTarget ->
+            stepTargets.mapNotNull { stepTarget ->
                 when (stepTarget) {
                     is KotlinSmartStepTarget -> stepTarget.createMethodFilter()
                     is MethodSmartStepTarget -> BasicStepMethodFilter(stepTarget.method, stepTarget.getCallingExpressionLines())
@@ -274,32 +292,22 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
     private fun List<SmartStepTarget>.sortedByPositionInTree(): List<SmartStepTarget> {
         if (isEmpty()) return emptyList()
-        val sortedTargets = MutableList(size) { first() }
-        for ((i, indexInTree) in getIndicesInTree().withIndex()) {
-            sortedTargets[indexInTree] = get(i)
-        }
-        return sortedTargets
-    }
-
-    private fun List<SmartStepTarget>.getIndicesInTree(): List<Int> {
-        val targetsIndicesInTree = MutableList(size) { 0 }
+        val sorted = mutableListOf<SmartStepTarget>()
         runReadAction {
-            val elementAt = debuggerContext.sourcePosition.elementAt
-            val topmostElement = getTopmostElementAtOffset(elementAt, elementAt.textRange.startOffset)
-            topmostElement.accept(object : KtTreeVisitorVoid() {
-                private var elementIndex = 0
+            val elementAt = debuggerContext.sourcePosition.elementAt ?: error("Can not sort smart targets source position element is not defined")
+            val searchEntryPoint = elementAt.getContainingMethod() ?: error("Can not sort smart targets as cannot find the containing element")
+            searchEntryPoint.accept(object : KtTreeVisitorVoid() {
                 override fun visitElement(element: PsiElement) {
-                    for ((i, target) in withIndex()) {
-                        if (element === target.highlightElement) {
-                            targetsIndicesInTree[i] = elementIndex++
-                            break
-                        }
+                    val target = find { it.highlightElement === element }
+                    if (target != null) {
+                        sorted.add(target)
                     }
                     super.visitElement(element)
                 }
             })
         }
-        return targetsIndicesInTree
+        assert(sorted.size == size) { "Tree visitor was supposed to find all $size smart targets, but only ${sorted.size} found" }
+        return sorted
     }
 
     protected fun SuspendContextImpl.runActionInSuspendCommand(action: SuspendContextImpl.() -> Unit) {

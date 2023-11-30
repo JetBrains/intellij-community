@@ -34,7 +34,6 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +44,10 @@ import java.util.function.Supplier;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class CreateFromTemplateActionBase extends AnAction {
+  public CreateFromTemplateActionBase() {
+    super();
+  }
+
   public CreateFromTemplateActionBase(@NlsActions.ActionText String title,
                                       @NlsActions.ActionDescription String description,
                                       Icon icon) {
@@ -101,7 +104,8 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     int count = template.getSegmentsCount();
     if (count == 0) return;
 
-    Set<String> variables = new HashSet<>();
+    // Using LinkedHashSet for a saving variables orders
+    Set<String> variables = new LinkedHashSet<>();
     for (int i = 0; i < count; i++) {
       variables.add(template.getSegmentName(i));
     }

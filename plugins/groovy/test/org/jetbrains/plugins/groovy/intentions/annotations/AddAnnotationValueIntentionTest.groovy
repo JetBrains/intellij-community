@@ -8,7 +8,7 @@ import org.jetbrains.plugins.groovy.intentions.GrIntentionTestCase
 class AddAnnotationValueIntentionTest extends GrIntentionTestCase {
 
   AddAnnotationValueIntentionTest() {
-    super(AddAnnotationValueIntention)
+    super("Add 'value='")
   }
 
   void 'test add value'() {

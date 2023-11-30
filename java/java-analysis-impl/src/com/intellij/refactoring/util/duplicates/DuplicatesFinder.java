@@ -302,10 +302,10 @@ public final class DuplicatesFinder {
       if (type1 instanceof PsiImmediateClassType && type2 instanceof PsiImmediateClassType) {
         final PsiClass psiClass1 = ((PsiImmediateClassType)type1).resolve();
         final PsiClass psiClass2 = ((PsiImmediateClassType)type2).resolve();
-        if (!(psiClass1 instanceof PsiAnonymousClass &&
-              psiClass2 instanceof PsiAnonymousClass &&
-              psiClass1.getManager().areElementsEquivalent(((PsiAnonymousClass)psiClass1).getBaseClassType().resolve(),
-                                                           ((PsiAnonymousClass)psiClass2).getBaseClassType().resolve()))) {
+        if (!(psiClass1 instanceof PsiAnonymousClass anonymousClass1 &&
+              psiClass2 instanceof PsiAnonymousClass anonymousClass2 &&
+              anonymousClass1.getBaseClassType().equals(anonymousClass2.getBaseClassType())
+        )) {
           return false;
         }
       }

@@ -159,6 +159,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 public void testCeSeveralLambdas() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSeveralLambdas.kt");
                 }
+
+                @TestMetadata("samConstruction.kt")
+                public void testSamConstruction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/samConstruction.kt");
+                }
             }
         }
 
@@ -223,6 +228,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             public void testNestedContextClassReceivers() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/contextReceivers/nestedContextClassReceivers.kt");
             }
+
+            @TestMetadata("valContextReceiver.kt")
+            public void testValContextReceiver() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/contextReceivers/valContextReceiver.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -265,6 +275,16 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("functionCallWithSuspendFunctionInside.kt")
             public void testFunctionCallWithSuspendFunctionInside() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/functionCallWithSuspendFunctionInside.kt");
+            }
+
+            @TestMetadata("infixSuspendCall.kt")
+            public void testInfixSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/infixSuspendCall.kt");
+            }
+
+            @TestMetadata("operatorSuspendCall.kt")
+            public void testOperatorSuspendCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/operatorSuspendCall.kt");
             }
 
             @TestMetadata("primitivesCoertion.kt")
@@ -861,6 +881,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/lambdas/destructuringParam.kt");
             }
 
+            @TestMetadata("evalInFilter.kt")
+            public void testEvalInFilter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdas/evalInFilter.kt");
+            }
+
             @TestMetadata("inlineFunctionalExpression.kt")
             public void testInlineFunctionalExpression() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/lambdas/inlineFunctionalExpression.kt");
@@ -1356,6 +1381,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
             }
 
+            @TestMetadata("inlineWithAnonymousObject.kt")
+            public void testInlineWithAnonymousObject() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineWithAnonymousObject.kt");
+            }
+
             @TestMetadata("innerClass.kt")
             public void testInnerClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/innerClass.kt");
@@ -1454,6 +1484,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("ktij21963.kt")
             public void testKtij21963() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/ktij21963.kt");
+            }
+
+            @TestMetadata("ktij26694.kt")
+            public void testKtij26694() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/ktij26694.kt");
             }
 
             @TestMetadata("lambdaToString.kt")
@@ -1556,6 +1591,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
             }
 
+            @TestMetadata("privateMemberShadowing.kt")
+            public void testPrivateMemberShadowing() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateMemberShadowing.kt");
+            }
+
             @TestMetadata("privatePropertyWithExplicitDefaultGetter.kt")
             public void testPrivatePropertyWithExplicitDefaultGetter() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");
@@ -1569,6 +1609,21 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("privateToplevelProperty.kt")
             public void testPrivateToplevelProperty() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateToplevelProperty.kt");
+            }
+
+            @TestMetadata("properties.kt")
+            public void testProperties() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/properties.kt");
+            }
+
+            @TestMetadata("protectedGetterFromJavaInsideClass.kt")
+            public void testProtectedGetterFromJavaInsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaInsideClass.kt");
+            }
+
+            @TestMetadata("protectedGetterFromJavaOutsideClass.kt")
+            public void testProtectedGetterFromJavaOutsideClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedGetterFromJavaOutsideClass.kt");
             }
 
             @TestMetadata("protectedMember.kt")
@@ -1634,6 +1689,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("unsafeCall.kt")
             public void testUnsafeCall() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
+            }
+
+            @TestMetadata("unsignedArrayOf.kt")
+            public void testUnsignedArrayOf() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/unsignedArrayOf.kt");
             }
 
             @TestMetadata("unusedTransitiveDependencies.kt")
@@ -1771,6 +1831,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/multipleBreakpoints/isInsideInlineLambda.kt");
             }
 
+            @TestMetadata("isInsideLocalFun.kt")
+            public void testIsInsideLocalFun() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/isInsideLocalFun.kt");
+            }
+
             @TestMetadata("lambdaParameters.kt")
             public void testLambdaParameters() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/lambdaParameters.kt");
@@ -1829,6 +1894,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("thisLabels.kt")
             public void testThisLabels() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/thisLabels.kt");
+            }
+
+            @TestMetadata("typeArguments.kt")
+            public void testTypeArguments() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/typeArguments.kt");
             }
 
             @TestMetadata("whenEntry.kt")

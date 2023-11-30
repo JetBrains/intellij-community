@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("LiftReturnOrAssignment")
-
 package com.intellij.platform.buildScripts.testFramework
 
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.buildScripts.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.runtime.repository.ProductMode
 import com.intellij.rt.execution.junit.FileComparisonData
 import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ExceptionUtilRt
@@ -16,13 +16,14 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.buildDistributions
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
-import com.intellij.platform.buildScripts.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
+import org.junit.jupiter.api.TestInfo
 import org.opentest4j.TestAbortedException
 import java.net.http.HttpConnectTimeoutException
 import java.nio.file.Files
@@ -53,8 +54,6 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
     BuildOptions.MAC_SIGN_STEP,
     BuildOptions.MAC_NOTARIZE_STEP,
   ))
-  options.buildMacArtifactsWithRuntime = false
-  options.buildMacArtifactsWithoutRuntime = false
   options.buildUnixSnaps = false
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
   options.useCompiledClassesFromProjectOutput = true
@@ -79,12 +78,14 @@ suspend inline fun createBuildContext(
 // don't expose BuildDependenciesCommunityRoot
 fun runTestBuild(homePath: Path,
                  productProperties: ProductProperties,
+                 traceSpanName: String,
                  buildTools: ProprietaryBuildTools,
                  buildOptionsCustomizer: (BuildOptions) -> Unit = {}) {
   runTestBuild(homePath = homePath,
                productProperties = productProperties,
                buildTools = buildTools,
-               traceSpanName = null,
+               traceSpanName = traceSpanName,
+               isReproducibilityTestAllowed = true,
                buildOptionsCustomizer = buildOptionsCustomizer)
 }
 
@@ -93,25 +94,28 @@ fun runTestBuild(
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: BuildDependenciesCommunityRoot = BuildDependenciesCommunityRoot(homePath.resolve("community")),
-  traceSpanName: String? = null,
+  traceSpanName: String,
   isReproducibilityTestAllowed: Boolean = true,
   build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) },
   onSuccess: suspend (context: BuildContext) -> Unit = {},
   buildOptionsCustomizer: (BuildOptions) -> Unit = {}
 ) {
   runBlocking(Dispatchers.Default) {
-    asSingleTraceFile(productProperties.baseFileName + (traceSpanName?.let { "-$it" } ?: "")) {
+    asSingleTraceFile("${productProperties.baseFileName}-$traceSpanName") {
       if (isReproducibilityTestAllowed) {
         val reproducibilityTest = BuildArtifactsReproducibilityTest()
         repeat(reproducibilityTest.iterations) { iterationNumber ->
           launch {
-            val buildContext = BuildContextImpl.createContext(communityHome = communityHomePath,
-                                                              projectHome = homePath,
-                                                              productProperties = productProperties,
-                                                              proprietaryBuildTools = buildTools,
-                                                              options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer).also {
-                                                                reproducibilityTest.configure(it)
-                                                              })
+            val buildContext = BuildContextImpl.createContext(
+              communityHome = communityHomePath,
+              projectHome = homePath,
+              productProperties = productProperties,
+              proprietaryBuildTools = buildTools,
+              setupTracer = false,
+              options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer).also {
+                reproducibilityTest.configure(it)
+              },
+            )
             doRunTestBuild(
               context = buildContext,
               traceSpanName = "#$iterationNumber",
@@ -130,6 +134,7 @@ fun runTestBuild(
                                                    projectHome = homePath,
                                                    productProperties = productProperties,
                                                    proprietaryBuildTools = buildTools,
+                                                   setupTracer = false,
                                                    options = createBuildOptionsForTest(productProperties, buildOptionsCustomizer)),
           traceSpanName = traceSpanName,
           build = { context ->
@@ -146,11 +151,11 @@ fun runTestBuild(
 // FIXME: test reproducibility
 suspend fun runTestBuild(
   context: BuildContext,
-  traceSpanName: String? = null,
+  traceSpanName: String,
   build: suspend (context: BuildContext) -> Unit = { buildDistributions(it) }
 ) {
-  asSingleTraceFile(context.productProperties.baseFileName + (traceSpanName?.let { "-$it" } ?: "")) {
-    doRunTestBuild(context, traceSpanName, build)
+  asSingleTraceFile("${context.productProperties.baseFileName}-$traceSpanName") {
+    doRunTestBuild(context = context, traceSpanName = traceSpanName, build = build)
   }
 }
 
@@ -162,9 +167,16 @@ private suspend fun doRunTestBuild(context: BuildContext, traceSpanName: String?
   try {
     spanBuilder(traceSpanName ?: "test build of ${context.productProperties.baseFileName}")
       .setAttribute("outDir", outDir.toString())
-      .useWithScope2 { span ->
+      .useWithScope { span ->
         try {
           build(context)
+          val jetBrainsClientMainModule = context.productProperties.embeddedJetBrainsClientMainModule
+          if (jetBrainsClientMainModule != null && context.generateRuntimeModuleRepository) {
+            val softly = SoftAssertions()
+            RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct(jetBrainsClientMainModule, ProductMode.FRONTEND, context, softly)
+            softly.assertAll()
+          }
+
         }
         catch (e: CancellationException) {
           throw e
@@ -228,25 +240,32 @@ private fun copyDebugLog(productProperties: ProductProperties, messages: BuildMe
   }
 }
 
-private inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
+private suspend inline fun asSingleTraceFile(traceSpanName: String, build: () -> Unit) {
   val traceFile = TestLoggerFactory.getTestLogDir().resolve("$traceSpanName-trace.json")
-  TracerProviderManager.setOutput(traceFile)
+  JaegerJsonSpanExporterManager.setOutput(traceFile)
   try {
     build()
   }
   finally {
-    publishTraceFile()
+    publishTraceFile(traceFile)
   }
 }
 
-private fun publishTraceFile() {
-  val trace = TraceManager.finish()?.takeIf { it.exists() } ?: return
+private suspend fun publishTraceFile(traceFile: Path) {
   try {
-    println("Performance report is written to $trace")
-    println("##teamcity[publishArtifacts '$trace']")
+    TraceManager.shutdown()
+    if (Files.notExists(traceFile)) {
+      return
+    }
+
+    println("Performance report is written to $traceFile")
+    println("##teamcity[publishArtifacts '$traceFile']")
   }
   catch (e: Exception) {
     System.err.println("cannot write performance report:")
     e.printStackTrace(System.err)
   }
 }
+
+val TestInfo.spanName: String
+  get() = "${testClass.get().simpleName}.${testMethod.orElse(null)?.name ?: "unknown"}"

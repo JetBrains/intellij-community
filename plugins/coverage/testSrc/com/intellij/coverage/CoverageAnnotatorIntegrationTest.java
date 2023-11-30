@@ -1,18 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
+import com.intellij.coverage.analysis.CoverageInfoCollector;
+import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator;
+import com.intellij.coverage.analysis.PackageAnnotator;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiPackage;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
@@ -62,7 +62,6 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
   }
 
   public void testExcludeEverythingFromCoverage() {
-    PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage("p");
     JavaCoverageEngine engine = new JavaCoverageEngine() {
       @Override
       public boolean acceptedByFilters(@NotNull PsiFile psiFile, @NotNull CoverageSuitesBundle suite) {
@@ -81,12 +80,12 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
         };
       }
     };
-    new JavaCoverageClassesAnnotator(suite, myProject, new PackageAnnotator.Annotator() {
+    new JavaCoverageClassesAnnotator(suite, myProject, new CoverageInfoCollector() {
       @Override
-      public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+      public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
         Assert.fail("No classes are accepted by filter");
       }
-    }).visitRootPackage(psiPackage);
+    }).visitSuite();
   }
 
   public void testMultipleSourceRoots() {
@@ -109,16 +108,16 @@ public class CoverageAnnotatorIntegrationTest extends JavaModuleTestCase {
         };
       }
     };
-    PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage("p");
+    JavaCoverageSuite javaCoverageSuite = (JavaCoverageSuite)suite.getSuites()[0];
+    javaCoverageSuite.setIncludeFilters(new String[]{"p.*"});
     Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> dirs = new HashMap<>();
-    new JavaCoverageClassesAnnotator(suite, myProject, new PackageAnnotator.Annotator() {
+    new JavaCoverageClassesAnnotator(suite, myProject, new CoverageInfoCollector() {
       @Override
-      public void annotateSourceDirectory(VirtualFile virtualFile,
-                                          PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
-                                          Module module) {
+      public void addSourceDirectory(VirtualFile virtualFile,
+                                     PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
         dirs.put(virtualFile, packageCoverageInfo);
       }
-    }).visitRootPackage(psiPackage);
+    }).visitSuite();
 
     assertEquals(2, dirs.size());
     for (PackageAnnotator.PackageCoverageInfo coverageInfo : dirs.values()) {

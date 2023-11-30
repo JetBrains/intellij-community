@@ -19,7 +19,7 @@ import javax.swing.KeyStroke
 @ApiStatus.Experimental
 @ApiStatus.Internal
 object ShortcutsRenderingUtil {
-  val SHORTCUT_PART_SEPARATOR = NON_BREAK_SPACE.repeat(3)
+  val SHORTCUT_PART_SEPARATOR: String = NON_BREAK_SPACE.repeat(3)
 
   /**
    * @param actionId
@@ -109,13 +109,13 @@ object ShortcutsRenderingUtil {
     return builder.toString() to ranges
   }
 
-  fun getGotoActionData(@NonNls actionId: String): Pair<String, List<IntRange>> {
+  fun getGotoActionData(@NonNls actionId: String, needLogIncorrectInput: Boolean): Pair<String, List<IntRange>> {
     val action = ActionManager.getInstance().getAction(actionId)
     val actionName = if (action != null) {
       action.templatePresentation.text.replaceSpacesWithNonBreakSpaces()
     }
     else {
-      thisLogger().error("Failed to find action with id: $actionId")
+      if (needLogIncorrectInput) thisLogger().error("Failed to find action with id: $actionId")
       actionId
     }
 
@@ -144,6 +144,7 @@ object ShortcutsRenderingUtil {
     KeyEvent.VK_RIGHT -> "→"
     KeyEvent.VK_UP -> "↑"
     KeyEvent.VK_DOWN -> "↓"
+    KeyEvent.VK_BACK_SLASH -> """\"""
     else -> if (SystemInfo.isMac) getMacKeyString(code) else getLinuxWinKeyString(code)
   }.replaceSpacesWithNonBreakSpaces()
 

@@ -61,7 +61,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
 
     override fun applyTo(element: KtLambdaExpression, editor: Editor?) {
         val functionDescriptor = element.functionLiteral.descriptor as? AnonymousFunctionDescriptor ?: return
-        val resultingFunction = convertLambdaToFunction(element, functionDescriptor) ?: return
+        val resultingFunction = Holder.convertLambdaToFunction(element, functionDescriptor) ?: return
         val argument = when (val parent = resultingFunction.parent) {
             is KtLambdaArgument -> parent
             is KtLabeledExpression -> parent.replace(resultingFunction).parent as? KtLambdaArgument
@@ -73,7 +73,7 @@ class LambdaToAnonymousFunctionIntention : SelfTargetingIntention<KtLambdaExpres
 
     private fun ValueParameterDescriptor.isDestructuring() = this is ValueParameterDescriptorImpl.WithDestructuringDeclaration
 
-    companion object {
+    object Holder {
         fun convertLambdaToFunction(
             lambda: KtLambdaExpression,
             functionDescriptor: FunctionDescriptor,

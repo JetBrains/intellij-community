@@ -46,6 +46,8 @@ class MavenWrapperEventLogNotification {
 
     @JvmStatic
     fun errorDownloading(project: Project, error: String) {
+      if (ApplicationManager.getApplication().isUnitTestMode) return; // project leak in tests
+
       val notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("Maven") ?: return
       ApplicationManager.getApplication().invokeLater {
         notificationGroup

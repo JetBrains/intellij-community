@@ -6,7 +6,6 @@ import com.intellij.codeInsight.hint.EditorHintListener;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -16,8 +15,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.BitUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,10 +42,8 @@ public class LookupManagerImpl extends LookupManager {
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
       @Override
-      public void hintShown(final Project project,
-                            @NotNull final LightweightHint hint,
-                            final int flags) {
-        if (project == myProject) {
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
+        if (editor.getProject() == myProject) {
           Lookup lookup = getActiveLookup();
           if (lookup != null && BitUtil.isSet(flags, HintManager.HIDE_BY_LOOKUP_ITEM_CHANGE)) {
             lookup.addLookupListener(new LookupListener() {
@@ -115,7 +114,7 @@ public class LookupManagerImpl extends LookupManager {
 
     final LookupImpl lookup = createLookup(editor, arranger, myProject);
 
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     myActiveLookup = lookup;
     myActiveLookupEditor = editor;

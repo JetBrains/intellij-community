@@ -1,52 +1,48 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class MoveIntoIfBranchesAction implements IntentionAction {
+public class MoveIntoIfBranchesAction implements ModCommandAction {
   @Override
-  public @IntentionName @NotNull String getText() {
+  public @NotNull @IntentionFamilyName String getFamilyName() {
     return JavaBundle.message("intention.name.move.into.if.branches");
   }
 
-  @Override
-  public @NotNull @IntentionFamilyName String getFamilyName() {
-    return getText();
-  }
-
-  private static List<PsiStatement> extractStatements(Editor editor, PsiFile file) {
+  private static List<PsiStatement> extractStatements(@NotNull ActionContext context) {
+    PsiFile file = context.file();
     if (!(file instanceof PsiJavaFile)) return Collections.emptyList();
-    SelectionModel model = editor.getSelectionModel();
-    if (!model.hasSelection()) {
-      int offset = editor.getCaretModel().getOffset();
+    TextRange selection = context.selection();
+    if (selection.isEmpty()) {
+      int offset = context.offset();
       PsiElement pos = file.findElementAt(offset);
       PsiStatement statement = PsiTreeUtil.getParentOfType(pos, PsiStatement.class, false, PsiMember.class, PsiCodeBlock.class);
       return ContainerUtil.createMaybeSingletonList(statement);
     }
-    int startOffset = model.getSelectionStart();
-    int endOffset = model.getSelectionEnd();
+    int startOffset = selection.getStartOffset();
+    int endOffset = selection.getEndOffset();
     PsiElement[] elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
     return StreamEx.of(elements)
       .map(e -> tryCast(e, PsiStatement.class))
@@ -82,20 +78,26 @@ public class MoveIntoIfBranchesAction implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    List<PsiStatement> statements = extractStatements(editor, file);
-    if (statements.isEmpty()) return false;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
+    List<PsiStatement> statements = extractStatements(context);
+    if (statements.isEmpty()) return null;
     PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statements.get(0));
-    return prev instanceof PsiIfStatement && !hasConflictingDeclarations((PsiIfStatement)prev, statements);
+    if (!(prev instanceof PsiIfStatement ifStatement) || hasConflictingDeclarations(ifStatement, statements)) return null;
+    return Presentation.of(getFamilyName());
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    List<PsiStatement> statements = extractStatements(editor, file);
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    return ModCommand.psiUpdate(context.file(), f -> invoke(context.withFile(f)));
+  }
+  
+  private static void invoke(@NotNull ActionContext context) {
+    List<PsiStatement> statements = extractStatements(context);
     if (statements.isEmpty()) return;
     PsiIfStatement ifStatement = tryCast(PsiTreeUtil.skipWhitespacesAndCommentsBackward(statements.get(0)), PsiIfStatement.class);
     if (ifStatement == null || hasConflictingDeclarations(ifStatement, statements)) return;
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
     PsiStatement thenBranch = ifStatement.getThenBranch();
     if (thenBranch == null) {
       ifStatement.setThenBranch(factory.createStatementFromText("{}", null));
@@ -120,10 +122,5 @@ public class MoveIntoIfBranchesAction implements IntentionAction {
     thenBlock.addRangeBefore(statements.get(0), statements.get(statements.size() - 1), thenBrace);
     elseBlock.addRangeBefore(statements.get(0), statements.get(statements.size() - 1), elseBrace);
     ifStatement.getParent().deleteChildRange(statements.get(0), statements.get(statements.size() - 1));
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

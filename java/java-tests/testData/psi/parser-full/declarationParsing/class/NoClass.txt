@@ -14,13 +14,17 @@ PsiJavaFile:NoClass.java
           <empty list>
       PsiJavaToken:SEMICOLON(';')
   PsiWhiteSpace('\n\n')
-  PsiModifierList:public
-    PsiKeyword:public('public')
-  PsiErrorElement:'class' or 'interface' expected
-    <empty list>
-  PsiWhiteSpace(' ')
-  PsiErrorElement:'class' or 'interface' expected
-    PsiIdentifier:ClassName('ClassName')
-    PsiJavaToken:LBRACE('{')
-    PsiWhiteSpace('\n')
-    PsiJavaToken:RBRACE('}')
+  PsiUnnamedClass
+    PsiMethod:ClassName
+      PsiModifierList:public
+        PsiKeyword:public('public')
+      PsiTypeParameterList
+        <empty list>
+      PsiWhiteSpace(' ')
+      PsiIdentifier:ClassName('ClassName')
+      PsiReferenceList
+        <empty list>
+      PsiCodeBlock
+        PsiJavaToken:LBRACE('{')
+        PsiWhiteSpace('\n')
+        PsiJavaToken:RBRACE('}')

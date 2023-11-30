@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
 import com.intellij.openapi.options.Configurable;
@@ -25,23 +25,19 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
 
   protected abstract boolean accept(@NotNull Configurable configurable);
 
-  @Nullable
-  public final Configurable find(ConfigurableGroup @NotNull ... groups) {
+  public final @Nullable Configurable find(ConfigurableGroup @NotNull ... groups) {
     return find(this, Arrays.asList(groups));
   }
 
-  @Nullable
-  public static Configurable findById(@NotNull String id, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static @Nullable Configurable findById(@NotNull String id, @NotNull List<? extends ConfigurableGroup> groups) {
     return find(configurable -> id.equals(getId(configurable)), groups);
   }
 
-  @Nullable
-  public static Configurable findByType(@NotNull Class<? extends Configurable> type, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static @Nullable Configurable findByType(@NotNull Class<? extends Configurable> type, @NotNull List<? extends ConfigurableGroup> groups) {
     return find(configurable -> ConfigurableWrapper.cast(type, configurable) != null, groups);
   }
 
-  @Nullable
-  public static Configurable find(@NotNull Predicate<? super Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static @Nullable Configurable find(@NotNull Predicate<? super Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
     for (ConfigurableGroup group : groups) {
       Configurable result = find(visitor, group.getConfigurables());
       if (result != null) {
@@ -51,8 +47,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     return null;
   }
 
-  @Nullable
-  public static Configurable find(@NotNull Predicate<? super Configurable> visitor, Configurable @NotNull [] configurables) {
+  public static @Nullable Configurable find(@NotNull Predicate<? super Configurable> visitor, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       if (visitor.test(configurable)) {
         return configurable;
@@ -70,8 +65,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     return null;
   }
 
-  @NotNull
-  public static List<Configurable> findAll(@NotNull Predicate<? super Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
+  public static @NotNull List<Configurable> findAll(@NotNull Predicate<? super Configurable> visitor, @NotNull List<? extends ConfigurableGroup> groups) {
     List<Configurable> list = new ArrayList<>();
     Consumer<Configurable> consumer = configurable -> {
       if (visitor.test(configurable)) {
@@ -94,8 +88,7 @@ public abstract class ConfigurableVisitor implements Predicate<Configurable> {
     }
   }
 
-  @NotNull
-  public static String getId(@NotNull Configurable configurable) {
+  public static @NotNull String getId(@NotNull Configurable configurable) {
     return configurable instanceof SearchableConfigurable
            ? ((SearchableConfigurable)configurable).getId()
            : configurable.getClass().getName();

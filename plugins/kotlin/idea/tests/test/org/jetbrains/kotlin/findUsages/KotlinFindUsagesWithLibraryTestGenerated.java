@@ -20,6 +20,413 @@ import org.junit.runner.RunWith;
 @TestMetadata("testData/findUsages/libraryUsages")
 public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractKotlinFindUsagesWithLibraryTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages")
+    public abstract static class FindLibraryFunctionUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/dataClassComponent")
+        public static class DataClassComponent extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("dataClassComponent.0.kt")
+            public void testDataClassComponent() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/dataClassComponent/dataClassComponent.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/enumFunctionUsages")
+        public static class EnumFunctionUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumFunctionUsages.0.kt")
+            public void testEnumFunctionUsages() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/enumFunctionUsages/enumFunctionUsages.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/enumValueOf")
+        public static class EnumValueOf extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumValueOf.0.kt")
+            public void testEnumValueOf() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/enumValueOf/enumValueOf.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/functionUsedInPlainText")
+        public static class FunctionUsedInPlainText extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("functionUsedInPlainText.0.kt")
+            public void testFunctionUsedInPlainText() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/functionUsedInPlainText/functionUsedInPlainText.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/highlightingOfSuperUsages")
+        public static class HighlightingOfSuperUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("highlightingOfSuperUsages.0.kt")
+            public void testHighlightingOfSuperUsages() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/highlightingOfSuperUsages/highlightingOfSuperUsages.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/interfaceOverrides")
+        public static class InterfaceOverrides extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("interfaceOverrides.0.kt")
+            public void testInterfaceOverrides() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/interfaceOverrides/interfaceOverrides.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromClassCompanion")
+        public static class InvokeFromClassCompanion extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("invokeFromClassCompanion.0.kt")
+            public void testInvokeFromClassCompanion() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromClassCompanion/invokeFromClassCompanion.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromClassCompanionExtension")
+        public static class InvokeFromClassCompanionExtension extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("invokeFromClassCompanionExtension.0.kt")
+            public void testInvokeFromClassCompanionExtension() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromClassCompanionExtension/invokeFromClassCompanionExtension.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromInterfaceCompanion")
+        public static class InvokeFromInterfaceCompanion extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("invokeFromInterfaceCompanion.0.kt")
+            public void testInvokeFromInterfaceCompanion() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromInterfaceCompanion/invokeFromInterfaceCompanion.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromParentCompanionClass")
+        public static class InvokeFromParentCompanionClass extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("invokeFromParentCompanionClass.0.kt")
+            public void testInvokeFromParentCompanionClass() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/invokeFromParentCompanionClass/invokeFromParentCompanionClass.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/javaAndKotlinOverrides")
+        public static class JavaAndKotlinOverrides extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("javaAndKotlinOverrides.0.kt")
+            public void testJavaAndKotlinOverrides() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/javaAndKotlinOverrides/javaAndKotlinOverrides.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/javaMethodUsages")
+        public static class JavaMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("javaMethodUsages.0.kt")
+            public void testJavaMethodUsages() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/javaMethodUsages/javaMethodUsages.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/jvmOverloaded")
+        public static class JvmOverloaded extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("jvmOverloaded.0.java")
+            public void testJvmOverloaded() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/jvmOverloaded/jvmOverloaded.0.java");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/jvmStaticFun")
+        public static class JvmStaticFun extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("jvmStaticFun.0.java")
+            public void testJvmStaticFun() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/jvmStaticFun/jvmStaticFun.0.java");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/jvmStaticJvmOverloadsFun")
+        public static class JvmStaticJvmOverloadsFun extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("jvmStaticJvmOverloadsFun.0.java")
+            public void testJvmStaticJvmOverloadsFun() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/jvmStaticJvmOverloadsFun/jvmStaticJvmOverloadsFun.0.java");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinAliasedMethodUsages")
+        public static class KotlinAliasedMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinAliasedMethodUsages.0.kt")
+            public void testKotlinAliasedMethodUsages() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinAliasedMethodUsages/kotlinAliasedMethodUsages.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinInterfaceImplThroughDelegate")
+        public static class KotlinInterfaceImplThroughDelegate extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinInterfaceImplThroughDelegate.0.kt")
+            public void testKotlinInterfaceImplThroughDelegate() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinInterfaceImplThroughDelegate/kotlinInterfaceImplThroughDelegate.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinInterfaceNoImplThroughDelegate")
+        public static class KotlinInterfaceNoImplThroughDelegate extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinInterfaceNoImplThroughDelegate.0.kt")
+            public void testKotlinInterfaceNoImplThroughDelegate() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinInterfaceNoImplThroughDelegate/kotlinInterfaceNoImplThroughDelegate.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinMethodAliasedUsages")
+        public static class KotlinMethodAliasedUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinMethodAliasedUsages.0.kt")
+            public void testKotlinMethodAliasedUsages() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinMethodAliasedUsages/kotlinMethodAliasedUsages.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinMethodUsages")
+        public static class KotlinMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinMethodUsages.0.kt")
+            public void testKotlinMethodUsages() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinMethodUsages/kotlinMethodUsages.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinMultiRefInImport")
+        public static class KotlinMultiRefInImport extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinMultiRefInImport.0.kt")
+            public void testKotlinMultiRefInImport() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinMultiRefInImport/kotlinMultiRefInImport.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinNestedClassMethodUsages")
+        public static class KotlinNestedClassMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinNestedClassMethodUsages.0.java")
+            public void testKotlinNestedClassMethodUsages() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinNestedClassMethodUsages/kotlinNestedClassMethodUsages.0.java");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinOverloadAndExtensionUsages")
+        public static class KotlinOverloadAndExtensionUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsages.0.kt")
+            public void testKotlinOverloadAndExtensionUsages() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinOverloadAndExtensionUsages/kotlinOverloadAndExtensionUsages.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinOverloadAndExtensionUsages2")
+        public static class KotlinOverloadAndExtensionUsages2 extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinOverloadAndExtensionUsages2.0.kt")
+            public void testKotlinOverloadAndExtensionUsages2() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinOverloadAndExtensionUsages2/kotlinOverloadAndExtensionUsages2.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelExternalFunction")
+        public static class KotlinTopLevelExternalFunction extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinTopLevelExternalFunction.0.kt")
+            public void testKotlinTopLevelExternalFunction() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelExternalFunction/kotlinTopLevelExternalFunction.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelMethodUsages")
+        public static class KotlinTopLevelMethodUsages extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinTopLevelMethodUsages.0.kt")
+            public void testKotlinTopLevelMethodUsages() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelMethodUsages/kotlinTopLevelMethodUsages.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelMethodUsagesMultifile")
+        public static class KotlinTopLevelMethodUsagesMultifile extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinTopLevelMethodUsagesMultifile.0.java")
+            public void testKotlinTopLevelMethodUsagesMultifile() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelMethodUsagesMultifile/kotlinTopLevelMethodUsagesMultifile.0.java");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelMethodUsagesWithRenamedFile")
+        public static class KotlinTopLevelMethodUsagesWithRenamedFile extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kotlinTopLevelMethodUsagesWithRenamedFile.0.java")
+            public void testKotlinTopLevelMethodUsagesWithRenamedFile() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/kotlinTopLevelMethodUsagesWithRenamedFile/kotlinTopLevelMethodUsagesWithRenamedFile.0.java");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/labeledReturns")
+        public static class LabeledReturns extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("labeledReturns.0.kt")
+            public void testLabeledReturns() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/labeledReturns/labeledReturns.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/nonBaseDeclarationFunctionAsPropName")
+        public static class NonBaseDeclarationFunctionAsPropName extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nonBaseDeclarationFunctionAsPropName.0.kt")
+            public void testNonBaseDeclarationFunctionAsPropName() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/nonBaseDeclarationFunctionAsPropName/nonBaseDeclarationFunctionAsPropName.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/libraryUsages/findLibraryFunctionUsages/overrides")
+        public static class Overrides extends AbstractKotlinFindUsagesWithLibraryTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("overrides.0.kt")
+            public void testOverrides() throws Exception {
+                runTest("testData/findUsages/libraryUsages/findLibraryFunctionUsages/overrides/overrides.0.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/findUsages/libraryUsages/javaLibrary")
     public static class JavaLibrary extends AbstractKotlinFindUsagesWithLibraryTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -79,9 +486,24 @@ public abstract class KotlinFindUsagesWithLibraryTestGenerated extends AbstractK
             runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryEnumEntryUsages.0.kt");
         }
 
+        @TestMetadata("LibraryEnumUsage.0.kt")
+        public void testLibraryEnumUsage() throws Exception {
+            runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryEnumUsage.0.kt");
+        }
+
+        @TestMetadata("LibraryExtFunctionUsage.0.kt")
+        public void testLibraryExtFunctionUsage() throws Exception {
+            runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryExtFunctionUsage.0.kt");
+        }
+
         @TestMetadata("LibraryFunctionUsages.0.kt")
         public void testLibraryFunctionUsages() throws Exception {
             runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryFunctionUsages.0.kt");
+        }
+
+        @TestMetadata("LibraryJvmOverloads.0.kt")
+        public void testLibraryJvmOverloads() throws Exception {
+            runTest("testData/findUsages/libraryUsages/kotlinLibrary/LibraryJvmOverloads.0.kt");
         }
 
         @TestMetadata("LibraryMemberFunctionUsages.0.kt")

@@ -2,16 +2,18 @@
 
 package org.jetbrains.kotlin.checkers;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.base.highlighting.KotlinNameHighlightingStateUtils;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager;
 import org.jetbrains.kotlin.idea.highlighter.AbstractKotlinHighlightVisitor;
@@ -35,36 +37,50 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
 
     public void doTest(@NotNull VirtualFile file) throws Exception {
         myFixture.configureFromExistingVirtualFile(file);
-        checkHighlighting(true, false, false);
+        checkHighlighting(true, false, false, false);
         checkResolveToDescriptor();
     }
 
     public void doTest(@NotNull String filePath) throws Exception {
         PsiFile file = myFixture.configureByFile(fileName());
         ScriptConfigurationManager.getInstance(getProject()).getConfiguration((KtFile) file); // if it's a script, enable its highlighting (see KotlinProblemHighlightFilter)
-        checkHighlighting(true, false, false);
+        checkHighlighting(true, false, false, false);
         checkResolveToDescriptor();
     }
 
     public void doTest(@NotNull String... filePath) throws Exception {
         myFixture.configureByFiles(filePath);
-        checkHighlighting(true, false, false);
+        checkHighlighting(true, false, false, false);
         checkResolveToDescriptor();
     }
 
-    public void doTestWithInfos(@NotNull String filePath) throws Exception {
+    void doTestWithInfos(@NotNull String __) {
         myFixture.configureByFile(fileName());
 
         myFixture.enableInspections(SpellCheckingInspection.class);
 
-        KotlinNameHighlightingStateUtils.withNameHighlightingDisabled(myFixture.getProject(), () -> {
-            checkHighlighting(true, true, false);
-            checkResolveToDescriptor();
-            return null;
-        });
+        try {
+            // TODO fix duplicate highlighting of some symbols
+            ExpectedHighlightingData.expectedDuplicatedHighlighting(() -> {
+                checkHighlighting(true, true, false, true);
+                checkResolveToDescriptor();
+            });
+        }
+        catch (IllegalStateException e) {
+            if (e.toString().contains("Expected duplication problem")) {
+                FileDocumentManager.getInstance().reloadFromDisk(getEditor().getDocument());
+                myFixture.configureByFile(fileName());
+                DaemonCodeAnalyzer.getInstance(getProject()).restart();
+                checkHighlighting(true, true, false, true);
+                checkResolveToDescriptor();
+            }
+            else {
+                throw e;
+            }
+        }
     }
 
-    protected long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
+    private long checkHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, boolean checkSymbolNames) {
         PsiFile file = getFile();
         KtFile ktFile = file instanceof KtFile ? (KtFile) file : null;
         String text = file.getText();
@@ -87,10 +103,16 @@ public abstract class AbstractKotlinHighlightVisitorTest extends KotlinLightCode
                                 }
                             });
                         }
-                        return myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+                        ExpectedHighlightingData data = new ExpectedHighlightingData(
+                          getEditor().getDocument(), checkWarnings, checkWeakWarnings, checkInfos, false);
+                        if (checkSymbolNames) {
+                            data.checkSymbolNames();
+                        }
+                        data.init();
+                        return ((JavaCodeInsightTestFixtureImpl)myFixture).collectAndCheckHighlighting(data);
                     }
                     catch (FileComparisonFailure e) {
-                        throw new FileComparisonFailure(e.getMessage(), e.getExpected(), e.getActual(),
+                        throw new FileComparisonFailure(e.getMessage(), e.getExpectedStringPresentation(), e.getActualStringPresentation(),
                                                         new File(e.getFilePath()).getAbsolutePath());
                     }
                 });

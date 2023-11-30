@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -54,26 +54,26 @@ import java.util.regex.Pattern;
 public final class HtmlUtil {
   private static final Logger LOG = Logger.getInstance(HtmlUtil.class);
 
-  @NonNls private static final String JSFC = "jsfc";
-  @NonNls private static final String CHARSET = "charset";
-  @NonNls private static final String CHARSET_PREFIX = CHARSET + "=";
-  @NonNls public static final String HTML5_DATA_ATTR_PREFIX = "data-";
+  private static final @NonNls String JSFC = "jsfc";
+  private static final @NonNls String CHARSET = "charset";
+  private static final @NonNls String CHARSET_PREFIX = CHARSET + "=";
+  public static final @NonNls String HTML5_DATA_ATTR_PREFIX = "data-";
 
-  @NlsSafe public static final String SCRIPT_TAG_NAME = "script";
-  @NlsSafe public static final String STYLE_TAG_NAME = "style";
-  @NlsSafe public static final String TEMPLATE_TAG_NAME = "template";
-  @NlsSafe public static final String TEXTAREA_TAG_NAME = "textarea";
-  @NlsSafe public static final String TITLE_TAG_NAME = "title";
+  public static final @NlsSafe String SCRIPT_TAG_NAME = "script";
+  public static final @NlsSafe String STYLE_TAG_NAME = "style";
+  public static final @NlsSafe String TEMPLATE_TAG_NAME = "template";
+  public static final @NlsSafe String TEXTAREA_TAG_NAME = "textarea";
+  public static final @NlsSafe String TITLE_TAG_NAME = "title";
 
-  @NlsSafe public static final String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
-  @NlsSafe public static final String SRC_ATTRIBUTE_NAME = "src";
-  @NlsSafe public static final String ID_ATTRIBUTE_NAME = "id";
-  @NlsSafe public static final String CLASS_ATTRIBUTE_NAME = "class";
-  @NlsSafe public static final String TYPE_ATTRIBUTE_NAME = "type";
-  @NlsSafe public static final String LANGUAGE_ATTRIBUTE_NAME = "language";
+  public static final @NlsSafe String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
+  public static final @NlsSafe String SRC_ATTRIBUTE_NAME = "src";
+  public static final @NlsSafe String ID_ATTRIBUTE_NAME = "id";
+  public static final @NlsSafe String CLASS_ATTRIBUTE_NAME = "class";
+  public static final @NlsSafe String TYPE_ATTRIBUTE_NAME = "type";
+  public static final @NlsSafe String LANGUAGE_ATTRIBUTE_NAME = "language";
 
-  @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
-  @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+  public static final @NonNls String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
+  public static final @NonNls String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
   public static final String[] RFC2616_HEADERS = {"Accept", "Accept-Charset", "Accept-Encoding", "Accept-Language",
     "Accept-Ranges", "Age", "Allow", "Authorization", "Cache-Control", "Connection", "Content-Encoding", "Content-Language",
@@ -81,8 +81,8 @@ public final class HtmlUtil {
     "Host", "If-Match", "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Last-Modified", "Location",
     "Max-Forwards", "Pragma", "Proxy-Authenticate", "Proxy-Authorization", "Range", "Referer", "Refresh", "Retry-After", "Server", "TE",
     "Trailer", "Transfer-Encoding", "Upgrade", "User-Agent", "Vary", "Via", "Warning", "WWW-Authenticate"};
-  private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
-  private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
+  private static final String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
+  private static final Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
 
   private HtmlUtil() {
   }
@@ -159,11 +159,10 @@ public final class HtmlUtil {
   }
 
   public static boolean isSingleHtmlTag(@NotNull XmlTag tag, boolean toLowerCase) {
-    final XmlExtension extension = XmlExtension.getExtensionByElement(tag);
     final String name = tag.getName();
     boolean result = EMPTY_TAGS_MAP.contains(!toLowerCase || tag.isCaseSensitive()
                                              ? name : StringUtil.toLowerCase(name));
-    return result && (extension == null || !extension.isSingleTagException(tag));
+    return result && !XmlCustomElementDescriptor.isCustomElement(tag);
   }
 
   public static boolean isSingleHtmlTag(String tagName, boolean caseSensitive) {
@@ -271,8 +270,7 @@ public final class HtmlUtil {
     }
   }
 
-  @Nullable
-  public static XmlDocument getRealXmlDocument(@Nullable XmlDocument doc) {
+  public static @Nullable XmlDocument getRealXmlDocument(@Nullable XmlDocument doc) {
     return HtmlPsiUtil.getRealXmlDocument(doc);
   }
 
@@ -369,8 +367,7 @@ public final class HtmlUtil {
     return descriptors;
   }
 
-  @Nullable
-  public static String getEntitiesString(@Nullable PsiElement context, @NotNull String inspectionName) {
+  public static @Nullable String getEntitiesString(@Nullable PsiElement context, @NotNull String inspectionName) {
     if (context == null) return null;
     PsiFile containingFile = context.getContainingFile().getOriginalFile();
 
@@ -502,8 +499,7 @@ public final class HtmlUtil {
     return attributeName.startsWith(HTML5_DATA_ATTR_PREFIX);
   }
 
-  @Nullable
-  public static String getHrefBase(XmlFile file) {
+  public static @Nullable String getHrefBase(XmlFile file) {
     final XmlTag root = file.getRootTag();
     final XmlTag head = root != null ? root.findFirstSubTag("head") : null;
     final XmlTag base = head != null ? head.findFirstSubTag("base") : null;
@@ -544,10 +540,11 @@ public final class HtmlUtil {
     if (startsWithTag(line)) {
       int tagStart = line.indexOf("<");
       if (tagStart >= 0) {
-        tagStart ++;
+        tagStart++;
         for (int i = tagStart; i < line.length(); i ++) {
-          if (!Character.isAlphabetic(line.charAt(i))) {
-            return line.substring(tagStart,i);
+          char ch = line.charAt(i);
+          if (!(Character.isAlphabetic(ch) || (i > tagStart && (Character.isDigit(ch) || ch == '-' )))) {
+            return line.substring(tagStart, i);
           }
         }
       }
@@ -593,13 +590,13 @@ public final class HtmlUtil {
     final Ref<String> charsetNameRef = new Ref<>();
     try {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
-        @NonNls final Set<String> inTag = new HashSet<>();
+        final @NonNls Set<String> inTag = new HashSet<>();
         boolean metHttpEquiv;
         boolean metHtml5Charset;
 
         @Override
-        public void doctype(@Nullable final CharSequence publicId,
-                            @Nullable final CharSequence systemId,
+        public void doctype(final @Nullable CharSequence publicId,
+                            final @Nullable CharSequence systemId,
                             final int startOffset,
                             final int endOffset) {
         }
@@ -619,7 +616,7 @@ public final class HtmlUtil {
 
         @Override
         public void endTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset) {
-          @NonNls final String name = StringUtil.toLowerCase(localName.toString());
+          final @NonNls String name = StringUtil.toLowerCase(localName.toString());
           if ("meta".equals(name) && (metHttpEquiv || metHtml5Charset) && contentAttributeValue != null) {
             String charsetName;
             if (metHttpEquiv) {
@@ -649,7 +646,7 @@ public final class HtmlUtil {
 
         @Override
         public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
-          @NonNls final String name = StringUtil.toLowerCase(localName.toString());
+          final @NonNls String name = StringUtil.toLowerCase(localName.toString());
           if (inTag.contains("meta")) {
             @NonNls String value = StringUtil.toLowerCase(v.toString());
             if (name.equals("http-equiv")) {
@@ -776,8 +773,7 @@ public final class HtmlUtil {
     }
   }
 
-  @NotNull
-  public static Iterable<String> splitClassNames(@Nullable String classAttributeValue) {
+  public static @NotNull Iterable<String> splitClassNames(@Nullable String classAttributeValue) {
     // comma is useduse as separator because class name cannot contain comma but it can be part of JSF classes attributes
     return classAttributeValue != null ? StringUtil.tokenize(classAttributeValue, " \t,") : Collections.emptyList();
   }
@@ -799,8 +795,7 @@ public final class HtmlUtil {
     return builder.toString();
   }
 
-  @Nullable
-  private static String getAttributeValue(@NotNull XmlTag tag, @NotNull String attrName) {
+  private static @Nullable String getAttributeValue(@NotNull XmlTag tag, @NotNull String attrName) {
     XmlAttribute classAttribute = getAttributeByName(tag, attrName);
     if (classAttribute != null && !containsOuterLanguageElements(classAttribute)) {
       String value = classAttribute.getValue();
@@ -809,8 +804,7 @@ public final class HtmlUtil {
     return null;
   }
 
-  @Nullable
-  private static XmlAttribute getAttributeByName(@NotNull XmlTag tag, @NotNull String name) {
+  private static @Nullable XmlAttribute getAttributeByName(@NotNull XmlTag tag, @NotNull String name) {
     PsiElement child = tag.getFirstChild();
     while (child != null) {
       if (child instanceof XmlAttribute) {
@@ -840,7 +834,7 @@ public final class HtmlUtil {
     return false;
   }
 
-  public static List<XmlAttributeValue> getIncludedPathsElements(@NotNull final XmlFile file) {
+  public static List<XmlAttributeValue> getIncludedPathsElements(final @NotNull XmlFile file) {
     final List<XmlAttributeValue> result = new ArrayList<>();
     file.acceptChildren(new XmlRecursiveElementWalkingVisitor() {
       @Override

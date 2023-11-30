@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.xml.dom.XmlDomReader;
@@ -28,11 +29,12 @@ public final class ApplicationNamesInfo {
 
   private static @NotNull XmlElement loadData() {
     String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "");
+    String appInfoData = getAppInfoData();
 
-    if (Boolean.getBoolean("idea.use.dev.build.server")) {
+    if (AppMode.isDevServer() && appInfoData.isEmpty()) {
       String module = null;
       if (prefix.isEmpty() || prefix.equals(PlatformUtils.IDEA_PREFIX)) {
-        module = "intellij.idea.ultimate.resources";
+        module = "intellij.idea.ultimate.customization";
       }
       else if (prefix.equals(PlatformUtils.WEB_PREFIX)) {
         module = "intellij.webstorm";
@@ -44,16 +46,15 @@ public final class ApplicationNamesInfo {
         try {
           return XmlDomReader.readXmlAsModel(Files.newInputStream(file));
         }
-        catch (NoSuchFileException ignore) {
-        }
+        catch (NoSuchFileException ignore) { }
         catch (Exception e) {
           throw new RuntimeException("Cannot load " + file, e);
         }
       }
     }
     else {
-      // Gateway started from other IntelliJ Based IDE case, same for Qodana
-      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX) || prefix.equals(PlatformUtils.QODANA_PREFIX) || prefix.equals(PlatformUtils.JETBRAINS_CLIENT_PREFIX)) {
+      // Gateway started from another IntelliJ-based IDE; same for Qodana
+      if (prefix.equals(PlatformUtils.GATEWAY_PREFIX) || prefix.equals(PlatformUtils.QODANA_PREFIX)) {
         String customAppInfo = System.getProperty("idea.application.info.value");
         if (customAppInfo != null) {
           try {
@@ -66,14 +67,14 @@ public final class ApplicationNamesInfo {
         }
       }
 
-      // production
-      String appInfoData = getAppInfoData();
-      if (!appInfoData.isEmpty()) {
+      // this property is used when a product is started from distribution of another product
+      boolean forceLoadingFromResources = "true".equals(System.getProperty("intellij.platform.load.app.info.from.resources"));
+      if (!forceLoadingFromResources && !appInfoData.isEmpty()) {
         return XmlDomReader.readXmlAsModel(appInfoData.getBytes(StandardCharsets.UTF_8));
       }
     }
 
-    // from sources
+    // from sources or from another product
     String resource = "idea/" + (prefix.equals("idea") ? "" : prefix) + "ApplicationInfo.xml";
     InputStream stream = ApplicationNamesInfo.class.getClassLoader().getResourceAsStream(resource);
     if (stream == null) {
@@ -182,23 +183,16 @@ public final class ApplicationNamesInfo {
   }
 
   /**
-   * Returns the base name (i.e. a name without the extension and architecture suffix)
-   * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, MacOS/xxx)
+   * Returns the base name (i.e., a name without the extension and architecture suffix)
+   * of launcher files (bin/xxx64.exe, bin/xxx.bat, bin/xxx.sh, macOS/xxx)
    * ({@code "idea"} for IntelliJ IDEA, {@code "webstorm"} for WebStorm, etc.).
    */
   public String getScriptName() {
     return myScriptName;
   }
 
-  /** @deprecated separate command-line launchers are no longer supported. Please use {@link #getScriptName()} instead. */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public String getDefaultLauncherName() {
-    return getScriptName();
-  }
-
   /**
-   * Returns motto of the product. Used as a comment for the command-line launcher.
+   * Returns motto of the product. Used as a comment for a desktop entry on XDG-compliant systems (read "Linux").
    */
   public @NotNull String getMotto() {
     return myMotto;

@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class LocalQuickFixesWrapper extends QuickFixAction {
+public final class LocalQuickFixesWrapper extends QuickFixAction {
   private final List<@NotNull LocalQuickFixWrapper> myFixActions = new ArrayList<>();
 
   LocalQuickFixesWrapper(@NlsActions.ActionText String name,
@@ -47,13 +48,15 @@ public class LocalQuickFixesWrapper extends QuickFixAction {
   }
 
   @Override
-  protected void applyFix(@NotNull final Project project,
-                          @NotNull final GlobalInspectionContextImpl context,
-                          final CommonProblemDescriptor @NotNull [] descriptors,
-                          @NotNull final Set<? super PsiElement> ignoredElements) {
+  protected ModCommandExecutor.@NotNull BatchExecutionResult applyFix(@NotNull final Project project,
+                                                                      @NotNull final GlobalInspectionContextImpl context,
+                                                                      final CommonProblemDescriptor @NotNull [] descriptors,
+                                                                      @NotNull final Set<? super PsiElement> ignoredElements) {
+    ModCommandExecutor.BatchExecutionResult result = ModCommandExecutor.Result.NOTHING;
     for (LocalQuickFixWrapper fixAction : myFixActions) {
-      fixAction.applyFix(project, context, descriptors, ignoredElements);
+      result = result.compose(fixAction.applyFix(project, context, descriptors, ignoredElements));
     }
+    return result;
   }
 
   @Override

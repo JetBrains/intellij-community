@@ -97,7 +97,7 @@ public abstract class TreeTraversal {
       @Override
       public @NotNull <TT> TraversalArgs<TT> intercept(@NotNull TraversalArgs<TT> args) {
         final Function<? super TT, ? extends Iterable<? extends TT>> tree = args.tree;
-        class WrappedTree implements Condition<TT>, Function<TT, Iterable<? extends TT>> {
+        final class WrappedTree implements Condition<TT>, Function<TT, Iterable<? extends TT>> {
           final Function<?, ?> inner = identity;
           java.util.HashSet<Object> visited;
 
@@ -130,7 +130,7 @@ public abstract class TreeTraversal {
       @Override
       public @NotNull <TT> TraversalArgs<TT> intercept(@NotNull TraversalArgs<TT> args) {
         final Function<? super TT, ? extends Iterable<? extends TT>> tree = args.tree;
-        class WrappedTree implements Function<TT, Iterable<? extends TT>> {
+        final class WrappedTree implements Function<TT, Iterable<? extends TT>> {
           @Override
           public Iterable<? extends TT> fun(TT t) {
             //noinspection unchecked
@@ -160,7 +160,7 @@ public abstract class TreeTraversal {
         final Function<? super TT, ? extends Iterable<? extends TT>> tree = args.tree;
         final Condition<? super TT> inRangeCondition = (Condition<? super TT>)rangeCondition;
         final Condition<? super TT> notInRangeCondition = (Condition<? super TT>)not(rangeCondition);
-        class WrappedTree implements Function<TT, Iterable<? extends TT>> {
+        final class WrappedTree implements Function<TT, Iterable<? extends TT>> {
           final Condition<? super T> inner = rangeCondition;
 
           @Override
@@ -213,13 +213,13 @@ public abstract class TreeTraversal {
     }
   }
 
-  private static class Intercepted extends TreeTraversal {
+  private static final class Intercepted extends TreeTraversal {
     final TreeTraversal original;
     final TraversalInterceptor interceptor;
 
-    protected Intercepted(@NotNull String debugName,
-                          @NotNull TreeTraversal original,
-                          @NotNull TraversalInterceptor interceptor) {
+    private Intercepted(@NotNull String debugName,
+                        @NotNull TreeTraversal original,
+                        @NotNull TraversalInterceptor interceptor) {
       super(debugName);
       this.original = original;
       this.interceptor = interceptor;

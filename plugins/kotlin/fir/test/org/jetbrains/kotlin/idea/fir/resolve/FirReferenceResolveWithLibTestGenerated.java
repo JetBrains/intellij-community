@@ -68,6 +68,11 @@ public class FirReferenceResolveWithLibTestGenerated extends AbstractFirReferenc
         runTest("../idea/tests/testData/resolve/referenceWithLib/multiDeclarationWithTypeParameters/");
     }
 
+    @TestMetadata("namedArguments")
+    public void testNamedArguments() throws Exception {
+        runTest("../idea/tests/testData/resolve/referenceWithLib/namedArguments/");
+    }
+
     @TestMetadata("nestedClassFromLib")
     public void testNestedClassFromLib() throws Exception {
         runTest("../idea/tests/testData/resolve/referenceWithLib/nestedClassFromLib/");

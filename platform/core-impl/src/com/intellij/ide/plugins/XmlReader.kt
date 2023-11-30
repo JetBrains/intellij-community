@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("XmlReader")
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplacePutWithAssignment", "ReplaceGetOrSet")
 package com.intellij.ide.plugins
@@ -12,12 +12,15 @@ import com.intellij.openapi.extensions.ExtensionDescriptor
 import com.intellij.openapi.extensions.ExtensionPointDescriptor
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.Java11Shim
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.xml.dom.NoOpXmlInterner
 import com.intellij.util.xml.dom.XmlInterner
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import com.intellij.util.xml.dom.readXmlAsModel
+import kotlinx.collections.immutable.persistentHashSetOf
+import kotlinx.collections.immutable.persistentListOf
 import org.codehaus.stax2.XMLStreamReader2
 import org.codehaus.stax2.typed.TypedXMLStreamException
 import org.jetbrains.annotations.ApiStatus
@@ -33,9 +36,8 @@ import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
 
-@ApiStatus.Internal const val PACKAGE_ATTRIBUTE = "package"
-@ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE = "implementation-detail"
-@ApiStatus.Experimental const val ON_DEMAND_ATTRIBUTE = "on-demand"
+@ApiStatus.Internal const val PACKAGE_ATTRIBUTE: String = "package"
+@ApiStatus.Internal const val IMPLEMENTATION_DETAIL_ATTRIBUTE: String = "implementation-detail"
 
 private const val defaultXPointerValue = "xpointer(/idea-plugin/*)"
 
@@ -144,7 +146,6 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
       "use-idea-classloader" -> descriptor.isUseIdeaClassLoader = reader.getAttributeAsBoolean(i)
       "allow-bundled-update" -> descriptor.isBundledUpdateAllowed = reader.getAttributeAsBoolean(i)
       IMPLEMENTATION_DETAIL_ATTRIBUTE -> descriptor.implementationDetail = reader.getAttributeAsBoolean(i)
-      ON_DEMAND_ATTRIBUTE -> descriptor.onDemand = reader.getAttributeAsBoolean(i)
       "require-restart" -> descriptor.isRestartRequired = reader.getAttributeAsBoolean(i)
       "version" -> {
         // internalVersionString - why it is not used, but just checked?
@@ -164,11 +165,19 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
 /**
  * Keep in sync with KotlinPluginUtil.KNOWN_KOTLIN_PLUGIN_IDS
  */
-@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SSBasedInspection")
-private val KNOWN_KOTLIN_PLUGIN_IDS = HashSet(Arrays.asList(
+private val KNOWN_KOTLIN_PLUGIN_IDS = persistentHashSetOf(
   "org.jetbrains.kotlin",
   "com.intellij.appcode.kmm",
   "org.jetbrains.kotlin.native.appcode"
+)
+
+private val K2_ALLOWED_PLUGIN_IDS = KNOWN_KOTLIN_PLUGIN_IDS.addAll(persistentHashSetOf(
+  "fleet.backend.mercury",
+  "fleet.backend.mercury.macos",
+  "fleet.backend.mercury.kotlin.macos",
+  "org.jetbrains.android",
+  "androidx.compose.plugins.idea",
+  "org.jetbrains.compose.desktop.ide",
 ))
 
 private fun readRootElementChild(reader: XMLStreamReader2,
@@ -209,19 +218,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
     "product-descriptor" -> readProduct(reader, descriptor)
     "module" -> {
       findAttributeValue(reader, "value")?.let { moduleName ->
-        var modules = descriptor.modules
-        if (modules == null) {
-          descriptor.modules = Collections.singletonList(PluginId.getId(moduleName))
-        }
-        else {
-          if (modules.size == 1) {
-            val singleton = modules
-            modules = ArrayList(4)
-            modules.addAll(singleton)
-            descriptor.modules = modules
-          }
-          modules.add(PluginId.getId(moduleName))
-        }
+        descriptor.modules = descriptor.modules.add(PluginId.getId(moduleName))
       }
       reader.skipElement()
     }
@@ -245,12 +242,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
     }
     "incompatible-with" -> {
       getNullifiedContent(reader)?.let {
-        var list = descriptor.incompatibilities
-        if (list == null) {
-          list = ArrayList()
-          descriptor.incompatibilities = list
-        }
-        list.add(PluginId.getId(it))
+        descriptor.incompatibilities = descriptor.incompatibilities.add(PluginId.getId(it))
       }
     }
 
@@ -308,7 +300,12 @@ private fun readRootElementChild(reader: XMLStreamReader2,
   }
 }
 
-private val actionNameToEnum = ActionDescriptorName.values().let { it.associateByTo(HashMap(it.size), ActionDescriptorName::name) }
+private val actionNameToEnum = run {
+  HashMap<String, ActionDescriptorName>().let { map ->
+    ActionDescriptorName.entries.associateByTo(map, ActionDescriptorName::name)
+    Java11Shim.INSTANCE.copyOf(map)
+  }
+}
 
 private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader2, readContext: ReadModuleContext) {
   var actionElements = descriptor.actions
@@ -350,11 +347,11 @@ private fun readActions(descriptor: RawPluginDescriptor, reader: XMLStreamReader
       ActionDescriptorName.group -> {
         var className = element.attributes.get("class")
         if (className.isNullOrEmpty()) {
-          className = if ("true" == element.attributes.get("compact")) {
+          className = if (element.attributes.get("compact") == "true") {
             "com.intellij.openapi.actionSystem.DefaultCompactActionGroup"
           }
           else {
-            "com.intellij.openapi.actionSystem.DefaultActionGroup"
+            null
           }
         }
 
@@ -453,43 +450,22 @@ private fun readExtensions(reader: XMLStreamReader2, descriptor: RawPluginDescri
           }
         }
 
-        var map: MutableMap<String, MutableList<ExtensionDescriptor>>? = descriptor.epNameToExtensions
-        if (map == null) {
-          /**
-           * What's going on:
-           * See [com.intellij.ide.plugins.DynamicPluginsTest]#`registry access of key from same plugin`
-           * This is an ad-hoc solution to the problem, it doesn't fix the root cause. This may also break if this map gets copied
-           * or transformed into a HashMap somewhere, but it seems it's not the case right now.
-           * TODO: one way to make a better fix is to introduce loadingOrder on extension points (as it is made for extensions).
-           */
-          map = sortedMapOf(kotlin.Comparator { o1, o2 ->
-            val registryKey = "com.intellij.registryKey"
-            if (o1 == registryKey) {
-              return@Comparator if (o2 == registryKey) { 0 } else { -1 }
-            }
-            if (o2 == registryKey) {
-              return@Comparator 1
-            }
-            o1.compareTo(o2)
-          })
-          descriptor.epNameToExtensions = map
+        val extensionDescriptor = ExtensionDescriptor(implementation = implementation,
+                                                      os = os,
+                                                      orderId = orderId,
+                                                      order = order,
+                                                      element = element,
+                                                      hasExtraAttributes = hasExtraAttributes)
+
+        var epNameToExtensions = descriptor.epNameToExtensions
+        if (epNameToExtensions == null) {
+          epNameToExtensions = HashMap()
+          descriptor.epNameToExtensions = epNameToExtensions
         }
 
-        val extensionDescriptor = ExtensionDescriptor(implementation, os, orderId, order, element, hasExtraAttributes)
-
-        val list = map.get(qualifiedExtensionPointName)
-        if (list == null) {
-          map.put(qualifiedExtensionPointName, Collections.singletonList(extensionDescriptor))
-        }
-        else if (list.size == 1) {
-          val l = ArrayList<ExtensionDescriptor>(4)
-          l.add(list.get(0))
-          l.add(extensionDescriptor)
-          map.put(qualifiedExtensionPointName, l)
-        }
-        else {
-          list.add(extensionDescriptor)
-        }
+        val list = epNameToExtensions.get(qualifiedExtensionPointName)
+        @Suppress("IfThenToElvis")
+        epNameToExtensions.put(qualifiedExtensionPointName, if (list == null) persistentListOf(extensionDescriptor) else list.add(extensionDescriptor))
 
         assert(reader.isEndElement)
         return@consumeChildElements
@@ -555,6 +531,7 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
     var beanClass: String? = null
     var `interface`: String? = null
     var isDynamic = false
+    var hasAttributes = false
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         "area" -> area = getNullifiedAttributeValue(reader, i)
@@ -566,6 +543,7 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
         "interface" -> `interface` = getNullifiedAttributeValue(reader, i)
 
         "dynamic" -> isDynamic = reader.getAttributeAsBoolean(i)
+        "hasAttributes" -> hasAttributes = reader.getAttributeAsBoolean(i)
       }
     }
 
@@ -588,18 +566,13 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
       }
     }
 
-    var result = containerDescriptor.extensionPoints
-    if (result == null) {
-      result = ArrayList()
-      containerDescriptor.extensionPoints = result
-    }
-
-    result.add(ExtensionPointDescriptor(
+    containerDescriptor.extensionPoints = containerDescriptor.extensionPoints.add(ExtensionPointDescriptor(
       name = qualifiedName ?: name ?: throw RuntimeException("`name` attribute not specified for extension point at ${reader.location}"),
       isNameQualified = qualifiedName != null,
       className = `interface` ?: beanClass!!,
       isBean = `interface` == null,
-      isDynamic = isDynamic
+      hasAttributes = hasAttributes,
+      isDynamic = isDynamic,
     ))
   }
 }
@@ -607,14 +580,9 @@ private fun readExtensionPoints(reader: XMLStreamReader2,
 private inline fun applyPartialContainer(from: RawPluginDescriptor,
                                          to: RawPluginDescriptor,
                                          crossinline extractor: (RawPluginDescriptor) -> ContainerDescriptor) {
-  extractor(from).extensionPoints?.let {
+  extractor(from).extensionPoints.takeIf { it.isNotEmpty() }?.let {
     val toContainer = extractor(to)
-    if (toContainer.extensionPoints == null) {
-      toContainer.extensionPoints = it
-    }
-    else {
-      toContainer.extensionPoints!!.addAll(it)
-    }
+    toContainer.extensionPoints = toContainer.extensionPoints.addAll(it)
   }
 }
 
@@ -646,12 +614,14 @@ private fun readServiceDescriptor(reader: XMLStreamReader2, os: ExtensionDescrip
         }
       }
       "client" -> {
+        @Suppress("DEPRECATION")
         when (reader.getAttributeValue(i)) {
           "local" -> client = ClientKind.LOCAL
           "guest" -> client = ClientKind.GUEST
           "controller" -> client = ClientKind.CONTROLLER
           "owner" -> client = ClientKind.OWNER
           "remote" -> client = ClientKind.REMOTE
+          "frontend" -> client = ClientKind.FRONTEND
           "all" -> client = ClientKind.ALL
           else -> LOG.error("Unknown client value: ${reader.getAttributeValue(i)} at ${reader.location}")
         }
@@ -682,7 +652,6 @@ private fun readProduct(reader: XMLStreamReader2, descriptor: RawPluginDescripto
 }
 
 private fun readComponents(reader: XMLStreamReader2, containerDescriptor: ContainerDescriptor) {
-  val result = containerDescriptor.getComponentListToAdd()
   reader.consumeChildElements("component") {
     var isApplicableForDefaultProject = false
     var interfaceClass: String? = null
@@ -743,20 +712,19 @@ private fun readComponents(reader: XMLStreamReader2, containerDescriptor: Contai
     }
     assert(reader.isEndElement)
 
-    result.add(ComponentConfig(interfaceClass, implementationClass, headlessImplementationClass, isApplicableForDefaultProject,
-                               os, overrides, options))
+    containerDescriptor.components = containerDescriptor.components.add(ComponentConfig(interfaceClass,
+                                                                                        implementationClass,
+                                                                                        headlessImplementationClass,
+                                                                                        isApplicableForDefaultProject,
+                                                                                        os,
+                                                                                        overrides,
+                                                                                        options))
   }
 }
 
 private fun readContent(reader: XMLStreamReader2,
                         descriptor: RawPluginDescriptor,
                         readContext: ReadModuleContext) {
-  var items = descriptor.contentModules
-  if (items == null) {
-    items = ArrayList()
-    descriptor.contentModules = items
-  }
-
   reader.consumeChildElements { elementName ->
     when (elementName) {
       "module" -> {
@@ -777,7 +745,7 @@ private fun readContent(reader: XMLStreamReader2,
           configFile = "${name.substring(0, index)}.${name.substring(index + 1)}.xml"
         }
 
-        items.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile))
+        descriptor.contentModules = descriptor.contentModules.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile))
       }
       else -> throw RuntimeException("Unknown content item type: $elementName")
     }
@@ -787,8 +755,8 @@ private fun readContent(reader: XMLStreamReader2,
 }
 
 private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, readContext: ReadModuleContext) {
-  var modules: MutableList<ModuleDependenciesDescriptor.ModuleReference>? = null
-  var plugins: MutableList<ModuleDependenciesDescriptor.PluginReference>? = null
+  var modules = persistentListOf<ModuleDependenciesDescriptor.ModuleReference>()
+  var plugins = persistentListOf<ModuleDependenciesDescriptor.PluginReference>()
   reader.consumeChildElements { elementName ->
     when (elementName) {
       "module" -> {
@@ -799,10 +767,7 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
           }
         }
 
-        if (modules == null) {
-          modules = ArrayList()
-        }
-        modules!!.add(ModuleDependenciesDescriptor.ModuleReference(name!!))
+        modules = modules.add(ModuleDependenciesDescriptor.ModuleReference(name!!))
       }
       "plugin" -> {
         var id: String? = null
@@ -812,16 +777,13 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
           }
         }
 
-        if (plugins == null) {
-          plugins = ArrayList()
-        }
-        plugins!!.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(id!!)))
+        plugins = plugins.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(id!!)))
       }
       else -> throw RuntimeException("Unknown content item type: $elementName")
     }
     reader.skipElement()
   }
-  descriptor.dependencies = ModuleDependenciesDescriptor(modules ?: Collections.emptyList(), plugins ?: Collections.emptyList())
+  descriptor.dependencies = ModuleDependenciesDescriptor(modules, plugins)
   assert(reader.isEndElement)
 }
 
@@ -834,9 +796,9 @@ private fun findAttributeValue(reader: XMLStreamReader2, name: String): String? 
   return null
 }
 
-private fun getNullifiedContent(reader: XMLStreamReader2): String? = reader.elementText.takeIf { !it.isEmpty() }
+private fun getNullifiedContent(reader: XMLStreamReader2): String? = reader.elementText.trim().takeIf { !it.isEmpty() }
 
-private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reader.getAttributeValue(i).takeIf { !it.isEmpty() }
+private fun getNullifiedAttributeValue(reader: XMLStreamReader2, i: Int) = reader.getAttributeValue(i).trim().takeIf { !it.isEmpty() }
 
 interface ReadModuleContext {
   val interner: XmlInterner
@@ -921,7 +883,7 @@ private fun readInclude(reader: XMLStreamReader2,
 }
 
 private fun checkConditionalIncludeIsSupported(attribute: String, pluginDescriptor: RawPluginDescriptor) {
-  if (pluginDescriptor.id !in KNOWN_KOTLIN_PLUGIN_IDS) {
+  if (pluginDescriptor.id !in K2_ALLOWED_PLUGIN_IDS) {
     throw IllegalArgumentException("$attribute of 'include' is not supported")
   }
 }
@@ -929,7 +891,7 @@ private fun checkConditionalIncludeIsSupported(attribute: String, pluginDescript
 private var dateTimeFormatter: DateTimeFormatter? = null
 
 private val LOG: Logger
-  get() = PluginManagerCore.getLogger()
+  get() = PluginManagerCore.logger
 
 private fun parseReleaseDate(dateString: String): LocalDate? {
   if (dateString.isEmpty() || dateString == "__DATE__") {
@@ -998,7 +960,7 @@ private fun readOs(value: String): ExtensionDescriptor.Os {
 }
 
 private inline fun XMLStreamReader.consumeChildElements(crossinline consumer: (name: String) -> Unit) {
-  // cursor must be at the start of the parent element
+  // the cursor must be at the start of the parent element
   assert(isStartElement)
 
   var depth = 1

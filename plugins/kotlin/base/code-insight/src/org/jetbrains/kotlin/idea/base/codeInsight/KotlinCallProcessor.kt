@@ -72,11 +72,6 @@ object KotlinCallProcessor {
     )
 
     fun process(element: PsiElement, processor: KtAnalysisSession.(CallTarget) -> Unit) {
-        val containingFile = element.containingFile
-        if (containingFile is KtCodeFragment) {
-            return
-        }
-
         when (element) {
             is KtArrayAccessExpression -> handle(element, processor)
             is KtCallExpression -> handle(element, processor)

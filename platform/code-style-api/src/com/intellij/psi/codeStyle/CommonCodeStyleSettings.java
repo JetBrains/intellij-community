@@ -1,14 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.properties.CommaSeparatedValues;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -43,7 +41,7 @@ import static com.intellij.psi.codeStyle.CodeStyleDefaults.*;
  * Common code style settings can be used by several programming languages. Each language may have its own
  * instance of {@code CommonCodeStyleSettings}.
  */
-public class CommonCodeStyleSettings {
+public class CommonCodeStyleSettings implements CommentStyleSettings {
   // Dev. notes:
   // - Do not add language-specific options here, use CustomCodeStyleSettings instead.
   // - New options should be added to CodeStyleSettingsCustomizable as well.
@@ -61,6 +59,7 @@ public class CommonCodeStyleSettings {
   private final SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
+
 
   private final static Logger LOG = Logger.getInstance(CommonCodeStyleSettings.class);
 
@@ -205,6 +204,22 @@ public class CommonCodeStyleSettings {
       }
     }
   }
+
+  @Override
+  public boolean isLineCommentInTheFirstColumn() {
+    return LINE_COMMENT_AT_FIRST_COLUMN;
+  }
+
+  @Override
+  public boolean isLineCommentFollowedWithSpace() {
+    return LINE_COMMENT_ADD_SPACE;
+  }
+
+  @Override
+  public boolean isBlockCommentIncludesSpace() {
+    return BLOCK_COMMENT_ADD_SPACE;
+  }
+
 
   public static final class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
@@ -912,6 +927,9 @@ public class CommonCodeStyleSettings {
 
   @WrapConstant
   public int ASSERT_STATEMENT_WRAP = DO_NOT_WRAP;
+
+  @WrapConstant
+  public int SWITCH_EXPRESSIONS_WRAP = WRAP_AS_NEEDED;
   public boolean ASSERT_STATEMENT_COLON_ON_NEXT_LINE = false;
 
   // BRACE FORCING

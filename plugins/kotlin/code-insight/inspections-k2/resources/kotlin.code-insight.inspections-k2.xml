@@ -1,6 +1,10 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight.inspections">
   <dependencies>
     <module name="kotlin.code-insight.intentions-k2"/>
+    <module name="kotlin.code-insight.inspections-shared"/>
+    <module name="kotlin.searching.k2"/>
+    <module name="kotlin.highlighting.k2"/>
+    <module name="kotlin.refactorings.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection
@@ -23,6 +27,15 @@
             language="kotlin"
             key="inspection.redundant.visibility.modifier.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantUnitExpressionInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     language="kotlin"
+                     cleanupTool="true" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.redundant.unit.expression.display.name" bundle="messages.KotlinBundle"/>
+
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.CanBePrimaryConstructorPropertyInspection"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
@@ -39,16 +52,6 @@
                      level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      language="kotlin"
                      key="inspection.redundant.modality.modifier.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinUnusedImportInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
-                     enabledByDefault="true"
-                     cleanupTool="true"
-                     level="WARNING" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
-                     language="kotlin"
-                     suppressId="UnusedImport"
-                     key="inspection.kotlin.unused.import.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.UnusedVariableInspection"
                      groupPath="Kotlin"
@@ -183,7 +186,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.lift.return.or.assignment.display.name" bundle="messages.KotlinBundle"/>
 
@@ -251,5 +254,57 @@
                      level="WEAK WARNING"
                      language="kotlin" key="inspection.protected.in.final.display.name" bundle="messages.KotlinBundle"/>
 
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.MayBeConstantInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin" key="inspection.protected.in.final.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.MoveLambdaOutsideParenthesesInspection"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.style.issues"
+                     enabledByDefault="true"
+                     level="WEAK WARNING"
+                     language="kotlin" key="inspection.move.lambda.outside.parentheses.display.name" bundle="messages.KotlinBundle"/>
+
+    <!-- TODO: We currently have a performance issue caused by reference search. See https://kotlin.jetbrains.space/p/kotlin/reviews/710.
+               We have an idea of indexing reference counts. Enable this inspection after implement it. -->
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection"
+                     enabledByDefault="true"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     runForWholeFile="true"
+                     language="kotlin"
+                     suppressId="unused" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
+                     key="inspection.unused.symbol.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.FunctionNameInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.naming.conventions"
+                     enabledByDefault="true"
+                     level="WEAK WARNING" key="inspection.function.name.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.FoldInitializerAndIfToElvisInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.naming.conventions"
+                     enabledByDefault="true"
+                     level="INFORMATION" key="if.null.return.break.foldable.to" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantElseInIfInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.naming.conventions"
+                     enabledByDefault="true"
+                     level="INFORMATION" key="redundant.else" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.JoinDeclarationAndAssignmentInspection"
+                     language="kotlin"
+                     groupPath="Kotlin"
+                     groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                     enabledByDefault="true"
+                     level="WEAK WARNING" key="can.be.joined.with.assignment" bundle="messages.KotlinBundle"/>
   </extensions>
 </idea-plugin>

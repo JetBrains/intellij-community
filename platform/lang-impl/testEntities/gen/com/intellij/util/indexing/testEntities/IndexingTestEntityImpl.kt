@@ -1,32 +1,31 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.testEntities
 
-import com.intellij.workspaceModel.storage.EntityInformation
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.GeneratedCodeApiVersion
-import com.intellij.workspaceModel.storage.GeneratedCodeImplVersion
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.impl.ConnectionId
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.UsedClassesCollector
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.containers.MutableWorkspaceList
-import com.intellij.workspaceModel.storage.impl.containers.toMutableWorkspaceList
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import org.jetbrains.deft.ObjBuilder
-import org.jetbrains.deft.Type
+import com.intellij.platform.workspace.storage.EntityInformation
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.EntityType
+import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
+import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.impl.ConnectionId
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityBase
+import com.intellij.platform.workspace.storage.impl.WorkspaceEntityData
+import com.intellij.platform.workspace.storage.impl.containers.MutableWorkspaceList
+import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
+import com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
-@GeneratedCodeApiVersion(1)
-@GeneratedCodeImplVersion(1)
-open class IndexingTestEntityImpl(val dataSource: IndexingTestEntityData) : IndexingTestEntity, WorkspaceEntityBase() {
+@GeneratedCodeApiVersion(2)
+@GeneratedCodeImplVersion(3)
+open class IndexingTestEntityImpl(private val dataSource: IndexingTestEntityData) : IndexingTestEntity, WorkspaceEntityBase(dataSource) {
 
-  companion object {
+  private companion object {
 
 
-    val connections = listOf<ConnectionId>(
+    private val connections = listOf<ConnectionId>(
     )
 
   }
@@ -43,6 +42,7 @@ open class IndexingTestEntityImpl(val dataSource: IndexingTestEntityData) : Inde
   override fun connectionIdList(): List<ConnectionId> {
     return connections
   }
+
 
   class Builder(result: IndexingTestEntityData?) : ModifiableWorkspaceEntityBase<IndexingTestEntity, IndexingTestEntityData>(
     result), IndexingTestEntity.Builder {
@@ -74,7 +74,7 @@ open class IndexingTestEntityImpl(val dataSource: IndexingTestEntityData) : Inde
       checkInitialization() // TODO uncomment and check failed tests
     }
 
-    fun checkInitialization() {
+    private fun checkInitialization() {
       val _diff = diff
       if (!getEntityData().isEntitySourceInitialized()) {
         error("Field WorkspaceEntity#entitySource should be initialized")
@@ -175,8 +175,8 @@ class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>() {
   lateinit var roots: MutableList<VirtualFileUrl>
   lateinit var excludedRoots: MutableList<VirtualFileUrl>
 
-  fun isRootsInitialized(): Boolean = ::roots.isInitialized
-  fun isExcludedRootsInitialized(): Boolean = ::excludedRoots.isInitialized
+  internal fun isRootsInitialized(): Boolean = ::roots.isInitialized
+  internal fun isExcludedRootsInitialized(): Boolean = ::excludedRoots.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<IndexingTestEntity> {
     val modifiable = IndexingTestEntityImpl.Builder(null)
@@ -193,6 +193,10 @@ class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>() {
       entity.id = createEntityId()
       entity
     }
+  }
+
+  override fun getMetadata(): EntityMetadata {
+    return MetadataStorageImpl.getMetadataByTypeFqn("com.intellij.util.indexing.testEntities.IndexingTestEntity") as EntityMetadata
   }
 
   override fun clone(): IndexingTestEntityData {
@@ -258,11 +262,5 @@ class IndexingTestEntityData : WorkspaceEntityData<IndexingTestEntity>() {
     result = 31 * result + roots.hashCode()
     result = 31 * result + excludedRoots.hashCode()
     return result
-  }
-
-  override fun collectClassUsagesData(collector: UsedClassesCollector) {
-    this.roots?.let { collector.add(it::class.java) }
-    this.excludedRoots?.let { collector.add(it::class.java) }
-    collector.sameForAllEntities = false
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager;
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory;
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
@@ -25,8 +26,8 @@ import org.gradle.cli.CommandLineArgumentException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine;
 
 import static org.jetbrains.plugins.gradle.execution.GradleRunAnythingProvider.HELP_COMMAND;
 
@@ -87,7 +88,8 @@ public class GradleExecuteTaskAction extends ExternalSystemAction {
       return;
     }
 
-    ExternalSystemUtil.runTask(taskExecutionInfo.getSettings(), taskExecutionInfo.getExecutorId(), project, GradleConstants.SYSTEM_ID);
+    ExternalSystemUtil.runTask(taskExecutionInfo.getSettings(), taskExecutionInfo.getExecutorId(), project, GradleConstants.SYSTEM_ID, null,
+                               ProgressExecutionMode.NO_PROGRESS_ASYNC);
 
     RunnerAndConfigurationSettings configuration =
       ExternalSystemUtil.createExternalSystemRunnerAndConfigurationSettings(taskExecutionInfo.getSettings(),

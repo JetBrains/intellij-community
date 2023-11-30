@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 
-public class IntMapForwardIndex implements IntForwardIndex, MeasurableIndexStore {
+public final class IntMapForwardIndex implements IntForwardIndex, MeasurableIndexStore {
   private final @NotNull Path myStorageFile;
   private final boolean myHasChunks;
   private volatile @NotNull PersistentMap<Integer, Integer> myPersistentMap;
@@ -44,6 +44,11 @@ public class IntMapForwardIndex implements IntForwardIndex, MeasurableIndexStore
   @Override
   public void force() {
     myPersistentMap.force();
+  }
+
+  @Override
+  public boolean isDirty() {
+    return myPersistentMap.isDirty();
   }
 
   @Override

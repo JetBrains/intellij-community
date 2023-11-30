@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.safeDelete;
 
@@ -32,7 +32,7 @@ import java.util.Set;
 
 import static com.intellij.refactoring.safeDelete.impl.SafeDeleteKt.safeDelete;
 
-public class SafeDeleteHandler implements RefactoringActionHandler {
+public final class SafeDeleteHandler implements RefactoringActionHandler {
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
@@ -85,12 +85,12 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
       }
     }
 
-    PsiElement[] temptoDelete = PsiTreeUtil.filterAncestors(elements);
-    Set<PsiElement> elementsSet = Set.of(temptoDelete);
+    PsiElement[] tempToDelete = PsiTreeUtil.filterAncestors(elements);
+    Set<PsiElement> elementsSet = Set.of(tempToDelete);
     Set<PsiElement> fullElementsSet = new LinkedHashSet<>();
 
     if (checkDelegates) {
-      for (PsiElement element : temptoDelete) {
+      for (PsiElement element : tempToDelete) {
         boolean found = false;
         for(SafeDeleteProcessorDelegate delegate: SafeDeleteProcessorDelegate.EP_NAME.getExtensionList()) {
           if (delegate.handlesElement(element)) {
@@ -108,7 +108,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
         }
       }
     } else {
-      ContainerUtil.addAll(fullElementsSet, temptoDelete);
+      ContainerUtil.addAll(fullElementsSet, tempToDelete);
     }
 
     if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, fullElementsSet, true)) return;

@@ -2,7 +2,7 @@
 
 /**
  * Classes in this package provide base interfaces for implementations which store the old IDE project model data in
- * {@link com.intellij.workspaceModel.storage.WorkspaceEntity} instances.
+ * {@link com.intellij.platform.workspace.storage.WorkspaceEntity} instances.
  *
  * <p>
  * All classes in this package aren't supposed to be used in external code.

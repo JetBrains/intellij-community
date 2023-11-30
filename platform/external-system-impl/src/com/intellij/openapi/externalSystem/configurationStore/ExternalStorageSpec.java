@@ -43,6 +43,6 @@ public final class ExternalStorageSpec extends FileStorageAnnotation implements 
   @NotNull
   @Override
   public String getKey() {
-    return "external://" + path;
+    return "external//" + path;
   }
 }

@@ -427,11 +427,15 @@ fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = false,
     triggerUI().component { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
   }
 
-  waitBeforeContinue(500)
+  waitBeforeContinue(defaultRestoreDelay)
 
   task {
     highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "Resume", highlightInside, usePulsation)
   }
+}
+
+fun LessonContext.highlightOldDebugActionsToolbar(highlightInside: Boolean = false, usePulsation: Boolean = false) {
+  highlightDebugActionsToolbar(highlightInside, usePulsation)
   task {
     if (!ExperimentalUI.isNewUI() && !UIExperiment.isNewDebuggerUIEnabled()) {
       highlightToolbarWithAction(ActionPlaces.DEBUGGER_TOOLBAR, "ShowExecutionPoint",
@@ -440,11 +444,11 @@ fun LessonContext.highlightDebugActionsToolbar(highlightInside: Boolean = false,
   }
 }
 
-private fun TaskContext.highlightToolbarWithAction(place: String,
-                                                   actionId: String,
-                                                   highlightInside: Boolean,
-                                                   usePulsation: Boolean,
-                                                   clearPreviousHighlights: Boolean = true) {
+fun TaskContext.highlightToolbarWithAction(place: String,
+                                           actionId: String,
+                                           highlightInside: Boolean,
+                                           usePulsation: Boolean,
+                                           clearPreviousHighlights: Boolean = true) {
   val needAction = getActionById(actionId)
   triggerAndBorderHighlight {
     this.highlightInside = highlightInside
@@ -474,15 +478,18 @@ fun TaskContext.proceedLink(additionalAbove: Int = 0) {
 fun TaskContext.gotItStep(position: Balloon.Position,
                           width: Int,
                           @Nls text: String,
+                          @Nls buttonText: String = IdeBundle.message("got.it.button.name"),
                           cornerToPointerDistance: Int = -1,
                           duplicateMessage: Boolean = true) {
   val gotIt = CompletableFuture<Boolean>()
-  text(text, LearningBalloonConfig(position, width, duplicateMessage, cornerToPointerDistance = cornerToPointerDistance) {
+  text(text, LearningBalloonConfig(position, width, duplicateMessage,
+                                   cornerToPointerDistance = cornerToPointerDistance,
+                                   buttonText = buttonText) {
     gotIt.complete(true)
   })
   addStep(gotIt)
   test(waitEditorToBeReady = false) {
-    ideFrame { button(IdeBundle.message("got.it.button.name")).click() }
+    ideFrame { button(buttonText).click() }
   }
 }
 

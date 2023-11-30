@@ -15,6 +15,9 @@ import java.nio.file.Path
 object EnvironmentUtil {
   private val pathToEnvironmentConfig : Key<Path> = Key.create("environment.configuration.file")
 
+  /**
+   * Returns the path to a configuration file on local machine
+   */
   fun getPathToConfigurationFile() : Path? {
     return ApplicationManager.getApplication().getUserData(pathToEnvironmentConfig)
   }
@@ -44,7 +47,7 @@ object EnvironmentUtil {
       }
     }
 
-    fun build() : EnvironmentConfiguration = EnvironmentConfiguration(map)
+    internal fun build() : EnvironmentConfiguration = EnvironmentConfiguration(map)
   }
 
   @TestOnly

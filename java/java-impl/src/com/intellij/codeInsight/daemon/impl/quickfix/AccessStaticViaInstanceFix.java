@@ -2,46 +2,67 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
-import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
+import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.StatementExtractor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.MessageFormat;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  private static final Logger LOG = Logger.getInstance(AccessStaticViaInstanceFix.class);
-  private final boolean myOnTheFly;
+public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiReferenceExpression> {
   private final @IntentionName String myText;
+  private final @NotNull ThreeState myKeepSideEffects;
 
-  public AccessStaticViaInstanceFix(@NotNull PsiReferenceExpression expression, @NotNull JavaResolveResult result, boolean onTheFly) {
-    super(expression);
-    myOnTheFly = onTheFly;
-    PsiMember member = (PsiMember)result.getElement();
-    myText = calcText(member, result.getSubstitutor());
+  /**
+   * @deprecated onTheFly parameter is ignored. Use another constructor.
+   */
+  @Deprecated
+  public AccessStaticViaInstanceFix(@NotNull PsiReferenceExpression expression,
+                                    @NotNull JavaResolveResult result,
+                                    @SuppressWarnings("unused") boolean onTheFly) {
+    this(expression, result);
   }
 
-  @NotNull
+  public AccessStaticViaInstanceFix(@NotNull PsiReferenceExpression expression, @NotNull JavaResolveResult result) {
+    super(expression);
+    myText = calcText((PsiMember)Objects.requireNonNull(result.getElement()), result.getSubstitutor());
+    myKeepSideEffects = ThreeState.UNSURE;
+  }
+
+  private AccessStaticViaInstanceFix(@NotNull PsiReferenceExpression expression, boolean keepSideEffects) {
+    super(expression);
+    myText = "";
+    myKeepSideEffects = ThreeState.fromBoolean(keepSideEffects);
+  }
+
   @Override
-  public String getText() {
-    return myText;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiReferenceExpression ref) {
+    return switch (myKeepSideEffects) {
+      case YES -> {
+        final PsiExpression qualifierExpression = ref.getQualifierExpression();
+        List<PsiExpression> sideEffects = qualifierExpression == null ?
+                                          List.of() : SideEffectChecker.extractSideEffectExpressions(qualifierExpression);
+        yield Presentation.of(JavaBundle.message("intention.family.name.extract.possible.side.effects"))
+          .withHighlighting(ContainerUtil.map2Array(sideEffects, TextRange.EMPTY_ARRAY, expression -> expression.getTextRange()));
+      }
+      case NO -> Presentation.of(JavaBundle.message("intention.family.name.delete.possible.side.effects"));
+      case UNSURE -> Presentation.of(myText);
+    };
   }
 
   private static @IntentionName String calcText(PsiMember member, PsiSubstitutor substitutor) {
@@ -60,110 +81,62 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    final PsiReferenceExpression myExpression = (PsiReferenceExpression)startElement;
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiReferenceExpression ref) {
+    final PsiExpression qualifierExpression = ref.getQualifierExpression();
+    List<PsiExpression> sideEffects = myKeepSideEffects == ThreeState.NO || qualifierExpression == null ?
+                                      List.of() : SideEffectChecker.extractSideEffectExpressions(qualifierExpression);
+    if (sideEffects.isEmpty()) {
+      return ModCommand.psiUpdate(ref, r -> invoke(r, List.of()));
+    } else {
+      if (myKeepSideEffects == ThreeState.UNSURE) {
+        if (!CodeBlockSurrounder.canSurround(ref)) {
+          return ModCommand.psiUpdate(ref, r -> invoke(r, List.of()));
+        }
+        return ModCommand.chooseAction(QuickFixBundle.message("access.static.via.class.reference.title"), 
+                                       new AccessStaticViaInstanceFix(ref, true), new AccessStaticViaInstanceFix(ref, false));
+      }
+      return ModCommand.psiUpdate(ref, (r, updater) -> invoke(r, ContainerUtil.map(sideEffects, updater::getWritable)));
+    }
+  }
+  
+  private static void invoke(@NotNull PsiReferenceExpression ref, @NotNull List<PsiExpression> sideEffects) {
+    PsiElement element = ref.resolve();
+    if (!(element instanceof PsiMember member)) return;
 
-    if (!myExpression.isValid()) return;
-    if (!FileModificationService.getInstance().prepareFileForWrite(myExpression.getContainingFile())) return;
-    PsiElement element = myExpression.resolve();
-    if (!(element instanceof PsiMember myMember)) return;
-    if (!myMember.isValid()) return;
-
-    PsiClass containingClass = myMember.getContainingClass();
+    PsiClass containingClass = member.getContainingClass();
     if (containingClass == null || containingClass instanceof PsiAnonymousClass) return;
-    final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
+    Project project = member.getProject();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    if (qualifierExpression != null && !checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression,editor)) return;
-    WriteAction.run(() -> {
-      try {
-        PsiElement newQualifier = factory.createReferenceExpression(containingClass);
-        if (qualifierExpression != null) {
-          newQualifier = qualifierExpression.replace(newQualifier);
-        }
-        else {
-          myExpression.setQualifierExpression((PsiExpression)newQualifier);
-          newQualifier = myExpression.getQualifierExpression();
-        }
-        PsiElement qualifiedWithClassName = myExpression.copy();
-        if (myExpression.getTypeParameters().length == 0 && !(containingClass.isInterface() && !containingClass.equals(PsiTreeUtil.getParentOfType(myExpression, PsiClass.class)))) {
-          newQualifier.delete();
-          if (myExpression.resolve() != myMember) {
-            myExpression.replace(qualifiedWithClassName);
-          }
+    PsiExpression qualifierExpression = ref.getQualifierExpression();
+    if (!sideEffects.isEmpty()) {
+      Objects.requireNonNull(qualifierExpression);
+      CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(ref);
+      if (surrounder != null) {
+        PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, qualifierExpression);
+        CodeBlockSurrounder.SurroundResult result = surrounder.surround();
+        ref = (PsiReferenceExpression)result.getExpression();
+        qualifierExpression = ref.getQualifierExpression();
+        PsiStatement anchor = result.getAnchor();
+        if (statements.length > 0) {
+          BlockUtils.addBefore(anchor, statements);
         }
       }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
+    }
+    PsiElement newQualifier = factory.createReferenceExpression(containingClass);
+    if (qualifierExpression != null) {
+      newQualifier = qualifierExpression.replace(newQualifier);
+    }
+    else {
+      ref.setQualifierExpression((PsiExpression)newQualifier);
+      newQualifier = Objects.requireNonNull(ref.getQualifierExpression());
+    }
+    PsiElement qualifiedWithClassName = ref.copy();
+    if (ref.getTypeParameters().length == 0 &&
+        !(containingClass.isInterface() && !containingClass.equals(PsiTreeUtil.getParentOfType(ref, PsiClass.class)))) {
+      newQualifier.delete();
+      if (ref.resolve() != member) {
+        ref.replace(qualifiedWithClassName);
       }
-    });
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  private boolean checkSideEffects(final Project project,
-                                   PsiClass containingClass,
-                                   final PsiExpression qualifierExpression,
-                                   PsiElementFactory factory,
-                                   final PsiElement myExpression,
-                                   Editor editor) {
-    final List<PsiElement> sideEffects = new ArrayList<>();
-    boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(qualifierExpression, null, sideEffects);
-    if (hasSideEffects && !myOnTheFly) return false;
-    if (!hasSideEffects || ApplicationManager.getApplication().isUnitTestMode()) {
-      return true;
     }
-    if (editor == null) {
-      return false;
-    }
-    HighlightManager.getInstance(project).addOccurrenceHighlights(editor, PsiUtilCore.toPsiElementArray(sideEffects), 
-                                                                  EditorColors.SEARCH_RESULT_ATTRIBUTES, true, null);
-    try {
-      hasSideEffects = PsiUtil.isStatement(factory.createStatementFromText(qualifierExpression.getText(), qualifierExpression));
-    }
-    catch (IncorrectOperationException e) {
-      hasSideEffects = false;
-    }
-    final PsiReferenceExpression qualifiedWithClassName = (PsiReferenceExpression)myExpression.copy();
-    qualifiedWithClassName.setQualifierExpression(factory.createReferenceExpression(containingClass));
-    final PsiStatement statement = PsiTreeUtil.getParentOfType(myExpression, PsiStatement.class);
-    final boolean canCopeWithSideEffects = hasSideEffects && statement != null;
-    final SideEffectWarningDialog dialog =
-      new SideEffectWarningDialog(project, false, null, sideEffects.get(0).getText(), PsiExpressionTrimRenderer.render(qualifierExpression),
-                                  canCopeWithSideEffects){
-        @Override
-        protected String sideEffectsDescription() {
-          if (canCopeWithSideEffects) {
-            return MessageFormat.format(getFormatString(),
-                                        JavaBundle.message("side.effects.expression.presentation", qualifierExpression.getText()),
-                                        myExpression.getText(), //before text
-                                        qualifierExpression.getText() + ";" + "<br>" + qualifiedWithClassName.getText());//after text
-          }
-          return JavaBundle.message("side.effects.non.fixable.message", qualifierExpression.getText());
-        }
-      };
-    dialog.show();
-    int res = dialog.getExitCode();
-    if (res == RemoveUnusedVariableUtil.RemoveMode.CANCEL.ordinal()) return false;
-    if (res == RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT.ordinal()) {
-      final PsiStatement statementFromText = factory.createStatementFromText(qualifierExpression.getText() + ";", null);
-      LOG.assertTrue(statement != null);
-      WriteAction.run(() -> {
-        try {
-          PsiElement parent = statement.getParent();
-          BlockUtils.addBefore(parent instanceof PsiForStatement ? (PsiStatement)parent : statement, statementFromText);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      });
-    }
-    return true;
   }
 }

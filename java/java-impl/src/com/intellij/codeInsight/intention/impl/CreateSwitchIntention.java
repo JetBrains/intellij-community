@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,7 +24,7 @@ public class CreateSwitchIntention extends PsiUpdateModCommandAction<PsiExpressi
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionStatement expressionStatement, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpressionStatement expressionStatement, @NotNull ModPsiUpdater updater) {
     String valueToSwitch = expressionStatement.getExpression().getText();
     PsiSwitchStatement switchStatement = (PsiSwitchStatement)new CommentTracker().replaceAndRestoreComments(
       expressionStatement, "switch (" + valueToSwitch + ") {}");

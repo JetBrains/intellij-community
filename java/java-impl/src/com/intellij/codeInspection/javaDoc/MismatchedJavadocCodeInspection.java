@@ -83,7 +83,7 @@ public class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocalInspec
         }
       }
 
-      private @Nls @Nullable String getIncompatibleMessage(@NotNull String text, @NotNull Kind kind, @NotNull PsiMethod method) {
+      private static @Nls @Nullable String getIncompatibleMessage(@NotNull String text, @NotNull Kind kind, @NotNull PsiMethod method) {
         PsiType returnType = method.getReturnType();
         if (returnType == null || PsiTypes.voidType().equals(returnType)) return null;
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(returnType);
@@ -158,7 +158,7 @@ public class MismatchedJavadocCodeInspection extends AbstractBaseJavaLocalInspec
         return ranges;
       }
 
-      private void processLine(Pattern pattern, PsiElement child, Kind kind, List<ReturnItem> ranges) {
+      private static void processLine(Pattern pattern, PsiElement child, Kind kind, List<ReturnItem> ranges) {
         String text = child.getText();
         Matcher matcher = pattern.matcher(text);
         while (matcher.find()) {

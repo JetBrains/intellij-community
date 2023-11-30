@@ -170,6 +170,13 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
                 (IS_PY3K and sys.version_info[1] >= 3))
 
 
+USE_LOW_IMPACT_MONITORING = (IS_PY312_OR_GREATER and
+                             os.environ.get('USE_LOW_IMPACT_MONITORING', False))
+
+# The tool name to use in the API calls from PEP 669.
+PYDEVD_TOOL_NAME = 'pydevd'
+
+
 class ValuesPolicy:
     SYNC = 0
     ASYNC = 1

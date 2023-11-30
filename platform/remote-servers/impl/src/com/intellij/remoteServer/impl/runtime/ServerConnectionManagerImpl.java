@@ -11,19 +11,19 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ServerConnectionManagerImpl extends ServerConnectionManager {
 
-  private final Map<RemoteServer<?>, ServerConnection> myConnections = new HashMap<>();
+  private final Map<RemoteServer<?>, ServerConnection<?>> myConnections = new ConcurrentHashMap<>();
   private final ServerConnectionEventDispatcher myEventDispatcher = new ServerConnectionEventDispatcher();
 
   @NotNull
   @Override
-  public <C extends ServerConfiguration> ServerConnection getOrCreateConnection(@NotNull RemoteServer<C> server) {
+  public <C extends ServerConfiguration> ServerConnection<?> getOrCreateConnection(@NotNull RemoteServer<C> server) {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
-    ServerConnection connection = myConnections.get(server);
+    ServerConnection<?> connection = myConnections.get(server);
     if (connection == null) {
       connection = doCreateConnection(server, this);
       myConnections.put(server, connection);
@@ -34,11 +34,11 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
 
   @NotNull
   @Override
-  public <C extends ServerConfiguration> ServerConnection createTemporaryConnection(@NotNull RemoteServer<C> server) {
+  public <C extends ServerConfiguration> ServerConnection<?> createTemporaryConnection(@NotNull RemoteServer<C> server) {
     return doCreateConnection(server, null);
   }
 
-  private <C extends ServerConfiguration> ServerConnection doCreateConnection(@NotNull RemoteServer<C> server,
+  private <C extends ServerConfiguration> ServerConnection<?> doCreateConnection(@NotNull RemoteServer<C> server,
                                                                               ServerConnectionManagerImpl manager) {
     ServerTaskExecutorImpl executor = new ServerTaskExecutorImpl();
     return new ServerConnectionImpl<>(server, server.getType().createConnector(server, executor), manager, getEventDispatcher());
@@ -46,7 +46,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
 
   @Nullable
   @Override
-  public <C extends ServerConfiguration> ServerConnection getConnection(@NotNull RemoteServer<C> server) {
+  public <C extends ServerConfiguration> ServerConnection<?> getConnection(@NotNull RemoteServer<C> server) {
     return myConnections.get(server);
   }
 
@@ -61,7 +61,7 @@ public class ServerConnectionManagerImpl extends ServerConnectionManager {
 
   @NotNull
   @Override
-  public Collection<ServerConnection> getConnections() {
+  public Collection<ServerConnection<?>> getConnections() {
     ApplicationManager.getApplication().assertWriteIntentLockAcquired();
     return Collections.unmodifiableCollection(myConnections.values());
   }

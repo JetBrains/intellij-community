@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -98,12 +98,12 @@ final class FileTypeDetectionService implements Disposable {
 
     FileTypeRegistry.FileTypeDetector.EP_NAME.addChangeListener(() -> {
       cachedDetectFileBufferSize = -1;
-      onDetectorsChange();
+      onDetectorListChange();
     }, this);
 
     List<String> prevDetectors = PropertiesComponent.getInstance().getList(FILE_TYPE_DETECTORS_PROPERTY);
-    if (!Objects.equals(prevDetectors, getDetectorsString())) {
-      onDetectorsChange();
+    if (!Objects.equals(prevDetectors, getDetectorListString())) {
+      onDetectorListChange();
     }
     reDetectExecutor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("FileTypeManager Redetect", coroutineScope);
   }
@@ -292,12 +292,12 @@ final class FileTypeDetectionService implements Disposable {
     }
   }
 
-  private void onDetectorsChange() {
+  private void onDetectorListChange() {
     clearCaches();
-    PropertiesComponent.getInstance().setList(FILE_TYPE_DETECTORS_PROPERTY, getDetectorsString());
+    PropertiesComponent.getInstance().setList(FILE_TYPE_DETECTORS_PROPERTY, getDetectorListString());
   }
 
-  private static @NotNull List<String> getDetectorsString() {
+  private static @NotNull List<String> getDetectorListString() {
     ExtensionPointImpl<FileTypeRegistry.@NotNull FileTypeDetector> ep =
       (ExtensionPointImpl<FileTypeRegistry.@NotNull FileTypeDetector>)FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint();
     int size = ep.size();
@@ -367,11 +367,15 @@ final class FileTypeDetectionService implements Disposable {
     int flags = BitUtil.set(0, AUTO_DETECTED_AS_TEXT_MASK, wasAutodetectedAsText);
     flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
     if (file instanceof VirtualFileWithId) {
-      writeFlagsToCache(file, flags);
       int id = ((VirtualFileWithId)file).getId();
       flags = BitUtil.set(flags, AUTO_DETECT_WAS_RUN_MASK, true);
       flags = BitUtil.set(flags, ATTRIBUTES_WERE_LOADED_MASK, true);
-      packedFlags.set(id, flags);
+
+      long oldFlags = packedFlags.get(id);
+      if (oldFlags != flags) {
+        packedFlags.set(id, flags);
+        writeFlagsToCache(file, flags);
+      }
 
       if (wasAutodetectedAsText || wasAutodetectedAsBinary) {
         file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
@@ -429,8 +433,7 @@ final class FileTypeDetectionService implements Disposable {
     }
   }
 
-  @Nullable
-  private FileType getFileTypeDetectedFromContent(@NotNull VirtualFile file) {
+  private @Nullable FileType getFileTypeDetectedFromContent(@NotNull VirtualFile file) {
     String fileTypeName = file.getUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY);
     return fileTypeName == null ? null : myFileTypeManager.findFileTypeByName(fileTypeName);
   }
@@ -507,8 +510,7 @@ final class FileTypeDetectionService implements Disposable {
     return false;
   }
 
-  @NotNull
-  private FileType detectFromContentAndCache(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) throws IOException {
+  private @NotNull FileType detectFromContentAndCache(@NotNull VirtualFile file, byte @Nullable [] content, @Nullable FileType fileTypeByName) throws IOException {
     long start = System.currentTimeMillis();
     ByteArraySequence bytes = getFirstBytes(file, content);
     FileType fileType = detectFromContent(file, bytes, fileTypeByName);
@@ -536,8 +538,7 @@ final class FileTypeDetectionService implements Disposable {
     return n;
   }
 
-  @NotNull
-  private FileType detectFromContent(@NotNull VirtualFile file, @NotNull ByteArraySequence bytes, @Nullable FileType fileTypeByName) throws IOException {
+  private @NotNull FileType detectFromContent(@NotNull VirtualFile file, @NotNull ByteArraySequence bytes, @Nullable FileType fileTypeByName) throws IOException {
     List<FileTypeRegistry.FileTypeDetector> detectors = FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensionList();
     // use PlainTextFileType because it doesn't supply its own charset detector
     // help set charset in the process to avoid double charset detection from content
@@ -614,8 +615,7 @@ final class FileTypeDetectionService implements Disposable {
     }
   });
 
-  @NotNull
-  private ByteArraySequence readFirstBytesFromFile(@NotNull VirtualFile file, int bufferLength) throws IOException {
+  private @NotNull ByteArraySequence readFirstBytesFromFile(@NotNull VirtualFile file, int bufferLength) throws IOException {
     try (InputStream inputStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
       if (toLog()) {
         log("F: detectFromContentAndCache(" + file.getName() + "):" + " inputStream=" + streamInfo(inputStream));
@@ -627,8 +627,7 @@ final class FileTypeDetectionService implements Disposable {
     }
   }
 
-  @NotNull
-  private ByteArraySequence getFirstBytes(@NotNull VirtualFile file, byte @Nullable [] content) throws IOException {
+  private @NotNull ByteArraySequence getFirstBytes(@NotNull VirtualFile file, byte @Nullable [] content) throws IOException {
     int bufferLength = getDetectFileBufferSize(file);
     if (content == null) {
       if (bufferLength == 0) {
@@ -670,8 +669,7 @@ final class FileTypeDetectionService implements Disposable {
     return bufferLength;
   }
 
-  @NotNull
-  private static String readableFlags(long flags) {
+  private static @NotNull String readableFlags(long flags) {
     String result = "";
     if (BitUtil.isSet(flags, ATTRIBUTES_WERE_LOADED_MASK)) result += "ATTRIBUTES_WERE_LOADED_MASK";
     if (BitUtil.isSet(flags, AUTO_DETECT_WAS_RUN_MASK)) result += (result.isEmpty() ? "" :" | ") + "AUTO_DETECT_WAS_RUN_MASK";
@@ -680,8 +678,8 @@ final class FileTypeDetectionService implements Disposable {
     return result;
   }
 
-  @Nullable //null means the file was not auto-detected as text/binary
-  private static FileType textOrBinaryFromCachedFlags(long flags) {
+  //null means the file was not auto-detected as text/binary
+  private static @Nullable FileType textOrBinaryFromCachedFlags(long flags) {
     return BitUtil.isSet(flags, AUTO_DETECTED_AS_TEXT_MASK) ? PlainTextFileType.INSTANCE :
            BitUtil.isSet(flags, AUTO_DETECTED_AS_BINARY_MASK) ? UnknownFileType.INSTANCE :
            null;

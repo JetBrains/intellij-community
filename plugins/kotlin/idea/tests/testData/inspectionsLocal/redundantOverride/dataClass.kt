@@ -1,4 +1,7 @@
-// PROBLEM: none
-data class My(val x: Int, val y: String) {
-    override <caret>fun hashCode() = super.hashCode()
+open class Foo {
+    open fun foo() = 1
+}
+
+data class D(val i: Int) : Foo() {
+    <caret>override fun foo(): Int = super.foo()
 }

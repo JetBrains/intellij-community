@@ -14,10 +14,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Caret;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.CaretSpecificDataContext;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -46,6 +43,11 @@ import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsKt;
+import com.jetbrains.jsonSchema.impl.nestedCompletions.NestedCompletionsNodeKt;
+import com.jetbrains.jsonSchema.impl.nestedCompletions.SchemaPath;
+import kotlin.Unit;
+import kotlin.collections.SetsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -53,6 +55,9 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.effectiveBranchOrNull;
+import static com.jetbrains.jsonSchema.impl.NotRequiredPropertiesKt.findPropertiesThatMustNotBePresent;
 
 public final class JsonSchemaCompletionContributor extends CompletionContributor {
   private static final String BUILTIN_USAGE_KEY = "builtin";
@@ -127,7 +132,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     });
   }
 
-  private static class Worker {
+  private static final class Worker {
     private final @NotNull JsonSchemaObject myRootSchema;
     private final @NotNull PsiElement myPosition;
     private final @NotNull PsiElement myOriginalPosition;
@@ -160,30 +165,53 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       final JsonPointerPosition position = myWalker.findPosition(checkable, isName == ThreeState.NO);
       if (position == null || position.isEmpty() && isName == ThreeState.NO) return;
 
-      final Collection<JsonSchemaObject> schemas = new JsonSchemaResolver(myProject, myRootSchema, position).resolve();
       final Set<String> knownNames = new HashSet<>();
-      // too long here, refactor further
-      schemas.forEach(schema -> {
-        if (isName != ThreeState.NO) {
-          final boolean insertComma = myWalker.hasMissingCommaAfter(myPosition);
-          final boolean hasValue = myWalker.isPropertyWithValue(checkable);
+      final var nestedCompletionsNode = NestedCompletionsNodeKt.navigate(myRootSchema.getNestedCompletionRoot(), position);
 
-          final Collection<String> properties = myWalker.getPropertyNamesOfParentObject(myOriginalPosition, myPosition);
-          final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(myOriginalPosition);
-
-          final Map<String, JsonSchemaObject> schemaProperties = schema.getProperties();
-          addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaProperties, knownNames);
-          addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, properties, adapter, knownNames);
-          addPropertyNameSchemaVariants(schema);
-        }
-
-        if (isName != ThreeState.YES) {
-          suggestValues(schema, isName == ThreeState.NO);
-        }
-      });
+      new JsonSchemaResolver(myProject, myRootSchema, position)
+        .resolve()
+        .forEach(schema -> {
+          NestedCompletionsKt.collectNestedCompletions(schema, myProject, nestedCompletionsNode, null, (path, subSchema) -> {
+            processSchema(subSchema, isName, checkable, knownNames, path);
+            return Unit.INSTANCE;
+          });
+        });
 
       for (LookupElement variant : myVariants) {
         myResultConsumer.consume(variant);
+      }
+    }
+
+    /**
+     * @param completionPath Linked node representation of the names of all the parent
+     *                       schema objects that we have navigated for nested completions
+     */
+    private void processSchema(JsonSchemaObject schema,
+                               ThreeState isName,
+                               PsiElement checkable,
+                               Set<String> knownNames,
+                               @Nullable SchemaPath completionPath) {
+      if (isName != ThreeState.NO) {
+        final var completionOriginalPosition = NestedCompletionsKt.findChildBy(myWalker, completionPath, myOriginalPosition);
+        final var completionPosition = NestedCompletionsKt.findChildBy(myWalker, completionPath, myPosition);
+        final boolean insertComma = myWalker.hasMissingCommaAfter(myPosition);
+        final boolean hasValue = myWalker.isPropertyWithValue(checkable);
+
+        final Set<String> properties = myWalker.getPropertyNamesOfParentObject(completionOriginalPosition, completionPosition);
+        final JsonPropertyAdapter adapter = myWalker.getParentPropertyAdapter(completionOriginalPosition);
+
+        final Map<String, JsonSchemaObject> schemaProperties = schema.getProperties();
+        final Set<String> forbiddenNames = SetsKt.plus(
+          findPropertiesThatMustNotBePresent(schema, myPosition, myProject, properties),
+          properties
+        );
+        addAllPropertyVariants(insertComma, hasValue, forbiddenNames, adapter, schemaProperties, knownNames, completionPath);
+        addIfThenElsePropertyNameVariants(schema, insertComma, hasValue, forbiddenNames, adapter, knownNames, completionPath);
+        addPropertyNameSchemaVariants(schema);
+      }
+
+      if (isName != ThreeState.YES) {
+        suggestValues(schema, isName == ThreeState.NO);
       }
     }
 
@@ -202,9 +230,10 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     private void addIfThenElsePropertyNameVariants(@NotNull JsonSchemaObject schema,
                                                    boolean insertComma,
                                                    boolean hasValue,
-                                                   @NotNull Collection<String> properties,
+                                                   @NotNull Set<String> forbiddenNames,
                                                    @Nullable JsonPropertyAdapter adapter,
-                                                   Set<String> knownNames) {
+                                                   Set<String> knownNames,
+                                                   @Nullable SchemaPath completionPath) {
       List<IfThenElse> ifThenElseList = schema.getIfThenElse();
       if (ifThenElseList == null) return;
 
@@ -216,33 +245,25 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       if (object == null) return;
 
       for (IfThenElse ifThenElse : ifThenElseList) {
-        JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(myProject, JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
-        checker.checkByScheme(object, ifThenElse.getIf());
-        if (checker.isCorrect()) {
-          JsonSchemaObject then = ifThenElse.getThen();
-          if (then != null) {
-            addAllPropertyVariants(insertComma, hasValue, properties, adapter, then.getProperties(), knownNames);
-          }
-        }
-        else {
-          JsonSchemaObject schemaElse = ifThenElse.getElse();
-          if (schemaElse != null) {
-            addAllPropertyVariants(insertComma, hasValue, properties, adapter, schemaElse.getProperties(), knownNames);
-          }
-        }
+        JsonSchemaObject effectiveBranch = effectiveBranchOrNull(ifThenElse, myProject, object);
+        if (effectiveBranch == null) continue;
+
+        addAllPropertyVariants(insertComma, hasValue, forbiddenNames, adapter, effectiveBranch.getProperties(), knownNames, completionPath);
       }
     }
 
     private void addAllPropertyVariants(boolean insertComma,
                                         boolean hasValue,
-                                        Collection<String> properties,
+                                        Set<String> forbiddenNames,
                                         JsonPropertyAdapter adapter,
-                                        Map<String, JsonSchemaObject> schemaProperties, Set<String> knownNames) {
+                                        Map<String, JsonSchemaObject> schemaProperties,
+                                        Set<String> knownNames,
+                                        @Nullable SchemaPath completionPath) {
       schemaProperties.keySet().stream()
-        .filter(name -> !properties.contains(name) && !knownNames.contains(name) || adapter != null && name.equals(adapter.getName()))
+        .filter(name -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name.equals(adapter.getName()))
         .forEach(name -> {
           knownNames.add(name);
-          addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma);
+          addPropertyVariant(name, schemaProperties.get(name), hasValue, insertComma, completionPath);
         });
     }
 
@@ -350,12 +371,14 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
       else if (JsonSchemaType._array.equals(type)) {
         String value = myWalker.getDefaultArrayValue();
         addValueVariant(value, null,
-                        "[...]", createArrayOrObjectLiteralInsertHandler(myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length()));
+                        "[...]", createArrayOrObjectLiteralInsertHandler(myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length())
+        );
       }
       else if (JsonSchemaType._object.equals(type)) {
         String value = myWalker.getDefaultObjectValue();
         addValueVariant(value, null,
-                        "{...}", createArrayOrObjectLiteralInsertHandler(myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length()));
+                        "{...}", createArrayOrObjectLiteralInsertHandler(myWalker.hasWhitespaceDelimitedCodeBlocks(), value.length())
+        );
       }
     }
 
@@ -428,7 +451,8 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     private void addPropertyVariant(@NotNull String key,
                                     @NotNull JsonSchemaObject jsonSchemaObject,
                                     boolean hasValue,
-                                    boolean insertComma) {
+                                    boolean insertComma,
+                                    @Nullable SchemaPath completionPath) {
       final Collection<JsonSchemaObject> variants = new JsonSchemaResolver(myProject, jsonSchemaObject).resolve();
       jsonSchemaObject = ObjectUtils.coalesce(ContainerUtil.getFirstItem(variants), jsonSchemaObject);
       key = !shouldWrapInQuotes(key, false) ? key : StringUtil.wrapWithDoubleQuote(key);
@@ -473,7 +497,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
         builder = builder.withTailText(JsonBundle.message("schema.documentation.deprecated.postfix"), true).withStrikeoutness(true);
       }
 
-      myVariants.add(builder);
+      myVariants.add(NestedCompletionsKt.prefixedBy(builder, completionPath, myWalker));
     }
 
     private static @NotNull String findFirstSentence(@NotNull String sentence) {
@@ -649,13 +673,15 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
                 AutoPopupController.getInstance(context.getProject()).autoPopupMemberLookup(context.getEditor(), null);
               }
               case _array -> {
-                EditorModificationUtil.insertStringAtCaret(editor, insertColon ? ": " : " ",
-                                                           false, true,
-                                                           insertColon ? 2 : 1);
+                EditorModificationUtilEx.insertStringAtCaret(editor, insertColon ? ":" : " ",
+                                                             false, true,
+                                                             1);
                 hadEnter = false;
                 if (insertColon && myWalker.hasWhitespaceDelimitedCodeBlocks()) {
                   invokeEnterHandler(editor);
                   hadEnter = true;
+                } else {
+                  EditorModificationUtilEx.insertStringAtCaret(editor, " ", false, true, 1);
                 }
                 if (insertColon) {
                   stringToInsert = myWalker.getDefaultArrayValue() + comma;
@@ -669,7 +695,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
 
                 PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
 
-                if (stringToInsert != null) {
+                if (stringToInsert != null && myWalker.requiresReformatAfterArrayInsertion()) {
                   formatInsertedString(context, stringToInsert.length());
                 }
               }

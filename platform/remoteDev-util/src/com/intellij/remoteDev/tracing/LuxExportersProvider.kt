@@ -2,48 +2,38 @@
 package com.intellij.remoteDev.tracing
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.FilteredMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.belongsToScope
 import com.intellij.platform.diagnostic.telemetry.impl.CsvGzippedMetricsExporter
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
+import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
-import java.io.File
-import java.time.Duration
+import java.nio.file.Path
+import kotlin.time.Duration.Companion.seconds
 
-private val LOG = logger<LuxExportersProvider>()
-class LuxExportersProvider : OTelExportersProvider {
-  override fun getSpanExporters(): List<AsyncSpanExporter> {
-    return emptyList()
-  }
-
+private class LuxExportersProvider : OpenTelemetryExporterProvider {
   override fun getMetricsExporters(): List<MetricExporter> {
-    val fileToWrite: File? = try {
-      CsvGzippedMetricsExporter.generatePathForLuxMetrics().toFile()
+    if (System.getProperty(OpenTelemetryUtils.RDCT_LUX_METRICS_DIAGNOSTIC_FLAG) == null) {
+      return emptyList()
+    }
+
+    val fileToWrite: Path? = try {
+      CsvGzippedMetricsExporter.generatePathForLuxMetrics()
     }
     catch (e: UnsupportedOperationException) {
-      LOG.warn("Failed to create a file for metrics")
+      logger<LuxExportersProvider>().warn("Failed to create a file for metrics")
       null
     }
+
     fileToWrite?.let {
       return listOf(
-        FilteredMetricsExporter(CsvGzippedMetricsExporter(fileToWrite)) { metric ->
+        FilteredMetricsExporter(SynchronizedClearableLazy { CsvGzippedMetricsExporter(fileToWrite) }) { metric ->
           metric.belongsToScope(Lux)
         })
     }
     return emptyList()
   }
 
-  override fun getReadsInterval(): Duration {
-    return Duration.ofSeconds(1)
-  }
-
-  override fun isTracingAvailable(): Boolean {
-    return false
-  }
-
-  override fun areMetricsAvailable(): Boolean {
-    return System.getProperty(OpenTelemetryUtils.RDCT_LUX_METRICS_DIAGNOSTIC_FLAG) != null
-  }
+  override fun getReadInterval() = 1.seconds
 }

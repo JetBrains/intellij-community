@@ -139,8 +139,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @return text range of this element relative to its parent
    */
   @Contract(pure = true)
-  @NotNull
-  default TextRange getTextRangeInParent() {
+  default @NotNull TextRange getTextRangeInParent() {
     return TextRange.from(getStartOffsetInParent(), getTextLength());
   }
 

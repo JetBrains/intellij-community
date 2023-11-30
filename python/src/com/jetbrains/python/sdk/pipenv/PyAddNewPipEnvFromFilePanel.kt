@@ -38,7 +38,7 @@ class PyAddNewPipEnvFromFilePanel(private val module: Module) : JPanel() {
     add(formPanel, BorderLayout.NORTH)
   }
 
-  fun validateAll(): List<ValidationInfo> = listOfNotNull(validatePipEnvExecutable(pipEnvPathField.text))
+  fun validateAll(): List<ValidationInfo> = emptyList() // Pre-target validation is not supported
 
   data class Data(val pipEnvPath: @NlsSafe @SystemDependent String)
 }

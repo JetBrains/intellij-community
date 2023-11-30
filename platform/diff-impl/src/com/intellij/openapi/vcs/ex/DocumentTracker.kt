@@ -21,9 +21,12 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -40,7 +43,7 @@ import kotlin.math.max
 class DocumentTracker(
   document1: Document,
   document2: Document,
-  private val LOCK: Lock
+  private val LOCK: Lock = Lock()
 ) : Disposable {
 
   private val handlers: MutableList<Handler> = mutableListOf()
@@ -76,7 +79,7 @@ class DocumentTracker(
 
   @RequiresEdt
   override fun dispose() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     if (isDisposed) return
     isDisposed = true
@@ -230,12 +233,12 @@ class DocumentTracker(
 
 
   @RequiresEdt
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean) {
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> RangeExclusionState) {
     partiallyApplyBlocks(side, condition, { _, _ -> })
   }
 
   @RequiresEdt
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean, consumer: (Block, shift: Int) -> Unit) {
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> RangeExclusionState, consumer: (Range, shift: Int) -> Unit) {
     if (isDisposed) return
 
     val otherSide = side.other()
@@ -243,7 +246,7 @@ class DocumentTracker(
     val otherDocument = otherSide[document1, document2]
 
     doFrozen(side) {
-      val appliedBlocks = LOCK.write {
+      val appliedRanges = LOCK.write {
         updateFrozenContentIfNeeded()
         tracker.partiallyApplyBlocks(side, condition)
       }
@@ -251,13 +254,13 @@ class DocumentTracker(
       // We use already filtered blocks here, because conditions might have been changed from other thread.
       // The documents/blocks themselves did not change though.
       var shift = 0
-      for (block in appliedBlocks) {
-        DiffUtil.applyModification(document, block.range.start(side) + shift, block.range.end(side) + shift,
-                                   otherDocument, block.range.start(otherSide), block.range.end(otherSide))
+      for (range in appliedRanges) {
+        DiffUtil.applyModification(document, range.start(side) + shift, range.end(side) + shift,
+                                   otherDocument, range.start(otherSide), range.end(otherSide))
 
-        consumer(block, shift)
+        consumer(range, shift)
 
-        shift += getRangeDelta(block.range, side)
+        shift += getRangeDelta(range, side)
       }
 
       LOCK.write {
@@ -266,23 +269,43 @@ class DocumentTracker(
     }
   }
 
-  fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String? {
+  fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> RangeExclusionState): String? {
     if (isDisposed) return null
 
     val otherSide = side.other()
-    val affectedBlocks = tracker.blocks.filter(condition)
     val content = getContent(side)
     val otherContent = getContent(otherSide)
 
     val lineOffsets = content.lineOffsets
     val otherLineOffsets = otherContent.lineOffsets
 
-    val ranges = affectedBlocks.map {
-      Range(it.range.start(side), it.range.end(side),
-            it.range.start(otherSide), it.range.end(otherSide))
+    val ranges = tracker.blocks.flatMap { block ->
+      val exclusionState = condition(block)
+      return@flatMap when (exclusionState) {
+        RangeExclusionState.Included -> listOf(block.range)
+        RangeExclusionState.Excluded -> emptyList()
+        is RangeExclusionState.Partial -> toIncludedRanges(block.range, exclusionState)
+      }
     }
+      .map { range ->
+        Range(range.start(side), range.end(side),
+              range.start(otherSide), range.end(otherSide))
+      }
 
     return DiffUtil.applyModification(content, lineOffsets, otherContent, otherLineOffsets, ranges)
+  }
+
+  private fun toIncludedRanges(range: Range, exclusionState: RangeExclusionState.Partial): List<Range> {
+    val result = mutableListOf<Range>()
+
+    exclusionState.iterateIncludedDeletionRanges(range) { deletedRange ->
+      result += deletedRange
+    }
+    exclusionState.iterateIncludedAdditionRanges(range) { addedRange ->
+      result += addedRange
+    }
+
+    return result
   }
 
   fun setFrozenState(content1: CharSequence, content2: CharSequence, lineRanges: List<Range>): Boolean {
@@ -497,6 +520,10 @@ class DocumentTracker(
   }
 
 
+  /**
+   * Would be better to implement this with a proper RW-lock, but it's challenging fue to absence of lock upgrade in [java.util.concurrent.locks.ReentrantReadWriteLock].
+   * Fine to leave it as is for now because it is not that contested.
+   */
   @ApiStatus.Internal
   class Lock {
     val myLock = ReentrantLock()
@@ -540,12 +567,16 @@ class DocumentTracker(
 
 
   class Block(val range: Range, internal val isDirty: Boolean, internal val isTooBig: Boolean) : BlockI {
-    var data: Any? = null
+    var data: BlockData? = null
 
     override val start: Int get() = range.start2
     override val end: Int get() = range.end2
     override val vcsStart: Int get() = range.start1
     override val vcsEnd: Int get() = range.end1
+  }
+
+  interface BlockData {
+    object Empty : BlockData
   }
 
   companion object {
@@ -636,22 +667,57 @@ private class LineTracker(private val handlers: List<Handler>,
     afterBulkRangeChange(isDirty)
   }
 
-  fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean): List<Block> {
+  fun partiallyApplyBlocks(side: Side, condition: (Block) -> RangeExclusionState): List<Range> {
     val newBlocks = mutableListOf<Block>()
-    val appliedBlocks = mutableListOf<Block>()
+    val appliedRanges = mutableListOf<Range>()
 
     var shift = 0
     for (block in blocks) {
-      if (condition(block)) {
-        appliedBlocks.add(block)
+      val exclusionState = condition(block)
+      when (exclusionState) {
+        RangeExclusionState.Included -> {
+          appliedRanges.add(block.range)
 
-        shift += getRangeDelta(block.range, side)
-      }
-      else {
-        val newBlock = block.shift(side, shift)
-        onRangeShifted(block, newBlock)
+          shift += getRangeDelta(block.range, side)
+        }
+        RangeExclusionState.Excluded -> {
+          val newBlock = block.shift(side, shift)
+          onRangeShifted(block, newBlock)
 
-        newBlocks.add(newBlock)
+          newBlocks.add(newBlock)
+        }
+        is RangeExclusionState.Partial -> {
+          var deletedCount = 0
+          var addedCount = 0
+
+          var partialShift = 0
+          exclusionState.iterateIncludedDeletionRanges(block.range) { deletedRange ->
+            appliedRanges += deletedRange
+            deletedCount += deletedRange.end1 - deletedRange.start1
+            partialShift += getRangeDelta(deletedRange, side)
+          }
+          exclusionState.iterateIncludedAdditionRanges(block.range) { addedRange ->
+            appliedRanges += addedRange
+            addedCount += addedRange.end2 - addedRange.start2
+            partialShift += getRangeDelta(addedRange, side)
+          }
+
+          val newRange = if (side.isLeft) {
+            Range(block.range.start1 + shift, block.range.end1 + shift + addedCount - deletedCount,
+                  block.range.start2, block.range.end2)
+          }
+          else {
+            Range(block.range.start1, block.range.end1,
+                  block.range.start2 + shift, block.range.end2 + shift + deletedCount - addedCount)
+          }
+
+          val newBlock = Block(newRange, true, false)
+          shift += partialShift
+
+          onRangesChanged(listOf(block), newBlock)
+          newBlocks += newBlock
+          isDirty = true
+        }
       }
     }
 
@@ -659,7 +725,7 @@ private class LineTracker(private val handlers: List<Handler>,
 
     afterBulkRangeChange(isDirty)
 
-    return appliedBlocks
+    return appliedRanges
   }
 
 
@@ -1157,4 +1223,132 @@ private fun shiftRange(range: Range, shift1: Int, shift2: Int) = Range(range.sta
 private fun createRange(side: Side, start: Int, end: Int, otherStart: Int, otherEnd: Int): Range = when {
   side.isLeft -> Range(start, end, otherStart, otherEnd)
   else -> Range(otherStart, otherEnd, start, end)
+}
+
+sealed class RangeExclusionState {
+  abstract val hasExcluded: Boolean
+  abstract val hasIncluded: Boolean
+
+  object Included : RangeExclusionState() {
+    override val hasExcluded: Boolean = false
+    override val hasIncluded: Boolean = true
+  }
+
+  object Excluded : RangeExclusionState() {
+    override val hasExcluded: Boolean = true
+    override val hasIncluded: Boolean = false
+  }
+
+  @Experimental
+  class Partial(
+    val deletionsCount: Int,
+    val additionsCount: Int,
+    private val includedDeletions: BitSet,
+    private val includedAdditions: BitSet
+  ) : RangeExclusionState() {
+    init {
+      if (includedAdditions.length() > additionsCount || includedDeletions.length() > deletionsCount) {
+        logger<DocumentTracker>().error(
+          "Invalid exclusion state: [$includedDeletions - $deletionsCount] [$includedAdditions - $additionsCount]")
+      }
+    }
+
+    override val hasExcluded: Boolean
+      get() = includedDeletions.nextClearBit(0) < deletionsCount ||
+              includedAdditions.nextClearBit(0) < additionsCount
+    override val hasIncluded: Boolean
+      get() = !includedDeletions.isEmpty || !includedAdditions.isEmpty
+
+    val includedDeletionsCount: Int get() = includedDeletions.cardinality()
+    val includedAdditionsCount: Int get() = includedAdditions.cardinality()
+
+    fun iterateIncludedDeletionRanges(blockRange: Range, consumer: (range: Range) -> Unit) {
+      iterateIncludedRanges(includedDeletions) { start, end ->
+        consumer(Range(blockRange.start1 + start, blockRange.start1 + end, blockRange.start2, blockRange.start2))
+      }
+    }
+
+    fun iterateIncludedAdditionRanges(blockRange: Range, consumer: (range: Range) -> Unit) {
+      iterateIncludedRanges(includedAdditions) { start, end ->
+        consumer(Range(blockRange.end1, blockRange.end1, blockRange.start2 + start, blockRange.start2 + end))
+      }
+    }
+
+    fun iterateAdditionOffsets(consumer: (start: Int, end: Int, isIncluded: Boolean) -> Unit) {
+      iterateOffsets(includedAdditions, additionsCount, consumer)
+    }
+
+    fun iterateDeletionOffsets(consumer: (start: Int, end: Int, isIncluded: Boolean) -> Unit) {
+      iterateOffsets(includedDeletions, deletionsCount, consumer)
+    }
+
+    @Internal
+    fun copyIncludedInto(includedDeletions: BitSet, includedAdditions: BitSet) {
+      includedDeletions.or(this.includedDeletions)
+      includedAdditions.or(this.includedAdditions)
+    }
+
+    private fun iterateIncludedRanges(set: BitSet, consumer: (start: Int, end: Int) -> Unit) {
+      var index = 0
+      while (true) {
+        val nextStart = set.nextSetBit(index)
+        if (nextStart == -1) break
+        val nextEnd = set.nextClearBit(nextStart)
+        consumer(nextStart, nextEnd)
+        index = nextEnd
+      }
+    }
+
+    private fun iterateOffsets(set: BitSet, count: Int, consumer: (start: Int, end: Int, isIncluded: Boolean) -> Unit) {
+      var index = 0
+      while (true) {
+        val nextStart = set.nextSetBit(index)
+        if (nextStart == -1) break
+
+        if (index < nextStart) {
+          consumer(index, nextStart, false)
+        }
+
+        val nextEnd = set.nextClearBit(nextStart)
+        consumer(nextStart, nextEnd, true)
+
+        index = nextEnd
+      }
+
+      if (index < count) {
+        consumer(index, count, false)
+      }
+    }
+
+    override fun toString(): String {
+      return "RangeExclusionState.Partial($includedDeletions - $includedAdditions)"
+    }
+
+    fun validate(deletionsCount: Int, additionsCount: Int) {
+      if (this.deletionsCount != deletionsCount || this.additionsCount != additionsCount) {
+        logger<DocumentTracker>().error(
+          "Invalid exclusion state: [${this.deletionsCount} - ${this.deletionsCount}] [${deletionsCount} - ${additionsCount}]")
+      }
+    }
+  }
+}
+
+/**
+ * Used to display files status
+ */
+fun RangeExclusionState.countAffectedVisibleChanges(includedIntoCommitOnly: Boolean): Int {
+  if (includedIntoCommitOnly) {
+    return when (this) {
+      RangeExclusionState.Excluded -> 0
+      RangeExclusionState.Included -> 1
+      is RangeExclusionState.Partial -> includedDeletionsCount + includedAdditionsCount
+    }
+  }
+  else {
+    return when (this) {
+      RangeExclusionState.Excluded -> 1
+      RangeExclusionState.Included -> 1
+      is RangeExclusionState.Partial -> deletionsCount + additionsCount
+    }
+  }
 }

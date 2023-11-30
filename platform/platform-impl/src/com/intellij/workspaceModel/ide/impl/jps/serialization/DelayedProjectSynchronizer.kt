@@ -5,10 +5,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.jps.model.diagnostic.JpsMetrics
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.TestOnly
@@ -21,15 +20,23 @@ import kotlin.system.measureTimeMillis
  *
  * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronizes the state
  * of workspace model with project model files (iml/xml).
+ *
+ * If this synchronizer overrides your changes and you'd like to postpone the changes to be after this synchronization,
+ *   you can use [com.intellij.workspaceModel.ide.JpsProjectLoadingManager].
  */
 @VisibleForTesting
 class DelayedProjectSynchronizer : ProjectActivity {
   override suspend fun execute(project: Project) {
-    doSync(project)
+    Util.doSync(project)
   }
 
-  companion object {
-    private suspend fun doSync(project: Project) {
+  object Util {
+    init {
+      setupOpenTelemetryReporting(JpsMetrics.getInstance().meter)
+    }
+
+    // This function is effectively "private". It's internal because otherwise it's not available for DelayedProjectSynchronizer
+    internal suspend fun doSync(project: Project) {
       val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
       if (!(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
         return
@@ -39,7 +46,7 @@ class DelayedProjectSynchronizer : ProjectActivity {
         projectModelSynchronizer.loadProject(project)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
-      syncTimeMs.addElapsedTimeMs(loadingTime)
+      syncTimeMs.addAndGet(loadingTime)
       thisLogger().info(
         "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}"
       )
@@ -60,10 +67,6 @@ class DelayedProjectSynchronizer : ProjectActivity {
         .ofLongs().buildObserver()
 
       meter.batchCallback({ syncTimeGauge.record(syncTimeMs.get()) }, syncTimeGauge)
-    }
-
-    init {
-      setupOpenTelemetryReporting(JpsMetrics.getInstance().meter)
     }
   }
 }

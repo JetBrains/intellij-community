@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.surroundWith;
 
 import com.intellij.json.JsonElementTypes;
@@ -17,7 +18,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class JsonSurroundDescriptor implements SurroundDescriptor {
+public final class JsonSurroundDescriptor implements SurroundDescriptor {
   private static final Surrounder[] ourSurrounders = new Surrounder[]{
     new JsonWithObjectLiteralSurrounder(),
     new JsonWithArrayLiteralSurrounder(),

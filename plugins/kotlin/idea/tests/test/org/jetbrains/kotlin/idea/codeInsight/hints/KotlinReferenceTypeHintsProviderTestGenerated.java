@@ -63,6 +63,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
         runTest("testData/codeInsight/hints/types/DestructingType.kt");
     }
 
+    @TestMetadata("DestructingType2.kt")
+    public void testDestructingType2() throws Exception {
+        runTest("testData/codeInsight/hints/types/DestructingType2.kt");
+    }
+
     @TestMetadata("Destructuring.kt")
     public void testDestructuring() throws Exception {
         runTest("testData/codeInsight/hints/types/Destructuring.kt");
@@ -101,6 +106,11 @@ public class KotlinReferenceTypeHintsProviderTestGenerated extends AbstractKotli
     @TestMetadata("ExpandedTypeAlias.kt")
     public void testExpandedTypeAlias() throws Exception {
         runTest("testData/codeInsight/hints/types/ExpandedTypeAlias.kt");
+    }
+
+    @TestMetadata("FlexibleType.kt")
+    public void testFlexibleType() throws Exception {
+        runTest("testData/codeInsight/hints/types/FlexibleType.kt");
     }
 
     @TestMetadata("ImportedEnumEntry.kt")

@@ -64,7 +64,7 @@ public final class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRun
                 return aClass instanceof KtLightClass && ConfigurationUtil.MAIN_CLASS.value(aClass) && findMainMethod(aClass) != null;
             }
 
-            private @Nullable PsiMethod findMainMethod(PsiClass aClass) {
+            private static @Nullable PsiMethod findMainMethod(PsiClass aClass) {
                 return ReadAction.compute(() -> PsiMethodUtil.findMainMethod(aClass));
             }
         };

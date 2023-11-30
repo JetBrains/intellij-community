@@ -6,10 +6,10 @@ import org.jetbrains.annotations.ApiStatus;
 import java.util.function.Predicate;
 
 /**
- * Deprecated. Please use {@link java.util.function.Predicate} instead.
- *
+ * Deprecated; please use {@link Predicate} instead.
+ * <p>
  * Returns {@code true} or {@code false} for the given input object.
- * <p/>
+ * <p>
  * See {@link Conditions} for chained conditions.
  */
 @FunctionalInterface
@@ -21,9 +21,7 @@ public interface Condition<T> extends Predicate<T> {
     return value(t);
   }
 
-  /**
-   * @deprecated use {@link Conditions#notNull()} instead
-   */
+  /** @deprecated use {@link Conditions#notNull()} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval  
   Condition<Object> NOT_NULL = new Condition<Object>() {
@@ -38,9 +36,7 @@ public interface Condition<T> extends Predicate<T> {
     }
   };
 
-  /**
-   * @deprecated use {@link Conditions#alwaysTrue()} instead
-   */
+  /** @deprecated use {@link Conditions#alwaysTrue()} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   Condition<Object> TRUE = new Condition<Object>() {
@@ -54,9 +50,8 @@ public interface Condition<T> extends Predicate<T> {
       return "Condition.TRUE";
     }
   };
-  /**
-   * @deprecated use {@link Conditions#alwaysFalse()} instead
-   */
+
+  /** @deprecated use {@link Conditions#alwaysFalse()} instead */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   Condition<Object> FALSE = new Condition<Object>() {

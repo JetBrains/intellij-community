@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
-import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.inspections.RedundantSamConstructorInspection
+import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -47,7 +47,7 @@ class AddFunModifierFix(
         val argument = getStrictParentOfType<KtValueArgument>()?.takeIf { it.getArgumentExpression() == this } ?: return
         val parentCall = argument.getStrictParentOfType<KtCallExpression>() ?: return
 
-        RedundantSamConstructorInspection.replaceSamConstructorCall(this)
+        RedundantSamConstructorInspection.Util.replaceSamConstructorCall(this)
 
         if (parentCall.canMoveLambdaOutsideParentheses()) {
             runWriteActionIfPhysical(parentCall) {

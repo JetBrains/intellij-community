@@ -1,52 +1,71 @@
-<idea-plugin package="com.intellij.feedback">
-  <extensions defaultExtensionNs="com.intellij">
+<idea-plugin package="com.intellij.platform.feedback">
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.feedback.idleFeedbackSurvey" interface="com.intellij.platform.feedback.FeedbackSurvey"
+                    dynamic="true"/>
+  </extensionPoints>
 
-    <applicationService serviceImplementation="com.intellij.feedback.common.state.DontShowAgainFeedbackService"/>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.ide.impl.feedback.PlatformFeedbackDialogs"
+                        serviceImplementation="com.intellij.platform.feedback.impl.PlatformFeedbackDialogsImpl"
+                        overrides="true"/>
+
+    <applicationService serviceImplementation="com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService"/>
 
     <notificationGroup displayType="BALLOON" id="Feedback In IDE" bundle="messages.CommonFeedbackMessages"
                        key="notification.group.feedback"/>
 
-    <typedHandler implementation="com.intellij.feedback.common.track.EditorTypingEventTracker"/>
-    <typedHandler implementation="com.intellij.feedback.aqua.track.AquaEditorTypingChecker"/>
-    <backgroundPostStartupActivity implementation="com.intellij.feedback.aqua.track.AquaFirstUsageLogger"/>
-    <editorFactoryMouseListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
-    <editorFactoryMouseMotionListener implementation="com.intellij.feedback.common.track.EditorMouseEventTracker"/>
+    <typedHandler implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
+    <typedHandler implementation="com.intellij.platform.feedback.aqua.track.AquaEditorTypingChecker"/>
+    <backgroundPostStartupActivity implementation="com.intellij.platform.feedback.aqua.track.AquaFirstUsageLogger"/>
+    <editorFactoryMouseListener implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
+    <editorFactoryMouseMotionListener implementation="com.intellij.platform.feedback.impl.track.EditorInputEventTracker"/>
 
     <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
     <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
                  description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
-    <statistics.applicationUsagesCollector implementation="com.intellij.feedback.common.statistics.DontShowAgainValueCollector"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector"/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveyIdValidationRule"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.DontShowAgainValueCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveysStateCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector"/>
+
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoExternalFeedbackSurvey"/>
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.feedback.localization.service.LocalizationFeedbackStartupListener"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.feedback.pycharmUi.state.NewUserFirstRunDateTracker"
+    <listener class="com.intellij.platform.feedback.localization.service.LocalizationFeedbackStartupListener"
               topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <actions>
     <group id="FeedbackDialogGroup" internal="true">
       <separator/>
-      <action id="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction"
-              class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogAction" internal="true"/>
-      <action id="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction"
-              class="com.intellij.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction" internal="true"/>
-      <action id="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction"
-              class="com.intellij.feedback.aqua.TestShowAquaNewUserFeedbackAction" internal="true"/>
-      <action id="com.intellij.feedback.aqua.TestShowAquaOldUserFeedbackAction"
-              class="com.intellij.feedback.aqua.TestShowAquaOldUserFeedbackAction" internal="true"/>
-      <action id="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
-              class="com.intellij.feedback.pycharmUi.TestShowNewUIFeedbackAction"
+      <action id="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogAction"
+              class="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction"
+              class="com.intellij.platform.feedback.demo.action.ShowDemoFeedbackDialogWithEmailAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.aqua.TestShowAquaNewUserFeedbackAction"
+              class="com.intellij.platform.feedback.aqua.TestShowAquaNewUserFeedbackAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.aqua.TestShowAquaOldUserFeedbackAction"
+              class="com.intellij.platform.feedback.aqua.TestShowAquaOldUserFeedbackAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
+              class="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               internal="true"/>
-      <action id="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
-              class="com.intellij.feedback.new_ui.TestShowNewUIFeedbackAction"
-              internal="true"/>
-      <action id="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
-              class="com.intellij.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
-              internal="true"/>
+      <action id="com.intellij.platform.feedback.kafka.TestShowKafkaConsumerFeedbackAction"
+              class="com.intellij.platform.feedback.kafka.TestShowKafkaConsumerFeedbackAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction"
+              class="com.intellij.platform.feedback.kafka.TestShowKafkaProducerFeedbackAction" internal="true"/>
+      <action id="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction"
+              class="com.intellij.platform.feedback.pycharmce.TestPyCharmFeedbackAction" internal="true"/>
       <add-to-group group-id="Internal.UI" anchor="last"/>
     </group>
+
+    <action class="com.intellij.platform.feedback.demo.action.ShowExternalDemoFeedbackWithStatsAction" internal="true"/>
+    <action class="com.intellij.platform.feedback.demo.action.ShowInIdeDemoFeedbackWithStatsAction" internal="true"/>
   </actions>
 </idea-plugin>

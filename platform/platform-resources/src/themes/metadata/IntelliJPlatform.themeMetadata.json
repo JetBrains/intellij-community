@@ -202,6 +202,46 @@
       "since": "2022.2"
     },
     {
+      "key": "PresentationAssistant.Bright.Popup.foreground",
+      "description": "Presentation Assistant popup bright foreground (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.PopupBackground",
+      "description": "Presentation Assistant popup bright background (experimental UI only). PopupBackground name is used to not apply the '*.background' pattern default color",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.Popup.border",
+      "description": "Presentation Assistant popup bright border (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.keymapLabel",
+      "description": "Presentation Assistant keymap label bright text color (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.Popup.foreground",
+      "description": "Presentation Assistant popup pale foreground (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.PopupBackground",
+      "description": "Presentation Assistant popup pale background (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.Popup.border",
+      "description": "Presentation Assistant popup pale border (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.keymapLabel",
+      "description": "Presentation Assistant keymap label pale text color (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
       "key": "ContextHelp.fontSizeOffset",
       "description": "Font size offset for comments (usually gray description text under components), used only in legacy UI",
       "since": "2022.1",
@@ -360,6 +400,21 @@
       "key": "EditorTabs.hoverBackground",
       "since": "2019.2",
       "description": "Transparent overlay on editor tab hover. If value isn't specified the value of DefaultTabs.hoverBackground will be used"
+    },
+    {
+      "key": "EditorTabs.hoverInactiveBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on editor tab hover when editor is not focused. If value isn't specified the value of DefaultTabs.hoverBackground will be used"
+    },
+    {
+      "key": "EditorTabs.hoverSelectedBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on selected editor tab. If value isn't specified the #00000000 will be used"
+    },
+    {
+      "key": "EditorTabs.hoverSelectedInactiveBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on selected editor tab when editor is not focused. If value isn't specified the #00000000 will be used"
     },
     {
       "key": "EditorTabs.inactiveColoredFileBackground",
@@ -563,6 +618,16 @@
       "key": "GotItTooltip.stepForeground",
       "description": "GotIt tooltip step number foreground color if different from GotItTooltip.foreground",
       "since": "2023.1"
+    },
+    {
+      "key": "GotItTooltip.imageBorderColor",
+      "description": "GotIt tooltip image rounded border color if different from GotItTooltip.background",
+      "since": "2023.2.1"
+    },
+    {
+      "key": "GotItTooltip.animationBackground",
+      "description": "GotIt tooltip animation background color if different from GotItTooltip.background",
+      "since": "2023.2.1"
     },
     {
       "key": "GotItTooltip.Header.foreground",
@@ -802,6 +867,11 @@
     {
       "key": "NavBar.borderColor",
       "description": "Border above the navbar, visible when the toolbar is on"
+    },
+    {
+      "key": "NewUiOnboarding.Dialog.background",
+      "description": "Background of the dialog with proposal to start the onboarding to the New UI",
+      "since": "2023.2.1"
     },
     {
       "key": "Notification.background",
@@ -1370,6 +1440,11 @@
       "description": "A background of a hovered row in an unfocused tree if hover is allowed."
     },
     {
+      "key": "Tree.forceFocusedSelectionForeground",
+      "since": "2023.2",
+      "description": "Does it need to use Tree.selectionForeground instead of custom element foreground"
+    },
+    {
       "key": "Tree.Selection.arc",
       "since": "2023",
       "description": "Selection border corners radius in tree selection"
@@ -1823,8 +1898,16 @@
       "description": "Border color of selected action"
     },
     {
+      "key": "WelcomeScreen.LearnTab.CourseCard.hover",
+      "description": ""
+    },
+    {
       "key": "Window.border",
       "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
+    },
+    {
+      "key": "Window.undecorated.border",
+      "description": "Used as window border in case the window has no border, decoration and shadow. Used on Linux in non-fullscreen mode only. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },
     {
       "key": "RunToolbar.Run.activeBackground",

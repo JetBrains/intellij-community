@@ -10,11 +10,14 @@ import java.nio.file.DirectoryStream
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.listDirectoryEntries
 
-
-fun Path.getChildren(): List<Path> {
-  return Files.newDirectoryStream(this).use { it.toList() }
-}
+@Deprecated(
+  message = "Use stdlib function",
+  replaceWith = ReplaceWith("listDirectoryEntries()", "kotlin.io.path.listDirectoryEntries"),
+  level = DeprecationLevel.ERROR,
+)
+fun Path.getChildren(): List<Path> = listDirectoryEntries()
 
 fun Path.createFile(): Path {
   if (exists()) {

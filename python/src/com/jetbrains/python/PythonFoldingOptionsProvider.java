@@ -14,5 +14,6 @@ final class PythonFoldingOptionsProvider extends BeanConfigurable<PythonFoldingS
     checkBox(PyBundle.message("python.long.string.literals"), settings::isCollapseLongStrings, v -> settings.COLLAPSE_LONG_STRINGS = v);
     checkBox(PyBundle.message("python.long.collection.literals"), settings::isCollapseLongCollections, v -> settings.COLLAPSE_LONG_COLLECTIONS = v);
     checkBox(PyBundle.message("python.sequential.comments"), settings::isCollapseSequentialComments, v -> settings.COLLAPSE_SEQUENTIAL_COMMENTS = v);
+    checkBox(PyBundle.message("python.type.annotations"), settings::isCollapseTypeAnnotations, v -> settings.COLLAPSE_TYPE_ANNOTATIONS = v);
   }
 }

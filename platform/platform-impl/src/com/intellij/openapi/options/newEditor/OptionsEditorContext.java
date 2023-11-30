@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.Configurable;
@@ -29,7 +29,7 @@ public final class OptionsEditorContext {
   private final MultiMap<Configurable, Configurable> myParentToChildrenMap = new MultiMap<>();
 
   @NotNull
-  Promise<? super Object> fireSelected(@Nullable final Configurable configurable, @NotNull OptionsEditorColleague requestor) {
+  Promise<? super Object> fireSelected(final @Nullable Configurable configurable, @NotNull OptionsEditorColleague requestor) {
     if (myCurrentConfigurable == configurable) {
       return Promises.resolvedPromise();
     }
@@ -38,16 +38,15 @@ public final class OptionsEditorContext {
     myCurrentConfigurable = configurable;
 
     return notify(new ColleagueAction() {
-      @NotNull
       @Override
-      public Promise<? super Object> process(final OptionsEditorColleague colleague) {
+      public @NotNull Promise<? super Object> process(final OptionsEditorColleague colleague) {
         return colleague.onSelected(configurable, old);
       }
     }, requestor);
   }
 
   @NotNull
-  Promise<? super Object> fireModifiedAdded(@NotNull final Configurable configurable, @Nullable OptionsEditorColleague requestor) {
+  Promise<? super Object> fireModifiedAdded(final @NotNull Configurable configurable, @Nullable OptionsEditorColleague requestor) {
     if (myModified.contains(configurable)) {
       return Promises.rejectedPromise();
     }
@@ -55,9 +54,8 @@ public final class OptionsEditorContext {
     myModified.add(configurable);
 
     return notify(new ColleagueAction() {
-      @NotNull
       @Override
-      public Promise<? super Object> process(final OptionsEditorColleague colleague) {
+      public @NotNull Promise<? super Object> process(final OptionsEditorColleague colleague) {
         return colleague.onModifiedAdded(configurable);
       }
     }, requestor);
@@ -65,7 +63,7 @@ public final class OptionsEditorContext {
   }
 
   @NotNull
-  Promise<? super Object> fireModifiedRemoved(@NotNull final Configurable configurable, @Nullable OptionsEditorColleague requestor) {
+  Promise<? super Object> fireModifiedRemoved(final @NotNull Configurable configurable, @Nullable OptionsEditorColleague requestor) {
     if (!myModified.contains(configurable)) {
       return Promises.rejectedPromise();
     }
@@ -73,9 +71,8 @@ public final class OptionsEditorContext {
     myModified.remove(configurable);
 
     return notify(new ColleagueAction() {
-      @NotNull
       @Override
-      public Promise<? super Object> process(final OptionsEditorColleague colleague) {
+      public @NotNull Promise<? super Object> process(final OptionsEditorColleague colleague) {
         return colleague.onModifiedRemoved(configurable);
       }
     }, requestor);
@@ -90,9 +87,8 @@ public final class OptionsEditorContext {
     myErrors = errors != null ? errors : new HashMap<>();
 
     return notify(new ColleagueAction() {
-      @NotNull
       @Override
-      public Promise<? super Object> process(final OptionsEditorColleague colleague) {
+      public @NotNull Promise<? super Object> process(final OptionsEditorColleague colleague) {
         return colleague.onErrorsChanged();
       }
     }, requestor);
@@ -137,8 +133,7 @@ public final class OptionsEditorContext {
     myParentToChildrenMap.putValue(parent, kid);
   }
 
-  @NotNull
-  public Collection<Configurable> getChildren(final Configurable parent) {
+  public @NotNull Collection<Configurable> getChildren(final Configurable parent) {
     return myParentToChildrenMap.get(parent);
   }
 

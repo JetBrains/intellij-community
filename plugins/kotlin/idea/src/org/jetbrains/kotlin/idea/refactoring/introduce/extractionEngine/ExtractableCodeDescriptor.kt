@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -354,6 +355,26 @@ data class ExtractableCodeDescriptor(
     val name: String get() = suggestedNames.firstOrNull() ?: ""
     val duplicates: List<DuplicateInfo> by lazy { findDuplicates() }
 }
+
+/**
+ * [ExtractableCodeDescriptor.copy] substitute to avoid depending on the [BindingContext] in compile-time.
+ *
+ * Only used in KTOR IDE plugin.
+ */
+@ApiStatus.Internal
+fun ExtractableCodeDescriptor.withSuggestedNames(
+  suggestedNames: List<String>
+): ExtractableCodeDescriptor = copy(suggestedNames = suggestedNames)
+
+/**
+ * [ExtractableCodeDescriptor.copy] substitute to avoid depending on the [BindingContext] in compile-time.
+ *
+ * Only used in KTOR IDE plugin.
+ */
+@ApiStatus.Internal
+fun ExtractableCodeDescriptor.withVisibility(
+  visibility: KtModifierKeywordToken?
+): ExtractableCodeDescriptor = copy(visibility = visibility)
 
 @IDEAPluginsCompatibilityAPI(
     usedIn = [IDEAPlatforms._213],

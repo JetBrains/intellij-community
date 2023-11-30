@@ -6,8 +6,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 
-class ToggleInlayHintsGloballyAction : ToggleAction(CodeInsightBundle.message("inlay.hints.toggle.action")), Toggleable {
+class ToggleInlayHintsGloballyAction : ToggleAction(CodeInsightBundle.message("inlay.hints.toggle.action")), Toggleable, ActionRemoteBehaviorSpecification.Frontend {
   override fun isSelected(e: AnActionEvent): Boolean {
     val project = e.project ?: return false
     return InlayHintsSwitch.isEnabled(project)

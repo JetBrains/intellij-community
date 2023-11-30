@@ -78,8 +78,8 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     add(splitter, BorderLayout.CENTER);
     add(createToolbar(), BorderLayout.NORTH);
 
-    myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree, myProject);
-    myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree, myProject);
+    myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree);
+    myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree);
 
     updateLeftTreeModel();
     updateRightTreeModel();

@@ -7,16 +7,6 @@
       <add-to-group group-id="EditorTabPopupMenu" anchor="after" relative-to-action="CopyReference"/>
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="Copy.Paste.Special"/>
     </action>
-
-    <action id="JsonPathEvaluateAction" class="com.intellij.jsonpath.ui.JsonPathEvaluateAction" icon="AllIcons.FileTypes.Json">
-      <add-to-group group-id="FindMenuGroup" anchor="after" relative-to-action="StructuralSearchActions" />
-      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
-    </action>
-
-    <action id="JsonPathExportEvaluateResultAction" class="com.intellij.jsonpath.ui.JsonPathExportEvaluateResultAction"
-            use-shortcut-of="ExportToTextFile" icon="AllIcons.Actions.MenuSaveall">
-      <add-to-group group-id="EditorContextBarMenu"/>
-    </action>
   </actions>
 
   <actions resource-bundle="messages.JsonBundle">
@@ -26,7 +16,7 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="JSON" extensions="har;json"
+    <fileType name="JSON" extensions="har;json;jsonc"
               implementationClass="com.intellij.json.JsonFileType" fieldName="INSTANCE"
               language="JSON"/>
     <fileType name="JSON5" extensions="json5" fileNames="devcontainer.json"
@@ -91,6 +81,8 @@
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
     <!-- Inspections -->
+    <inspection.basicVisitor class="com.intellij.json.psi.JsonElementVisitor"/>
+
     <localInspection language="JSON" shortName="JsonStandardCompliance"
                      bundle="messages.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="ERROR"
@@ -151,43 +143,18 @@
       <bundleName>messages.JsonBundle</bundleName>
       <categoryKey>json.intention.category.name</categoryKey>
     </intentionAction>
+    <intentionAction>
+      <language>JSON</language>
+      <className>com.jetbrains.jsonSchema.impl.fixes.AddOptionalPropertiesIntention</className>
+      <bundleName>messages.JsonBundle</bundleName>
+      <categoryKey>json.intention.category.name</categoryKey>
+    </intentionAction>
+
     <notificationGroup id="JSON Schema" displayType="NONE" bundle="messages.JsonBundle" key="notification.group.json.schema"/>
 
     <psi.referenceContributor language="JSON" implementation="com.intellij.json.JsonWebReferenceContributor"/>
 
-    <lang.parserDefinition language="JSONPath" implementationClass="com.intellij.jsonpath.psi.JsonPathParserDefinition"/>
-    <lang.braceMatcher language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathPairedBraceMatcher"/>
-    <lang.quoteHandler language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathQuoteHandler"/>
-    <lang.syntaxHighlighterFactory language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathSyntaxHighlighterFactory"/>
-    <annotator language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathFunctionCallAnnotator"/>
-    <colorSettingsPage implementation="com.intellij.jsonpath.JsonPathColorSettingsPage"/>
-    <completion.contributor language="JSONPath" order="last" implementationClass="com.intellij.jsonpath.JsonPathCompletionContributor"/>
-    <spellchecker.support language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathSpellcheckerStrategy"/>
-
-    <localInspection language="JSONPath" shortName="JsonPathUnknownFunction"
-                     implementationClass="com.intellij.jsonpath.inspections.JsonPathUnknownFunctionInspection"
-                     bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.function"
-                     groupBundle="messages.JsonBundle" groupKey="json.inspection.group"
-                     level="WARNING" enabledByDefault="true"/>
-    <localInspection language="JSONPath" shortName="JsonPathUnknownOperator"
-                     implementationClass="com.intellij.jsonpath.inspections.JsonPathUnknownOperatorInspection"
-                     bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.operator"
-                     groupBundle="messages.JsonBundle" groupKey="json.inspection.group"
-                     level="WARNING" enabledByDefault="true"/>
-    <localInspection language="JSONPath" shortName="JsonPathEvaluateUnknownKey"
-                     implementationClass="com.intellij.jsonpath.inspections.JsonPathEvaluateUnknownKeyInspection"
-                     bundle="messages.JsonBundle" key="inspection.jsonpath.unknown.key"
-                     groupBundle="messages.JsonBundle" groupKey="json.inspection.group"
-                     level="WARNING" enabledByDefault="true"/>
-
-    <toolWindowAllowlist id="JSONPathEvaluate"/>
-
-    <intentionAction>
-      <language>JSONPath</language>
-      <className>com.intellij.jsonpath.ui.JsonPathEvaluateIntentionAction</className>
-      <bundleName>messages.JsonBundle</bundleName>
-      <categoryKey>json.intention.category.name</categoryKey>
-    </intentionAction>
+    <json.jsonStandardComplianceProvider implementation="com.intellij.json.jsonc.JsoncComplianceProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="JavaScript">
@@ -211,6 +178,8 @@
                     interface="com.jetbrains.jsonSchema.extension.JsonSchemaGotoDeclarationSuppressor"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory"
                     interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaMapper"
+                    interface="com.jetbrains.jsonSchema.extension.JsonSchemaMapper" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor"

@@ -1,9 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
-import com.intellij.ide.ui.ProductIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
+import com.intellij.ide.ui.ProductIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class DirectoryPresentationProvider implements ItemPresentationProvider<PsiDirectory> {
+public final class DirectoryPresentationProvider implements ItemPresentationProvider<PsiDirectory> {
   @Override
   public ItemPresentation getPresentation(@NotNull final PsiDirectory directory) {
     final VirtualFile vFile = directory.getVirtualFile();

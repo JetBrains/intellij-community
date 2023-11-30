@@ -158,11 +158,6 @@ abstract class AbstractKotlinTestClassGradleConfigurationProducer
         return checkShouldReplace(self, other) || super.shouldReplace(self, other)
     }
 
-    private fun checkShouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
-        if (self.isProducedBy(javaClass) && other.isProducedBy(TestClassGradleConfigurationProducer::class.java)) {
-            return true
-        }
-
-        return false
-    }
+    private fun checkShouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean =
+        self.isProducedBy(javaClass) && other.isProducedBy(TestClassGradleConfigurationProducer::class.java)
 }

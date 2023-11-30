@@ -37,11 +37,23 @@
             displayType="STICKY_BALLOON"
             key="kotlin.jps.plugin.group.name"
     />
+
+    <!-- Workspace Model -->
+    <workspaceModel.customFacetRelatedEntitySerializer implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinModuleSettingsSerializer" />
+    <workspaceModel.facetContributor implementation="org.jetbrains.kotlin.idea.workspaceModel.KotlinFacetContributor" />
+    <registryKey key="workspace.model.kotlin.facet.bridge" defaultValue="false" restartRequired="true"
+                 description="Enable Kotlin facet work via own entities at workspace model"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.jps.KotlinGlobalSettingsChangeListener"
+              topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
+  </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JsIdePlatformKind"/>
+    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind"/>
     <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind"/>
   </extensions>
 </idea-plugin>

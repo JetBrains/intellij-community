@@ -5,18 +5,25 @@ package org.jetbrains.kotlin.idea.inspections
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.inspections.collections.isMap
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.intentions.receiverTypeIfSelectorIsSizeOrLength
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType
 import org.jetbrains.kotlin.idea.util.RangeKtExpressionType.*
+import org.jetbrains.kotlin.idea.util.getFactoryForImplicitReceiverWithSubtypeOf
+import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi2ir.deparenthesize
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getImplicitReceiverValue
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -82,18 +89,34 @@ class ReplaceManualRangeWithIndicesCallQuickFix : LocalQuickFix {
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val element = descriptor.psiElement as KtExpression
-        val receiver = when (val secondArg = element.getArguments()?.second) {
+        val secondArg = element.getArguments()?.second ?: return
+        val receiver = when (secondArg) {
             is KtBinaryExpression -> (secondArg.left as? KtDotQualifiedExpression)?.receiverExpression
             is KtDotQualifiedExpression -> secondArg.receiverExpression
             else -> null
         }
+        val newReceiver = when {
+            receiver is KtThisExpression -> null
+            receiver != null -> receiver
+            else -> secondArg.explicitThis()?.takeUnless { it.labelQualifier == null }
+        }
+
         val psiFactory = KtPsiFactory(project)
-        val newExpression = if (receiver != null && receiver !is KtThisExpression) {
-            psiFactory.createExpressionByPattern("$0.indices", receiver)
+        val newExpression = if (newReceiver != null) {
+            psiFactory.createExpressionByPattern("$0.indices", newReceiver)
         } else {
             psiFactory.createExpression("indices")
         }
-        element.replace(newExpression)
+        val replaced = element.replaced(newExpression)
+        replaced.removeUnnecessaryParentheses()
+    }
+
+    private fun KtExpression.removeUnnecessaryParentheses() {
+        parents.takeWhile { it is KtParenthesizedExpression }.lastOrNull()?.let {
+            if (it is KtParenthesizedExpression && KtPsiUtil.areParenthesesUseless(it)) {
+                it.replace(it.deparenthesize())
+            }
+        }
     }
 }
 
@@ -109,6 +132,7 @@ class ReplaceIndexLoopWithCollectionLoopQuickFix(private val type: RangeKtExpres
         val element = descriptor.psiElement.getStrictParentOfType<KtForExpression>() ?: return
         val loopParameter = element.loopParameter ?: return
         val loopRange = element.loopRange ?: return
+
         val collectionParent = when (loopRange) {
             is KtDotQualifiedExpression -> (loopRange.parent as? KtCallExpression)?.valueArguments?.firstOrNull()?.getArgumentExpression()
             is KtBinaryExpression -> loopRange.right
@@ -116,16 +140,19 @@ class ReplaceIndexLoopWithCollectionLoopQuickFix(private val type: RangeKtExpres
         } ?: return
         val sizeOrLengthCall = collectionParent.sizeOrLengthCall(type) ?: return
         val collection = (sizeOrLengthCall as? KtDotQualifiedExpression)?.receiverExpression
+        val newLoopRange = collection ?: sizeOrLengthCall.explicitThis() ?: return
+
         val paramElement = loopParameter.originalElement ?: return
         val usageElement = ReferencesSearch.search(paramElement).singleOrNull()?.element ?: return
         val arrayAccessElement =
             usageElement.parents.match(KtContainerNode::class, last = KtArrayAccessExpression::class) ?: return
+
         val factory = KtPsiFactory(project)
         val newParameter = factory.createLoopParameter("element")
         val newReferenceExpression = factory.createExpression("element")
         arrayAccessElement.replace(newReferenceExpression)
         loopParameter.replace(newParameter)
-        loopRange.replace(collection ?: factory.createThisExpression())
+        loopRange.replace(newLoopRange)
     }
 }
 
@@ -144,4 +171,17 @@ private fun KtExpression.sizeOrLengthCall(type: RangeKtExpressionType): KtExpres
     val receiverType = expression.receiverTypeIfSelectorIsSizeOrLength() ?: return null
     if (receiverType.isMap()) return null
     return expression
+}
+
+private fun KtExpression.explicitThis(): KtThisExpression? {
+    val context = analyze()
+    val scope = getResolutionScope(context) ?: return null
+    val implicitReceiverType = getResolvedCall(context)?.getImplicitReceiverValue()?.type ?: return null
+    val receiverExpressionFactory = scope.getFactoryForImplicitReceiverWithSubtypeOf(implicitReceiverType) ?: return null
+    val psiFactory = KtPsiFactory(project)
+    return if (receiverExpressionFactory.isImmediate) {
+        psiFactory.createThisExpression()
+    } else {
+        psiFactory.createExpression(receiverExpressionFactory.expressionText) as? KtThisExpression
+    }
 }

@@ -1,20 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ToolWindowMoveAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.*
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.ScreenUtil
+import com.intellij.ui.*
 import com.intellij.ui.awt.DevicePoint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -33,6 +31,7 @@ import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JLabel
+import javax.swing.JLayeredPane
 import javax.swing.SwingUtilities
 
 private fun Dimension.isNotEmpty(): Boolean = width > 0 && height > 0
@@ -59,7 +58,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
   private var dropTooltipPopup: JBPopup? = null
 
   companion object {
-    const val THUMB_OPACITY = .85f
+    const val THUMB_OPACITY: Float = .85f
 
     /**
      * Create a potentially scaled image of the component to use as a drag image
@@ -117,7 +116,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     // The points are screen points from the event, which is in the same coordinate system as the dragSourcePane
     val point = pressedScreenPoint.location.also { SwingUtilities.convertPointFromScreen(it, dragSourcePane) }
     val component = getComponentFromDragSourcePane(RelativePoint(dragSourcePane, point))
-    if (component is StripeButton || component is SquareStripeButton || component is MoreSquareStripeButton) {
+    if (component is StripeButton || component is AbstractSquareStripeButton) {
       return super.getDragStartDeadzone(pressedScreenPoint, draggedScreenPoint)
     }
     return JBUI.scale(Registry.intValue("ide.new.tool.window.start.drag.deadzone", 7, 0, 100))
@@ -288,7 +287,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private fun relocate(event: MouseEvent) {
     if (dragMoreButton != null) {
-      val bounds = Rectangle(Point(), UIUtil.getWindow(myDragComponent)!!.size)
+      val bounds = Rectangle(Point(), ComponentUtil.getWindow(myDragComponent)!!.size)
       if (event.x > bounds.width / 2) {
         bounds.x = 1 + 2 * bounds.width / 3
         dragMoreButtonNewSide = RIGHT
@@ -329,18 +328,19 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
           lastDropTooltipAnchor = anchor
 
           val tooltip = HelpTooltip()
-          tooltip.setTitle(anchor.toString())
+          tooltip.setTitle(UIBundle.message("tool.window.move.to.action.group.name") + " " + anchor.toString())
           dropTooltipPopup = HelpTooltip.initPopupBuilder(tooltip.createTipPanel()).createPopup()
         }
 
         val bounds = dialog.bounds
-        val location = Point(0, bounds.y)
+        val size = dropTooltipPopup!!.content.preferredSize
+        val location = Point(0, bounds.y + (bounds.height - size.height) / 2)
 
         if (anchor.toString().lowercase().contains("left")) {
           location.x = bounds.x + bounds.width + JBUI.scale(10)
         }
         else {
-          location.x = bounds.x - JBUI.scale(10) - dropTooltipPopup!!.content.preferredSize.width
+          location.x = bounds.x - JBUI.scale(10) - size.width
         }
 
         if (dropTooltipPopup!!.isVisible) {
@@ -558,15 +558,35 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private fun getToolWindow() = toolWindowRef?.get()
 
-  private fun getComponentFromDragSourcePane(point: RelativePoint) : Component? =
-    point.getPoint(dragSourcePane).let { SwingUtilities.getDeepestComponentAt(dragSourcePane, it.x, it.y) } ?:
-    point.getPoint(dragSourcePane.parent).let { SwingUtilities.getDeepestComponentAt(dragSourcePane.parent, it.x, it.y) }
+  private fun getComponentFromDragSourcePane(point: RelativePoint) : Component? {
+    // This is VERY tricky. Can't use dragSourcePane directly here because it can be obscured by a popup (IDEA-329995).
+    // Can't use the window (IdeFrame) either because in that case we can mistakenly end up selecting the glass pane,
+    // because we place that drop target highlight component on it (see createDropTargetHighlightComponent).
+    // So we have to walk the middle ground here and start searching from the layered pane instead.
+    // Moreover, we want the topmost layered pane, as there may be others, like the tool window pane itself.
+    val layeredPane = getTopmostLayeredPane(dragSourcePane) ?: return null
+    val pointOnWindow = point.getPoint(layeredPane)
+    return SwingUtilities.getDeepestComponentAt(layeredPane, pointOnWindow.x, pointOnWindow.y)
+  }
+
+  private fun getTopmostLayeredPane(dragSourcePane: ToolWindowPane): JLayeredPane? {
+    var result: JLayeredPane? = null
+    var component: Component? = dragSourcePane
+    while (component != null) {
+      if (component is JLayeredPane) {
+        result = component
+      }
+      component = component.parent
+    }
+    return result
+  }
 
   private fun getToolWindowAtPoint(point: RelativePoint): ToolWindowImpl? {
     val clickedComponent = getComponentFromDragSourcePane(point)
     if (clickedComponent != null && isComponentDraggable(clickedComponent)) {
       val decorator = InternalDecoratorImpl.findNearestDecorator(clickedComponent)
       if (decorator != null &&
+          isHeaderDraggingEnabled() &&
           (decorator.toolWindow.anchor != BOTTOM ||
            decorator.locationOnScreen.y < point.screenPoint.y - ToolWindowPane.headerResizeArea))
         return decorator.toolWindow
@@ -575,9 +595,12 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
     return when (clickedComponent) {
       is StripeButton -> clickedComponent.toolWindow
       is SquareStripeButton -> clickedComponent.toolWindow
+      is ToolWindowProvider -> clickedComponent.toolWindow
       else -> null
     }
   }
+
+  private fun isHeaderDraggingEnabled(): Boolean = AdvancedSettings.getBoolean("ide.tool.window.header.dnd")
 
   private fun getPaneContentScreenBounds(pane: ToolWindowPane): Rectangle {
     val location = pane.locationOnScreen
@@ -781,5 +804,9 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
         repaint()
       }
     }
+  }
+
+  interface ToolWindowProvider {
+    val toolWindow: ToolWindowImpl?
   }
 }

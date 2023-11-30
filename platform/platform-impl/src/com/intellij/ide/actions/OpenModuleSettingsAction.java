@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class OpenModuleSettingsAction extends EditSourceAction {
+public final class OpenModuleSettingsAction extends EditSourceAction {
   @Override
   public void update(@NotNull AnActionEvent event) {
     super.update(event);
@@ -25,7 +25,7 @@ public class OpenModuleSettingsAction extends EditSourceAction {
     return super.getActionUpdateThread();
   }
 
-  protected static boolean isModuleInProjectViewPopup(@NotNull AnActionEvent e) {
+  static boolean isModuleInProjectViewPopup(@NotNull AnActionEvent e) {
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(e.getPlace())) {
       return isModuleInContext(e);
     }

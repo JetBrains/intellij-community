@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class BackspaceAction extends TextComponentEditorAction implements LatencyAwareEditorAction, HintManagerImpl.ActionToIgnore {
+public final class BackspaceAction extends TextComponentEditorAction implements LatencyAwareEditorAction, HintManagerImpl.ActionToIgnore {
   public BackspaceAction() {
     super(new Handler());
   }
@@ -53,23 +53,21 @@ public class BackspaceAction extends TextComponentEditorAction implements Latenc
       else {
         editor.getSelectionModel().removeSelection();
 
-        ScrollingModel scrollingModel = editor.getScrollingModel();
-        scrollingModel.disableAnimation();
-
-        FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
-        if (region != null && region.shouldNeverExpand()) {
-          document.deleteString(region.getStartOffset(), region.getEndOffset());
-          editor.getCaretModel().moveToOffset(region.getStartOffset());
-        }
-        else {
-          int prevOffset = DocumentUtil.getPreviousCodePointOffset(document, offset);
-          if (prevOffset >= 0) {
-            document.deleteString(prevOffset, offset);
+        Runnable runnable = () -> {
+          FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
+          if (region != null && region.shouldNeverExpand()) {
+            document.deleteString(region.getStartOffset(), region.getEndOffset());
+            editor.getCaretModel().moveToOffset(region.getStartOffset());
           }
-        }
-
-        EditorModificationUtilEx.scrollToCaret(editor);
-        scrollingModel.enableAnimation();
+          else {
+            int prevOffset = DocumentUtil.getPreviousCodePointOffset(document, offset);
+            if (prevOffset >= 0) {
+              document.deleteString(prevOffset, offset);
+            }
+          }
+          EditorModificationUtilEx.scrollToCaret(editor);
+        };
+        EditorUtil.runWithAnimationDisabled(editor, runnable);
       }
     }
     else if(lineNumber > 0) {

@@ -34,10 +34,10 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
                                     int row, boolean hasFocus) {
     Object userObject = TreeUtil.getUserObject(value);
     if (userObject instanceof HierarchyNodeDescriptor descriptor) {
-      var tagIconAndText = TagManager.getTagIconAndText(descriptor.getPsiElement());
+      var tagIconAndText = descriptor.getTagIconAndTextCached();
       descriptor.getHighlightedText().customize(this);
-      setIcon(IconUtil.rowIcon(tagIconAndText.first, fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus)));
-      append(tagIconAndText.second);
+      setIcon(IconUtil.rowIcon(tagIconAndText.icon(), fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus)));
+      append(tagIconAndText.coloredText());
     }
     else {
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);

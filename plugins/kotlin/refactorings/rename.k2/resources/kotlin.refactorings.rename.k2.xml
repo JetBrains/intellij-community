@@ -4,11 +4,6 @@
     <module name="kotlin.refactorings.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-
-    <applicationService
-            serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
-            serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.K2ReferenceMutateService"/>
-
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.rename.K2RenameRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>
   </extensions>

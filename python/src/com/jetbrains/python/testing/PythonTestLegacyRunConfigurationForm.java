@@ -284,6 +284,10 @@ public class PythonTestLegacyRunConfigurationForm implements AbstractPythonTestR
     return myParamCheckBox;
   }
 
+  public JTextField getParamTextField() {
+    return myParamTextField;
+  }
+
   public void setParams(String params) {
     myParamTextField.setText(params);
   }

@@ -2,13 +2,13 @@
 package org.jetbrains.plugins.groovy.intentions.conversions
 
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.plugins.groovy.intentions.base.Intention
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
@@ -18,15 +18,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement
 
-class RemoveParenthesesFromMethodCallIntention : Intention() {
+class RemoveParenthesesFromMethodCallIntention : GrPsiUpdateIntention() {
 
   override fun getElementPredicate(): PsiElementPredicate = Predicate
 
   override fun isStopElement(element: PsiElement): Boolean = super.isStopElement(element) || element is GrStatementOwner
 
-  override fun processIntention(element: PsiElement, project: Project, editor: Editor) {
+  override fun processIntention(element: PsiElement, context: ActionContext, updater: ModPsiUpdater) {
     val newText = removeParentheses(element as GrMethodCallExpression)
-    val statement = GroovyPsiElementFactory.getInstance(project).createStatementFromText(newText)
+    val statement = GroovyPsiElementFactory.getInstance(context.project).createStatementFromText(newText)
     element.replace(statement)
   }
 

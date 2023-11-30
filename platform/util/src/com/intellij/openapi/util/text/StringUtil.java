@@ -1307,6 +1307,39 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  public static @Unmodifiable @NotNull List<String> split(@NotNull String s,
+                                                          @NotNull CharFilter separator,
+                                                          boolean excludeSeparator,
+                                                          boolean excludeEmptyStrings) {
+    //noinspection unchecked,rawtypes
+    return (List)split((CharSequence)s, separator, excludeSeparator, excludeEmptyStrings);
+  }
+
+  @Contract(pure = true)
+  public static @Unmodifiable @NotNull List<CharSequence> split(@NotNull CharSequence s,
+                                                                @NotNull CharFilter separator,
+                                                                boolean excludeSeparator,
+                                                                boolean excludeEmptyStrings) {
+    List<CharSequence> result = new ArrayList<>();
+    int pos = 0;
+    int index = 0;
+    while (index < s.length()) {
+      if (separator.accept(s.charAt(index))) {
+        CharSequence token = s.subSequence(pos, excludeSeparator ? index : index + 1);
+        if (token.length() != 0 || !excludeEmptyStrings) {
+          result.add(token);
+        }
+        pos = index + 1;
+      }
+      index++;
+    }
+    if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
+      result.add(s.subSequence(pos, s.length()));
+    }
+    return result;
+  }
+
+  @Contract(pure = true)
   public static @NotNull Iterable<String> tokenize(@NotNull String s, @NotNull String separators) {
     return tokenize(new StringTokenizer(s, separators));
   }
@@ -1874,6 +1907,13 @@ public class StringUtil extends StringUtilRt {
     int i = text.lastIndexOf(subString);
     if (i == -1) return text;
     return text.substring(0, i);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String substringBeforeLast(@NotNull String text, @NotNull String subString, boolean includeLast) {
+    int i = text.lastIndexOf(subString);
+    if (i == -1) return text;
+    return includeLast ? text.substring(0, i + subString.length()) : text.substring(0, i);
   }
 
   @Contract(pure = true)
@@ -2497,7 +2537,6 @@ public class StringUtil extends StringUtilRt {
   public static String @NotNull [] splitByLinesKeepSeparators(@NotNull String string) {
     return Splitters.EOL_SPLIT_KEEP_SEPARATORS.split(string);
   }
-
   @Contract(pure = true)
   public static @NotNull List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
     List<Pair<String, Integer>> res = new ArrayList<>();
@@ -3001,10 +3040,27 @@ public class StringUtil extends StringUtilRt {
     }
     for (int i = 0; i < str.length(); i++) {
       char c = str.charAt(i);
-      if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || Character.isDigit(c)) {
-        continue;
+      if ((c < 'A' || c > 'Z') && (c < 'a' || c > 'z') && !Character.isDigit(c)) {
+        return false;
       }
+    }
+    return true;
+  }
+
+  /**
+   * @return {@code true} if the passed string is not {@code null} and not empty
+   * and contains only digits; {@code false} otherwise.
+   */
+  @Contract(pure = true)
+  public static boolean isNumeric(@Nullable CharSequence str) {
+    if (isEmpty(str)) {
       return false;
+    }
+
+    for (int i = 0; i < str.length(); i++) {
+      if (!Character.isDigit(str.charAt(i))) {
+        return false;
+      }
     }
     return true;
   }
@@ -3016,8 +3072,9 @@ public class StringUtil extends StringUtilRt {
 
   /**
    * Finds the next position in the supplied CharSequence which is neither a space nor a tab.
+   *
    * @param text text
-   * @param pos starting position
+   * @param pos  starting position
    * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
    * if no non-whitespace character found
    */
@@ -3030,9 +3087,26 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Finds the previous position in the supplied CharSequence which is neither a space nor a tab.
+   * Finds the next position in the supplied CharSequence which is neither a space, a new line nor a tab.
+   *
    * @param text text
-   * @param pos starting position
+   * @param pos  starting position
+   * @return position of the first non-whitespace character after or equal to pos; or the length of the CharSequence
+   * if no non-whitespace character found
+   */
+  public static int skipWhitespaceOrNewLineForward(@NotNull CharSequence text, int pos) {
+    int length = text.length();
+    while (pos < length && isWhitespaceTabOrNewLine(text.charAt(pos))) {
+      pos++;
+    }
+    return pos;
+  }
+
+  /**
+   * Finds the previous position in the supplied CharSequence which is neither a space nor a tab.
+   *
+   * @param text text
+   * @param pos  starting position
    * @return position of the character before or equal to pos which has no space or tab before;
    * or zero if no non-whitespace character found
    */
@@ -3043,20 +3117,26 @@ public class StringUtil extends StringUtilRt {
     return pos;
   }
 
+  /**
+   * Finds the previous position in the supplied CharSequence which is neither a space, a new line nor a tab.
+   *
+   * @param text text
+   * @param pos  starting position
+   * @return position of the character before or equal to pos which has no space or tab before;
+   * or zero if no non-whitespace character found
+   */
+  public static int skipWhitespaceOrNewLineBackward(@NotNull CharSequence text, int pos) {
+    while (pos > 0 && isWhitespaceTabOrNewLine(text.charAt(pos - 1))) {
+      pos--;
+    }
+    return pos;
+  }
+
   private static boolean isWhitespaceOrTab(char c) {
     return c == ' ' || c == '\t';
   }
 
-  /**
-   * @deprecated use {@link com.intellij.ide.nls.NlsMessages#formatAndList(java.util.Collection)} instead to get properly localized concatenation
-   */
-  @SuppressWarnings("HardCodedStringLiteral")
-  @Deprecated
-  public static @Nls @NotNull String naturalJoin(List<String> strings) {
-    if (strings.isEmpty()) return "";
-    if (strings.size() == 1) return strings.get(0);
-    String lastWord = strings.get(strings.size() - 1);
-    String leadingWords = join(strings.subList(0, strings.size() - 1), ", ");
-    return leadingWords + " and " + lastWord;
+  private static boolean isWhitespaceTabOrNewLine(char c) {
+    return c == ' ' || c == '\t' || c == '\n';
   }
 }

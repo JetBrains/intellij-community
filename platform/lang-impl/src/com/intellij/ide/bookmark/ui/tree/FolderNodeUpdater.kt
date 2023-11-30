@@ -37,7 +37,7 @@ internal class FolderNodeUpdater(val view: BookmarksView) : ProjectFileNodeUpdat
     roots.forEach { invalidate(it, true) }
   }
 
-  fun invalidate(file: VirtualFile, structure: Boolean) = forEachTreePath(file) {
+  fun invalidate(file: VirtualFile, structure: Boolean): Unit = forEachTreePath(file) {
     view.model.invalidate(it, structure)
   }
 

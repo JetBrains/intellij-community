@@ -31,14 +31,11 @@ public abstract class StubTreeLoader {
     return ApplicationManager.getApplication().getService(StubTreeLoader.class);
   }
 
-  @Nullable
-  public abstract ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
+  public abstract @Nullable ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
 
-  @Nullable
-  public abstract ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
+  public abstract @Nullable ObjectStubTree<?> build(@Nullable Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile);
 
-  @Nullable
-  public abstract ObjectStubTree<?> readFromVFile(@NotNull Project project, @NotNull VirtualFile vFile);
+  public abstract @Nullable ObjectStubTree<?> readFromVFile(@NotNull Project project, @NotNull VirtualFile vFile);
 
   public abstract void rebuildStubTree(VirtualFile virtualFile);
 
@@ -48,8 +45,7 @@ public abstract class StubTreeLoader {
     return false;
   }
 
-  @Nullable
-  protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
+  protected @Nullable IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
     return null;
   }
 
@@ -65,8 +61,7 @@ public abstract class StubTreeLoader {
    * use {@link StubTreeLoader#createCoarseExceptionStubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable)}
    * and invoke {@link StubTreeAndIndexUnmatchCoarseException#createCompleteException()} outside the lock.
    */
-  @NotNull
-  public RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
+  public @NotNull RuntimeException stubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
                                                      @NotNull PsiFileWithStubSupport psiFile,
                                                      @Nullable Throwable cause) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
@@ -77,8 +72,7 @@ public abstract class StubTreeLoader {
   /**
    * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable)
    */
-  @NotNull
-  public StubTreeAndIndexUnmatchCoarseException createCoarseExceptionStubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
+  public @NotNull StubTreeAndIndexUnmatchCoarseException createCoarseExceptionStubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
                                                                                                 @NotNull PsiFileWithStubSupport psiFile,
                                                                                                 @Nullable Throwable cause) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
@@ -86,10 +80,9 @@ public abstract class StubTreeLoader {
     });
   }
 
-  @NotNull
-  private StubTreeAndIndexUnmatchCoarseException doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
-                                                                                                   @NotNull PsiFileWithStubSupport psiFile,
-                                                                                                   @Nullable Throwable cause) {
+  private @NotNull StubTreeAndIndexUnmatchCoarseException doCreateCoarseExceptionStubTreeAndIndexDoNotMatch(@Nullable ObjectStubTree<?> stubTree,
+                                                                                                            @NotNull PsiFileWithStubSupport psiFile,
+                                                                                                            @Nullable Throwable cause) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       VirtualFile file = psiFile.getViewProvider().getVirtualFile();
       boolean compiled = psiFile instanceof PsiCompiledElement;
@@ -139,6 +132,7 @@ public abstract class StubTreeLoader {
       }
 
       msg += "\nindexing info: " + indexingStampInfo;
+      msg += "\nref: 50cf572587cf";
 
       ArrayList<Attachment> attachments = createAttachments(stubTree, psiFile, file);
       return new StubTreeAndIndexUnmatchCoarseException(psiFile, file, msg, attachments, upToDate, cause, stubTree);
@@ -179,15 +173,13 @@ public abstract class StubTreeLoader {
     }
 
 
-    @NotNull
-    public RuntimeException createCompleteException() {
+    public @NotNull RuntimeException createCompleteException() {
       return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
         return doCreateCompleteException();
       });
     }
 
-    @NotNull
-    private RuntimeException doCreateCompleteException() {
+    private @NotNull RuntimeException doCreateCompleteException() {
       StubTreeLoader instance = getInstance();
       StubTree stubTreeFromIndex = (StubTree)instance.readFromVFile(project, file);
 

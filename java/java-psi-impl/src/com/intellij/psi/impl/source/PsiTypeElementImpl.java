@@ -63,7 +63,11 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     List<TypeAnnotationProvider> arrayComponentAnnotations = new SmartList<>();
 
     PsiElement parent = getParent();
-    for (PsiElement child = getFirstChild(); child != null; child = child.getNextSibling()) {
+    PsiElement firstChild = getFirstChild();
+    if (firstChild == null && parent instanceof PsiUnnamedPattern) {
+      type = JavaPsiPatternUtil.getDeconstructedImplicitPatternType((PsiPattern)parent);
+    }
+    for (PsiElement child = firstChild; child != null; child = child.getNextSibling()) {
       if (child instanceof PsiComment || child instanceof PsiWhiteSpace) continue;
 
       if (child instanceof PsiAnnotation) {
@@ -170,7 +174,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       if (declarationScope instanceof PsiForeachStatement) {
         PsiExpression iteratedValue = ((PsiForeachStatement)declarationScope).getIteratedValue();
         if (iteratedValue != null) {
-          return JavaGenericsUtil.getCollectionItemType(iteratedValue);
+          PsiType type = JavaGenericsUtil.getCollectionItemType(iteratedValue);
+          //Upward projection is applied to the type of the initializer when determining the type of the
+          //variable
+          return type != null ? JavaVarTypeUtil.getUpwardProjection(type) : null;
         }
         return null;
       }

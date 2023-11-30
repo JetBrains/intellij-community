@@ -34,11 +34,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.canUnloadActionGroup
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.LaterInvocator
-import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionDescriptor
@@ -49,13 +49,12 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.keymap.impl.BundledKeymapBean
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.updateSettings.impl.UpdateChecker
 import com.intellij.openapi.util.Disposer
@@ -68,6 +67,8 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.IconDeferrer
@@ -248,7 +249,7 @@ object DynamicPlugins {
     }
 
     val epNameToExtensions = module.epNameToExtensions
-    if (epNameToExtensions != null) {
+    if (!epNameToExtensions.isEmpty()) {
       doCheckExtensionsCanUnloadWithoutRestart(
         extensions = epNameToExtensions,
         descriptor = module,
@@ -261,7 +262,7 @@ object DynamicPlugins {
     }
 
     checkNoComponentsOrServiceOverrides(module)?.let { return it }
-    ActionManagerImpl.checkUnloadActions(module)?.let { return it }
+    checkUnloadActions(module)?.let { return it }
 
     for (moduleRef in module.content.modules) {
       if (pluginSet.isModuleEnabled(moduleRef.name)) {
@@ -351,11 +352,8 @@ object DynamicPlugins {
    */
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
-    val extensions = (module.unsortedEpNameToExtensionElements.takeIf { it.isNotEmpty() } ?: module.appContainerDescriptor.extensions)
-    if (extensions != null && !extensions.all {
-        it.key == UIThemeProvider.EP_NAME.name ||
-        it.key == BundledKeymapBean.EP_NAME.name
-      }) {
+    val extensions = (module.epNameToExtensions.takeIf { it.isNotEmpty() } ?: module.appContainerDescriptor.extensions)
+    if (!extensions.all { it.key == UIThemeProvider.EP_NAME.name || it.key == BundledKeymapBean.EP_NAME.name }) {
       return false
     }
     return checkNoComponentsOrServiceOverrides(module) == null && module.actions.isEmpty()
@@ -369,7 +367,7 @@ object DynamicPlugins {
   }
 
   private fun checkNoComponentsOrServiceOverrides(pluginId: PluginId?, containerDescriptor: ContainerDescriptor): String? {
-    if (!containerDescriptor.components.isNullOrEmpty()) {
+    if (!containerDescriptor.components.isEmpty()) {
       return "Plugin $pluginId is not unload-safe because it declares components"
     }
     if (containerDescriptor.services.any { it.overrides }) {
@@ -386,7 +384,7 @@ object DynamicPlugins {
     if (options.save) {
       runInAutoSaveDisabledMode {
         FileDocumentManager.getInstance().saveAllDocuments()
-        runBlockingModal(project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(), "") {
+        runWithModalProgressBlocking(project?.let { ModalTaskOwner.project(it) } ?: ModalTaskOwner.guess(), "") {
           saveProjectsAndApp(true)
         }
       }
@@ -414,27 +412,27 @@ object DynamicPlugins {
       this.isUpdate = isUpdate
     }
 
-    fun withWaitForClassloaderUnload(waitForClassloaderUnload: Boolean) = also {
+    fun withWaitForClassloaderUnload(waitForClassloaderUnload: Boolean): UnloadPluginOptions = also {
       this.waitForClassloaderUnload = waitForClassloaderUnload
     }
 
-    fun withDisable(disable: Boolean) = also {
+    fun withDisable(disable: Boolean): UnloadPluginOptions = also {
       this.disable = disable
     }
 
-    fun withRequireMemorySnapshot(requireMemorySnapshot: Boolean) = also {
+    fun withRequireMemorySnapshot(requireMemorySnapshot: Boolean): UnloadPluginOptions = also {
       this.requireMemorySnapshot = requireMemorySnapshot
     }
 
-    fun withUnloadWaitTimeout(unloadWaitTimeout: Int) = also {
+    fun withUnloadWaitTimeout(unloadWaitTimeout: Int): UnloadPluginOptions = also {
       this.unloadWaitTimeout = unloadWaitTimeout
     }
 
-    fun withSave(save: Boolean) = also {
+    fun withSave(save: Boolean): UnloadPluginOptions = also {
       this.save = save
     }
 
-    fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean) = also {
+    fun withCheckImplementationDetailDependencies(checkImplementationDetailDependencies: Boolean): UnloadPluginOptions = also {
       this.checkImplementationDetailDependencies = checkImplementationDetailDependencies
     }
   }
@@ -468,7 +466,7 @@ object DynamicPlugins {
     }
     catch (e: Exception) {
       logger<DynamicPlugins>().error(e)
-      logDescriptorUnload(pluginDescriptor, success = false)
+      DynamicPluginsUsagesCollector.logDescriptorUnload(pluginDescriptor, success = false)
       return false
     }
 
@@ -501,7 +499,7 @@ object DynamicPlugins {
 
           jdomSerializer.clearSerializationCaches()
           TypeFactory.defaultInstance().clearCache()
-          app.getServiceIfCreated(TopHitCache::class.java)?.clear()
+          TopHitCache.getInstance().clear()
           ActionToolbarImpl.resetAllToolbars()
           PresentationFactory.clearPresentationCaches()
           TouchbarSupport.reloadAllActions()
@@ -590,7 +588,7 @@ object DynamicPlugins {
           InstalledPluginsState.getInstance().isRestartRequired = true
         }
 
-        logDescriptorUnload(pluginDescriptor, success = classLoaderUnloaded)
+        DynamicPluginsUsagesCollector.logDescriptorUnload(pluginDescriptor, success = classLoaderUnloaded)
       }
     }
 
@@ -701,19 +699,27 @@ object DynamicPlugins {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     (ActionManager.getInstance() as ActionManagerImpl).unloadActions(module)
 
+    if (module.pluginId.idString == "com.intellij.jsp") {
+      println("Unloading")
+    }
     val openedProjects = ProjectUtil.getOpenProjects().asList()
     val appExtensionArea = app.extensionArea
     val priorityUnloadListeners = mutableListOf<Runnable>()
     val unloadListeners = mutableListOf<Runnable>()
-    unregisterUnknownLevelExtensions(module.unsortedEpNameToExtensionElements, module, appExtensionArea, openedProjects,
+    unregisterUnknownLevelExtensions(module.epNameToExtensions, module, appExtensionArea, openedProjects,
                                      priorityUnloadListeners, unloadListeners)
-    for (epName in (module.appContainerDescriptor.extensions?.keys ?: emptySet())) {
-      appExtensionArea.unregisterExtensions(epName, module, priorityUnloadListeners, unloadListeners)
+    for (epName in module.appContainerDescriptor.extensions.keys) {
+      appExtensionArea.unregisterExtensions(extensionPointName = epName,
+                                            pluginDescriptor = module,
+                                            priorityListenerCallbacks = priorityUnloadListeners,
+                                            listenerCallbacks = unloadListeners)
     }
-    for (epName in (module.projectContainerDescriptor.extensions?.keys ?: emptySet())) {
+    for (epName in module.projectContainerDescriptor.extensions.keys) {
       for (project in openedProjects) {
-        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(epName, module, priorityUnloadListeners,
-                                                                           unloadListeners)
+        (project.extensionArea as ExtensionsAreaImpl).unregisterExtensions(extensionPointName = epName,
+                                                                           pluginDescriptor = module,
+                                                                           priorityListenerCallbacks = priorityUnloadListeners,
+                                                                           listenerCallbacks = unloadListeners)
       }
     }
 
@@ -737,20 +743,19 @@ object DynamicPlugins {
       area.unregisterExtensionPoints(points, module)
     }
 
-    val pluginId = module.pluginId
-    app.unloadServices(module.appContainerDescriptor.services, pluginId)
+    app.unloadServices(module, module.appContainerDescriptor.services)
     val appMessageBus = app.messageBus as MessageBusEx
     module.appContainerDescriptor.listeners?.let { appMessageBus.unsubscribeLazyListeners(module, it) }
 
     for (project in openedProjects) {
-      (project as ComponentManagerImpl).unloadServices(module.projectContainerDescriptor.services, pluginId)
+      (project as ComponentManagerImpl).unloadServices(module, module.projectContainerDescriptor.services)
       module.projectContainerDescriptor.listeners?.let {
         ((project as ComponentManagerImpl).messageBus as MessageBusEx).unsubscribeLazyListeners(module, it)
       }
 
       val moduleServices = module.moduleContainerDescriptor.services
       for (ideaModule in ModuleManager.getInstance(project).modules) {
-        (ideaModule as ComponentManagerImpl).unloadServices(moduleServices, pluginId)
+        (ideaModule as ComponentManagerImpl).unloadServices(module, moduleServices)
         createDisposeTreePredicate(module)?.let { Disposer.disposeChildren(ideaModule, it) }
       }
 
@@ -793,15 +798,15 @@ object DynamicPlugins {
   private inline fun processExtensionPoints(pluginDescriptor: IdeaPluginDescriptorImpl,
                                             projects: List<Project>,
                                             processor: (points: List<ExtensionPointDescriptor>, area: ExtensionsAreaImpl) -> Unit) {
-    pluginDescriptor.appContainerDescriptor.extensionPoints?.let {
+    pluginDescriptor.appContainerDescriptor.extensionPoints.let {
       processor(it, ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
     }
-    pluginDescriptor.projectContainerDescriptor.extensionPoints?.let { extensionPoints ->
+    pluginDescriptor.projectContainerDescriptor.extensionPoints.let { extensionPoints ->
       for (project in projects) {
         processor(extensionPoints, project.extensionArea as ExtensionsAreaImpl)
       }
     }
-    pluginDescriptor.moduleContainerDescriptor.extensionPoints?.let { extensionPoints ->
+    pluginDescriptor.moduleContainerDescriptor.extensionPoints.let { extensionPoints ->
       for (project in projects) {
         for (module in ModuleManager.getInstance(project).modules) {
           processor(extensionPoints, module.extensionArea as ExtensionsAreaImpl)
@@ -853,11 +858,13 @@ object DynamicPlugins {
         val listenerCallbacks = mutableListOf<Runnable>()
 
         // 4. load into service container
-        loadModules(pluginWithContentModules, app, listenerCallbacks)
+        loadModules(modules = pluginWithContentModules, app = app, listenerCallbacks = listenerCallbacks)
         loadModules(
-          optionalDependenciesOnPlugin(pluginDescriptor, classLoaderConfigurator, pluginSet),
-          app,
-          listenerCallbacks,
+          modules = optionalDependenciesOnPlugin(dependencyPlugin = pluginDescriptor,
+                                                 classLoaderConfigurator = classLoaderConfigurator,
+                                                 pluginSet = pluginSet).toList(),
+          app = app,
+          listenerCallbacks = listenerCallbacks,
         )
 
         clearPluginClassLoaderParentListCache(pluginSet)
@@ -865,7 +872,7 @@ object DynamicPlugins {
 
         listenerCallbacks.forEach(Runnable::run)
 
-        logDescriptorLoad(pluginDescriptor)
+        DynamicPluginsUsagesCollector.logDescriptorLoad(pluginDescriptor)
         LOG.info("Plugin ${pluginDescriptor.pluginId} loaded without restart in ${System.currentTimeMillis() - loadStartTime} ms")
       }
       finally {
@@ -1057,28 +1064,23 @@ private fun optionalDependenciesOnPlugin(
     .topologicalComparator
   dependentPluginsAndItsModule.sortWith(Comparator { o1, o2 -> topologicalComparator.compare(o1.first, o2.first) })
 
-  return dependentPluginsAndItsModule.distinct()
+  return dependentPluginsAndItsModule
+    .distinct()
     .filter { (mainDescriptor, moduleDescriptor) ->
       // 3. setup classloaders
       classLoaderConfigurator.configureDependency(mainDescriptor, moduleDescriptor)
-    }.map { it.second }.toSet()
+    }
+    .map { it.second }
+    .toSet()
 }
 
-private fun loadModules(
-  modules: Collection<IdeaPluginDescriptorImpl>,
-  app: ApplicationImpl,
-  listenerCallbacks: MutableList<in Runnable>,
-) {
-  fun registerComponents(componentManager: ComponentManager) {
-    (componentManager as ComponentManagerImpl).registerComponents(modules.toList(), app, null, listenerCallbacks)
-  }
-
-  registerComponents(app)
-  for (openProject in ProjectUtil.getOpenProjects()) {
-    registerComponents(openProject)
+private fun loadModules(modules: List<IdeaPluginDescriptorImpl>, app: ApplicationImpl, listenerCallbacks: MutableList<in Runnable>) {
+  app.registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
+  for (openProject in getOpenedProjects()) {
+    (openProject as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
 
     for (module in ModuleManager.getInstance(openProject).modules) {
-      registerComponents(module)
+      (module as ComponentManagerImpl).registerComponents(modules = modules, app = app, listenerCallbacks = listenerCallbacks)
     }
   }
 
@@ -1297,7 +1299,7 @@ private fun doCheckExtensionsCanUnloadWithoutRestart(
 
 private fun findPluginExtensionPoint(pluginDescriptor: IdeaPluginDescriptorImpl, epName: String): ExtensionPointDescriptor? {
   fun findContainerExtensionPoint(containerDescriptor: ContainerDescriptor): ExtensionPointDescriptor? {
-    return containerDescriptor.extensionPoints?.find { it.nameEquals(epName, pluginDescriptor) }
+    return containerDescriptor.extensionPoints.find { it.nameEquals(epName, pluginDescriptor) }
   }
 
   return findContainerExtensionPoint(pluginDescriptor.appContainerDescriptor)
@@ -1378,4 +1380,16 @@ private fun clearCachedValues() {
   for (project in ProjectUtil.getOpenProjects()) {
     (CachedValuesManager.getManager(project) as? CachedValuesManagerImpl)?.clearCachedValues()
   }
+}
+
+private fun checkUnloadActions(module: IdeaPluginDescriptorImpl): String? {
+  for (descriptor in module.actions) {
+    val element = descriptor.element
+    val elementName = descriptor.name
+    if (elementName != ActionDescriptorName.action &&
+        !(elementName == ActionDescriptorName.group && canUnloadActionGroup(element)) && elementName != ActionDescriptorName.reference) {
+      return "Plugin $module is not unload-safe because of action element $elementName"
+    }
+  }
+  return null
 }

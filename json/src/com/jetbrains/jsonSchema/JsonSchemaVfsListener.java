@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -40,8 +40,7 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
   public static final Topic<Runnable> JSON_SCHEMA_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Schema.Changed", Runnable.class);
   public static final Topic<Runnable> JSON_DEPS_CHANGED = Topic.create("JsonSchemaVfsListener.Json.Deps.Changed", Runnable.class);
 
-  @NotNull
-  public static JsonSchemaUpdater startListening(@NotNull Project project, @NotNull JsonSchemaService service, @NotNull MessageBusConnection connection) {
+  public static @NotNull JsonSchemaUpdater startListening(@NotNull Project project, @NotNull JsonSchemaService service, @NotNull MessageBusConnection connection) {
     final JsonSchemaUpdater updater = new JsonSchemaUpdater(project, service);
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new JsonSchemaVfsListener(updater));
     PsiManager.getInstance(project).addPsiTreeChangeListener(new PsiTreeAnyChangeAbstractAdapter() {
@@ -55,9 +54,9 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
 
   private JsonSchemaVfsListener(@NotNull JsonSchemaUpdater updater) {
     super(new VirtualFileContentsChangedAdapter() {
-      @NotNull private final JsonSchemaUpdater myUpdater = updater;
+      private final @NotNull JsonSchemaUpdater myUpdater = updater;
       @Override
-      protected void onFileChange(@NotNull final VirtualFile schemaFile) {
+      protected void onFileChange(final @NotNull VirtualFile schemaFile) {
         myUpdater.onFileChange(schemaFile);
       }
 
@@ -68,17 +67,17 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
     });
   }
 
-  public static class JsonSchemaUpdater {
+  public static final class JsonSchemaUpdater {
     private static final int DELAY_MS = 200;
 
-    @NotNull private final Project myProject;
+    private final @NotNull Project myProject;
     private final ZipperUpdater myUpdater;
-    @NotNull private final JsonSchemaService myService;
+    private final @NotNull JsonSchemaService myService;
     private final Set<VirtualFile> myDirtySchemas = ConcurrentCollectionFactory.createConcurrentSet();
     private final Runnable myRunnable;
     private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Json Vfs Updater Executor");
 
-    protected JsonSchemaUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
+    private JsonSchemaUpdater(@NotNull Project project, @NotNull JsonSchemaService service) {
       Disposable disposable = (Disposable)service;
 
       myProject = project;
@@ -128,7 +127,7 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
       if (psiFile != null) analyzer.restart(psiFile);
     }
 
-    protected void onFileChange(@NotNull final VirtualFile schemaFile) {
+    private void onFileChange(final @NotNull VirtualFile schemaFile) {
       if (JsonFileType.DEFAULT_EXTENSION.equals(schemaFile.getExtension())) {
         myDirtySchemas.add(schemaFile);
         Application app = ApplicationManager.getApplication();

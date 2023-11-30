@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
@@ -66,27 +66,25 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   private final PsiAnchor myElement;
   private final PsiAnchor myToken;
 
-  @NotNull
-  private XmlFile getFile() {
+  private @NotNull XmlFile getFile() {
     return (XmlFile)myElement.getFile();
   }
 
-  protected CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
-                                            @NotNull final String namespacePrefix) {
+  protected CreateNSDeclarationIntentionFix(final @NotNull PsiElement element,
+                                            final @NotNull String namespacePrefix) {
     this(element, namespacePrefix, null);
   }
 
-  public CreateNSDeclarationIntentionFix(@NotNull final PsiElement element,
+  public CreateNSDeclarationIntentionFix(final @NotNull PsiElement element,
                                          @NotNull String namespacePrefix,
-                                         @Nullable final XmlToken token) {
+                                         final @Nullable XmlToken token) {
     myNamespacePrefix = namespacePrefix;
     myElement = PsiAnchor.create(element);
     myToken = token == null ? null : PsiAnchor.create(token);
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     final String alias = getXmlNamespaceHelper().getNamespaceAlias(getFile());
     return XmlPsiBundle.message("xml.quickfix.create.namespace.declaration.text", alias);
   }
@@ -96,13 +94,12 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return XmlPsiBundle.message("xml.quickfix.create.namespace.declaration.family");
   }
 
   @Override
-  public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
+  public void applyFix(final @NotNull Project project, final @NotNull ProblemDescriptor descriptor) {
     final PsiFile containingFile = descriptor.getPsiElement().getContainingFile();
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     final PsiFile file = editor != null ? PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument()) : null;
@@ -128,8 +125,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     return doPreview(project, PsiTreeUtil.findSameElementInCopy(element, file), editor);
   }
 
-  @NotNull
-  private IntentionPreviewInfo doPreview(@NotNull Project project, PsiElement element, @Nullable Editor editor) {
+  private @NotNull IntentionPreviewInfo doPreview(@NotNull Project project, PsiElement element, @Nullable Editor editor) {
     PsiFile file = element.getContainingFile();
     if (!(file instanceof XmlFile xmlFile)) return IntentionPreviewInfo.EMPTY;
     List<String> namespaces = getNamespaces(element, xmlFile);
@@ -150,8 +146,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   /**
    * Looks up the unbound namespaces and sorts them
    */
-  @NotNull
-  private List<String> getNamespaces(PsiElement element, XmlFile xmlFile) {
+  private @NotNull List<String> getNamespaces(PsiElement element, XmlFile xmlFile) {
     if (element instanceof XmlAttribute) {
       element = element.getParent();
     }
@@ -168,7 +163,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
     final PsiElement element = myElement.retrieve();
     if (element == null) return;
     XmlFile xmlFile = getFile();
@@ -187,8 +182,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
    * as determined by the {@link XmlSchemaProvider#getDefaultPrefix(String, XmlFile)}
    * implementations
    */
-  @Nullable
-  public static String getUnboundNamespaceForPrefix(String prefix, XmlFile xmlFile, Set<String> namespaces) {
+  public static @Nullable String getUnboundNamespaceForPrefix(String prefix, XmlFile xmlFile, Set<String> namespaces) {
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(xmlFile);
     for (XmlSchemaProvider provider : providers) {
       for (String namespace : namespaces) {
@@ -211,7 +205,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
-  public boolean showHint(@NotNull final Editor editor) {
+  public boolean showHint(final @NotNull Editor editor) {
     XmlToken token = null;
     if (myToken != null) {
       token = (XmlToken)myToken.retrieve();
@@ -224,7 +218,8 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     if (element == null) return false;
     final List<String> namespaces = getNamespaces(element, getFile());
     if (!namespaces.isEmpty()) {
-      final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
+      final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, XmlPsiBundle.message("xml.terms.namespace.alias"),
+                                                           namespaces.iterator().next());
       final String title = getSelectNSActionTitle();
       final ImportNSAction action = new ImportNSAction(namespaces, getFile(), element, editor, title);
       if (element instanceof XmlTag && token != null) {
@@ -413,7 +408,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   public interface ExternalUriProcessor {
-    void process(@NotNull String uri, @Nullable final String url);
+    void process(@NotNull String uri, final @Nullable String url);
   }
 
   private class MyStringToAttributeProcessor implements StringToAttributeProcessor {
@@ -433,7 +428,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     }
 
     @Override
-    public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String namespace)
+    public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(final @NotNull String namespace)
       throws IncorrectOperationException {
       String prefix = myNamespacePrefix;
       if (StringUtil.isEmpty(prefix)) {

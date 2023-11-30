@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -9,12 +9,14 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.psi.*;
+import com.intellij.psi.util.AccessModifier;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.util.VisibilityUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 @SuppressWarnings("InspectionDescriptionNotFoundInspection") // via UnusedReturnValue
 public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -43,14 +45,15 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
   public ProblemDescriptor @Nullable [] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
         PsiTypes.voidType().equals(method.getReturnType()) ||
-        VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), myGlobal.highestModifier) < 0 ||
-        (myGlobal.IGNORE_BUILDER_PATTERN && (PropertyUtilBase.isSimplePropertySetter(method) ||
-        MethodUtils.isChainable(method))) ||
+        AccessModifier.fromModifierList(method.getModifierList()).compareTo(myGlobal.getHighestModifier()) < 0 ||
+        (myGlobal.IGNORE_BUILDER_PATTERN && (PropertyUtilBase.isSimplePropertySetter(method) || MethodUtils.isChainable(method))) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
         RefUtil.isImplicitRead(method) ||
         MethodUtils.hasCanIgnoreReturnValueAnnotation(method, method.getContainingFile()) ||
-        UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) return null;
+        UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) {
+      return null;
+    }
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};
     if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {

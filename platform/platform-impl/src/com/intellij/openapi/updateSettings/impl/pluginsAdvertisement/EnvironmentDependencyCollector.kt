@@ -18,7 +18,12 @@ internal class EnvironmentDependencyCollector : DependencyCollector {
     "docker",
     "kubectl",
     "podman",
-    "terraform"
+    "terraform",
+
+    // Reserved for Cloud vendors only
+    "az",
+    "gcloud",
+    "aws"
   )
 
   override fun collectDependencies(project: Project): Collection<String> {
@@ -48,7 +53,7 @@ object EnvironmentScanner {
 
   fun hasToolInLocalPath(pathNames: List<Path>, executableWithoutExt: String): Boolean {
     val baseNames = if (SystemInfo.isWindows) {
-      sequenceOf(".bat", ".com", ".exe")
+      sequenceOf(".bat", ".cmd", ".com", ".exe")
         .map { exeSuffix -> executableWithoutExt + exeSuffix }
     }
     else {

@@ -35,55 +35,55 @@ internal data class CommonSdkLookupBuilder(
 
   private val lookup: (CommonSdkLookupBuilder) -> Unit
 ) : SdkLookupBuilder, SdkLookupParameters {
-  override fun withProject(project: Project?) =
+  override fun withProject(project: Project?): CommonSdkLookupBuilder =
     copy(project = project)
 
-  override fun withProgressMessageTitle(@ProgressTitle message: String) =
+  override fun withProgressMessageTitle(@ProgressTitle message: String): CommonSdkLookupBuilder =
     copy(progressMessageTitle = message)
 
-  override fun withSdkName(name: String) =
+  override fun withSdkName(name: String): CommonSdkLookupBuilder =
     copy(sdkName = name)
 
-  override fun withSdkType(sdkType: SdkType) =
+  override fun withSdkType(sdkType: SdkType): CommonSdkLookupBuilder =
     copy(sdkType = sdkType)
 
-  override fun withVersionFilter(filter: (String) -> Boolean) =
+  override fun withVersionFilter(filter: (String) -> Boolean): CommonSdkLookupBuilder =
     copy(versionFilter = filter)
 
-  override fun withSdkHomeFilter(filter: (String) -> Boolean) =
+  override fun withSdkHomeFilter(filter: (String) -> Boolean): CommonSdkLookupBuilder =
     copy(sdkHomeFilter = filter)
 
-  override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision) =
+  override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision): CommonSdkLookupBuilder =
     copy(onDownloadingSdkDetected = handler)
 
-  override fun withProgressIndicator(indicator: ProgressIndicator) =
+  override fun withProgressIndicator(indicator: ProgressIndicator): CommonSdkLookupBuilder =
     copy(progressIndicator = indicator)
 
-  override fun testSuggestedSdksFirst(sdks: Sequence<Sdk?>) =
+  override fun testSuggestedSdksFirst(sdks: Sequence<Sdk?>): CommonSdkLookupBuilder =
     copy(testSdkSequence = testSdkSequence + sdks)
 
-  override fun testSuggestedSdkFirst(sdk: () -> Sdk?) =
+  override fun testSuggestedSdkFirst(sdk: () -> Sdk?): CommonSdkLookupBuilder =
     copy(testSdkSequence = testSdkSequence + generateSequence(sdk) { null })
 
-  override fun onBeforeSdkSuggestionStarted(handler: () -> SdkLookupDecision) =
+  override fun onBeforeSdkSuggestionStarted(handler: () -> SdkLookupDecision): CommonSdkLookupBuilder =
     copy(onBeforeSdkSuggestionStarted = handler)
 
-  override fun onLocalSdkSuggested(handler: (UnknownSdkLocalSdkFix) -> SdkLookupDecision) =
+  override fun onLocalSdkSuggested(handler: (UnknownSdkLocalSdkFix) -> SdkLookupDecision): CommonSdkLookupBuilder =
     copy(onLocalSdkSuggested = handler)
 
-  override fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision) =
+  override fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision): CommonSdkLookupBuilder =
     copy(onSdkFixResolved = handler)
 
-  override fun onDownloadableSdkSuggested(handler: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision) =
+  override fun onDownloadableSdkSuggested(handler: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision): CommonSdkLookupBuilder =
     copy(onDownloadableSdkSuggested = handler)
 
-  override fun onSdkResolved(handler: (Sdk?) -> Unit) =
+  override fun onSdkResolved(handler: (Sdk?) -> Unit): CommonSdkLookupBuilder =
     copy(onSdkResolved = this.onSdkResolved + handler)
 
-  override fun onSdkNameResolved(handler: (Sdk?) -> Unit) =
+  override fun onSdkNameResolved(handler: (Sdk?) -> Unit): CommonSdkLookupBuilder =
     copy(onSdkNameResolved = this.onSdkNameResolved + handler)
 
-  override fun executeLookup() = lookup(this)
+  override fun executeLookup(): Unit = lookup(this)
 
   @JvmName("plusTUnit")
   private operator fun <T> ( (T) -> Unit).plus(v : (T) -> Unit) : (T) -> Unit = {

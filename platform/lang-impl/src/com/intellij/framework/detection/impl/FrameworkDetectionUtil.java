@@ -70,7 +70,7 @@ public final class FrameworkDetectionUtil {
                                      final ModifiableModelsProvider modelsProvider, final ModulesProvider modulesProvider) {
     WriteAction.run(() -> {
       List<DetectedFrameworkDescription> sortedDescriptions = new ArrayList<>();
-      //todo[nik] perform real sorting
+      //todo perform real sorting
       for (DetectedFrameworkDescription description : descriptions) {
         if (description.getDetector().getUnderlyingFrameworkType() == null) {
           sortedDescriptions.add(description);

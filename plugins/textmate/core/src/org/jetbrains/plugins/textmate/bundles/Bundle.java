@@ -132,7 +132,7 @@ public class Bundle {
     return Collections.singletonList(PreferencesReadUtil.retrieveSettingsPlist(plistReader.read(file)));
   }
 
-  private static class BundleFilesFilter implements FileFilter {
+  private static final class BundleFilesFilter implements FileFilter {
     private final Set<String> myExtensions;
 
     private BundleFilesFilter(String... extensions) {

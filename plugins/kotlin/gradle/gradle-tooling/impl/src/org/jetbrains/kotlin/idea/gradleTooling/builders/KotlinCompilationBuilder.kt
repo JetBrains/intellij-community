@@ -4,13 +4,12 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 import org.gradle.api.Task
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationOutputReflection
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationReflection
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinNativeCompileReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
+import java.io.File
 
 class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: String?) :
     KotlinModelComponentBuilder<KotlinCompilationReflection, MultiplatformModelImportingContext, KotlinCompilation> {
@@ -51,6 +50,13 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
 
         val serializedExtras = importingContext.importReflection?.resolveExtrasSerialized(origin.gradleCompilation)
 
+        val isTestCompilation = if (importingContext.getProperty(GradleImportProperties.LEGACY_TEST_SOURCE_SET_DETECTION)) {
+            compilationName == KotlinCompilation.TEST_COMPILATION_NAME
+                    || platform == KotlinPlatform.ANDROID && compilationName.contains("Test")
+        } else {
+            associateCompilations.isNotEmpty()
+        }
+
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
             name = compilationName,
@@ -62,7 +68,9 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             kotlinTaskProperties = kotlinTaskProperties,
             nativeExtensions = nativeExtensions,
             associateCompilations = associateCompilations.toSet(),
-            extras = IdeaKotlinExtras.from(serializedExtras)
+            extras = IdeaKotlinExtras.from(serializedExtras),
+            isTestComponent = isTestCompilation,
+            archiveFile = getArchiveFile(origin, importingContext)
         )
     }
 
@@ -114,6 +122,8 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             importingContext: MultiplatformModelImportingContext,
             compilationReflection: KotlinCompilationReflection,
         ): List<KotlinDependency> = ArrayList<KotlinDependency>().apply {
+            if (compilationReflection.target?.platformType != NATIVE_TARGET_PLATFORM_TYPE_NAME) return@apply
+
             val compilationSourceSets = compilationReflection.sourceSets ?: return@apply
             val isIntransitiveMetadataSupported = compilationSourceSets.all {
                 it[INTRANSITIVE_METADATA_CONFIGURATION_NAME_ACCESSOR] != null
@@ -142,6 +152,16 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             val compilationOutputBase = KotlinCompilationOutputBuilder.buildComponent(kotlinCompilationOutputReflection) ?: return null
             val destinationDir = KotlinNativeCompileReflection(compileKotlinTask).destinationDir
             return KotlinCompilationOutputImpl(compilationOutputBase.classesDirs, destinationDir, compilationOutputBase.resourcesDir)
+        }
+
+        private fun getArchiveFile(
+            kotlinCompilation: KotlinCompilationReflection,
+            importingContext: MultiplatformModelImportingContext
+        ): File? {
+            val archiveTaskName = kotlinCompilation.archiveTaskName ?: return null
+            val artifactTask = importingContext.project.tasks.findByName(archiveTaskName) ?: return null
+            val jarTaskReflection = KotlinTargetJarReflection(artifactTask)
+            return jarTaskReflection.archiveFile
         }
     }
 }

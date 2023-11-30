@@ -1,10 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.sun.jna.platform.win32.Kernel32;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.io.*;
@@ -12,14 +10,10 @@ import java.nio.channels.FileLock;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class PatchCreationTest extends PatchTestCase {
@@ -27,7 +21,7 @@ public class PatchCreationTest extends PatchTestCase {
   public void testDigestFiles() throws Exception {
     Patch patch = createPatch();
     Map<String, Long> checkSums = digest(patch, myOlderDir);
-    assertThat(checkSums).hasSize(11);
+    assertThat(checkSums).hasSize(10);
   }
 
   @Test
@@ -38,16 +32,8 @@ public class PatchCreationTest extends PatchTestCase {
       new CreateAction(patch, "newDir/"),
       new CreateAction(patch, "newDir/newFile.txt"),
       new UpdateAction(patch, "Readme.txt", CHECKSUMS.README_TXT),
-      new UpdateZipAction(patch, "lib/annotations.jar",
-                          singletonList("org/jetbrains/annotations/NewClass.class"),
-                          singletonList("org/jetbrains/annotations/Nullable.class"),
-                          singletonList("org/jetbrains/annotations/TestOnly.class"),
-                          CHECKSUMS.ANNOTATIONS_JAR),
-      new UpdateZipAction(patch, "lib/bootstrap.jar",
-                          Collections.emptyList(),
-                          Collections.emptyList(),
-                          singletonList("com/intellij/ide/ClassloaderUtil.class"),
-                          CHECKSUMS.BOOTSTRAP_JAR));
+      new UpdateAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new UpdateAction(patch, "lib/bootstrap.jar", CHECKSUMS.BOOTSTRAP_JAR));
   }
 
   @Test
@@ -55,22 +41,14 @@ public class PatchCreationTest extends PatchTestCase {
     PatchSpec spec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath())
-      .setIgnoredFiles(asList("Readme.txt", "bin/idea.bat"));
-    Patch patch = new Patch(spec, TEST_UI);
+      .setIgnoredFiles(List.of("Readme.txt", "bin/idea.bat"));
+    Patch patch = new Patch(spec);
 
     assertThat(sortActions(patch.getActions())).containsExactly(
       new CreateAction(patch, "newDir/"),
       new CreateAction(patch, "newDir/newFile.txt"),
-      new UpdateZipAction(patch, "lib/annotations.jar",
-                          singletonList("org/jetbrains/annotations/NewClass.class"),
-                          singletonList("org/jetbrains/annotations/Nullable.class"),
-                          singletonList("org/jetbrains/annotations/TestOnly.class"),
-                          CHECKSUMS.ANNOTATIONS_JAR),
-      new UpdateZipAction(patch, "lib/bootstrap.jar",
-                          Collections.emptyList(),
-                          Collections.emptyList(),
-                          singletonList("com/intellij/ide/ClassloaderUtil.class"),
-                          CHECKSUMS.BOOTSTRAP_JAR));
+      new UpdateAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
+      new UpdateAction(patch, "lib/bootstrap.jar", CHECKSUMS.BOOTSTRAP_JAR));
   }
 
   @Test
@@ -93,42 +71,42 @@ public class PatchCreationTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/focuskiller.dll",
                            ValidationResult.Action.DELETE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "bin/idea.bat",
                            ValidationResult.Action.DELETE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.DELETE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/",
                            ValidationResult.Action.CREATE,
-                           ValidationResult.ALREADY_EXISTS_MESSAGE,
+                           "Already exists",
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.CONFLICT,
                            "newDir/newFile.txt",
                            ValidationResult.Action.CREATE,
-                           ValidationResult.ALREADY_EXISTS_MESSAGE,
+                           "Already exists",
                            ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "Readme.txt",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "bin/focuskiller.dll",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.IGNORE),
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/bootstrap.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.ABSENT_MESSAGE,
+                           "Absent",
                            ValidationResult.Option.IGNORE));
   }
 
@@ -151,7 +129,7 @@ public class PatchCreationTest extends PatchTestCase {
         new ValidationResult(ValidationResult.Kind.CONFLICT,
                              "bin/IDEA.bat",
                              ValidationResult.Action.CREATE,
-                             ValidationResult.ALREADY_EXISTS_MESSAGE,
+                             "Already exists",
                              ValidationResult.Option.REPLACE, ValidationResult.Option.KEEP));
     }
     else {
@@ -167,14 +145,14 @@ public class PatchCreationTest extends PatchTestCase {
       new ValidationResult(ValidationResult.Kind.ERROR,
                            "lib/annotations.jar",
                            ValidationResult.Action.UPDATE,
-                           ValidationResult.MODIFIED_MESSAGE,
+                           "Modified",
                            ValidationResult.Option.IGNORE));
 
     PatchSpec spec = new PatchSpec()
       .setOldFolder(myOlderDir.getAbsolutePath())
       .setNewFolder(myNewerDir.getAbsolutePath())
-      .setOptionalFiles(singletonList("lib/annotations.jar"));
-    Patch patch2 = new Patch(spec, TEST_UI);
+      .setOptionalFiles(List.of("lib/annotations.jar"));
+    Patch patch2 = new Patch(spec);
     FileUtil.delete(new File(myOlderDir, "lib/annotations.jar"));
     assertThat(patch2.validate(myOlderDir, TEST_UI)).isEmpty();
   }
@@ -184,8 +162,7 @@ public class PatchCreationTest extends PatchTestCase {
     Patch patch = createPatch();
     File f = new File(myOlderDir, "Readme.txt");
     try (FileOutputStream s = new FileOutputStream(f, true); FileLock ignored = s.getChannel().lock()) {
-      String message = Utils.IS_WINDOWS ? "Locked by: [" + Kernel32.INSTANCE.GetCurrentProcessId() + "] OpenJDK Platform binary"
-                                        : ValidationResult.ACCESS_DENIED_MESSAGE;
+      String message = Utils.IS_WINDOWS ? "Locked by: [" + ProcessHandle.current().pid() + "] OpenJDK Platform binary" : "Access denied";
       ValidationResult.Option option = Utils.IS_WINDOWS ? ValidationResult.Option.KILL_PROCESS : ValidationResult.Option.IGNORE;
       assertThat(patch.validate(myOlderDir, TEST_UI)).containsExactly(
         new ValidationResult(ValidationResult.Kind.ERROR,
@@ -218,11 +195,7 @@ public class PatchCreationTest extends PatchTestCase {
     assertThat(sortActions(patch.getActions())).containsExactly(
       new DeleteAction(patch, "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
-      new UpdateZipAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar",
-                          singletonList("org/jetbrains/annotations/NewClass.class"),
-                          singletonList("org/jetbrains/annotations/Nullable.class"),
-                          singletonList("org/jetbrains/annotations/TestOnly.class"),
-                          CHECKSUMS.ANNOTATIONS_JAR));
+      new UpdateAction(patch, "lib/redist/annotations.jar", "lib/annotations.jar", CHECKSUMS.ANNOTATIONS_JAR, false));
   }
 
   @Test
@@ -250,14 +223,14 @@ public class PatchCreationTest extends PatchTestCase {
     FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.bin"));
     FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.bin"));
 
-    Patch patch = createPatch(spec -> spec.setOptionalFiles(asList("lib/annotations.bin", "lib/redist/annotations.bin")));
+    Patch patch = createPatch(spec -> spec.setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN),
-      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR_BIN),
+      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR),
+      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.bin", "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true),
-      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR_BIN, false));
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR, false));
   }
 
   @Test
@@ -268,14 +241,14 @@ public class PatchCreationTest extends PatchTestCase {
     FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib/redist/annotations.bin"));
     FileUtil.copy(new File(dataDir, "lib/annotations.jar"), new File(myNewerDir, "lib64/redist/annotations.bin"));
 
-    Patch patch = createPatch(spec -> spec.setOptionalFiles(asList("lib/annotations.bin", "lib/redist/annotations.bin")));
+    Patch patch = createPatch(spec -> spec.setOptionalFiles(List.of("lib/annotations.bin", "lib/redist/annotations.bin")));
     assertThat(sortActions(patch.getActions())).containsExactly(
-      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR_BIN),
-      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN),
+      new DeleteAction(patch, "lib/annotations.bin", CHECKSUMS.ANNOTATIONS_CHANGED_JAR),
+      new DeleteAction(patch, "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR),
       new CreateAction(patch, "lib/redist/"),
       new CreateAction(patch, "lib64/redist/"),
-      new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true),
-      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR_BIN, true));
+      new UpdateAction(patch, "lib/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR, true),
+      new UpdateAction(patch, "lib64/redist/annotations.bin", "lib64/annotations.bin", CHECKSUMS.ANNOTATIONS_JAR, true));
   }
 
   @Test
@@ -297,7 +270,7 @@ public class PatchCreationTest extends PatchTestCase {
     assumeSymLinkCreationIsSupported();
 
     Files.write(new File(myOlderDir, "bin/_target").toPath(), "test".getBytes(StandardCharsets.UTF_8));
-    Files.createSymbolicLink(new File(myOlderDir, "bin/_link").toPath(), Paths.get("_target"));
+    Files.createSymbolicLink(new File(myOlderDir, "bin/_link").toPath(), Path.of("_target"));
     resetNewerDir();
 
     Patch patch = createPatch();
@@ -309,7 +282,7 @@ public class PatchCreationTest extends PatchTestCase {
     assumeSymLinkCreationIsSupported();
 
     long checksum = randomFile(myOlderDir.toPath().resolve("bin/mac_lib.jnilib"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("bin/mac_lib.dylib"), Paths.get("mac_lib.jnilib"));
+    Files.createSymbolicLink(myOlderDir.toPath().resolve("bin/mac_lib.dylib"), Path.of("mac_lib.jnilib"));
     resetNewerDir();
     Utils.delete(new File(myNewerDir, "bin/mac_lib.dylib"));
     Files.createDirectories(new File(myNewerDir, "plugins/whatever/bin").toPath());
@@ -331,7 +304,7 @@ public class PatchCreationTest extends PatchTestCase {
 
     resetNewerDir();
     Files.createDirectories(myOlderDir.toPath().resolve("other_dir"));
-    @NotNull Path target = Paths.get("other_dir");
+    Path target = Path.of("other_dir");
     Files.createSymbolicLink(myOlderDir.toPath().resolve("dir"), target);
     Files.createDirectories(myNewerDir.toPath().resolve("dir"));
 
@@ -352,11 +325,11 @@ public class PatchCreationTest extends PatchTestCase {
 
     randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib.dylib"));
     randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r/res.bin"));
-    @NotNull Path target2 = Paths.get("A");
+    Path target2 = Path.of("A");
     Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), target2);
-    @NotNull Path target1 = Paths.get("Versions/Current/Libraries");
+    Path target1 = Path.of("Versions/Current/Libraries");
     Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), target1);
-    @NotNull Path target = Paths.get("Versions/Current/Resources");
+    Path target = Path.of("Versions/Current/Resources");
     Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), target);
 
     randomFile(myNewerDir.toPath().resolve("A.framework/Libraries/lib.dylib"));

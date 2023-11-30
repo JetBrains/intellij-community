@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -336,7 +336,7 @@ public abstract class InspectionRVContentProvider {
     return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(QuickFixAction.EMPTY);
   }
 
-  private static class FixAndOccurrences {
+  private static final class FixAndOccurrences {
     QuickFixAction fix;
     int occurrences;
     FixAndOccurrences(QuickFixAction fix) {this.fix = fix;}

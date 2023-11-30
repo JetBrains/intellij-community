@@ -108,9 +108,9 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
 //        var debugText: String? = null
     }
 
-    private class StandardTreeElement() : TreeElement()
+    private class StandardTreeElement : TreeElement()
     private class TokenTreeElement(val tokenType: KtToken) : TreeElement()
-    private class LineBreakTreeElement() : TreeElement()
+    private class LineBreakTreeElement : TreeElement()
 
     private class CommentTreeElement(
         val commentText: String,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.build.*;
@@ -61,6 +61,7 @@ import org.jetbrains.idea.maven.execution.run.configuration.MavenRunConfiguratio
 import org.jetbrains.idea.maven.execution.target.MavenCommandLineSetup;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeTargetConfiguration;
 import org.jetbrains.idea.maven.execution.target.MavenRuntimeType;
+import org.jetbrains.idea.maven.execution.target.MavenRuntimeTypeConstants;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
@@ -77,6 +78,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -162,7 +164,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       .getData(SingleConfigurationConfigurable.RUN_ON_TARGET_NAME_KEY);
   }
 
-  public JavaParameters createJavaParameters(@Nullable Project project) throws ExecutionException {
+  public JavaParameters createJavaParameters(@NotNull Project project) throws ExecutionException {
     return MavenExternalParameters.createJavaParameters(project, getRunnerParameters(), getGeneralSettings(), getRunnerSettings(), this);
   }
 
@@ -439,7 +441,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         MavenDistribution mavenDistribution =
           MavenDistributionsCache.getInstance(myConfiguration.getProject()).getMavenDistribution(myConfiguration.getRunnerParameters()
                                                                                                    .getWorkingDirPath());
-        String mavenHome = StringUtil.notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome().toString()));
+        String mavenHome = StringUtil.notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome()));
         String mavenVersion = StringUtil.notNullize(mavenDistribution.getVersion());
 
         MavenRuntimeTargetConfiguration mavenConfig = new MavenRuntimeTargetConfiguration();
@@ -538,7 +540,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
       processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
       DefaultExecutionResult res = new DefaultExecutionResult(consoleView, processHandler, new DefaultActionGroup());
-      addRestartAction(res);
+      res.setRestartActions(new JvmToggleAutoTestAction());
       return res;
     }
 
@@ -567,17 +569,16 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
       AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};
       DefaultExecutionResult res = new DefaultExecutionResult(buildView, processHandler, actions);
+      List<AnAction> restartActions = new ArrayList<>();
+      restartActions.add(new JvmToggleAutoTestAction());
+
       if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration)) {
         MavenResumeAction resumeAction =
           new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment(), eventProcessor.getParsingContext());
-        res.setRestartActions(resumeAction);
+        restartActions.add(resumeAction);
       }
-      addRestartAction(res);
+      res.setRestartActions(restartActions.toArray(AnAction.EMPTY_ARRAY));
       return res;
-    }
-
-    private static void addRestartAction(DefaultExecutionResult res) {
-      res.setRestartActions(new JvmToggleAutoTestAction());
     }
 
     @NotNull
@@ -605,7 +606,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
       };
       if (!(targetEnvironment instanceof LocalTargetEnvironment)) {
         TargetEnvironmentRequest targetEnvironmentRequest = getTargetEnvironmentRequest();
-        LanguageRuntimeType.VolumeType mavenProjectFolderVolumeType = MavenRuntimeType.getPROJECT_FOLDER_VOLUME().getType();
+        LanguageRuntimeType.VolumeType mavenProjectFolderVolumeType = MavenRuntimeTypeConstants.getPROJECT_FOLDER_VOLUME().getType();
         Set<TargetEnvironment.UploadRoot> uploadVolumes = targetEnvironmentRequest.getUploadVolumes();
         for (TargetEnvironment.UploadRoot uploadVolume : uploadVolumes) {
           String localPath = uploadVolume.getLocalRootPath().toString();

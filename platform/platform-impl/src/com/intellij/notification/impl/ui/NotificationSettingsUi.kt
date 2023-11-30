@@ -1,17 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationDisplayType.*
-import com.intellij.notification.impl.NotificationsAnnouncer
 import com.intellij.notification.impl.NotificationsConfigurationImpl
+import com.intellij.notification.impl.isNotificationAnnouncerEnabled
 import com.intellij.notification.impl.isSoundEnabled
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.layout.ComponentPredicate
 import com.intellij.util.ui.JBUI
 import javax.swing.DefaultComboBoxModel
@@ -20,7 +23,8 @@ import javax.swing.JCheckBox
 /**
  * @author Konstantin Bulenkov
  */
-class NotificationSettingsUi(var notification: NotificationSettingsWrapper, private val useBalloonNotifications: ComponentPredicate) {
+internal class NotificationSettingsUi(private var notification: NotificationSettingsWrapper,
+                                      private val useBalloonNotifications: ComponentPredicate) {
   val ui: DialogPanel
   private lateinit var type: ComboBox<NotificationDisplayType>
   private lateinit var log: JCheckBox
@@ -74,10 +78,17 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper, priv
     this.notification = notification
     type.model = createComboboxModel(notification)
     type.model.selectedItem = notification.displayType
+    // Assistive tools use popup list's selection as the current combo box value.
+    // When setting a new model, list selection is cleared, and in some cases could still be empty even after setting a new selectedItem.
+    // In that case, set the list selection manually.
+    val popupList = type.popup?.list
+    if (popupList != null && popupList.selectedIndex == -1) {
+      popupList.selectedIndex = type.selectedIndex
+    }
     log.isSelected = notification.isShouldLog
     if (isReadAloudEnabled()) {
-      readAloud.isSelected = notification.isShouldReadAloud && !NotificationsAnnouncer.isEnabled()
-      readAloud.isEnabled = !NotificationsAnnouncer.isEnabled()
+      readAloud.isSelected = notification.isShouldReadAloud && !isNotificationAnnouncerEnabled()
+      readAloud.isEnabled = !isNotificationAnnouncerEnabled()
     }
     if (isSoundEnabled()) {
       playSound.isSelected = notification.isPlaySound

@@ -41,10 +41,10 @@ public final class PlaybackRunnerExtended extends PlaybackRunner {
   public void setProject(@Nullable Project project) {
     myProject = project;
 
-    if (project != null && !project.isDefault()) {
+    if (project != null && !project.isDefault() && !project.isDisposed()) {
       Disposer.register(project, () -> {
         if (project == myProject) {
-          Disposer.dispose(myOnStop);
+          Disposer.dispose(onStop);
         }
       });
     }

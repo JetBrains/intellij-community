@@ -2,18 +2,18 @@
 package com.intellij.ide.ui.customization
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 
-abstract class ToolbarAddQuickActionsAction(protected val actionIds: List<String>,
-                                            private val rootGroupID: String,
-                                            private val insertStrategy: ToolbarQuickActionInsertStrategy): AnAction() {
+class ToolbarAddQuickActionsAction(private val info: ToolbarAddQuickActionInfo) : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
+
   override fun actionPerformed(e: AnActionEvent) {
     val schema = CustomActionsSchema(null)
     schema.copyFrom(CustomActionsSchema.getInstance())
-    insertStrategy.addToSchema(actionIds, schema)
+    info.insertStrategy.addActions(info.actionIDs, schema)
     CustomActionsSchema.getInstance().copyFrom(schema)
 
     CustomActionsSchema.getInstance().initActionIcons()
@@ -25,9 +25,12 @@ abstract class ToolbarAddQuickActionsAction(protected val actionIds: List<String
   }
 
   override fun update(e: AnActionEvent) {
+    val presentation = e.presentation
+    presentation.text = info.name
+    presentation.icon = info.icon
     val schema = CustomActionsSchema.getInstance()
-    e.presentation.isEnabledAndVisible = actionIds.none { id -> groupContainsAction(rootGroupID, id, schema)}
+    presentation.isEnabledAndVisible = info.actionIDs.none { id -> info.insertStrategy.checkExists(id, schema) }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

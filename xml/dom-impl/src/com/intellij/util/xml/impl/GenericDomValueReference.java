@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -64,8 +64,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
     return true;
   }
 
-  @Nullable
-  protected PsiElement resolveInner(T o) {
+  protected @Nullable PsiElement resolveInner(T o) {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       return ((ResolvingConverter<T>)converter).resolve(o, getConvertContext());
@@ -91,7 +90,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   @Override
-  public boolean isReferenceTo(@NotNull final PsiElement element) {
+  public boolean isReferenceTo(final @NotNull PsiElement element) {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       T value = myGenericValue.getValue();
@@ -117,21 +116,18 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   @Override
-  @Nullable
-  public PsiElement resolve() {
+  public @Nullable PsiElement resolve() {
     final T value = myGenericValue.getValue();
     return value == null ? null : resolveInner(value);
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     return StringUtil.notNullize(getStringValue());
   }
 
   @Override
-  @NotNull
-  public String getUnresolvedMessagePattern() {
+  public @NotNull String getUnresolvedMessagePattern() {
     final ConvertContext context = getConvertContext();
     return getConverter().getErrorMessage(getStringValue(), context);
   }
@@ -141,7 +137,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
   }
 
   @Override
-  public PsiElement handleElementRename(@NotNull final String newElementName) throws IncorrectOperationException {
+  public PsiElement handleElementRename(final @NotNull String newElementName) throws IncorrectOperationException {
     final Converter<T> converter = getConverter();
     if (converter instanceof ResolvingConverter) {
       ((ResolvingConverter)converter).handleElementRename(myGenericValue, getConvertContext(), newElementName);

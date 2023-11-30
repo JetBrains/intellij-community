@@ -15,3 +15,4 @@ fun foo(s: String, t: X) {
 }
 
 operator fun X.plus(x: X): X? = null
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

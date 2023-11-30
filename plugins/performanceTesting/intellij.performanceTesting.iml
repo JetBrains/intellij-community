@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" scope="PROVIDED" name="cli-parser" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
@@ -24,7 +23,12 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module-library">
       <library name="github.oshi.core" type="repository">
-        <properties maven-id="com.github.oshi:oshi-core:6.2.2">
+        <properties maven-id="com.github.oshi:oshi-core:6.4.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.4.4/oshi-core-6.4.4.jar">
+              <sha256sum>423ef4cd72207b73a9197bd5c3514c3b336a706e44f2dfbd1e9da14f75135dce</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="net.java.dev.jna:jna-platform" />
             <dependency maven-id="net.java.dev.jna:jna" />
@@ -32,18 +36,17 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.2.2/oshi-core-6.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.4.4/oshi-core-6.4.4.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.2.2/oshi-core-6.2.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/oshi/oshi-core/6.4.4/oshi-core-6.4.4-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
@@ -52,5 +55,9 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.driver.impl" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="library" name="netty-buffer" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.startUpPerformanceReporter" />
   </component>
 </module>

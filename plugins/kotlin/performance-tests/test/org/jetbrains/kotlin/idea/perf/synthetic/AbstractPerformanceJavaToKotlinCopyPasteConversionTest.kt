@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.performance.tests.utils.commitAllDocuments
 import org.jetbrains.kotlin.idea.performance.tests.utils.dispatchAllInvocationEvents
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.util.slashedPath
 import java.io.File
 
 abstract class AbstractPerformanceJavaToKotlinCopyPasteConversionTest(private val newJ2K: Boolean = false) :
@@ -82,7 +83,7 @@ abstract class AbstractPerformanceJavaToKotlinCopyPasteConversionTest(private va
     fun doPerfTest(path: String) {
         val testName = getTestName(false)
 
-        myFixture.testDataPath = testDataPath
+        myFixture.testDataPath = testDataDirectory.slashedPath
         myFixture.configureByFiles("$testName.java")
         configureByDependencyIfExists("$testName.dependency.java")
 

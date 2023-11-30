@@ -19,11 +19,10 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="library" name="CGLIB" level="project" />
-    <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.themes" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
-    <orderEntry type="library" scope="RUNTIME" name="commons-lang" level="project" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.devkit.core" />
 </module>

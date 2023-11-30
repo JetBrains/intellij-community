@@ -111,7 +111,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     """.trimIndent()) {
       withBuildScriptPrefix { call("println", "Hello, Prefix!") }
       withBuildScriptRepository { call("repo", call("file", "build/repo")) }
-      withBuildScriptDependency { call("classpath", call("file", "build/targets/org/classpath/archive.jar")) }
+      addBuildScriptClasspath(call("file", "build/targets/org/classpath/archive.jar"))
       withBuildScriptPostfix { call("println", "Hello, Postfix!") }
       applyPlugin("gradle-build")
       addImport("org.classpath.Build")
@@ -355,6 +355,44 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       """.trimIndent())
     ) {
       withJUnit()
+    }
+  }
+
+  @Test
+  fun `test string escaping`() {
+    assertBuildScript(groovyScript = """
+      |def string = 'simple string'
+      |println "string with ${'$'}string interpolation"
+      |println '/example/unix/path'
+      |println 'C:\\example\\win\\path'
+      |println 'string with \' quote'
+      |println 'string with " quote'
+      |println 'multi-line\n joined\n string'
+      |println 'multi-line\n raw\n string'
+    """.trimMargin(), kotlinScript = """
+      |var string = "simple string"
+      |println("string with ${'$'}string interpolation")
+      |println("/example/unix/path")
+      |println("C:\\example\\win\\path")
+      |println("string with ' quote")
+      |println("string with \" quote")
+      |println("multi-line\n joined\n string")
+      |println("multi-line\n raw\n string")
+    """.trimMargin()) {
+      withPostfix {
+        property("string", "simple string")
+        call("println", "string with ${'$'}string interpolation")
+        call("println", "/example/unix/path")
+        call("println", "C:\\example\\win\\path")
+        call("println", "string with ' quote")
+        call("println", "string with \" quote")
+        call("println", "multi-line\n joined\n string")
+        call("println", """
+          |multi-line
+          | raw
+          | string
+        """.trimMargin())
+      }
     }
   }
 }

@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.github.util
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 
-class DisposalCountingHolder<T : Any>(private val valueFactory: (Disposable) -> T) : Disposable {
+class DisposalCountingHolder<T : Any>(private val valueFactory: (CheckedDisposable) -> T) : Disposable {
 
-  private var valueAndDisposable: Pair<T, Disposable>? = null
+  private var valueAndDisposable: Pair<T, CheckedDisposable>? = null
   private var disposalCounter = 0
 
   val value: T?
@@ -16,7 +17,7 @@ class DisposalCountingHolder<T : Any>(private val valueFactory: (Disposable) -> 
     if (Disposer.isDisposed(this)) error("Already disposed")
 
     if (valueAndDisposable == null) {
-      valueAndDisposable = Disposer.newDisposable().let {
+      valueAndDisposable = Disposer.newCheckedDisposable().let {
         valueFactory(it) to it
       }
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.openapi.application.Application;
@@ -10,16 +10,15 @@ import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class AbstractCommand implements PlaybackCommand {
-
   private static final Logger LOG = Logger.getInstance(AbstractCommand.class);
 
   public static final @NonNls String CMD_PREFIX = "%";
@@ -47,7 +46,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
 
   private final @NonNls @NotNull String myText;
   private final int myLine;
-  private final boolean myExecuteInAwt;
+  private final boolean executeInAwt;
 
   private @Nullable File myScriptDir;
 
@@ -56,7 +55,7 @@ public abstract class AbstractCommand implements PlaybackCommand {
   }
 
   public AbstractCommand(@NotNull String text, int line, boolean executeInAwt) {
-    myExecuteInAwt = executeInAwt;
+    this.executeInAwt = executeInAwt;
     myText = text;
     myLine = line;
   }
@@ -84,39 +83,46 @@ public abstract class AbstractCommand implements PlaybackCommand {
   }
 
   @Override
-  public final @NotNull Promise<Object> execute(@NotNull PlaybackContext context) {
+  public final @NotNull CompletableFuture<?> execute(@NotNull PlaybackContext context) {
     try {
       if (isToDumpCommand()) {
         context.code(getText(), getLine());
       }
-      final AsyncPromise<Object> result = new AsyncPromise<>();
+
+      CompletableFuture<Object> result = new CompletableFuture<>();
       Runnable runnable = Context.current().wrap(() -> {
         try {
-          _execute(context).processed(result);
+          Promises.asCompletableFuture(_execute(context)).whenComplete((o, throwable) -> {
+            if (throwable == null) {
+              result.complete(o);
+            }
+            else {
+              result.completeExceptionally(throwable);
+            }
+          });
         }
         catch (Throwable e) {
           LOG.error(e);
           dumpError(context, e.getMessage());
-          result.setError(e);
+          result.completeExceptionally(e);
         }
       });
 
       Application application = ApplicationManager.getApplication();
-      if (myExecuteInAwt) {
-        // prevent previous action context affecting next action.
-        // E.g. previous action may have called callback.setDone from inside write action, while
-        // next action may not expect that
+      if (executeInAwt) {
+        // Prevent previous action context affecting next action.
+        // E.g., previous action may have called callback.setDone from inside write action, while
+        // the next action may not expect that
         application.invokeLater(runnable);
       }
       else {
         application.executeOnPooledThread(runnable);
       }
-
       return result;
     }
     catch (Throwable e) {
       dumpError(context, e.getMessage());
-      return Promises.rejectedPromise(e);
+      return CompletableFuture.failedFuture(e);
     }
   }
 

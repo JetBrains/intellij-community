@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -581,8 +581,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return {@code OutputStream}
    * @throws IOException if an I/O error occurs
    */
-  @NotNull
-  public final OutputStream getOutputStream(Object requestor) throws IOException {
+  public final @NotNull OutputStream getOutputStream(Object requestor) throws IOException {
     return getOutputStream(requestor, -1, -1);
   }
 
@@ -681,8 +680,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
-  @NotNull
-  public @NlsSafe String getPresentableName() {
+  public @NotNull @NlsSafe String getPresentableName() {
     return getName();
   }
 
@@ -707,8 +705,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @throws IOException if an I/O error occurs
    * @see #contentsToByteArray
    */
-  @NotNull
-  public abstract InputStream getInputStream() throws IOException;
+  public abstract @NotNull InputStream getInputStream() throws IOException;
 
   public byte @Nullable [] getBOM() {
     return getUserData(BOM_KEY);

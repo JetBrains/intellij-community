@@ -11,18 +11,23 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.yaml.YAMLElementGenerator
 import org.jetbrains.yaml.psi.YAMLQuotedText
 
-class YAMLAddQuoteQuickFix(scalarOrTemplate: PsiElement, private val quickFixText: @Nls String) :
+class YAMLAddQuoteQuickFix(scalarOrTemplate: PsiElement, private val quickFixText: @Nls String, private val singleQuote: Boolean = false) :
   LocalQuickFixAndIntentionActionOnPsiElement(scalarOrTemplate) {
   override fun getText(): @Nls String = quickFixText
 
   override fun getFamilyName(): @Nls String = text
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-    val text = """
-          key: "${startElement.text}"
-        """.trimIndent()
-    val tempFile = YAMLElementGenerator.getInstance(project).createDummyYamlWithText(text)
-    val quoted = PsiTreeUtil.collectElementsOfType(tempFile, YAMLQuotedText::class.java).firstOrNull() ?: return
-    startElement.replace(quoted)
+    wrapWithQuotes(startElement, singleQuote)
   }
+}
+
+fun wrapWithQuotes(startElement: PsiElement, singleQuote: Boolean) {
+  val quote = if (singleQuote) '\'' else '"'
+  val text = """
+          key: $quote${startElement.text}$quote
+        """.trimIndent()
+  val tempFile = YAMLElementGenerator.getInstance(startElement.project).createDummyYamlWithText(text)
+  val quoted = PsiTreeUtil.collectElementsOfType(tempFile, YAMLQuotedText::class.java).firstOrNull() ?: return
+  startElement.replace(quoted)
 }

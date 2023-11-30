@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.codeinsight.utils.createArgumentWithoutName
 import org.jetbrains.kotlin.idea.completion.ArgumentThatCanBeUsedWithoutName
 import org.jetbrains.kotlin.idea.completion.collectAllArgumentsThatCanBeUsedWithoutName
+import org.jetbrains.kotlin.idea.intentions.RemoveAllArgumentNamesIntention.Holder.removeArgumentNames
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
@@ -32,7 +33,7 @@ class RemoveAllArgumentNamesIntention : SelfTargetingIntention<KtCallElement>(
         argumentList.removeArgumentNames(collectAllArgumentsThatCanBeUsedWithoutName(resolvedCall))
     }
 
-    companion object {
+    object Holder {
         fun KtValueArgumentList.removeArgumentNames(
             argumentsThatCanBeUsedWithoutName: List<ArgumentThatCanBeUsedWithoutName>,
             removeOnlyLastArgumentName: Boolean = false

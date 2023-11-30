@@ -108,7 +108,7 @@ public class PyTypeTest extends PyTestCase {
   }
 
   public void testSetComp() {
-    doTest("set",
+    doTest("Set[int]",
            "expr = {i for i in range(3)}");
   }
 
@@ -3162,7 +3162,8 @@ public class PyTypeTest extends PyTestCase {
   }
 
   // PY-24960
-  public void testOperatorReturnsAny() {
+  // TODO Re-enable once PY-61090 is fixed
+  public void _testOperatorReturnsAny() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> doTest("Union[bool, Any]",

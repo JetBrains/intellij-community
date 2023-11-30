@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeWithMe.ClientId;
@@ -15,10 +15,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
@@ -51,7 +54,7 @@ public class HintManagerImpl extends HintManager {
   }
 
   public static HintManagerImpl getInstanceImpl() {
-    return (HintManagerImpl)ApplicationManager.getApplication().getService(HintManager.class);
+    return (HintManagerImpl)HintManager.getInstance();
   }
 
   public HintManagerImpl() {
@@ -89,6 +92,8 @@ public class HintManagerImpl extends HintManager {
     return ClientHintManager.getCurrentInstance().hasShownHintsThatWillHideByOtherHint(willShowTooltip);
   }
 
+  private static final Key<Integer> LAST_HINT_ON_EDITOR_Y_POSITION = Key.create("hint.previous.editor.y.position");
+
   static void updateScrollableHintPosition(VisibleAreaEvent e, LightweightHint hint, boolean hideIfOutOfEditor) {
     if (hint.getComponent() instanceof ScrollAwareHint) {
       ((ScrollAwareHint)hint.getComponent()).editorScrolled();
@@ -106,6 +111,17 @@ public class HintManagerImpl extends HintManager {
 
     int xOffset = location.x - oldRectangle.x;
     int yOffset = location.y - oldRectangle.y;
+
+    Point locationOnEditor = hint.getLocationOn(editor.getComponent());
+    if (oldRectangle.y == newRectangle.y && oldRectangle.height < newRectangle.height) {
+      Integer previousYPosition = hint.getUserData(LAST_HINT_ON_EDITOR_Y_POSITION);
+      // editor size decreased, and if a hint goes up, then it means editor top side going down
+      if (previousYPosition != null && previousYPosition > locationOnEditor.y) {
+        yOffset += newRectangle.height - oldRectangle.height;
+      }
+    }
+    hint.putUserData(LAST_HINT_ON_EDITOR_Y_POSITION, locationOnEditor.y);
+
     location = new Point(newRectangle.x + xOffset, newRectangle.y + yOffset);
 
     Rectangle newBounds = new Rectangle(location.x, location.y, size.width, size.height);
@@ -122,11 +138,26 @@ public class HintManagerImpl extends HintManager {
   }
 
   /**
+   * Displays a hint in the editor gutter, at the specified line number and with some horizontal offset
+   * Allows to avoid calculation of a hint position manually
+   */
+  public void showGutterHint(final LightweightHint hint,
+                             final Editor editor,
+                             final int lineNumber,
+                             final int horizontalOffset,
+                             @HideFlags final int flags,
+                             final int timeout, final boolean reviveOnEditorChange,
+                             final @NotNull HintHint hintInfo) {
+    getClientManager(editor).showGutterHint(hint, editor, hintInfo, lineNumber, horizontalOffset,
+                                            flags, timeout, reviveOnEditorChange, null);
+  }
+
+  /**
    * In this method the point to show hint depends on current caret position.
    * So, first of all, editor will be scrolled to make the caret position visible.
    */
   public void showEditorHint(final LightweightHint hint, final Editor editor, @PositionFlags final short constraint, @HideFlags final int flags, final int timeout, final boolean reviveOnEditorChange) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     editor.getScrollingModel().runActionOnScrollingFinished(() -> {
       LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
@@ -140,7 +171,7 @@ public class HintManagerImpl extends HintManager {
   /**
    * @param p                    point in layered pane coordinate system.
    */
-  public void showEditorHint(@NotNull final LightweightHint hint,
+  public void showEditorHint(final @NotNull LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
                              @HideFlags int flags,
@@ -149,7 +180,7 @@ public class HintManagerImpl extends HintManager {
     showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, HintManager.ABOVE);
   }
 
-  public void showEditorHint(@NotNull final LightweightHint hint,
+  public void showEditorHint(final @NotNull LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
                              @HideFlags int flags,
@@ -160,7 +191,7 @@ public class HintManagerImpl extends HintManager {
     showEditorHint(hint, editor, p, flags, timeout, reviveOnEditorChange, hintHint);
   }
 
-  public void showEditorHint(@NotNull final LightweightHint hint,
+  public void showEditorHint(final @NotNull LightweightHint hint,
                              @NotNull Editor editor,
                              @NotNull Point p,
                              @HideFlags int flags,
@@ -172,46 +203,24 @@ public class HintManagerImpl extends HintManager {
   }
 
   @Override
-  public void showHint(@NotNull final JComponent component, @NotNull RelativePoint p, int flags, int timeout) {
+  public void showHint(final @NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout) {
     showHint(component, p,flags,timeout,null);
   }
 
   @Override
-  public void showHint(@NotNull final JComponent component, @NotNull RelativePoint p, int flags, int timeout, @Nullable Runnable onHintHidden) {
+  public void showHint(final @NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout, @Nullable Runnable onHintHidden) {
     ClientHintManager.getCurrentInstance().showHint(component, p, flags, timeout, onHintHidden);
   }
 
   static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, Point p, HintHint hintInfo, boolean updateSize) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     JComponent externalComponent = getExternalComponent(editor);
-    Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
-
-    if (hint.isRealPopup() || hintInfo.isPopupForced()) {
-      final Point point = new Point(p);
-      SwingUtilities.convertPointToScreen(point, externalComponent);
-      final Rectangle editorScreen = ScreenUtil.getScreenRectangle(point.x, point.y);
-
-      p = new Point(p);
-      if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
-        p.x -= size.width;
-      }
-      SwingUtilities.convertPointToScreen(p, externalComponent);
-      final Rectangle rectangle = new Rectangle(p, size);
-      ScreenUtil.moveToFit(rectangle, editorScreen, null);
-      p = rectangle.getLocation();
-      SwingUtilities.convertPointFromScreen(p, externalComponent);
-      if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
-        p.x += size.width;
-      }
-    }
-    else if (externalComponent.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
-      p.x = Math.max(0, externalComponent.getWidth() - size.width);
-    }
+    p = adjustHintPosition(p, updateSize, externalComponent, hint, hintInfo);
 
     if(hint.isShouldBeReopen()){
       hint.hide(true);
     }
-
     if (hint.isVisible()) {
       if (updateSize) {
         hint.pack();
@@ -222,6 +231,76 @@ public class HintManagerImpl extends HintManager {
     else {
       hint.show(externalComponent, p.x, p.y, editor.getContentComponent(), hintInfo);
     }
+    hint.putUserData(LAST_HINT_ON_EDITOR_Y_POSITION, hint.getLocationOn(editor.getComponent()).y);
+  }
+
+  private static @NotNull Point adjustHintPosition(
+    Point p,
+    boolean updateSize,
+    JComponent externalComponent,
+    LightweightHint hint,
+    HintHint hintInfo
+  ) {
+    Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("START adjusting hint position " + p + " for a hint of size " + size + " (using the " + (updateSize ? "preferred size" : "real size") + ")");
+    }
+    if (hint.isRealPopup() || hintInfo.isPopupForced()) {
+      final Point point = new Point(p);
+      SwingUtilities.convertPointToScreen(point, externalComponent);
+      if (LOG.isDebugEnabled()) {
+        var componentBounds = new Rectangle(externalComponent.getLocationOnScreen(), externalComponent.getSize());
+        LOG.debug("Location after converting to screen coordinates (for the external component with bounds " + componentBounds + "): " + point);
+      }
+      final Rectangle editorScreen = ScreenUtil.getScreenRectangle(point.x, point.y);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The screen rectangle for the original location is " + editorScreen);
+      }
+
+      p = new Point(p);
+      if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
+        p.x -= size.width;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Location after moving left to account for the balloon position" + p);
+        }
+      }
+      SwingUtilities.convertPointToScreen(p, externalComponent);
+      if (LOG.isDebugEnabled()) {
+        var componentBounds = new Rectangle(externalComponent.getLocationOnScreen(), externalComponent.getSize());
+        LOG.debug("Location after converting to screen coordinates (for the external component with bounds " + componentBounds + "): " + p);
+      }
+      final Rectangle rectangle = new Rectangle(p, size);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Adjusting bounds to fit into the screen: " + rectangle);
+      }
+      ScreenUtil.moveToFit(rectangle, editorScreen, null);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Adjusted bounds to fit into the screen: " + rectangle);
+      }
+      p = rectangle.getLocation();
+      SwingUtilities.convertPointFromScreen(p, externalComponent);
+      if (LOG.isDebugEnabled()) {
+        var componentBounds = new Rectangle(externalComponent.getLocationOnScreen(), externalComponent.getSize());
+        LOG.debug("Location after converting from screen coordinates (for the external component with bounds " + componentBounds + "): " +
+                  p);
+      }
+      if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
+        p.x += size.width;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Location after moving right to account for the balloon position" + p);
+        }
+      }
+    }
+    else if (externalComponent.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
+      p.x = Math.max(0, externalComponent.getWidth() - size.width);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Location after trying to fit a non-AWT hint into [0, " + externalComponent.getWidth() + "]: " + p);
+      }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("END adjusting hint position, the end result is " + p);
+    }
+    return p;
   }
 
   public static void updateLocation(final LightweightHint hint, final Editor editor, Point p) {
@@ -248,11 +327,11 @@ public class HintManagerImpl extends HintManager {
     return ClientHintManager.getCurrentInstance().getHintPosition(hint, editor, constraint);
   }
 
-  static Point getHintPositionRelativeTo(@NotNull final LightweightHint hint,
-                                                 @NotNull final Editor editor,
-                                                 @PositionFlags short constraint,
-                                                 @NotNull final Rectangle lookupBounds,
-                                                 final LogicalPosition pos) {
+  static Point getHintPositionRelativeTo(final @NotNull LightweightHint hint,
+                                         final @NotNull Editor editor,
+                                         @PositionFlags short constraint,
+                                         final @NotNull Rectangle lookupBounds,
+                                         final LogicalPosition pos) {
 
     JComponent externalComponent = getExternalComponent(editor);
 
@@ -360,8 +439,7 @@ public class HintManagerImpl extends HintManager {
     return p;
   }
 
-  @NotNull
-  public static JComponent getExternalComponent(@NotNull Editor editor) {
+  public static @NotNull JComponent getExternalComponent(@NotNull Editor editor) {
     JComponent externalComponent = editor.getComponent();
     JRootPane rootPane = externalComponent.getRootPane();
     if (rootPane == null) return externalComponent;
@@ -481,8 +559,27 @@ public class HintManagerImpl extends HintManager {
     showEditorHint(hint, editor, p, flags, 0, false);
   }
 
-  @NotNull
-  private static ClientHintManager getClientManager(@NotNull Editor editor) {
+  @Override
+  public void showSuccessHint(@NotNull Editor editor, @NotNull String text, short position) {
+    showSuccessHint(editor, text, position, null);
+  }
+
+  @Override
+  public void showSuccessHint(@NotNull Editor editor, @NotNull String text, @Nullable HyperlinkListener listener) {
+    showSuccessHint(editor, text, ABOVE, listener);
+  }
+
+  private void showSuccessHint(@NotNull Editor editor,
+                               @NotNull @HintText String text,
+                               @PositionFlags short position,
+                               @Nullable HyperlinkListener listener) {
+    LightweightHint hint = new LightweightHint(HintUtil.createSuccessLabel(text, listener));
+    Point p = getClientManager(editor).getHintPosition(hint, editor, position);
+    int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+    showEditorHint(hint, editor, p, flags, 0, false);
+  }
+
+  private static @NotNull ClientHintManager getClientManager(@NotNull Editor editor) {
     try (AccessToken ignored = ClientId.withClientId(ClientEditorManager.getClientId(editor))) {
       return ClientHintManager.getCurrentInstance();
     }
@@ -512,11 +609,11 @@ public class HintManagerImpl extends HintManager {
     showQuestionHint(editor, offset1, offset2, hint, action, ABOVE);
   }
 
-  public void showQuestionHint(@NotNull final Editor editor,
+  public void showQuestionHint(final @NotNull Editor editor,
                                final int offset1,
                                final int offset2,
-                               @NotNull final LightweightHint hint,
-                               @NotNull final QuestionAction action,
+                               final @NotNull LightweightHint hint,
+                               final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
     final VisualPosition pos1 = editor.offsetToVisualPosition(offset1);
     final VisualPosition pos2 = editor.offsetToVisualPosition(offset2);
@@ -524,24 +621,46 @@ public class HintManagerImpl extends HintManager {
     showQuestionHint(editor, p, offset1, offset2, hint, action, constraint);
   }
 
+  private static void showQuestionHint(final @NotNull Editor editor,
+                                       final @NotNull Point p,
+                                       final int offset1,
+                                       final int offset2,
+                                       final @NotNull LightweightHint hint,
+                                       int flags,
+                                       final @NotNull QuestionAction action,
+                                       @PositionFlags short constraint) {
+    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
+  }
 
-  public void showQuestionHint(@NotNull final Editor editor,
-                               @NotNull final Point p,
+  public void showQuestionHint(final @NotNull Editor editor,
+                               final @NotNull Point p,
                                final int offset1,
                                final int offset2,
-                               @NotNull final LightweightHint hint,
-                               @NotNull final QuestionAction action,
+                               final @NotNull LightweightHint hint,
+                               final @NotNull QuestionAction action,
                                @PositionFlags short constraint) {
+    if (ExperimentalUI.isNewUI() && hint.getComponent() instanceof HintUtil.HintLabel label) {
+      JEditorPane pane = label.getPane();
+      if (pane != null) {
+        pane.addHyperlinkListener(e -> {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED && "action".equals(e.getDescription()) && hint.isVisible()) {
+            if (action.execute()) {
+              hint.hide();
+            }
+          }
+        });
+      }
+    }
     int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.UPDATE_BY_SCROLLING |
                 HintManager.HIDE_IF_OUT_OF_EDITOR | HintManager.DONT_CONSUME_ESCAPE;
-    getClientManager(editor).showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
+    showQuestionHint(editor, p, offset1, offset2, hint, flags, action, constraint);
   }
 
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint) {
     return createHintHint(editor, p, hint, constraint, false);
   }
 
-  //todo[nik,kirillk] perhaps 'createInEditorComponent' parameter should always be 'true'
+  //todo perhaps 'createInEditorComponent' parameter should always be 'true'
   //old 'createHintHint' method uses LayeredPane as original component for HintHint so IdeTooltipManager.eventDispatched()
   //wasn't able to correctly hide tooltip after mouse move.
   public static HintHint createHintHint(Editor editor, Point p, LightweightHint hint, @PositionFlags short constraint, boolean createInEditorComponent) {
@@ -634,7 +753,7 @@ public class HintManagerImpl extends HintManager {
 
     @Override
     public void projectClosed(@NotNull Project project) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       // avoid leak through com.intellij.codeInsight.hint.TooltipController.myCurrentTooltip
       TooltipController.getInstance().cancelTooltips();

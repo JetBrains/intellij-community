@@ -8,7 +8,7 @@ import java.io.File
 
 abstract class AbstractK1IntentionTest : AbstractIntentionTestBase() {
     override fun doTestFor(mainFile: File, pathToFiles: Map<String, PsiFile>, intentionAction: IntentionAction, fileText: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_K1) {
             super.doTestFor(mainFile, pathToFiles, intentionAction, fileText)
         }
     }

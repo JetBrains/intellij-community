@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.stubindex
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -13,18 +14,22 @@ import com.intellij.util.Processor
 import com.intellij.util.Processors
 import com.intellij.util.SmartList
 import com.intellij.util.indexing.IdFilter
+import org.jetbrains.kotlin.idea.base.indices.*
+import org.jetbrains.kotlin.idea.base.indices.processAllKeysAndMeasure
+import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
 
 private val isNestedIndexAccessEnabled: Boolean by lazy { Registry.`is`("kotlin.indices.nested.access.enabled") }
 
 abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private val valueClass: Class<Key>) {
+    private val logger = Logger.getInstance(this.javaClass)
     abstract val indexKey: StubIndexKey<String, Key>
 
     operator fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<Key> {
-        return StubIndex.getElements(indexKey, fqName, project, scope, valueClass)
+        return getByKeyAndMeasure(indexKey, logger) { StubIndex.getElements(indexKey, fqName, project, scope, valueClass) }
     }
 
     fun getAllKeys(project: Project): Collection<String> {
-        return StubIndex.getInstance().getAllKeys(indexKey, project)
+        return getAllKeysAndMeasure(indexKey, logger) { StubIndex.getInstance().getAllKeys(indexKey, project) }
     }
 
     fun getAllElements(s: String, project: Project, scope: GlobalSearchScope, filter: (Key) -> Boolean): List<Key> {
@@ -43,7 +48,9 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
     fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in Key>): Boolean {
-        return StubIndex.getInstance().processElements(indexKey, s, project, scope, idFilter, valueClass, processor)
+        return processElementsAndMeasure(indexKey, logger) {
+            StubIndex.getInstance().processElements(indexKey, s, project, scope, idFilter, valueClass, processor)
+        }
     }
 
     fun getAllElements(
@@ -74,13 +81,19 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
             // collect all keys, collect all values those fulfill filter into a single collection, process values after that
 
             val allKeys = HashSet<String>()
-            if (!stubIndex.processAllKeys(indexKey, project, CancelableCollectFilterProcessor(allKeys, filter))) return
+            val processAllKeys = processAllKeysAndMeasure(indexKey, logger) {
+                stubIndex.processAllKeys(indexKey, project, CancelableCollectFilterProcessor(allKeys, filter))
+            }
+            if (!processAllKeys) return
 
             if (allKeys.isNotEmpty()) {
                 val values = HashSet<Key>(allKeys.size)
                 val collectProcessor = Processors.cancelableCollectProcessor(values)
                 allKeys.forEach { s ->
-                    if (!stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)) return
+                    val processElements = processElementsAndMeasure(indexKey, logger) {
+                        stubIndex.processElements(indexKey, s, project, scope, valueClass, collectProcessor)
+                    }
+                    if (!processElements) return
                 }
                 // process until the 1st negative result of processor
                 values.all(processor::process)
@@ -89,11 +102,15 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
     }
 
     fun processAllKeys(scope: GlobalSearchScope, filter: IdFilter? = null, processor: Processor<in String>): Boolean {
-        return StubIndex.getInstance().processAllKeys(indexKey, processor, scope, filter)
+        return processAllKeysAndMeasure(indexKey, logger) {
+            StubIndex.getInstance().processAllKeys(indexKey, processor, scope, filter)
+        }
     }
 
     fun processAllKeys(project: Project, processor: Processor<in String>): Boolean {
-        return StubIndex.getInstance().processAllKeys(indexKey, project, processor)
+        return processAllKeysAndMeasure(indexKey, logger) {
+            StubIndex.getInstance().processAllKeys(indexKey, project, processor)
+        }
     }
 }
 

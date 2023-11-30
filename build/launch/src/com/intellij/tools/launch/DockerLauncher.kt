@@ -2,7 +2,9 @@ package com.intellij.tools.launch
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.tools.launch.Launcher.affixIO
+import com.intellij.util.SystemProperties
 import com.sun.security.auth.module.UnixSystem
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.TimeUnit
@@ -29,51 +31,37 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     }
 
     fun MutableList<String>.addReadonly(volume: File) = addVolume(volume, false)
+    fun MutableList<String>.addReadonlyIfExists(volume: File) {
+      addVolumeIfExists(volume, false)
+    }
+
+    fun MutableList<String>.addVolumeIfExists(volume: File, isWritable: Boolean) {
+      if (volume.exists()) addVolume(volume, isWritable)
+    }
+
     fun MutableList<String>.addWriteable(volume: File) = addVolume(volume, true)
 
   }
 
-  private val UBUNTU_18_04_WITH_USER_TEMPLATE = "ubuntu-18-04-docker-launcher"
-
   fun assertCanRun() = dockerInfo()
 
-  fun runInContainer(cmd: List<String>): Process {
-    // we try to make everything the same as on the host folder, e.g. UID, paths
-    val username = System.getProperty("user.name")
-    // docker doesn't like dots and uppercase letters
-    val usernameForDockerBuild = username.replace(".", "-").lowercase()
-    val uid = UnixSystem().uid.toString()
-    val userHomePath = File(System.getProperty("user.home"))
 
+  private val uid = UnixSystem().uid.toString()
+  private val gid = UnixSystem().gid.toString()
+  private val userName: String = System.getProperty("user.name")!!
+  private val userHome: String = "/home/$userName"
 
-
-    if (!userHomePath.exists())
-      error("Home directory ${userHomePath.pathNotResolvingSymlinks()} of user=$username, uid=$uid does not exist")
-
-    val imageName = "$UBUNTU_18_04_WITH_USER_TEMPLATE-user-$usernameForDockerBuild-uid-$uid"
-
-    val buildArgs = mapOf(
-      "USER_NAME" to username,
-      "USER_ID" to UnixSystem().uid.toString(),
-      "USER_HOME" to userHomePath.pathNotResolvingSymlinks()
-    )
-
-    dockerBuild(imageName, buildArgs)
-
+  fun runInContainer(cmd: List<String>): Pair<Process, String> {
     val containerIdFile = File.createTempFile("cwm.docker.cid", "")
 
     val dockerCmd = mutableListOf(
       "docker",
       "run",
-
       // for network configuration (e.g. default gateway)
       "--cap-add=NET_ADMIN",
 
       "--cidfile",
       containerIdFile.pathNotResolvingSymlinks(),
-
-      // -u=USER_NAME will throw if user does not exist, but -u=UID will not
-      "--user=$username"
     )
 
     val containerName = "${options.containerName}-${System.nanoTime()}".let {
@@ -85,8 +73,8 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     val writeable = listOf(paths.logFolder,
                            paths.configFolder,
                            paths.systemFolder,
-                           paths.outputRootFolder, // classpath index making a lot of noise
-                           paths.communityRootFolder.resolve("build/download")) // quiche lib
+                           paths.communityRootFolder.resolve("build/download") // quiche lib
+    )
 
     // docker can create these under root, so we create them ourselves
     writeable.forEach {
@@ -96,6 +84,7 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     // **** RO ****
     dockerCmd.addReadonly(paths.javaHomeFolder)
+    dockerCmd.addReadonly(paths.outputRootFolder)
 
     // jars
     dockerCmd.addReadonly(paths.communityBinFolder)
@@ -104,20 +93,30 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("plugins"))
     dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("contrib"))
 
+    // on buildserver agents libraries may be cached in ~/.m2.base
+    if (TeamCityHelper.isUnderTeamCity) {
+      val mavenCache = File(SystemProperties.getUserHome()).resolve(".m2.base")
+      if (mavenCache.isDirectory) {
+        dockerCmd.addReadonlyIfExists(mavenCache)
+      }
+    }
+
     // a lot of jars in classpaths, /plugins, /xml, so we'll just mount the whole root
-    dockerCmd.addReadonly(paths.communityRootFolder)
+    dockerCmd.addReadonlyIfExists(paths.communityRootFolder)
 
     // main jar itself
-    dockerCmd.addReadonly(paths.launcherFolder)
+    dockerCmd.addReadonlyIfExists(paths.launcherFolder)
 
     // ~/.m2
-    dockerCmd.addReadonly(paths.mavenRepositoryFolder)
+    dockerCmd.addReadonlyIfExists(paths.mavenRepositoryFolder)
 
     // quiche
-    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve(".idea"))
+    dockerCmd.addReadonlyIfExists(paths.sourcesRootFolder.resolve(".idea"))
 
     // user-provided volumes
-    paths.dockerVolumesToWritable.forEach { (volume, isWriteable) -> dockerCmd.addVolume(volume, isWriteable) }
+    paths.dockerVolumesToWritable.forEach { (volume, isWriteable) ->
+      dockerCmd.addVolumeIfExists(volume, isWriteable)
+    }
 
     options.exposedPorts.forEach {
       dockerCmd.add("-p")
@@ -136,29 +135,48 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       ))
     }
 
-    dockerCmd.add(imageName)
-
-    logger.info(dockerCmd.joinToString("\n"))
+    dockerCmd.add(options.dockerImageName)
 
     // docker will still have a route for all subnet packets to go through the host, this only affects anything not in the subnet
-    val ipRouteBash = if (options.network != DockerNetworkEntry.AUTO && options.network.defaultGatewayIPv4Address != null) "sudo ip route change default via ${options.network.defaultGatewayIPv4Address}" else null
-
-    if (options.runBashBeforeJava != null || ipRouteBash != null) {
-      dockerCmd.add("/bin/bash")
-      dockerCmd.add("-c")
-
-      val cmdHttpLinkSomewhatEscaped = cmd.joinToString(" ").replace("&", "\\&")
-
-      var entrypointBash = ""
-      if (ipRouteBash != null)
-        entrypointBash += "$ipRouteBash && "
-      if (options.runBashBeforeJava != null)
-        entrypointBash += "${options.runBashBeforeJava} && "
-      dockerCmd.add("$entrypointBash$cmdHttpLinkSomewhatEscaped")
+    val ipRouteBash = if (options.network != DockerNetworkEntry.AUTO && options.network.defaultGatewayIPv4Address != null) {
+      "sudo ip route change default via ${options.network.defaultGatewayIPv4Address}"
     }
-    else {
-      dockerCmd.addAll(cmd)
+    else null
+
+    val userAddCommand = if (userName != "root") {
+      // this step is needed to make the user starting autotests owner of the logs files.
+      // by default the logs are mounted with root as owner.
+      // we need to add current user to docker and then chown logs to it, to be able to remove them
+      "groupadd -g $gid $userName && " +
+      "useradd -s /bin/bash -d $userHome -u $uid -g $gid -m $userName"
     }
+    else null
+
+    val bashCommandToAdd =
+      "echo 'started bash' && " +
+      options.runBashBackgroundBeforeJava?.joinToString("") { " $it & " }.orEmpty() +
+      ipRouteBash?.let { " $it && " }.orEmpty() +
+      userAddCommand?.let { " $it && " }.orEmpty() +
+      options.runBashBeforeJava?.joinToString("") { " $it && " }.orEmpty() +
+      "echo 'finished bash'"
+
+    val cmdEscaped = cmd.joinToString(" ").replace("&", "\\&")
+
+    val chownCmd = if (userName != "root") {
+      //additional wait so all the folders are created before chown
+      "sleep 5; " +
+      //chown for all mounted changed directories
+      (writeable + paths.dockerVolumesToWritable.filter { it.value }.keys).joinToString("") { "chown -R $uid:$gid $it; " }
+    }
+    else null
+
+    dockerCmd.addAll(listOf("/bin/bash", "-c"))
+
+    dockerCmd.add(
+      bashCommandToAdd + " && " +
+      cmdEscaped + "; " +
+      chownCmd.orEmpty()
+    )
 
     if (containerIdFile.exists())
       assert(containerIdFile.delete())
@@ -170,12 +188,13 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
 
     val dockerRun = dockerRunPb.start()
 
-    val readableCmd = dockerRunPb.command().joinToString(" ")
+    val readableCmd = dockerRunPb.command().joinToString("\n")
     logger.info("Docker run cmd=$readableCmd")
     logger.info("Started docker run, waiting for container ID at ${containerIdPath}")
 
-    // using WatchService is overkill here
-    for (i in 1..5) {
+    val startTimestamp = System.currentTimeMillis()
+    val timeoutMs = 40_000
+    while (System.currentTimeMillis() - startTimestamp < timeoutMs) {
       if (!dockerRun.isAlive) error("docker run exited with code ${dockerRun.exitValue()}")
 
       if (containerIdFile.exists() && containerIdFile.length() > 0) {
@@ -183,13 +202,11 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
         break
       }
 
-      val sleepMillis = 100L * 2.0.pow(i).toLong()
-      logger.info("No container ID in file ${containerIdPath} yet, sleeping for $sleepMillis")
-      Thread.sleep(sleepMillis)
+      Thread.sleep(3_000)
     }
 
     val containerId = containerIdFile.readText()
-    if (containerId.isEmpty()) error { "Started container ID must not be empty" }
+    if (containerId.isEmpty()) error("Started container ID must not be empty")
     logger.info("Container ID=$containerId")
 
     fun isInDockerPs() =
@@ -209,31 +226,11 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
       Thread.sleep(sleepMillis)
     }
 
-    return dockerRun
+    return dockerRun to containerId
   }
 
   private fun dockerInfo() = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder, false, "docker", "info")
   private fun dockerKill(containerId: String) = runCmd(1, TimeUnit.MINUTES, false, paths.tempFolder, false, "docker", "kill", containerId)
-
-  private fun dockerBuild(tag: String, buildArgs: Map<String, String>) {
-    val dockerBuildCmd = listOf("docker", "build", "-t", tag).toMutableList()
-    buildArgs.forEach {
-      dockerBuildCmd.add("--build-arg")
-      dockerBuildCmd.add("${it.key}=${it.value}")
-    }
-
-    dockerBuildCmd.add(".")
-
-    val res = runCmd(10,
-                     TimeUnit.MINUTES,
-                     true,
-                     paths.communityRootFolder.resolve("build/launch/src/com/intellij/tools/launch"),
-                     true,
-                     *dockerBuildCmd.toTypedArray())
-
-    logger.info(res.toString())
-  }
-
 
   private fun runCmd(timeout: Long,
                      unit: TimeUnit,

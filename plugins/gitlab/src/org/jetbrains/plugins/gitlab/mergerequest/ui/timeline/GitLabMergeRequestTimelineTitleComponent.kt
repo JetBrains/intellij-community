@@ -7,20 +7,20 @@ import com.intellij.collaboration.ui.util.bindTextHtmlIn
 import com.intellij.util.ui.JBFont
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.map
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 import javax.swing.JComponent
 
 internal object GitLabMergeRequestTimelineTitleComponent {
-  fun create(scope: CoroutineScope, mr: GitLabMergeRequest): JComponent {
+  fun create(scope: CoroutineScope, vm: GitLabMergeRequestViewModel): JComponent {
     return SimpleHtmlPane().apply {
       name = "Review timeline title panel"
       font = JBFont.h2().asBold()
-      bindTextHtmlIn(scope, mr.title.map { title ->
+      bindTextHtmlIn(scope, vm.title.map { title ->
         CodeReviewTitleUIUtil.createTitleText(
           title = title,
-          reviewNumber = "!${mr.number}",
-          url = mr.url,
+          reviewNumber = vm.number,
+          url = vm.url,
           tooltip = GitLabBundle.message("open.on.gitlab.tooltip")
         )
       })

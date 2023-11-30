@@ -3,3 +3,5 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
 @JvmInline
 value class Foo<T>(val x: T)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.AddValVarToConstructorParameterAction$QuickFix

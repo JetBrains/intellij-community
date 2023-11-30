@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.util.UserDataHolder
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
 
 class TerminalCharFilter : CharFilter() {
   override fun acceptChar(c: Char, prefixLength: Int, lookup: Lookup): Result? {
@@ -14,12 +15,12 @@ class TerminalCharFilter : CharFilter() {
       // Close lookup on any char typed
       Result.HIDE_LOOKUP
     }
-    else if (lookup.editor.getUserData(TerminalPromptPanel.KEY) != null) {
+    else if (lookup.editor.isPromptEditor) {
       // It is command completion lookup
       val matches = lookup.items.filter { matchesAfterAppendingChar(lookup, it, c) }
       if (matches.isNotEmpty()) {
-        if (matches.all { TerminalCompletionContributor.isSingleCharParameter(it.lookupString) }
-            && !lookup.items.any { TerminalCompletionContributor.isSingleCharParameter(it.lookupString) && it.lookupString[1] == c }) {
+        if (matches.all { isSingleCharParameter(it.lookupString) }
+            && !lookup.items.any { isSingleCharParameter(it.lookupString) && it.lookupString[1] == c }) {
           // Close lookup if we are completing single char parameters and user typed the char,
           // that do not match any of available parameters
           Result.HIDE_LOOKUP
@@ -35,4 +36,6 @@ class TerminalCharFilter : CharFilter() {
     val matcher = lookup.itemMatcher(item)
     return matcher.cloneWithPrefix(matcher.prefix + (lookup as LookupImpl).additionalPrefix + c).prefixMatches(item)
   }
+
+  private fun isSingleCharParameter(value: String): Boolean = value.length == 2 && value[0] == '-'
 }

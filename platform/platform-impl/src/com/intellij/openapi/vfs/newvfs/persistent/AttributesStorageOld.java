@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.Disposer;
@@ -15,24 +15,18 @@ import com.intellij.util.io.RepresentableAsByteArraySequence;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import com.intellij.util.io.storage.AbstractStorage;
 import com.intellij.util.io.storage.Storage;
-import com.intellij.util.progress.CancellationUtil;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.checkAttributeValueSize;
 
-/**
- *
- */
-public class AttributesStorageOld implements AbstractAttributesStorage {
+public final class AttributesStorageOld implements AbstractAttributesStorage {
 
   /**
    * RC: this flag influences storage layout, but used nowhere. Seems like it is an unfinished effort to
@@ -49,16 +43,13 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
    */
   private final boolean inlineAttributes;
 
-  @NotNull
-  private final Storage attributesBlobStorage;
+  private final @NotNull Storage attributesBlobStorage;
 
   private final ReadWriteLock lock = new ReentrantReadWriteLock();
-  private final AtomicInteger modCount = new AtomicInteger();
 
-
-  protected AttributesStorageOld(final boolean bulkAttrReadSupport,
-                                 final boolean inlineAttributes,
-                                 final @NotNull Storage attributesBlobStorage) {
+  AttributesStorageOld(final boolean bulkAttrReadSupport,
+                       final boolean inlineAttributes,
+                       final @NotNull Storage attributesBlobStorage) {
     this.bulkAttrReadSupport = bulkAttrReadSupport;
     this.inlineAttributes = inlineAttributes;
 
@@ -80,8 +71,8 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
     final Lock readLock = lock.readLock();
-    CancellationUtil.lockMaybeCancellable(readLock);
-    //readLock.lock();
+    //CancellationUtil.lockMaybeCancellable(readLock);
+    readLock.lock();
     try {
       PersistentFSConnection.ensureIdIsValid(fileId);
 
@@ -152,8 +143,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
    * Opens given attribute of given file for writing
    */
   @Override
-  @NotNull
-  public AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
+  public @NotNull AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
                                               final int fileId,
                                               final @NotNull FileAttribute attribute) {
     return new AttributeOutputStreamBase(
@@ -168,7 +158,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
     lock.writeLock().lock();
     try {
       int attPage = fileAttributeRecordId(connection, fileId);
-      if (attPage != 0) {
+      if (attPage != NON_EXISTENT_ATTR_RECORD_ID) {
         try (final DataInputStream attStream = attributesBlobStorage.readStream(attPage)) {
           if (bulkAttrReadSupport) skipRecordHeader(attStream, PersistentFSConnection.RESERVED_ATTR_ID, fileId);
 
@@ -183,7 +173,10 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
               }
               attAddressOrSize -= INLINE_ATTRIBUTE_SMALLER_THAN;
             }
-            attributesBlobStorage.deleteRecord(attAddressOrSize);
+            //RC: must always be true, but there are reports ...
+            if (attAddressOrSize > NON_EXISTENT_ATTR_RECORD_ID) {
+              attributesBlobStorage.deleteRecord(attAddressOrSize);
+            }
           }
         }
         attributesBlobStorage.deleteRecord(attPage);
@@ -195,29 +188,22 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   }
 
   @Override
-  public int getLocalModificationCount() {
-    return modCount.get();
-  }
-
-
-  @Override
-  public void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
-                                           final int fileId,
-                                           final @NotNull IntList usedAttributeRecordIds,
-                                           final @NotNull IntList validAttributeIds) throws IOException {
+  public boolean isEmpty() throws IOException {
     lock.readLock().lock();
-    try {
-      int attributeRecordId = fileAttributeRecordId(connection, fileId);
-
-      assert attributeRecordId >= 0;
-      if (attributeRecordId > 0) {
-        checkAttributesSanity(attributeRecordId, usedAttributeRecordIds, validAttributeIds);
-      }
-    }
-    finally {
+    try{
+      return attributesBlobStorage.getLiveRecordsCount() == 0;
+    }finally {
       lock.readLock().unlock();
     }
   }
+
+  @Override
+  public void checkAttributeRecordSanity(int fileId,
+                                         int attributeRecordId) throws IOException {
+    //legacy class, soon-to-be-deleted -- not worth the effort
+    throw new UnsupportedOperationException("Method not implemented: doesn't worth it");
+  }
+
 
   @Override
   public boolean isDirty() {
@@ -233,12 +219,12 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   public void close() throws IOException {
     Disposer.dispose(attributesBlobStorage);
   }
+
   /* ==================================== implementation =================================================================== */
 
   private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
     private final PersistentFSConnection connection;
-    @NotNull
-    private final FileAttribute attribute;
+    private final @NotNull FileAttribute attribute;
     private final int fileId;
 
     private AttributeOutputStreamImpl(final PersistentFSConnection connection,
@@ -288,7 +274,6 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
             attributesBlobStorage.writeBytes(attributeRecordId, _out.toByteArraySequence(), attribute.isFixedSize());
           }
         }
-        modCount.incrementAndGet();
       }
       catch (Throwable t) {
         FSRecords.LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
@@ -420,9 +405,8 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
       }
     }
 
-    @NotNull
     @Override
-    public ByteArraySequence asByteArraySequence() {
+    public @NotNull ByteArraySequence asByteArraySequence() {
       return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
     }
   }
@@ -505,11 +489,11 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
         DataInputOutputUtil.writeINT(appender, encodedAttrId);
         int attrAddress = attributesBlobStorage.createNewRecord();
         DataInputOutputUtil.writeINT(appender, inlineAttributes ? attrAddress + INLINE_ATTRIBUTE_SMALLER_THAN : attrAddress);
-        PersistentFSConnection.REASONABLY_SMALL.myAttrPageRequested = true;
+        PersistentFSConnection.REASONABLY_SMALL.attrPageRequested = true;
         return attrAddress;
       }
       finally {
-        PersistentFSConnection.REASONABLY_SMALL.myAttrPageRequested = false;
+        PersistentFSConnection.REASONABLY_SMALL.attrPageRequested = false;
       }
     }
 
@@ -533,50 +517,14 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
     assert expectedFileId == fileId || expectedFileId == 0;
   }
 
-  private int fileAttributeRecordId(final PersistentFSConnection connection,
-                                    final int fileId) throws IOException {
+  private static int fileAttributeRecordId(final PersistentFSConnection connection,
+                                           final int fileId) throws IOException {
     return connection.getRecords().getAttributeRecordId(fileId);
   }
 
-  private void updateFileAttributeRecordId(final PersistentFSConnection connection,
-                                           final int fileId,
-                                           final int attributeRecordId) throws IOException {
+  private static void updateFileAttributeRecordId(final PersistentFSConnection connection,
+                                                  final int fileId,
+                                                  final int attributeRecordId) throws IOException {
     connection.getRecords().setAttributeRecordId(fileId, attributeRecordId);
-  }
-
-  private void checkAttributesSanity(final int attributeRecordId,
-                                     final @NotNull IntList usedAttributeRecordIds,
-                                     final @NotNull IntList validAttributeIds) throws IOException {
-    assert !usedAttributeRecordIds.contains(attributeRecordId);
-    usedAttributeRecordIds.add(attributeRecordId);
-
-    try (DataInputStream dataInputStream = attributesBlobStorage.readStream(attributeRecordId)) {
-      if (bulkAttrReadSupport) skipRecordHeader(dataInputStream, 0, 0);
-
-      while (dataInputStream.available() > 0) {
-        int attId = DataInputOutputUtil.readINT(dataInputStream);
-
-        if (!validAttributeIds.contains(attId)) {
-          //assert !getNames().valueOf(attId).isEmpty();
-          validAttributeIds.add(attId);
-        }
-
-        int attDataRecordIdOrSize = DataInputOutputUtil.readINT(dataInputStream);
-
-        if (inlineAttributes) {
-          if (attDataRecordIdOrSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
-            dataInputStream.skipBytes(attDataRecordIdOrSize);
-            continue;
-          }
-          else {
-            attDataRecordIdOrSize -= INLINE_ATTRIBUTE_SMALLER_THAN;
-          }
-        }
-        assert !usedAttributeRecordIds.contains(attDataRecordIdOrSize);
-        usedAttributeRecordIds.add(attDataRecordIdOrSize);
-
-        attributesBlobStorage.checkSanity(attDataRecordIdOrSize);
-      }
-    }
   }
 }

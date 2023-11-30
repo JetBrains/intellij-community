@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.Disposable;
@@ -19,7 +19,6 @@ import java.nio.file.Path;
  *
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/module.html">IntelliJ Platform Docs</a>
  */
-@SuppressWarnings("DeprecatedIsStillUsed")
 public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
    * The empty array of modules which can be reused to avoid unnecessary allocations.
@@ -49,9 +48,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * Returns path to the module {@code .iml} file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
    */
   @ApiStatus.Internal
-  @SystemIndependent
-  @NonNls
-  default @NotNull String getModuleFilePath() {
+  default @SystemIndependent @NonNls @NotNull String getModuleFilePath() {
     return getModuleNioFile().toString().replace(File.separatorChar, '/');
   }
 
@@ -165,16 +162,14 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
    * @return scope including only production sources.
    */
-  @NotNull
-  default GlobalSearchScope getModuleProductionSourceScope() {
+  default @NotNull GlobalSearchScope getModuleProductionSourceScope() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   /**
    * @return scope including only test sources.
    */
-  @NotNull
-  default GlobalSearchScope getModuleTestSourceScope() {
+  default @NotNull GlobalSearchScope getModuleTestSourceScope() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -185,9 +180,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * of type of the module, see {@link com.intellij.openapi.module.ModuleType ModuleType}'s javadoc for details.
    */
   @ApiStatus.Internal
-  @Nullable
-  @NonNls
-  default String getModuleTypeName() {
+  default @Nullable @NonNls String getModuleTypeName() {
     return getOptionValue(ELEMENT_TYPE);
   }
 

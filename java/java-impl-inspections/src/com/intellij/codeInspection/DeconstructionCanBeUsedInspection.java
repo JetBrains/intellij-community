@@ -2,7 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.FileModifier;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -10,7 +11,6 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightRecordField;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -38,7 +38,7 @@ public class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInsp
         List<List<PsiReferenceExpression>> collect = collect(expression, variable, false);
         if (collect.isEmpty()) return;
         holder.registerProblem(variable.getTypeElement(), InspectionGadgetsBundle.message("inspection.deconstruction.can.be.used.message"),
-                               new PatternVariableCanBeUsedFix(expression));
+                               new PatternVariableCanBeUsedFix());
       }
     };
   }
@@ -99,13 +99,7 @@ public class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInsp
     return null;
   }
 
-  private static class PatternVariableCanBeUsedFix implements LocalQuickFix {
-    private final SmartPsiElementPointer<PsiInstanceOfExpression> myInstanceOfPointer;
-
-    private PatternVariableCanBeUsedFix(@NotNull PsiInstanceOfExpression instanceOf) {
-      myInstanceOfPointer = SmartPointerManager.createPointer(instanceOf);
-    }
-
+  private static class PatternVariableCanBeUsedFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -114,8 +108,8 @@ public class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiPatternVariable patternVariable = ObjectUtils.tryCast(descriptor.getStartElement().getParent(), PsiPatternVariable.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiPatternVariable patternVariable = ObjectUtils.tryCast(element.getParent(), PsiPatternVariable.class);
       if (patternVariable == null) return;
       PsiInstanceOfExpression instanceOf = ObjectUtils.tryCast(patternVariable.getParent().getParent(), PsiInstanceOfExpression.class);
       if (instanceOf == null) return;
@@ -129,7 +123,7 @@ public class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInsp
         s = generator.generate(false);
         deconstructionList.add((type != null ? type.getCanonicalText() : "var") + " " + s);
         for (PsiReferenceExpression expression : expressions) {
-          PsiLocalVariable variable = foo(expression);
+          PsiLocalVariable variable = getVariableFromInitializer(expression);
           if (variable != null) {
             var references = VariableAccessUtils.getVariableReferences(variable, PsiUtil.getVariableCodeBlock(variable, null));
             for (PsiReferenceExpression ref : references) {
@@ -146,29 +140,18 @@ public class DeconstructionCanBeUsedInspection extends AbstractBaseJavaLocalInsp
       PsiInstanceOfExpression replace =
         (PsiInstanceOfExpression)new CommentTracker().replace(instanceOf, instanceOf.getOperand().getText() +
                                                                           " instanceof " +
-                                                                          descriptor.getPsiElement().getText() +
-                                                                          deconstructionList +
-                                                                          ((PsiVariable)descriptor.getStartElement()
-                                                                            .getParent()).getName());
+                                                                          element.getText() + deconstructionList + patternVariable.getName());
       PsiPrimaryPattern pattern = replace.getPattern();
       PsiPatternVariable variable = JavaPsiPatternUtil.getPatternVariable(pattern);
       assert variable != null;
       if (!VariableAccessUtils.variableIsUsed(variable, variable.getDeclarationScope())) {
         new CommentTracker().replace(replace, replace.getOperand().getText() +
                                               " instanceof " +
-                                              descriptor.getPsiElement().getText() +
-                                              deconstructionList);
+                                              element.getText() + deconstructionList);
       }
     }
 
-    @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-
-      PsiInstanceOfExpression instanceOf = myInstanceOfPointer.getElement();
-      return instanceOf == null ? null : new PatternVariableCanBeUsedFix(PsiTreeUtil.findSameElementInCopy(instanceOf, target));
-    }
-
-    private static @Nullable PsiLocalVariable foo(PsiReferenceExpression ref) {
+    private static @Nullable PsiLocalVariable getVariableFromInitializer(PsiReferenceExpression ref) {
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
       if (parent instanceof PsiLocalVariable variable) {
         return variable;

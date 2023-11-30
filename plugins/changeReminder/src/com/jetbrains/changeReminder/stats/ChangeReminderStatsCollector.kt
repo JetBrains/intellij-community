@@ -6,16 +6,14 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.changeReminder.predict.PredictionData
-import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.DISPLAYED_PREDICTION
-import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.EMPTY_REASON
-import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.GROUP
-import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.PREDICTION_FOR_FILES
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.DISPLAYED_PREDICTION
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.EMPTY_REASON
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.GROUP
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.PREDICTION_FOR_FILES
 import java.util.*
-import kotlin.collections.ArrayList
 
 internal fun Collection<VirtualFile>.anonymizeVirtualFileCollection(): List<String> = this.map {
   EventLogConfiguration.getInstance().getOrCreate(GROUP.recorder).anonymize(it.path)
@@ -39,38 +37,35 @@ internal fun getPredictionData(predictionData: PredictionData): List<EventPair<*
   return data
 }
 
-class ChangeReminderStatsCollector : CounterUsagesCollector() {
+object ChangeReminderStatsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    internal val GROUP = EventLogGroup("vcs.change.reminder", 3)
-    internal val COMMITTED_FILES = EventFields.StringListValidatedByRegexp("committed_files", "hash")
-    internal val DISPLAYED_PREDICTION = EventFields.StringListValidatedByRegexp("displayed_prediction", "hash")
-    internal val CUR_MODIFIED_FILES = EventFields.StringListValidatedByRegexp("cur_modified_files", "hash")
-    internal val PREV_MODIFIED_FILES = EventFields.StringListValidatedByRegexp("prev_modified_files", "hash")
-    internal val PREDICTION_FOR_FILES = EventFields.StringListValidatedByRegexp("prediction_for_files", "hash")
-    internal val EMPTY_REASON = EventFields.Enum<PredictionData.EmptyPredictionReason>("empty_reason") {
-      it.name.lowercase(Locale.ENGLISH)
-    }
-
-    internal val CHANGELIST_CHANGED = GROUP.registerVarargEvent("changelist_changed",
-                                                                PREV_MODIFIED_FILES,
-                                                                DISPLAYED_PREDICTION,
-                                                                PREDICTION_FOR_FILES,
-                                                                EMPTY_REASON,
-                                                                CUR_MODIFIED_FILES)
-
-    internal val CHANGES_COMMITTED = GROUP.registerVarargEvent("changes_committed",
-                                                               CUR_MODIFIED_FILES,
-                                                               COMMITTED_FILES,
-                                                               DISPLAYED_PREDICTION,
-                                                               PREDICTION_FOR_FILES,
-                                                               EMPTY_REASON)
-
-    internal val NODE_EXPANDED = GROUP.registerVarargEvent("node_expanded",
-                                                           DISPLAYED_PREDICTION,
-                                                           PREDICTION_FOR_FILES,
-                                                           EMPTY_REASON)
-
+  internal val GROUP = EventLogGroup("vcs.change.reminder", 3)
+  internal val COMMITTED_FILES = EventFields.StringListValidatedByRegexp("committed_files", "hash")
+  internal val DISPLAYED_PREDICTION = EventFields.StringListValidatedByRegexp("displayed_prediction", "hash")
+  internal val CUR_MODIFIED_FILES = EventFields.StringListValidatedByRegexp("cur_modified_files", "hash")
+  internal val PREV_MODIFIED_FILES = EventFields.StringListValidatedByRegexp("prev_modified_files", "hash")
+  internal val PREDICTION_FOR_FILES = EventFields.StringListValidatedByRegexp("prediction_for_files", "hash")
+  internal val EMPTY_REASON = EventFields.Enum<PredictionData.EmptyPredictionReason>("empty_reason") {
+    it.name.lowercase(Locale.ENGLISH)
   }
+
+  internal val CHANGELIST_CHANGED = GROUP.registerVarargEvent("changelist_changed",
+                                                              PREV_MODIFIED_FILES,
+                                                              DISPLAYED_PREDICTION,
+                                                              PREDICTION_FOR_FILES,
+                                                              EMPTY_REASON,
+                                                              CUR_MODIFIED_FILES)
+
+  internal val CHANGES_COMMITTED = GROUP.registerVarargEvent("changes_committed",
+                                                             CUR_MODIFIED_FILES,
+                                                             COMMITTED_FILES,
+                                                             DISPLAYED_PREDICTION,
+                                                             PREDICTION_FOR_FILES,
+                                                             EMPTY_REASON)
+
+  internal val NODE_EXPANDED = GROUP.registerVarargEvent("node_expanded",
+                                                         DISPLAYED_PREDICTION,
+                                                         PREDICTION_FOR_FILES,
+                                                         EMPTY_REASON)
 }

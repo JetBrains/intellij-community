@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.util.containers.FastUtilHashingStrategies;
@@ -42,15 +42,13 @@ final class ChunkBuildOutputConsumerImpl implements ModuleLevelBuilder.OutputCon
     return Collections.emptyList();
   }
 
-  @NotNull
   @Override
-  public Map<String, CompiledClass> getCompiledClasses() {
+  public @NotNull Map<String, CompiledClass> getCompiledClasses() {
     return Collections.unmodifiableMap(myClasses);
   }
 
   @Override
-  @Nullable
-  public BinaryContent lookupClassBytes(String className) {
+  public @Nullable BinaryContent lookupClassBytes(String className) {
     final CompiledClass object = myClasses.get(className);
     return object != null ? object.getContent() : null;
   }

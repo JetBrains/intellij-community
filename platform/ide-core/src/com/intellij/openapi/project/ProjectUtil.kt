@@ -7,8 +7,6 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -40,7 +38,7 @@ import java.util.*
 import javax.swing.JComponent
 import kotlin.io.path.exists
 
-val NOTIFICATIONS_SILENT_MODE = Key.create<Boolean>("NOTIFICATIONS_SILENT_MODE")
+val NOTIFICATIONS_SILENT_MODE: Key<Boolean> = Key.create("NOTIFICATIONS_SILENT_MODE")
 
 val Module.rootManager: ModuleRootManager
   get() = ModuleRootManager.getInstance(this)
@@ -61,14 +59,22 @@ fun calcRelativeToProjectPath(file: VirtualFile,
     else -> file.name
   }
 
-  return if (project == null) url
-         else displayUrlRelativeToProject(file, url, project, includeFilePath, keepModuleAlwaysOnTheLeft)
+  if (project == null) {
+    return url
+  }
+  else {
+    return displayUrlRelativeToProject(file = file,
+                                       url = url,
+                                       project = project,
+                                       isIncludeFilePath = includeFilePath,
+                                       moduleOnTheLeft = keepModuleAlwaysOnTheLeft)
+  }
 }
 
 fun guessProjectForFile(file: VirtualFile): Project? = ProjectLocator.getInstance().guessProjectForFile(file)
 
 /**
- * guessProjectForFile works incorrectly - even if file is config (idea config file) a first opened project will be returned
+ * guessProjectForFile works incorrectly - even if file is config (idea config file), a first opened project will be returned
  */
 @JvmOverloads
 fun guessProjectForContentFile(file: VirtualFile,
@@ -109,7 +115,7 @@ val Project.modules: Array<Module>
 inline fun <T> Project.modifyModules(crossinline task: ModifiableModuleModel.() -> T): T {
   val model = ModuleManager.getInstance(this).getModifiableModel()
   val result = model.task()
-  runWriteAction {
+  ApplicationManager.getApplication().runWriteAction {
     model.commit()
   }
   return result
@@ -124,8 +130,6 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
   }
 }
 
-private val BASE_DIRECTORY_SUGGESTER_EP_NAME = ExtensionPointName.create<BaseDirectorySuggester>("com.intellij.baseDirectorySuggester")
-
 /**
  *  Tries to guess the "main project directory" of the project.
  *
@@ -139,13 +143,6 @@ fun Project.guessProjectDir() : VirtualFile? {
     return null
   }
 
-  val customBaseDir = BASE_DIRECTORY_SUGGESTER_EP_NAME.extensionList.asSequence()
-    .map { it.suggestBaseDirectory(this) }
-    .filterNotNull()
-    .firstOrNull()
-  if (customBaseDir != null) {
-    return customBaseDir
-  }
   val baseDirectory = getBaseDirectories().firstOrNull()
   if (baseDirectory != null) {
     return baseDirectory
@@ -272,25 +269,6 @@ fun clearCachesForAllProjectsStartingWith(@NonNls prefix: String) {
   }
 }
 
-@ApiStatus.Experimental
-fun hasCacheForAnyProjectStartingWith(@NonNls prefix: String): Boolean {
-  require(!prefix.isEmpty())
-  projectsDataDir.directoryStreamIfExists { projectDirs ->
-    for (projectDir in projectDirs) {
-      if (!Files.isDirectory(projectDir)) {
-        continue
-      }
-
-      projectDir.directoryStreamIfExists { files ->
-        if (files.any { it.fileName.toString().startsWith(prefix) }) {
-          return true
-        }
-      }
-    }
-  }
-  return false
-}
-
 /**
  * Returns the root directory for all caches related to [project].
  */
@@ -315,13 +293,13 @@ fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, ha
   return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
 }
 
-inline fun processOpenedProjects(processor: (Project) -> Unit) {
-  for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return)) {
-    if (project.isDisposed || !project.isInitialized) {
-      continue
+fun getOpenedProjects(): Sequence<Project> {
+  return sequence {
+    for (project in ((ProjectManager.getInstanceIfCreated() ?: return@sequence).openProjects)) {
+      if (!project.isDisposed && project.isInitialized) {
+        yield(project)
+      }
     }
-
-    processor(project)
   }
 }
 

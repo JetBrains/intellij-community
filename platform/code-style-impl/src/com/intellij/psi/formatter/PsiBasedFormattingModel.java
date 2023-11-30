@@ -27,11 +27,11 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   private final Project myProject;
   private final ASTNode myASTNode;
   private final FormattingDocumentModelImpl myDocumentModel;
-  @NotNull private final Block myRootBlock;
+  private final @NotNull Block myRootBlock;
   protected boolean myCanModifyAllWhiteSpaces = false;
 
   public PsiBasedFormattingModel(final PsiFile file,
-                                 @NotNull final Block rootBlock,
+                                 final @NotNull Block rootBlock,
                                  final FormattingDocumentModelImpl documentModel) {
     myASTNode = SourceTreeToPsiMap.psiElementToTree(file);
     myDocumentModel = documentModel;
@@ -69,8 +69,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   }
 
 
-  @Nullable
-  private String replaceWithPSI(final TextRange textRange, final String whiteSpace) {
+  private @Nullable String replaceWithPSI(final TextRange textRange, final String whiteSpace) {
     final int offset = textRange.getEndOffset();
     ASTNode leafElement = findElementAt(offset);
 
@@ -119,8 +118,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
     return intersection == null ? null : intersection.shiftLeft(injectedDocument.getStartOffset());
   }
 
-  @Nullable
-  protected String replaceWithPsiInLeaf(final TextRange textRange, final String whiteSpace, final ASTNode leafElement) {
+  protected @Nullable String replaceWithPsiInLeaf(final TextRange textRange, final String whiteSpace, final ASTNode leafElement) {
     if (!myCanModifyAllWhiteSpaces) {
       if (leafElement.getElementType() == TokenType.WHITE_SPACE) return null;
     }
@@ -131,8 +129,7 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
     return whiteSpace;
   }
 
-  @Nullable
-  protected ASTNode findElementAt(final int offset) {
+  protected @Nullable ASTNode findElementAt(final int offset) {
     PsiFile containingFile = myASTNode.getPsi().getContainingFile();
     Project project = containingFile.getProject();
 
@@ -150,14 +147,12 @@ public class PsiBasedFormattingModel implements FormattingModelEx {
   }
 
   @Override
-  @NotNull
-  public FormattingDocumentModel getDocumentModel() {
+  public @NotNull FormattingDocumentModel getDocumentModel() {
     return myDocumentModel;
   }
 
   @Override
-  @NotNull
-  public Block getRootBlock() {
+  public @NotNull Block getRootBlock() {
     return myRootBlock;
   }
   

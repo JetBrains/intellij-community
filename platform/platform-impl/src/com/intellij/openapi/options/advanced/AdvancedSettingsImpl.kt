@@ -61,7 +61,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
   @Attribute("default")
   @RequiredElement
   @JvmField
-  var defaultValue = ""
+  var defaultValue: String = ""
 
   /**
    * Name of the property in the resource bundle [bundle] which holds the label for the setting displayed in the UI.
@@ -173,7 +173,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
     return if (type() == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
   }
 
-  val defaultValueObject by lazy { valueFromString(defaultValue) }
+  val defaultValueObject: Any by lazy { valueFromString(defaultValue) }
 
   private fun findBundle(): ResourceBundle? {
     val bundleName = bundle.nullize()
@@ -189,6 +189,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
       null
     else {
       val classLoader = pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader
+      @Suppress("IncorrectServiceRetrieving")
       ApplicationManager.getApplication().getService(classLoader.loadClass(service))
     }
   }
@@ -204,7 +205,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName<AdvancedSettingBean>("com.intellij.advancedSetting")
+    val EP_NAME: ExtensionPointName<AdvancedSettingBean> = ExtensionPointName("com.intellij.advancedSetting")
   }
 
   override fun getKey(): String = id
@@ -215,7 +216,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 @State(name = "AdvancedSettings", storages = [Storage("advancedSettings.xml"), Storage(value = "ide.general.xml", deprecated = true)])
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState {
-    var settings = mutableMapOf<String, String>()
+    var settings: MutableMap<String, String> = mutableMapOf()
   }
 
   private val epCollector = KeyedExtensionCollector<AdvancedSettingBean, String>(AdvancedSettingBean.EP_NAME.name)
@@ -243,7 +244,7 @@ class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithMod
     state.settings.mapNotNull { (k, v) -> getOptionOrNull(k)?.let { option -> k to option.valueFromString(v) } }.toMap(this.state)
   }
 
-  override fun getStateModificationCount() = modificationCount
+  override fun getStateModificationCount(): Long = modificationCount
 
   override fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
     val option = getOption(id)

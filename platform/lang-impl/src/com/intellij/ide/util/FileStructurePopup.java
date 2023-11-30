@@ -12,16 +12,16 @@ import com.intellij.ide.structureView.SearchableTextProvider;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
-import com.intellij.ide.structureView.newStructureView.TreeActionWrapper;
-import com.intellij.ide.structureView.newStructureView.TreeActionsOwner;
-import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
+import com.intellij.ide.structureView.newStructureView.*;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.navigation.LocationPresentation;
@@ -52,7 +52,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBCheckBox;
@@ -90,6 +89,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiPredicate;
 
 /**
@@ -124,9 +124,11 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   private final TreeExpander myTreeExpander;
   private final CopyPasteDelegator myCopyPasteDelegator;
 
+  private final long constructorCallTime = System.nanoTime();
+  private long showTime;
+
   private boolean myCanClose = true;
   private boolean myDisposed;
-
   /**
    * @noinspection unused
    * @deprecated use {@link #FileStructurePopup(Project, FileEditor, StructureViewModel)}
@@ -280,7 +282,8 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setCancelKeyEnabled(false)
       .setDimensionServiceKey(myProject, getDimensionServiceKey(), true)
       .setCancelCallback(() -> {
-        myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC).stateChanged(false);
+        FileStructurePopupListener listener = myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC);
+        listener.stateChanged(false);
         return myCanClose;
       })
       .setAdvertiser(new SpeedSearchAdvertiser().addSpeedSearchAdvertisement())
@@ -294,13 +297,15 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
 
-    return rebuildAndSelect(false, myInitialElement).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    return rebuildAndSelect(false, myInitialElement, null).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
-      installUpdater();
+      myProject.getService(FileStructurePopupLoadingStateUpdater.class).installUpdater(this::installUpdater, myProject, myTreeModel);
+      showTime = System.nanoTime();
     }));
   }
 
-  private void installUpdater() {
+
+  private void installUpdater(final int delayMillis) {
     if (ApplicationManager.getApplication().isUnitTestMode() || myPopup.isDisposed()) {
       return;
     }
@@ -340,10 +345,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
           }));
         }
         if (!alarm.isDisposed()) {
-          alarm.addRequest(this, 300);
+          alarm.addRequest(this, delayMillis);
         }
       }
-    }, 300);
+    }, delayMillis);
   }
 
   private boolean handleBackspace(String filter) {
@@ -361,31 +366,15 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   }
 
   public @NotNull Promise<TreePath> select(Object element) {
-    int[] stage = {1, 0}; // 1 - first pass, 2 - optimization applied, 3 - retry w/o optimization
-    TreePath[] deepestPath = {null};
-    TreeVisitor visitor = path -> {
-      Object last = path.getLastPathComponent();
-      Object userObject = StructureViewComponent.unwrapNavigatable(last);
-      Object value = StructureViewComponent.unwrapValue(last);
-      if (Comparing.equal(value, element) ||
-          userObject instanceof AbstractTreeNode && ((AbstractTreeNode<?>)userObject).canRepresent(element)) {
-        return TreeVisitor.Action.INTERRUPT;
-      }
-      if (value instanceof PsiElement && element instanceof PsiElement) {
-        if (PsiTreeUtil.isAncestor((PsiElement)value, (PsiElement)element, true)) {
-          int count = path.getPathCount();
-          if (stage[1] == 0 || stage[1] < count) {
-            stage[1] = count;
-            deepestPath[0] = path;
-          }
-        }
-        else if (stage[0] != 3) {
-          stage[0] = 2;
-          return TreeVisitor.Action.SKIP_CHILDREN;
-        }
-      }
-      return TreeVisitor.Action.CONTINUE;
-    };
+    int editorOffset;
+    if (myFileEditor instanceof TextEditor textEditor) {
+      editorOffset = textEditor.getEditor().getCaretModel().getOffset();
+    }
+    else {
+      editorOffset = -1;
+    }
+    var state = new StructureViewSelectVisitorState();
+    TreeVisitor visitor = path -> StructureViewComponent.visitPathForElementSelection(path, element, editorOffset, state);
     Function<TreePath, Promise<TreePath>> action = path -> {
       myTree.expandPath(path);
       TreeUtil.selectPath(myTree, path);
@@ -395,15 +384,15 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     Function<TreePath, Promise<TreePath>> fallback = new Function<>() {
       @Override
       public Promise<TreePath> fun(TreePath path) {
-        if (path == null && stage[0] == 2) {
+        if (path == null && state.isOptimizationUsed()) {
           // Some structure views merge unrelated psi elements into a structure node (MarkdownStructureViewModel).
           // So turn off the isAncestor() optimization and retry once.
-          stage[0] = 3;
+          state.disableOptimization();
           return myAsyncTreeModel.accept(visitor).thenAsync(this);
         }
         else {
-          TreePath adjusted = path == null ? deepestPath[0] : path;
-          if (path == null && adjusted != null && element instanceof PsiElement) {
+          TreePath adjusted = path == null ? state.getBestMatch() : path;
+          if (path == null && adjusted != null && !state.isExactMatch() && element instanceof PsiElement) {
             Object minChild = findClosestPsiElement((PsiElement)element, adjusted, myAsyncTreeModel);
             if (minChild != null) adjusted = adjusted.pathByAddingChild(minChild);
           }
@@ -436,6 +425,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   @Override
   public void dispose() {
     myDisposed = true;
+    if (showTime != 0) {
+      FileStructurePopupTimeTracker.logShowTime(System.nanoTime() - showTime);
+    }
+    FileStructurePopupTimeTracker.logPopupLifeTime(System.nanoTime() - constructorCallTime);
   }
 
   private static boolean isShouldNarrowDown() {
@@ -670,7 +663,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return minChild;
   }
 
-  private class MyTreeActionWrapper extends TreeActionWrapper {
+  private final class MyTreeActionWrapper extends TreeActionWrapper {
     private final TreeAction myAction;
 
     MyTreeActionWrapper(TreeAction action) {
@@ -797,7 +790,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       EventFields.PluginInfoFromInstance.with(action),
       EventFields.ActionPlace.with(ActionPlaces.FILE_STRUCTURE_POPUP),
       EventFields.CurrentFile.with(language),
-      ActionsEventLogGroup.ACTION_CLASS.with(action.getClass().getName()),
+      ActionsEventLogGroup.ACTION_CLASS.with(action.getClass()),
       ActionsEventLogGroup.ACTION_ID.with(action.getClass().getName())
     );
   }
@@ -805,17 +798,25 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
   private @NotNull Promise<Void> rebuild(boolean refilterOnly) {
     Object selection = JBIterable.of(myTree.getSelectionPaths())
                                  .filterMap(o -> StructureViewComponent.unwrapValue(o.getLastPathComponent())).first();
-    return rebuildAndSelect(refilterOnly, selection).then(o -> null);
+    return rebuildAndSelect(refilterOnly, selection, null).then(o -> null);
   }
 
-  private @NotNull Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection) {
+  private @NotNull Promise<TreePath> rebuildAndSelect(boolean refilterOnly, Object selection, @Nullable Long rebuildStartTime) {
+    if (rebuildStartTime == null) {
+      rebuildStartTime = System.nanoTime();
+    }
+
     AsyncPromise<TreePath> result = new AsyncPromise<>();
+    Long finalLastRebuildStartTime = rebuildStartTime;
     myStructureTreeModel.getInvoker().invoke(() -> {
       if (refilterOnly) {
         myFilteringStructure.refilter();
         myStructureTreeModel.invalidateAsync().thenRun(() -> {
           (selection == null ? myAsyncTreeModel.accept(o -> TreeVisitor.Action.CONTINUE) : select(selection))
-            .onError(ignore2 -> result.setError("rejected"))
+            .onError(ignore2 -> {
+              result.setError("rejected");
+              mySpeedSearch.refreshSelection(); // Selection failed, let the speed search reflect that by coloring itself red.
+            })
             .onSuccess(p -> EdtInvocationManager.invokeLaterIfNeeded(() -> {
               TreeUtil.expand(getTree(),
                               myTreeModel instanceof StructureViewCompositeModel
@@ -824,12 +825,13 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
               TreeUtil.ensureSelection(myTree);
               mySpeedSearch.refreshSelection();
               result.setResult(p);
+              FileStructurePopupTimeTracker.logRebuildTime(System.nanoTime() - finalLastRebuildStartTime);
             }));
         });
       }
       else {
         myTreeStructure.rebuildTree();
-        myStructureTreeModel.invalidateAsync().thenRun(() -> rebuildAndSelect(true, selection).processed(result));
+        myStructureTreeModel.invalidateAsync().thenRun(() -> rebuildAndSelect(true, selection, finalLastRebuildStartTime).processed(result));
       }
     }).onError(throwable -> result.setError(throwable));
     return result;
@@ -846,7 +848,12 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   private static boolean getDefaultValue(TreeAction action) {
     String propertyName = action instanceof PropertyOwner ? ((PropertyOwner)action).getPropertyName() : action.getName();
-    return PropertiesComponent.getInstance().getBoolean(TreeStructureUtil.getPropertyName(propertyName), Sorter.ALPHA_SORTER.equals(action));
+    var defaultValue = Sorter.ALPHA_SORTER.equals(action) || hasEnabledStateByDefault(action);
+    return PropertiesComponent.getInstance().getBoolean(TreeStructureUtil.getPropertyName(propertyName), defaultValue);
+  }
+
+  private static boolean hasEnabledStateByDefault(@NotNull TreeAction action) {
+    return action instanceof TreeActionWithDefaultState && ((TreeActionWithDefaultState)action).isEnabledByDefault();
   }
 
   private static void saveState(TreeAction action, boolean state) {
@@ -933,7 +940,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
-  private class FileStructurePopupFilter implements ElementFilter {
+  private final class FileStructurePopupFilter implements ElementFilter {
     private String myLastFilter;
     private final Set<Object> myVisibleParents = new HashSet<>();
     private final boolean isUnitTest = ApplicationManager.getApplication().isUnitTestMode();
@@ -983,7 +990,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
            ? mySpeedSearch.getEnteredPrefix() : null;
   }
 
-  private class MyTreeSpeedSearch extends TreeSpeedSearch {
+  private final class MyTreeSpeedSearch extends TreeSpeedSearch {
     private volatile boolean myPopupVisible;
 
     private MyTreeSpeedSearch() {
@@ -1062,7 +1069,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
-  static class MyTree extends DnDAwareTree implements PlaceProvider {
+  static final class MyTree extends DnDAwareTree implements PlaceProvider {
 
     MyTree(TreeModel treeModel) {
       super(treeModel);
@@ -1081,7 +1088,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  private class NavigateSelectedElementAction extends DumbAwareAction {
+  private final class NavigateSelectedElementAction extends DumbAwareAction {
     private final JPanel myPanel;
 
     private NavigateSelectedElementAction(JPanel panel) {
@@ -1097,7 +1104,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     }
   }
 
-  private class ToggleNarrowDownAction extends ToggleAction {
+  private final class ToggleNarrowDownAction extends ToggleAction {
     private ToggleNarrowDownAction() {
       super(IdeBundle.message("checkbox.narrow.down.on.typing"));
     }
@@ -1119,5 +1126,32 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
         rebuild(true);
       }
     }
+  }
+}
+
+final class FileStructurePopupTimeTracker extends CounterUsagesCollector {
+  private final static EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 2);
+  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", EventFields.DurationMs);
+  private final static EventId1<Long> SHOW = GROUP.registerEvent("data.shown", EventFields.DurationMs);
+  private final static EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", EventFields.DurationMs);
+
+  static void logRebuildTime(long elapsedTimeNanos) {
+    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
+    REBUILD.log(elapsedTimesMs);
+  }
+
+  static void logShowTime(long elapsedTimeNanos) {
+    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
+    SHOW.log(elapsedTimesMs);
+  }
+
+  static void logPopupLifeTime(long elapsedTimeNanos) {
+    long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);
+    LIFE.log(elapsedTimesMs);
+  }
+
+  @Override
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 }

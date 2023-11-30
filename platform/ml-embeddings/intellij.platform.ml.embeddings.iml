@@ -1,0 +1,414 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="module-library">
+      <library name="ai.grazie.utils.common" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-common-jvm:0.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.3.1/utils-common-jvm-0.3.1.jar">
+              <sha256sum>0d953af11f967970692cfe76d773d1061cc21f8562053f610a6bbe7dc8b82701</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.3.1/utils-common-jvm-0.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-common-jvm/0.3.1/utils-common-jvm-0.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.utils.ki" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.utils:utils-ki-jvm:0.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-ki-jvm/0.3.1/utils-ki-jvm-0.3.1.jar">
+              <sha256sum>319198acfc325cd1bd58c86f2e29101089e5acd01fbe5a77ef5f0b5dc9aaed0f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-ki-jvm/0.3.1/utils-ki-jvm-0.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/utils/utils-ki-jvm/0.3.1/utils-ki-jvm-0.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.model.nlp.encoder" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-nlp-jvm:0.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-nlp-jvm/0.3.1/model-nlp-jvm-0.3.1.jar">
+              <sha256sum>12b25338d86edb40206b0f8e7ccd2af5b3a732a7d45d87484da51492b966e8ea</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-nlp-jvm/0.3.1/model-nlp-jvm-0.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-nlp-jvm/0.3.1/model-nlp-jvm-0.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="ai.grazie.emb" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.model:model-emb-jvm:0.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.3.1/model-emb-jvm-0.3.1.jar">
+              <sha256sum>e9d275753050bea00184ca43b96ab8f13a38bc4db2d9184fe9c7815891d5084b</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.3.1/model-emb-jvm-0.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/model/model-emb-jvm/0.3.1/model-emb-jvm-0.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp.encoder" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-encoder-engine-jvm:0.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-engine-jvm/0.3.1/nlp-encoder-engine-jvm-0.3.1.jar">
+              <sha256sum>89cd160a52590171bf27693d57e2957f83356466654314b0e18ba65118c96385</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-engine-jvm/0.3.1/nlp-encoder-engine-jvm-0.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-engine-jvm/0.3.1/nlp-encoder-engine-jvm-0.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="ai.grazie.nlp.encoder.bert.uncased" type="repository">
+        <properties include-transitive-deps="false" maven-id="ai.grazie.nlp:nlp-encoder-bert-base-uncased-jvm:0.3.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-bert-base-uncased-jvm/0.3.1/nlp-encoder-bert-base-uncased-jvm-0.3.1.jar">
+              <sha256sum>25bc178c5ac2ff702378f568835d2eb5debc158a75a69316fb979112e77fb36e</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-bert-base-uncased-jvm/0.3.1/nlp-encoder-bert-base-uncased-jvm-0.3.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-encoder-bert-base-uncased-jvm/0.3.1/nlp-encoder-bert-base-uncased-jvm-0.3.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.api.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-api-jvm:0.2.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.15/inference-api-jvm-0.2.15.jar">
+              <sha256sum>34f83ed0bf75767fb6f0dc75511eb3a432735aa4928f97f33d605383e9c810f5</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.15/inference-api-jvm-0.2.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-api-jvm/0.2.15/inference-api-jvm-0.2.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.core.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-core-jvm:0.2.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.15/inference-core-jvm-0.2.15.jar">
+              <sha256sum>6f4aa8bbd638c4b13683998ad75f7b668e8b9c884f409a9d4b4c3fb41fa1b17f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.15/inference-core-jvm-0.2.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-core-jvm/0.2.15/inference-core-jvm-0.2.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.ndarray.api.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:ndarray-api-jvm:0.2.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.15/ndarray-api-jvm-0.2.15.jar">
+              <sha256sum>735b3b100405d24a2a7fdb16e604f313fe1f34e2f846f98d44e0f3b1a8475cb4</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.15/ndarray-api-jvm-0.2.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-api-jvm/0.2.15/ndarray-api-jvm-0.2.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.ndarray.core.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:ndarray-core-jvm:0.2.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.15/ndarray-core-jvm-0.2.15.jar">
+              <sha256sum>8a07c2b12df5d29ea516cffe749c652296b7191304058088abd4f8e7c083a8a2</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.15/ndarray-core-jvm-0.2.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/ndarray-core-jvm/0.2.15/ndarray-core-jvm-0.2.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.ir.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:inference-ir-jvm:0.2.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.15/inference-ir-jvm-0.2.15.jar">
+              <sha256sum>b7897167e5988673d584fc2c0638b631d38078e91dea6b9870c758e6b5c3e64d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.15/inference-ir-jvm-0.2.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/inference-ir-jvm/0.2.15/inference-ir-jvm-0.2.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.utils" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:utils-common-jvm:0.2.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.15/utils-common-jvm-0.2.15.jar">
+              <sha256sum>a9f01384eedab229bd22e52bfe922141af8f543d8df64c5a526871c25424992a</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.15/utils-common-jvm-0.2.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/utils-common-jvm/0.2.15/utils-common-jvm-0.2.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.serializer.protobuf.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:serializer-protobuf-jvm:0.2.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.15/serializer-protobuf-jvm-0.2.15.jar">
+              <sha256sum>8e9c7990b2120946da37adf24434fe3692c29919a11144fb20186c0d7169d451</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.15/serializer-protobuf-jvm-0.2.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-protobuf-jvm/0.2.15/serializer-protobuf-jvm-0.2.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.model.profiler.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:model-profiler-jvm:0.2.9">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/model-profiler-jvm/0.2.9/model-profiler-jvm-0.2.9.jar">
+              <sha256sum>94d1b65da91b55b60a8c9fa5552cafe02f3cf9378f0625cf5fb726b828dc093a</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/model-profiler-jvm/0.2.9/model-profiler-jvm-0.2.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/model-profiler-jvm/0.2.9/model-profiler-jvm-0.2.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.common.utils.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:common-utils-jvm:0.2.9">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/common-utils-jvm/0.2.9/common-utils-jvm-0.2.9.jar">
+              <sha256sum>c0ae81b5992ba0a1f300c26420cfa68104f98a880b6b2b5e464ce99e366943fb</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/common-utils-jvm/0.2.9/common-utils-jvm-0.2.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/common-utils-jvm/0.2.9/common-utils-jvm-0.2.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.serializer.tiled.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:serializer-tiled-jvm:0.2.15">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.15/serializer-tiled-jvm-0.2.15.jar">
+              <sha256sum>4f98ae11fded2a81a3b27a1490b9cefdbfd673d244f37b02c2704bdb440d4782</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.15/serializer-tiled-jvm-0.2.15.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/serializer-tiled-jvm/0.2.15/serializer-tiled-jvm-0.2.15-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.logger.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference:logger-jvm:0.2.9">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/logger-jvm/0.2.9/logger-jvm-0.2.9.jar">
+              <sha256sum>ae2ea06418f9d57f867f53ef8a4102f54f1f6a71c8309e4ebe89d2d71d682d0f</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/logger-jvm/0.2.9/logger-jvm-0.2.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/logger-jvm/0.2.9/logger-jvm-0.2.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="kinference.primitives.annotations.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.kinference.primitives:primitives-annotations-jvm:0.1.24">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.24/primitives-annotations-jvm-0.1.24.jar">
+              <sha256sum>2c5d67bd29a9082f07522643d728d887f2f93012467e05c45a2079d4e3eea8bf</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.24/primitives-annotations-jvm-0.1.24.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/kinference/primitives/primitives-annotations-jvm/0.1.24/primitives-annotations-jvm-0.1.24-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="squareup.okio.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.squareup.okio:okio-jvm:3.0.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0.jar">
+              <sha256sum>be64a0cc1f28ea9cd5c970dd7e7557af72c808d738c495b397bf897c9921e907</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="squareup.wire.runtime.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.squareup.wire:wire-runtime-jvm:4.3.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.3.0/wire-runtime-jvm-4.3.0.jar">
+              <sha256sum>821ebfe4817c132ea830ac2598953ef19e3579d53aab15018bf00b432d03aa45</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.3.0/wire-runtime-jvm-4.3.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/wire/wire-runtime-jvm/4.3.0/wire-runtime-jvm-4.3.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
+  </component>
+</module>

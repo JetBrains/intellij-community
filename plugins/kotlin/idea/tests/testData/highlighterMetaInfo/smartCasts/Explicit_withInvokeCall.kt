@@ -1,4 +1,6 @@
 // FIR_IDENTICAL
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 interface WithInvoke {
     operator fun invoke()
 }

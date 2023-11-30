@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.PsiKeyword;
@@ -20,7 +19,6 @@ import java.util.List;
 public class MergePackageAccessibilityStatementsFix
   extends MergeModuleStatementsFix<PsiPackageAccessibilityStatement> {
 
-  private static final Logger LOG = Logger.getInstance(MergePackageAccessibilityStatementsFix.class);
   private final String myPackageName;
   private final Role myRole;
 

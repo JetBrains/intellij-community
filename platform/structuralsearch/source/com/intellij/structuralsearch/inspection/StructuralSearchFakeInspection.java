@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileModifiableModel;
 import com.intellij.ide.DataManager;
@@ -14,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.profile.codeInspection.ui.CustomInspectionActions;
 import com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
@@ -119,7 +119,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
   @Override
   public @Nls(capitalization = Nls.Capitalization.Sentence) String @NotNull [] getGroupPath() {
-    return new String[] {InspectionsBundle.message("group.names.user.defined"), getGroupDisplayName()};
+    return InspectionProfileUtil.getGroup();
   }
 
   @Nullable
@@ -181,8 +181,8 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     if (profile == null) {
       return;
     }
-    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
-    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, myMainConfiguration);
+    final SSBasedInspection inspection = SSBasedInspection.getStructuralSearchInspection(profile);
+    final InspectionMetaDataDialog dialog = inspection.createMetaDataDialog(project, profile.getDisplayName(), myMainConfiguration);
     if (isCleanupAllowed()) {
       dialog.showCleanupOption(myMainConfiguration.isCleanup());
     }
@@ -200,7 +200,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
     inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
     inspection.addConfigurations(myConfigurations);
     profile.setModified(true);
-    InspectionProfileUtil.fireProfileChanged(profile);
+    CustomInspectionActions.fireProfileChanged(profile);
   }
 
   private void performMove(@NotNull JList<Configuration> list, boolean up) {
@@ -294,7 +294,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
   private void saveChangesToProfile(@NotNull JList<Configuration> list) {
     final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(list);
     if (profile == null) return;
-    final SSBasedInspection inspection = InspectionProfileUtil.getStructuralSearchInspection(profile);
+    final SSBasedInspection inspection = SSBasedInspection.getStructuralSearchInspection(profile);
     inspection.removeConfigurationsWithUuid(myMainConfiguration.getUuid());
     inspection.addConfigurations(myConfigurations);
     profile.setModified(true);
@@ -332,7 +332,7 @@ public class StructuralSearchFakeInspection extends LocalInspectionTool {
 
       final InspectionProfileModifiableModel profile = InspectionProfileUtil.getInspectionProfile(myList);
       if (profile == null) return;
-      if (InspectionProfileUtil.getStructuralSearchInspection(profile).addConfiguration(configuration)) {
+      if (SSBasedInspection.getStructuralSearchInspection(profile).addConfiguration(configuration)) {
         myConfigurations.add(configuration);
         model.fireContentsChanged(myList);
         myList.setSelectedIndex(size);

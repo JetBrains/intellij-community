@@ -43,7 +43,7 @@ public class ClsRecordHeaderImpl extends ClsRepositoryPsiElement<PsiRecordHeader
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     setMirrors(getRecordComponents(), SourceTreeToPsiMap.<PsiRecordHeader>treeToPsiNotNull(element).getRecordComponents());
   }

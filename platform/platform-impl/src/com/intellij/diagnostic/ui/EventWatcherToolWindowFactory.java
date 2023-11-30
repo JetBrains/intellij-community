@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.ui;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -61,7 +61,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
   }
 
   private static final class TableProvidingListener implements RunnablesListener {
-    private final @NotNull ListTableModel<InvocationsInfo> myInvocationsModel;
+    private final @NotNull ListTableModel<InvocationInfo> myInvocationsModel;
     private final @NotNull ListTableModel<InvocationDescription> myRunnablesModel;
     private final @NotNull ListTableModel<WrapperDescription> myWrappersModel;
 
@@ -70,14 +70,14 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
     TableProvidingListener() {
       myInvocationsModel = createDescendingTableModel(
         FunctionBasedColumnInfo.stringBased("event.watcher.column.name.runnable.callable",
-                                            InvocationsInfo::getFQN),
+                                            InvocationInfo::getFQN),
         new FunctionBasedColumnInfo<>("event.watcher.column.name.average.duration.ms",
                                       String.class,
                                       info -> DEFAULT_DURATION_FORMAT.format(info.getAverageDuration()),
-                                      Comparator.comparingDouble(InvocationsInfo::getAverageDuration)),
+                                      Comparator.comparingDouble(InvocationInfo::getAverageDuration)),
         new FunctionBasedColumnInfo<>("event.watcher.column.name.count",
                                       Integer.TYPE,
-                                      InvocationsInfo::getCount)
+                                      InvocationInfo::getCount)
       );
 
       myRunnablesModel = createDescendingTableModel(
@@ -116,7 +116,7 @@ final class EventWatcherToolWindowFactory implements ToolWindowFactory, DumbAwar
 
     @Override
     public void runnablesProcessed(@NotNull Collection<InvocationDescription> invocations,
-                                   @NotNull Collection<InvocationsInfo> infos,
+                                   @NotNull Collection<InvocationInfo> infos,
                                    @NotNull Collection<WrapperDescription> wrappers) {
       myRunnablesModel.addRows(invocations);
       setItems(myInvocationsModel, infos);

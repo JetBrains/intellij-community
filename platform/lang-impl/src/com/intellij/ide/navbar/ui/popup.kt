@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar.ui
 
 import com.intellij.ide.actions.OpenInRightSplitAction
@@ -24,7 +24,7 @@ import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JList
 
-internal fun createNavBarPopup(list: JList<NavBarPopupItem>): LightweightHint {
+internal fun createNavBarPopup(list: JList<out NavBarPopupItem>): LightweightHint {
   // TODO implement async hint update supply
   HintUpdateSupply.installHintUpdateSupply(list) { item ->
     SlowOperations.allowSlowOperations(ThrowableComputable {
@@ -43,12 +43,12 @@ internal fun createNavBarPopup(list: JList<NavBarPopupItem>): LightweightHint {
   return popup
 }
 
-internal fun navBarPopupList(
-  vm: NavBarPopupVm,
+internal fun <T : NavBarPopupItem> navBarPopupList(
+  vm: NavBarPopupVm<T>,
   contextComponent: Component,
   floating: Boolean,
-): JList<NavBarPopupItem> {
-  val list = ContextJBList<NavBarPopupItem>(contextComponent)
+): JList<T> {
+  val list = ContextJBList<T>(contextComponent)
   list.model = CollectionListModel(vm.items)
   list.cellRenderer = NavBarPopupListCellRenderer(floating)
   list.border = JBUI.Borders.empty(5)
@@ -80,7 +80,7 @@ internal fun navBarPopupList(
   return list
 }
 
-private fun JList<NavBarPopupItem>.withSpeedSearch(): JComponent {
+private fun JList<out NavBarPopupItem>.withSpeedSearch(): JComponent {
   val wrapper = NavBarListWrapper(this)
   val component = ListWithFilter.wrap(this, wrapper) { item ->
     item.presentation.popupText ?: item.presentation.text

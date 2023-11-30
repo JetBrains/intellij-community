@@ -19,7 +19,6 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.*
-import java.util.function.Function
 import java.util.logging.Logger
 import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
@@ -32,6 +31,7 @@ object BuildDependenciesUtil {
 
   val isWindows = System.getProperty("os.name").lowercase().startsWith("windows")
 
+  @JvmStatic
   @Suppress("HttpUrlsUsage")
   fun createDocumentBuilder(): DocumentBuilder {
     // from https://cheatsheetseries.owasp.org/cheatsheets/XML_External_Entity_Prevention_Cheat_Sheet.html#jaxp-documentbuilderfactory-saxparserfactory-and-dom4j
@@ -78,41 +78,40 @@ object BuildDependenciesUtil {
     }
   }
 
+  @JvmStatic
   fun getChildElements(parent: Element, tagName: String): List<Element> {
     val childNodes = parent.childNodes
     val result = ArrayList<Element>()
     for (i in 0 until childNodes.length) {
       val node = childNodes.item(i)
-      if (node is Element) {
-        if (tagName == node.tagName) {
-          result.add(node)
-        }
+      if (node is Element && tagName == node.tagName) {
+        result.add(node)
       }
     }
     return result
   }
 
+  @JvmStatic
   fun getComponentElement(root: Element, componentName: String): Element {
-    val elements = getChildElements(root, "component")
-      .filter { x -> componentName == x.getAttribute("name") }
+    val elements = getChildElements(root, "component").filter { x -> componentName == x.getAttribute("name") }
     check(elements.size == 1) { "Expected one and only one component with name '$componentName'" }
     return elements[0]
   }
 
+  @JvmStatic
   fun getSingleChildElement(parent: Element, tagName: String): Element {
     val result = getChildElements(parent, tagName)
     check(result.size == 1) { "Expected one and only one element by tag '$tagName'" }
     return result[0]
   }
 
+  @JvmStatic
   fun tryGetSingleChildElement(parent: Element, tagName: String): Element? {
     val result = getChildElements(parent, tagName)
-    return if (result.size == 1) {
-      result[0]
-    }
-    else null
+    return if (result.size == 1) result[0] else null
   }
 
+  @JvmStatic
   fun getLibraryMavenId(libraryXml: Path): String {
     return try {
       val documentBuilder = createDocumentBuilder()
@@ -128,7 +127,20 @@ object BuildDependenciesUtil {
     }
   }
 
-  @Throws(Exception::class)
+  @JvmStatic
+  fun getLibraryElement(root: Element, libraryName: String, iml: Path): Element {
+    val rootManager = getComponentElement(root, "NewModuleRootManager")
+    val library = getChildElements(rootManager, "orderEntry")
+                    .filter { it.getAttribute("type") == "module-library" }
+                    .map { getSingleChildElement(it, "library") }
+                    .singleOrNull { it.getAttribute("name") == libraryName }
+                  ?: error("Library '$libraryName' was not found in '$iml'")
+
+    return library
+  }
+
+  @JvmStatic
+  @Throws(IOException::class)
   fun extractZip(archiveFile: Path, target: Path, stripRoot: Boolean) {
     ZipFile(FileChannel.open(archiveFile)).use { zipFile ->
       val entries = zipFile.entries
@@ -138,24 +150,21 @@ object BuildDependenciesUtil {
             if (!entries.hasMoreElements()) {
               return null
             }
-            val entry = entries.nextElement() ?: return null
+            val entry = entries.nextElement()
             return object : Entry {
               override val type: Entry.Type
-                get() {
-                  if (entry.isUnixSymlink) {
-                    return Entry.Type.SYMLINK
-                  }
-                  return if (entry.isDirectory) Entry.Type.DIR else Entry.Type.FILE
+                get() = when {
+                  entry.isUnixSymlink -> Entry.Type.SYMLINK
+                  entry.isDirectory -> Entry.Type.DIR
+                  else -> Entry.Type.FILE
                 }
               override val name: String
                 get() = entry.name
               override val isExecutable: Boolean
                 get() = entry.unixMode and octal_0111 != 0
-
               @get:Throws(IOException::class)
               override val linkTarget: String?
                 get() = zipFile.getUnixSymlink(entry)
-
               @get:Throws(IOException::class)
               override val inputStream: InputStream
                 get() = zipFile.getInputStream(entry)
@@ -165,37 +174,21 @@ object BuildDependenciesUtil {
     }
   }
 
-  @Throws(Exception::class)
+  @JvmStatic
+  @Throws(IOException::class)
   fun extractTarBz2(archiveFile: Path, target: Path, stripRoot: Boolean) {
-    extractTarBasedArchive(archiveFile, target, stripRoot) { `is`: InputStream? ->
-      try {
-        return@extractTarBasedArchive BZip2CompressorInputStream(`is`)
-      }
-      catch (e: IOException) {
-        throw RuntimeException(e)
-      }
-    }
+    extractTarBasedArchive(archiveFile, target, stripRoot) { BZip2CompressorInputStream(it) }
   }
 
-  @Throws(Exception::class)
+  @JvmStatic
+  @Throws(IOException::class)
   fun extractTarGz(archiveFile: Path, target: Path, stripRoot: Boolean) {
-    extractTarBasedArchive(archiveFile, target, stripRoot) { `is`: InputStream? ->
-      try {
-        return@extractTarBasedArchive GzipCompressorInputStream(`is`)
-      }
-      catch (e: IOException) {
-        throw RuntimeException(e)
-      }
-    }
+    extractTarBasedArchive(archiveFile, target, stripRoot) { GzipCompressorInputStream(it) }
   }
 
-  @Throws(Exception::class)
-  private fun extractTarBasedArchive(archiveFile: Path,
-                                     target: Path,
-                                     stripRoot: Boolean,
-                                     unpacker: Function<in InputStream, out InputStream>) {
-    TarArchiveInputStream(
-      unpacker.apply(BufferedInputStream(Files.newInputStream(archiveFile)))).use { archive ->
+  @Throws(IOException::class)
+  private fun extractTarBasedArchive(archiveFile: Path, target: Path, stripRoot: Boolean, decompressor: (InputStream) -> InputStream) {
+    TarArchiveInputStream(decompressor(BufferedInputStream(Files.newInputStream(archiveFile)))).use { archive ->
       genericExtract(archiveFile, object : ArchiveContent {
         @get:Throws(IOException::class)
         override val nextEntry: Entry?
@@ -203,17 +196,11 @@ object BuildDependenciesUtil {
             val entry = archive.nextTarEntry ?: return null
             return object : Entry {
               override val type: Entry.Type
-                get() {
-                  if (entry.isSymbolicLink) {
-                    return Entry.Type.SYMLINK
-                  }
-                  if (entry.isDirectory) {
-                    return Entry.Type.DIR
-                  }
-                  if (entry.isFile) {
-                    return Entry.Type.FILE
-                  }
-                  throw IllegalStateException(archiveFile.toString() + ": unknown entry type at '" + entry.name + "'")
+                get() = when {
+                  entry.isSymbolicLink -> Entry.Type.SYMLINK
+                  entry.isDirectory -> Entry.Type.DIR
+                  entry.isFile -> Entry.Type.FILE
+                  else -> throw IllegalStateException("${archiveFile}: unknown entry type at '${entry.name}")
                 }
               override val name: String
                 get() = entry.name
@@ -285,40 +272,23 @@ object BuildDependenciesUtil {
     }
   }
 
+  @JvmStatic
   fun normalizeEntryName(name: String): String {
-    val withForwardSlashes = name.replace(backwardSlash, forwardSlash)
-    val trimmed = trim(withForwardSlashes, forwardSlash)
-    assertValidEntryName(trimmed)
-    return trimmed
+    val normalized = name.replace('\\', '/').trim('/')
+    assertValidEntryName(normalized)
+    return normalized
   }
 
-  private const val backwardSlash = '\\'
-  private const val backwardSlashString = backwardSlash.toString()
-  private const val forwardSlash = '/'
-  private const val forwardSlashString = forwardSlash.toString()
-  private const val doubleForwardSlashString = forwardSlashString + forwardSlashString
   private fun assertValidEntryName(normalizedEntryName: String) {
-    check(!normalizedEntryName.isBlank()) { "Entry names should not be blank: '$normalizedEntryName'" }
-    check(!normalizedEntryName.contains(backwardSlashString)) { "Normalized entry names should not contain '$backwardSlashString'" }
-    check(!normalizedEntryName.startsWith(
-      forwardSlashString)) { "Normalized entry names should not start with forward slash: $normalizedEntryName" }
-    check(!normalizedEntryName.endsWith(
-      forwardSlashString)) { "Normalized entry names should not end with forward slash: $normalizedEntryName" }
-    check(!normalizedEntryName.contains(
-      doubleForwardSlashString)) { "Normalized entry name should not contain '$doubleForwardSlashString': $normalizedEntryName" }
-    check(!(normalizedEntryName.contains("..") &&
-            normalizedEntryName.split(forwardSlash).contains(".."))) { "Invalid entry name: $normalizedEntryName" }
+    check(!normalizedEntryName.isBlank()) { "Entry names should not be blank" }
+    check(!normalizedEntryName.contains('\\')) { "Normalized entry names should not contain '\\'" }
+    check(!normalizedEntryName.startsWith('/')) { "Normalized entry names should not start with '/': ${normalizedEntryName}" }
+    check(!normalizedEntryName.endsWith('/')) { "Normalized entry names should not end with '/': ${normalizedEntryName}" }
+    check(!normalizedEntryName.contains("//")) { "Normalized entry name should not contain '//': ${normalizedEntryName}" }
+    check(!(normalizedEntryName.contains("..") && normalizedEntryName.split('/').contains(".."))) { "Invalid entry name: ${normalizedEntryName}" }
   }
 
-  fun trim(s: String, charToTrim: Char): String {
-    val len = s.length
-    var start = 0
-    while (start < len && s[start] == charToTrim) start++
-    var end = len
-    while (end > 0 && start < end && s[end - 1] == charToTrim) end--
-    return s.substring(start, end)
-  }
-
+  @JvmStatic
   fun deleteFileOrFolder(file: Path) {
     @Suppress("UnstableApiUsage")
     MoreFiles.deleteRecursively(file, RecursiveDeleteOption.ALLOW_INSECURE)
@@ -331,25 +301,16 @@ object BuildDependenciesUtil {
   }
 
   @JvmStatic
-  fun loadPropertiesFile(file: Path?): Map<String, String> {
-    val result = HashMap<String, String>()
-    val properties = Properties()
-    try {
-      Files.newBufferedReader(file).use { reader -> properties.load(reader) }
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
-    for ((key, value) in properties) {
-      result[key as String] = value as String
-    }
-    return result
-  }
+  fun loadPropertiesFile(file: Path): Map<String, String> =
+    Files.newBufferedReader(file).use { val properties = Properties(); properties.load(it); properties }
+      .map { (k, v) -> k as String to v as String }
+      .toMap()
 
-  fun listDirectory(directory: Path): List<Path> {
-    return Files.newDirectoryStream(directory).use { it.toList() }
-  }
+  @JvmStatic
+  fun listDirectory(directory: Path): List<Path> =
+    Files.newDirectoryStream(directory).use { it.toList() }
 
+  @JvmStatic
   fun directoryContentToString(directory: Path, humanReadableName: String?): String {
     val contents = listDirectory(directory)
     val sb = StringBuilder()
@@ -372,11 +333,7 @@ object BuildDependenciesUtil {
   }
 
   private interface Entry {
-    enum class Type {
-      FILE,
-      DIR,
-      SYMLINK
-    }
+    enum class Type { FILE, DIR, SYMLINK }
 
     val type: Type
     val name: String
@@ -393,8 +350,8 @@ object BuildDependenciesUtil {
         return target.resolve(normalizedName)
       }
       if (leadingComponentPrefix == null) {
-        val split = normalizedName.split(forwardSlash.toString().toRegex(), limit = 2).toTypedArray()
-        leadingComponentPrefix = split[0] + forwardSlash
+        val split = normalizedName.split('/'.toString().toRegex(), limit = 2).toTypedArray()
+        leadingComponentPrefix = split[0] + '/'
         return if (split.size < 2) {
           check(isDirectory) { "$archiveFile: first top-level entry must be a directory if strip root is enabled" }
           null

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight.actions.navigation
 
 import com.intellij.codeInsight.navigation.GotoTargetHandler
@@ -13,7 +13,7 @@ import org.editorconfig.language.psi.EditorConfigFlatOptionKey
 import org.editorconfig.language.psi.EditorConfigHeader
 import org.editorconfig.language.util.headers.EditorConfigOverridingHeaderSearcher
 
-class EditorConfigGotoSuperHandler : GotoTargetHandler() {
+internal class EditorConfigGotoSuperHandler : GotoTargetHandler() {
   override fun getFeatureUsedKey() = GotoSuperAction.FEATURE_ID
 
   override fun getSourceAndTargetElements(editor: Editor, file: PsiFile): GotoData? {
@@ -34,21 +34,19 @@ class EditorConfigGotoSuperHandler : GotoTargetHandler() {
     else -> EditorConfigBundle.get("goto.super.parent.not.found")
   }
 
-  private companion object {
-    private fun findSource(editor: Editor, file: PsiFile): PsiElement? {
-      val element = file.findElementAt(editor.caretModel.offset) ?: return null
-      return PsiTreeUtil.getParentOfType(
-        element,
-        EditorConfigHeader::class.java,
-        EditorConfigFlatOptionKey::class.java
-      )
-    }
+  private fun findSource(editor: Editor, file: PsiFile): PsiElement? {
+    val element = file.findElementAt(editor.caretModel.offset) ?: return null
+    return PsiTreeUtil.getParentOfType(
+      element,
+      EditorConfigHeader::class.java,
+      EditorConfigFlatOptionKey::class.java
+    )
+  }
 
-    private fun findTargets(element: PsiElement) = when (element) {
-      // todo icons
-      is EditorConfigHeader -> EditorConfigOverridingHeaderSearcher().findMatchingHeaders(element).map { it.header }
-      is EditorConfigFlatOptionKey -> element.reference.findParents()
-      else -> emptyList()
-    }
+  private fun findTargets(element: PsiElement) = when (element) {
+    // todo icons
+    is EditorConfigHeader -> EditorConfigOverridingHeaderSearcher().findMatchingHeaders(element).map { it.header }
+    is EditorConfigFlatOptionKey -> element.reference.findParents()
+    else -> emptyList()
   }
 }

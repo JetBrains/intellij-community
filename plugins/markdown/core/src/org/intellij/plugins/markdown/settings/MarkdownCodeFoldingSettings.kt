@@ -5,18 +5,18 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 @Service(Service.Level.APP)
-@State(name = "MarkdownCodeFoldingSettings", storages = [Storage("editor.xml")])
+@State(name = "MarkdownCodeFoldingSettings", storages = [Storage("editor.xml")], category = SettingsCategory.CODE)
 class MarkdownCodeFoldingSettings: SimplePersistentStateComponent<MarkdownCodeFoldingSettings.State>(State()) {
-  data class State(
-    val collapseLinks: Boolean = true,
-    val collapseFrontMatter: Boolean = true,
-    val collapseTables: Boolean = false,
-    val collapseCodeFences: Boolean = false,
-    val collapseTableOfContents: Boolean = true
-  ): BaseState()
+  class State: BaseState() {
+    var collapseLinks: Boolean by property(true)
+    var collapseFrontMatter: Boolean by property(true)
+    var collapseTables: Boolean by property(false)
+    var collapseCodeFences: Boolean by property(false)
+    var collapseTableOfContents: Boolean by property(true)
+  }
 
-  fun update(transform: (State) -> State) {
-    this.loadState(transform(this.state))
+  fun reset() {
+    loadState(State())
   }
 
   companion object {

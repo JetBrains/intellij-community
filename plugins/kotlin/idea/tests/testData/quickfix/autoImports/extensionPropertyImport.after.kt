@@ -7,5 +7,3 @@ import test.data.someVal
 fun some() {
     "".someVal
 }
-
-/* IGNORE_FIR */

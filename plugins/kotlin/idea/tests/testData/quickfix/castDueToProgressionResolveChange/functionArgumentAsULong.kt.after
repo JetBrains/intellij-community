@@ -7,3 +7,4 @@ fun append(xs: Collection<*>) {}
 fun invoke() {
     append((1UL..5UL) as Iterable<ULong><caret>)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OverloadResolutionChangeFix

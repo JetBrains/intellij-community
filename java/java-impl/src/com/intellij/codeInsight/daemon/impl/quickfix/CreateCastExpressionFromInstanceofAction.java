@@ -1,69 +1,74 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFromInstanceofAction {
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction.*;
+import static java.util.Objects.requireNonNull;
+
+public class CreateCastExpressionFromInstanceofAction implements ModCommandAction {
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    boolean available = super.isAvailable(project, editor, file);
-    if (!available) return false;
-    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
-    if (instanceOfExpression == null) return false;
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
+    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(context.file(), context.offset());
+    if (instanceOfExpression == null) return null;
     PsiTypeElement checkType = instanceOfExpression.getCheckType();
-    if (checkType == null) return false;
+    if (checkType == null || instanceOfExpression.getPattern() != null) return null;
+    PsiExpression operand = instanceOfExpression.getOperand();
+    PsiType operandType = operand.getType();
+    if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)) return null;
     PsiType type = checkType.getType();
+    PsiStatement statement = PsiTreeUtil.getParentOfType(instanceOfExpression, PsiStatement.class);
+    boolean insideIf = statement instanceof PsiIfStatement ifStatement
+                       && PsiTreeUtil.isAncestor(ifStatement.getCondition(), instanceOfExpression, false);
+    boolean insideWhile = statement instanceof PsiWhileStatement whileStatement
+                          && PsiTreeUtil.isAncestor(whileStatement.getCondition(), instanceOfExpression, false);
+
+    if (!insideIf && !insideWhile) return null;
+    if (isAlreadyCastedTo(type, instanceOfExpression, statement)) return null;
     String castTo = type.getPresentableText();
-    setText(JavaBundle.message("cast.to.0", castTo));
-    return true;
+    return Presentation.of(JavaBundle.message("cast.to.0", castTo));
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
-    assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
-    PsiElement decl = createAndInsertCast(instanceOfExpression, editor, file);
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(context.file(), context.offset());
+    if (instanceOfExpression == null) return ModCommand.nop();
+    return ModCommand.psiUpdate(instanceOfExpression, (expr, updater) -> invoke(context, expr, updater));
+  }
+
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiInstanceOfExpression instanceOfExpression, @NotNull ModPsiUpdater updater) {
+    PsiElement decl = createAndInsertCast(context.offset(), instanceOfExpression);
     if (decl == null) return;
     decl = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl);
     if (decl == null) return;
-    decl = CodeStyleManager.getInstance(project).reformat(decl);
-    editor.getCaretModel().moveToOffset(decl.getTextRange().getEndOffset());
+    decl = CodeStyleManager.getInstance(context.project()).reformat(decl);
+    updater.moveTo(decl.getTextRange().getEndOffset());
   }
 
   @Nullable
-  private static PsiElement createAndInsertCast(final PsiInstanceOfExpression instanceOfExpression, Editor editor, PsiFile file) throws IncorrectOperationException {
+  private static PsiElement createAndInsertCast(int caretOffset, @NotNull PsiInstanceOfExpression instanceOfExpression) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(instanceOfExpression.getProject());
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("((a)b)", instanceOfExpression);
 
     PsiParenthesizedExpression paren = (PsiParenthesizedExpression)statement.getExpression();
-    PsiTypeCastExpression cast = (PsiTypeCastExpression)paren.getExpression();
-    PsiType castType = instanceOfExpression.getCheckType().getType();
-    cast.getCastType().replace(factory.createTypeElement(castType));
-    cast.getOperand().replace(instanceOfExpression.getOperand());
+    PsiTypeCastExpression cast = (PsiTypeCastExpression)requireNonNull(paren.getExpression());
+    PsiType castType = requireNonNull(instanceOfExpression.getCheckType()).getType();
+    requireNonNull(cast.getCastType()).replace(factory.createTypeElement(castType));
+    requireNonNull(cast.getOperand()).replace(instanceOfExpression.getOperand());
 
-    final PsiStatement statementInside = isNegated(instanceOfExpression) ? null : getExpressionStatementInside(file, editor, instanceOfExpression.getOperand());
+    final PsiStatement statementInside = isNegated(instanceOfExpression) ? null : 
+                                         getExpressionStatementInside(caretOffset, instanceOfExpression.getOperand());
     if (statementInside != null) {
       return statementInside.replace(statement);
     }

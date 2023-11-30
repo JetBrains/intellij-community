@@ -43,7 +43,10 @@ import static org.jetbrains.uast.util.ClassSetKt.isInstanceOf;
 @ApiStatus.Internal
 public class OuterModelsModificationTracker extends SimpleModificationTracker {
 
-  public OuterModelsModificationTracker(Project project, Disposable parent, boolean useUastBased) {
+  private final boolean myTrackConfigurationFiles;
+
+  public OuterModelsModificationTracker(Project project, Disposable parent, boolean useUastBased, boolean trackConfigurationFiles) {
+    myTrackConfigurationFiles = trackConfigurationFiles;
     PsiManager.getInstance(project).addPsiTreeChangeListener(
       useUastBased ? new MyUastPsiTreeChangeAdapter(project) : new MyJavaPsiTreeChangeAdapter(),
       parent
@@ -55,7 +58,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
 
   private boolean processConfigFileChange(PsiFile psiFile) {
     String languageId = psiFile == null ? null : psiFile.getLanguage().getID();
-    if ("Properties".equals(languageId)) {
+    if (myTrackConfigurationFiles && "Properties".equals(languageId)) {
       incModificationCount();
       return true;
     }
@@ -65,7 +68,7 @@ public class OuterModelsModificationTracker extends SimpleModificationTracker {
       return true;
     }
 
-    if ("yaml".equals(languageId)) {
+    if (myTrackConfigurationFiles && "yaml".equals(languageId)) {
       incModificationCount();
       return true;
     }

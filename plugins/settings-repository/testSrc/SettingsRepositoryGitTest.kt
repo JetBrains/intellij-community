@@ -2,13 +2,13 @@
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.ApplicationStoreImpl
-import com.intellij.configurationStore.write
+import com.intellij.configurationStore.StreamProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.testFramework.file
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.delete
-import com.intellij.util.io.writeChild
+import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.settingsRepository.CannotResolveConflictInTestMode
@@ -21,8 +21,12 @@ import org.jetbrains.settingsRepository.git.deletePath
 import org.jetbrains.settingsRepository.git.writePath
 import org.junit.Test
 
-val MARKER_ACCEPT_MY = "__accept my__".toByteArray()
-val MARKER_ACCEPT_THEIRS = "__accept theirs__".toByteArray()
+internal val MARKER_ACCEPT_MY = "__accept my__".toByteArray()
+internal val MARKER_ACCEPT_THEIRS = "__accept theirs__".toByteArray()
+
+private fun StreamProvider.write(path: String, content: String) {
+  write(path, content.toByteArray())
+}
 
 internal class SettingsRepositoryGitTest : SettingsRepositoryGitTestBase() {
   init {
@@ -235,7 +239,7 @@ internal class SettingsRepositoryGitTest : SettingsRepositoryGitTestBase() {
     try {
       sync(SyncType.MERGE)
     }
-    catch (e: CannotResolveConflictInTestMode) {
+    catch (_: CannotResolveConflictInTestMode) {
     }
 
     // repository in unmerged state
@@ -378,13 +382,13 @@ internal class SettingsRepositoryGitTest : SettingsRepositoryGitTestBase() {
       </component>
     </application>"""
     if (addLocalFiles) {
-      localConfigPath.writeChild("options/ui.lnf.xml", lafData)
+      localConfigPath.resolve("options/ui.lnf.xml").write(lafData.toByteArray())
     }
 
     store.setPath(localConfigPath)
     store.storageManager.addStreamProvider(provider)
 
-    icsManager.sync(syncType, projectRule.project) { copyLocalConfig(store.storageManager) }
+    icsManager.sync(syncType) { copyLocalConfig(store.storageManager) }
 
     if (addLocalFiles) {
       assertThat(localConfigPath).isDirectory()

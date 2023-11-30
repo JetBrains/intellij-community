@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webcore.packaging;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class PackageVersionComparator implements Comparator<String> {
+public final class PackageVersionComparator implements Comparator<String> {
   public static final Comparator<String> VERSION_COMPARATOR = new PackageVersionComparator();
 
   @Override
@@ -29,8 +29,7 @@ public class PackageVersionComparator implements Comparator<String> {
     return vs1.size() - vs2.size();
   }
 
-  @Nullable
-  private static String replace(@NotNull String s) {
+  private static @Nullable String replace(@NotNull String s) {
     final Map<String, String> sub = Map.of("pre", "c",
                                            "preview", "c",
                                            "rc", "c",
@@ -54,8 +53,7 @@ public class PackageVersionComparator implements Comparator<String> {
     return "*" + s;
   }
 
-  @NotNull
-  private static List<String> parse(@Nullable String s) {
+  private static @NotNull List<String> parse(@Nullable String s) {
     // Version parsing from pkg_resources ensures that all the "pre", "alpha", "rc", etc. are sorted correctly
     if (s == null) {
       return Collections.emptyList();

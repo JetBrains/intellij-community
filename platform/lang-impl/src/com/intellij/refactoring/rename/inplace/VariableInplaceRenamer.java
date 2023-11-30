@@ -88,7 +88,20 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   }
 
   public boolean performInplaceRename() {
-    return performInplaceRefactoring(null);
+    return performInplaceRename(null);
+  }
+
+  public boolean performInplaceRename(@Nullable Collection<String> nameSuggestions) {
+    final String refactoringId = getRefactoringId();
+    PsiNamedElement elementToRename = getVariable();
+    if (refactoringId != null) {
+      final RefactoringEventData beforeData = new RefactoringEventData();
+      beforeData.addElement(elementToRename);
+      beforeData.addStringProperties(myOldName);
+      myProject.getMessageBus()
+        .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
+    }
+    return performInplaceRefactoring(nameSuggestions == null ? null : new LinkedHashSet<>(nameSuggestions));
   }
 
   @Override
@@ -275,13 +288,6 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     final String refactoringId = getRefactoringId();
     try {
       PsiNamedElement elementToRename = getVariable();
-      if (refactoringId != null) {
-        final RefactoringEventData beforeData = new RefactoringEventData();
-        beforeData.addElement(elementToRename);
-        beforeData.addStringProperties(myOldName);
-        myProject.getMessageBus()
-          .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, beforeData);
-      }
       if (!isIdentifier(newName, myLanguage)) {
         return;
       }

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
@@ -15,7 +16,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +31,9 @@ import java.util.concurrent.TimeUnit;
  */
 @Service(Service.Level.APP)
 public final class ExternalSystemProcessingManager implements ExternalSystemTaskNotificationListener, Disposable {
+
+  private static final Logger LOG = Logger.getInstance(ExternalSystemProcessingManager.class);
+
   /**
    * We receive information about the tasks being enqueued to the slave processes which work directly with external systems here.
    * However, there is a possible situation when particular task has been sent to execution but remote side has not been responding
@@ -58,7 +61,7 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
     if (app.isUnitTestMode()) {
       return;
     }
-    app.getService(ExternalSystemProgressNotificationManager.class).addNotificationListener(this, this);
+    ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(this, this);
   }
 
   @Override
@@ -140,12 +143,18 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
 
   @Override
   public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
-    myTasksInProgress.put(event.getId(), System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
+    Long prev = myTasksInProgress.replace(event.getId(), System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
+    if (prev == null) {
+      LOG.warn("onStatusChange is invoked before onStart or after onEnd (event: %s)".formatted(event));
+    }
   }
 
   @Override
   public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
-    myTasksInProgress.put(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
+    Long prev = myTasksInProgress.replace(id, System.currentTimeMillis() + TOO_LONG_EXECUTION_MS);
+    if (prev == null) {
+      LOG.warn("onTaskOutput is invoked before onStart or after onEnd (id: %s, stdOut: %b, text: %s)".formatted(id, stdOut, text));
+    }
   }
 
   @Override
@@ -204,7 +213,6 @@ public final class ExternalSystemProcessingManager implements ExternalSystemTask
     }
   }
 
-  @TestOnly
   public static ExternalSystemProcessingManager getInstance() {
     Application application = ApplicationManager.getApplication();
     return application.getService(ExternalSystemProcessingManager.class);

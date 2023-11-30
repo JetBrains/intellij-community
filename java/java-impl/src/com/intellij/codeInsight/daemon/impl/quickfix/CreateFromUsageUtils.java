@@ -20,6 +20,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -102,16 +103,24 @@ public final class CreateFromUsageUtils {
 
   public static void setupMethodBody(@NotNull PsiMethod method) throws IncorrectOperationException {
     PsiClass aClass = method.getContainingClass();
-    setupMethodBody(method, aClass);
-  }
-
-  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass) throws IncorrectOperationException {
     FileTemplate template = FileTemplateManager.getInstance(method.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY);
-    setupMethodBody(method, aClass, template);
+    setupMethodBody(method, aClass, template, null);
   }
 
-  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass, final FileTemplate template) throws
-                                                                                                                 IncorrectOperationException {
+  public static void setupMethodBody(final PsiMethod method, @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+    PsiClass aClass = method.getContainingClass();
+    FileTemplate template = FileTemplateManager.getInstance(method.getProject()).getCodeTemplate(JavaTemplateUtil.TEMPLATE_FROM_USAGE_METHOD_BODY);
+    setupMethodBody(method, aClass, template, updater);
+  }
+
+  public static void setupMethodBody(final PsiMethod method, final PsiClass aClass, final FileTemplate template) 
+    throws IncorrectOperationException {
+    setupMethodBody(method, aClass, template, null);
+  }
+
+  private static void setupMethodBody(final PsiMethod method, final PsiClass aClass, 
+                                      final FileTemplate template, @Nullable ModPsiUpdater updater) 
+    throws IncorrectOperationException {
     PsiType returnType = method.getReturnType();
     if (returnType == null) {
       returnType = PsiTypes.voidType();
@@ -151,9 +160,13 @@ public final class CreateFromUsageUtils {
       m = factory.createMethodFromText(methodText, aClass);
     }
     catch (IncorrectOperationException e) {
-      ApplicationManager.getApplication().invokeLater(
-        () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
-                                 QuickFixBundle.message("new.method.body.template.error.title")));
+      if (updater == null) {
+        ApplicationManager.getApplication().invokeLater(
+          () -> Messages.showErrorDialog(QuickFixBundle.message("new.method.body.template.error.text"),
+                                         QuickFixBundle.message("new.method.body.template.error.title")));
+      } else {
+        updater.cancel(QuickFixBundle.message("new.method.body.template.error.text"));
+      }
       return;
     }
 
@@ -213,6 +226,34 @@ public final class CreateFromUsageUtils {
     }
   }
 
+  public static void setupEditor(@NotNull PsiCodeBlock body, @NotNull ModPsiUpdater updater) {
+    PsiElement l = PsiTreeUtil.skipWhitespacesForward(body.getLBrace());
+    PsiElement r = PsiTreeUtil.skipWhitespacesBackward(body.getRBrace());
+    if (l != null && r != null) {
+      int start = l.getTextRange().getStartOffset();
+      int end = r.getTextRange().getEndOffset();
+      updater.moveTo(Math.max(start, end));
+      if (end < start) {
+        updater.moveTo(end + 1);
+        CodeStyleManager styleManager = CodeStyleManager.getInstance(body.getProject());
+        PsiFile containingFile = body.getContainingFile();
+        final String lineIndent = Objects.requireNonNullElse(styleManager.getLineIndent(containingFile, end), "");
+        PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
+        Document document = body.getContainingFile().getViewProvider().getDocument();
+        manager.doPostponedOperationsAndUnblockDocument(document);
+        document.insertString(updater.getCaretOffset(), lineIndent + "\n");
+        updater.moveTo(updater.getCaretOffset() + lineIndent.length());
+      }
+      else {
+        //correct position caret for groovy and java methods
+        if (body.getParent() instanceof PsiMethod) {
+          final PsiGenerationInfo<PsiMethod> info = OverrideImplementUtil.createGenerationInfo((PsiMethod)body.getParent());
+          info.positionCaret(updater, true);
+        }
+      }
+    }
+  }
+
   static void setupMethodParameters(PsiMethod method, TemplateBuilder builder, PsiExpressionList argumentList,
                                     PsiSubstitutor substitutor) throws IncorrectOperationException {
     if (argumentList == null) return;
@@ -223,7 +264,7 @@ public final class CreateFromUsageUtils {
 
   public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
                                            final PsiSubstitutor substitutor, final PsiExpression[] arguments) {
-    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map(arguments, Pair.createFunction(null)));
+    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map(arguments, arg -> new Pair<>(arg, null)));
   }
 
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
@@ -269,7 +310,7 @@ public final class CreateFromUsageUtils {
         parameter = postprocessReformattingAspect.postponeFormattingInside(() -> (PsiParameter) parameterList.add(param));
       }
 
-      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
+      ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailTypes.noneType());
 
       PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
       guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info}, context, containingClass);
@@ -650,7 +691,7 @@ public final class CreateFromUsageUtils {
       type = ((PsiPrimitiveType)type).getBoxedType(methodCall);
     }
     if (type == null) return ExpectedTypeInfo.EMPTY_ARRAY;
-    return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE)};
+    return new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailTypes.noneType())};
   }
 
   public static ExpectedTypeInfo @NotNull [] guessExpectedTypes(@NotNull PsiExpression expression, boolean allowVoidType) {
@@ -700,7 +741,7 @@ public final class CreateFromUsageUtils {
 
     if (expectedTypes.length == 0) {
       PsiType t = allowVoidType ? PsiTypes.voidType() : PsiType.getJavaLangObject(manager, resolveScope);
-      expectedTypes = new ExpectedTypeInfo[] {ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailType.NONE)};
+      expectedTypes = new ExpectedTypeInfo[]{ExpectedTypesProvider.createInfo(t, ExpectedTypeInfo.TYPE_OR_SUBTYPE, t, TailTypes.noneType())};
     }
 
     return expectedTypes;
@@ -830,7 +871,7 @@ public final class CreateFromUsageUtils {
         else {
           type = factory.createType(aClass);
         }
-        l.add(ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE));
+        l.add(ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.noneType()));
         if (l.size() == MAX_GUESSED_MEMBERS_COUNT) break;
       }
     }

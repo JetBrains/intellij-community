@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.cef.JCefAppConfig;
 import com.jetbrains.cef.JCefVersionDetails;
@@ -126,11 +127,35 @@ final class SettingsHelper {
         proxyArgs = new String[] {"--proxy-pac-url=" + proxySettings.PAC_URL + ":" + proxySettings.PROXY_PORT};
       }
       else {
-        proxyArgs = new String[] {"--proxy-auto-detect"};
+        // when "Auto-detect proxy settings" proxy option is enabled in IntelliJ:
+        //   IntelliJ's behavior: use system proxy settings or an automatically detected the proxy auto-config (PAC) file
+        //   CEF's behavior     : use system proxy settings
+        //     When no proxy flag passes to CEF, it uses the system proxy by default and detected the proxy auto-config (PAC) file
+        //     when "--proxy-auto-detect" flag passed.
+        //     CEF doesn't have any proxy flag that checks both system proxy settings and automatically detects proxy auto-config,
+        //     so we let the CEF uses the system proxy here because this is more useful for users and users can also manually
+        //     configure the PAC file in IntelliJ setting if they need to use PAC file.
       }
     }
     else if (proxySettings.USE_HTTP_PROXY) {
-      proxyArgs = new String[] {"--proxy-server=" + proxySettings.PROXY_HOST + ":" + proxySettings.PROXY_PORT};
+      String proxyScheme;
+      if (proxySettings.PROXY_TYPE_IS_SOCKS) {
+        proxyScheme = "socks";
+      }
+      else {
+        proxyScheme = "http";
+      }
+      String proxyServer = "--proxy-server=" + proxyScheme + "://" + proxySettings.PROXY_HOST + ":" + proxySettings.PROXY_PORT;
+      if (StringUtil.isEmptyOrSpaces(proxySettings.PROXY_EXCEPTIONS)) {
+        proxyArgs = new String[]{proxyServer};
+      }
+      else {
+        String proxyBypassList = "--proxy-bypass-list=" + proxySettings.PROXY_EXCEPTIONS;
+        proxyArgs = new String[]{proxyServer, proxyBypassList};
+      }
+    }
+    else {
+      proxyArgs = new String[]{"--no-proxy-server"};
     }
     if (proxyArgs != null) args = ArrayUtil.mergeArrays(args, proxyArgs);
 

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.server.embedder;
 
 import org.eclipse.aether.artifact.Artifact;
 
+import java.util.Map;
 import java.util.Objects;
 
 class ArtifactData {
@@ -11,17 +12,24 @@ class ArtifactData {
   private final String version;
   private final String classifier;
   private final String extension;
+  private final Map<String, String> properties;
 
-  ArtifactData(String artifactId, String groupId, String version, String classifier, String extension) {
+  ArtifactData(String artifactId, String groupId, String version, String classifier, String extension, Map<String, String> properties) {
     this.artifactId = artifactId;
     this.groupId = groupId;
     this.version = version;
     this.classifier = classifier;
     this.extension = extension;
+    this.properties = properties;
   }
 
   ArtifactData(Artifact artifact) {
-    this(artifact.getArtifactId(), artifact.getGroupId(), artifact.getVersion(), artifact.getClassifier(), artifact.getExtension());
+    this(artifact.getArtifactId(),
+         artifact.getGroupId(),
+         artifact.getVersion(),
+         artifact.getClassifier(),
+         artifact.getExtension(),
+         artifact.getProperties());
   }
 
   @Override
@@ -36,6 +44,7 @@ class ArtifactData {
     if (!Objects.equals(version, data.version)) return false;
     if (!Objects.equals(classifier, data.classifier)) return false;
     if (!Objects.equals(extension, data.extension)) return false;
+    if (!Objects.equals(properties, data.properties)) return false;
 
     return true;
   }
@@ -47,6 +56,7 @@ class ArtifactData {
     result = 31 * result + (version != null ? version.hashCode() : 0);
     result = 31 * result + (classifier != null ? classifier.hashCode() : 0);
     result = 31 * result + (extension != null ? extension.hashCode() : 0);
+    result = 31 * result + (properties != null ? properties.hashCode() : 0);
     return result;
   }
 

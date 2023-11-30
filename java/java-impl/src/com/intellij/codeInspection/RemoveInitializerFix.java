@@ -2,135 +2,146 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableFix;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteSideEffectsAwareFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
-public class RemoveInitializerFix implements LocalQuickFix {
+public class RemoveInitializerFix extends ModCommandQuickFix {
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return JavaBundle.message("inspection.unused.assignment.remove.quickfix");
+    return JavaBundle.message("inspection.unused.assignment.remove.initializer.quickfix");
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement psiInitializer = descriptor.getPsiElement();
-    if (!(psiInitializer instanceof PsiExpression)) return;
-    if (!(psiInitializer.getParent() instanceof PsiVariable variable)) return;
-
-    sideEffectAwareRemove(project, (PsiExpression)psiInitializer, psiInitializer, variable);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  public static void sideEffectAwareRemove(Project project,
-                                           PsiExpression psiInitializer,
-                                           PsiElement elementToDelete,
-                                           PsiVariable variable) {
-    PsiTypeElement typeElement = variable.getTypeElement();
-    sideEffectAwareRemove(project, psiInitializer, elementToDelete, variable,
-                          (typeElement != null ? typeElement.getText() + " " + variable.getName() + ";<br>" : "") +
-                          PsiExpressionTrimRenderer.render(psiInitializer));
-  }
-
-  /**
-   * Remove an element. Ask user what to do if the element has a side effect: keep the side effect, ignore it, or cancel removal.
-   * @return <code>true</code> if the element was actually removed, <code>false</code> if removal was cancelled or is not possible.
-   * */
-  public static boolean sideEffectAwareRemove(Project project,
-                                              PsiExpression psiInitializer,
-                                              PsiElement elementToDelete,
-                                              PsiVariable variable,
-                                              String afterText) {
-    if (!FileModificationService.getInstance().prepareFileForWrite(elementToDelete.getContainingFile())) return false;
-
-    final List<PsiElement> sideEffects = new ArrayList<>();
-    boolean hasSideEffects = RemoveUnusedVariableUtil.checkSideEffects(psiInitializer, variable, sideEffects);
-    final PsiElement declaration = variable.getParent();
-    RemoveUnusedVariableUtil.RemoveMode res;
-    if (hasSideEffects) {
-      hasSideEffects = PsiUtil.isStatement(psiInitializer);
-      res = RemoveUnusedVariableFix.showSideEffectsWarning(sideEffects, variable,
-                                                           FileEditorManager.getInstance(project).getSelectedTextEditor(),
-                                                           hasSideEffects, sideEffects.get(0).getText(), afterText);
-      if (res == RemoveUnusedVariableUtil.RemoveMode.CANCEL) {
-        return false;
-      }
+  public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    if (!(descriptor.getPsiElement() instanceof PsiExpression initializer)) return ModCommand.nop();
+    if (!(initializer.getParent() instanceof PsiVariable variable)) return ModCommand.nop();
+    List<ModCommandAction> subActions;
+    List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(initializer);
+    if (!sideEffects.isEmpty() && !ContainerUtil.exists(sideEffects, se -> VariableAccessUtils.variableIsUsed(variable, se))) {
+      subActions = List.of(new SideEffectAwareRemove(initializer),
+                           new DeleteElementFix(initializer, JavaBundle.message("delete.initializer.completely")));
     }
     else {
-      res = RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
+      subActions = List.of(new DeleteElementFix(initializer));
     }
-    WriteAction.run(() -> doRemove(project, psiInitializer, elementToDelete, variable, declaration, res));
-    return true;
+    return ModCommand.chooseAction(JavaBundle.message("inspection.unused.assignment.remove.initializer.quickfix.title"), subActions);
   }
+  
+  public static class SideEffectAwareRemove extends PsiUpdateModCommandAction<PsiExpression> {
+    private final @Nullable Consumer<PsiVariable> myAction;
 
-  @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    PsiExpression psiInitializer = ObjectUtils.tryCast(previewDescriptor.getPsiElement(), PsiExpression.class);
-    if (psiInitializer == null) return IntentionPreviewInfo.EMPTY;
-    PsiVariable variable = ObjectUtils.tryCast(psiInitializer.getParent(), PsiVariable.class);
-    if (variable == null) return IntentionPreviewInfo.EMPTY;
-    RemoveUnusedVariableUtil.RemoveMode res = RemoveUnusedVariableUtil.getModeForPreview(psiInitializer, variable);
-    doRemove(project, psiInitializer, psiInitializer, variable, variable.getParent(), res);
-    return IntentionPreviewInfo.DIFF;
-  }
+    public SideEffectAwareRemove(@NotNull PsiExpression initializer) {
+      this(initializer, null);
+    }
 
-  static void doRemove(@NotNull Project project,
-                       @NotNull PsiExpression psiInitializer,
-                       @NotNull PsiElement elementToDelete,
-                       @NotNull PsiVariable variable,
-                       PsiElement declaration,
-                       @NotNull RemoveUnusedVariableUtil.RemoveMode res) {
-    if (res == RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL) {
-      if (elementToDelete instanceof PsiExpression && !ExpressionUtils.isVoidContext((PsiExpression)elementToDelete) &&
-          !PsiTreeUtil.isAncestor(variable, elementToDelete, true)) {
-        String name = variable.getName();
-        if (name != null) {
-          new CommentTracker().replaceAndRestoreComments(elementToDelete, name);
+    public SideEffectAwareRemove(@NotNull PsiExpression initializer, @Nullable Consumer<PsiVariable> postAction) {
+      super(initializer);
+      myAction = postAction;
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression initializer, @NotNull ModPsiUpdater updater) {
+      invoke(initializer);
+    }
+
+    private void invoke(@NotNull PsiExpression initializer) {
+      PsiVariable origVar = initializer.getParent() instanceof PsiVariable v ? v:
+                            initializer.getParent() instanceof PsiAssignmentExpression assignment &&
+                            assignment.getLExpression() instanceof PsiReferenceExpression ref && 
+                            ref.resolve() instanceof PsiVariable v ? v : null;
+      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(
+        initializer, e -> e instanceof PsiUnaryExpression unary && ExpressionUtils.isReferenceTo(unary.getOperand(), origVar) ||
+                          e instanceof PsiAssignmentExpression assignment &&
+                          ExpressionUtils.isReferenceTo(assignment.getLExpression(), origVar));
+      CodeBlockSurrounder.SurroundResult result = null;
+      if (!sideEffects.isEmpty()) {
+        PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, initializer);
+        CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(initializer);
+        if (surrounder == null) {
+          tryProcessExpressionList(initializer, sideEffects);
           return;
         }
-      }
-      elementToDelete.delete();
-    }
-    else if (res == RemoveUnusedVariableUtil.RemoveMode.MAKE_STATEMENT) {
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiStatement statementFromText = factory.createStatementFromText(psiInitializer.getText() + ";", null);
-      final PsiElement parent = elementToDelete.getParent();
-      if (parent instanceof PsiExpressionStatement) {
-        parent.replace(statementFromText);
-      }
-      else {
-        elementToDelete.delete();
-        if (declaration instanceof PsiClass) {
-          PsiClassInitializer initializer = factory.createClassInitializer();
-          initializer = (PsiClassInitializer)declaration.addAfter(initializer, variable);
-          initializer.getBody().add(statementFromText);
-          return;
+        result = surrounder.surround();
+        PsiStatement anchor = result.getAnchor();
+        initializer = result.getExpression();
+        if (statements.length > 0) {
+          BlockUtils.addBefore(anchor, statements);
         }
-        PsiElement grandParent = declaration.getParent();
-        BlockUtils.addBefore(((PsiStatement)(grandParent instanceof PsiForStatement ? grandParent : declaration)), statementFromText);
       }
+      PsiElement parent = initializer.getParent();
+      if (parent instanceof PsiVariable var) {
+        initializer.delete();
+        if (myAction != null) {
+          myAction.accept(var);
+        }
+      } else if (parent instanceof PsiAssignmentExpression) {
+        RemoveUnusedVariableUtil.deleteWholeStatement(parent);
+      }
+      if (result != null) {
+        result.collapse();
+      }
+    }
+
+    private static void tryProcessExpressionList(@NotNull PsiExpression initializer, List<PsiExpression> sideEffects) {
+      if (initializer.getParent() instanceof PsiAssignmentExpression assignment) {
+        if (assignment.getParent() instanceof PsiExpressionList list) {
+          for (PsiExpression effect : sideEffects) {
+            list.addBefore(effect, assignment);
+          }
+          assignment.delete();
+        }
+        if (assignment.getParent() instanceof PsiExpressionStatement statement && statement.getParent() instanceof PsiForStatement) {
+          if (sideEffects.size() == 1) {
+            assignment.replace(sideEffects.get(0));
+          } else {
+            PsiExpressionListStatement listStatement = (PsiExpressionListStatement)JavaPsiFacade.getElementFactory(statement.getProject())
+              .createStatementFromText("a,b", null);
+            PsiExpressionList list = listStatement.getExpressionList();
+            PsiExpression[] mockExpressions = list.getExpressions();
+            PsiExpression first = mockExpressions[0];
+            for (PsiExpression effect : sideEffects) {
+              list.addBefore(effect, first);
+            }
+            for (PsiExpression expression : mockExpressions) {
+              expression.delete();
+            }
+            statement.replace(listStatement);
+          }
+        }
+      }
+    }
+
+    public static void remove(@NotNull PsiExpression expression) {
+      new SideEffectAwareRemove(expression).invoke(expression);
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression initializer) {
+      if (!CodeBlockSurrounder.canSurround(initializer)) return null;
+      List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(initializer);
+      return Presentation.of(DeleteSideEffectsAwareFix.getMessage(initializer, sideEffects))
+        .withHighlighting(ContainerUtil.map2Array(sideEffects, TextRange.EMPTY_ARRAY, expression -> expression.getTextRange()));
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return QuickFixBundle.message("extract.side.effects.family.name");
     }
   }
 }

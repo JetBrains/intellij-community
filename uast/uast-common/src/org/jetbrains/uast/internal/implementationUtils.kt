@@ -97,10 +97,10 @@ fun <T : UElement> convertOrReport(psiElement: PsiElement, parent: UElement, exp
 
 internal inline fun <T, R> ThreadLocal<T>.withValue(value: T, block: () -> R): R {
   val old = this.get()
-  if (old == value) return block.invoke();
+  if (old == value) return block.invoke()
   try {
     this.set(value)
-    return block.invoke();
+    return block.invoke()
   }
   finally {
     if (old == null)

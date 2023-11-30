@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.AnimatedIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -86,7 +86,7 @@ public class ProgressStripe extends JBPanel {
     }
 
     @Override
-    protected @NotNull NonOpaquePanel customizeLoadingLayer(JPanel parent, @NotNull JLabel text, @NotNull AsyncProcessIcon icon) {
+    protected @NotNull NonOpaquePanel customizeLoadingLayer(JPanel parent, @NotNull JLabel text, @NotNull AnimatedIcon icon) {
       parent.setLayout(new BorderLayout());
 
       NonOpaquePanel result = new NonOpaquePanel();

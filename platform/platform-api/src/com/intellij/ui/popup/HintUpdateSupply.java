@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
@@ -46,12 +32,10 @@ import javax.swing.tree.TreePath;
 public abstract class HintUpdateSupply {
   private static final Key<HintUpdateSupply> HINT_UPDATE_MARKER = Key.create("HINT_UPDATE_MARKER");
 
-  @Nullable
-  private JBPopup myHint;
+  private @Nullable JBPopup myHint;
   private JComponent myComponent;
 
-  @Nullable
-  public static HintUpdateSupply getSupply(@NotNull JComponent component) {
+  public static @Nullable HintUpdateSupply getSupply(@NotNull JComponent component) {
     return (HintUpdateSupply)component.getClientProperty(HINT_UPDATE_MARKER);
   }
 
@@ -70,11 +54,10 @@ public abstract class HintUpdateSupply {
       CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(component)));
   }
 
-  public static void installHintUpdateSupply(@NotNull final JComponent component, final Function<Object, ? extends PsiElement> provider) {
+  public static void installHintUpdateSupply(final @NotNull JComponent component, final Function<Object, ? extends PsiElement> provider) {
     HintUpdateSupply supply = new HintUpdateSupply(component) {
-      @Nullable
       @Override
-      protected PsiElement getPsiElementForHint(@Nullable Object selectedValue) {
+      protected @Nullable PsiElement getPsiElementForHint(@Nullable Object selectedValue) {
         return provider.fun(selectedValue);
       }
     };
@@ -102,7 +85,7 @@ public abstract class HintUpdateSupply {
     installListListener(list);
   }
 
-  protected void installTableListener(@NotNull final JTable table) {
+  protected void installTableListener(final @NotNull JTable table) {
     ListSelectionListener listener = new ListSelectionListener() {
       @Override
       public void valueChanged(final ListSelectionEvent e) {
@@ -122,7 +105,7 @@ public abstract class HintUpdateSupply {
     table.getColumnModel().getSelectionModel().addListSelectionListener(listener);
   }
 
-  protected void installTreeListener(@NotNull final JTree tree) {
+  protected void installTreeListener(final @NotNull JTree tree) {
     tree.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(final TreeSelectionEvent e) {
@@ -156,8 +139,7 @@ public abstract class HintUpdateSupply {
     });
   }
 
-  @Nullable
-  protected abstract PsiElement getPsiElementForHint(@Nullable Object selectedValue);
+  protected abstract @Nullable PsiElement getPsiElementForHint(@Nullable Object selectedValue);
 
   private void installSupply(@NotNull JComponent component) {
     component.putClientProperty(HINT_UPDATE_MARKER, this);

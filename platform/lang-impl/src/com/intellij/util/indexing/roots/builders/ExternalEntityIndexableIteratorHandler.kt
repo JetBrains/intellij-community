@@ -2,11 +2,12 @@
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.indexing.roots.ExternalEntityIndexableIteratorImpl
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.util.indexing.roots.origin.MutableIndexingUrlSourceRootHolder
 
 class ExternalEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean {
@@ -19,17 +20,14 @@ class ExternalEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     @Suppress("UNCHECKED_CAST")
     builders as Collection<ExternalEntityIteratorBuilder<WorkspaceEntity>>
 
-    val (custom, usual) = builders.partition { it.customization != null }
-
-    val customIterators = custom.flatMap {
-      it.customization!!.createExternalEntityIterators(it.entityReference, it.roots, it.sourceRoots)
+    return builders.groupBy { it.entityReference }.mapNotNull {
+      it.value.map { builder -> builder.roots }.foldRight(MutableIndexingUrlSourceRootHolder()) { holder, mutableHolder ->
+        mutableHolder.addRoots(holder)
+        return@foldRight mutableHolder
+      }.toSourceRootHolder().let { holder ->
+        if (holder.isEmpty()) null
+        else ExternalEntityIndexableIteratorImpl(it.key, holder, it.value[0].presentation)
+      }
     }
-
-    val usualIterators = usual.groupBy { it.entityReference }.map {
-      ExternalEntityIndexableIteratorImpl(it.key, it.value.flatMap { builder -> builder.roots },
-                                          it.value.flatMap { builder -> builder.sourceRoots })
-    }
-
-    return usualIterators + customIterators
   }
 }

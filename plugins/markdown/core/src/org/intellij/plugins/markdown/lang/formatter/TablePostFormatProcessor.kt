@@ -9,7 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils
-import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
+import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable

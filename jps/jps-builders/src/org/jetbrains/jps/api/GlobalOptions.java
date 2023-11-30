@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.api;
 
 /**
@@ -29,6 +15,7 @@ public interface GlobalOptions {
   String FALLBACK_JDK_VERSION = "jps.fallback.jdk.version";
   String REPORT_BUILD_STATISTICS = "jps.report.build.statistics";
   String JPS_IN_WSL_OPTION = "jps.in.wsl";
+  String DEPENDENCY_GRAPH_ENABLED = "jps.use.dependency.graph";
 
   /**
    * Set this property to 'false' to disable default logging. By default the log is written to build.log file in the directory specified by {@link #LOG_DIR_OPTION}.

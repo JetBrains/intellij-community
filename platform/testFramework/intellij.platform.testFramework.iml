@@ -26,8 +26,9 @@
     <orderEntry type="library" exported="" name="jetCheck" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" exported="" />
@@ -47,6 +48,14 @@
     <orderEntry type="module-library" scope="TEST">
       <library name="okhttp3-mockwebserver" type="repository">
         <properties maven-id="com.squareup.okhttp3:mockwebserver:5.0.0-alpha.11">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver/5.0.0-alpha.11/mockwebserver-5.0.0-alpha.11.jar">
+              <sha256sum>4a30234a911a73ae71f5aec5f98bee243c172665e841f8d532ef77e0b5e81010</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/mockwebserver3/5.0.0-alpha.11/mockwebserver3-5.0.0-alpha.11.jar">
+              <sha256sum>9c9e3ef454b514d4a1342faf99c7d4cb41eaae4cb7aefcc93cb7b202bdf4fdfd</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="com.squareup.okhttp3:okhttp-jvm" />
             <dependency maven-id="junit:junit" />
@@ -71,5 +80,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="okhttp" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
   </component>
 </module>

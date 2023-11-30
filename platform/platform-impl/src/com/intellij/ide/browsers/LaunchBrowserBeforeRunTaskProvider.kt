@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.execution.BeforeRunTask
@@ -20,25 +20,25 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.Nls
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import javax.swing.Icon
 import javax.swing.JCheckBox
 
+private val ID: Key<LaunchBrowserBeforeRunTask> = Key.create("LaunchBrowser.Before.Run")
+
 internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<LaunchBrowserBeforeRunTask>(), DumbAware {
-  companion object {
-    val ID = Key.create<LaunchBrowserBeforeRunTask>("LaunchBrowser.Before.Run")
-  }
 
-  override fun getName() = IdeBundle.message("task.browser.launch")
+  override fun getName(): @Nls String = IdeBundle.message("task.browser.launch")
 
-  override fun getId() = ID
+  override fun getId(): Key<LaunchBrowserBeforeRunTask> = ID
 
   override fun getIcon(): Icon = AllIcons.Nodes.PpWeb
 
-  override fun isConfigurable() = true
+  override fun isConfigurable(): Boolean = true
 
-  override fun createTask(runConfiguration: RunConfiguration) = LaunchBrowserBeforeRunTask()
+  override fun createTask(runConfiguration: RunConfiguration): LaunchBrowserBeforeRunTask = LaunchBrowserBeforeRunTask()
 
   override fun configureTask(context: DataContext, runConfiguration: RunConfiguration, task: LaunchBrowserBeforeRunTask): Promise<Boolean> {
     val state = task.state
@@ -87,11 +87,14 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
     return resolvedPromise(modificationCount != state.modificationCount)
   }
 
-  override fun executeTask(context: DataContext, configuration: RunConfiguration, env: ExecutionEnvironment, task: LaunchBrowserBeforeRunTask): Boolean {
+  override fun executeTask(context: DataContext,
+                           configuration: RunConfiguration,
+                           env: ExecutionEnvironment,
+                           task: LaunchBrowserBeforeRunTask): Boolean {
     val disposable = Disposer.newDisposable()
     Disposer.register(env.project, disposable)
     val executionId = env.executionId
-    env.project.messageBus.connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, object: ExecutionListener {
+    env.project.messageBus.connect(disposable).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
         Disposer.dispose(disposable)
       }
@@ -117,14 +120,17 @@ internal class LaunchBrowserBeforeRunTaskProvider : BeforeRunTaskProvider<Launch
 
 internal class LaunchBrowserBeforeRunTaskState : BaseState() {
   @get:Attribute(value = "browser", converter = WebBrowserReferenceConverter::class)
-  var browser by property<WebBrowser?>(null) { it == null }
+  var browser: WebBrowser? by property(null) { it == null }
+
   @get:Attribute()
-  var url by string()
+  var url: String? by string()
+
   @get:Attribute()
-  var withDebugger by property(false)
+  var withDebugger: Boolean by property(false)
 }
 
-internal class LaunchBrowserBeforeRunTask : BeforeRunTask<LaunchBrowserBeforeRunTask>(LaunchBrowserBeforeRunTaskProvider.ID), PersistentStateComponent<LaunchBrowserBeforeRunTaskState> {
+internal class LaunchBrowserBeforeRunTask : BeforeRunTask<LaunchBrowserBeforeRunTask>(ID),
+                                            PersistentStateComponent<LaunchBrowserBeforeRunTaskState> {
   private var state = LaunchBrowserBeforeRunTaskState()
 
   override fun loadState(state: LaunchBrowserBeforeRunTaskState) {
@@ -132,5 +138,5 @@ internal class LaunchBrowserBeforeRunTask : BeforeRunTask<LaunchBrowserBeforeRun
     this.state = state
   }
 
-  override fun getState() = state
+  override fun getState(): LaunchBrowserBeforeRunTaskState = state
 }

@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -28,26 +27,30 @@ public final class ChildInfoImpl implements ChildInfo {
   private final String symLinkTarget;
   private final ChildInfo @Nullable("null means children are unknown") [] children;
 
-  public ChildInfoImpl(@NotNull String name,
+  public ChildInfoImpl(int nameId,
                        @Nullable FileAttributes attributes,
                        ChildInfo @Nullable [] children,
                        @Nullable String symLinkTarget) {
-    this(UNKNOWN_ID_YET, FileNameCache.storeName(name), attributes, children, symLinkTarget);
+    this(UNKNOWN_ID_YET, nameId, attributes, children, symLinkTarget);
   }
 
-  public ChildInfoImpl(int id,
+  public ChildInfoImpl(int fileId,
                        int nameId,
                        @Nullable FileAttributes attributes,
                        ChildInfo @Nullable [] children,
                        @Nullable String symLinkTarget) {
     this.attributes = null == attributes ? UNKNOWN : attributes;
-    this.id = id;
+    this.id = fileId;
     this.nameId = nameId;
     this.symLinkTarget = symLinkTarget;
     this.children = children;
-    if (id <= 0 && id != UNKNOWN_ID_YET || nameId <= 0 && nameId != UNKNOWN_ID_YET) {
-      int parentId = FSRecords.getParent(id);
-      throw new IllegalArgumentException("invalid arguments id: " + id + " (parent id = " + parentId + "); nameId: " + nameId);
+    if (fileId <= 0 && fileId != UNKNOWN_ID_YET) {
+      int parentId = FSRecords.getParent(fileId);
+      throw new IllegalArgumentException("fileId is invalid: fileId=" + fileId + ", parentId=" + parentId + ", nameId=" + nameId);
+    }
+    else if (nameId <= 0 && nameId != UNKNOWN_ID_YET) {
+      int parentId = FSRecords.getParent(fileId);
+      throw new IllegalArgumentException("nameId is invalid: fileId=" + fileId + ", parentId=" + parentId + ", nameId=" + nameId);
     }
   }
 
@@ -58,7 +61,7 @@ public final class ChildInfoImpl implements ChildInfo {
 
   @Override
   public @NotNull CharSequence getName() {
-    return FileNameCache.getVFileName(nameId);
+    return ((PersistentFSImpl)PersistentFS.getInstance()).getNameByNameId(nameId);
   }
 
   @Override
@@ -135,7 +138,7 @@ public final class ChildInfoImpl implements ChildInfo {
   @Override
   public String toString() {
     return "\"" + (nameId > 0 ? getName() : "?") + "\"; nameId: " + nameId + "; id: " + id +
-           " (" + (attributes == UNKNOWN ? "unknown" : super.toString()) + ")" +
+           " (" + (attributes == UNKNOWN ? "unknown" : attributes.toString()) + ")" +
            (children == null ? "" : "\n  " + StringUtil.join(children, info -> info.toString().replaceAll("\n", "\n  "), "\n  "));
   }
 }

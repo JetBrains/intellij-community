@@ -7,6 +7,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ArrayUtilRt
@@ -41,13 +42,13 @@ open class MessageBusImpl : MessageBus {
 
   companion object {
     @JvmField
-    internal val LOG = Logger.getInstance(MessageBusImpl::class.java)
+    internal val LOG: Logger = logger<MessageBusImpl>()
   }
 
   @JvmField
   internal val publisherCache: ConcurrentMap<Topic<*>, Any> = ConcurrentHashMap()
   @JvmField
-  internal val subscribers = ConcurrentLinkedQueue<MessageHandlerHolder>()
+  internal val subscribers: ConcurrentLinkedQueue<MessageHandlerHolder> = ConcurrentLinkedQueue<MessageHandlerHolder>()
 
   // caches subscribers for this bus and its children or parents, depending on the topic's broadcast policy
   @JvmField
@@ -98,7 +99,7 @@ open class MessageBusImpl : MessageBus {
   }
 
   override fun simpleConnect(): SimpleMessageBusConnection {
-    // to avoid registering in Dispose tree, default handler and deliverImmediately are not supported
+    // to avoid registering in a Dispose tree, default handler and deliverImmediately are not supported
     checkNotDisposed()
     val connection = SimpleMessageBusConnectionImpl(this)
     subscribers.add(connection)
@@ -368,7 +369,7 @@ class RootBus(owner: MessageBusOwner) : CompositeMessageBus(owner) {
 
 internal class MessageQueue {
   @JvmField
-  val queue = ArrayDeque<Message>()
+  val queue: ArrayDeque<Message> = ArrayDeque<Message>()
 
   @JvmField
   var current: Message? = null

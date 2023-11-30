@@ -25,6 +25,12 @@ import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.events.*;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -34,14 +40,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,35 +97,28 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
     connect.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
       @Override
-      public void beforeChanged(@NotNull VersionedStorageChange event) {
-        for (EntityChange<ModuleEntity> change : SequencesKt.asIterable(event.getChanges(ModuleEntity.class))) {
+      public void changed(@NotNull VersionedStorageChange event) {
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
+          ModuleEntity newEntity = change.getNewEntity();
+          if (newEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(newEntity, event.getStorageAfter()));
+          }
           ModuleEntity oldEntity = change.getOldEntity();
           if (oldEntity != null) {
             addToDirtyModules(ModuleEntityUtils.findModule(oldEntity, event.getStorageBefore()));
           }
         }
-        for (EntityChange<ContentRootEntity> change : SequencesKt.asIterable(event.getChanges(ContentRootEntity.class))) {
+        for (EntityChange<ContentRootEntity> change : event.getChanges(ContentRootEntity.class)) {
+          ContentRootEntity newEntity = change.getNewEntity();
+          if (newEntity != null) {
+            addToDirtyModules(ModuleEntityUtils.findModule(newEntity.getModule(), event.getStorageAfter()));
+          }
           ContentRootEntity oldEntity = change.getOldEntity();
           if (oldEntity != null) {
             addToDirtyModules(ModuleEntityUtils.findModule(oldEntity.getModule(), event.getStorageBefore()));
           }
         }
-      }
-
-      @Override
-      public void changed(@NotNull VersionedStorageChange event) {
-        for (EntityChange<ModuleEntity> change : SequencesKt.asIterable(event.getChanges(ModuleEntity.class))) {
-          ModuleEntity newEntity = change.getNewEntity();
-          if (newEntity != null) {
-            addToDirtyModules(ModuleEntityUtils.findModule(newEntity, event.getStorageAfter()));
-          }
-        }
-        for (EntityChange<ContentRootEntity> change : SequencesKt.asIterable(event.getChanges(ContentRootEntity.class))) {
-          ContentRootEntity newEntity = change.getNewEntity();
-          if (newEntity != null) {
-            addToDirtyModules(ModuleEntityUtils.findModule(newEntity.getModule(), event.getStorageAfter()));
-          }
-        }
+        clearDisposedModules();
       }
     });
   }
@@ -335,14 +327,10 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     }
   }
 
-  private void removeFromDirtyModules(@NotNull Module module) {
+  private void clearDisposedModules() {
     synchronized (myLock) {
-      if (myCompilationPhase) {
-        myChangedModulesDuringCompilation.remove(module);
-      }
-      else {
-        myVFSChangedModules.remove(module);
-      }
+      myChangedModulesDuringCompilation.removeIf(module -> module.isDisposed());
+      myVFSChangedModules.removeIf(module -> module.isDisposed());
     }
   }
 

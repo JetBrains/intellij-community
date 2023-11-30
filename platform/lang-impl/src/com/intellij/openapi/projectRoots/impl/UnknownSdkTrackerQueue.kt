@@ -8,11 +8,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 
-@Service // project
+@Service(Service.Level.PROJECT)
 internal class UnknownSdkTrackerQueue : UnknownSdkCollectorQueue(700) {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<UnknownSdkTrackerQueue>()
+    fun getInstance(project: Project): UnknownSdkTrackerQueue = project.service<UnknownSdkTrackerQueue>()
   }
 }
 
@@ -25,7 +25,7 @@ internal abstract class UnknownSdkCollectorQueue(mergingTimeSpaceMillis : Int) :
                                                  null,
                                                  false).usePassThroughInUnitTestMode()
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   fun queue(task: UnknownSdkTrackerTask) {
     myUpdateQueue.queue(object : Update(this) {

@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.colors.ReaderModeStatsCollector
 import com.intellij.codeInsight.actions.ReaderModeSettingsListener.Companion.applyToAllEditors
 import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.DataManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ClientEditorManager
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
@@ -30,7 +31,7 @@ class ReaderModeSettingsListener : ReaderModeListener {
   companion object {
     @Topic.ProjectLevel
     @JvmField
-    val TOPIC = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<ReaderModeListener> = Topic(ReaderModeListener::class.java, Topic.BroadcastDirection.NONE)
 
     @RequiresEdt
     fun applyToAllEditors(project: Project) {
@@ -42,10 +43,12 @@ class ReaderModeSettingsListener : ReaderModeListener {
       }
 
       for (editor in ClientEditorManager.getCurrentInstance().editors()) {
-        if (editor !is EditorImpl) continue
-        if (editor.getProject() != project) continue
+        if (editor !is EditorImpl || editor.getProject() != project) {
+          continue
+        }
 
-        ReaderModeSettings.applyReaderMode(project, editor, FileDocumentManager.getInstance().getFile(editor.document), fileIsOpenAlready = true)
+        val file = FileDocumentManager.getInstance().getFile(editor.document) ?: continue
+        ReaderModeSettings.applyReaderMode(project = project, editor = editor, file = file, fileIsOpenAlready = true)
       }
     }
 
@@ -78,9 +81,9 @@ private class ReaderModeEditorSettingsListener : ProjectActivity {
         }
       }
     }
-    EditorSettingsExternalizable.getInstance().addPropertyChangeListener(propertyChangeListener, project)
+    serviceAsync<EditorSettingsExternalizable>().addPropertyChangeListener(propertyChangeListener, project)
 
-    val fontPreferences = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
+    val fontPreferences = serviceAsync<AppEditorFontOptions>().fontPreferences as FontPreferencesImpl
     fontPreferences.addChangeListener({
       ReaderModeSettings.getInstance(project).showLigatures = fontPreferences.useLigatures()
       applyToAllEditors(project)

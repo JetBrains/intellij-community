@@ -3,7 +3,6 @@ package com.intellij.credentialStore.kdbx
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.sha2_512
 import org.bouncycastle.crypto.SkippingStreamCipher
 import org.bouncycastle.crypto.engines.ChaCha7539Engine
@@ -14,6 +13,7 @@ import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
 import java.util.zip.GZIPInputStream
+import kotlin.io.path.inputStream
 
 // https://gist.github.com/lgg/e6ccc6e212d18dd2ecd8a8c116fb1e45
 

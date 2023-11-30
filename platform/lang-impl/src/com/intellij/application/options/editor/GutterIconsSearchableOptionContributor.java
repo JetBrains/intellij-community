@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor;
 
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
@@ -15,7 +15,7 @@ final class GutterIconsSearchableOptionContributor extends SearchableOptionContr
   @Override
   public void processOptions(@NotNull SearchableOptionProcessor processor) {
     String gutterIconsDisplayName = IdeBundle.message("configurable.GutterIconsConfigurable.display.name");
-    for (KeyedLazyInstance<LineMarkerProvider> extension : LineMarkerProviders.EP_NAME.getExtensions()) {
+    for (KeyedLazyInstance<LineMarkerProvider> extension : LineMarkerProviders.EP_NAME.getExtensionList()) {
       LineMarkerProvider instance = extension.getInstance();
       if (instance instanceof LineMarkerProviderDescriptor) {
         String name = ((LineMarkerProviderDescriptor)instance).getName();

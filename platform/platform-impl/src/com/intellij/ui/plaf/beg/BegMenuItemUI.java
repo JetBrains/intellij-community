@@ -1,5 +1,5 @@
 
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
@@ -53,9 +53,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private static final Rectangle h = new Rectangle();
   private static final Rectangle l = new Rectangle();
   private static final Rectangle f = new Rectangle(32767, 32767);
-  @NonNls public static final String PLAY_SOUND_METHOD = "playSound";
-  @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
-  @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
+  public static final @NonNls String PLAY_SOUND_METHOD = "playSound";
+  public static final @NonNls String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
+  public static final @NonNls String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
 
   /** invoked by reflection */
   public static ComponentUI createUI(JComponent component) {
@@ -78,7 +78,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
   }
 
-  private static boolean isSelected(JMenuItem item) {
+  static boolean isSelected(JMenuItem item) {
     if (item == null) return false;
     ButtonModel model = item.getModel();
     if (model == null) return false;
@@ -119,15 +119,12 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     String keyStrokeText = getKeyStrokeText(jmenuitem);
     String s1 = layoutMenuItem(fontmetrics, jmenuitem.getText(), fontmetrics1, keyStrokeText, icon1, icon2, arrowIcon, jmenuitem.getVerticalAlignment(), jmenuitem.getHorizontalAlignment(), jmenuitem.getVerticalTextPosition(), jmenuitem.getHorizontalTextPosition(), f, l, j, c, h, d, jmenuitem.getText() != null ? defaultTextIconGap : 0, defaultTextIconGap);
     Color color2 = g.getColor();
-    if (comp.isOpaque() || StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (comp.isOpaque()) {
       g.setColor(jmenuitem.getBackground());
       g.fillRect(0, 0, j1, k1);
       if (isSelected(jmenuitem)) {
         g.setColor(selectionBackground);
-        if (icon2 != null && !(StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF())) {
-          g.fillRect(k, 0, j1 - k, k1);
-        }
-        else if (ExperimentalUI.isNewUI() || IdeaPopupMenuUI.isRoundBorder()) {
+        if (ExperimentalUI.isNewUI() || IdeaPopupMenuUI.isRoundBorder()) {
           IdeaMenuUI.paintRoundSelection(g, comp, j1, k1);
         }
         else {
@@ -236,8 +233,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
            : getKeyStrokeText(item.getAccelerator());
   }
 
-  @NlsSafe
-  private static String getKeyStrokeText(KeyStroke keystroke) {
+  private static @NlsSafe String getKeyStrokeText(KeyStroke keystroke) {
     String s1 = "";
     if (keystroke != null){
       int j1 = keystroke.getModifiers();
@@ -516,7 +512,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     }
     ActionMenuItem item = (ActionMenuItem)menuItem;
     AnAction action = item.getAnAction();
-    if (ActionPlaces.MAIN_MENU.equals(item.getPlace()) && ApplicationManager.getApplication() != null) {
+    if (ActionPlaces.MAIN_MENU.equals(item.place) && ApplicationManager.getApplication() != null) {
       MainMenuCollector.getInstance().record(action);
     }
     if (!item.isKeepMenuOpen()) {
@@ -549,14 +545,17 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     return new MyMouseInputHandler();
   }
 
-  private class MyMouseInputHandler extends MouseInputHandler{
+  private final class MyMouseInputHandler extends MouseInputHandler {
     @Override
     public void mouseReleased(MouseEvent e){
       MenuSelectionManager manager=MenuSelectionManager.defaultManager();
-      Point p=e.getPoint();
-      if(p.x>=0&&p.x<menuItem.getWidth()&&p.y>=0&&p.y<menuItem.getHeight()){
-        doClick(manager,e);
-      } else{
+      Point p = e.getPoint();
+      if (p.x >= 0 && p.x < menuItem.getWidth() && p.y >= 0 && p.y < menuItem.getHeight()) {
+        if (e.getButton() == MouseEvent.BUTTON1) {
+          doClick(manager, e);
+        }
+      }
+      else {
         manager.processMouseEvent(e);
       }
     }
@@ -567,7 +566,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     return new MyMenuDragMouseHandler();
   }
 
-  private class MyMenuDragMouseHandler implements MenuDragMouseListener {
+  private final class MyMenuDragMouseHandler implements MenuDragMouseListener {
     @Override
     public void menuDragMouseEntered(MenuDragMouseEvent e){}
 

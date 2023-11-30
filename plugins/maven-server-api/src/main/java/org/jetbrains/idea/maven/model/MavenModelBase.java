@@ -20,13 +20,13 @@ import java.util.*;
 
 public class MavenModelBase implements Serializable {
   private Properties myProperties;
-  private List<MavenPlugin> myPlugins = Collections.emptyList();
-  private List<MavenArtifact> myExtensions = Collections.emptyList();
-  private List<MavenArtifact> myDependencies = Collections.emptyList();
-  private List<MavenArtifactNode> myDependencyTree = Collections.emptyList();
-  private List<MavenRemoteRepository> myRemoteRepositories = Collections.emptyList();
+  private ArrayList<MavenPlugin> myPlugins = new ArrayList<>();
+  private ArrayList<MavenArtifact> myExtensions = new ArrayList<>();
+  private ArrayList<MavenArtifact> myDependencies = new ArrayList<>();
+  private ArrayList<MavenArtifactNode> myDependencyTree = new ArrayList<>();
+  private ArrayList<MavenRemoteRepository> myRemoteRepositories =new ArrayList<>();
 
-  private List<String> myModules;
+  private ArrayList<String> myModules;
 
   public Properties getProperties() {
     if (myProperties == null) myProperties = new Properties();

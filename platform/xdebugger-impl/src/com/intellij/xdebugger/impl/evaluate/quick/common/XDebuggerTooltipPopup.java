@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebuggerBundle;
@@ -36,6 +37,7 @@ class XDebuggerTooltipPopup {
     myPoint = point;
   }
 
+  @Nullable
   JBPopup show(JComponent component, @Nullable EditorMouseEvent editorMouseEvent) {
     BorderLayoutPanel content = JBUI.Panels.simplePanel();
     Color bgColor = HintUtil.getInformationColor();
@@ -76,12 +78,19 @@ class XDebuggerTooltipPopup {
       .createPopup();
 
     //Editor may be disposed before later invokator process this action
-    if (myEditor.getComponent().getRootPane() == null) {
+    if (myEditor.isDisposed()) {
       myPopup.cancel();
       return null;
     }
+    hideAndDisableFloatingToolbar(myEditor, myPopup);
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
     return myPopup;
+  }
+
+  private static void hideAndDisableFloatingToolbar(@NotNull Editor editor, @NotNull JBPopup popup){
+    CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+    if (floatingToolbar == null) return;
+    floatingToolbar.hideOnPopupConflict(popup);
   }
 
   private class ShowErrorsAction extends AnAction {

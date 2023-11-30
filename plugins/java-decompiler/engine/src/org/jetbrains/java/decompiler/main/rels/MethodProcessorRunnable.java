@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.main.rels;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.code.cfg.ControlFlowGraph;
+import org.jetbrains.java.decompiler.main.CancellationManager;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
@@ -67,6 +68,8 @@ public class MethodProcessorRunnable implements Runnable {
   }
 
   public static RootStatement codeToJava(StructClass cl, StructMethod mt, MethodDescriptor md, VarProcessor varProc) throws IOException {
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
+    cancellationManager.checkCanceled();
     boolean isInitializer = CodeConstants.CLINIT_NAME.equals(mt.getName()); // for now static initializer only
 
     mt.expandData(cl);
@@ -83,6 +86,7 @@ public class MethodProcessorRunnable implements Runnable {
     // Since jsr instruction is forbidden for class files version 51.0 (Java 7) or above
     // call to inlineJsr() is only meaningful for class files prior to the Java 7.
     //
+    cancellationManager.checkCanceled();
     if (!cl.isVersion7()) {
       graph.inlineJsr(cl, mt);
     }
@@ -91,6 +95,8 @@ public class MethodProcessorRunnable implements Runnable {
     DeadCodeHelper.connectDummyExitBlock(graph);
 
     DeadCodeHelper.removeGoTos(graph);
+
+    ExceptionDeobfuscator.duplicateMergedCatchBlocks(graph, cl);
 
     ExceptionDeobfuscator.removeCircularRanges(graph);
 
@@ -124,36 +130,42 @@ public class MethodProcessorRunnable implements Runnable {
       }
       ExceptionDeobfuscator.insertDummyExceptionHandlerBlocks(graph, mt.getBytecodeVersion());
     }
-
+    cancellationManager.checkCanceled();
     RootStatement root = DomHelper.parseGraph(graph);
+
+    cancellationManager.checkCanceled();
 
     FinallyProcessor fProc = new FinallyProcessor(md, varProc);
     while (fProc.iterateGraph(cl, mt, root, graph)) {
+      cancellationManager.checkCanceled();
       root = DomHelper.parseGraph(graph);
     }
 
     // remove synchronized exception handler
     // not until now because of comparison between synchronized statements in the finally cycle
     DomHelper.removeSynchronizedHandler(root);
+    cancellationManager.checkCanceled();
 
     //		LabelHelper.lowContinueLabels(root, new HashSet<StatEdge>());
 
     SequenceHelper.condenseSequences(root);
 
     ClearStructHelper.clearStatements(root);
+    cancellationManager.checkCanceled();
 
     ExprProcessor proc = new ExprProcessor(md, varProc);
     proc.processStatement(root, cl);
+    cancellationManager.checkCanceled();
 
     SequenceHelper.condenseSequences(root);
 
-    StackVarsProcessor stackProc = new StackVarsProcessor();
-
     do {
-      stackProc.simplifyStackVars(root, mt, cl);
+      StackVarsProcessor.simplifyStackVars(root, mt, cl);
       varProc.setVarVersions(root);
     }
     while (new PPandMMHelper().findPPandMM(root));
+
+    cancellationManager.checkCanceled();
 
     while (true) {
       LabelHelper.cleanUpEdges(root);
@@ -166,7 +178,7 @@ public class MethodProcessorRunnable implements Runnable {
       if (DecompilerContext.getOption(IFernflowerPreferences.IDEA_NOT_NULL_ANNOTATION)) {
         if (IdeaNotNullHelper.removeHardcodedChecks(root, mt)) {
           SequenceHelper.condenseSequences(root);
-          stackProc.simplifyStackVars(root, mt, cl);
+          StackVarsProcessor.simplifyStackVars(root, mt, cl);
           varProc.setVarVersions(root);
         }
       }
@@ -187,6 +199,7 @@ public class MethodProcessorRunnable implements Runnable {
       //  break;
       //}
     }
+    cancellationManager.checkCanceled();
 
     ExitHelper.removeRedundantReturns(root);
 
@@ -194,12 +207,16 @@ public class MethodProcessorRunnable implements Runnable {
 
     varProc.setVarDefinitions(root);
 
+    cancellationManager.checkCanceled();
+
     // must be the last invocation, because it makes the statement structure inconsistent
     // FIXME: new edge type needed
     LabelHelper.replaceContinueWithBreak(root);
 
+    SwitchHelper.simplifySwitchesOnReferences(root, cl);
+    SwitchHelper.prepareForRules(root, cl);
     PatternHelper.replaceAssignmentsWithPatternVariables(root, cl);
-    SwitchHelper.simplifySwitchesOnString(root);
+    cancellationManager.checkCanceled();
 
     mt.releaseResources();
 

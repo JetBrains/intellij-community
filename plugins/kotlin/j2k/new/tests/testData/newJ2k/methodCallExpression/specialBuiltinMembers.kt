@@ -1,9 +1,5 @@
-// ERROR: None of the following functions can be called with the arguments supplied:  public open fun parseInt(p0: String!): Int defined in java.lang.Integer public open fun parseInt(p0: String!, p1: Int): Int defined in java.lang.Integer
-// ERROR: None of the following functions can be called with the arguments supplied:  public open fun parseLong(p0: String!): Long defined in java.lang.Long public open fun parseLong(p0: String!, p1: Int): Long defined in java.lang.Long
 internal enum class E {
-    A,
-    B,
-    C
+    A, B, C
 }
 
 internal class A {
@@ -26,6 +22,7 @@ internal class A {
         val f = 10.1.toFloat()
         val l = 10.1.toLong()
         val s = 10.1.toInt().toShort()
+
         try {
             val removed = list.removeAt(10)
             val isRemoved = list.remove("a")
@@ -33,6 +30,7 @@ internal class A {
             System.err.println(e.message)
             throw RuntimeException(e.cause)
         }
+
         for (entry in map.entries) {
             val key = entry.key
             val value = entry.value
@@ -48,31 +46,36 @@ internal class A {
         l
         f
         d
+
         str.toBoolean()
         str.toBoolean()
+
         str.toByte()
         str.toByte()
         str.toByte(i)
         str.toByte(i)
+
         str.toShort()
         str.toShort()
         str.toShort(i)
         str.toShort(i)
+
         str.toInt()
         str.toInt()
         str.toInt(i)
         str.toInt(i)
+
         str.toLong()
         str.toLong()
         str.toLong(i)
         str.toLong(i)
 
-        // These functions were added in JDK 9, hence the error on test JDK 8 (None of the following functions can be called...)
-        // Also, they have no equivalent in Kotlin stdlib
         Integer.parseInt(str, i, i, i)
         java.lang.Long.parseLong(str, i, i, i)
+
         str.toFloat()
         str.toFloat()
+
         str.toDouble()
         str.toDouble()
     }

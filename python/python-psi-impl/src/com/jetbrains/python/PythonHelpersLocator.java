@@ -16,53 +16,20 @@
 package com.jetbrains.python;
 
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.LazyInitializer;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 
 public final class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance(PythonHelpersLocator.class);
   private static final String PROPERTY_HELPERS_LOCATION = "idea.python.helpers.path";
-
-  /**
-   * Python creates *.pyc files near to *.py files after importing. It used to break patch updates from Toolbox on macOS
-   * due to signature mismatches: macOS refuses to launch such applications and users had to reinstall the IDE.
-   * There is no check for macOS though, since such problems may appear in other operating systems as well, and since it's a bad
-   * idea to modify the IDE distributive during running in general.
-   */
-  private static final LazyInitializer.LazyValue<@Nullable File> ourTemporaryHelpersRootDir =
-    new LazyInitializer.LazyValue<>(PythonHelpersLocator::initializeTemporaryHelpersRootDir);
-
-  private static @Nullable File initializeTemporaryHelpersRootDir() {
-    String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
-    final File pluginBaseDir = getPluginBaseDir(jarPath);
-    if (pluginBaseDir == null) {
-      return null;
-    }
-    try {
-      File rootDir = FileUtil.createTempDirectory(
-        "python-helpers-" + ApplicationInfo.getInstance().getBuild().asStringWithoutProductCode(),
-        null,
-        true);
-      FileUtil.copyDir(pluginBaseDir, rootDir, true);
-      return rootDir;
-    }
-    catch (IOException e) {
-      throw new UncheckedIOException("Failed to create temporary directory for helpers", e);
-    }
-  }
 
   private PythonHelpersLocator() {}
 
@@ -82,16 +49,17 @@ public final class PythonHelpersLocator {
   }
 
   private static @NotNull File getHelperRoot(@NotNull String moduleName, @NotNull String relativePath) {
+    @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
+
     if (PluginManagerCore.isRunningFromSources()) {
       return new File(PathManager.getCommunityHomePath() + relativePath);
     }
     else {
-      @Nullable File helpersRootDir = ourTemporaryHelpersRootDir.get();
-      if (helpersRootDir != null) {
-        return new File(helpersRootDir, PathUtil.getFileName(relativePath));
+      final File pluginBaseDir = getPluginBaseDir(jarPath);
+      if (pluginBaseDir != null) {
+        return new File(pluginBaseDir, PathUtil.getFileName(relativePath));
       }
       else {
-        @NonNls String jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator.class);
         return new File(new File(jarPath).getParentFile(), moduleName);
       }
     }

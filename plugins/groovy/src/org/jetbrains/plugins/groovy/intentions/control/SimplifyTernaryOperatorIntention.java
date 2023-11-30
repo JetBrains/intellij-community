@@ -15,15 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.intentions.control;
 
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.intentions.base.GrPsiUpdateIntention;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -34,10 +34,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyConstantExpressionEvalua
  * @author Niels Harremoes
  * @author Oscar Toernroth
  */
-public class SimplifyTernaryOperatorIntention extends Intention {
+public class SimplifyTernaryOperatorIntention extends GrPsiUpdateIntention {
 
   @Override
-  protected void processIntention(@NotNull PsiElement element, @NotNull Project project, Editor editor) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element, @NotNull ActionContext context, @NotNull ModPsiUpdater updater) {
     if (!(element instanceof GrConditionalExpression condExp)) {
       throw new IncorrectOperationException("Not invoked on a conditional");
     }
@@ -52,7 +52,7 @@ public class SimplifyTernaryOperatorIntention extends Intention {
       String conditionExpText = getStringToPutIntoOrExpression(conditionExp);
       String elseExpText = getStringToPutIntoOrExpression(elseBranch);
       String newExp = conditionExpText + "||" + elseExpText;
-      manageReplace(editor, condExp, conditionExpText, newExp);
+      manageReplace(updater, condExp, conditionExpText, newExp);
       return;
     }
 
@@ -66,20 +66,21 @@ public class SimplifyTernaryOperatorIntention extends Intention {
 
 
       String newExp = conditionExpText + "&&" + thenExpText;
-      manageReplace(editor, condExp, conditionExpText, newExp);
+      manageReplace(updater, condExp, conditionExpText, newExp);
     }
   }
 
-  private static void manageReplace(Editor editor,
+  private static void manageReplace(ModPsiUpdater updater,
                                     GrConditionalExpression condExp,
                                     String conditionExpText, String newExp) {
     int caretOffset = conditionExpText.length() + 2; // after operation sign
 
-    GrExpression expressionFromText = GroovyPsiElementFactory.getInstance(editor.getProject()).createExpressionFromText(newExp, condExp .getContext());
+    GrExpression expressionFromText = GroovyPsiElementFactory.getInstance(condExp.getProject())
+      .createExpressionFromText(newExp, condExp .getContext());
 
     expressionFromText = (GrExpression)condExp.replace(expressionFromText);
 
-    editor.getCaretModel().moveToOffset(expressionFromText.getTextOffset() + caretOffset); // just past operation sign
+    updater.moveTo(expressionFromText.getTextOffset() + caretOffset); // just past operation sign
   }
 
   /**
@@ -109,33 +110,30 @@ public class SimplifyTernaryOperatorIntention extends Intention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new PsiElementPredicate() {
-      @Override
-      public boolean satisfiedBy(@NotNull PsiElement element) {
-        if (!(element instanceof GrConditionalExpression condExp)) {
-          return false;
-        }
-
-        PsiType condType = condExp.getType();
-        if (condType == null || !PsiTypes.booleanType().isConvertibleFrom(condType)) {
-          return false;
-        }
-
-        GrExpression thenBranch = condExp.getThenBranch();
-        GrExpression elseBranch = condExp.getElseBranch();
-
-        Object thenVal = GroovyConstantExpressionEvaluator.evaluate(thenBranch);
-        if (Boolean.TRUE.equals(thenVal) && elseBranch != null) {
-          return true;
-        }
-
-        Object elseVal = GroovyConstantExpressionEvaluator.evaluate(elseBranch);
-        if (thenBranch != null && Boolean.FALSE.equals(elseVal)) {
-          return true;
-        }
-
+    return element -> {
+      if (!(element instanceof GrConditionalExpression condExp)) {
         return false;
       }
+
+      PsiType condType = condExp.getType();
+      if (condType == null || !PsiTypes.booleanType().isConvertibleFrom(condType)) {
+        return false;
+      }
+
+      GrExpression thenBranch = condExp.getThenBranch();
+      GrExpression elseBranch = condExp.getElseBranch();
+
+      Object thenVal = GroovyConstantExpressionEvaluator.evaluate(thenBranch);
+      if (Boolean.TRUE.equals(thenVal) && elseBranch != null) {
+        return true;
+      }
+
+      Object elseVal = GroovyConstantExpressionEvaluator.evaluate(elseBranch);
+      if (thenBranch != null && Boolean.FALSE.equals(elseVal)) {
+        return true;
+      }
+
+      return false;
     };
   }
 }

@@ -19,6 +19,7 @@ fun X.test(i1: I1, i2: I2) {
 
 interface X
 
+// IGNORE_K2
 // EXIST: { itemText: "xfoo", tailText: " {...} (p: () -> Unit) for String in <root>", typeText:"Unit" }
 // EXIST: { itemText: "xfoo", tailText: "(v1) for String in <root>", typeText: "Unit" }
 // NOTHING_ELSE

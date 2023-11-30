@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.output;
 
 import com.intellij.build.FilePosition;
@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 /**
  * Parses javac's output.
  */
-public class JavacOutputParser implements BuildOutputParser {
+public final class JavacOutputParser implements BuildOutputParser {
   private static final @NotNull Supplier<@BuildEventsNls.Title String> COMPILER_MESSAGES_GROUP =
     LangBundle.messagePointer("build.event.title.compiler");
 

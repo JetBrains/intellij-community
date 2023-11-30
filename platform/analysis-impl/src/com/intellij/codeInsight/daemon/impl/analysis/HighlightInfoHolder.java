@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -12,25 +12,27 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class HighlightInfoHolder {
   private final PsiFile myContextFile;
-  private final HighlightInfoFilter[] myFilters;
+  private final List<HighlightInfoFilter> myFilters;
   private final AnnotationSession myAnnotationSession;
   private int myErrorCount;
   private final List<HighlightInfo> myInfos;
 
-  public HighlightInfoHolder(@NotNull PsiFile contextFile, HighlightInfoFilter @NotNull ... filters) {
+  public HighlightInfoHolder(@NotNull PsiFile contextFile) {
+    this(contextFile, List.of());
+  }
+
+  public HighlightInfoHolder(@NotNull PsiFile contextFile, @NotNull List<HighlightInfoFilter> filters) {
     myContextFile = contextFile;
-    myAnnotationSession = new AnnotationSession(contextFile);
+    myAnnotationSession = new AnnotationSessionImpl(contextFile);
     myFilters = filters;
     myInfos = new ArrayList<>(Math.max(10, contextFile.getTextLength() / 800)); // extrapolated from the most error-packed AbstractTreeUI
   }
 
-  @NotNull
-  public AnnotationSession getAnnotationSession() {
+  public @NotNull AnnotationSession getAnnotationSession() {
     return myAnnotationSession;
   }
 
@@ -54,34 +56,19 @@ public class HighlightInfoHolder {
     return myErrorCount != 0;
   }
 
-  /**
-   * @deprecated Use {@link #add(HighlightInfo)} instead, as soon as HighlightInfo is ready, to reduce the latency between generating the highlight info and showing it onscreen
-   */
-  @Deprecated
-  public boolean addAll(@NotNull Collection<? extends HighlightInfo> highlightInfos) {
-    boolean added = false;
-    for (HighlightInfo highlightInfo : highlightInfos) {
-      added |= add(highlightInfo);
-    }
-    return added;
-  }
-
   public int size() {
     return myInfos.size();
   }
 
-  @NotNull
-  public HighlightInfo get(int i) {
+  public @NotNull HighlightInfo get(int i) {
     return myInfos.get(i);
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myContextFile.getProject();
   }
 
-  @NotNull
-  public PsiFile getContextFile() {
+  public @NotNull PsiFile getContextFile() {
     return myContextFile;
   }
 
@@ -92,8 +79,7 @@ public class HighlightInfoHolder {
     return true;
   }
 
-  @NotNull
-  public TextAttributesScheme getColorsScheme() {
+  public @NotNull TextAttributesScheme getColorsScheme() {
     return key -> key.getDefaultAttributes();
   }
 }

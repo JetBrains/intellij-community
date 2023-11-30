@@ -17,6 +17,7 @@ import com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
 import com.intellij.vcs.log.graph.utils.DfsWalk
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import com.intellij.vcs.log.ui.table.size
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
 import git4idea.findProtectedRemoteBranch
@@ -90,7 +91,8 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
               }
               nodeId > maxNodeId -> { // we can no longer meet remaining selected commits below
                 val commitNotInHead = getCommitIdByNodeId(logData, permanentGraph, commitNodeIds.first())
-                description = GitBundle.message("rebase.log.multiple.commit.editing.action.specific.commit.not.in.head", commitNotInHead.hash)
+                description = GitBundle.message("rebase.log.multiple.commit.editing.action.specific.commit.not.in.head",
+                                                commitNotInHead.hash)
                 false
               }
               else -> {
@@ -130,84 +132,111 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   }
 
   override fun update(e: AnActionEvent) {
-    super.update(e)
-
-    e.presentation.isEnabledAndVisible = false
-
-    val commitEditingData = when (val commitEditingDataCreationResult = createCommitEditingData(e)) {
-      is Prohibited -> {
-        val description = commitEditingDataCreationResult.description
-        if (description != null) {
-          e.presentation.isVisible = true
-          e.presentation.description = description
-        }
-        return
+    e.presentation.isEnabledAndVisible = true
+    e.presentation.description = templatePresentation.description
+   
+    val commitEditingDataCreationResult = createCommitEditingData(e)
+    if (commitEditingDataCreationResult is Prohibited) {
+      val description = commitEditingDataCreationResult.description
+      if (description != null) {
+        e.presentation.description = description
       }
-      is Created<T> -> {
-        commitEditingDataCreationResult.data
+      else {
+        e.presentation.isVisible = false
       }
-    }
-
-    e.presentation.isVisible = true
-
-    val commitList = commitEditingData.selectedCommitList
-    val repository = commitEditingData.repository
-
-    if (VcsLogUtil.findBranch(commitEditingData.logData.dataPack.refsModel, repository.root, GitUtil.HEAD) == null) {
-      e.presentation.description = GitBundle.message("rebase.log.multiple.commit.editing.action.cant.find.head", commitList.size)
+      e.presentation.isEnabled = false
       return
     }
 
-    // editing merge commit or root commit is not allowed
-    commitList.forEach { commit ->
-      if (commit !is LoadingDetails && commit.isRootOrMerge()) {
-        e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
-        return
-      }
+    val commitEditingData = (commitEditingDataCreationResult as Created<T>).data
+    val errorDescription = checkCommitsEditingAvailability(commitEditingData)
+    if (errorDescription != null) {
+      e.presentation.description = errorDescription
+      e.presentation.isEnabled = false
+      return
     }
 
-    // check that first and last selected commits are in HEAD and not pushed to protected branch
+    update(e, commitEditingData)
+  }
+
+  private fun checkCommitsEditingAvailability(commitEditingData: T): @Nls String? {
+    return checkIsHeadBranch(commitEditingData)
+           ?: checkNotInitialCommit(commitEditingData)
+           ?: checkNotMergeCommit(commitEditingData)
+           ?: checkCommitsCanBeEdited(commitEditingData)
+           ?: checkNotRebaseDuringRebase(commitEditingData)
+  }
+
+  private fun checkIsHeadBranch(commitEditingData: T): @Nls String? {
+    val repository = commitEditingData.repository
+    if (VcsLogUtil.findBranch(commitEditingData.logData.dataPack.refsModel, repository.root, GitUtil.HEAD) == null) {
+      return GitBundle.message("rebase.log.multiple.commit.editing.action.cant.find.head", commitEditingData.selection.size)
+    }
+    return null
+  }
+
+  private fun checkNotInitialCommit(commitEditingData: T): @Nls String? {
+    val commitList = commitEditingData.selection.cachedMetadata
+    commitList.forEach { commit ->
+      if (commit !is LoadingDetails && commit.parents.size == 0) {
+        return GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
+      }
+    }
+    return null
+  }
+
+  protected open fun checkNotMergeCommit(commitEditingData: T): @Nls String? {
+    val commitList = commitEditingData.selection.cachedMetadata
+    commitList.forEach { commit ->
+      if (commit !is LoadingDetails && commit.parents.size > 1) {
+        return GitBundle.message("rebase.log.commit.editing.action.disabled.parents.description", commit.parents.size)
+      }
+    }
+    return null
+  }
+
+  /**
+   * Check that first and last selected commits are in HEAD and not pushed to protected branch
+   */
+  private fun checkCommitsCanBeEdited(commitEditingData: T): @Nls String? {
+    val commitList = commitEditingData.selection.commits
+    val repository = commitEditingData.repository
     listOf(commitList.first(), commitList.last()).forEach { commit ->
-      val branches = commitEditingData.logData.containingBranchesGetter.getContainingBranchesQuickly(commit.root, commit.id)
+      val branches = commitEditingData.logData.containingBranchesGetter.getContainingBranchesQuickly(commit.root, commit.hash)
       if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
         if (GitUtil.HEAD !in branches) {
-          e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.commit.not.in.head.error.text")
-          return
+          return GitBundle.message("rebase.log.commit.editing.action.commit.not.in.head.error.text")
         }
 
         // and not if pushed to a protected branch
         val protectedBranch = findProtectedRemoteBranch(repository, branches)
         if (protectedBranch != null) {
-          e.presentation.description = GitBundle.message(
-            "rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text",
-            protectedBranch
+          return GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text",
+                                   protectedBranch
           )
-          return
         }
       }
     }
+    return null
+  }
 
+  private fun checkNotRebaseDuringRebase(commitEditingData: T): @Nls String? {
     when (val policy = prohibitRebaseDuringRebasePolicy) {
       ProhibitRebaseDuringRebasePolicy.Allow -> {
       }
       is ProhibitRebaseDuringRebasePolicy.Prohibit -> {
         val message = getProhibitedStateMessage(commitEditingData, policy.operation)
         if (message != null) {
-          e.presentation.description = message
-          return
+          return message
         }
       }
     }
-
-    e.presentation.isEnabledAndVisible = true
-    update(e, commitEditingData)
+    return null
   }
-
-  private fun VcsShortCommitDetails.isRootOrMerge() = parents.size != 1
 
   final override fun actionPerformed(e: AnActionEvent) {
     val commitEditingRequirements = (createCommitEditingData(e) as Created<T>).data
-    val description = checkCommitsEditingAvailability(commitEditingRequirements)
+    val description = lastCheckCommitsEditingAvailability(commitEditingRequirements)
 
     if (description != null) {
       Messages.showErrorDialog(
@@ -221,16 +250,18 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
   }
 
   @Nls
-  protected open fun checkCommitsEditingAvailability(commitEditingData: T): String? {
-    val description = checkHeadLinearHistory(commitEditingData,
-      GitBundle.message("rebase.log.multiple.commit.editing.action.progress.indicator.action.possibility.check"))
+  protected open fun lastCheckCommitsEditingAvailability(commitEditingData: T): String? {
+    val description = checkHeadLinearHistory(
+      commitEditingData,
+      GitBundle.message("rebase.log.multiple.commit.editing.action.progress.indicator.action.possibility.check")
+    )
     if (description != null) {
       return description
     }
 
     // if any commit is pushed to protected branch, the last (oldest) commit is published as well => it is enough to check only the last.
-    val lastCommit = commitEditingData.selectedCommitList.last()
-    val branches = findContainingBranches(commitEditingData.logData, lastCommit.root, lastCommit.id)
+    val lastCommit = commitEditingData.selection.commits.last()
+    val branches = findContainingBranches(commitEditingData.logData, lastCommit.root, lastCommit.hash)
     val protectedBranch = findProtectedRemoteBranch(commitEditingData.repository, branches)
     if (protectedBranch != null) {
       return GitBundle.message("rebase.log.commit.editing.action.commit.pushed.to.protected.branch.error.text", protectedBranch)
@@ -248,7 +279,7 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
       return Prohibited()
     }
 
-    val commitList = selection.cachedMetadata.takeIf { it.isNotEmpty() } ?: return Prohibited()
+    val commitList = selection.commits.takeIf { it.isNotEmpty() } ?: return Prohibited()
     val repositoryManager = GitUtil.getRepositoryManager(project)
 
     val root = commitList.map { it.root }.distinct().singleOrNull() ?: return Prohibited(
@@ -282,7 +313,6 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
     val logData: VcsLogData
   ) {
     val project = repository.project
-    val selectedCommitList: List<VcsCommitMetadata> = selection.cachedMetadata
   }
 
   protected sealed class ProhibitRebaseDuringRebasePolicy {
@@ -292,6 +322,6 @@ abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBase.Multipl
 
   protected sealed class CommitEditingDataCreationResult<T : MultipleCommitEditingData> {
     class Created<T : MultipleCommitEditingData>(val data: T) : CommitEditingDataCreationResult<T>()
-    class Prohibited<T : MultipleCommitEditingData>(@Nls val description: String? = null) : CommitEditingDataCreationResult<T>()
+    class Prohibited<T : MultipleCommitEditingData>(val description: @Nls String? = null) : CommitEditingDataCreationResult<T>()
   }
 }

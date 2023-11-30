@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.refactoring;
 
 import com.intellij.openapi.project.Project;
@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 
-public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
+public final class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     final NestedControllerCandidate nestedControllerCandidate = findNestedControllerCandidate(element);
@@ -58,8 +58,7 @@ public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
     }
   }
 
-  @Nullable
-  private static NestedControllerCandidate findNestedControllerCandidate(@NotNull PsiElement element) {
+  private static @Nullable NestedControllerCandidate findNestedControllerCandidate(@NotNull PsiElement element) {
     if (element instanceof PsiField field) {
       final String fxId = field.getName();
       if (!StringUtil.isEmpty(fxId)) {
@@ -78,8 +77,7 @@ public class JavaFxRenameFxIdFieldProcessor extends RenamePsiElementProcessor {
     return null;
   }
 
-  @NotNull
-  private static Collection<PsiFile> findFxmlWithController(@Nullable NestedControllerCandidate nestedControllerCandidate) {
+  private static @NotNull Collection<PsiFile> findFxmlWithController(@Nullable NestedControllerCandidate nestedControllerCandidate) {
     if (nestedControllerCandidate != null) {
       final String qualifiedName = nestedControllerCandidate.controllerClass.getQualifiedName();
       if (qualifiedName != null) {

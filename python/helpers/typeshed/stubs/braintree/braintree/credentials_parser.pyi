@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from braintree.environment import Environment as Environment
@@ -7,7 +8,9 @@ class CredentialsParser:
     client_id: Any
     client_secret: Any
     access_token: Any
-    def __init__(self, client_id: Any | None = ..., client_secret: Any | None = ..., access_token: Any | None = ...) -> None: ...
+    def __init__(
+        self, client_id: Incomplete | None = None, client_secret: Incomplete | None = None, access_token: Incomplete | None = None
+    ) -> None: ...
     environment: Any
     def parse_client_credentials(self) -> None: ...
     merchant_id: Any

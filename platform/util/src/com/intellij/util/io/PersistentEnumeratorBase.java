@@ -12,6 +12,7 @@ import com.intellij.util.io.keyStorage.InlinedKeyStorage;
 import com.intellij.util.io.keyStorage.NoDataException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.Closeable;
@@ -29,9 +30,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author max
  * @author jeka
  */
-public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>, Forceable, Closeable, SelfDiagnosing {
+public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx<Data>,
+                                                                ScannableDataEnumeratorEx<Data>,
+                                                                Forceable, Closeable, SelfDiagnosing {
   protected static final Logger LOG = Logger.getInstance(PersistentEnumeratorBase.class);
-  protected static final int NULL_ID = DataEnumeratorEx.NULL_ID;
 
   protected static final boolean USE_RW_LOCK = SystemProperties.getBooleanProperty("idea.persistent.data.use.read.write.lock", false);
   private static final int META_DATA_OFFSET = 4;
@@ -69,7 +71,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   private RecordBufferHandler<PersistentEnumeratorBase<?>> myRecordHandler;
   private @Nullable Flushable myMarkCleanCallback;
 
-  public static class Version {
+  public static final class Version {
     private static final int DIRTY_MAGIC = 0xbabe1977;
     private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafd;
 
@@ -109,6 +111,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     myDoCaching = doCaching;
     myCollisionResolutionStorage = valueStorage;
 
+    lockStorageWrite();
     try {
       if (!Files.exists(file)) {
         if (file.getFileSystem().isReadOnly()) {
@@ -123,54 +126,48 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
 
       boolean created = false;
-      lockStorageWrite();
-      try {
-        if (myCollisionResolutionStorage.length() == 0) {
-          try {
-            markDirty(true);
-            putMetaData(0);
-            putMetaData2(0);
-            setupEmptyFile();
-            doFlush();
-            created = true;
+      if (myCollisionResolutionStorage.length() == 0) {
+        try {
+          markDirty(true);
+          putMetaData(0);
+          putMetaData2(0);
+          setupEmptyFile();
+          doFlush();
+          created = true;
+        }
+        catch (RuntimeException e) {
+          LOG.info(e);
+          if (e.getCause() instanceof IOException) {
+            throw (IOException)e.getCause();
           }
-          catch (RuntimeException e) {
-            LOG.info(e);
-            if (e.getCause() instanceof IOException) {
-              throw (IOException)e.getCause();
-            }
-            throw e;
+          throw e;
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.info(e);
+          throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
+        }
+      }
+      else {
+        int sign;
+        try {
+          sign = myCollisionResolutionStorage.getInt(0);
+        }
+        catch (Exception e) {
+          LOG.info(e);
+          sign = myVersion.dirtyMagic;
+        }
+        if (sign != myVersion.correctlyClosedMagic) {
+          if (sign != myVersion.dirtyMagic) {
+            throw new VersionUpdatedException(file, Integer.toHexString(myVersion.correctlyClosedMagic), Integer.toHexString(sign));
           }
-          catch (IOException e) {
-            LOG.info(e);
-            throw e;
-          }
-          catch (Exception e) {
-            LOG.info(e);
+          else {
             throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
           }
         }
-        else {
-          int sign;
-          try {
-            sign = myCollisionResolutionStorage.getInt(0);
-          }
-          catch (Exception e) {
-            LOG.info(e);
-            sign = myVersion.dirtyMagic;
-          }
-          if (sign != myVersion.correctlyClosedMagic) {
-            if (sign != myVersion.dirtyMagic) {
-              throw new VersionUpdatedException(file, Integer.toHexString(myVersion.correctlyClosedMagic), Integer.toHexString(sign));
-            }
-            else {
-              throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
-            }
-          }
-        }
-      }
-      finally {
-        unlockStorageWrite();
       }
 
       if (dataDescriptor instanceof InlineKeyDescriptor) {
@@ -206,6 +203,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         t.addSuppressed(errorOnClose);
       }
       throw t;
+    }
+    finally {
+      unlockStorageWrite();
     }
   }
 
@@ -285,7 +285,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected void putMetaData(long data) throws IOException {
     lockStorageWrite();
     try {
-      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) myCollisionResolutionStorage.putLong(META_DATA_OFFSET, data);
+      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) {
+        myCollisionResolutionStorage.putLong(META_DATA_OFFSET, data);
+      }
     }
     finally {
       unlockStorageWrite();
@@ -305,7 +307,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   void putMetaData2(long data) throws IOException {
     lockStorageWrite();
     try {
-      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) myCollisionResolutionStorage.putLong(META_DATA_OFFSET + 8, data);
+      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) {
+        myCollisionResolutionStorage.putLong(META_DATA_OFFSET + 8, data);
+      }
     }
     finally {
       unlockStorageWrite();
@@ -322,17 +326,37 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     }
   }
 
-  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor, final @Nullable DataFilter filter)
+  public boolean processAllDataObject(final @NotNull Processor<? super Data> processor,
+                                      final @Nullable DataFilter filter)
     throws IOException {
     return traverseAllRecords(new RecordsProcessor() {
       @Override
-      public boolean process(final int record) throws IOException {
+      public boolean process(int record) throws IOException {
         if (filter == null || filter.accept(record)) {
           return processor.process(valueOf(record));
         }
         return true;
       }
     });
+  }
+
+  public boolean forEach(@NotNull ValueReader<? super Data> reader,
+                         @Nullable DataFilter filter) throws IOException {
+    return traverseAllRecords(new RecordsProcessor() {
+      @Override
+      public boolean process(final int record) throws IOException {
+        if (filter == null || filter.accept(record)) {
+          Data value = valueOf(record);
+          return reader.read(record, value);
+        }
+        return true;
+      }
+    });
+  }
+
+  @Override
+  public boolean forEach(@NotNull ValueReader<? super Data> reader) throws IOException {
+    return forEach(reader, /*filter: */null);
   }
 
   public @NotNull Collection<Data> getAllDataObjects(final @Nullable DataFilter filter) throws IOException {
@@ -408,18 +432,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   public boolean iterateData(@NotNull Processor<? super Data> processor) throws IOException {
-    return doIterateData((offset, data) -> processor.process(data));
+    return iterateData((offset, data) -> processor.process(data));
   }
 
-  protected boolean doIterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
-    lockStorageWrite(); // todo locking in key storage
-    try {
-      myKeyStorage.force();
-    }
-    finally {
-      unlockStorageWrite();
-    }
-
+  boolean iterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
     return myKeyStorage.processAll(processor);
   }
 
@@ -428,14 +444,15 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   @Override
-  public Data valueOf(int idx) throws IOException {
+  public Data valueOf(@Range(from = 1, to = Integer.MAX_VALUE) int idx) throws IOException {
+    //noinspection ConstantValue
     if (idx <= NULL_ID) return null;
     return catchCorruption(() -> {
       return findValueFor(idx);
     });
   }
 
-  private Data findValueFor(int idx) throws IOException {
+  private Data findValueFor(@Range(from = 1, to = Integer.MAX_VALUE) int idx) throws IOException {
     boolean shouldLock = shouldLockOnValueOf();
     if (shouldLock) {
       lockStorageRead();
@@ -488,7 +505,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void doClose() throws IOException {
-    IOCancellationCallbackHolder.interactWithUI();
+    IOCancellationCallbackHolder.INSTANCE.interactWithUI();
 
     getWriteLock().lock();
     try {

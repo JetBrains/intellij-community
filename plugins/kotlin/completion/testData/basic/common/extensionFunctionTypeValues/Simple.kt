@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 package ppp
 
 val fooGlobal: Int.() -> Unit = { }

@@ -1,37 +1,42 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathMacros;
 import com.intellij.openapi.fileChooser.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.Map;
 
 public class FileChooserFactoryImpl extends FileChooserFactory {
-  @NotNull
-  @Override
-  public FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
-                                             @Nullable Project project,
-                                             @Nullable Component parent) {
-    return ClientFileChooserFactory.getInstance().createFileChooser(descriptor, project, parent);
+  private static ClientFileChooserFactory getService() {
+    return ApplicationManager.getApplication().getService(ClientFileChooserFactory.class);
   }
 
-  @NotNull
   @Override
-  public PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
-                                             @Nullable Project project,
-                                             @Nullable Component parent) {
-    return ClientFileChooserFactory.getInstance().createPathChooser(descriptor, project, parent);
+  public @NotNull FileChooserDialog createFileChooser(@NotNull FileChooserDescriptor descriptor,
+                                                      @Nullable Project project,
+                                                      @Nullable Component parent) {
+    return getService().createFileChooser(descriptor, project, parent);
   }
 
-  @NotNull
   @Override
-  public FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent) {
-    return ClientFileChooserFactory.getInstance().createFileTextField(descriptor, showHidden, parent);
+  public @NotNull PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
+                                                      @Nullable Project project,
+                                                      @Nullable Component parent) {
+    return getService().createPathChooser(descriptor, project, parent);
+  }
+
+  @Override
+  public @NotNull FileTextField createFileTextField(@NotNull FileChooserDescriptor descriptor, boolean showHidden, @Nullable Disposable parent) {
+    return getService().createFileTextField(descriptor, showHidden, parent);
   }
 
   @Override
@@ -39,28 +44,33 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
                                     @NotNull FileChooserDescriptor descriptor,
                                     boolean showHidden,
                                     @Nullable Disposable parent) {
-    ClientFileChooserFactory.getInstance().installFileCompletion(field, descriptor, showHidden, parent);
+    getService().installFileCompletion(field, descriptor, showHidden, parent);
   }
 
-  @NotNull
   @Override
-  public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
-    return ClientFileChooserFactory.getInstance().createSaveFileDialog(descriptor, project);
+  public @NotNull FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
+    return getService().createSaveFileDialog(descriptor, project);
   }
 
-  @NotNull
   @Override
-  public FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
-    return ClientFileChooserFactory.getInstance().createSaveFileDialog(descriptor, parent);
+  public @NotNull FileSaverDialog createSaveFileDialog(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
+    return getService().createSaveFileDialog(descriptor, parent);
   }
 
+  @ApiStatus.Internal
   public static PathChooserDialog createNativePathChooserIfEnabled(@NotNull FileChooserDescriptor descriptor,
                                                                    @Nullable Project project,
                                                                    @Nullable Component parent) {
-    return ClientFileChooserFactory.createNativePathChooserIfEnabled(descriptor, project, parent);
+    return LocalFileChooserFactory.createNativePathChooserIfEnabled(descriptor, project, parent);
   }
 
   public static Map<String, String> getMacroMap() {
-    return ClientFileChooserFactory.getMacroMap();
+    var macros = PathMacros.getInstance();
+    var allNames = macros.getAllMacroNames();
+    var map = new HashMap<String, String>(allNames.size());
+    for (var eachMacroName : allNames) {
+      map.put('$' + eachMacroName + '$', macros.getValue(eachMacroName));
+    }
+    return map;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -27,6 +29,9 @@ import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIf
 public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<Key, Value, Input>,
                                                                   MeasurableIndexStore {
   private static final Logger LOG = Logger.getInstance(MapReduceIndex.class);
+  private static final boolean USE_READ_LOCK_ON_UPDATE =
+    SystemProperties.getBooleanProperty("idea.map.reduce.index.use.read.lock.on.update", false);
+
 
   protected final IndexId<Key, Value> myIndexId;
   protected final IndexStorage<Key, Value> myStorage;
@@ -81,7 +86,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myLowMemoryFlusher = LowMemoryWatcher.register(() -> clearCaches());
   }
 
-  private void clearCaches() {
+  public void clearCaches() {
     try {
       myLock.readLock().lock();
       try {
@@ -174,6 +179,13 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
+  public boolean isDirty() {
+    if (myForwardIndex != null && myForwardIndex.isDirty()) {
+      return true;
+    }
+    return myStorage.isDirty();
+  }
+
   protected void doFlush() throws IOException, StorageException {
     if (myForwardIndex != null) myForwardIndex.force();
     myStorage.flush();
@@ -223,7 +235,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myLock.readLock().lock();
     try {
       if (isDisposed()) {
-        return new ValueContainerImpl<>();
+        return ValueContainerImpl.createNewValueContainer();
       }
       IndexDebugProperties.DEBUG_INDEX_ID.set(myIndexId);
       return myStorage.read(key);
@@ -343,7 +355,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
-    myLock.writeLock().lock();
+    Lock lock = USE_READ_LOCK_ON_UPDATE ? myLock.readLock() : myLock.writeLock();
+    lock.lock();
     try {
       IndexId<?, ?> oldIndexId = IndexDebugProperties.DEBUG_INDEX_ID.get();
       try {
@@ -363,12 +376,12 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       }
     }
     finally {
-      myLock.writeLock().unlock();
+      lock.unlock();
     }
   }
 
   @ApiStatus.Internal
-  public class IndexUpdateComputable implements Computable<Boolean> {
+  public final class IndexUpdateComputable implements Computable<Boolean> {
     private final UpdateData<Key, Value> myUpdateData;
     private final InputData<Key, Value> myInputData;
 
@@ -403,6 +416,10 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         }
         MapReduceIndex.this.requestRebuild(ex);
         return false;
+      }
+      catch (Throwable t) {
+        LOG.error("An exception during updateWithMap(). Index " + myIndexId.getName(), t);
+        throw t;
       }
       return true;
     }

@@ -3,9 +3,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class UnwrapSwitchLabelFix implements LocalQuickFix {
+public class UnwrapSwitchLabelFix extends PsiUpdateModCommandQuickFix {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   @Override
@@ -33,8 +33,8 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
   }
 
   @Override
-  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PsiCaseLabelElement label = ObjectUtils.tryCast(descriptor.getStartElement(), PsiCaseLabelElement.class);
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    PsiCaseLabelElement label = ObjectUtils.tryCast(element, PsiCaseLabelElement.class);
     if (label == null) return;
     PsiSwitchLabelStatementBase labelStatement = PsiImplUtil.getSwitchLabel(label);
     if (labelStatement == null) return;
@@ -44,9 +44,16 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
     boolean shouldKeepDefault = block instanceof PsiSwitchExpression &&
                                 !(labelStatement instanceof PsiSwitchLabeledRuleStatement ruleStatement &&
                                   ruleStatement.getBody() instanceof PsiExpressionStatement);
+    Set<PsiCaseLabelElement> removableUnreachableBranches = new HashSet<>(SwitchUtils.findRemovableUnreachableBranches(label, block));
     for (PsiSwitchLabelStatementBase otherLabel : labels) {
       if (otherLabel == labelStatement) continue;
-      if (!shouldKeepDefault || !SwitchUtils.isDefaultLabel(otherLabel)) {
+      boolean isDefault = SwitchUtils.isDefaultLabel(otherLabel);
+      PsiCaseLabelElementList otherElementList = otherLabel.getCaseLabelElementList();
+      if (otherElementList != null) {
+        PsiCaseLabelElement[] otherElements = otherElementList.getElements();
+        if(!removableUnreachableBranches.containsAll(Set.of(otherElements)) && !isDefault) continue;
+      }
+      if (!shouldKeepDefault || !isDefault) {
         DeleteSwitchLabelFix.deleteLabel(otherLabel);
       }
       else {
@@ -54,7 +61,9 @@ public class UnwrapSwitchLabelFix implements LocalQuickFix {
       }
     }
     for (PsiCaseLabelElement labelElement : Objects.requireNonNull(labelStatement.getCaseLabelElementList()).getElements()) {
-      if (labelElement != label && !(shouldKeepDefault && labelElement instanceof PsiDefaultCaseLabelElement)) {
+      boolean isDefault = labelElement instanceof PsiDefaultCaseLabelElement;
+      if(!removableUnreachableBranches.contains(labelElement) && !isDefault) continue;
+      if (labelElement != label && !(shouldKeepDefault && isDefault)) {
         new CommentTracker().deleteAndRestoreComments(labelElement);
       }
     }

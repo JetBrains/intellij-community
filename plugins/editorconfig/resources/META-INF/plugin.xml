@@ -38,9 +38,8 @@ For more information, check the documentation for <a href="https://editorconfig.
     <codeStyleSettingsModifier implementation="org.editorconfig.configmanagement.extended.EditorConfigCodeStyleSettingsModifier" order="first"/>
     <fileIndentOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigIndentOptionsProvider" order="first"/>
     <trailingSpacesOptionsProvider implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesOptionsProvider" id="editorConfigTrailingSpacesOptionsProvider"/>
-    <fileEditorProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider"/>
+    <fileEditorProvider id="org.editorconfig.configmanagement.editor" implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorProvider" fileType="EditorConfig"/>
     <codeInsight.lineMarkerProvider language="" implementationClass="org.editorconfig.configmanagement.editor.EditorConfigPreviewMarkerProvider"/>
-    <projectService serviceImplementation="org.editorconfig.configmanagement.editor.EditorConfigPreviewManager"/>
     <gotoFileContributor implementation="org.editorconfig.configmanagement.finder.EditorConfigGotoFileContributor"/>
     <stripTrailingSpacesFilterFactory implementation="org.editorconfig.configmanagement.EditorConfigTrailingSpacesFilterFactory"/>
     <editorNotificationProvider implementation="org.editorconfig.configmanagement.editor.EditorConfigEditorNotificationProvider"/>
@@ -112,6 +111,15 @@ For more information, check the documentation for <a href="https://editorconfig.
         enabledByDefault="true"
         level="WARNING"
         implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigDeprecatedDescriptorInspection"/>
+    <localInspection
+      language="EditorConfig"
+      shortName="EditorConfigVerifyByCore"
+      bundle="messages.EditorConfigBundle"
+      key="inspection.verify.by.core.name"
+      groupKey="editorconfig.inspection.group"
+      enabledByDefault="true"
+      level="ERROR"
+      implementationClass="org.editorconfig.language.codeinsight.inspections.EditorConfigVerifyByCoreInspection"/>
 
     <!-- Root declaration inspections -->
     <localInspection

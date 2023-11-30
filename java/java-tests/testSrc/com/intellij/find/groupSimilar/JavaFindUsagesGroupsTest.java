@@ -12,6 +12,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageInfoToUsageConverter;
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -40,7 +42,10 @@ public class JavaFindUsagesGroupsTest extends JavaPsiTestCase {
     ClusteringSearchSession session = new ClusteringSearchSession();
     handler.processElementUsages(streamMethod, info -> {
       try {
-        ReadAction.nonBlocking(() -> UsageInfoToUsageConverter.convertToSimilarUsage(new PsiMethod[]{streamMethod}, info, session)).submit(AppExecutorUtil.getAppExecutorService()).get();
+        ReadAction.nonBlocking(() -> {
+          Usage usage = UsageInfoToUsageConverter.convertToSimilarUsage(new PsiMethod[]{streamMethod}, info, session);
+          ((UsageInfo2UsageAdapter)usage).updateCachedPresentation();
+        }).submit(AppExecutorUtil.getAppExecutorService()).get();
       }
       catch (InterruptedException | ExecutionException e) {
         throw new RuntimeException(e);

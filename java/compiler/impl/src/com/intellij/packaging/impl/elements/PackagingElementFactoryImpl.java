@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,9 +20,8 @@ import com.intellij.packaging.artifacts.ArtifactPointer;
 import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.ui.ArtifactEditorContext;
-import com.intellij.util.ArrayUtil;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import com.intellij.util.PathUtil;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +30,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
+import static kotlinx.collections.immutable.ExtensionsKt.toPersistentList;
 import static org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.APPLICATION_LEVEL;
 import static org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer.PROJECT_LEVEL;
 
@@ -42,14 +43,14 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   public static final PackagingElementType<DirectoryCopyPackagingElement> DIRECTORY_COPY_ELEMENT_TYPE = new DirectoryCopyElementType();
   public static final PackagingElementType<ExtractedDirectoryPackagingElement> EXTRACTED_DIRECTORY_ELEMENT_TYPE = new ExtractedDirectoryElementType();
   public static final PackagingElementType<ArtifactRootElement<?>> ARTIFACT_ROOT_ELEMENT_TYPE = new ArtifactRootElementType();
-  private static final PackagingElementType[] STANDARD_TYPES = {
+  private static final List<PackagingElementType<?>> STANDARD_TYPES = persistentListOf(
       DIRECTORY_ELEMENT_TYPE, ARCHIVE_ELEMENT_TYPE,
       LibraryElementType.LIBRARY_ELEMENT_TYPE,
       ProductionModuleOutputElementType.ELEMENT_TYPE,
       TestModuleOutputElementType.ELEMENT_TYPE,
       ProductionModuleSourceElementType.ELEMENT_TYPE,
       ArtifactElementType.ARTIFACT_ELEMENT_TYPE, FILE_COPY_ELEMENT_TYPE, DIRECTORY_COPY_ELEMENT_TYPE, EXTRACTED_DIRECTORY_ELEMENT_TYPE
-  };
+  );
 
   @Override
   public PackagingElementType<?> @NotNull [] getNonCompositeElementTypes() {
@@ -98,9 +99,8 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   }
 
   @Override
-  public PackagingElementType @NotNull [] getAllElementTypes() {
-    final PackagingElementType[] types = PackagingElementType.EP_NAME.getExtensions();
-    return ArrayUtil.mergeArrays(STANDARD_TYPES, types);
+  public @NotNull List<PackagingElementType> getAllElementTypes() {
+    return toPersistentList(PackagingElementType.EP_NAME.getExtensionList()).addAll(STANDARD_TYPES);
   }
 
   @NotNull
@@ -166,7 +166,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
                                                                      @NotNull @NonNls String path,
                                                                      final boolean directory, boolean addAsFirstChild) {
     path = StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/");
-    if (path.length() == 0) {
+    if (path.isEmpty()) {
       return root;
     }
     int index = path.lastIndexOf('/');

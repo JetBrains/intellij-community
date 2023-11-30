@@ -1,0 +1,5 @@
+package test
+
+import com.dependency.*
+
+fun foo() = bar()

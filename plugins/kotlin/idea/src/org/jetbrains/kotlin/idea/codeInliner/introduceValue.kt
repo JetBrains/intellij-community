@@ -2,13 +2,16 @@
 
 package org.jetbrains.kotlin.idea.codeInliner
 
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
-import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.computeTypeInContext
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.core.setType
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
 import org.jetbrains.kotlin.idea.resolve.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.getAllAccessibleVariables
 import org.jetbrains.kotlin.idea.util.getResolutionScope
@@ -23,8 +26,8 @@ import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoBefore
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
-import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.error.ErrorUtils
 
 /**
  * Modifies [MutableCodeToInline] introducing a variable initialized by [value] and replacing all of [usages] with its use.
@@ -62,7 +65,7 @@ internal fun MutableCodeToInline.introduceValue(
 
     fun suggestName(validator: (String) -> Boolean): Name {
         val name = if (nameSuggestion != null)
-            Fe10KotlinNameSuggester.suggestNameByName(nameSuggestion, validator)
+            KotlinNameSuggester.suggestNameByName(nameSuggestion, validator)
         else
             Fe10KotlinNameSuggester.suggestNamesByExpressionOnly(value, bindingContext, validator, "t").first()
         return Name.identifier(name)
@@ -94,8 +97,8 @@ internal fun MutableCodeToInline.introduceValue(
             statementsBefore.add(0, value)
         }
     } else {
-        val useIt = !isNameUsed("it")
-        val name = if (useIt) Name.identifier("it") else suggestName { !isNameUsed(it) }
+        val useIt = !isNameUsed(StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
+        val name = if (useIt) StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME else suggestName { !isNameUsed(it) }
         replaceUsages(name)
 
         mainExpression = psiFactory.buildExpression {

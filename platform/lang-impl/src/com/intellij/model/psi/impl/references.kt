@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model.psi.impl
 
-import com.intellij.model.Symbol
 import com.intellij.model.psi.ImplicitReferenceProvider
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.PsiSymbolReferenceHints
 import com.intellij.model.psi.PsiSymbolReferenceService
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
@@ -62,7 +60,7 @@ private fun allReferencesInElement(element: PsiElement, offsetInElement: Int): C
   if (references.isNotEmpty()) {
     return references
   }
-  val implicitReference = implicitReference(element)
+  val implicitReference = implicitReference(element, offsetInElement)
   if (implicitReference != null) {
     return listOf(implicitReference)
   }
@@ -79,12 +77,9 @@ private fun referencesInElement(element: PsiElement, offsetInElement: Int): Coll
   }
 }
 
-private fun implicitReference(element: PsiElement): PsiSymbolReference? {
-  for (handler in ImplicitReferenceProvider.EP_NAME.extensions) {
-    val resolved = handler.resolveAsReference(element)
-    if (resolved.isNotEmpty()) {
-      return ImmediatePsiSymbolReference(element, resolved)
-    }
+private fun implicitReference(element: PsiElement, offsetInElement: Int): PsiSymbolReference? {
+  for (handler in ImplicitReferenceProvider.EP_NAME.extensionList) {
+    return handler.getImplicitReference(element, offsetInElement) ?: continue
   }
   return null
 }
@@ -104,16 +99,4 @@ private class ReferenceCollectingVisitor(
     super.visitElement(element)
     references.addAll(allReferencesInElement(element, -1))
   }
-}
-
-private class ImmediatePsiSymbolReference(
-  private val myElement: PsiElement,
-  private val myTargets: Collection<Symbol>
-) : PsiSymbolReference {
-
-  private val myRange = TextRange.from(0, element.textLength)
-
-  override fun getElement(): PsiElement = myElement
-  override fun getRangeInElement(): TextRange = myRange
-  override fun resolveReference(): Collection<Symbol> = myTargets
 }

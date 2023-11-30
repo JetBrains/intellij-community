@@ -102,12 +102,6 @@ abstract class EditorDiffPreview(protected val project: Project,
   private val previewFileDelegate = lazy { PreviewDiffVirtualFile(this) }
   private val previewFile by previewFileDelegate
 
-  protected fun init() {
-    addSelectionListener {
-      updatePreview(true)
-    }
-  }
-
   override fun openPreview(requestFocus: Boolean): Boolean {
     val oldToolWindowFocus = getCurrentToolWindowFocus()
     registerEscapeHandler(file = previewFile, handler = MyEscapeHandler(oldToolWindowFocus))
@@ -124,8 +118,6 @@ abstract class EditorDiffPreview(protected val project: Project,
   override fun getOwner(): Disposable = owner
 
   abstract fun getOwnerComponent(): JComponent
-
-  abstract fun addSelectionListener(listener: () -> Unit)
 
   private fun getCurrentToolWindowFocus(): ToolWindowFocus? {
     val focusOwner = IdeFocusManager.getInstance(project).focusOwner ?: return null
@@ -159,10 +151,6 @@ abstract class EditorDiffPreview(protected val project: Project,
 class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsLogChangesBrowser) :
   EditorDiffPreview(project, changesBrowser), ChainBackedDiffPreviewProvider {
 
-  init {
-    init()
-  }
-
   override fun createDiffRequestProcessor(): DiffRequestProcessor {
     val preview = changesBrowser.createChangeProcessor(true)
     preview.updatePreview(true)
@@ -176,15 +164,6 @@ class VcsLogEditorDiffPreview(project: Project, private val changesBrowser: VcsL
   }
 
   override fun getOwnerComponent(): JComponent = changesBrowser.preferredFocusedComponent
-
-  override fun addSelectionListener(listener: () -> Unit) {
-    changesBrowser.viewer.addSelectionListener(Runnable {
-      if (changesBrowser.selectedChanges.isNotEmpty()) {
-        listener()
-      }
-    }, owner)
-    changesBrowser.addListener(VcsLogChangesBrowser.Listener { updatePreview(true) }, owner)
-  }
 
   override fun createDiffRequestChain(): DiffRequestChain? {
     val producers = VcsTreeModelData.getListSelectionOrAll(changesBrowser.viewer).map {

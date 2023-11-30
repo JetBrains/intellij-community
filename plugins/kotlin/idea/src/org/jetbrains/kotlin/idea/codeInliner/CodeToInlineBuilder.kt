@@ -3,19 +3,19 @@
 package org.jetbrains.kotlin.idea.codeInliner
 
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.codeInliner.CommentHolder.CommentNode.Companion.mergeComments
+import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.asExpression
-import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.*
 import org.jetbrains.kotlin.idea.references.canBeResolvedViaImport
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -40,44 +40,28 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.unCapture
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
-class CodeToInlineBuilder(
-    private val targetCallable: CallableDescriptor,
-    private val resolutionFacade: ResolutionFacade,
-    private val originalDeclaration: KtDeclaration?,
-    private val fallbackToSuperCall: Boolean = false,
-) {
-    private val psiFactory = KtPsiFactory(resolutionFacade.project)
+class CodeToInlineBuilder(private val targetCallable: CallableDescriptor,
+                          private val resolutionFacade: ResolutionFacade,
+                          originalDeclaration: KtDeclaration?,
+                          fallbackToSuperCall: Boolean = false) : AbstractCodeToInlineBuilder(resolutionFacade.project, originalDeclaration, fallbackToSuperCall) {
+    constructor(originalDeclaration: KtDeclaration, fallbackToSuperCall: Boolean): this(originalDeclaration.unsafeResolveToDescriptor() as CallableDescriptor, originalDeclaration.getResolutionFacade(), originalDeclaration, fallbackToSuperCall)
 
-    fun prepareCodeToInlineWithAdvancedResolution(
-        bodyOrExpression: KtExpression,
-        expressionMapper: (bodyOrExpression: KtExpression) -> Pair<KtExpression?, List<KtExpression>>?,
-    ): CodeToInline? {
-        val (mainExpression, statementsBefore) = expressionMapper(bodyOrExpression) ?: return null
-        val codeToInline = prepareMutableCodeToInline(
+    override fun prepareMutableCodeToInline(
+        mainExpression: KtExpression?,
+        statementsBefore: List<KtExpression>,
+        reformat: Boolean,
+    ): MutableCodeToInline {
+        return prepareMutableCodeToInline(
             mainExpression = mainExpression,
             statementsBefore = statementsBefore,
             analyze = { it.analyze(BodyResolveMode.PARTIAL) },
-            reformat = true,
+            reformat = reformat
         )
-
-        val copyOfBodyOrExpression = bodyOrExpression.copied()
-
-        // Body's expressions to be inlined contain related comments as a user data (see CommentHolder.CommentNode.Companion.mergeComments).
-        // When inlining (with untouched declaration!) is reverted and called again expressions become polluted with duplicates (^ merge!).
-        // Now that we copied required data it's time to clear the storage.
-        codeToInline.expressions.forEach { it.putCopyableUserData(CommentHolder.COMMENTS_TO_RESTORE_KEY, null) }
-
-        val (resultMainExpression, resultStatementsBefore) = expressionMapper(copyOfBodyOrExpression) ?: return null
-        codeToInline.mainExpression = resultMainExpression
-        codeToInline.statementsBefore.clear()
-        codeToInline.statementsBefore.addAll(resultStatementsBefore)
-
-        return codeToInline.toNonMutable()
     }
 
     private fun prepareMutableCodeToInline(
@@ -94,6 +78,7 @@ class CodeToInlineBuilder(
 
         val codeToInline = MutableCodeToInline(
             mainExpression,
+            originalDeclaration,
             statementsBefore.toMutableList(),
             mutableSetOf(),
             alwaysKeepMainExpression,
@@ -101,7 +86,7 @@ class CodeToInlineBuilder(
         )
 
         if (originalDeclaration != null) {
-            saveComments(codeToInline, originalDeclaration)
+            saveComments(codeToInline, originalDeclaration!!)
         }
 
         insertExplicitTypeArguments(codeToInline, analyze)
@@ -157,32 +142,6 @@ class CodeToInlineBuilder(
         reformat: Boolean,
     ): CodeToInline = prepareMutableCodeToInline(mainExpression, statementsBefore, analyze, reformat).toNonMutable()
 
-    private fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {
-        val bodyBlockExpression = contextDeclaration.safeAs<KtDeclarationWithBody>()?.bodyBlockExpression
-        if (bodyBlockExpression != null) addCommentHoldersForStatements(codeToInline, bodyBlockExpression)
-    }
-
-    private fun addCommentHoldersForStatements(mutableCodeToInline: MutableCodeToInline, blockExpression: KtBlockExpression) {
-        val expressions = mutableCodeToInline.expressions
-
-        for ((indexOfIteration, commentHolder) in CommentHolder.extract(blockExpression).withIndex()) {
-            if (commentHolder.isEmpty) continue
-
-            if (expressions.isEmpty()) {
-                mutableCodeToInline.addExtraComments(commentHolder)
-            } else {
-                val expression = expressions.elementAtOrNull(indexOfIteration)
-                if (expression != null) {
-                    expression.mergeComments(commentHolder)
-                } else {
-                    expressions.last().mergeComments(
-                        CommentHolder(emptyList(), trailingComments = commentHolder.leadingComments + commentHolder.trailingComments)
-                    )
-                }
-            }
-        }
-    }
-
     private fun getParametersForFunctionLiteral(
         functionLiteralExpression: KtLambdaExpression,
         analyze: (KtExpression) -> BindingContext
@@ -207,7 +166,7 @@ class CodeToInlineBuilder(
         }
 
         if (!needToAddParameterTypes(lambdaExpr, resolutionFacade)) return
-        SpecifyExplicitLambdaSignatureIntention.applyWithParameters(lambdaExpr, parameters)
+        SpecifyExplicitLambdaSignatureIntention.Holder.applyWithParameters(lambdaExpr, parameters)
     }
 
     private fun needToAddParameterTypes(
@@ -226,7 +185,7 @@ class CodeToInlineBuilder(
                     last = KtFunctionLiteral::class
                 )
             val hasUnresolvedItOrThis = factory == Errors.UNRESOLVED_REFERENCE &&
-                    element.text == "it" &&
+                    element.text == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier &&
                     element.getStrictParentOfType<KtFunctionLiteral>() == functionLiteral
 
             hasCantInferParameter || hasUnresolvedItOrThis

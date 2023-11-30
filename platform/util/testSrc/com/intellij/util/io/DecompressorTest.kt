@@ -29,7 +29,7 @@ import java.util.zip.ZipException
 import java.util.zip.ZipOutputStream
 
 class DecompressorTest {
-  @Rule @JvmField var tempDir = TempDirectory()
+  @Rule @JvmField var tempDir: TempDirectory = TempDirectory()
 
   @Test fun noInternalTraversalInZip() {
     val zip = tempDir.newFile("test.zip")
@@ -204,6 +204,17 @@ class DecompressorTest {
     assertThat(dir.resolve("rogue")).isSymbolicLink().hasSameBinaryContentAs(rogueTarget.toPath())
   }
 
+  @Test fun tarHardlinks() {
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "hardlink", link = "hardlink", type = TarArchiveEntry.LF_LINK)
+    }
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    Decompressor.Tar(tar).extract(dir)
+
+    assertThat(dir.resolve("hardlink")).doesNotExist()
+  }
+
   @Test fun zipSymlinks() {
     assumeSymLinkCreationIsSupported()
 
@@ -226,7 +237,8 @@ class DecompressorTest {
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "rogue", link = "../f") }
 
-    val decompressor = Decompressor.Zip(zip).withZipExtensions().allowEscapingSymlinks(false)
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW)
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -237,7 +249,8 @@ class DecompressorTest {
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "rogue", link = "../f") }
 
-    val decompressor = Decompressor.Tar(tar).allowEscapingSymlinks(false)
+    val decompressor = Decompressor.Tar(tar).escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW)
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -395,7 +408,8 @@ class DecompressorTest {
     val tar = tempDir.newFile("test.tar")
     TarArchiveOutputStream(FileOutputStream(tar)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
 
-    val decompressor = Decompressor.Tar(tar).allowEscapingSymlinks(false).removePrefixPath("a/b/c")
+    val decompressor = Decompressor.Tar(tar).escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW).removePrefixPath("a/b/c")
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -406,7 +420,8 @@ class DecompressorTest {
     val zip = tempDir.newFile("test.zip")
     ZipArchiveOutputStream(FileOutputStream(zip)).use { writeEntry(it, "a/b/c/rogue", link = "../f") }
 
-    val decompressor = Decompressor.Zip(zip).withZipExtensions().allowEscapingSymlinks(false).removePrefixPath("a/b/c")
+    val decompressor = Decompressor.Zip(zip).withZipExtensions().escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.DISALLOW).removePrefixPath("a/b/c")
     val dir = tempDir.newDirectory("unpacked").toPath()
     testNoTraversal(decompressor, dir, dir.resolve("rogue"))
   }
@@ -474,6 +489,21 @@ class DecompressorTest {
     }
   }
 
+  @Test fun absoluteSymlinkToRelativeWithOptionSet() {
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "symlink", link = "/root")
+    }
+
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    Decompressor.Tar(tar).escapingSymlinkPolicy(
+      Decompressor.EscapingSymlinkPolicy.RELATIVIZE_ABSOLUTE).extract(dir)
+
+    val symlink = dir.resolve("symlink");
+    assertThat(symlink).isSymbolicLink()
+    assertThat(Files.readSymbolicLink(symlink)).isEqualTo(dir.resolve("root"))
+  }
+
   //<editor-fold desc="Helpers.">
   private fun writeEntry(zip: ZipOutputStream, name: String) {
     val entry = ZipEntry(name)
@@ -483,9 +513,9 @@ class DecompressorTest {
     zip.closeEntry()
   }
 
-  private fun writeEntry(tar: TarArchiveOutputStream, name: String, mode: Int = 0, link: String? = null) {
+  private fun writeEntry(tar: TarArchiveOutputStream, name: String, mode: Int = 0, link: String? = null, type: Byte = TarArchiveEntry.LF_SYMLINK) {
     if (link != null) {
-      val entry = TarArchiveEntry(name, TarArchiveEntry.LF_SYMLINK)
+      val entry = TarArchiveEntry(name, type)
       entry.modTime = Date()
       entry.linkName = link
       entry.size = 0

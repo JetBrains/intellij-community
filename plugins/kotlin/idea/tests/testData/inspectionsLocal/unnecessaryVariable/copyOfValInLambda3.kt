@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// PROBLEM: none
 fun findCredentials() = 1
 
 fun println(i: Int) {}

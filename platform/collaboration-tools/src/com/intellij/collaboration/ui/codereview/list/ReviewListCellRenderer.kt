@@ -2,12 +2,13 @@
 package com.intellij.collaboration.ui.codereview.list
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle.message
-import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.createTagLabel
+import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.ide.IdeTooltip
 import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
+import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.list.SelectablePanel
@@ -17,6 +18,8 @@ import com.intellij.util.containers.nullize
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import icons.CollaborationToolsIcons
+import icons.DvcsImplIcons
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.geom.RoundRectangle2D
 import javax.swing.*
@@ -38,13 +41,8 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
     font = font.deriveFont(titleFontSize / 13.0f * 12.0f)
   }
   private val tags = JLabel()
-  private val state = JLabel().apply {
-    border = JBUI.Borders.empty(0, 4)
-    foreground = stateForeground
-  }
-  private val statePanel = StatePanel(state).apply {
-    background = stateBackground
-  }
+  private val stateTextModel = SingleValueModel<@Nls String?>(null)
+  private val stateLabel = createTagLabel(stateTextModel)
   private val nonMergeable = JLabel()
   private val buildStatus = JLabel()
   private val userGroup1 = JLabel()
@@ -62,7 +60,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
       add(title, SwingConstants.LEFT as Any)
       add(tags, SwingConstants.LEFT as Any)
 
-      add(statePanel, SwingConstants.RIGHT as Any)
+      add(stateLabel, SwingConstants.RIGHT as Any)
       add(nonMergeable, SwingConstants.RIGHT as Any)
       add(buildStatus, SwingConstants.RIGHT as Any)
       add(userGroup1, SwingConstants.RIGHT as Any)
@@ -131,7 +129,7 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
     val tagGroup = presentation.tagGroup
     tags.apply {
-      icon = CollaborationToolsIcons.Review.Branch
+      icon = DvcsImplIcons.BranchLabel
       isVisible = tagGroup != null
     }.also {
       if (tagGroup != null) {
@@ -142,10 +140,10 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
             val color = tag.color
             if (color != null) {
               //TODO: need a separate untinted icon to color properly
-              label.icon = IconUtil.colorize(CollaborationToolsIcons.Review.Branch, color)
+              label.icon = IconUtil.colorize(DvcsImplIcons.BranchLabel, color)
             }
             else {
-              label.icon = CollaborationToolsIcons.Review.Branch
+              label.icon = DvcsImplIcons.BranchLabel
             }
           }
         }
@@ -156,12 +154,8 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
       }
     }
 
-    state.apply {
-      font = JBUI.Fonts.smallFont()
-      text = presentation.state
-      isVisible = presentation.state != null
-    }
-    statePanel.isVisible = presentation.state != null
+    stateTextModel.value = presentation.state
+    stateLabel.isVisible = presentation.state != null
 
     nonMergeable.apply {
       val status = presentation.mergeableStatus
@@ -237,10 +231,6 @@ class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewListItemPres
 
   companion object {
     private const val MAX_PARTICIPANT_ICONS = 2
-
-    // TODO: register metadata provider somehow?
-    private val stateForeground = JBColor.namedColor("ReviewList.state.foreground", 0x797979)
-    private val stateBackground = JBColor.namedColor("ReviewList.state.background", 0xDFE1E5)
 
     /**
      * Draws a background with rounded corners

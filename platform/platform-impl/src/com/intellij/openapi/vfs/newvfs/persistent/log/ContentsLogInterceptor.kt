@@ -3,133 +3,143 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ContentsInterceptor
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogOperationTrackingContext.Companion.trackOperation
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogOperationTrackingContext.Companion.trackPlainOperation
 import com.intellij.util.io.storage.IAppenderStream
 import com.intellij.util.io.storage.IStorageDataOutput
 
 class ContentsLogInterceptor(
-  private val context: VfsLogContext
+  private val context: VfsLogOperationTrackingContext,
+  private val interceptMask: VfsOperationTagsMask = VfsOperationTagsMask.ContentsMask
 ) : ContentsInterceptor {
 
-  override fun onWriteBytes(underlying: (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit) =
-    { record: Int, bytes: ByteArraySequence, fixedSize: Boolean ->
-      { underlying(record, bytes, fixedSize) } catchResult { result ->
-        val data = bytes.toBytes()
-        context.enqueueOperationWrite(VfsOperationTag.CONTENT_WRITE_BYTES) {
-          val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
-            write(data, 0, data.size)
-          }
-          VfsOperation.ContentsOperation.WriteBytes(record, fixedSize, payloadRef, result)
-        }
-      }
+  override fun onWriteBytes(underlying: (record: Int, bytes: ByteArraySequence, fixedSize: Boolean) -> Unit): (Int, ByteArraySequence, Boolean) -> Unit =
+    if (VfsOperationTag.CONTENT_WRITE_BYTES !in interceptMask) underlying
+    else { record: Int, bytes: ByteArraySequence, fixedSize: Boolean ->
+      val data = bytes.toBytes()
+      context.trackPlainOperation(VfsOperationTag.CONTENT_WRITE_BYTES, {
+        val payloadRef = context.payloadWriter(data)
+        VfsOperation.ContentsOperation.WriteBytes(record, fixedSize, payloadRef, it)
+      }) { underlying(record, bytes, fixedSize) }
     }
 
   override fun onWriteStream(underlying: (record: Int) -> IStorageDataOutput): (record: Int) -> IStorageDataOutput =
-    { record ->
-      val sdo = underlying(record)
-      object : IStorageDataOutput by sdo {
-        override fun close() {
-          { sdo.close() } catchResult ::interceptClose
-        }
-
-        private fun interceptClose(result: OperationResult<Unit>) {
-          val data = sdo.asByteArraySequence().toBytes()
-          context.enqueueOperationWrite(VfsOperationTag.CONTENT_WRITE_STREAM) {
-            val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
-              write(data, 0, data.size)
+    if (VfsOperationTag.CONTENT_WRITE_STREAM !in interceptMask) underlying
+    else { record ->
+      context.trackOperation(VfsOperationTag.CONTENT_WRITE_STREAM) {
+        val sdo = underlying(record)
+        object : IStorageDataOutput by sdo {
+          private var wasClosed = false
+          override fun close() {
+            if (wasClosed) {
+              sdo.close()
+              return
             }
-            VfsOperation.ContentsOperation.WriteStream(recordId, payloadRef, result)
+            wasClosed = true
+            val data = sdo.asByteArraySequence().toBytes();
+            { sdo.close() } catchResult { result ->
+              completeTracking {
+                val payloadRef = context.payloadWriter(data)
+                VfsOperation.ContentsOperation.WriteStream(record, payloadRef, result)
+              }
+            }
           }
         }
       }
     }
 
   override fun onWriteStream(underlying: (record: Int, fixedSize: Boolean) -> IStorageDataOutput): (record: Int, fixedSize: Boolean) -> IStorageDataOutput =
-    { record, fixedSize ->
-      val sdo = underlying(record, fixedSize)
-      object : IStorageDataOutput by sdo {
-        override fun close() {
-          val data = sdo.asByteArraySequence().toBytes();
-          { sdo.close() } catchResult { interceptClose(data, it) }
-        }
-
-        private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
-          context.enqueueOperationWrite(VfsOperationTag.CONTENT_WRITE_STREAM_2) {
-            val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
-              write(data, 0, data.size)
+    if (VfsOperationTag.CONTENT_WRITE_STREAM_2 !in interceptMask) underlying
+    else { record, fixedSize ->
+      context.trackOperation(VfsOperationTag.CONTENT_WRITE_STREAM_2) {
+        val sdo = underlying(record, fixedSize)
+        object : IStorageDataOutput by sdo {
+          private var wasClosed: Boolean = false
+          override fun close() {
+            if (wasClosed) {
+              sdo.close()
+              return
             }
-            VfsOperation.ContentsOperation.WriteStream2(recordId, fixedSize, payloadRef, result)
+            wasClosed = true
+            val data = sdo.asByteArraySequence().toBytes();
+            { sdo.close() } catchResult { result ->
+              completeTracking {
+                val payloadRef = context.payloadWriter(data)
+                VfsOperation.ContentsOperation.WriteStream2(record, fixedSize, payloadRef, result)
+              }
+            }
           }
         }
       }
     }
 
   override fun onAppendStream(underlying: (record: Int) -> IAppenderStream): (record: Int) -> IAppenderStream =
-    { record ->
-      val ias = underlying(record)
-      object : IAppenderStream by ias {
-        override fun close() {
-          val data = ias.asByteArraySequence().toBytes();
-          { ias.close() } catchResult { interceptClose(data, it) }
-        }
-
-        private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
-          context.enqueueOperationWrite(VfsOperationTag.CONTENT_APPEND_STREAM) {
-            val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
-              write(data, 0, data.size)
+    if (VfsOperationTag.CONTENT_APPEND_STREAM !in interceptMask) underlying
+    else { record ->
+      context.trackOperation(VfsOperationTag.CONTENT_APPEND_STREAM) {
+        val ias = underlying(record)
+        object : IAppenderStream by ias {
+          private var wasClosed: Boolean = false
+          override fun close() {
+            if (wasClosed) {
+              ias.close()
+              return
             }
-            VfsOperation.ContentsOperation.AppendStream(record, payloadRef, result)
+            wasClosed = true
+            val data = ias.asByteArraySequence().toBytes();
+            { ias.close() } catchResult { result ->
+              completeTracking {
+                val payloadRef = context.payloadWriter(data)
+                VfsOperation.ContentsOperation.AppendStream(record, payloadRef, result)
+              }
+            }
           }
         }
       }
     }
 
   override fun onReplaceBytes(underlying: (record: Int, offset: Int, bytes: ByteArraySequence) -> Unit): (record: Int, offset: Int, bytes: ByteArraySequence) -> Unit =
-    { record, offset, bytes ->
-      { underlying(record, offset, bytes) } catchResult { result ->
-        val data = bytes.toBytes()
-        context.enqueueOperationWrite(VfsOperationTag.CONTENT_REPLACE_BYTES) {
-          val payloadRef = payloadStorage.writePayload(data.size.toLong()) {
-            write(data, 0, data.size)
-          }
-          VfsOperation.ContentsOperation.ReplaceBytes(record, offset, payloadRef, result)
-        }
-      }
+    if (VfsOperationTag.CONTENT_REPLACE_BYTES !in interceptMask) underlying
+    else { record, offset, bytes ->
+      val data = bytes.toBytes()
+      context.trackPlainOperation(VfsOperationTag.CONTENT_REPLACE_BYTES, {
+        val payloadRef = context.payloadWriter(data)
+        VfsOperation.ContentsOperation.ReplaceBytes(record, offset, payloadRef, it)
+      }) { underlying(record, offset, bytes) }
     }
 
   override fun onAcquireNewRecord(underlying: () -> Int): () -> Int =
-    {
-      { underlying() } catchResult { result ->
-        context.enqueueOperationWrite(VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD) {
-          VfsOperation.ContentsOperation.AcquireNewRecord(result)
+    if (VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD !in interceptMask) underlying
+    else {
+      {
+        context.trackPlainOperation(VfsOperationTag.CONTENT_ACQUIRE_NEW_RECORD, { VfsOperation.ContentsOperation.AcquireNewRecord(it) }) {
+          underlying()
         }
       }
     }
 
   override fun onAcquireRecord(underlying: (record: Int) -> Unit): (record: Int) -> Unit =
-    { record ->
-      { underlying(record) } catchResult { result ->
-        context.enqueueOperationWrite(VfsOperationTag.CONTENT_ACQUIRE_RECORD) {
-          VfsOperation.ContentsOperation.AcquireRecord(record, result)
-        }
+    if (VfsOperationTag.CONTENT_ACQUIRE_RECORD !in interceptMask) underlying
+    else { record ->
+      context.trackPlainOperation(VfsOperationTag.CONTENT_ACQUIRE_RECORD, { VfsOperation.ContentsOperation.AcquireRecord(record, it) }) {
+        underlying(record)
       }
     }
 
 
   override fun onReleaseRecord(underlying: (record: Int) -> Unit): (record: Int) -> Unit =
-    { record ->
-      { underlying(record) } catchResult { result ->
-        context.enqueueOperationWrite(VfsOperationTag.CONTENT_RELEASE_RECORD) {
-          VfsOperation.ContentsOperation.ReleaseRecord(record, result)
-        }
+    if (VfsOperationTag.CONTENT_RELEASE_RECORD !in interceptMask) underlying
+    else { record ->
+      context.trackPlainOperation(VfsOperationTag.CONTENT_RELEASE_RECORD, { VfsOperation.ContentsOperation.ReleaseRecord(record, it) }) {
+        underlying(record)
       }
     }
 
   override fun onSetVersion(underlying: (version: Int) -> Unit): (version: Int) -> Unit =
-    { version ->
-      { underlying(version) } catchResult { result ->
-        context.enqueueOperationWrite(VfsOperationTag.CONTENT_SET_VERSION) {
-          VfsOperation.ContentsOperation.SetVersion(version, result)
-        }
+    if (VfsOperationTag.CONTENT_SET_VERSION !in interceptMask) underlying
+    else { version ->
+      context.trackPlainOperation(VfsOperationTag.CONTENT_SET_VERSION, { VfsOperation.ContentsOperation.SetVersion(version, it) }) {
+        underlying(version)
       }
     }
 }

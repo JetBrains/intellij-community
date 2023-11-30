@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.isDirectory
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -25,6 +24,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.notExists
 import kotlin.io.path.pathString
@@ -156,10 +156,10 @@ object ClasspathToVfsConverter {
 
     private val Path.fileType: FileType get(){
         return when {
-            notExists() -> FileType.NOT_EXISTS
-            isDirectory() -> FileType.DIRECTORY
-            isRegularFile() -> FileType.REGULAR_FILE
-            else -> FileType.UNKNOWN
+          notExists() -> FileType.NOT_EXISTS
+          isDirectory() -> FileType.DIRECTORY
+          isRegularFile() -> FileType.REGULAR_FILE
+          else -> FileType.UNKNOWN
         }
     }
 

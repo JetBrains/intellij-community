@@ -1,0 +1,20 @@
+<idea-plugin package="org.jetbrains.kotlin.idea.highlighting">
+  <dependencies>
+    <module name="kotlin.searching.k2"/>
+  </dependencies>
+
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.callHighlighterExtension"
+            interface="org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension"
+            dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinDiagnosticHighlightVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinSemanticHighlightingVisitor"/>
+
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
+  </extensions>
+
+</idea-plugin>

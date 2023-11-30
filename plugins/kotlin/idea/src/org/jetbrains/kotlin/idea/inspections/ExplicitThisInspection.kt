@@ -9,25 +9,26 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
+import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.ExplicitThisInspection.Util.thisAsReceiverOrNull
 import org.jetbrains.kotlin.idea.intentions.getCallableDescriptor
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
+import org.jetbrains.kotlin.psi.psiUtil.referenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-
 class ExplicitThisInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitExpression(expression: KtExpression) {
             val thisExpression = expression.thisAsReceiverOrNull() ?: return
-            if (hasExplicitThis(expression)) {
+            if (Util.hasExplicitThis(expression)) {
                 holder.registerProblem(
                     thisExpression,
                     KotlinBundle.message("redundant.explicit.this"),
@@ -37,7 +38,7 @@ class ExplicitThisInspection : AbstractKotlinInspection() {
         }
     }
 
-    companion object {
+    object Util {
         fun KtExpression.thisAsReceiverOrNull() = when (this) {
             is KtCallableReferenceExpression -> receiverExpression as? KtThisExpression
             is KtDotQualifiedExpression -> receiverExpression as? KtThisExpression
@@ -55,12 +56,14 @@ class ExplicitThisInspection : AbstractKotlinInspection() {
             val scope = expression.getResolutionScope(context) ?: return false
 
             val referenceExpression = reference as? KtNameReferenceExpression ?: reference.getChildOfType() ?: return false
+            if (context.diagnostics.forElement(referenceExpression).any { it.factory == Errors.UNRESOLVED_REFERENCE }) return false
             val receiverType = context[BindingContext.EXPRESSION_TYPE_INFO, thisExpression]?.type ?: return false
+            val referenceTarget = context[BindingContext.REFERENCE_TARGET, reference.referenceExpression()]
 
             //we avoid overload-related problems by enforcing that there is only one candidate
             val name = referenceExpression.getReferencedNameAsName()
             val candidates = if (reference is KtCallExpression
-                || (expression is KtCallableReferenceExpression && reference.mainReference.resolve() is KtFunction)
+                || (expression is KtCallableReferenceExpression && referenceTarget is FunctionDescriptor)
             ) {
                 scope.getAllAccessibleFunctions(name) +
                         scope.getAllAccessibleVariables(name).filter { it is LocalVariableDescriptor && it.canInvoke() }
@@ -78,8 +81,7 @@ class ExplicitThisInspection : AbstractKotlinInspection() {
             val expressionFactory = scope.getFactoryForImplicitReceiverWithSubtypeOf(receiverType) ?: return false
 
             val label = thisExpression.getLabelName() ?: ""
-            if (!expressionFactory.matchesLabel(label)) return false
-            return true
+            return expressionFactory.matchesLabel(label)
         }
 
         private fun VariableDescriptor.canInvoke(): Boolean {

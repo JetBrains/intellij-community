@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.*;
@@ -29,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApplyChangesState extends State {
+public final class ApplyChangesState extends State {
 
   /**
    * There is a possible case that formatting introduced big number of changes to the underlying document. That number may be
@@ -68,7 +54,7 @@ public class ApplyChangesState extends State {
    */
   @SuppressWarnings({"deprecation"})
   private void applyChangesAtRewriteMode(final @NotNull List<? extends LeafBlockWrapper> blocksToModify,
-                                         @NotNull final FormattingModel model) {
+                                         final @NotNull FormattingModel model) {
     FormattingDocumentModel documentModel = model.getDocumentModel();
     Document document = documentModel.getDocument();
     CaretOffsetUpdater caretOffsetUpdater = new CaretOffsetUpdater(document);
@@ -113,8 +99,7 @@ public class ApplyChangesState extends State {
     blocks.clear();
   }
 
-  @Nullable
-  private static DocumentEx getAffectedDocument(final FormattingModel model) {
+  private static @Nullable DocumentEx getAffectedDocument(final FormattingModel model) {
     final Document document = model.getDocumentModel().getDocument();
     if (document instanceof DocumentEx) {
       return (DocumentEx)document;

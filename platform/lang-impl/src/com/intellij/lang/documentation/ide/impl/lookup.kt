@@ -58,7 +58,7 @@ private fun cancelPopupWhenLookupIsClosed(lookup: Lookup, popup: AbstractPopup) 
   }
 }
 
-internal fun Lookup.elementFlow(): Flow<LookupElement> {
+fun Lookup.elementFlow(): Flow<LookupElement> {
   EDT.assertIsEdt()
   val items = MutableSharedFlow<LookupElement>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   addLookupListener(object : LookupListener {
@@ -95,7 +95,7 @@ internal fun lookupElementToRequestMapper(lookup: Lookup): suspend (LookupElemen
       }
       val file = PsiUtilBase.getPsiFileInEditor(editor, project)
                  ?: return@readAction null
-      ideTargetProvider.documentationTarget(editor, file, lookupElement)?.documentationRequest()
+      ideTargetProvider.documentationTargets(editor, file, lookupElement).firstOrNull()?.documentationRequest()
     }
   }
 }

@@ -5,13 +5,19 @@ package com.intellij.codeInspection;
  * Defines type used to determine highlighting of {@link ProblemDescriptor}.
  * Please use {@link #GENERIC_ERROR_OR_WARNING}, otherwise user's settings would be ignored.
  * <p/>
- * If you need specific text attributes in the editor, please use {@link InspectionProfileEntry#getEditorAttributesKey()} instead.
+ * If you need specific text attributes in the editor, please specify it in the {@code plugin.xml} using {@link InspectionEP#editorAttributes}
+ *
  * @see com.intellij.codeInspection.ProblemDescriptorUtil#getHighlightInfoType
  */
 public enum ProblemHighlightType {
 
   /**
-   * Underlying highlighting with color depending on the inspection {@link com.intellij.codeHighlighting.HighlightDisplayLevel}.
+   * Use underlying highlighting with a style specified in the inspection settings.
+   *
+   * @see com.intellij.codeHighlighting.HighlightDisplayLevel
+   * @see InspectionEP#getDefaultLevel
+   * @see InspectionEP#editorAttributes
+   * @see com.intellij.codeInsight.daemon.impl.LocalInspectionsPass#highlightInfoFromDescriptor
    */
   GENERIC_ERROR_OR_WARNING,
 

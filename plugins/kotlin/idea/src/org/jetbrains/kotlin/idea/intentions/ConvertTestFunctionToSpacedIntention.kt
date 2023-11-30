@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.intentions
 
-import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
@@ -14,10 +13,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.rename.RenameProcessor
-import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -28,10 +27,6 @@ import org.jetbrains.kotlin.utils.SmartList
 sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfTargetingRangeIntention<KtNamedFunction>(
     KtNamedFunction::class.java, KotlinBundle.lazyMessage("replace.0.name.with.spaces", case)
 ) {
-    companion object {
-        private val SNAKE_CASE_REGEX = ".+_.+".toRegex()
-    }
-
     abstract fun split(name: String): List<String>
 
     abstract fun isApplicableName(name: String): Boolean
@@ -48,8 +43,7 @@ sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfTargetingR
         val newName = convert(name)
         if (newName == name.quoteIfNeeded()) return null
 
-        val psiClass = element.toLightMethods().firstOrNull()?.containingClass ?: return null
-        if (!TestFrameworks.getInstance().isTestClass(psiClass)) return null
+        if (KotlinPsiBasedTestFramework.findTestFramework(element) == null) return null
 
         setTextGetter(KotlinBundle.lazyMessage("rename.to.01", newName))
 
@@ -106,6 +100,7 @@ sealed class ConvertTestFunctionToSpacedIntention(case: String) : SelfTargetingR
     }
 }
 
+private val SNAKE_CASE_REGEX: Regex = ".+_.+".toRegex()
 
 class ConvertCamelCaseTestFunctionToSpacedIntention : ConvertTestFunctionToSpacedIntention("camel-case") {
     override fun isApplicableName(name: String): Boolean {

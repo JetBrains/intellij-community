@@ -4,12 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 enum Enum1 {
-  A(<error descr="Illegal forward reference">B</error>.var),
+  A(<error descr="Cannot refer to enum constant 'B' before its definition">B</error>.var),
   B(test.Enum1.A.var),
-  C(<error descr="Illegal forward reference">constant</error>),
+  C(<error descr="Cannot read value of field 'constant' before the field's definition">constant</error>),
   D(Enum1.constant),
-  E(<error descr="Illegal forward reference">staticVar</error>),
-  F(<error descr="Illegal forward reference">Enum1.staticVar</error>)
+  E(<error descr="Cannot read value of field 'staticVar' before the field's definition">staticVar</error>),
+  F(<error descr="Cannot read value of field 'staticVar' before the field's definition">Enum1.staticVar</error>)
   ;
   Enum1(String str) {
   }
@@ -20,10 +20,10 @@ enum Enum1 {
 }
 
 enum Enum2 {
-  A(<error descr="Illegal forward reference">B</error>.var),
+  A(<error descr="Cannot refer to enum constant 'B' before its definition">B</error>.var),
   B(A.var),
-  C(<error descr="Illegal forward reference">constant</error>),
-  D(<error descr="Illegal forward reference">Enum2.constant</error>)
+  C(<error descr="Cannot read value of field 'constant' before the field's definition">constant</error>),
+  D(<error descr="Cannot read value of field 'constant' before the field's definition">Enum2.constant</error>)
   ;
   Enum2(List<String> str) {
   }
@@ -33,15 +33,15 @@ enum Enum2 {
 }
 
 enum Enum3 {
-  A(<error descr="Illegal forward reference">B</error>),
-  B(<error descr="Illegal forward reference">Enum3.C</error>),
+  A(<error descr="Cannot refer to enum constant 'B' before its definition">B</error>),
+  B(<error descr="Cannot refer to enum constant 'C' before its definition">Enum3.C</error>),
   C(A),
   D(Enum3.B),
-  E(<error descr="Illegal forward reference">constant</error>),
-  F(<error descr="Illegal forward reference">Enum3.constant</error>),
+  E(<error descr="Cannot read value of field 'constant' before the field's definition">constant</error>),
+  F(<error descr="Cannot read value of field 'constant' before the field's definition">Enum3.constant</error>),
   G(A.var),
-  H(<error descr="Illegal forward reference">staticVar</error>),
-  I(<error descr="Illegal forward reference">Enum3.staticVar</error>)
+  H(<error descr="Cannot read value of field 'staticVar' before the field's definition">staticVar</error>),
+  I(<error descr="Cannot read value of field 'staticVar' before the field's definition">Enum3.staticVar</error>)
   ;
   Enum3(Enum3 str) {
   }
@@ -54,7 +54,7 @@ enum Enum4 {
   A
   ;
   static final String C1 = Enum4.D;
-  static final String C2 = <error descr="Illegal forward reference">D</error>;
+  static final String C2 = <error descr="Cannot read value of field 'D' before the field's definition">D</error>;
   static final String C3 = A.D;
   static final String D = "";
 }

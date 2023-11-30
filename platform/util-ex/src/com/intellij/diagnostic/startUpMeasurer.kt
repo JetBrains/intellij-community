@@ -3,15 +3,8 @@ package com.intellij.diagnostic
 
 import org.jetbrains.annotations.NonNls
 
-inline fun <T> Activity?.runChild(name: String, task: () -> T): T {
-  val activity = this?.startChild(name)
-  val result = task()
-  activity?.end()
-  return result
-}
-
-inline fun <T> runActivity(@NonNls name: String, category: ActivityCategory = ActivityCategory.DEFAULT, task: () -> T): T {
-  val activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity(name, category) else null
+inline fun <T> runActivity(@NonNls name: String, task: () -> T): T {
+  val activity = if (StartUpMeasurer.isEnabled()) StartUpMeasurer.startActivity(name) else null
   val result = task()
   activity?.end()
   return result

@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.lang.Language
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
@@ -27,9 +28,6 @@ import org.jetbrains.uast.*
 
 @Suppress("NOTHING_TO_INLINE")
 inline fun String?.orAnonymous(kind: String = ""): String = this ?: "<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">"
-
-fun <T> lz(initializer: () -> T) =
-    lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
 
 inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P): P {
     val unwrapped = if (element is T) element.javaPsi else element
@@ -89,8 +87,7 @@ fun KtExpression.readWriteAccess(): ReferenceAccess {
 fun KtElement.canAnalyze(): Boolean {
     if (!isValid) return false
     val containingFile = containingFile as? KtFile ?: return false // EA-114080, EA-113475, EA-134193
-    if (containingFile.doNotAnalyze != null) return false // To prevent exceptions during analysis
-    return true
+    return containingFile.doNotAnalyze == null // To prevent exceptions during analysis
 }
 
 val PsiClass.isEnumEntryLightClass: Boolean
@@ -106,10 +103,27 @@ internal fun KtClassOrObject.toPsiType(): PsiType {
     return PsiTypesUtil.getClassType(lightClass)
 }
 
+@ApiStatus.Internal
 fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {
-    if (this is KtProperty && sourcePsi?.readWriteAccess()?.isWrite == true) {
-        with(getAccessorLightMethods()) {
-            (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
+    if (this is KtProperty) {
+        val readWriteAccess = sourcePsi?.readWriteAccess()
+        if (readWriteAccess != null) {
+            with(getAccessorLightMethods()) {
+                if (sourcePsi is KtBackingField ||
+                    (sourcePsi as? KtNameReferenceExpression)?.getReferencedName() == "field"
+                ) {
+                    backingField?.let { return it }
+                }
+                when {
+                    readWriteAccess.isWrite -> {
+                        (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
+                    }
+                    readWriteAccess.isRead -> {
+                        getter?.let { return it }
+                    }
+                    else -> {}
+                }
+            }
         }
     }
     return when (this) {

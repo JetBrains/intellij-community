@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections.flake8;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.collect.Sets;
 import com.intellij.codeInspection.InspectionSuppressor;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiComment;
@@ -12,12 +11,12 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import one.util.streamex.StreamEx;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -30,9 +29,9 @@ import java.util.regex.Pattern;
  * @author jansorg
  */
 public class Flake8InspectionSuppressor implements InspectionSuppressor {
-  @NonNls public static final String NOQA = "noqa";
+  public static final @NonNls String NOQA = "noqa";
   // See flake8.defaults module
-  private static final Pattern NOQA_COMMENT_PATTERN = Pattern.compile("# noqa(?::[\\s]?(?<codes>([A-Z]+[0-9]+(?:[,\\s]+)?)+))?.*",
+  private static final Pattern NOQA_COMMENT_PATTERN = Pattern.compile("# noqa(?::\\s?(?<codes>([A-Z]+[0-9]+(?:[,\\s]+)?)+))?.*",
                                                                       Pattern.CASE_INSENSITIVE);
 
   private static final ImmutableSetMultimap<String, String> ourInspectionToFlake8Code =
@@ -81,26 +80,28 @@ public class Flake8InspectionSuppressor implements InspectionSuppressor {
    * an empty list if it's "# noqa" comment but without any explicit codes,
    * {@code null} if the specified comment is not a "# noqa" comment.
    */
-  @Nullable
-  public static Set<String> extractNoqaCodes(@NotNull PsiComment comment) {
+  public static @Nullable Set<String> extractNoqaCodes(@NotNull PsiComment comment) {
     String commentText = comment.getText();
-    if (commentText == null) return null;
-    int noqaOffset = StringUtils.lowerCase(commentText).indexOf("# noqa");
-    String noqaSuffix = StringUtils.substring(commentText, noqaOffset);
-    final Matcher matcher = NOQA_COMMENT_PATTERN.matcher(noqaSuffix);
+    if (commentText == null) {
+      return null;
+    }
+
+    int noqaOffset = commentText.toLowerCase(Locale.ENGLISH).indexOf("# noqa");
+    if (noqaOffset < 0) {
+      return null;
+    }
+
+    String noqaSuffix = commentText.substring(noqaOffset);
+    Matcher matcher = NOQA_COMMENT_PATTERN.matcher(noqaSuffix);
     if (matcher.matches()) {
-      final String codeList = matcher.group("codes");
-      if (codeList != null) {
-        return Sets.newHashSet(codeList.split("[,\\s]+"));
-      }
-      return Collections.emptySet();
+      String codeList = matcher.group("codes");
+      return codeList == null ? Collections.emptySet() : Set.of(codeList.split("[,\\s]+"));
     }
     return null;
   }
 
-  @NotNull
   @Override
-  public SuppressQuickFix[] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+  public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
     return SuppressQuickFix.EMPTY_ARRAY;
   }
 }

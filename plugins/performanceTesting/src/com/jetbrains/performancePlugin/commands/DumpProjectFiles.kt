@@ -2,6 +2,7 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
@@ -58,7 +59,7 @@ class DumpProjectFiles(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
     const val PREFIX = CMD_PREFIX + "dumpProjectFiles"
 
-    private val LOG = Logger.getInstance(DumpProjectFiles::class.java)
+    private val LOG = logger<DumpProjectFiles>()
 
     private fun getOrCreateDirectoryToDumpFiles(): Path {
       val property = System.getProperty("dump.project.files.directory")

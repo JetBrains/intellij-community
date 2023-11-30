@@ -27,13 +27,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class ChangeListsIndexes {
+class ChangeListsIndexes {
   private static final Logger LOG = Logger.getInstance(ChangeListsIndexes.class);
 
   private Map<FilePath, Data> myMap;
   private Set<Change> myChanges;
 
-  public ChangeListsIndexes() {
+  ChangeListsIndexes() {
     myMap = new HashMap<>();
     myChanges = new HashSet<>();
   }

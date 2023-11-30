@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.JavaUiBundle;
@@ -219,7 +219,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
     }
     else {
       // execute when current dialog is closed
-      invokeLater(project, ModalityState.NON_MODAL, () -> {
+      invokeLater(project, ModalityState.nonModal(), () -> {
         final Module[] committedModules = ModuleManager.getInstance(project).getModules();
         if (Arrays.asList(committedModules).containsAll(modules)) {
           resolveDependenciesTask.run();
@@ -236,7 +236,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         if (externalProject == null) {
           return;
         }
-        ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(externalProject, project);
+        ProjectDataManager.getInstance().importData(externalProject, project);
       }
     };
   }

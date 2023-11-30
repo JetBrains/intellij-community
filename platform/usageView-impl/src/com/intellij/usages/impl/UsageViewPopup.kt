@@ -43,6 +43,6 @@ interface UsageViewPopupFactory {
   fun createUsageViewPopup(project: Project, targetLanguage: Language): UsageViewPopup?
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<UsageViewPopupFactory>("com.intellij.usageViewPopupFactory")
+    val EP_NAME: ExtensionPointName<UsageViewPopupFactory> = ExtensionPointName.create("com.intellij.usageViewPopupFactory")
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.navigation.ItemPresentation;
@@ -107,8 +107,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return ((ElementBase)element).getElementIcon(flags);
   }
 
-  @Nullable
-  protected Icon computeBaseIcon(@Iconable.IconFlags int flags) {
+  protected @Nullable Icon computeBaseIcon(@Iconable.IconFlags int flags) {
     Icon baseIcon = isVisibilitySupported() ? getAdjustedBaseIcon(getBaseIcon(), flags) : getBaseIcon();
 
     // to prevent blinking, base icon should be created with the layers
@@ -121,8 +120,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     return baseIcon;
   }
 
-  @Nullable
-  protected Icon getBaseIcon() {
+  protected @Nullable Icon getBaseIcon() {
     if (this instanceof PsiElement) {
       PsiFile file = ((PsiElement)this).getContainingFile();
       if (file != null) {
@@ -182,14 +180,14 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
       ElementIconRequest request = (ElementIconRequest)o;
 
       if (myFlags != request.myFlags) return false;
-      if (!myPointer.equals(request.myPointer)) return false;
+      if (myPointer != request.myPointer) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-      int result = myPointer.hashCode();
+      int result = System.identityHashCode(myPointer);
       result = 31 * result + myFlags;
       return result;
     }

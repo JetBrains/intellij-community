@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeHighlighting.HighlightDisplayLevelColoredIcon;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
@@ -152,6 +153,14 @@ public final class InspectionsConfigTreeTable extends TreeTable {
            : null;
   }
 
+  @Nullable
+  public InspectionConfigTreeNode.Group getStrictlySelectedGroupNode() {
+    TreePath[] paths = getTree().getSelectionPaths();
+    return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Group
+           ? (InspectionConfigTreeNode.Group)paths[0].getLastPathComponent()
+           : null;
+  }
+
   public Collection<InspectionConfigTreeNode.Tool> getSelectedToolNodes() {
     return InspectionsAggregationUtil.getInspectionsNodes(getTree().getSelectionPaths());
   }
@@ -189,7 +198,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     public abstract void updateRightPanel();
   }
 
-  private static class InspectionsConfigTreeTableModel extends DefaultTreeModel implements TreeTableModel {
+  private static final class InspectionsConfigTreeTableModel extends DefaultTreeModel implements TreeTableModel {
 
     private final InspectionsConfigTreeTableSettings mySettings;
     private final Runnable myUpdateRunnable;
@@ -360,7 +369,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     }
   }
 
-  private static class SeverityAndOccurrences {
+  private static final class SeverityAndOccurrences {
     private HighlightSeverity myPrimarySeverity;
     private final Map<String, HighlightSeverity> myOccurrences = new HashMap<>();
 
@@ -390,7 +399,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
     }
   }
 
-  private static class MultiColoredHighlightSeverityIconSink {
+  private static final class MultiColoredHighlightSeverityIconSink {
 
 
     private final Map<String, SeverityAndOccurrences> myScopeToAverageSeverityMap = new HashMap<>();
@@ -501,7 +510,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       }
       final Icon icon = state.getLevel().getIcon();
       final String scopeName = state.getScopeName();
-      if (icon instanceof HighlightDisplayLevel.ColoredIcon) {
+      if (icon instanceof HighlightDisplayLevelColoredIcon) {
         final SeverityAndOccurrences severityAndOccurrences = myScopeToAverageSeverityMap.get(scopeName);
         final String inspectionName = state.getTool().getShortName();
         if (severityAndOccurrences == null) {

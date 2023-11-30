@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.find.FindManager;
@@ -194,7 +194,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       FindModel findModel = createFindModel(findManager, selectedString, replaceWith);
 
       final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModel);
-      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(project, true, presentation);
+      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(true, presentation);
 
       findManager.getFindInProjectModel().copyFrom(findModel);
       final FindModel findModelCopy = findModel.clone();

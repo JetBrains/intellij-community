@@ -5,14 +5,14 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.components.serviceIfCreated
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 
 internal class SettingsChangeLafListener: LafManagerListener {
   override fun lookAndFeelChanged(source: LafManager) {
     if (!LoadingState.APP_STARTED.isOccurred) {
       return
     }
-    processOpenedProjects { project ->
+    for (project in getOpenedProjects()) {
       project.serviceIfCreated<MarkdownSettings>()?.let { settings ->
         val publisher = project.messageBus.syncPublisher(MarkdownSettings.ChangeListener.TOPIC)
         publisher.beforeSettingsChanged(settings)

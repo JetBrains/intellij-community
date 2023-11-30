@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.application.AccessToken;
@@ -118,8 +118,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
       return false;
     }
 
-    @Nullable
-    default Predicate<KeyEvent> getKeyEventHandler() {
+    default @Nullable Predicate<KeyEvent> getKeyEventHandler() {
       return null;
     }
 

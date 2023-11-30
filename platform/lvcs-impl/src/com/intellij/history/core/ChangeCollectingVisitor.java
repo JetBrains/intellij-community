@@ -34,23 +34,23 @@ public final class ChangeCollectingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void begin(ChangeSet c) throws StopVisitingException {
+  public void begin(ChangeSet c) {
     myCurrentChangeSet = c;
   }
 
   @Override
-  public void end(ChangeSet c) throws StopVisitingException {
+  public void end(ChangeSet c) {
     myCurrentChangeSet = null;
     myDoNotAddAnythingElseFromCurrentChangeSet = false;
   }
 
   @Override
-  public void visit(PutLabelChange c) throws StopVisitingException {
+  public void visit(PutLabelChange c) {
     doVisit(c);
   }
 
   @Override
-  public void visit(StructuralChange c) throws StopVisitingException {
+  public void visit(StructuralChange c) {
     doVisit(c);
   }
 
@@ -60,14 +60,14 @@ public final class ChangeCollectingVisitor extends ChangeVisitor {
   }
 
   @Override
-  public void visit(CreateEntryChange c) throws StopVisitingException {
+  public void visit(CreateEntryChange c) {
     if (skippedDueToNonexistence(c)) return;
     addIfAffectsAndRevert(c);
     if (c.isCreationalFor(myPath)) myExists = false;
   }
 
   @Override
-  public void visit(DeleteChange c) throws StopVisitingException {
+  public void visit(DeleteChange c) {
     if (skippedDueToNonexistence(c)) {
       if (c.isDeletionOf(myPath)) {
         addIfAffectsAndRevert(c);

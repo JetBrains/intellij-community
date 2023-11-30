@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -32,7 +18,7 @@ import java.awt.event.MouseEvent;
  */
 public class NavigateAction<T extends PsiElement> extends AnAction {
   private final LineMarkerInfo<T> myInfo;
-  @Nullable private final String myOriginalActionId;
+  private final @Nullable String myOriginalActionId;
 
   public NavigateAction(@NotNull @NlsActions.ActionText String text,
                         @NotNull LineMarkerInfo<T> info,
@@ -62,14 +48,12 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
     }
   }
 
-  @NotNull
-  public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull @NlsActions.ActionText String text, @Nullable String originalActionId) {
+  public static @NotNull <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull @NlsActions.ActionText String text, @Nullable String originalActionId) {
     return setNavigateAction(info, text, originalActionId, null);
   }
 
-  @NotNull
-  public static <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull @NlsActions.ActionText String text,
-                                                                           @Nullable String originalActionId, @Nullable Icon icon) {
+  public static @NotNull <T extends PsiElement> LineMarkerInfo<T> setNavigateAction(@NotNull LineMarkerInfo<T> info, @NotNull @NlsActions.ActionText String text,
+                                                                                    @Nullable String originalActionId, @Nullable Icon icon) {
     NavigateAction<T> action = new NavigateAction<>(text, info, originalActionId);
 
     if (icon != null) {
@@ -80,8 +64,7 @@ public class NavigateAction<T extends PsiElement> extends AnAction {
     return info;
   }
 
-  @Nullable
-  public String getOriginalActionId() {
+  public @Nullable String getOriginalActionId() {
     return myOriginalActionId;
   }
 }

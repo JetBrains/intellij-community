@@ -2,15 +2,17 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -22,69 +24,53 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class AddReturnFix implements IntentionActionWithFixAllOption, HighPriorityAction {
-  private final PsiParameterListOwner myMethod;
-
+public class AddReturnFix extends PsiUpdateModCommandAction<PsiParameterListOwner> {
 
   public AddReturnFix(@NotNull PsiParameterListOwner methodOrLambda) {
-    myMethod = methodOrLambda;
-  }
-
-  @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message("add.return.statement.text");
+    super(methodOrLambda);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return getText();
+    return QuickFixBundle.message("add.return.statement.text");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myMethod.isValid() &&
-           BaseIntentionAction.canModify(myMethod) &&
-           myMethod.getBody() instanceof PsiCodeBlock &&
-           ((PsiCodeBlock)myMethod.getBody()).getRBrace() != null;
-  }
-
-  @NotNull
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
-    return myMethod;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiParameterListOwner method) {
+    if (!(method.getBody() instanceof PsiCodeBlock body) || body.getRBrace() == null) return null;
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (invokeSingleExpressionLambdaFix()) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiParameterListOwner method, @NotNull ModPsiUpdater updater) {
+    if (invokeSingleExpressionLambdaFix(method)) {
       return;
     }
-    String value = suggestReturnValue();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
-    PsiReturnStatement returnStatement = (PsiReturnStatement) factory.createStatementFromText("return " + value+";", myMethod);
-    PsiCodeBlock body = ObjectUtils.tryCast(myMethod.getBody(), PsiCodeBlock.class);
+    String value = suggestReturnValue(method);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
+    PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return " + value + ";", method);
+    PsiCodeBlock body = ObjectUtils.tryCast(method.getBody(), PsiCodeBlock.class);
     assert body != null;
     returnStatement = (PsiReturnStatement) body.addBefore(returnStatement, body.getRBrace());
 
-    MethodReturnTypeFix.selectInEditor(returnStatement.getReturnValue(), editor);
+    updater.select(Objects.requireNonNull(returnStatement.getReturnValue()));
   }
 
-  private String suggestReturnValue() {
+  private static String suggestReturnValue(@NotNull PsiParameterListOwner owner) {
     PsiType type;
-    if (myMethod instanceof PsiMethod) {
-      type = ((PsiMethod)myMethod).getReturnType();
+    if (owner instanceof PsiMethod method) {
+      type = method.getReturnType();
     }
-    else if (myMethod instanceof PsiLambdaExpression) {
-      type = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myMethod);
+    else if (owner instanceof PsiLambdaExpression lambda) {
+      type = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
     }
     else {
       return PsiKeyword.NULL; // normally shouldn't happen
     }
 
     // first try to find suitable local variable
-    List<PsiVariable> variables = getDeclaredVariables(myMethod);
+    List<PsiVariable> variables = getDeclaredVariables(owner);
     for (PsiVariable variable : variables) {
       PsiType varType = variable.getType();
       if (varType.equals(type)) {
@@ -93,13 +79,13 @@ public class AddReturnFix implements IntentionActionWithFixAllOption, HighPriori
     }
     // then try to find a conversion of local variable to the required type
     for (PsiVariable variable : variables) {
-      String conversion = getConversionToType(variable, type, true);
+      String conversion = getConversionToType(owner, variable, type, true);
       if (conversion != null) {
         return conversion;
       }
     }
     for (PsiVariable variable : variables) {
-      String conversion = getConversionToType(variable, type, false);
+      String conversion = getConversionToType(owner, variable, type, false);
       if (conversion != null) {
         return conversion;
       }
@@ -108,22 +94,24 @@ public class AddReturnFix implements IntentionActionWithFixAllOption, HighPriori
   }
 
   @NonNls
-  private String getConversionToType(@NotNull PsiVariable variable, @Nullable PsiType type, boolean preciseTypeReqired) {
+  private static String getConversionToType(@NotNull PsiParameterListOwner method,
+                                            @NotNull PsiVariable variable,
+                                            @Nullable PsiType type,
+                                            boolean preciseTypeRequired) {
     PsiType varType = variable.getType();
-    if (type instanceof PsiArrayType) {
-      PsiType arrayComponentType = ((PsiArrayType)type).getComponentType();
-      if (!(arrayComponentType instanceof PsiPrimitiveType) &&
-          !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter) &&
-          InheritanceUtil.isInheritor(varType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        PsiType erasedComponentType = TypeConversionUtil.erasure(arrayComponentType);
-        if (!preciseTypeReqired || arrayComponentType.equals(erasedComponentType)) {
-          PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, myMethod.getResolveScope());
-          if (collectionItemType != null && erasedComponentType.isAssignableFrom(collectionItemType)) {
-            if (erasedComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-              return variable.getName() + ".toArray()";
-            }
-            return variable.getName() + ".toArray(new " + erasedComponentType.getCanonicalText() + "[0])";
+    if (!(type instanceof PsiArrayType arrayType)) return null;
+    PsiType arrayComponentType = arrayType.getComponentType();
+    if (!(arrayComponentType instanceof PsiPrimitiveType) &&
+        !(PsiUtil.resolveClassInType(arrayComponentType) instanceof PsiTypeParameter) &&
+        InheritanceUtil.isInheritor(varType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+      PsiType erasedComponentType = TypeConversionUtil.erasure(arrayComponentType);
+      if (!preciseTypeRequired || arrayComponentType.equals(erasedComponentType)) {
+        PsiType collectionItemType = JavaGenericsUtil.getCollectionItemType(varType, method.getResolveScope());
+        if (collectionItemType != null && erasedComponentType.isAssignableFrom(collectionItemType)) {
+          if (erasedComponentType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            return variable.getName() + ".toArray()";
           }
+          return variable.getName() + ".toArray(new " + erasedComponentType.getCanonicalText() + "[0])";
         }
       }
     }
@@ -150,40 +138,24 @@ public class AddReturnFix implements IntentionActionWithFixAllOption, HighPriori
     return variables;
   }
 
-  private boolean invokeSingleExpressionLambdaFix() {
-    if (myMethod instanceof PsiLambdaExpression) {
-      PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)myMethod);
-      if (returnType != null) {
-        PsiCodeBlock body = ObjectUtils.tryCast(myMethod.getBody(), PsiCodeBlock.class);
-        if (body != null) {
-          PsiStatement[] statements = body.getStatements();
-          if (statements.length == 1 && statements[0] instanceof PsiExpressionStatement expressionStatement) {
-            PsiExpression expression = expressionStatement.getExpression();
-            PsiType expressionType = expression.getType();
+  private static boolean invokeSingleExpressionLambdaFix(@NotNull PsiParameterListOwner method) {
+    if (!(method instanceof PsiLambdaExpression lambda)) return false;
+    PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda);
+    if (returnType == null) return false;
+    PsiCodeBlock body = ObjectUtils.tryCast(lambda.getBody(), PsiCodeBlock.class);
+    if (body == null) return false;
+    PsiStatement[] statements = body.getStatements();
+    if (statements.length != 1 || !(statements[0] instanceof PsiExpressionStatement expressionStatement)) return false;
+    PsiExpression expression = expressionStatement.getExpression();
+    PsiType expressionType = expression.getType();
+    if (expressionType == null || !returnType.isAssignableFrom(expressionType)) return false;
 
-            if (expressionType != null && returnType.isAssignableFrom(expressionType)) {
-              PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
-              PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return 0;", myMethod);
-              Objects.requireNonNull(returnStatement.getReturnValue()).replace(expression);
-              CommentTracker tracker = new CommentTracker();
-              tracker.markUnchanged(expression);
-              tracker.replaceAndRestoreComments(expressionStatement, returnStatement);
-              return true;
-            }
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(lambda.getProject());
+    PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return 0;", lambda);
+    Objects.requireNonNull(returnStatement.getReturnValue()).replace(expression);
+    CommentTracker tracker = new CommentTracker();
+    tracker.markUnchanged(expression);
+    tracker.replaceAndRestoreComments(expressionStatement, returnStatement);
     return true;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new AddReturnFix(PsiTreeUtil.findSameElementInCopy(myMethod, target));
   }
 }

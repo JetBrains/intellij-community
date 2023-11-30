@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -14,6 +14,8 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -27,6 +29,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.Nls;
@@ -88,6 +91,22 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
       final String message = JavaAnalysisBundle.message("inspection.compiler.javac.quirks.anno.array.comma.problem");
       final String fixName = JavaAnalysisBundle.message("inspection.compiler.javac.quirks.anno.array.comma.fix");
       myHolder.registerProblem(lastElement, message, QuickFixFactory.getInstance().createDeleteFix(lastElement, fixName));
+    }
+  }
+
+  @Override
+  public void visitTypeParameterList(@NotNull PsiTypeParameterList list) {
+    if (PsiUtil.isLanguageLevel7OrHigher(list)) return;
+    PsiTypeParameter[] parameters = list.getTypeParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiTypeParameter typeParameter = parameters[i];
+      for (PsiJavaCodeReferenceElement referenceElement : typeParameter.getExtendsList().getReferenceElements()) {
+        PsiElement resolve = referenceElement.resolve();
+        if (resolve instanceof PsiTypeParameter && ArrayUtilRt.find(parameters, resolve) > i) {
+          myHolder.registerProblem(referenceElement,
+                                   JavaAnalysisBundle.message("inspection.compiler.javac.quirks.illegal.forward.reference"));
+        }
+      }
     }
   }
 
@@ -275,7 +294,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   }
 
 
-  private static class ReplaceAssignmentOperatorWithAssignmentFix implements LocalQuickFix {
+  private static class ReplaceAssignmentOperatorWithAssignmentFix extends PsiUpdateModCommandQuickFix {
     private final String myOperationSign;
 
     ReplaceAssignmentOperatorWithAssignmentFix(String operationSign) {
@@ -297,15 +316,14 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiAssignmentExpression) {
-        PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)element);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiAssignmentExpression assignment) {
+        PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression(assignment);
       }
     }
   }
 
-  private static class MyAddExplicitTypeArgumentsFix implements LocalQuickFix {
+  private static class MyAddExplicitTypeArgumentsFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -314,38 +332,15 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (element instanceof PsiReferenceExpression) {
         PsiElement parent = element.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments((PsiExpression)parent, null);
+        if (parent instanceof PsiMethodCallExpression call) {
+          PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments(call, null);
           if (withArgs == null) return;
-          element = WriteAction.compute(() -> CodeStyleManager.getInstance(project).reformat(parent.replace(withArgs)));
-          new SuppressByJavaCommentFix(
-            RedundantTypeArgsInspection.SHORT_NAME + " (explicit type arguments speedup compilation and analysis time)")
-            .invoke(project, element);
+          parent.replace(withArgs);
         }
       }
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      PsiElement element = previewDescriptor.getPsiElement();
-      if (element instanceof PsiReferenceExpression) {
-        PsiElement parent = element.getParent();
-        if (parent instanceof PsiMethodCallExpression) {
-          PsiExpression withArgs = AddTypeArgumentsFix.addTypeArguments((PsiExpression)parent, null);
-          if (withArgs == null) return IntentionPreviewInfo.EMPTY;
-          CodeStyleManager.getInstance(project).reformat(parent.replace(withArgs));
-        }
-      }
-      return IntentionPreviewInfo.DIFF;
     }
   }
 }

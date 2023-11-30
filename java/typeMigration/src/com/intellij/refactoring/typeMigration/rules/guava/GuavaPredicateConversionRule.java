@@ -2,12 +2,16 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 
@@ -65,5 +69,71 @@ public class GuavaPredicateConversionRule extends GuavaLambdaConversionRule {
       }
     }
     return false;
+  }
+
+  public static boolean isEnclosingCallAPredicate(@NotNull PsiMethodCallExpression enclosingMethodCallExpression) {
+    return isPredicates(enclosingMethodCallExpression);
+  }
+
+  private static int getExpressionPosition(@NotNull PsiExpressionList expressionList, @NotNull PsiExpression expression) {
+    var expressions = expressionList.getExpressions();
+    for (int i = 0; i < expressions.length; ++i) {
+      if (expressions[i].equals(expression)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  public static boolean isPredicateConvertibleInsideEnclosingMethod(@NotNull PsiMethodCallExpression innerMethodCallExpression,
+                                                                    @NotNull PsiMethodCallExpression enclosingMethodCallExpression) {
+    PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(innerMethodCallExpression, PsiExpressionList.class);
+    if (expressionList == null) return false;
+    PsiMethod enclosingMethod = enclosingMethodCallExpression.resolveMethod();
+    if (enclosingMethod == null) return false;
+    PsiClass aClass = enclosingMethod.getContainingClass();
+    if (aClass == null) return false;
+    int position = getExpressionPosition(expressionList, innerMethodCallExpression);
+    return Arrays.stream(aClass.findMethodsByName(enclosingMethod.getName(), true))
+      .filter(method -> PsiUtil.isMemberAccessibleAt(method, innerMethodCallExpression))
+      .anyMatch(method -> areExpressionsConvertibleToMethodParameters(expressionList.getExpressionTypes(),
+                                                                      method.getParameterList().getParameters(),
+                                                                      position));
+  }
+
+  private static boolean areExpressionsConvertibleToMethodParameters(PsiType[] expressionTypes,
+                                                                     PsiParameter[] parameters,
+                                                                     int predicateExpressionPosition) {
+    if (parameters.length == 0 || (parameters.length > expressionTypes.length && !parameters[expressionTypes.length].isVarArgs())) {
+      return false;
+    }
+
+    boolean isJavaPredicatePresented = false;
+    int parametersLastIndex = parameters.length - 1;
+    for (int expressionTypeIndex = 0; expressionTypeIndex < expressionTypes.length; ++expressionTypeIndex) {
+      PsiType parameterType;
+      if (expressionTypeIndex < parameters.length) {
+        if (parameters[expressionTypeIndex].isVarArgs()) {
+          parameterType = ((PsiArrayType)parameters[expressionTypeIndex].getType()).getComponentType();
+        }
+        else {
+          parameterType = parameters[expressionTypeIndex].getType();
+        }
+      }
+      else {
+        if (!parameters[parametersLastIndex].isVarArgs()) return false;
+        parameterType = ((PsiArrayType)parameters[parametersLastIndex].getType()).getComponentType();
+      }
+      if (!parameterType.isConvertibleFrom(expressionTypes[expressionTypeIndex])) return false;
+      PsiClass parameterClass = PsiTypesUtil.getPsiClass(parameterType);
+      if (parameterClass == null) continue;
+      String qualifiedClassName = parameterClass.getQualifiedName();
+      if (qualifiedClassName == null) continue;
+
+      if (expressionTypeIndex == predicateExpressionPosition && qualifiedClassName.equals(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE)) {
+        isJavaPredicatePresented = true;
+      }
+    }
+    return isJavaPredicatePresented;
   }
 }

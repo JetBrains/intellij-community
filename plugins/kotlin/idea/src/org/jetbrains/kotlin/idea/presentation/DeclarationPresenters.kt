@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.presentation
 
@@ -10,8 +10,8 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.Iconable
 import com.intellij.ui.ExperimentalUI
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinIconProvider
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -31,7 +31,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
     override fun getLocationString(): String? {
         if ((declaration is KtFunction && declaration.isLocal) || (declaration is KtClassOrObject && declaration.isLocal)) {
             val containingDeclaration = declaration.getStrictParentOfType<KtNamedDeclaration>() ?: return null
-            val containerName = containingDeclaration.fqName ?: containingDeclaration.name
+            val containerName = containingDeclaration.fqName ?: containingDeclaration.name ?: return null
             return getPresentationInContainer(containerName.toString())
         }
 
@@ -66,7 +66,7 @@ open class KotlinDefaultNamedDeclarationPresentation(private val declaration: Kt
     }
 
     override fun getIcon(unused: Boolean): Icon? {
-        for (kotlinIconProvider in IconProvider.EXTENSION_POINT_NAME.extensionList.filterIsInstance<KotlinIconProvider>()) {
+        for (kotlinIconProvider in IconProvider.EXTENSION_POINT_NAME.getIterable().filterIsInstance<KotlinIconProvider>()) {
             kotlinIconProvider.getIcon(declaration, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)?.let { return it }
         }
         return null

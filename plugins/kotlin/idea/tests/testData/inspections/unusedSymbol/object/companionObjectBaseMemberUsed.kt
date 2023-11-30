@@ -15,5 +15,6 @@ class C {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     C()
 }

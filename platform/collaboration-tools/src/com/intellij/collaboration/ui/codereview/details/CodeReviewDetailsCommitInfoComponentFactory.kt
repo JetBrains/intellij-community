@@ -27,7 +27,7 @@ object CodeReviewDetailsCommitInfoComponentFactory {
   fun <T> create(
     scope: CoroutineScope,
     commit: Flow<T?>,
-    commitPresenter: (T) -> CommitPresenter,
+    commitPresentation: (T) -> CommitPresentation,
     htmlPaneFactory: () -> JEditorPane
   ): JComponent {
     val withDetailedInfo = MutableStateFlow(false)
@@ -69,12 +69,10 @@ object CodeReviewDetailsCommitInfoComponentFactory {
       scope.launch {
         commit.collect { commit: T? ->
           if (commit == null) return@collect
-          val presentation = commitPresenter(commit)
-          if (presentation is CommitPresenter.SingleCommit) {
-            title.setHtmlBody(presentation.title)
-            description.setHtmlBody(presentation.description)
-            info.setHtmlBody("${presentation.author}, ${DateFormatUtil.formatPrettyDateTime(presentation.committedDate)}")
-          }
+          val presentation = commitPresentation(commit)
+          title.text = presentation.titleHtml
+          description.text = presentation.descriptionHtml
+          info.setHtmlBody("${presentation.author}, ${DateFormatUtil.formatPrettyDateTime(presentation.committedDate)}")
         }
       }
     }

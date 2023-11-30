@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private val project: Project) : StoreReloadManager {
+internal class StoreReloadManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : StoreReloadManager {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<Throwable?>()
   private val changedStorages = LinkedHashMap<ComponentStoreImpl, MutableSet<StateStorage>>()
@@ -75,13 +75,8 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
 
     val projectsToReload = LinkedHashSet<Project>()
     withContext(Dispatchers.EDT) {
-      for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return@withContext)) {
-        if (project.isDisposed || !project.isInitialized) {
-          continue
-        }
-
-        applyProjectChanges(project, projectsToReload)
-      }
+      LOG.debug("Dispatch to EDT")
+      applyProjectChanges(projectsToReload)
 
       if (projectsToReload.isNotEmpty()) {
         for (project in projectsToReload) {
@@ -92,8 +87,25 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
   }
 
   @RequiresEdt
-  private suspend fun applyProjectChanges(project: Project, projectsToReload: LinkedHashSet<Project>) {
+  private suspend fun applyProjectChanges(projectsToReload: LinkedHashSet<Project>) {
     if (changedSchemes.isEmpty() && changedStorages.isEmpty()
+        && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
+      return
+    }
+
+    val changedSchemesCopy: LinkedHashMap<SchemeChangeApplicator<*, *>, MutableSet<SchemeChangeEvent<*, *>>>
+    synchronized(changedSchemes) {
+      changedSchemesCopy = LinkedHashMap(changedSchemes)
+      changedSchemes.clear()
+    }
+
+    val changedStoragesCopy: LinkedHashMap<ComponentStoreImpl, MutableSet<StateStorage>>
+    synchronized(changedStorages) {
+      changedStoragesCopy = LinkedHashMap(changedStorages)
+      changedStorages.clear()
+    }
+
+    if (changedSchemesCopy.isEmpty() && changedStoragesCopy.isEmpty()
         && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
       return
     }
@@ -102,7 +114,7 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
     publisher.onBatchUpdateStarted()
     try {
       // reload schemes first because project file can refer to scheme (e.g. inspection profile)
-      for ((tracker, files) in changedSchemes) {
+      for ((tracker, files) in changedSchemesCopy) {
         runCatching {
           SlowOperations.knownIssue("IDEA-307617, EA-680581").use {
             @Suppress("UNCHECKED_CAST")
@@ -111,7 +123,7 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
         }.getOrLogException(LOG)
       }
 
-      for ((store, storages) in changedStorages) {
+      for ((store, storages) in changedStoragesCopy) {
         if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed == true) {
           continue
         }
@@ -173,7 +185,9 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
   }
 
   override fun reloadProject() {
-    changedStorages.clear()
+    synchronized(changedStorages) {
+      changedStorages.clear()
+    }
     doReloadProject(project)
   }
 
@@ -189,6 +203,24 @@ internal class StoreReloadManagerImpl(coroutineScope: CoroutineScope, private va
     for (storage in storages) {
       if (storage is StateStorageBase<*>) {
         storage.disableSaving()
+      }
+    }
+
+    scheduleProcessingChangedFiles()
+  }
+
+  override fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>) {
+    batchStorageEvents.forEach { (store, storages) ->
+      LOG.debug(Exception()) { "[RELOAD] registering to reload: ${storages.joinToString("\n")}" }
+
+      synchronized(changedStorages) {
+        changedStorages.computeIfAbsent(store as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
+      }
+
+      for (storage in storages) {
+        if (storage is StateStorageBase<*>) {
+          storage.disableSaving()
+        }
       }
     }
 
@@ -335,5 +367,5 @@ private fun doReloadProject(project: Project) {
     }
 
     ProjectManagerEx.getInstanceEx().openProject(Path.of(presentableUrl), OpenProjectTask())
-  }, ModalityState.NON_MODAL, project.disposed)
+  }, ModalityState.nonModal(), project.disposed)
 }

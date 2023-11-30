@@ -24,7 +24,7 @@ abstract class AbstractFirKeywordCompletionHandlerTest : AbstractKeywordCompleti
     }
 
     override fun doTest(testPath: String) {
-        IgnoreTests.runTestIfEnabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
             super.doTest(testPath)
             val originalTestFile = dataFile()
             IgnoreTests.cleanUpIdenticalFirTestFile(

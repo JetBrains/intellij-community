@@ -1,13 +1,13 @@
 // EXPECTED_DUPLICATED_HIGHLIGHTING
 // FALSE_POSITIVE
 
-var <info textAttributesKey="KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><info textAttributesKey="KOTLIN_MUTABLE_VARIABLE">my</info></info> = 0
-    <info textAttributesKey="KOTLIN_KEYWORD">get</info>() = <info textAttributesKey="KOTLIN_BACKING_FIELD_VARIABLE"><info textAttributesKey="KOTLIN_MUTABLE_VARIABLE">field</info></info>
-    <info textAttributesKey="KOTLIN_KEYWORD">set</info>(<info textAttributesKey="KOTLIN_PARAMETER">arg</info>) {
-        <info textAttributesKey="KOTLIN_BACKING_FIELD_VARIABLE"><info textAttributesKey="KOTLIN_MUTABLE_VARIABLE">field</info></info> = <info textAttributesKey="KOTLIN_PARAMETER">arg</info> + 1
+var <symbolName textAttributesKey="KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName textAttributesKey="KOTLIN_MUTABLE_VARIABLE">my</symbolName></symbolName> = 0
+    <symbolName textAttributesKey="KOTLIN_KEYWORD">get</symbolName>() = <symbolName textAttributesKey="KOTLIN_BACKING_FIELD_VARIABLE"><symbolName textAttributesKey="KOTLIN_MUTABLE_VARIABLE">field</symbolName></symbolName>
+    <symbolName textAttributesKey="KOTLIN_KEYWORD">set</symbolName>(<symbolName textAttributesKey="KOTLIN_PARAMETER">arg</symbolName>) {
+        <symbolName textAttributesKey="KOTLIN_BACKING_FIELD_VARIABLE"><symbolName textAttributesKey="KOTLIN_MUTABLE_VARIABLE">field</symbolName></symbolName> = <symbolName textAttributesKey="KOTLIN_PARAMETER">arg</symbolName> + 1
     }
 
-fun <info textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</info>(): <info textAttributesKey="KOTLIN_CLASS">Int</info> {
-    val <info textAttributesKey="KOTLIN_LOCAL_VARIABLE">field</info> = <info textAttributesKey="KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><info textAttributesKey="KOTLIN_MUTABLE_VARIABLE">my</info></info>
-    return <info textAttributesKey="KOTLIN_LOCAL_VARIABLE">field</info>
+fun <symbolName textAttributesKey="KOTLIN_FUNCTION_DECLARATION">foo</symbolName>(): <symbolName textAttributesKey="KOTLIN_CLASS">Int</symbolName> {
+    val <symbolName textAttributesKey="KOTLIN_LOCAL_VARIABLE">field</symbolName> = <symbolName textAttributesKey="KOTLIN_PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION"><symbolName textAttributesKey="KOTLIN_MUTABLE_VARIABLE">my</symbolName></symbolName>
+    return <symbolName textAttributesKey="KOTLIN_LOCAL_VARIABLE">field</symbolName>
 }

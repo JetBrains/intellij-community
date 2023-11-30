@@ -3,3 +3,5 @@
 <caret>object : Any() {
 
 }
+// FIR_IGNORE
+// KTIJ-26297

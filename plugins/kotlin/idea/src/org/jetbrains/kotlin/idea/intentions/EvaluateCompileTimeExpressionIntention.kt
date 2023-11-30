@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
@@ -18,9 +19,6 @@ class EvaluateCompileTimeExpressionIntention : SelfTargetingOffsetIndependentInt
     KtBinaryExpression::class.java,
     KotlinBundle.lazyMessage("evaluate.compile.time.expression")
 ) {
-    companion object {
-        val constantNodeTypes = listOf(KtNodeTypes.FLOAT_CONSTANT, KtNodeTypes.CHARACTER_CONSTANT, KtNodeTypes.INTEGER_CONSTANT)
-    }
 
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {
         if (element.getStrictParentOfType<KtBinaryExpression>() != null || !element.isConstantExpression()) return false
@@ -64,3 +62,9 @@ class EvaluateCompileTimeExpressionIntention : SelfTargetingOffsetIndependentInt
         }
     }
 }
+
+private val constantNodeTypes: List<IElementType> = listOf(
+    KtNodeTypes.FLOAT_CONSTANT,
+    KtNodeTypes.CHARACTER_CONSTANT,
+    KtNodeTypes.INTEGER_CONSTANT
+)

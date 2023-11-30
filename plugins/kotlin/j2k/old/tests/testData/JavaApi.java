@@ -52,10 +52,15 @@ public enum E {
 }
 
 public class Base {
+    private int prop = 0;
+
     public @Nullable String foo(@Nullable String s) { return s; }
 
-    public int getProperty() { return 1; }
-    public void setProperty(int value) {}
+    public int getProperty() { return prop; }
+
+    public void setProperty(int value) {
+        prop = value;
+    }
 }
 
 public class Derived extends Base {
@@ -101,16 +106,18 @@ public class MethodReferenceHelperClass {
 }
 
 public class JavaClassWithProperties {
-    public int getValue1() { return 1; }
+    private int prop;
 
-    public int getValue2() { return 1; }
-    public void setValue2(int value) { }
+    public int getValue1() { return prop; }
 
-    public int getValue3() { return 1; }
-    public void setValue3(int value) { }
+    public int getValue2() { return prop; }
+    public void setValue2(int value) { prop = value; }
 
-    public int getValue4() { return 1; }
-    public void setValue4(int value) { }
+    public int getValue3() { return prop; }
+    public void setValue3(int value) { prop = value; }
+
+    public int getValue4() { return prop; }
+    public void setValue4(int value) { prop = value; }
 }
 
 public class JavaClassDerivedFromKotlinClassWithProperties extends KotlinClassWithProperties {

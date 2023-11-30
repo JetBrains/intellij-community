@@ -4,22 +4,20 @@ package org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.internal.statistic.ReportingClassSubstitutor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.KotlinApplicableToolBase
-import org.jetbrains.kotlin.idea.codeinsight.api.inspections.KotlinSingleElementInspection
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfNeeded
 import org.jetbrains.kotlin.psi.KtElement
-import kotlin.reflect.KClass
 
 /**
  * [AbstractKotlinApplicableInspectionBase] is a base implementation for [AbstractKotlinApplicableInspection] and
  * [AbstractKotlinApplicableInspectionWithContext].
  */
-abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
-    elementType: KClass<ELEMENT>,
-) : KotlinSingleElementInspection<ELEMENT>(elementType), KotlinApplicableToolBase<ELEMENT> {
+abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement> : LocalInspectionTool(), KotlinApplicableToolBase<ELEMENT> {
     /**
      * The action family name is an action name without any element-specific information. For example, the family name for an action
      * "Replace 'get' call with indexing operator" would be "Replace 'get' or 'set' call with indexing operator".
@@ -50,7 +48,7 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
      */
     internal abstract fun buildProblemInfo(element: ELEMENT): ProblemInfo?
 
-    final override fun visitTargetElement(element: ELEMENT, holder: ProblemsHolder, isOnTheFly: Boolean) {
+    final fun visitTargetElement(element: ELEMENT, holder: ProblemsHolder, isOnTheFly: Boolean) {
         if (!isApplicableByPsi(element)) return
         val ranges = getApplicabilityRange().getApplicabilityRanges(element)
         if (ranges.isEmpty()) return
@@ -69,9 +67,11 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
             )
         }
     }
+
+    abstract override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor
 }
 
-internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix {
+internal abstract class AbstractKotlinApplicableInspectionQuickFix<ELEMENT : KtElement> : LocalQuickFix, ReportingClassSubstitutor {
     abstract fun applyTo(element: ELEMENT)
 
     abstract fun shouldApplyInWriteAction(): Boolean

@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="commons-cli" type="repository">
-    <properties maven-id="commons-cli:commons-cli:1.5.0" />
+    <properties maven-id="commons-cli:commons-cli:1.5.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.5.0/commons-cli-1.5.0.jar">
+          <sha256sum>bc8bb01fc0fad250385706e20f927ddcff6173f6339b387dc879237752567ac6</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/commons-cli" />
     </ANNOTATIONS>

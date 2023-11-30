@@ -2,15 +2,14 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.ide.ProjectWindowCustomizerService
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.platform.ide.menu.IdeJMenuBar
 import com.intellij.ui.JBColor
 import com.intellij.ui.plaf.beg.IdeaMenuUI
+import kotlinx.coroutines.CoroutineScope
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 
-internal class IdeMenuHelper(private val menu: IdeMenuBar, parentDisposable: Disposable?) {
-
+internal class IdeMenuHelper(private val menu: IdeJMenuBar, coroutineScope: CoroutineScope?) {
   private val containerListener = object : ContainerAdapter() {
     override fun componentAdded(e: ContainerEvent?) {
       updateUI()
@@ -19,8 +18,8 @@ internal class IdeMenuHelper(private val menu: IdeMenuBar, parentDisposable: Dis
 
   init {
     menu.isOpaque = false
-    parentDisposable?.let {
-      ProjectWindowCustomizerService.getInstance().addListener(it, true) {
+    if (coroutineScope != null) {
+      ProjectWindowCustomizerService.getInstance().addListener(coroutineScope = coroutineScope, fireFirstTime = true) {
         updateUI()
       }
     }
@@ -36,10 +35,12 @@ internal class IdeMenuHelper(private val menu: IdeMenuBar, parentDisposable: Dis
   }
 
   fun updateUI() {
-    val selectionBackground =
-      if (ProjectWindowCustomizerService.getInstance().isActive())
-        JBColor.namedColor("MainMenu.transparentSelectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
-      else JBColor.namedColor("MainMenu.selectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
+    val selectionBackground = if (ProjectWindowCustomizerService.getInstance().isActive()) {
+      JBColor.namedColor("MainMenu.transparentSelectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
+    }
+    else {
+      JBColor.namedColor("MainMenu.selectionBackground", IdeaMenuUI.getDefaultSelectionBackground())
+    }
 
     for (i in 0..menu.menuCount - 1) {
       val menu = menu.getMenu(i)

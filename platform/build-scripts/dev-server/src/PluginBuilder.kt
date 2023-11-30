@@ -1,75 +1,75 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PrivatePropertyName", "LiftReturnOrAssignment")
+@file:OptIn(ExperimentalCoroutinesApi::class)
 
 package org.jetbrains.intellij.build.devServer
 
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
-import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.checkOutputOfPluginModules
-import org.jetbrains.intellij.build.impl.layoutDistribution
+import org.jetbrains.intellij.build.UNMODIFIED_MARK_FILE_NAME
+import org.jetbrains.intellij.build.impl.*
+import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption
-import java.util.*
 import java.util.concurrent.atomic.LongAdder
-
-private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
-
-internal fun createMarkFile(file: Path) {
-  try {
-    Files.newByteChannel(file, TOUCH_OPTIONS)
-  }
-  catch (ignore: NoSuchFileException) {
-  }
-}
 
 internal data class PluginBuildDescriptor(@JvmField val dir: Path,
                                           @JvmField val layout: PluginLayout,
-                                          @JvmField val moduleNames: List<String>) {
-  fun markAsBuilt(outDir: Path) {
-    for (moduleName in moduleNames) {
-      createMarkFile(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME))
-    }
-  }
-}
+                                          @JvmField val moduleNames: List<String>)
 
 internal suspend fun buildPlugins(pluginBuildDescriptors: List<PluginBuildDescriptor>,
                                   outDir: Path,
                                   pluginCacheRootDir: Path,
-                                  context: BuildContext) {
-  spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope2 { span ->
+                                  platformLayout: PlatformLayout,
+                                  context: BuildContext): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
+  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), pluginBuildDescriptors.size.toLong()).useWithScope { span ->
     val counter = LongAdder()
-    coroutineScope {
-      for (plugin in pluginBuildDescriptors) {
-        launch {
-          if (buildPlugin(plugin = plugin, outDir = outDir, pluginCacheRootDir = pluginCacheRootDir, context = context)) {
-            counter.add(1)
-          }
+    val pluginEntries = coroutineScope {
+      pluginBuildDescriptors.map { plugin ->
+        async {
+          plugin to buildPluginIfNotCached(plugin = plugin,
+                                           platformLayout = platformLayout,
+                                           outDir = outDir,
+                                           pluginCacheRootDir = pluginCacheRootDir,
+                                           context = context,
+                                           reusedPluginsCounter = counter)
         }
       }
-    }
+    }.map { it.getCompleted() }
     span.setAttribute("reusedCount", counter.toLong())
+    pluginEntries
   }
 }
 
-internal suspend fun buildPlugin(plugin: PluginBuildDescriptor, outDir: Path, pluginCacheRootDir: Path, context: BuildContext): Boolean {
+internal suspend fun buildPluginIfNotCached(plugin: PluginBuildDescriptor,
+                                            outDir: Path,
+                                            pluginCacheRootDir: Path,
+                                            platformLayout: PlatformLayout,
+                                            context: BuildContext,
+                                            reusedPluginsCounter: LongAdder): List<DistributionFileEntry> {
   val mainModule = plugin.layout.mainModule
 
   val reason = withContext(Dispatchers.IO) {
     // check cache
     val reason = checkCache(plugin = plugin, projectOutDir = outDir, pluginCacheRootDir = pluginCacheRootDir)
-    if (reason == null) {
-      return@withContext null
+
+    if (reason == null || reason == "initial build") {
+      if (plugin.layout.mainModule == "intellij.rider.plugins.clion.radler" && hasResourcePaths(plugin.layout)) {
+        // copy custom resources
+        spanBuilder("build plugin")
+          .setAttribute("mainModule", mainModule)
+          .setAttribute("dir", plugin.layout.directoryName)
+          .setAttribute("reason", "copy custom resources")
+          .useWithScope {
+            layoutResourcePaths(layout = plugin.layout, context = context, targetDirectory = plugin.dir, overwrite = true)
+          }
+      }
     }
+
+    if (reason == null) return@withContext null
 
     if (mainModule != "intellij.platform.builtInHelp") {
       checkOutputOfPluginModules(mainPluginModule = mainModule,
@@ -78,24 +78,47 @@ internal suspend fun buildPlugin(plugin: PluginBuildDescriptor, outDir: Path, pl
                                  context = context)
     }
     reason
-  } ?: return true
+  }
+  if (reason == null) {
+    reusedPluginsCounter.add(1)
+    if (context.generateRuntimeModuleRepository) {
+      return buildPlugin(plugin = plugin,
+                         reason = "generate runtime module repository",
+                         platformLayout = platformLayout,
+                         context = context,
+                         copyFiles = false)
+    }
+    return emptyList()
+  }
 
+  return buildPlugin(plugin = plugin,
+                     reason = reason,
+                     platformLayout = platformLayout,
+                     context = context,
+                     copyFiles = true)
+}
+
+private suspend fun buildPlugin(plugin: PluginBuildDescriptor,
+                                reason: String,
+                                platformLayout: PlatformLayout,
+                                context: BuildContext,
+                                copyFiles: Boolean): List<DistributionFileEntry> {
   val moduleOutputPatcher = ModuleOutputPatcher()
   return spanBuilder("build plugin")
-    .setAttribute("mainModule", mainModule)
+    .setAttribute("mainModule", plugin.layout.mainModule)
     .setAttribute("dir", plugin.layout.directoryName)
     .setAttribute("reason", reason)
-    .useWithScope2 {
-      layoutDistribution(layout = plugin.layout,
-                         targetDirectory = plugin.dir,
-                         moduleOutputPatcher = moduleOutputPatcher,
-                         includedModules = plugin.layout.includedModules,
-                         context = context)
-      withContext(Dispatchers.IO) {
-        plugin.markAsBuilt(outDir)
-      }
+    .useWithScope {
+      val (pluginEntries, _) = layoutDistribution(layout = plugin.layout,
+                                                  platformLayout = platformLayout, targetDirectory = plugin.dir,
 
-      false
+                                                  moduleOutputPatcher = moduleOutputPatcher,
+                                                  includedModules = plugin.layout.includedModules,
+                                                  copyFiles = copyFiles,
+                                                  // searchable options are not generated in dev mode
+                                                  moduleWithSearchableOptions = emptySet(),
+                                                  context = context)
+      pluginEntries
     }
 }
 

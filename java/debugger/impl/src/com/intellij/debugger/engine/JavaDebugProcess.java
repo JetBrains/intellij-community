@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -31,7 +31,6 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
@@ -199,7 +198,7 @@ public class JavaDebugProcess extends XDebugProcess {
       }
     });
     if (!DebuggerUtilsImpl.isRemote(process)) {
-      DfaAssist.installDfaAssist(myJavaSession, session);
+      DfaAssist.installDfaAssist(myJavaSession, session, process.myDisposable);
     }
 
     mySmartStepIntoActionHandler = new JvmSmartStepIntoActionHandler(javaSession);

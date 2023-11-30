@@ -77,13 +77,33 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract void setPaintBackground(boolean value);
 
-  public abstract void setForceShowLeftFreePaintersArea(boolean value);
+  /**
+   * Force left free painters area to always be visible or hidden
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void setLeftFreePaintersAreaState(@NotNull EditorGutterFreePainterAreaState value);
 
-  public abstract void setForceShowRightFreePaintersArea(boolean value);
+  /**
+   * Force right free painters area to always be visible or hidden
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void setRightFreePaintersAreaState(@NotNull EditorGutterFreePainterAreaState value);
 
-  public abstract void setLeftFreePaintersAreaWidth(int widthInPixels);
+  /**
+   * Request an area in the left area to be reserved
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void reserveLeftFreePaintersAreaWidth(@NotNull Disposable disposable, int widthInPixels);
 
-  public abstract void setRightFreePaintersAreaWidth(int widthInPixels);
+  /**
+   * Request an area in the right area to be reserved
+   */
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public abstract void reserveRightFreePaintersAreaWidth(@NotNull Disposable disposable, int widthInPixels);
 
   public abstract void setInitialIconAreaWidth(int width);
 
@@ -110,5 +130,13 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   @ApiStatus.Internal
   public int getLineNumberAreaWidth() {
     return 0;
+  }
+
+  public @NotNull LineNumberConverter getPrimaryLineNumberConverter() {
+    return LineNumberConverter.DEFAULT;
+  }
+
+  public @Nullable LineNumberConverter getAdditionalLineNumberConverter() {
+    return null;
   }
 }

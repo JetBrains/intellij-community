@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.service.project
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import org.gradle.tooling.LongRunningOperation
+import org.gradle.tooling.model.build.BuildEnvironment
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
@@ -30,5 +31,6 @@ interface GradleOperationHelperExtension {
    */
   fun prepareForExecution(id: ExternalSystemTaskId,
                           operation: LongRunningOperation,
-                          gradleExecutionSettings: GradleExecutionSettings)
+                          gradleExecutionSettings: GradleExecutionSettings,
+                          buildEnvironment: BuildEnvironment?)
 }

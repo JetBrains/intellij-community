@@ -12,7 +12,6 @@ import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Processor
 import com.intellij.util.Processors
@@ -98,27 +97,24 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
             return@Processor processor.process(psiClass)
         }
 
-        val allKtClassOrObjectsProcessed = StubIndex.getInstance().processElements(
-            KotlinClassShortNameIndex.indexKey,
-            name,
-            project,
-            effectiveScope,
-            filter,
-            KtClassOrObject::class.java
-        ) { ktClassOrObject ->
-            fqNameProcessor.process(ktClassOrObject.fqName)
-        }
+        val allKtClassOrObjectsProcessed =
+          KotlinClassShortNameIndex.processElements(
+              name,
+              project,
+              effectiveScope,
+              filter
+            ) { ktClassOrObject ->
+                fqNameProcessor.process(ktClassOrObject.fqName)
+            }
         if (!allKtClassOrObjectsProcessed) {
             return false
         }
 
-        return StubIndex.getInstance().processElements(
-            KotlinFileFacadeShortNameIndex.indexKey,
-            name,
-            project,
-            effectiveScope,
-            filter,
-            KtFile::class.java
+        return KotlinFileFacadeShortNameIndex.processElements(
+          name,
+          project,
+          effectiveScope,
+          filter
         ) { ktFile ->
             fqNameProcessor.process(ktFile.javaFileFacadeFqName)
         }
@@ -181,40 +177,33 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         filter: IdFilter?
     ): Boolean {
         if (disableSearch.get()) return true
-        val allFunctionsProcessed = StubIndex.getInstance().processElements(
-            KotlinFunctionShortNameIndex.indexKey,
+        val allFunctionsProcessed =
+          KotlinFunctionShortNameIndex.processElements(
             name,
             project,
             scope,
-            filter,
-            KtNamedFunction::class.java
-        ) { ktNamedFunction ->
-            val methods = LightClassUtil.getLightClassMethodsByName(ktNamedFunction, name).toList()
-            methods.all(processor::process)
-        }
+            filter
+          ) { ktNamedFunction ->
+              val methods = LightClassUtil.getLightClassMethodsByName(ktNamedFunction, name).toList()
+              methods.all(processor::process)
+          }
         if (!allFunctionsProcessed) {
             return false
         }
 
         for (propertyName in getPropertyNamesCandidatesByAccessorName(Name.identifier(name))) {
-            val allProcessed = StubIndex.getInstance().processElements(
-                KotlinPropertyShortNameIndex.indexKey,
-                propertyName.asString(),
-                project,
-                scope,
-                filter,
-                KtNamedDeclaration::class.java
-            ) { ktNamedDeclaration ->
-                if (ktNamedDeclaration is KtValVarKeywordOwner) {
-                    if (ktNamedDeclaration.isPrivate() || KotlinPsiHeuristics.hasJvmFieldAnnotation(ktNamedDeclaration)) {
-                        return@processElements true
-                    }
-                }
-                ktNamedDeclaration.getAccessorLightMethods()
+            val allProcessed =
+              KotlinPropertyShortNameIndex.processElements(propertyName.asString(), project, scope, filter) { ktNamedDeclaration ->
+                  if (ktNamedDeclaration is KtValVarKeywordOwner) {
+                      if (ktNamedDeclaration.isPrivate() || KotlinPsiHeuristics.hasJvmFieldAnnotation(ktNamedDeclaration)) {
+                          return@processElements true
+                      }
+                  }
+                  ktNamedDeclaration.getAccessorLightMethods()
                     .asSequence()
                     .filter { it.name == name }
                     .all(processor::process)
-            }
+              }
             if (!allProcessed) {
                 return false
             }
@@ -282,16 +271,14 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
         filter: IdFilter?
     ): Boolean {
         if (disableSearch.get()) return true
-        return StubIndex.getInstance().processElements(
-            KotlinPropertyShortNameIndex.indexKey,
-            name,
-            project,
-            scope,
-            filter,
-            KtNamedDeclaration::class.java
+        return KotlinPropertyShortNameIndex.processElements(
+          name,
+          project,
+          scope,
+          filter
         ) { ktNamedDeclaration ->
             val field = LightClassUtil.getLightClassBackingField(ktNamedDeclaration)
-                ?: return@processElements true
+                        ?: return@processElements true
 
             return@processElements processor.process(field)
         }

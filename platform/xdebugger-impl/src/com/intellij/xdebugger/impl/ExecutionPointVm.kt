@@ -18,7 +18,7 @@ interface ExecutionPointVm {
   val mainPositionVm: ExecutionPositionVm?
   val alternativePositionVm: ExecutionPositionVm?
 
-  fun navigateTo(navigationMode: ExecutionPositionNavigationMode, sourceKind: XSourceKind? = null)
+  suspend fun navigateTo(navigationMode: ExecutionPositionNavigationMode, sourceKind: XSourceKind? = null)
 }
 
 interface ExecutionPositionVm {
@@ -30,13 +30,14 @@ interface ExecutionPositionVm {
   val gutterVm: ExecutionPositionGutterVm
   val invalidationUpdateFlow: Flow<Unit>
 
-  fun navigateTo(navigationMode: ExecutionPositionNavigationMode, isActiveSourceKind: Boolean)
+  suspend fun navigateTo(navigationMode: ExecutionPositionNavigationMode, isActiveSourceKind: Boolean)
 }
 
 class ExecutionPositionGutterVm(val gutterIconRendererState: StateFlow<GutterIconRenderer?>)
 
 
 internal class ExecutionPointVmImpl(
+  internal val coroutineScope: CoroutineScope,
   override val mainPositionVm: ExecutionPositionVm?,
   override val alternativePositionVm: ExecutionPositionVm?,
   override val isTopFrame: Boolean,
@@ -44,7 +45,7 @@ internal class ExecutionPointVmImpl(
 ) : ExecutionPointVm {
   private val activeSourceKind: XSourceKind by activeSourceKindState::value
 
-  override fun navigateTo(navigationMode: ExecutionPositionNavigationMode, sourceKind: XSourceKind?) {
+  override suspend fun navigateTo(navigationMode: ExecutionPositionNavigationMode, sourceKind: XSourceKind?) {
     val effectiveSourceKind = sourceKind ?: activeSourceKind
     mainPositionVm?.navigateTo(navigationMode, isActiveSourceKind = effectiveSourceKind == XSourceKind.MAIN)
     alternativePositionVm?.navigateTo(navigationMode, isActiveSourceKind = effectiveSourceKind == XSourceKind.ALTERNATIVE)
@@ -73,7 +74,7 @@ internal class ExecutionPointVmImpl(
       val mainPositionVm = createPositionVm(mainSourcePosition, XSourceKind.MAIN)
       val alternativePositionVm = createPositionVm(alternativeSourcePosition, XSourceKind.ALTERNATIVE)
 
-      return ExecutionPointVmImpl(mainPositionVm, alternativePositionVm, isTopFrame, activeSourceKindState)
+      return ExecutionPointVmImpl(coroutineScope, mainPositionVm, alternativePositionVm, isTopFrame, activeSourceKindState)
     }
   }
 }
@@ -103,7 +104,7 @@ internal class ExecutionPositionVmImpl(
 
   override val invalidationUpdateFlow: Flow<Unit> = navigationAwareUpdateFlow.map { }
 
-  override fun navigateTo(navigationMode: ExecutionPositionNavigationMode, isActiveSourceKind: Boolean) {
+  override suspend fun navigateTo(navigationMode: ExecutionPositionNavigationMode, isActiveSourceKind: Boolean) {
     navigator.navigateTo(navigationMode, isActiveSourceKind)
   }
 }

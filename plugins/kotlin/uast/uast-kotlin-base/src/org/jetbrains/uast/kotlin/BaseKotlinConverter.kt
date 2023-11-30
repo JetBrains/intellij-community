@@ -99,7 +99,19 @@ interface BaseKotlinConverter {
                         if (ktFunction.isLocal)
                             convertDeclaration(ktFunction, givenParent, requiredTypes)
                         else
-                            KotlinUMethodWithFakeLightDelegate(ktFunction, element, givenParent)
+                            KotlinUMethodWithFakeLightDelegateMethod(ktFunction, element, givenParent)
+                    }
+                }
+
+                is UastFakeSourceLightDefaultAccessor -> {
+                    el<UMethod> {
+                        KotlinUMethodWithFakeLightDelegateDefaultAccessor(element.original, element, givenParent)
+                    }
+                }
+
+                is UastFakeSourceLightAccessor -> {
+                    el<UMethod> {
+                        KotlinUMethodWithFakeLightDelegateAccessor(element.original, element, givenParent)
                     }
                 }
 
@@ -171,11 +183,11 @@ interface BaseKotlinConverter {
                     } else {
                         el<UMethod> {
                             val lightMethod = LightClassUtil.getLightClassMethod(element)
-                            if (lightMethod != null)
+                            if (lightMethod != null) {
                                 convertDeclaration(lightMethod, givenParent, requiredTypes)
-                            else {
+                            } else {
                                 val ktLightClass = getLightClassForFakeMethod(element) ?: return null
-                                KotlinUMethodWithFakeLightDelegate(element, ktLightClass, givenParent)
+                                KotlinUMethodWithFakeLightDelegateMethod(element, ktLightClass, givenParent)
                             }
                         }
                     }
@@ -183,8 +195,13 @@ interface BaseKotlinConverter {
 
                 is KtPropertyAccessor -> {
                     el<UMethod> {
-                        val lightMethod = LightClassUtil.getLightClassAccessorMethod(element) ?: return null
-                        convertDeclaration(lightMethod, givenParent, requiredTypes)
+                        val lightMethod = LightClassUtil.getLightClassAccessorMethod(element)
+                        if (lightMethod != null) {
+                            convertDeclaration(lightMethod, givenParent, requiredTypes)
+                        } else {
+                            val ktLightClass = getContainingLightClass(element) ?: return null
+                            KotlinUMethodWithFakeLightDelegateAccessor(element, ktLightClass, givenParent)
+                        }
                     }
                 }
 

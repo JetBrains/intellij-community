@@ -9,11 +9,29 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceIn
 interface ResolutionAnchorCacheService {
     val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo>
 
+    val librariesForResolutionAnchors: Map<ModuleSourceInfo, List<LibraryInfo>>
+
+    /**
+     * Anchor module is a source module that could replace library.
+     *
+     * Let's say:
+     * Module1 (M1) has dependencies Library1 (L1) and Library2 (L2)
+     * Module2 (M2) has dependencies Library2 (L2) and Library3 (L3)
+     * and Module3 (M3) is an anchor module for `L3`.
+     *
+     * Current project model does NOT support library dependencies.
+     * For those purposes some kind of approximation is used:
+     * Library dependencies means other libraries those used in the same module.
+     *
+     * For any of `L1`, `L2` or `L3` method returns [`M3`] as those libraries have
+     * direct or transitive `dependency` on `L3` that has anchor module `M3`.
+     */
     fun getDependencyResolutionAnchors(libraryInfo: LibraryInfo): Set<ModuleSourceInfo>
 
     companion object {
         val Empty = object : ResolutionAnchorCacheService {
             override val resolutionAnchorsForLibraries: Map<LibraryInfo, ModuleSourceInfo> get() = emptyMap()
+            override val librariesForResolutionAnchors: Map<ModuleSourceInfo, List<LibraryInfo>> get() = emptyMap()
             override fun getDependencyResolutionAnchors(libraryInfo: LibraryInfo): Set<ModuleSourceInfo> = emptySet()
         }
 

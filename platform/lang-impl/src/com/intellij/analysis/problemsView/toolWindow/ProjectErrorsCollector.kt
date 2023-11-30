@@ -51,7 +51,7 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
       problem is FileProblem -> process(problem, true) { set ->
         when {
           // do not add HighlightingDuplicate if there is any HighlightingProblem
-          problem is HighlightingDuplicate && set.any { it is HighlightingProblem } -> SetUpdateState.IGNORED
+          problem is HighlightingDuplicateProblem && set.any { it is HighlightingProblem } -> SetUpdateState.IGNORED
           else -> SetUpdateState.add(problem, set)
         }
       }
@@ -60,7 +60,7 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
     if (!ignored && problem is HighlightingProblem) {
       // remove any HighlightingDuplicate if HighlightingProblem is appeared
       synchronized(fileProblems) {
-        fileProblems[problem.file]?.filter { it is HighlightingDuplicate }
+        fileProblems[problem.file]?.filter { it is HighlightingDuplicateProblem }
       }?.forEach { problemDisappeared(it) }
     }
   }

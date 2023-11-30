@@ -6,7 +6,11 @@
 
   <description><![CDATA[Provides Windows 10 Look And Feel that mimics Windows 10 system UI]]></description>
 
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
   <extensions defaultExtensionNs="com.intellij">
-    <lafProvider implementation="com.intellij.laf.win10.WinLafProvider" os="windows"/>
+    <themeProvider id="win10Light" path="/win10intellijlaf.theme.json"  targetUi="classic" parentTheme="IntelliJ"/>
   </extensions>
 </idea-plugin>

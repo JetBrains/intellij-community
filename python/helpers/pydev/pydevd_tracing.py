@@ -50,7 +50,7 @@ def _get_stack_str(frame):
     return msg
 
 def _internal_set_trace(tracing_func):
-    if TracingFunctionHolder._warn:
+    if TracingFunctionHolder._warn and sys.gettrace() != tracing_func:
         frame = get_frame()
         if frame is not None and frame.f_back is not None:
             filename = frame.f_back.f_code.co_filename.lower()
@@ -99,7 +99,16 @@ def restore_sys_set_trace_func():
 
 
 def load_python_helper_lib():
-    if not IS_CPYTHON or ctypes is None or sys.version_info[:2] > (3, 9):
+    if not IS_CPYTHON:
+        pydev_log.info('Helper lib to set tracing to all threads not loaded: unsupported Python implementation')
+        return None
+
+    if ctypes is None:
+        pydev_log.info('Helper lib to set tracing to all threads not loaded: ctypes not found')
+        return None
+
+    if sys.version_info[:2] > (3, 11):
+        pydev_log.info('Helper lib to set tracing to all threads not loaded: unsupported Python version')
         return None
 
     if IS_WINDOWS:

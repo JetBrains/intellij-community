@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 import com.intellij.ide.IdeDeprecatedMessagesBundle
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.util.EditorHelper
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -41,7 +42,6 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToBeShortenedDescendants
 import org.jetbrains.kotlin.idea.codeInsight.shorten.performDelayedRefactoringRequests
 import org.jetbrains.kotlin.idea.refactoring.broadcastRefactoringExit
 import org.jetbrains.kotlin.idea.refactoring.move.*
-import org.jetbrains.kotlin.idea.refactoring.move.java.MoveKotlinClassHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtElement
@@ -72,7 +72,8 @@ private object ElementHashingStrategy : HashingStrategy<PsiElement> {
     }
 }
 
-class MoveKotlinDeclarationsProcessor(
+@IntellijInternalApi
+open class MoveKotlinDeclarationsProcessor(
     val descriptor: MoveDeclarationsDescriptor,
     val mover: KotlinMover = KotlinMover.Default,
     private val throwOnConflicts: Boolean = false
@@ -234,8 +235,7 @@ class MoveKotlinDeclarationsProcessor(
             internalUsages += descriptor.delegate.findInternalUsages(descriptor.moveSource)
             collectUsages(kotlinToLightElements, externalUsages)
             if (descriptor.analyzeConflicts) {
-                val conflictCheckerSupport = KotlinMoveConflictCheckerSupport.getInstance()
-                conflicts.putAllValues(conflictCheckerSupport.checkAllConflicts(moveCheckerInfo, internalUsages, externalUsages))
+                conflicts.putAllValues(checkAllConflicts(moveCheckerInfo, internalUsages, externalUsages))
                 descriptor.delegate.collectConflicts(descriptor.moveTarget, internalUsages, conflicts)
             }
 

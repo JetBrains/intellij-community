@@ -6,24 +6,30 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtScopeKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
-import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 
 internal class FirPackageCompletionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
-) : FirCompletionContributorBase<FirRawPositionCompletionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(positionContext: FirRawPositionCompletionContext, weighingContext: WeighingContext) {
-        val rootSymbol = if (positionContext !is FirNameReferencePositionContext || positionContext.explicitReceiver == null) {
+    context(KtAnalysisSession)
+    override fun complete(
+        positionContext: KotlinRawPositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
+        val rootSymbol = if (positionContext !is KotlinNameReferencePositionContext || positionContext.explicitReceiver == null) {
             ROOT_PACKAGE_SYMBOL
         } else {
-            positionContext.explicitReceiver?.reference()?.resolveToSymbol() as? KtPackageSymbol
+            positionContext.explicitReceiver?.reference()?.resolveToSymbols()?.filterIsInstance<KtPackageSymbol>()?.singleOrNull()
         } ?: return
 
         val symbolOrigin = CompletionSymbolOrigin.Scope(KtScopeKind.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX))

@@ -9,6 +9,9 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
 object JdkDownloaderLogger : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup = GROUP
+
+  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 1)
 
   private const val UNKNOWN_JDK = "Unknown"
   private val JDKS = listOf(
@@ -27,8 +30,6 @@ object JdkDownloaderLogger : CounterUsagesCollector() {
     UNKNOWN_JDK
   )
 
-  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 1)
-
   private val DOWNLOAD: EventId1<Boolean> = GROUP.registerEvent("download", EventFields.Boolean("success"))
 
   private val DETECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("detected",
@@ -37,8 +38,6 @@ object JdkDownloaderLogger : CounterUsagesCollector() {
   private val SELECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("selected",
                                                                          EventFields.String("product", JDKS),
                                                                          EventFields.Int("version"))
-
-  override fun getGroup(): EventLogGroup = GROUP
 
   fun logDownload(success: Boolean) {
     DOWNLOAD.log(success)
@@ -59,6 +58,7 @@ object JdkDownloaderLogger : CounterUsagesCollector() {
     SELECTED_SDK.log(name, jdkItem.jdkMajorVersion)
   }
 
+  @JvmStatic
   fun logDetected(jdkInfo: JdkVersionDetector.JdkVersionInfo?) {
     val (name, version) = when {
                             jdkInfo == null -> null
@@ -67,5 +67,4 @@ object JdkDownloaderLogger : CounterUsagesCollector() {
                           } ?: return
     DETECTED_SDK.log(name, version)
   }
-
 }

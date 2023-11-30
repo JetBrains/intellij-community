@@ -18,15 +18,15 @@ import javax.swing.plaf.LabelUI
 
 open class InteractiveCoursePanel(protected val data: InteractiveCourseData, private val contentEnabled: Boolean = true) : JPanel() {
 
-  val startLearningButton = JButton()
+  val startLearningButton: JButton = LearnButton(this.getButtonAction(), contentEnabled)
 
   // needed to align panel with button border without selection
-  protected val leftMargin = 3
+  protected val leftMargin: Int = 3
 
   private val newContentMarker = data.newContentMarker()
   private val nameLine: JPanel? = if (data.newContentMarker() != null) JPanel() else null
 
-  private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.HeaderColor)
+  private val interactiveCourseDescription = HeightLimitedPane(data.getDescription(), -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
 
   private val calculateInnerComponentHeight: () -> Int = { preferredSize.height }
 
@@ -74,15 +74,11 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData, pri
     }
   }
 
-  protected open fun createSouthPanel() = createButtonPanel(data.getAction())
+  protected open fun createSouthPanel(): JPanel = createButtonPanel()
 
-  protected fun createButtonPanel(action: Action): JPanel {
-    startLearningButton.action = action
-    startLearningButton.margin = JBUI.emptyInsets()
-    startLearningButton.isOpaque = false
-    startLearningButton.isContentAreaFilled = false
-    startLearningButton.isEnabled = contentEnabled
+  protected open fun getButtonAction(): Action = data.getAction()
 
+  protected fun createButtonPanel(): JPanel {
     return BorderLayoutPanel().apply {
       isOpaque = false
       addToLeft(startLearningButton)

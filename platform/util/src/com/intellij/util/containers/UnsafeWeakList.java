@@ -271,16 +271,6 @@ public class UnsafeWeakList<T> extends AbstractCollection<T> {
   }
 
   /**
-   * @deprecated Since weak references can be collected at any time,
-   * this method considered dangerous, misleading, error-inducing and is not supported.
-   */
-  @Deprecated
-  public T get(int index) {
-    throwNotAllowedException();
-    return null;
-  }
-
-  /**
    * @return true if all elements (allowed by {@code allowEntity} predicate) from the {@code other} list are contained in this list
    */
   public boolean containsAll(@NotNull UnsafeWeakList<T> other, @NotNull Predicate<? super T> allowEntity) {

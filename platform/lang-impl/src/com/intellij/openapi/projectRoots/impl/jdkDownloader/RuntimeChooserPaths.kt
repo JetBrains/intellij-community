@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -30,7 +31,7 @@ class RuntimeChooserPaths {
 
   fun installCustomJdk(@NlsSafe jdkName: String,
                        resolveSuggestedHome: (ProgressIndicator) -> Path?
-  ) = runWithProgress { indicator, jdkFile ->
+  ): Unit = runWithProgress { indicator, jdkFile ->
     val sdkHome = try {
       resolveSuggestedHome(indicator)
     }
@@ -57,7 +58,7 @@ class RuntimeChooserPaths {
     jdkName
   }
 
-  fun resetCustomJdk() = runWithProgress { _, jdkFile ->
+  fun resetCustomJdk(): Unit = runWithProgress { _, jdkFile ->
     jdkFile.delete()
     LOG.warn("Removed custom boot runtime from the $jdkFile. Bundled runtime will be used")
     LangBundle.message("dialog.message.choose.ide.runtime.is.set.to.param.default")
@@ -73,7 +74,7 @@ class RuntimeChooserPaths {
           jdkFileShadow = jdkFile
 
           @NlsSafe val runtimeName = action(indicator, jdkFile)
-          if (runtimeName != null) {
+          if (runtimeName != null && !ApplicationManagerEx.isInIntegrationTest()) {
             RuntimeChooserMessages.showRestartMessage(runtimeName)
           }
         }

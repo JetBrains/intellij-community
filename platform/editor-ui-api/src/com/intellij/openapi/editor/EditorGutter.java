@@ -36,7 +36,7 @@ public interface EditorGutter {
    * possibility to execute an action when the annotation is clicked.
    *
    * @param provider the provider instance.
-   * @param action the action to execute when the annotation is clicked.
+   * @param action   the action to execute when the annotation is clicked.
    */
   void registerTextAnnotation(@NotNull TextAnnotationGutterProvider provider, @NotNull EditorGutterAction action);
 
@@ -57,15 +57,16 @@ public interface EditorGutter {
    *
    * @see #setLineNumberConverter(LineNumberConverter, LineNumberConverter)
    */
-  default void setLineNumberConverter(@NotNull LineNumberConverter converter) {
+  default void setLineNumberConverter(@Nullable LineNumberConverter converter) {
     setLineNumberConverter(converter, null);
   }
 
   /**
    * Changes how line numbers are displayed in the gutter.
    *
-   * @param primaryConverter converter for primary line number shown in gutter
+   * @param primaryConverter    converter for primary line number shown in gutter
+   *                            Pass {@code null} to show line numbers according to {@link EditorSettings#getLineNumerationType()}.
    * @param additionalConverter if not {@code null}, defines an additional column of numbers to be displayed in the gutter
    */
-  void setLineNumberConverter(@NotNull LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter);
+  void setLineNumberConverter(@Nullable LineNumberConverter primaryConverter, @Nullable LineNumberConverter additionalConverter);
 }

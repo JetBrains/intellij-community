@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -185,8 +185,7 @@ final class FilePartNodeRoot extends FilePartNode {
   }
 
   // extracted private method to split code which is too large for JDK17 to not crash (see IDEA-289921 [JBR17] Constant crashes while executing tests on TeamCity
-  @NotNull
-  private static NodeToUpdate trieDescend(@NotNull NewVirtualFileSystem fs,
+  private static @NotNull NodeToUpdate trieDescend(@NotNull NewVirtualFileSystem fs,
                                           @NotNull NewVirtualFileSystem currentFS,
                                           @NotNull List<String> names,
                                           @Nullable NewVirtualFile fsRoot,
@@ -244,11 +243,10 @@ final class FilePartNodeRoot extends FilePartNode {
     return new NodeToUpdate(parentNode, currentNode);
   }
 
-  @NotNull
-  private static FilePartNode createNode(@NotNull NewVirtualFileSystem currentFS,
-                                         @NotNull FilePartNode currentNode,
-                                         @Nullable VirtualFile currentFile,
-                                         @NotNull String name) {
+  private static @NotNull FilePartNode createNode(@NotNull NewVirtualFileSystem currentFS,
+                                                  @NotNull FilePartNode currentNode,
+                                                  @Nullable VirtualFile currentFile,
+                                                  @NotNull String name) {
     if (currentFile == null) {
       return new UrlPartNode(name, myUrl(currentNode.myFileOrUrl), currentFS);
     }
@@ -256,8 +254,7 @@ final class FilePartNodeRoot extends FilePartNode {
     return new FilePartNode(nameId, currentFile, currentFS);
   }
 
-  @Nullable
-  private static NewVirtualFile findRoot(@NotNull NewVirtualFileSystem fs, @NotNull List<String> names, @Nullable NewVirtualFile fsRoot) {
+  private static @Nullable NewVirtualFile findRoot(@NotNull NewVirtualFileSystem fs, @NotNull List<String> names, @Nullable NewVirtualFile fsRoot) {
     if (fsRoot == null) {
       String rootName = ContainerUtil.getLastItem(names);
       fsRoot = ManagingFS.getInstance().findRoot(rootName, fs instanceof ArchiveFileSystem ? LocalFileSystem.getInstance() : fs);
@@ -277,8 +274,7 @@ final class FilePartNodeRoot extends FilePartNode {
     return currentFS;
   }
 
-  @NotNull
-  static List<String> splitNames(@NotNull String path) {
+  static @NotNull List<String> splitNames(@NotNull String path) {
     int end = path.length();
     if (end == 0) return Collections.emptyList();
     List<String> names = new ArrayList<>(Math.max(20, end/4)); // path length -> path height approximation
@@ -351,8 +347,7 @@ final class FilePartNodeRoot extends FilePartNode {
     }
   }
 
-  @NotNull
-  static FilePartNodeRoot createFakeRoot(@NotNull NewVirtualFileSystem fs) {
+  static @NotNull FilePartNodeRoot createFakeRoot(@NotNull NewVirtualFileSystem fs) {
     return new FilePartNodeRoot(fs);
   }
 }

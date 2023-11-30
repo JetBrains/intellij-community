@@ -10,12 +10,12 @@ import org.jetbrains.annotations.Nullable;
  * for the most recent pages -- which are very likely to be accessed more than once.
  */
 @ApiStatus.Internal
-class PagedFileStorageCache {
+final class PagedFileStorageCache {
   private volatile CachedBuffer myLastBuffer;
   private volatile CachedBuffer myLastBuffer2;
   private volatile CachedBuffer myLastBuffer3;
 
-  private static class CachedBuffer {
+  private static final class CachedBuffer {
     private final DirectBufferWrapper myWrapper;
     private final long myLastPage;
 

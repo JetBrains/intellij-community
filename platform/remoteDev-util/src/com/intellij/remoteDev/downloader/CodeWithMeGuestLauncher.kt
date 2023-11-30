@@ -1,5 +1,6 @@
 package com.intellij.remoteDev.downloader
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -10,8 +11,10 @@ import com.intellij.openapi.progress.Task.Backgroundable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.remoteDev.RemoteDevUtilBundle
 import com.intellij.remoteDev.downloader.exceptions.CodeWithMeDownloaderExceptionHandler
 import com.intellij.remoteDev.util.UrlUtil
@@ -21,6 +24,7 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.pathString
 
 @ApiStatus.Experimental
 object CodeWithMeGuestLauncher {
@@ -46,61 +50,87 @@ object CodeWithMeGuestLauncher {
 
     val uri = UrlUtil.parseOrShowError(url, product) ?: return
 
+    if (runAlreadyDownloadedClient(clientBuild, lifetime, project, url, onDone)) {
+      return
+    }
+
     if (!alreadyDownloading.add(url)) {
       LOG.info("Already downloading a client for $url")
       return
     }
 
-    if (runAlreadyDownloadedClient(clientBuild, lifetime, project, url, onDone)) {
-      return
-    }
+    ProgressManager.getInstance().run(DownloadAndLaunchClientTask(project, uri, lifetime, url, product, onDone))
+  }
 
-    ProgressManager.getInstance().run(object : Backgroundable(project, RemoteDevUtilBundle.message("launcher.title"), true) {
+  private class DownloadAndLaunchClientTask(
+    private val project: Project?,
+    private val uri: URI,
+    private val lifetime: Lifetime?,
+    private val url: String,
+    private val product: @NlsContexts.DialogTitle String,
+    private val onDone: (Lifetime) -> Unit
+  ) : Backgroundable(project, RemoteDevUtilBundle.message("launcher.title"), true) {
 
-      private var clientLifetime : Lifetime = Lifetime.Terminated
+    private var clientLifetime : Lifetime = Lifetime.Terminated
 
-      override fun run(progressIndicator: ProgressIndicator) {
-        try {
-          val sessionInfo = when (uri.scheme) {
-            "tcp", "gwws" -> {
-              val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
-              val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
-              val unattendedMode = isUnattendedModeUri(uri)
+    override fun run(progressIndicator: ProgressIndicator) {
+      try {
+        val sessionInfo = when (uri.scheme) {
+          "tcp", "gwws" -> {
+            val clientBuild = uri.fragmentParameters["cb"] ?: error("there is no client build in url")
+            val jreBuild = uri.fragmentParameters["jb"] ?: error("there is no jre build in url")
+            val unattendedMode = isUnattendedModeUri(uri)
 
-              CodeWithMeClientDownloader.createSessionInfo(clientBuild, jreBuild, unattendedMode)
+            CodeWithMeClientDownloader.createSessionInfo(clientBuild, jreBuild, unattendedMode)
+          }
+          "http", "https" -> {
+            progressIndicator.text = RemoteDevUtilBundle.message("launcher.get.client.info")
+            ThinClientSessionInfoFetcher.getSessionUrl(uri)
+          }
+          else -> {
+            error("scheme '${uri.scheme} is not supported'")
+          }
+        }
+
+        val parentLifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal
+        if (Registry.`is`("rdct.use.embedded.client") || Registry.`is`("rdct.always.use.embedded.client")) {
+          val hostBuildNumber = BuildNumber.fromStringOrNull(sessionInfo.hostBuildNumber)?.withoutProductCode()
+          val currentIdeBuildNumber = ApplicationInfo.getInstance().build.withoutProductCode()
+          LOG.debug("Host build number: $hostBuildNumber, current IDE build number: $currentIdeBuildNumber")
+          if (hostBuildNumber == currentIdeBuildNumber || Registry.`is`("rdct.always.use.embedded.client")) {
+            val embeddedClientLauncher = EmbeddedClientLauncher.create()
+            if (embeddedClientLauncher != null) {
+              LOG.debug("Launching client process from current IDE")
+              clientLifetime = embeddedClientLauncher.launch(url, parentLifetime, NotificationBasedEmbeddedClientErrorReporter(project))
+              return
             }
-            "http", "https" -> {
-              progressIndicator.text = RemoteDevUtilBundle.message("launcher.get.client.info")
-              ThinClientSessionInfoFetcher.getSessionUrl(uri)
-            }
-            else -> {
-              error("scheme '${uri.scheme} is not supported'")
+            else {
+              LOG.debug("Embedded client isn't available in the current IDE installation")
             }
           }
+        }
+        
+        val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
 
-          val extractedJetBrainsClientData = CodeWithMeClientDownloader.downloadClientAndJdk(sessionInfo, progressIndicator)
-          if (extractedJetBrainsClientData == null) return
-
-          clientLifetime = runDownloadedClient(
-            lifetime = lifetime ?: project?.createLifetime() ?: Lifetime.Eternal,
-            extractedJetBrainsClientData = extractedJetBrainsClientData,
-            urlForThinClient = url,
-            product = product,
-            progressIndicator = progressIndicator
-          )
-        }
-        catch (t: Throwable) {
-          LOG.warn(t)
-          CodeWithMeDownloaderExceptionHandler.handle(product, t)
-        }
-        finally {
-          alreadyDownloading.remove(url)
-        }
+        clientLifetime = runDownloadedClient(
+          lifetime = parentLifetime,
+          extractedJetBrainsClientData = extractedJetBrainsClientData,
+          urlForThinClient = url,
+          product = product,
+          progressIndicator = progressIndicator
+        )
       }
+      catch (t: Throwable) {
+        LOG.warn(t)
+        CodeWithMeDownloaderExceptionHandler.handle(product, t)
+      }
+      finally {
+        alreadyDownloading.remove(url)
+      }
+    }
 
-      override fun onSuccess() = onDone.invoke(clientLifetime)
-      override fun onCancel() = Unit
-    })
+    override fun onSuccess() = onDone.invoke(clientLifetime)
+    override fun onCancel() = Unit
   }
 
   private fun runAlreadyDownloadedClient(
@@ -111,6 +141,9 @@ object CodeWithMeGuestLauncher {
     onDone: (Lifetime) -> Unit
   ): Boolean {
     if (clientBuild == null) {
+      return false
+    }
+    if (Registry.`is`("rdct.always.use.embedded.client")) {
       return false
     }
     if (!CodeWithMeClientDownloader.isClientDownloaded(clientBuild)) {
@@ -140,7 +173,7 @@ object CodeWithMeGuestLauncher {
     // todo: offer to connect as-is?
     try {
       progressIndicator?.text = RemoteDevUtilBundle.message("launcher.launch.client")
-      progressIndicator?.text2 = extractedJetBrainsClientData.clientDir.toString()
+      progressIndicator?.text2 = extractedJetBrainsClientData.clientDir.pathString
       val thinClientLifetime = CodeWithMeClientDownloader.runCwmGuestProcessFromDownload(lifetime, urlForThinClient, extractedJetBrainsClientData)
 
       // Wait a bit until process will be launched and only after that finish task

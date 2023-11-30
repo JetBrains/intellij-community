@@ -5,6 +5,8 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -220,7 +222,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiMethodCallExpression countCall)) return;
       PsiElement countName = countCall.getMethodExpression().getReferenceNameElement();
       if (countName == null) return;

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.serialization.PropertyAccessor
@@ -13,7 +14,7 @@ import java.lang.invoke.MethodType
 import java.nio.charset.Charset
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
 
-internal val LOG = logger<BaseState>()
+internal val LOG: Logger = logger<BaseState>()
 
 private val factory: StatePropertyFactory = run {
   val implClass = BaseState::class.java.classLoader.loadClass("com.intellij.serialization.stateProperties.StatePropertyFactoryImpl")
@@ -52,7 +53,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * For non-BaseState classes explicit `isDefault` must be provided, because no other way to check.
    */
-  protected fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean) = addProperty(factory.obj(initialValue, isDefault))
+  protected fun <T> property(initialValue: T, isDefault: (value: T) -> Boolean): StoredPropertyBase<T> = addProperty(factory.obj(initialValue, isDefault))
 
   /**
    * Collection considered as default if empty.
@@ -75,7 +76,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Charset is an immutable, so, it is safe to use it as default value.
    */
-  protected fun <T : Charset> property(initialValue: T) = addProperty(factory.obj(initialValue))
+  protected fun <T : Charset> property(initialValue: T): StoredPropertyBase<T> = addProperty(factory.obj(initialValue))
 
   protected inline fun <reified T : Enum<*>> enum(defaultValue: T): StoredPropertyBase<T> {
     @Suppress("UNCHECKED_CAST")
@@ -208,7 +209,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   // internal usage only
   @Suppress("FunctionName")
   @ApiStatus.Internal
-  fun __getProperties() = properties
+  fun __getProperties(): MutableList<StoredProperty<Any>> = properties
 }
 
 interface StatePropertyFactory {

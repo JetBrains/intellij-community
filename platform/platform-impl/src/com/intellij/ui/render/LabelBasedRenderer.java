@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.render;
 
 import com.intellij.util.ui.JBUI;
@@ -13,13 +13,12 @@ import java.awt.*;
 
 public class LabelBasedRenderer extends JLabel {
 
-  public static class List<E> extends LabelBasedRenderer implements ListCellRenderer<E> {
+  public static final class List<E> extends LabelBasedRenderer implements ListCellRenderer<E> {
     private static final Border EMPTY = JBUI.Borders.empty(1); // see DefaultListCellRenderer.getNoFocusBorder
 
-    @NotNull
     @Override
-    public Component getListCellRendererComponent(@NotNull JList<? extends E> list, @Nullable E value,
-                                                  int index, boolean selected, boolean focused) {
+    public @NotNull Component getListCellRendererComponent(@NotNull JList<? extends E> list, @Nullable E value,
+                                                           int index, boolean selected, boolean focused) {
       configure(list, value);
       setForeground(RenderingUtil.getForeground(list, selected));
       setBackground(RenderingUtil.getBackground(list, selected));
@@ -31,10 +30,9 @@ public class LabelBasedRenderer extends JLabel {
   public static class Tree extends LabelBasedRenderer implements TreeCellRenderer {
     private static final Border EMPTY = JBUI.Borders.emptyRight(3); // see DefaultTreeCellRenderer.getPreferredSize
 
-    @NotNull
     @Override
-    public Component getTreeCellRendererComponent(@NotNull JTree tree, @Nullable Object value,
-                                                  boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
+    public @NotNull Component getTreeCellRendererComponent(@NotNull JTree tree, @Nullable Object value,
+                                                           boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
       configure(tree, tree.convertValueToText(value, selected, expanded, leaf, row, focused));
       setForeground(RenderingUtil.getForeground(tree, selected));
       setBackground(RenderingUtil.getBackground(tree, selected));

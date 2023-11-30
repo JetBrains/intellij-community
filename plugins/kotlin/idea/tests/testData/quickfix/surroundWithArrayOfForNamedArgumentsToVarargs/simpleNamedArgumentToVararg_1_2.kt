@@ -6,4 +6,6 @@ fun foo(vararg s: String) {}
 fun test() {
     foo(s = <caret>"value")
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithArrayOfWithSpreadOperatorInFunctionFix

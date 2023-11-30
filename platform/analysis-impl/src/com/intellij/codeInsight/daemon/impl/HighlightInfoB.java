@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -44,7 +44,7 @@ final class HighlightInfoB implements HighlightInfo.Builder {
 
   private GutterIconRenderer gutterIconRenderer;
   private ProblemGroup problemGroup;
-  private String inspectionToolId;
+  private Object toolId;
   private PsiElement psiElement;
   private int group;
   private final List<FixInfo> fixes = new ArrayList<>();
@@ -55,18 +55,16 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     this.type = type;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer) {
+  public @NotNull HighlightInfo.Builder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer) {
     assertNotCreated();
     assert this.gutterIconRenderer == null : "gutterIconRenderer already set";
     this.gutterIconRenderer = gutterIconRenderer;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder problemGroup(@NotNull ProblemGroup problemGroup) {
+  public @NotNull HighlightInfo.Builder problemGroup(@NotNull ProblemGroup problemGroup) {
     assertNotCreated();
     assert this.problemGroup == null : "problemGroup already set";
     this.problemGroup = problemGroup;
@@ -77,69 +75,61 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     assert !created : "Must not call this method after Builder.create() was called";
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder inspectionToolId(@NotNull String inspectionToolId) {
+  public @NotNull HighlightInfo.Builder inspectionToolId(@NotNull String inspectionToolId) {
     assertNotCreated();
-    assert this.inspectionToolId == null : "inspectionToolId already set";
-    this.inspectionToolId = inspectionToolId;
+    assert this.toolId == null : "inspectionToolId already set";
+    this.toolId = inspectionToolId;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder description(@NotNull String description) {
+  public @NotNull HighlightInfo.Builder description(@NotNull String description) {
     assertNotCreated();
     assert escapedDescription == null : "description already set";
     escapedDescription = description;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder descriptionAndTooltip(@NotNull String description) {
+  public @NotNull HighlightInfo.Builder descriptionAndTooltip(@NotNull String description) {
     return description(description).unescapedToolTip(description);
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder textAttributes(@NotNull TextAttributes attributes) {
+  public @NotNull HighlightInfo.Builder textAttributes(@NotNull TextAttributes attributes) {
     assertNotCreated();
     assert forcedTextAttributes == null : "textAttributes already set";
     forcedTextAttributes = attributes;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder textAttributes(@NotNull TextAttributesKey attributesKey) {
+  public @NotNull HighlightInfo.Builder textAttributes(@NotNull TextAttributesKey attributesKey) {
     assertNotCreated();
     assert forcedTextAttributesKey == null : "textAttributesKey already set";
     forcedTextAttributesKey = attributesKey;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder unescapedToolTip(@NotNull String unescapedToolTip) {
+  public @NotNull HighlightInfo.Builder unescapedToolTip(@NotNull String unescapedToolTip) {
     assertNotCreated();
     assert escapedToolTip == null : "Tooltip was already set";
     escapedToolTip = htmlEscapeToolTip(unescapedToolTip);
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder escapedToolTip(@NotNull String escapedToolTip) {
+  public @NotNull HighlightInfo.Builder escapedToolTip(@NotNull String escapedToolTip) {
     assertNotCreated();
     assert this.escapedToolTip == null : "Tooltip was already set";
     this.escapedToolTip = escapedToolTip;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder range(int start, int end) {
+  public @NotNull HighlightInfo.Builder range(int start, int end) {
     assertNotCreated();
     assert startOffset == -1 && endOffset == -1 : "Offsets already set";
 
@@ -148,9 +138,8 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder range(@NotNull TextRange textRange) {
+  public @NotNull HighlightInfo.Builder range(@NotNull TextRange textRange) {
     assertNotCreated();
     assert startOffset == -1 && endOffset == -1 : "Offsets already set";
     startOffset = textRange.getStartOffset();
@@ -158,82 +147,72 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder range(@NotNull ASTNode node) {
+  public @NotNull HighlightInfo.Builder range(@NotNull ASTNode node) {
     return range(node.getPsi());
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder range(@NotNull PsiElement element) {
+  public @NotNull HighlightInfo.Builder range(@NotNull PsiElement element) {
     assertNotCreated();
     assert psiElement == null : " psiElement already set";
     psiElement = element;
     return range(element.getTextRange());
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
+  public @NotNull HighlightInfo.Builder range(@NotNull PsiElement element, @NotNull TextRange rangeInElement) {
     TextRange absoluteRange = rangeInElement.shiftRight(element.getTextRange().getStartOffset());
     return range(element, absoluteRange.getStartOffset(), absoluteRange.getEndOffset());
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder range(@NotNull PsiElement element, int start, int end) {
+  public @NotNull HighlightInfo.Builder range(@NotNull PsiElement element, int start, int end) {
     assertNotCreated();
     assert psiElement == null : " psiElement already set";
     psiElement = element;
     return range(start, end);
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder endOfLine() {
+  public @NotNull HighlightInfo.Builder endOfLine() {
     assertNotCreated();
     isAfterEndOfLine = true;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder needsUpdateOnTyping(boolean update) {
+  public @NotNull HighlightInfo.Builder needsUpdateOnTyping(boolean update) {
     assertNotCreated();
     assert myNeedsUpdateOnTyping == null : " needsUpdateOnTyping already set";
     myNeedsUpdateOnTyping = update;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder severity(@NotNull HighlightSeverity severity) {
+  public @NotNull HighlightInfo.Builder severity(@NotNull HighlightSeverity severity) {
     assertNotCreated();
     assert this.severity == null : " severity already set";
     this.severity = severity;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder fileLevelAnnotation() {
+  public @NotNull HighlightInfo.Builder fileLevelAnnotation() {
     assertNotCreated();
     isFileLevelAnnotation = true;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder navigationShift(int navigationShift) {
+  public @NotNull HighlightInfo.Builder navigationShift(int navigationShift) {
     assertNotCreated();
     this.navigationShift = navigationShift;
     return this;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo.Builder group(int group) {
+  public @NotNull HighlightInfo.Builder group(int group) {
     assertNotCreated();
     this.group = group;
     return this;
@@ -261,9 +240,8 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     return this;
   }
 
-  @Nullable
   @Override
-  public HighlightInfo create() {
+  public @Nullable HighlightInfo create() {
     HighlightInfo info = createUnconditionally();
     LOG.assertTrue(psiElement != null ||
                    severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY ||
@@ -273,9 +251,8 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     return isAcceptedByFilters(info, psiElement) ? info : null;
   }
 
-  @NotNull
   @Override
-  public HighlightInfo createUnconditionally() {
+  public @NotNull HighlightInfo createUnconditionally() {
     assertNotCreated();
     created = true;
     if (severity == null) {
@@ -284,21 +261,20 @@ final class HighlightInfoB implements HighlightInfo.Builder {
     HighlightInfo info = new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
                                            escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation,
                                            navigationShift,
-                                           problemGroup, inspectionToolId, gutterIconRenderer, group, unresolvedReference, psiElement);
+                                           problemGroup, toolId, gutterIconRenderer, group, unresolvedReference);
     for (FixInfo fix : fixes) {
       info.registerFix(fix.action(), fix.options(), fix.displayName(), fix.fixRange(), fix.key());
     }
     return info;
   }
 
-  @Nullable
-  private static @NlsContexts.Tooltip String htmlEscapeToolTip(@Nullable @NlsContexts.Tooltip String unescapedTooltip) {
+  private static @Nullable @NlsContexts.Tooltip String htmlEscapeToolTip(@Nullable @NlsContexts.Tooltip String unescapedTooltip) {
     return unescapedTooltip == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
   }
 
   private static boolean isAcceptedByFilters(@NotNull HighlightInfo info, @Nullable PsiElement psiElement) {
     PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
-    for (HighlightInfoFilter filter : HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions()) {
+    for (HighlightInfoFilter filter : HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensionList()) {
       if (!filter.accept(info, file)) {
         return false;
       }

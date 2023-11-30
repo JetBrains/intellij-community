@@ -6,6 +6,7 @@ import com.intellij.lang.parameterInfo.CreateParameterInfoContext
 import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.parameterInfo.KotlinParameterInfoBase
@@ -88,6 +90,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             KtContainerNode::class.java,
             KtTypeArgumentList::class.java
         )
+
+        private const val SINGLE_LINE_PARAMETERS_COUNT = 3
     }
 
     override fun getActualParameterDelimiterType(): KtSingleValueToken = KtTokens.COMMA
@@ -240,7 +244,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             .count { it.node.elementType == KtTokens.COMMA }
     }
 
-    private fun KtAnalysisSession.renderParameter(
+    context(KtAnalysisSession)
+    private fun renderParameter(
         parameter: KtVariableLikeSignature<KtValueParameterSymbol>,
         includeName: Boolean
     ): String {
@@ -380,6 +385,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             val usedParameterIndices = HashSet<Int>()
             val text = buildString {
                 var argumentIndex = 0
+                val parameterDelimiterIndexes = mutableListOf<Int>()
 
                 fun appendParameter(
                     parameterIndex: Int,
@@ -391,13 +397,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
                     if (length > 0) {
                         append(", ")
+                        parameterDelimiterIndexes.add(length)
                         if (markUsedUnusedParameterBorder) {
                             // This is used to "disable" the used parameters, when in "named mode" and there are more unused parameters.
                             // See NamedParameter3.kt test. Disabling them gives a visual cue that they are already used.
 
-                            // Highlight the space after the comma; highlighted text needs to be at least one character long
+                            // Highlight something as bold to show text before as disabled
                             highlightStartOffset = length - 1
-                            highlightEndOffset = length
+                            highlightEndOffset = length - 1
                             isDisabledBeforeHighlight = true
                         }
                     }
@@ -475,6 +482,13 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
                 if (length == 0) {
                     append(CodeInsightBundle.message("parameter.info.no.parameters"))
+                } else {
+                    val useMultilineParameters = Registry.`is`("kotlin.multiline.function.parameters.info")
+                    if (useMultilineParameters && argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
+                        parameterDelimiterIndexes.forEach { offset ->
+                            replace(offset - 1, offset, "\n")
+                        }
+                    }
                 }
             }
 

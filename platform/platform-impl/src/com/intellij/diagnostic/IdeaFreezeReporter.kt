@@ -9,10 +9,12 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginUtil
+import com.intellij.idea.AppMode
 import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -20,6 +22,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SmartList
 import kotlinx.coroutines.*
 import java.io.IOException
@@ -47,20 +50,19 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
-    @Suppress("DEPRECATION")
-    app.coroutineScope.launch {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
         override fun appWillBeClosed(isRestart: Boolean) {
           appClosing = true
         }
       })
 
-      if (DEBUG || !PluginManagerCore.isRunningFromSources()) {
+      if (DEBUG || (!PluginManagerCore.isRunningFromSources() && !AppMode.isDevServer())) {
         reportUnfinishedFreezes()
       }
     }
 
-    if (!DEBUG && PluginManagerCore.isRunningFromSources() || !isEnabled(app)) {
+    if (!DEBUG && (PluginManagerCore.isRunningFromSources() || AppMode.isDevServer()) || !isEnabled(app)) {
       throw ExtensionNotApplicableException.create()
     }
   }
@@ -89,6 +91,10 @@ internal class IdeaFreezeReporter : PerformanceListener {
         }
       }
     }
+
+    internal fun checkProfilerCrash(crashContent: String) {
+      EP_NAME.forEachExtensionSafe { it.checkCrash(crashContent) }
+    }
   }
 
   override fun uiFreezeStarted(reportDir: Path, coroutineScope: CoroutineScope) {
@@ -105,6 +111,11 @@ internal class IdeaFreezeReporter : PerformanceListener {
       dumpTask = object : SamplingTask(100, maxDumpDuration, coroutineScope) {
         override fun stop() {
           super.stop()
+          EP_NAME.forEachExtensionSafe(FreezeProfiler::stop)
+        }
+
+        override suspend fun stopDumpingThreads() {
+          super.stopDumpingThreads()
           EP_NAME.forEachExtensionSafe(FreezeProfiler::stop)
         }
       }
@@ -372,7 +383,7 @@ private const val MESSAGE_FILE_NAME = ".message"
 private const val THROWABLE_FILE_NAME = ".throwable"
 
 @Suppress("SpellCheckingInspection")
-internal const val APP_INFO_FILE_NAME = ".appinfo"
+internal const val APP_INFO_FILE_NAME: String = ".appinfo"
 
 // common sub-stack contains more than the specified % samples
 private const val COMMON_SUB_STACK_WEIGHT = 0.25

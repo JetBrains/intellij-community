@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.ui;
 
@@ -264,7 +264,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
   protected abstract Icon getOverrideIcon(M memberInfo);
 
-  private static class DefaultMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
+  private static final class DefaultMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
     @Override
     public boolean isMemberEnabled(M member) {
       return true;
@@ -306,7 +306,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
-  protected static class MyTableModel<T extends PsiElement, M extends MemberInfoBase<T>> extends AbstractTableModel {
+  protected static final class MyTableModel<T extends PsiElement, M extends MemberInfoBase<T>> extends AbstractTableModel {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
     public MyTableModel(AbstractMemberSelectionTable<T, M> table) {
@@ -394,7 +394,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
-  private class MyEnableDisableAction extends EnableDisableAction {
+  private final class MyEnableDisableAction extends EnableDisableAction {
 
     @Override
     protected JTable getTable() {
@@ -429,7 +429,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   }
 
   private record MemberInfoData(@Nls String tooltip, Icon icon, boolean isEditable, int problem) {}
-  private static class MyTableRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends ColoredTableCellRenderer {
+  private static final class MyTableRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends ColoredTableCellRenderer {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
     MyTableRenderer(AbstractMemberSelectionTable<T, M> table) {
@@ -457,7 +457,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
-  private static class MyBooleanRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends BooleanTableCellRenderer {
+  private static final class MyBooleanRenderer<T extends PsiElement, M extends MemberInfoBase<T>> extends BooleanTableCellRenderer {
     private final AbstractMemberSelectionTable<T, M> myTable;
 
     MyBooleanRenderer(AbstractMemberSelectionTable<T, M> table) {

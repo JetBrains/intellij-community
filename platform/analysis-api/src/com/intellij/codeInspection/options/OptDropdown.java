@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.options;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +26,15 @@ public record OptDropdown(@Language("jvm-field-name") @NotNull String bindId,
         throw new IllegalArgumentException("Duplicating key: " + option.key);
       }
     }
+  }
+
+  /**
+   * @param key key to look for
+   * @return an option that corresponds to the specified key; null if not found
+   */
+  public @Nullable Option findOption(@NotNull Object key) {
+    String keyToLookup = key instanceof Enum<?> e ? e.name() : key.toString();
+    return ContainerUtil.find(options, opt -> opt.key().equals(keyToLookup));
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.impl.projectStructureMapping
@@ -7,9 +7,10 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.MAVEN_REPO
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
-import org.jetbrains.intellij.build.tasks.MAVEN_REPO
 import java.io.File
 import java.io.OutputStream
 import java.nio.file.Files
@@ -23,7 +24,10 @@ internal val Collection<DistributionFileEntry>.includedModules: Sequence<String>
  * Provides mapping between files in the product distribution and modules and libraries in the project configuration. The generated JSON file
  * contains an array of [DistributionFileEntry].
  */
-internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>, out: OutputStream?, buildPaths: BuildPaths) {
+internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>,
+                                   out: OutputStream?,
+                                   buildPaths: BuildPaths,
+                                   context: BuildContext) {
   val writer = JsonFactory().createGenerator(out).setPrettyPrinter(IntelliJDefaultPrettyPrinter())
   val fileToEntry = TreeMap<String, MutableList<DistributionFileEntry>>()
   val fileToPresentablePath = HashMap<Path, String>()
@@ -39,6 +43,17 @@ internal fun buildJarContentReport(entries: Collection<DistributionFileEntry>, o
     writeModules(writer = writer, fileEntries = fileEntries, buildPaths = buildPaths)
     writer.writeEndObject()
   }
+
+  for (item in context.getDistFiles(os = null, arch = null)) {
+    writer.writeStartObject()
+
+    writer.writeStringField("name", item.relativePath)
+    item.os?.let { writer.writeStringField("os", it.osId) }
+    item.arch?.let { writer.writeStringField("arch", it.dirName) }
+
+    writer.writeEndObject()
+  }
+
   writer.writeEndArray()
   writer.close()
 }
@@ -52,6 +67,7 @@ fun writeProjectStructureReport(entries: Collection<DistributionFileEntry>, file
       for (entry in entries) {
         writer.writeStartObject()
         writer.writeStringField("path", shortenAndNormalizePath(entry.path, buildPaths, extraRoot))
+
         writer.writeStringField("type", entry.type)
         when (entry) {
           is ModuleLibraryFileEntry -> {
@@ -70,7 +86,6 @@ fun writeProjectStructureReport(entries: Collection<DistributionFileEntry>, file
             writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile!!, buildPaths, extraRoot))
             writer.writeNumberField("size", entry.size)
           }
-          else -> throw UnsupportedOperationException("${entry.type} is not supported")
         }
         writer.writeEndObject()
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class ComboEditorCompletionContributor extends CompletionContributor implements DumbAware {
+public final class ComboEditorCompletionContributor extends CompletionContributor implements DumbAware {
 
   public static final Key<Boolean> CONTINUE_RUN_COMPLETION = Key.create("CONTINUE_RUN_COMPLETION");
   private static final Key<LookupElementProvider> LOOKUP_ELEMENT_PROVIDER_KEY = Key.create("LOOKUP_ELEMENT_PROVIDER_KEY");
@@ -59,7 +59,7 @@ public class ComboEditorCompletionContributor extends CompletionContributor impl
     LookupElement createLookupElement(@NotNull String lookupString);
   }
 
-  public static class DefaultLookupElementProvider implements LookupElementProvider {
+  public static final class DefaultLookupElementProvider implements LookupElementProvider {
     @NotNull
     @Override
     public LookupElementBuilder createLookupElement(@NotNull String lookupString) {

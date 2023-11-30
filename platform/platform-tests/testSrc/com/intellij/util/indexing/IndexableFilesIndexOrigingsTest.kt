@@ -4,7 +4,7 @@ package com.intellij.util.indexing
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.runBlockingModal
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -257,14 +257,14 @@ class IndexableFilesIndexBasicOriginsTest : IndexableFilesIndexOriginsTestBase()
     val originToUnload = createModuleContentOrigin(contentRootToUnload, moduleToUnload)
     assertOrigins(listOf(originToRetain, originToUnload), listOf(contentFileToUnload, contentFileToRetain))
 
-    runBlockingModal(project, "") {
+    runWithModalProgressBlocking(project, "") {
       ModuleManager.getInstance(project).setUnloadedModules(listOf("moduleToUnload"))
     }
 
     assertOrigin(originToRetain, contentFileToRetain)
     assertNoOrigin(contentFileToUnload, contentRootToUnload)
 
-    runBlockingModal(project, "") {
+    runWithModalProgressBlocking(project, "") {
       ModuleManager.getInstance(project).setUnloadedModules(emptyList())
     }
 

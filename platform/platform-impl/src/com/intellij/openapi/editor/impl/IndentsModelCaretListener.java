@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
@@ -13,19 +14,16 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 public class IndentsModelCaretListener implements CaretListener {
-  @NotNull
-  private final EditorImpl myEditor;
-  @Nullable
-  private IndentGuideDescriptor myCurrentCaretGuide;
-  @Nullable
-  protected LightweightHint myCurrentHint;
+  private final @NotNull EditorImpl myEditor;
+  private @Nullable IndentGuideDescriptor myCurrentCaretGuide;
+  protected @Nullable LightweightHint myCurrentHint;
 
-  public IndentsModelCaretListener(@NotNull final EditorImpl editor) {
+  public IndentsModelCaretListener(final @NotNull EditorImpl editor) {
     myEditor = editor;
   }
 
   @Override
-  public void caretPositionChanged(@NotNull final CaretEvent event) {
+  public void caretPositionChanged(final @NotNull CaretEvent event) {
     final IndentGuideDescriptor newGuide = getCaretIndentGuide(event);
     if (!Comparing.equal(myCurrentCaretGuide, newGuide)) {
       repaintGuide(newGuide);
@@ -43,7 +41,7 @@ public class IndentsModelCaretListener implements CaretListener {
     }
   }
 
-  private void repaintGuide(@Nullable final IndentGuideDescriptor guide) {
+  private void repaintGuide(final @Nullable IndentGuideDescriptor guide) {
     if (guide != null) {
       myEditor.repaintLines(guide.startLine, guide.endLine);
     }
@@ -54,8 +52,7 @@ public class IndentsModelCaretListener implements CaretListener {
     return myEditor.logicalLineToY(descriptor.startLine) < visibleArea.y;
   }
 
-  @Nullable
-  protected IndentGuideDescriptor getCaretIndentGuide(@NotNull final CaretEvent event) {
+  protected @Nullable IndentGuideDescriptor getCaretIndentGuide(final @NotNull CaretEvent event) {
     return myEditor.getIndentsModel().getCaretIndentGuide();
   }
 

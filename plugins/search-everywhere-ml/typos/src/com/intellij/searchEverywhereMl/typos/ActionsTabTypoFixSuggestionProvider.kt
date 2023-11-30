@@ -1,55 +1,64 @@
 package com.intellij.searchEverywhereMl.typos
 
+import ai.grazie.spell.lists.FrequencyMetadata
 import ai.grazie.spell.suggestion.ranker.FrequencySuggestionRanker
 import ai.grazie.spell.suggestion.ranker.JaroWinklerSuggestionRanker
 import ai.grazie.spell.suggestion.ranker.LinearAggregatingSuggestionRanker
-import ai.grazie.spell.suggestion.ranker.SuggestionRanker
-import com.intellij.grazie.utils.toLinkedSet
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.actionSystem.AbbreviationManager
 import com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel
-import com.intellij.spellchecker.SpellCheckerManager
+import com.intellij.searchEverywhereMl.typos.models.TypoSuggestionProvider
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 
-internal class ActionsTabTypoFixSuggestionProvider(project: Project) {
-  private val spellChecker = SpellCheckerManager.getInstance(project)
-
-  // Use the backing field, so that we can just provide suggestion ranker if it has already been constructed,
-  // otherwise we're going to try to create it using the language model - this may not be successful if the
-  // language model is still being computed
-  private var _suggestionRanker: SuggestionRanker? = null
-  private val suggestionRanker: SuggestionRanker?
-    get() {
-      if (_suggestionRanker != null) return _suggestionRanker
-
-      val languageModel = ActionsLanguageModel.getInstance() ?: return null
-      if (!languageModel.isComputed) return null
-
-      _suggestionRanker = LinearAggregatingSuggestionRanker(
-        JaroWinklerSuggestionRanker() to 0.5,
-        FrequencySuggestionRanker(languageModel) to 0.5,
-      )
-      return _suggestionRanker
-    }
-
-  fun suggestFixFor(query: String): SearchEverywhereSpellCheckResult = splitText(query)
-    .map { token ->
-      when (token) {
-        is SearchEverywhereStringToken.Delimiter -> WordSpellCheckResult.NoCorrection(token.value)
-        is SearchEverywhereStringToken.Word -> correctWord(token.value)
+internal class ActionsTabTypoFixSuggestionProvider {
+  private val deferredSuggestionProvider: Deferred<TypoSuggestionProvider>? =
+    ActionsLanguageModel.getInstance()
+      ?.let { model ->
+        model.coroutineScope.async {
+          val dictionary = model.deferredDictionary.await()
+          val ranker = getSuggestionRanker(dictionary)
+          TypoSuggestionProvider(dictionary, ranker)
+        }
       }
-    }
-    .toQuerySpellCheckResult()
 
-  private fun correctWord(word: String): WordSpellCheckResult = word.takeIf { spellChecker.hasProblem(it) }
-    ?.let { misspelledWord ->
-      val correctionSuggestions = spellChecker.getSuggestions(misspelledWord.lowercase()).toLinkedSet()
+  private fun getSuggestionRanker(dictionary: FrequencyMetadata) = LinearAggregatingSuggestionRanker(
+    JaroWinklerSuggestionRanker() to 0.5,
+    FrequencySuggestionRanker(dictionary) to 0.5,
+  )
 
-      suggestionRanker?.score(word.lowercase(), correctionSuggestions)
-        ?.asSequence()
-        ?.maxBy { it.value }
-        ?.let { (correction, confidence) -> correction.capitalizeBasedOn(word) to confidence }
-        ?.let { (word, confidence) -> WordSpellCheckResult.Correction(word, confidence) }
-    } ?: WordSpellCheckResult.NoCorrection(word)
+  fun suggestFixFor(query: String): SearchEverywhereSpellCheckResult {
+    if (isActionAbbreviation(query)) return SearchEverywhereSpellCheckResult.NoCorrection
+
+    return splitText(query)
+      .map { token ->
+        when (token) {
+          is SearchEverywhereStringToken.Delimiter -> WordSpellCheckResult.NoCorrection(token.value)
+          is SearchEverywhereStringToken.Word -> correctWord(token.value)
+        }
+      }
+      .toQuerySpellCheckResult()
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun correctWord(word: String): WordSpellCheckResult {
+    if (deferredSuggestionProvider == null || !deferredSuggestionProvider.isCompleted) return WordSpellCheckResult.NoCorrection(word)
+
+    val suggestionProvider = deferredSuggestionProvider.getCompleted()
+    val lowercaseWord = word.lowercase()
+    if (!suggestionProvider.isMisspelled(word.lowercase())) return WordSpellCheckResult.NoCorrection(word)
+
+    return suggestionProvider.getSuggestions(lowercaseWord, 5)
+             .maxByOrNull { it.score }
+             ?.let { (correction, confidence) -> correction.toString().capitalizeBasedOn(word) to confidence }
+             ?.let { (word, confidence) -> WordSpellCheckResult.Correction(word, confidence) }
+           ?: WordSpellCheckResult.NoCorrection(word)
+  }
+
+  private fun isActionAbbreviation(query: String): Boolean {
+    return AbbreviationManager.getInstance().findActions(query).isNotEmpty()
+  }
 
   private sealed class WordSpellCheckResult(val word: String) {
     class Correction(suggestion: String, val confidence: Double) : WordSpellCheckResult(suggestion)
@@ -71,4 +80,3 @@ internal class ActionsTabTypoFixSuggestionProvider(project: Project) {
     else return this
   }
 }
-

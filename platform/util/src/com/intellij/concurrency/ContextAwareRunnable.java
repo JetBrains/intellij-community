@@ -4,7 +4,7 @@ package com.intellij.concurrency;
 import org.jetbrains.annotations.ApiStatus;
 
 /**
- * Represents a runnable that handles thread contexts internally.
+ * Represents a computation that handles thread contexts internally.
  * This class can be useful in the following cases:
  * <ul>
  *   <li>
@@ -12,12 +12,13 @@ import org.jetbrains.annotations.ApiStatus;
  *     (like {@link kotlin.coroutines.Continuation}), so there is no need for capturing and installing the thread context.
  *   </li>
  *   <li>
- *     A runnable represents a stack of wrappers over some {@link ContextRunnable},
+ *     A runnable represents a stack of wrappers over some {@link com.intellij.util.concurrency.ContextRunnable},
  *     so the presence of this class can help to avoid unnecessary capturing and pointless IDE assertions.
  *   </li>
  * </ul>
  *
- * {@link ContextRunnable} is intentionally not marked as {@link ContextAwareRunnable}. We would like to keep {@link ContextRunnable} as an
+ * {@link com.intellij.util.concurrency.ContextRunnable} is intentionally not marked as {@link ContextAwareRunnable}.
+ * We would like to keep {@link com.intellij.util.concurrency.ContextRunnable} as an
  * implementation detail that should not be used by a client directly,
  * so the IDE assertions will point to double context capturing to prevent such cases.
  */

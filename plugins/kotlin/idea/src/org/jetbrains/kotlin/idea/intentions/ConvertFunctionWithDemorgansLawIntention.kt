@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils
-import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Companion.invertSelectorFunction
+import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Util.invertSelectorFunction
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -104,7 +104,7 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
             is KtBinaryExpression -> {
                 val operationToken = baseExpression.operationToken
                 if (operationToken == KtTokens.ANDAND || operationToken == KtTokens.OROR) {
-                    ConvertBinaryExpressionWithDemorgansLawIntention.convertIfPossible(baseExpression)
+                    ConvertBinaryExpressionWithDemorgansLawIntention.Holder.convertIfPossible(baseExpression)
                 } else {
                     NegatedBinaryExpressionSimplificationUtils.simplifyNegatedBinaryExpressionIfNeeded(replaced)
                 }
@@ -140,19 +140,19 @@ sealed class ConvertFunctionWithDemorgansLawIntention(
     private fun KtPsiFactory.createLabelQualifier(labelName: String): KtContainerNode {
         return (createExpression("return@$labelName 1") as KtReturnExpression).labelQualifier!!
     }
-
-    companion object {
-        private val collectionFunctions = listOf("all", "any", "none", "filter", "filterNot", "filterTo", "filterNotTo").associateWith {
-            listOf(FqName("kotlin.collections.$it"), FqName("kotlin.sequences.$it"))
-        }
-
-        private val standardFunctions = listOf("takeIf", "takeUnless").associateWith {
-            listOf(FqName("kotlin.$it"))
-        }
-
-        private val functions = collectionFunctions + standardFunctions
-    }
 }
+
+private val collectionFunctions: Map<String, List<FqName>> =
+    listOf("all", "any", "none", "filter", "filterNot", "filterTo", "filterNotTo").associateWith {
+        listOf(FqName("kotlin.collections.$it"), FqName("kotlin.sequences.$it"))
+    }
+
+private val standardFunctions: Map<String, List<FqName>> =
+    listOf("takeIf", "takeUnless").associateWith {
+        listOf(FqName("kotlin.$it"))
+    }
+
+private val functions: Map<String, List<FqName>> = collectionFunctions + standardFunctions
 
 private data class Conversion(
     val fromFunctionName: String,

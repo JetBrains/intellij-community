@@ -2,12 +2,12 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
 import com.intellij.facet.Facet
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSettingsBase
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleSettingsBase
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -29,7 +29,7 @@ interface FacetBridge<T : ModuleSettingsBase> {
    */
   fun addToStorage(mutableStorage: MutableEntityStorage, moduleEntity: ModuleEntity, entitySource: EntitySource) {
     config.init(moduleEntity, entitySource)
-    val settingsEntity = config.getEntity()
+    val settingsEntity = config.getEntity(moduleEntity)
     mutableStorage.addEntity(settingsEntity)
     mutableStorage.mutableFacetMapping().addMapping(settingsEntity, this as Facet<*>)
   }
@@ -103,5 +103,5 @@ interface FacetConfigurationBridge<T : ModuleSettingsBase> {
   /**
    * Returns the entity holding current configuration
    */
-  fun getEntity(): T
+  fun getEntity(moduleEntity: ModuleEntity): T
 }

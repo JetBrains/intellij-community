@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.lang.annotation.ProblemGroup;
@@ -30,9 +30,7 @@ public interface ProblemDescriptor extends CommonProblemDescriptor {
    * Returns the template (text or HTML) from which the editor tooltip text is built.
    * By default, {@link #getDescriptionTemplate()} result is used.
    */
-  @NlsContexts.Tooltip
-  @NotNull
-  default String getTooltipTemplate() {
+  default @NlsContexts.Tooltip @NotNull String getTooltipTemplate() {
     return getDescriptionTemplate();
   }
 

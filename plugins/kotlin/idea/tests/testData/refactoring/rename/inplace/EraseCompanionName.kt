@@ -1,3 +1,7 @@
+// NEW_NAME: ""
+// RENAME: member
+// IGNORE_K2
+
 class Foo {
     companion object <caret>Bar {
         fun bar(n: Int) {}

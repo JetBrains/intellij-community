@@ -2,7 +2,7 @@
     <id>com.jetbrains.packagesearch.intellij-plugin</id>
     <name>Package Search</name>
     <vendor>JetBrains</vendor>
-
+    <resource-bundle>messages.packageSearchBundle</resource-bundle>
     <description><![CDATA[
 Find and manage dependencies for JVM and Kotlin Multiplatform projects.
 <br>
@@ -142,7 +142,8 @@ Supports Maven and Gradle projects.
 
     <actions>
         <action id="com.jetbrains.packagesearch.intellij.plugin.actions.AddDependencyAction"
-                class="com.jetbrains.packagesearch.intellij.plugin.actions.AddDependencyAction">
+                class="com.jetbrains.packagesearch.intellij.plugin.actions.AddDependencyAction"
+                icon="com.jetbrains.packagesearch.PackageSearchIcons.Artifact">
             <add-to-group group-id="GenerateGroup" anchor="first"/>
         </action>
         <action id="com.jetbrains.packagesearch.intellij.plugin.actions.PkgsToDAAction"

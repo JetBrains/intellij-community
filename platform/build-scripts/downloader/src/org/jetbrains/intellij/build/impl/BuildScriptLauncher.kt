@@ -26,9 +26,19 @@ object BuildScriptLauncher {
     try {
       val mainClassName = System.getProperty(MAIN_CLASS_PROPERTY)
       val mainClass = BuildScriptLauncher::class.java.classLoader.loadClass(mainClassName)
-      MethodHandles.lookup()
-        .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, Array<String>::class.java))
-        .invokeExact(args)
+      val lookup = MethodHandles.lookup()
+      try {
+        lookup
+          .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, Array<String>::class.java))
+          .invokeExact(args)
+      }
+      catch (_: NoSuchMethodException) {
+        val method = lookup.findStatic(mainClass, "main", MethodType.methodType(Void.TYPE))
+        check(args.isEmpty()) {
+          "$mainClass.main method doesn't accept arguments: ${args.joinToString()}"
+        }
+        method.invokeExact()
+      }
       exitProcess(0)
     }
     catch (t: Throwable) {

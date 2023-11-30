@@ -11,7 +11,13 @@
     <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module-library">
       <library name="io.takari.maven.wrapper" type="repository">
-        <properties maven-id="io.takari:maven-wrapper:0.5.5" />
+        <properties maven-id="io.takari:maven-wrapper:0.5.5">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/takari/maven-wrapper/0.5.5/maven-wrapper-0.5.5.jar">
+              <sha256sum>164e026e01338638e3433e4f6efbda52ed9a64a94ced649c3d0bbe02a7c61282</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/io/takari/maven-wrapper/0.5.5/maven-wrapper-0.5.5.jar!/" />
         </CLASSES>
@@ -26,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>

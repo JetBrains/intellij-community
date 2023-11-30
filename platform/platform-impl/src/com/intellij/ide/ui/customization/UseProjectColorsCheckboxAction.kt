@@ -8,13 +8,15 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.CheckboxAction
+import com.intellij.openapi.project.DumbAware
 
-class UseProjectColorsCheckboxAction : CheckboxAction(IdeBundle.message("checkbox.use.solution.colours.in.toolbar")) {
+private class UseProjectColorsCheckboxAction : CheckboxAction(IdeBundle.messagePointer("checkbox.use.solution.colours.in.toolbar")),
+                                               DumbAware {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = ProjectWindowCustomizerService.getInstance().isAvailable()
-                                         && e.place == ActionPlaces.MAIN_TOOLBAR
-                                         && !UISettings.getInstance().separateMainMenu
+    e.presentation.isEnabledAndVisible = e.place == ActionPlaces.MAIN_TOOLBAR &&
+                                         !UISettings.getInstance().separateMainMenu &&
+                                         ProjectWindowCustomizerService.getInstance().isAvailable()
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
@@ -22,11 +24,10 @@ class UseProjectColorsCheckboxAction : CheckboxAction(IdeBundle.message("checkbo
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    UISettings.getInstance().differentiateProjects = state
-    UISettings.getInstance().fireUISettingsChanged()
+    val uiSettings = UISettings.getInstance()
+    uiSettings.differentiateProjects = state
+    uiSettings.fireUISettingsChanged()
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
-};
+  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+}

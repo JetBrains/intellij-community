@@ -1,6 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
-
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.schemeManager.ROOT_CONFIG
@@ -10,14 +9,15 @@ import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.StateStorageOperation
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NamedJDOMExternalizable
+import com.intellij.platform.workspace.jps.serialization.impl.ApplicationStoreJpsContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
-import com.intellij.workspaceModel.ide.impl.jps.serialization.ApplicationStoreJpsContentReader
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import kotlinx.coroutines.coroutineScope
@@ -29,7 +29,8 @@ internal class ApplicationPathMacroManager : PathMacroManager(null)
 
 @NonNls const val APP_CONFIG = "\$APP_CONFIG$"
 
-open class ApplicationStoreImpl(@Suppress("NonDefaultConstructor") private val app: Application)
+@Suppress("NonDefaultConstructor")
+open class ApplicationStoreImpl(private val app: Application)
   : ComponentStoreWithExtraComponents(), ApplicationStoreJpsContentReader {
   override val storageManager = ApplicationStorageManager(PathMacroManager.getInstance(app))
 
@@ -52,7 +53,9 @@ open class ApplicationStoreImpl(@Suppress("NonDefaultConstructor") private val a
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
     if (GlobalLibraryTableBridge.isEnabled()) {
-      (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities(AppStorageContentWriter(saveSessionManager))
+      blockingContext {
+        (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities(AppStorageContentWriter(saveSessionManager))
+      }
     }
     saveSettingsSavingComponentsAndCommitComponents(result, forceSavingAllSettings, saveSessionManager)
     // todo can we store default project in parallel to regular saving? for now only flush on disk is async, but not component committing
@@ -65,7 +68,7 @@ open class ApplicationStoreImpl(@Suppress("NonDefaultConstructor") private val a
       if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
         launch {
           // here, because no Project (and so, ProjectStoreImpl) on a Welcome Screen
-          val r = service<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)
+          val r = serviceAsync<DefaultProjectExportableAndSaveTrigger>().save(forceSavingAllSettings)
           // ignore
           r.isChanged = false
           r.appendTo(result)

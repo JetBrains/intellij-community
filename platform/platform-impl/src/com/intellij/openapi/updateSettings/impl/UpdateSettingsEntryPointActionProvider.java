@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -58,6 +58,10 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   }
 
   private static void preparePrevPlatformUpdate() {
+    if (!UpdateSettings.getInstance().isCheckNeeded()) {
+      return;
+    }
+
     PropertiesComponent properties = PropertiesComponent.getInstance();
     BuildNumber newBuildForUpdate;
     try {
@@ -137,8 +141,19 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
                                        @NotNull List<PluginDownloader> updatedPlugins,
                                        @NotNull Collection<? extends IdeaPluginDescriptor> incompatiblePlugins) {
-    setPlatformUpdateInfo(platformUpdateInfo);
-    newPlatformUpdate(updatedPlugins, incompatiblePlugins, null);
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (settings.isCheckNeeded()) {
+      setPlatformUpdateInfo(platformUpdateInfo);
+    }
+    else {
+      setPlatformUpdateInfo(null);
+    }
+    if (settings.isPluginsCheckNeeded()) {
+      newPlatformUpdate(updatedPlugins, incompatiblePlugins, null);
+    }
+    else {
+      newPlatformUpdate(null, null, (String)null);
+    }
     updateState();
   }
 
@@ -168,13 +183,22 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   public static void newPluginUpdates(@NotNull Collection<PluginDownloader> updatedPlugins,
                                       @NotNull Collection<PluginNode> customRepositoryPlugins) {
-    myUpdatedPlugins = updatedPlugins;
-    myCustomRepositoryPlugins = customRepositoryPlugins;
+    if (UpdateSettings.getInstance().isPluginsCheckNeeded()) {
+      myUpdatedPlugins = updatedPlugins;
+      myCustomRepositoryPlugins = customRepositoryPlugins;
+    }
+    else {
+      myUpdatedPlugins = null;
+    }
     updateState();
   }
 
+  public static @Nullable Collection<PluginDownloader> getPendingUpdates() {
+    return myUpdatedPlugins;
+  }
+
   private static void newUpdatedPlugins(@Nullable Collection<PluginDownloader> updatedPlugins) {
-    myUpdatedPlugins = updatedPlugins == null || updatedPlugins.isEmpty() ? null : updatedPlugins;
+    myUpdatedPlugins = ContainerUtil.isEmpty(updatedPlugins) ? null : updatedPlugins;
     updateState();
   }
 
@@ -236,8 +260,8 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
                                    pluginResults);
               }
 
-              private @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
-                                                                              @NotNull ProgressIndicator indicator) {
+              private static @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
+                                                                                     @NotNull ProgressIndicator indicator) {
                 return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(),
                                                               indicator);
               }
@@ -275,7 +299,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       actions.add(new IdeUpdateAction(myPlatformUpdateInfo.getNewBuild().getVersion()));
     }
     // todo[AL/RS] separate action for plugins compatible with both old and new builds
-    else if (myUpdatedPlugins != null) {
+    else if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
       int size = myUpdatedPlugins.size();
 
       actions.add(new UpdateAction(size == 1

@@ -15,16 +15,10 @@
  */
 package com.intellij.java.parser.annotationParsing;
 
-import com.intellij.java.parser.JavaParsingTestCase;
+import com.intellij.java.parser.JavaParsingTestConfigurator;
 
-public class AnnotationDeclarationParsingTest extends JavaParsingTestCase {
+public class AnnotationDeclarationParsingTest extends AbstractBasicAnnotationDeclarationParsingTest {
   public AnnotationDeclarationParsingTest() {
-    super("parser-full/annotationParsing/declaration");
+    super(new JavaParsingTestConfigurator());
   }
-
-  public void testSimple() { doTest(true); }
-  public void testDefault() { doTest(true); }
-  public void testNested() { doTest(true); }
-  public void testInner() { doTest(true); }
-  public void testOtherMembers() { doTest(true); }
 }

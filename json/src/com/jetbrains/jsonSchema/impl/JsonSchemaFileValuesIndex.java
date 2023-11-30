@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.JsonElementTypes;
@@ -24,43 +24,39 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.util.indexing.hints.BaseFileTypeInputFilter.FileTypeStrategy.BEFORE_SUBSTITUTION;
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
 
-public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, String> {
+public final class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, String> {
   public static final ID<String, String> INDEX_ID = ID.create("json.file.root.values");
   private static final int VERSION = 5;
   public static final String NULL = "$NULL$";
+  public static final String SCHEMA_PROPERTY_NAME = "$schema";
 
-  @NotNull
   @Override
-  public ID<String, String> getName() {
+  public @NotNull ID<String, String> getName() {
     return INDEX_ID;
   }
 
   private final DataIndexer<String, String, FileContent> myIndexer =
     new DataIndexer<>() {
       @Override
-      @NotNull
-      public Map<String, String> map(@NotNull FileContent inputData) {
+      public @NotNull Map<String, String> map(@NotNull FileContent inputData) {
         return readTopLevelProps(inputData.getFileType(), inputData.getContentAsText());
       }
     };
 
-  @NotNull
   @Override
-  public DataIndexer<String, String, FileContent> getIndexer() {
+  public @NotNull DataIndexer<String, String, FileContent> getIndexer() {
     return myIndexer;
   }
 
-  @NotNull
   @Override
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public DataExternalizer<String> getValueExternalizer() {
+  public @NotNull DataExternalizer<String> getValueExternalizer() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
@@ -69,9 +65,8 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
     return VERSION;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> fileType instanceof JsonFileType);
   }
 
@@ -80,14 +75,12 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
     return true;
   }
 
-  @Nullable
-  public static String getCachedValue(Project project, VirtualFile file, String requestedKey) {
+  public static @Nullable String getCachedValue(Project project, VirtualFile file, String requestedKey) {
     if (project.isDisposed() || !file.isValid() || DumbService.isDumb(project)) return NULL;
     return FileBasedIndex.getInstance().getFileData(INDEX_ID, file, project).get(requestedKey);
   }
 
-  @NotNull
-  static Map<String, String> readTopLevelProps(@NotNull FileType fileType, @NotNull CharSequence content) {
+  static @NotNull Map<String, String> readTopLevelProps(@NotNull FileType fileType, @NotNull CharSequence content) {
     if (!(fileType instanceof JsonFileType)) return new HashMap<>();
 
     Lexer lexer = fileType == Json5FileType.INSTANCE ? new Json5Lexer() : new JsonLexer();
@@ -116,7 +109,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
         switch (lexer.getTokenText()) {
           case "$id", "\"$id\"", "'$id'" -> idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
           case "id", "\"id\"", "'id'" -> obsoleteIdFound |= captureValueIfString(lexer, map, JsonCachedValues.OBSOLETE_ID_CACHE_KEY);
-          case "$schema", "\"$schema\"", "'$schema'" -> schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
+          case SCHEMA_PROPERTY_NAME, "\"$schema\"", "'$schema'" -> schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
         }
       }
       lexer.advance();
@@ -143,8 +136,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
     return false;
   }
 
-  @Nullable
-  private static IElementType skipWhitespacesAndGetTokenType(@NotNull Lexer lexer) {
+  private static @Nullable IElementType skipWhitespacesAndGetTokenType(@NotNull Lexer lexer) {
     while (lexer.getTokenType() == TokenType.WHITE_SPACE ||
            lexer.getTokenType() == JsonElementTypes.LINE_COMMENT ||
            lexer.getTokenType() == JsonElementTypes.BLOCK_COMMENT) {

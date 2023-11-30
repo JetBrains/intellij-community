@@ -15,7 +15,7 @@ import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
-import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
+import com.intellij.util.indexing.snapshot.EmptyValueContainer;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -220,12 +220,12 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void unused) {
+    public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable Void unused, boolean isProvidedByInfrastructureExtension) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
+    public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
       throw new UnsupportedOperationException();
     }
 
@@ -281,8 +281,13 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
+    public boolean isDirty() {
+      return false;
+    }
+
+    @Override
     public @NotNull ValueContainer<Value> getData(@NotNull Key key) {
-      return SnapshotSingleValueIndexStorage.empty();
+      return EmptyValueContainer.INSTANCE;
     }
 
     @Override

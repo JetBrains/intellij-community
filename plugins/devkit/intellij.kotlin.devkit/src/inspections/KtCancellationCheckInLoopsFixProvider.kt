@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.quickfix.CancellationCheckInLoopsFixProvider
 import org.jetbrains.kotlin.KtNodeTypes
@@ -15,9 +15,11 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddBracesIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSemicolon
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil.findChildByType
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 internal class KtCancellationCheckInLoopsFixProvider : CancellationCheckInLoopsFixProvider {
@@ -27,7 +29,6 @@ internal class KtCancellationCheckInLoopsFixProvider : CancellationCheckInLoopsF
   }
 
 }
-
 
 internal class KtInsertCancellationCheckFix(
   private val cancellationCheckCallFqn: String,
@@ -39,11 +40,11 @@ internal class KtInsertCancellationCheckFix(
   override fun getText(): String = familyName
 
   override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-    return PsiTreeUtil.getParentOfType(startElement, KtLoopExpression::class.java) != null
+    return startElement.parentOfType<KtLoopExpression>() != null
   }
 
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-    val loopStatement = PsiTreeUtil.getParentOfType(startElement, KtLoopExpression::class.java) ?: return
+    val loopStatement = startElement.parentOfType<KtLoopExpression>() ?: return
 
     val factory = KtPsiFactory(project)
     val cancellationCheckExpression = factory.createExpression("${cancellationCheckCallFqn}()")
@@ -61,7 +62,7 @@ internal class KtInsertCancellationCheckFix(
       is KtBlockExpression -> loopBody
       // single-line loops
       is KtExpression -> {
-        AddBracesIntention.addBraces(this, loopBody)
+        AddBracesIntention.Util.addBraces(this, loopBody)
         body as KtBlockExpression
       }
       // no-body loops like `for (i in 1..10);`
@@ -84,7 +85,7 @@ internal class KtInsertCancellationCheckFix(
   private fun KtBlockExpression.addExpressionToFirstLine(expression: KtExpression): KtExpression? {
     // otherwise the code might become incorrect in case of poor formatting before inserting an expression (e.g. missing new lines)
     CodeStyleManager.getInstance(project).reformat(this)
-    return addAfter(expression, lBrace).safeAs<KtExpression>()
+    return addAfter(expression, lBrace) as? KtExpression
   }
 
 }

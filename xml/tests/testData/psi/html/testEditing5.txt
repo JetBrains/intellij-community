@@ -11,7 +11,7 @@ HtmlFile:test.html
         XmlToken:XML_NAME('b')
         XmlToken:XML_TAG_END('>')
         XmlToken:XML_END_TAG_START('</')
-        PsiErrorElement:Closing tag name missing
+        PsiErrorElement:Closing tag name is missing
           <empty list>
       XmlText
         PsiWhiteSpace(' ')

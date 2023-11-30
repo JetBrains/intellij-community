@@ -27,7 +27,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(OpenFileWithTerminateCommand.PREFIX, OpenFileWithTerminateCommand::new),
       Map.entry(WaitForSmartCommand.PREFIX, WaitForSmartCommand::new),
       Map.entry(WaitVcsLogIndexingCommand.PREFIX, WaitVcsLogIndexingCommand::new),
-      Map.entry(WaitForAsyncRefreshCommand.PREFIX, WaitForAsyncRefreshCommand::new),
+      Map.entry(WaitForInitialRefreshCommand.PREFIX, WaitForInitialRefreshCommand::new),
       Map.entry(SingleInspectionCommand.PREFIX, SingleInspectionCommand::new),
       Map.entry(StartPowerSave.PREFIX, StartPowerSave::new),
       Map.entry(StopPowerSave.PREFIX, StopPowerSave::new),
@@ -61,7 +61,6 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ReloadFilesCommand.PREFIX, ReloadFilesCommand::new),
       Map.entry(AddFileCommand.PREFIX, AddFileCommand::new),
       Map.entry(DeleteFileCommand.PREFIX, DeleteFileCommand::new),
-      Map.entry(TestTipsAndFeaturesIntegrationCommand.PREFIX, TestTipsAndFeaturesIntegrationCommand::new),
       Map.entry(ExpandMainMenuCommand.PREFIX, ExpandMainMenuCommand::new),
       Map.entry(ExpandEditorMenuCommand.PREFIX, ExpandEditorMenuCommand::new),
       Map.entry(OpenRandomFileCommand.PREFIX, OpenRandomFileCommand::new),
@@ -77,6 +76,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(CollectAllFilesCommand.PREFIX, CollectAllFilesCommand::new),
       Map.entry(ExecuteEditorActionCommand.PREFIX, ExecuteEditorActionCommand::new),
       Map.entry(AssertCompletionCommand.PREFIX, AssertCompletionCommand::new),
+      Map.entry(ChooseCompletionCommand.PREFIX, ChooseCompletionCommand::new),
       Map.entry(AssertFindUsagesCommand.PREFIX, AssertFindUsagesCommand::new),
       Map.entry(SetBreakpointCommand.PREFIX, SetBreakpointCommand::new),
       Map.entry(DebugRunConfigurationCommand.PREFIX, DebugRunConfigurationCommand::new),
@@ -85,7 +85,21 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(WaitJpsBuildCommand.PREFIX, WaitJpsBuildCommand::new),
       Map.entry(WaitForFinishedCodeAnalysis.PREFIX, WaitForFinishedCodeAnalysis::new),
       Map.entry(ConditionalMemoryDumpCommand.PREFIX, ConditionalMemoryDumpCommand::new),
-      Map.entry(AcceptDecompileNotice.PREFIX, AcceptDecompileNotice::new)
+      Map.entry(AcceptDecompileNotice.PREFIX, AcceptDecompileNotice::new),
+      Map.entry(InstallCustomJBR.PREFIX, InstallCustomJBR::new),
+      Map.entry(ShowRecentFilesCommand.PREFIX, ShowRecentFilesCommand::new),
+      Map.entry(ShowEvaluateExpressionCommand.PREFIX, ShowEvaluateExpressionCommand::new),
+      Map.entry(EvaluateExpressionCompletionCommand.PREFIX, EvaluateExpressionCompletionCommand::new),
+      Map.entry(CollectFilesNotMarkedAsIndex.PREFIX, CollectFilesNotMarkedAsIndex::new),
+      Map.entry(RemoveBreakpointCommand.PREFIX, RemoveBreakpointCommand::new),
+      Map.entry(DropErrorCommand.PREFIX, DropErrorCommand::new),
+      Map.entry(SaveDocumentsAndSettingsCommand.PREFIX, SaveDocumentsAndSettingsCommand::new),
+      Map.entry(FreezeUICommand.PREFIX, FreezeUICommand::new),
+      Map.entry(MoveCaretCommand.PREFIX, MoveCaretCommand::new),
+      Map.entry(TakeThreadDumpCommand.PREFIX, TakeThreadDumpCommand::new),
+      Map.entry(CaptureMemoryMetricsCommand.PREFIX, CaptureMemoryMetricsCommand::new),
+      Map.entry(SleepCommand.PREFIX, SleepCommand::new),
+      Map.entry(AssertEncodingFileCommand.PREFIX, AssertEncodingFileCommand::new)
     );
   }
 }

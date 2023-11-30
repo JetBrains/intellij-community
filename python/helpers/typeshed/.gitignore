@@ -60,9 +60,14 @@ analyze.py
 # Editor backup files
 *~
 .*.sw?
-.vscode/
+.vscode/*
+!.vscode/settings.default.json
+!.vscode/extensions.json
 .idea/
 .venv*/
 
 # Mypy cache
 .mypy_cache/
+
+# pyenv local python version
+.python-version

@@ -31,6 +31,8 @@ import java.util.List;
  * @see RunConfigurationBase
  * @see RefactoringListenerProvider
  * @see RunConfigurationExtensionBase
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configurations.html">Execution / Run Configurations (IntelliJ Platform Docs)</a>
  */
 public interface RunConfiguration extends RunProfile, Cloneable {
   DataKey<RunConfiguration> DATA_KEY = DataKey.create("runtimeConfiguration");
@@ -139,9 +141,10 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    * Checks whether the run configuration settings are valid.
    * Note that this check may be invoked on every change (i.e., after each character is typed in an input field).
    *
-   * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal problem which the user should be warned about
+   * @throws RuntimeConfigurationWarning   if the configuration settings contain a problem which the user should be warned about.
+   * @throws RuntimeConfigurationException if the configuration settings contain a non-fatal error which the user should be warned about
    *                                       but the execution should still be allowed.
-   * @throws RuntimeConfigurationError     if the configuration settings contain a fatal problem which makes it impossible
+   * @throws RuntimeConfigurationError     if the configuration settings contain a fatal error which makes it impossible
    *                                       to execute the run configuration.
    */
   default void checkConfiguration() throws RuntimeConfigurationException {

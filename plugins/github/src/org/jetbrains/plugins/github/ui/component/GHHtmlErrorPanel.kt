@@ -93,7 +93,7 @@ object GHHtmlErrorPanel {
   }
 
   @Nls
-  private fun getLoadingErrorText(error: Throwable): String {
+  fun getLoadingErrorText(error: Throwable): String {
     if (error is GithubStatusCodeException && error.error != null && error.error!!.message != null) {
       val githubError = error.error!!
       val message = githubError.message!!.removePrefix("[").removeSuffix("]")

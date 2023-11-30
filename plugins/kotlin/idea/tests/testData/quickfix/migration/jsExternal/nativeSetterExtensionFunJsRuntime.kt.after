@@ -7,3 +7,4 @@ external class B
 inline fun B.boo(i: Int, v: B) {
     asDynamic()[i] = v
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.migration.MigrateExternalExtensionFix

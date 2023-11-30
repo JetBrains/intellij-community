@@ -19,7 +19,7 @@ sealed class NavigationActionResult {
    *
    * Might be obtained from direct navigation, in this case requiring [TargetPresentation] doesn't make sense.
    */
-  class SingleTarget internal constructor(val request: NavigationRequest, val navigationProvider: Any?) : NavigationActionResult()
+  class SingleTarget internal constructor(val requestor: NavigationRequestor, val navigationProvider: Any?) : NavigationActionResult()
 
   class MultipleTargets internal constructor(val targets: List<LazyTargetWithPresentation>) : NavigationActionResult() {
     init {

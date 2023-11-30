@@ -51,6 +51,9 @@ public class FindInPathAction extends AnAction implements DumbAware {
       return true;
     }
     final VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
-    return virtualFiles != null && virtualFiles.length == 1 && virtualFiles[0].isDirectory();
+    if (virtualFiles == null) {
+      return false;
+    }
+    return virtualFiles.length > 1 || virtualFiles.length == 1 && virtualFiles[0].isDirectory();
   }
 }

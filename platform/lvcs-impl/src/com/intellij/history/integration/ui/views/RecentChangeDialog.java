@@ -10,12 +10,13 @@ import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel;
 import com.intellij.history.integration.ui.models.RecentChangeDialogModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
-public class RecentChangeDialog extends DirectoryHistoryDialog {
+public final class RecentChangeDialog extends DirectoryHistoryDialog {
   private final RecentChange myChange;
 
   public RecentChangeDialog(Project p, IdeaGateway gw, RecentChange c) {
@@ -30,7 +31,7 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
   }
 
   @Override
-  protected JComponent createComponent() {
+  protected @NotNull JComponent createComponent() {
     JPanel result = new JPanel(new BorderLayout());
     result.add(super.createComponent(), BorderLayout.CENTER);
     result.add(createButtonsPanel(), BorderLayout.SOUTH);
@@ -47,7 +48,7 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
     return false;
   }
 
-  private JPanel createButtonsPanel() {
+  private @NotNull JPanel createButtonsPanel() {
     AbstractAction revert = new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -65,7 +66,7 @@ public class RecentChangeDialog extends DirectoryHistoryDialog {
   }
 
   @Override
-  protected String getHelpId() {
+  protected @NotNull String getHelpId() {
     return "reference.dialogs.recentChanges";
   }
 }

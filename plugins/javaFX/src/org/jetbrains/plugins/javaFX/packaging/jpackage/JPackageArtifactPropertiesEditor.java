@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging.jpackage;
 
 import com.intellij.execution.ExecutionBundle;
@@ -26,7 +26,7 @@ import java.awt.*;
 /**
  * @author Bas Leijdekkers
  */
-public class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
+public final class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
 
   private final JPackageArtifactProperties myProperties;
   private final Project myProject;
@@ -43,9 +43,8 @@ public class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProject = project;
   }
 
-  @Nls
   @Override
-  public String getTabName() {
+  public @Nls String getTabName() {
     return JavaFXBundle.message("packaging.artifact.tab.name");
   }
 

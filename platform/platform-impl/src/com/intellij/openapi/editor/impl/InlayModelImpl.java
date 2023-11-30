@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -17,13 +17,18 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
 
 public final class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
@@ -130,20 +135,18 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     myAfterLineEndElementsTree.dispose(myEditor.getDocument());
   }
 
-  @Nullable
   @Override
-  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
-                                                                           boolean relatesToPrecedingText,
-                                                                           @NotNull T renderer) {
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                     boolean relatesToPrecedingText,
+                                                                                     @NotNull T renderer) {
     return addInlineElement(offset, relatesToPrecedingText, 0, renderer);
   }
 
-  @Nullable
   @Override
-  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
-                                                                           boolean relatesToPrecedingText,
-                                                                           int priority,
-                                                                           @NotNull T renderer) {
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                     boolean relatesToPrecedingText,
+                                                                                     int priority,
+                                                                                     @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     Document document = myEditor.getDocument();
     if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
@@ -153,11 +156,10 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return inlay;
   }
 
-  @Nullable
   @Override
-  public <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
-                                                                           @NotNull InlayProperties properties,
-                                                                           @NotNull T renderer) {
+  public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                     @NotNull InlayProperties properties,
+                                                                                     @NotNull T renderer) {
     return addInlineElement(offset, properties.isRelatedToPrecedingText(), properties.getPriority(), renderer);
   }
 
@@ -225,18 +227,16 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return inlay;
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
+  public @NotNull List<Inlay<?>> getInlineElementsInRange(int startOffset, int endOffset) {
     List<InlineInlayImpl<?>> range = getElementsInRange(myInlineElementsTree, startOffset, endOffset, Predicates.alwaysTrue(),
                                                         INLINE_ELEMENTS_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
 
-  @NotNull
   @Override
-  public <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
+  public @NotNull <T> List<Inlay<? extends T>> getInlineElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     List<InlineInlayImpl<?>> range =
       getElementsInRange(myInlineElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
                          INLINE_ELEMENTS_COMPARATOR);
@@ -244,18 +244,16 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return (List)range;
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
+  public @NotNull List<Inlay<?>> getBlockElementsInRange(int startOffset, int endOffset) {
     List<BlockInlayImpl<?>> range =
       getElementsInRange(myBlockElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
     //noinspection unchecked
     return (List)range;
   }
 
-  @NotNull
   @Override
-  public <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
+  public @NotNull <T> List<Inlay<? extends T>> getBlockElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     List<BlockInlayImpl<?>> range = getElementsInRange(myBlockElementsTree, startOffset, endOffset,
                                                        inlay -> type.isInstance(inlay.myRenderer), BLOCK_ELEMENTS_PRIORITY_COMPARATOR);
     //noinspection unchecked
@@ -276,9 +274,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return result;
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getBlockElementsForVisualLine(int visualLine, boolean above) {
+  public @NotNull List<Inlay<?>> getBlockElementsForVisualLine(int visualLine, boolean above) {
     int visibleLineCount = myEditor.getVisibleLineCount();
     if (visualLine < 0 || visualLine >= visibleLineCount || myBlockElementsTree.size() == 0) return Collections.emptyList();
     List<BlockInlayImpl> result = new ArrayList<>();
@@ -351,9 +348,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
            visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
   }
 
-  @Nullable
   @Override
-  public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
+  public @Nullable Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
     int offset = myEditor.visualPositionToOffset(visualPosition);
     List<Inlay<?>> inlays = getInlineElementsInRange(offset, offset);
     if (inlays.isEmpty()) return null;
@@ -363,9 +359,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return inlayIndex >= 0 && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
   }
 
-  @Nullable
   @Override
-  public Inlay getElementAt(@NotNull Point point) {
+  public @Nullable Inlay getElementAt(@NotNull Point point) {
     return getElementAt(new EditorLocation(myEditor, point), false);
   }
 
@@ -457,9 +452,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return null;
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
+  public @NotNull List<Inlay<?>> getAfterLineEndElementsInRange(int startOffset, int endOffset) {
     if (!hasAfterLineEndElements()) return Collections.emptyList();
     List<AfterLineEndInlayImpl<?>> range =
       getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, Predicates.alwaysTrue(), AFTER_LINE_END_ELEMENTS_OFFSET_COMPARATOR);
@@ -467,9 +461,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return (List)range;
   }
 
-  @NotNull
   @Override
-  public <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
+  public @NotNull <T> List<Inlay<? extends T>> getAfterLineEndElementsInRange(int startOffset, int endOffset, @NotNull Class<T> type) {
     if (!hasAfterLineEndElements()) return Collections.emptyList();
     List<AfterLineEndInlayImpl> range =
       getElementsInRange(myAfterLineEndElementsTree, startOffset, endOffset, inlay -> type.isInstance(inlay.myRenderer),
@@ -478,9 +471,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return (List)range;
   }
 
-  @NotNull
   @Override
-  public List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine) {
+  public @NotNull List<Inlay<?>> getAfterLineEndElementsForLogicalLine(int logicalLine) {
     DocumentEx document = myEditor.getDocument();
     if (!hasAfterLineEndElements() || logicalLine < 0 || logicalLine > 0 && logicalLine >= document.getLineCount()) {
       return Collections.emptyList();
@@ -567,9 +559,8 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     }
   }
 
-  @NotNull
   @Override
-  public String dumpState() {
+  public @NotNull String dumpState() {
     return "Inline elements: " + dumpInlays(myInlineElementsTree)
            + ", after-line-end elements: " + dumpInlays(myAfterLineEndElementsTree)
            + ", block elements: " + dumpInlays(myBlockElementsTree);
@@ -589,15 +580,14 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
     return inlay instanceof BlockInlayImpl && ((BlockInlayImpl<?>)inlay).myShowWhenFolded;
   }
 
-  private class InlineElementsTree extends HardReferencingRangeMarkerTree<InlineInlayImpl<?>> {
+  private final class InlineElementsTree extends HardReferencingRangeMarkerTree<InlineInlayImpl<?>> {
     InlineElementsTree(@NotNull Document document) {
       super(document);
     }
 
-    @NotNull
     @Override
-    protected RMNode<InlineInlayImpl<?>> createNewNode(@NotNull InlineInlayImpl key, int start, int end,
-                                                  boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+    protected @NotNull RMNode<InlineInlayImpl<?>> createNewNode(@NotNull InlineInlayImpl key, int start, int end,
+                                                                boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
       return new RMNode<InlineInlayImpl<?>>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight) {
         @Override
         void addIntervalsFrom(@NotNull IntervalNode<InlineInlayImpl<?>> otherNode) {
@@ -614,7 +604,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
 
     @Override
     void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
-      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         if (myMoveInProgress) {
           // delay notification about invalidated inlay - folding model is not consistent at this point
           // (FoldingModelImpl.moveTextHappened hasn't been called yet at this point)
@@ -634,20 +624,20 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
 
     @Override
     void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
-      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
     }
   }
 
-  private class AfterLineEndElementTree extends HardReferencingRangeMarkerTree<AfterLineEndInlayImpl<?>> {
+  private final class AfterLineEndElementTree extends HardReferencingRangeMarkerTree<AfterLineEndInlayImpl<?>> {
     AfterLineEndElementTree(@NotNull Document document) {
       super(document);
     }
 
     @Override
     void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
-      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
     }

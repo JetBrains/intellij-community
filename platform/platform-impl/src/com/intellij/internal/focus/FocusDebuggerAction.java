@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.focus;
 
 import com.intellij.internal.InternalActionsBundle;
@@ -33,7 +33,7 @@ final class FocusDebuggerAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     perform();
   }
 
@@ -56,14 +56,14 @@ final class FocusDebuggerAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     presentation.setText(myFocusDrawer != null ?
                          InternalActionsBundle.messagePointer("action.presentation.FocusDebuggerAction.text.stop.focus.debugger") :
                          InternalActionsBundle.messagePointer("action.presentation.FocusDebuggerAction.text.start.focus.debugger"));
   }
 
-  private static class FocusDrawer extends Thread implements AWTEventListener, ApplicationActivationListener {
+  private static final class FocusDrawer extends Thread implements AWTEventListener, ApplicationActivationListener {
     private Component myCurrent;
     private Component myPrevious;
     private boolean myTemporary;

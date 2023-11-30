@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -27,8 +27,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return Language.ANY;
   }
 
@@ -38,32 +37,27 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  public PsiElement getFirstChild() {
+  public @Nullable PsiElement getFirstChild() {
     return null;
   }
 
   @Override
-  @Nullable
-  public PsiElement getLastChild() {
+  public @Nullable PsiElement getLastChild() {
     return null;
   }
 
   @Override
-  @Nullable
-  public PsiElement getNextSibling() {
+  public @Nullable PsiElement getNextSibling() {
     return null;
   }
 
   @Override
-  @Nullable
-  public PsiElement getPrevSibling() {
+  public @Nullable PsiElement getPrevSibling() {
     return null;
   }
 
   @Override
-  @Nullable
-  public TextRange getTextRange() {
+  public @Nullable TextRange getTextRange() {
     return null;
   }
 
@@ -78,8 +72,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  public PsiElement findElementAt(int offset) {
+  public @Nullable PsiElement findElementAt(int offset) {
     return null;
   }
 
@@ -89,9 +82,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getText() {
+  public @Nullable @NonNls String getText() {
     return null;
   }
 
@@ -106,8 +97,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  public ASTNode getNode() {
+  public @Nullable ASTNode getNode() {
     return null;
   }
 
@@ -127,8 +117,7 @@ public abstract class FakePsiElement extends PsiElementBase implements PsiNamedE
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(boolean open) {
+  public @Nullable Icon getIcon(boolean open) {
     return null;
   }
 

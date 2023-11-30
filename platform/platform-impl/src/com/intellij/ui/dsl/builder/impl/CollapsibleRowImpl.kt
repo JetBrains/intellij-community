@@ -31,9 +31,9 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
   private val collapsibleTitledSeparator = CollapsibleTitledSeparatorImpl(title)
   private var registeredKeyStroke: KeyStroke? = null
 
-  override var expanded by collapsibleTitledSeparator::expanded
+  override var expanded: Boolean by collapsibleTitledSeparator::expanded
 
-  override var packWindowHeight = false
+  override var packWindowHeight: Boolean = false
 
   override fun setTitle(title: String) {
     collapsibleTitledSeparator.text = title

@@ -12,7 +12,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
 
-class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
+internal class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
 
   override fun buildInternalVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     val checkProvider = CancellationCheckProviders.forLanguage(holder.file.language) ?: return PsiElementVisitor.EMPTY_VISITOR
@@ -61,7 +61,9 @@ class CancellationCheckInLoopsInspection : DevKitUastInspectionBase() {
     if (firstExpressionInLoop is ULoopExpression) return
 
     val cancellationCheckFqn = checkProvider.findCancellationCheckCall(sourcePsi)
-    if (checkProvider.isCancellationCheckCall(firstExpressionInLoop?.sourcePsi, cancellationCheckFqn)) return
+    val firstExpressionInLoopSourcePsi = firstExpressionInLoop?.sourcePsi
+    if (firstExpressionInLoopSourcePsi != null && checkProvider.isCancellationCheckCall(firstExpressionInLoopSourcePsi,
+                                                                                        cancellationCheckFqn)) return
 
     val anchor = sourcePsi.firstChild
     val fixProvider = CancellationCheckInLoopsFixProviders.forLanguage(holder.file.language) ?: return

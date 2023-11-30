@@ -27,8 +27,7 @@ public abstract class ModCommandQuickFix implements LocalQuickFix {
    * @param descriptor problem reported by the tool which provided this quick fix action
    * @return a command to be applied to finally execute the fix.
    */
-  @NotNull
-  public abstract ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
+  public abstract @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
   
   @Override
   public final boolean startInWriteAction() {
@@ -48,13 +47,12 @@ public abstract class ModCommandQuickFix implements LocalQuickFix {
   @Override
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     ModCommand command = perform(project, descriptor);
-    command.execute(project);
+    ModCommandExecutor.getInstance().executeInteractively(ActionContext.from(descriptor), command, null);
   }
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    PsiFile file = previewDescriptor.getPsiElement().getContainingFile();
     ModCommand modCommand = perform(project, previewDescriptor);
-    return IntentionPreviewUtils.getModCommandPreview(modCommand, file);
+    return IntentionPreviewUtils.getModCommandPreview(modCommand, ActionContext.from(previewDescriptor));
   }
 }

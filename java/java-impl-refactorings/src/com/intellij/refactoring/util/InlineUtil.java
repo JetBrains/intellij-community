@@ -342,25 +342,36 @@ public final class InlineUtil implements CommonJavaInlineUtil {
                                                            @NotNull PsiExpression initializer,
                                                            @NotNull PsiVariable variable) {
 
-    Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
-    if (referencedVars.isEmpty()) return;
-
-    PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(initializer, null);
-    if (scope == null) return;
-
-    ControlFlow flow = createControlFlow(scope);
-    if (flow == null) return;
-
-    int start = flow.getEndOffset(initializer);
-    if (start < 0) return;
-
-    Map<PsiElement, PsiVariable> writePlaces = ControlFlowUtil.getWritesBeforeReads(flow, referencedVars, Collections.singleton(variable), start);
+    Map<PsiElement, PsiVariable> writePlaces = getChangedBeforeLastAccessMap(initializer, variable);
 
     String readVarName = variable.getName();
     for (Map.Entry<PsiElement, PsiVariable> writePlaceEntry : writePlaces.entrySet()) {
       String message = JavaRefactoringBundle.message("variable.0.is.changed.before.last.access", writePlaceEntry.getValue().getName(), readVarName);
       conflicts.putValue(writePlaceEntry.getKey(), message);
     }
+  }
+
+  /**
+   * @param initializer variable initializer
+   * @param variable variable initialized
+   * @return map of places where locals referenced in the initializer are changed before the last use of variable
+   */
+  @NotNull
+  public static Map<PsiElement, PsiVariable> getChangedBeforeLastAccessMap(@NotNull PsiExpression initializer,
+                                                                           @NotNull PsiVariable variable) {
+    Set<PsiVariable> referencedVars = VariableAccessUtils.collectUsedVariables(initializer);
+    if (referencedVars.isEmpty()) return Map.of();
+
+    PsiElement scope = PsiUtil.getTopLevelEnclosingCodeBlock(initializer, null);
+    if (scope == null) return Map.of();
+
+    ControlFlow flow = createControlFlow(scope);
+    if (flow == null) return Map.of();
+
+    int start = flow.getEndOffset(initializer);
+    if (start < 0) return Map.of();
+
+    return ControlFlowUtil.getWritesBeforeReads(flow, referencedVars, Collections.singleton(variable), start);
   }
 
   @Nullable
@@ -452,10 +463,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     if (expr instanceof PsiLiteralExpression && PsiTypes.booleanType().equals(expr.getType())) {
       Boolean value = tryCast(((PsiLiteralExpression)expr).getValue(), Boolean.class);
       if (value != null) {
-        SimplifyBooleanExpressionFix fix = new SimplifyBooleanExpressionFix(expr, value);
-        if (fix.isAvailable()) {
-          fix.invoke(project, expr.getContainingFile(), expr, expr);
-        }
+        SimplifyBooleanExpressionFix.trySimplify(expr, value);
       }
     }
     return initializer;

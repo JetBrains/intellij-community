@@ -30,7 +30,8 @@ public class InvertedNameIndexBenchmark {
     @Param({"1000", "2000", "4000", "8000", "16000"})
     public int SAME_NAME_FILES_COUNT;
 
-    public static final int nameId = 42;
+    @SuppressWarnings("FieldMayBeStatic")
+    public final int nameId = 42;
     public int[] fileIds;
 
     public final InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
@@ -51,7 +52,7 @@ public class InvertedNameIndexBenchmark {
   @Benchmark
   public void removeManyFilesWithSameName(final Context context) {
     final int[] fileIdsToRemove = context.fileIds;
-    final int nameId = Context.nameId;
+    final int nameId = context.nameId;
     final InvertedNameIndex invertedNameIndex = context.invertedNameIndex;
     for (int fileId : fileIdsToRemove) {
       invertedNameIndex.updateFileName(fileId, InvertedNameIndex.NULL_NAME_ID, nameId);

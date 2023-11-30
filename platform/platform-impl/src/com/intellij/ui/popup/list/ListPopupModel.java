@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -13,9 +13,12 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-public class ListPopupModel<T> extends AbstractListModel<T> {
+public final class ListPopupModel<T> extends AbstractListModel<T> {
 
   private final List<T> myOriginalList;
   private final List<T> myFilteredList = new ArrayList<>();
@@ -61,8 +64,7 @@ public class ListPopupModel<T> extends AbstractListModel<T> {
     }
   }
 
-  @Nullable
-  public T get(int i) {
+  public @Nullable T get(int i) {
     if (i >= 0 && i < myFilteredList.size()) {
       return myFilteredList.get(i);
     }

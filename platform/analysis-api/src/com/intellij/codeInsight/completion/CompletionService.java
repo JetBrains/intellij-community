@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
@@ -45,7 +45,7 @@ public abstract class CompletionService {
    * will be run starting from the next one after that.
    */
   public void getVariantsFromContributors(final CompletionParameters parameters,
-                                          @Nullable final CompletionContributor from,
+                                          final @Nullable CompletionContributor from,
                                           final Consumer<? super CompletionResult> consumer) {
     getVariantsFromContributors(parameters, from, createMatcher(suggestPrefix(parameters), false), consumer);
   }
@@ -86,12 +86,10 @@ public abstract class CompletionService {
 
   protected abstract String suggestPrefix(CompletionParameters parameters);
 
-  @NotNull
-  protected abstract PrefixMatcher createMatcher(String prefix, boolean typoTolerant);
+  protected abstract @NotNull PrefixMatcher createMatcher(String prefix, boolean typoTolerant);
 
 
-  @Nullable
-  public abstract CompletionProcess getCurrentCompletion();
+  public abstract @Nullable CompletionProcess getCurrentCompletion();
 
   /**
    * The main method that is invoked to collect all the completion variants

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
@@ -57,7 +58,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   private final String myName;
   private boolean myIsSuite;
   private final String myLocationUrl;
-  private final String myMetainfo;
+  private volatile String myMetainfo;
   private final boolean myPreservePresentableName;
 
   private List<SMTestProxy> myChildren;
@@ -278,11 +279,17 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   @Override
+  public @Nullable NavigationRequest navigationRequest() {
+    Navigatable navigatable = getNavigatable();
+    return navigatable == null ? null : navigatable.navigationRequest();
+  }
+
+  @Override
   public void navigate(boolean requestFocus) {
     ReadAction.nonBlocking(() -> getNavigatable())
       .expireWith(this)
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.NON_MODAL, navigatable -> {
+      .finishOnUiThread(ModalityState.nonModal(), navigatable -> {
       if (navigatable != null) {
         navigatable.navigate(requestFocus);
       }
@@ -492,6 +499,16 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     // It should be the sum of children. This requirement is only
     // for safety of current model and may be changed
     LOG.warn("Unsupported operation");
+  }
+
+  /**
+   * The meta-information can be expanded after the test result tree is created when the tests are executed explicitly
+   * (information about the exact location of the test, the random generation seed, etc.).
+   *
+   * @param metainfo new metadata value resulting from the actual test execution.
+   */
+  public void setMetainfo(final @Nullable String metainfo) {
+    myMetainfo = metainfo;
   }
 
   public void setFinished() {

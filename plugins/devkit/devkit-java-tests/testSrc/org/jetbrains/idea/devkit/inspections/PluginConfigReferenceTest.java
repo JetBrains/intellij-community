@@ -12,6 +12,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.TestDataPath;
@@ -57,6 +58,8 @@ public class PluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase {
   }
 
   public void testRegistryKeyIdCompletion() {
+    //currently, there are over 1000 keys in registry
+    Registry.get("ide.completion.variant.limit").setValue(10_000, getTestRootDisposable());
     final List<String> variants = myFixture.getCompletionVariants("RegistryKeyIdCompletion.java",
                                                                   "registryKeyId.xml");
     assertContainsElements(variants,

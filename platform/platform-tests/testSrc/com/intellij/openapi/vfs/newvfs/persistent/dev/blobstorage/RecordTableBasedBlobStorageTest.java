@@ -9,7 +9,7 @@ import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage.NULL_ID;
+import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 
 /**

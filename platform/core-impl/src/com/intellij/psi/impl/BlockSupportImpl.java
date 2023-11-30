@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -54,13 +54,12 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   @Override
-  @NotNull
-  public DiffLog reparseRange(@NotNull PsiFile file,
-                              @NotNull FileASTNode oldFileNode,
-                              @NotNull TextRange changedPsiRange,
-                              @NotNull CharSequence newFileText,
-                              @NotNull ProgressIndicator indicator,
-                              @NotNull CharSequence lastCommittedText) {
+  public @NotNull DiffLog reparseRange(@NotNull PsiFile file,
+                                       @NotNull FileASTNode oldFileNode,
+                                       @NotNull TextRange changedPsiRange,
+                                       @NotNull CharSequence newFileText,
+                                       @NotNull ProgressIndicator indicator,
+                                       @NotNull CharSequence lastCommittedText) {
     return reparse(file, oldFileNode, changedPsiRange, newFileText, indicator, lastCommittedText).log;
   }
 
@@ -78,8 +77,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
   // return diff log, old node to replace, new node (in dummy file)
   // MUST call .close() on the returned result
-  @NotNull
-  static ReparseResult reparse(@NotNull PsiFile file,
+  static @NotNull ReparseResult reparse(@NotNull PsiFile file,
                                @NotNull FileASTNode oldFileNode,
                                @NotNull TextRange changedPsiRange,
                                @NotNull CharSequence newFileText,
@@ -103,8 +101,7 @@ public class BlockSupportImpl extends BlockSupport {
    * @return Pair (target reparseable node, new replacement node)
    *         or {@code null} if can't parse incrementally.
    */
-  @Nullable
-  public static Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
+  public static @Nullable Couple<ASTNode> findReparseableRoots(@NotNull PsiFileImpl file,
                                                      @NotNull FileASTNode oldFileNode,
                                                      @NotNull TextRange changedPsiRange,
                                                      @NotNull CharSequence newFileText) {
@@ -201,9 +198,8 @@ public class BlockSupportImpl extends BlockSupport {
     return null;
   }
 
-  @Nullable
-  protected static ASTNode tryReparseNode(@NotNull IReparseableElementTypeBase reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr,
-                                          @NotNull PsiManager manager, @NotNull Language baseLanguage, @NotNull CharTable charTable) {
+  protected static @Nullable ASTNode tryReparseNode(@NotNull IReparseableElementTypeBase reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr,
+                                                    @NotNull PsiManager manager, @NotNull Language baseLanguage, @NotNull CharTable charTable) {
     if (!reparseable.isReparseable(node, newTextStr, baseLanguage, manager.getProject())) {
       return null;
     }
@@ -228,9 +224,8 @@ public class BlockSupportImpl extends BlockSupport {
     return chameleon;
   }
 
-  @Nullable
   @SuppressWarnings("unchecked")
-  protected static ASTNode tryReparseLeaf(@NotNull IReparseableLeafElementType reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr) {
+  protected static @Nullable ASTNode tryReparseLeaf(@NotNull IReparseableLeafElementType reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr) {
     return reparseable.reparseLeaf(node, newTextStr);
   }
 
@@ -254,8 +249,7 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   // returns diff log, new file element
-  @NotNull
-  static ReparseResult makeFullParse(@NotNull PsiFileImpl fileImpl,
+  static @NotNull ReparseResult makeFullParse(@NotNull PsiFileImpl fileImpl,
                                      @NotNull FileASTNode oldFileNode,
                                      @NotNull CharSequence newFileText,
                                      @NotNull ProgressIndicator indicator,
@@ -299,8 +293,7 @@ public class BlockSupportImpl extends BlockSupport {
     return new ReparseResult(diffLog, oldFileNode, newFileElement);
   }
 
-  @NotNull
-  public static PsiFileImpl getFileCopy(@NotNull PsiFileImpl originalFile, @NotNull FileViewProvider providerCopy) {
+  public static @NotNull PsiFileImpl getFileCopy(@NotNull PsiFileImpl originalFile, @NotNull FileViewProvider providerCopy) {
     FileViewProvider viewProvider = originalFile.getViewProvider();
     Language language = originalFile.getLanguage();
 
@@ -334,8 +327,7 @@ public class BlockSupportImpl extends BlockSupport {
            (providerCopy.getVirtualFile() instanceof LightVirtualFile ? ((LightVirtualFile)providerCopy.getVirtualFile()).getOriginalFile() : null);
   }
 
-  @NotNull
-  private static DiffLog replaceElementWithEvents(@NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {
+  private static @NotNull DiffLog replaceElementWithEvents(@NotNull ASTNode oldRoot, @NotNull ASTNode newRoot) {
     DiffLog diffLog = new DiffLog();
     if (oldRoot instanceof CompositeElement) {
       diffLog.appendReplaceElementWithEvents((CompositeElement)oldRoot, (CompositeElement)newRoot);
@@ -346,12 +338,11 @@ public class BlockSupportImpl extends BlockSupport {
     return diffLog;
   }
 
-  @NotNull
-  public static DiffLog mergeTrees(@NotNull PsiFileImpl fileImpl,
-                                   @NotNull ASTNode oldRoot,
-                                   @NotNull ASTNode newRoot,
-                                   @NotNull ProgressIndicator indicator,
-                                   @NotNull CharSequence lastCommittedText) {
+  public static @NotNull DiffLog mergeTrees(@NotNull PsiFileImpl fileImpl,
+                                            @NotNull ASTNode oldRoot,
+                                            @NotNull ASTNode newRoot,
+                                            @NotNull ProgressIndicator indicator,
+                                            @NotNull CharSequence lastCommittedText) {
     PsiUtilCore.ensureValid(fileImpl);
     if (newRoot instanceof FileElement) {
       FileElement fileImplElement = fileImpl.getTreeElement();

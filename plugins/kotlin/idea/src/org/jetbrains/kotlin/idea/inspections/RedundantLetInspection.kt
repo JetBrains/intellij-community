@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ValueParameterDescriptorImpl
 import org.jetbrains.kotlin.idea.base.psi.isMultiLine
@@ -227,7 +228,7 @@ private fun KtDotQualifiedExpression.hasLambdaExpression() = selectorExpression?
 private fun KtLambdaExpression.getParameterName(): String? {
     val parameters = valueParameters
     if (parameters.size > 1) return null
-    return if (parameters.size == 1) parameters[0].text else "it"
+    return if (parameters.size == 1) parameters[0].text else StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier
 }
 
 private fun KtExpression.nameUsed(name: String, except: KtNameReferenceExpression? = null): Boolean =

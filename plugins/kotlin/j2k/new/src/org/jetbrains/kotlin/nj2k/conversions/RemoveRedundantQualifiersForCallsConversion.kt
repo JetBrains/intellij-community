@@ -14,9 +14,13 @@ class RemoveRedundantQualifiersForCallsConversion(context: NewJ2kConverterContex
         if (element !is JKQualifiedExpression) return recurse(element)
         val needRemoveQualifier = when (val receiver = element.receiver.receiverExpression()) {
             is JKClassAccessExpression -> receiver.identifier is JKUniverseClassSymbol
-            is JKFieldAccessExpression, is JKCallExpression -> element.selector.identifier?.isStaticMember == true
+            is JKFieldAccessExpression, is JKCallExpression, is JKThisExpression -> {
+                element.selector.identifier?.isStaticMember == true
+            }
+
             else -> false
         }
+
         if (needRemoveQualifier) {
             element.invalidate()
             return recurse(element.selector.withFormattingFrom(element.receiver).withFormattingFrom(element))

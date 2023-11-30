@@ -29,7 +29,7 @@ import java.util.*
 
 private const val serviceBeanFqn = "com.intellij.openapi.components.ServiceDescriptor"
 
-class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.java) {
+internal class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.java) {
   override fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val javaPsi = aClass.javaPsi
     // Groovy from test data - ignore it
@@ -50,7 +50,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
     // hack, allow Project-level @Service
     var isServiceAnnotation = false
     var extensionPoint: ExtensionPoint? = null
-    if (javaPsi.hasAnnotation("com.intellij.openapi.components.Service")) {
+    if (isLightService(aClass)) {
       area = null
       isService = true
       isServiceAnnotation = true
@@ -79,6 +79,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
             "guest" -> ClientKind.GUEST
             "owner" -> ClientKind.OWNER
             "remote" -> ClientKind.REMOTE
+            "frontend" -> ClientKind.FRONTEND
             "all" -> ClientKind.ALL
             else -> null
           }
@@ -222,8 +223,6 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
 @NonNls
 private val allowedClientSessionsQualifiedNames = setOf(
   "com.intellij.openapi.client.ClientSession",
-  "com.jetbrains.rdserver.core.GuestSession",
-  "com.jetbrains.rdserver.core.RemoteSession",
 )
 
 @NonNls

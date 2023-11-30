@@ -23,14 +23,4 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface PlaceHolder extends PlaceProvider {
   void setPlace(@NonNls @NotNull String place);
-
-  /**
-   * @deprecated this method is temporary added to keep compatibility with code which was compiled against the old version of {@link PlaceHolder}
-   * with generic parameter and therefore refers to the method with parameter type {@code Object} in its bytecode. This method isn't supposed to
-   * be used directly.
-   */
-  @Deprecated
-  default void setPlace(Object place) {
-    setPlace((String)place);
-  }
 }

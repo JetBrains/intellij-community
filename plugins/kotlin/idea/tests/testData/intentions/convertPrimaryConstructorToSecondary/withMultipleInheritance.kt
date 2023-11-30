@@ -1,4 +1,3 @@
-// AFTER-WARNING: 'open' has no effect in a final class
 interface A {
     val s: String
 }
@@ -9,8 +8,8 @@ interface B {
 
 abstract class C(open val d: Double)
 
-class D(<caret>open val y: Int, override val d: Double) :  A, C(d), B {
-    override val s = "$y -> $d"
+class D(<caret>val y: Int, final override val d: Double) :  A, C(d), B {
+    final override val s = "$y -> $d"
 
-    override val x = y * y
+    final override val x = y * y
 }

@@ -5,6 +5,8 @@ import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -368,7 +370,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
       return isBoxUnboxMethod(call.resolveMethod());
     }
     if (!allowBoxUnbox || !(expression instanceof PsiMethodReferenceExpression methodRef)) return false;
-    if (!BOX_UNBOX_NAMES.contains(methodRef.getReferenceName())) return false;
+    String referenceName = methodRef.getReferenceName();
+    if (referenceName == null || !BOX_UNBOX_NAMES.contains(referenceName)) return false;
     PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
     return isBoxUnboxMethod(method);
   }
@@ -430,7 +433,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression call = tryCast(element, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
@@ -460,7 +463,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiMethodCallExpression call)) return;
       PsiMethodCallExpression furtherCall = findCallThatSpoilsSorting(call);
       if (furtherCall == null) return;
@@ -479,7 +482,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression sortCall = tryCast(element, PsiMethodCallExpression.class);
       if (sortCall == null) return;
       PsiMethodCallExpression collector =

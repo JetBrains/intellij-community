@@ -3,11 +3,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.modcommand.ModChooseTarget;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -30,20 +27,17 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext ctx, @NotNull PsiElement element) {
     Context context = Context.from(element);
-    if (context == null) return ModCommands.nop();
+    if (context == null) return ModCommand.nop();
 
     List<? extends PsiClassType> unhandledExceptions = context.myExceptions;
     List<? extends PsiCatchSection> catches = context.myCatches;
 
-    var items = ContainerUtil.map(
-      catches, c -> ModChooseTarget.ListItem.of(
-        c,
-        Objects.requireNonNull(c.getCatchType()).getPresentableText(),
-        Objects.requireNonNull(c.getParameter()).getTextRange()));
-    return ModCommands.chooser(
-      items,
-      section -> ModCommands.psiUpdate(section, s -> addTypeToCatch(unhandledExceptions, s, s.getProject())),
-      QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"));
+    List<@NotNull ModCommandAction> actions = ContainerUtil.map(
+      catches, c -> ModCommand.psiUpdateStep(c,
+                                             Objects.requireNonNull(c.getCatchType()).getPresentableText(),
+                                             (section, updater) -> addTypeToCatch(unhandledExceptions, section, ctx.project()),
+                                              section -> Objects.requireNonNull(section.getParameter()).getTextRange()));
+    return ModCommand.chooseAction(QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"), actions);
   }
 
   private static List<PsiCatchSection> findSuitableSections(List<? extends PsiCatchSection> sections, @NotNull List<? extends PsiClassType> exceptionTypes, boolean isJava7OrHigher) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -22,6 +22,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.i18n.GitBundle;
+import git4idea.index.GitStageManagerKt;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -39,8 +40,8 @@ public class GitStashChangesSaver extends GitChangesSaver {
   private static final Logger LOG = Logger.getInstance(GitStashChangesSaver.class);
   private static final String NO_LOCAL_CHANGES_TO_SAVE = "No local changes to save";
 
-  @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final Map<VirtualFile, /* @Nullable */ Hash> myStashedRoots = new HashMap<>(); // stashed roots & nullable stash commit
+  private final @NotNull GitRepositoryManager myRepositoryManager;
+  private final @NotNull Map<VirtualFile, /* @Nullable */ Hash> myStashedRoots = new HashMap<>(); // stashed roots & nullable stash commit
 
   public GitStashChangesSaver(@NotNull Project project,
                               @NotNull Git git,
@@ -98,6 +99,9 @@ public class GitStashChangesSaver extends GitChangesSaver {
       myProgressIndicator.setText(message);
       GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.STASH);
       handler.addParameters("pop");
+      if (GitStageManagerKt.isStagingAreaAvailable(myProject)) {
+        handler.addParameters("--index");
+      }
       return handler;
     }, new UnstashConflictResolver(myProject, myGit, myStashedRoots.keySet(), myParams));
     myProgressIndicator.setText(oldProgressTitle);
@@ -165,21 +169,18 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {
 
-    @NotNull
     @Override
-    public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+    public @NotNull String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return GitBundle.message("stash.unstash.conflict.dialog.description.label.text");
     }
 
-    @NotNull
     @Override
-    public String getLeftPanelTitle(@NotNull VirtualFile file) {
+    public @NotNull String getLeftPanelTitle(@NotNull VirtualFile file) {
       return getConflictLeftPanelTitle();
     }
 
-    @NotNull
     @Override
-    public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
+    public @NotNull String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return getConflictRightPanelTitle();
     }
   }

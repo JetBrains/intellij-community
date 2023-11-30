@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.LangBundle;
@@ -14,9 +14,9 @@ import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ChangeTemplateDataLanguageAction extends AnAction {
+public final class ChangeTemplateDataLanguageAction extends AnAction {
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     e.getPresentation().setVisible(false);
 
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
@@ -45,14 +45,14 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
     editSettings(project, e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 
-  public static void editSettings(@NotNull Project project, @Nullable final VirtualFile virtualFile) {
+  public static void editSettings(@NotNull Project project, final @Nullable VirtualFile virtualFile) {
     final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
       if (virtualFile != null) {

@@ -37,13 +37,13 @@ boolean isUnix = Os.isFamily(Os.FAMILY_UNIX)
 
 envs {
   String python27version = "2.7.18"
-  String python36version = "3.6.8"
+  String python36version = (isWindows) ? "3.6.8" : "3.6.15" // 3.6.8 is broken on modern libc and clang, but latest version for Windows
   String python37version = "3.7.9"
   String python38version = "3.8.10"
   String python39version = "3.9.13"
   String python310version = "3.10.8"
   String python311version = "3.11.0"
-  String python312version = "3.12.0a7"
+  String python312version = "3.12.0rc3"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
@@ -80,7 +80,8 @@ envs {
     if (shouldUseCondaInterpreters || forceConda) {
       condaenv pythonName, version, packages
       pythonDirectory = new File(envsDirectory, pythonName)
-    } else {
+    }
+    else {
       python pythonName, version, packages
       pythonDirectory = new File(bootstrapDirectory, pythonName)
     }
@@ -92,13 +93,25 @@ envs {
       doLast {
         if (tags) new File(pythonDirectory, "tags.txt").write(tags)
 
-        if (createLink) {
-          String versionMajor = version.split(/\./)[0]
-          String versionMinor = version.split(/\./)[1]
-          versionMinor = versionMinor.endsWith("-dev") ? versionMinor.substring(0, versionMinor.indexOf("-dev"))
-                                                       : versionMinor
-          String linkName = "python$versionMajor.$versionMinor"
+        String versionMajor = version.split(/\./)[0]
+        String versionMinor = version.split(/\./)[1]
+        versionMinor = versionMinor.endsWith("-dev") ? versionMinor.substring(0, versionMinor.indexOf("-dev"))
+                                                     : versionMinor
+        // Pregenerate pyc
+        String linkName = "python$versionMajor.$versionMinor"
+        def path = pythonDirectory.toPath()
+        def python = path.resolve(isWindows ? "python.exe" : "bin/${linkName}").toString()
+        def lib = path.resolve("lib").toString()
+        def command = "import compileall; compileall.compile_dir('${lib}', force=True, quiet=True)"
 
+        def result = new StringBuilder()
+        def error = new StringBuilder()
+        def process = "${python} -c \"$command\"".execute()
+        process.consumeProcessErrorStream(error)
+        process.consumeProcessOutputStream(result)
+        process.waitForOrKill(60000)
+
+        if (createLink) {
           Closure createLinkClosure = { Path link, Path existing ->
             if (!link.toFile().exists()) Files.createLink(link, existing)
           }
@@ -106,7 +119,8 @@ envs {
           if (isUnix && !shouldUseCondaInterpreters) {
             createLinkClosure(Paths.get(pythonDirectory.toString(), linkName),
                               Paths.get(pythonDirectory.toString(), "bin/$linkName"))
-          } else if (isWindows) {
+          }
+          else if (isWindows) {
             createLinkClosure(Paths.get(pythonDirectory.toString(), "${linkName}.exe"),
                               Paths.get(pythonDirectory.toString(), "python.exe"))
           }
@@ -116,20 +130,30 @@ envs {
   }
 
 
-  createPython("django_latest", python36version, ["django", "behave-django", "behave", "pytest", "untangle"],
+  createPython("py36_django_latest", python36version, ["django", "behave-django", "behave", "pytest", "untangle"],
                "python3.6\ndjango\ndjango20\nbehave\nbehave-django\ndjango2\npytest\nuntangle", true)
-   if (djangoTrunkOnly) {
-     return
-   }
+  if (djangoTrunkOnly) {
+    return
+  }
 
-  createPython("py27",
-               python27version,
-               ["tox>=3.8.3", "nose", "pytest", "Twisted", "behave",  "teamcity-messages",
-                "untangle"] + ( isWindows ? ['pypiwin32'] : []  ), //win32api is required for pypiwin32
-               "python2.7\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
-               true)
+  if (isUnix) {
+    // For TensorFlow
+    createPython("py37",
+                 python37version,
+                 ["tensorflow", "pyqt5==5.12", "PySide2==5.12.1"],
+                 "tensorflow\npython3.7\nqt",
+                 true)
+  }
+  else {
+    // qt is for unix only
+    createPython("py37",
+                 python37version,
+                 ["tensorflow"],
+                 "tensorflow\npython3.7",
+                 true)
+  }
 
-  createPython("py38_django22_full",
+  createPython("py38",
                python38version,
                // The version of Jinja2 is fixed due to a bug in recent versions which breaks the debugging.
                // See: https://github.com/pallets/jinja/pull/1178.
@@ -154,48 +178,21 @@ envs {
 
   createPython("python3.11",
                python311version,
-               [],
-               "python3.11",
+               ["black == 23.1.0"],
+               "python3.11\nblack",
                true)
 
   createPython("python3.12",
                python312version,
-               [],
-               "python3\npython3.12")
+               ["teamcity-messages"],
+               "python3\npython3.12\nmessages")
 
-  // For tox
-  createPython("py36",
-               python36version,
-               [],
-               "python3.6",
+  createPython("py27",
+               python27version,
+               ["tox>=3.8.3", "nose", "pytest", "Twisted", "behave", "teamcity-messages",
+                "untangle"] + (isWindows ? ['pypiwin32'] : []), //win32api is required for pypiwin32
+               "python2.7\nnose\npytest\nbehave\npackaging\ntox\ntwisted\ndjango-nose\nuntangle\nmessages",
                true)
-
-  createPython("py37",
-               python37version,
-               [],
-               "python3.7",
-               true)
-
-  // For TensorFlow
-  createPython("py37_tensorflow1_oldpaths",
-               python37version,
-               ["tensorflow < 1.15.0rc0"],
-               "tensorflow1\ntensorflow_oldpaths\npython3.7",
-               true)
-  createPython("py37_tensorflow1_newpaths",
-               python37version,
-               ["tensorflow >= 1.15.0rc0, < 2.0.0a0"],
-               "tensorflow1\ntensorflow_newpaths\npython3.7",
-               true)
-  createPython("py37_tensorflow2_newpaths",
-               python37version,
-               ["tensorflow >= 2.0.0rc0"],
-               "tensorflow2\ntensorflow_newpaths\npython3.7",
-               true)
-
-  if (isUnix) {
-    createPython("qt_env", python37version, ["pyqt5==5.12", "PySide2==5.12.1"], "qt\npython3.7", true)
-  }
 }
 
 /**
@@ -214,21 +211,21 @@ task prepare(type: Delete) {
   dependsOn killPythonWindows
 
   doFirst {
-    new File(envs.bootstrapDirectory, "django_latest").with { djangoLatestFolder ->
- //     if (djangoLatestFolder.exists() && djangoLatestFolder.lastModified() < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
-        // older then a day
-        println "Cleaning django_latest at" + djangoLatestFolder
-        delete djangoLatestFolder
-   //   }
+    new File(envs.bootstrapDirectory, "py36_django_latest").with { djangoLatestFolder ->
+      //     if (djangoLatestFolder.exists() && djangoLatestFolder.lastModified() < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
+      // older then a day
+      println "Cleaning django_latest at" + djangoLatestFolder
+      delete djangoLatestFolder
+      //   }
     }
 
 //    if (!envs.bootstrapDirectory.exists() || (System.getenv("NO_CLEAN") == null && envs.envsDirectory.exists() &&
-  //                                            envs.envsDirectory.lastModified() < project.buildscript.sourceFile.lastModified())) {
-      // clean the cache if the build script was modified later
-      println "Cleaning cached environments at " + envs.envsDirectory
-      delete envs.envsDirectory
-      println "Cleaning cached pythons at " + envs.bootstrapDirectory
-      delete envs.bootstrapDirectory
+    //                                            envs.envsDirectory.lastModified() < project.buildscript.sourceFile.lastModified())) {
+    // clean the cache if the build script was modified later
+    println "Cleaning cached environments at " + envs.envsDirectory
+    delete envs.envsDirectory
+    println "Cleaning cached pythons at " + envs.bootstrapDirectory
+    delete envs.bootstrapDirectory
     //}
   }
 }

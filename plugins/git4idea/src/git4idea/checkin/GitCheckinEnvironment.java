@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin;
 
 import com.google.common.collect.HashMultiset;
@@ -17,10 +17,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.IssueNavigationConfiguration.LinkMatch;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -36,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.commit.AmendCommitAware;
 import com.intellij.vcs.commit.EditedCommitDetails;
 import com.intellij.vcs.log.Hash;
@@ -79,6 +78,7 @@ import static git4idea.checkin.GitCommitAndPushExecutorKt.isPushAfterCommit;
 import static git4idea.checkin.GitCommitOptionsKt.*;
 import static git4idea.checkin.GitSkipHooksCommitHandlerFactoryKt.isSkipHooks;
 import static git4idea.repo.GitSubmoduleKt.isSubmodule;
+import static java.util.Collections.singletonList;
 
 @Service(Service.Level.PROJECT)
 public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAware {
@@ -199,7 +199,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     List<GitRepository> repositories = collectRepositories(sortedChanges.keySet(), commitWithoutChangesRoots);
     for (GitRepository repository : repositories) {
       Collection<Change> rootChanges = sortedChanges.getOrDefault(repository, emptyList());
-      Collection<CommitChange> toCommit = map(rootChanges, CommitChange::new);
+      Collection<CommitChange> toCommit = collectChangesToCommit(rootChanges);
 
       if (isCommitRenamesSeparately(commitContext)) {
         Pair<Collection<CommitChange>, List<VcsException>> pair = commitExplicitRenames(repository, toCommit, commitMessage);
@@ -352,17 +352,14 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
   private @NotNull Pair<List<PartialCommitHelper>, List<CommitChange>>
   addPartialChangesToIndex(@NotNull GitRepository repository, @NotNull Collection<? extends CommitChange> changes) throws VcsException {
-    Set<String> changelistIds = map2SetNotNull(changes, change -> change.changelistId);
-    if (changelistIds.isEmpty()) return Pair.create(emptyList(), emptyList());
-    if (changelistIds.size() != 1) throw new VcsException(GitBundle.message("error.commit.cant.commit.multiple.changelists"));
-    String changelistId = changelistIds.iterator().next();
+    if (!exists(changes, it -> it.changelistIds != null)) return Pair.create(emptyList(), emptyList());
 
     Pair<List<PartialCommitHelper>, List<CommitChange>> result = computeAfterLSTManagerUpdate(repository.getProject(), () -> {
       List<PartialCommitHelper> helpers = new ArrayList<>();
       List<CommitChange> partialChanges = new ArrayList<>();
 
       for (CommitChange change : changes) {
-        if (change.changelistId != null && change.virtualFile != null &&
+        if (change.changelistIds != null && change.virtualFile != null &&
             change.beforePath != null && change.afterPath != null) {
           PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change.virtualFile);
           if (tracker != null && tracker.hasPartialChangesToCommit()) {
@@ -371,7 +368,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
               return null; // commit failure
             }
 
-            helpers.add(tracker.handlePartialCommit(Side.LEFT, Collections.singletonList(changelistId), true));
+            helpers.add(tracker.handlePartialCommit(Side.LEFT, change.changelistIds, true));
             partialChanges.add(change);
           }
         }
@@ -529,7 +526,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   private static @NotNull List<FilePath> getPaths(@NotNull Collection<? extends ChangedPath> changes) {
     List<FilePath> files = new ArrayList<>();
     for (ChangedPath change : changes) {
-      if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(change.beforePath, change.afterPath)) {
+      if (equalsCaseSensitive(change.beforePath, change.afterPath)) {
         addIfNotNull(files, change.beforePath);
       }
       else {
@@ -565,6 +562,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
     List<VcsException> exceptions = new ArrayList<>();
     VirtualFile root = repository.getRoot();
+    String newMessage = message;
+    String issueLinks = getIssueLinks(newMessage);
 
     List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
     List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
@@ -573,9 +572,13 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     for (GitCheckinExplicitMovementProvider provider : providers) {
       Collection<Movement> providerMovements = provider.collectExplicitMovements(myProject, beforePaths, afterPaths);
       if (!providerMovements.isEmpty()) {
-        message = provider.getCommitMessage(message);
+        newMessage = provider.getCommitMessage(newMessage);
         movedPaths.addAll(providerMovements);
       }
+    }
+
+    if (!issueLinks.isBlank()) {
+      newMessage += "\n\n" + issueLinks;
     }
 
     try {
@@ -585,7 +588,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       List<CommitChange> movedChanges = committedAndNewChanges.first;
       Collection<CommitChange> newRootChanges = committedAndNewChanges.second;
 
-      runWithMessageFile(myProject, root, message, moveMessageFile -> exceptions.addAll(
+      runWithMessageFile(myProject, root, newMessage, moveMessageFile -> exceptions.addAll(
         commitUsingIndex(myProject, repository, movedChanges, new HashSet<>(movedChanges), moveMessageFile, createCommitOptions())));
 
       List<Couple<FilePath>> committedMovements = mapNotNull(movedChanges, it -> Couple.of(it.beforePath, it.afterPath));
@@ -599,6 +602,16 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       exceptions.add(e);
       return Pair.create(changes, exceptions);
     }
+  }
+
+  private String getIssueLinks(String message) {
+    List<LinkMatch> matches = IssueNavigationConfiguration.getInstance(myProject).findIssueLinks(message);
+    StringBuilder builder = new StringBuilder();
+    for (LinkMatch match : matches) {
+      String issueId = match.getRange().substring(message);
+      builder.append(issueId).append("\n");
+    }
+    return builder.toString();
   }
 
   private @Nullable Pair<List<CommitChange>, List<CommitChange>> addExplicitMovementsToIndex(@NotNull GitRepository repository,
@@ -663,7 +676,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       // We do not use revision numbers after, and it's unclear which numbers should be used. For now, just pass null values.
       nextCommitChanges.add(new CommitChange(afterFilePath, afterFilePath,
                                              null, null,
-                                             aChange.changelistId, aChange.virtualFile));
+                                             aChange.changelistIds, aChange.virtualFile));
       movedChanges.add(new CommitChange(beforeFilePath, afterFilePath,
                                         null, null,
                                         null, null));
@@ -674,11 +687,11 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
     // Commit leftovers as added/deleted files (ex: if git detected files movements in a conflicting way)
     affectedBeforePaths.forEach((bPath, change) -> nextCommitChanges.add(new CommitChange(change.beforePath, null,
-                                                                                        change.beforeRevision, null,
-                                                                                        change.changelistId, change.virtualFile)));
+                                                                                          change.beforeRevision, null,
+                                                                                          change.changelistIds, change.virtualFile)));
     affectedAfterPaths.forEach((aPath, change) -> nextCommitChanges.add(new CommitChange(null, change.afterPath,
-                                                                                       null, change.afterRevision,
-                                                                                       change.changelistId, change.virtualFile)));
+                                                                                         null, change.afterRevision,
+                                                                                         change.changelistIds, change.virtualFile)));
 
     if (movedChanges.isEmpty()) return null;
     return Pair.create(movedChanges, nextCommitChanges);
@@ -698,9 +711,94 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       addIfNotNull(beforePathsMultiSet, change.beforePath);
       addIfNotNull(afterPathsMultiSet, change.afterPath);
     }
-    return filter(explicitMoves, move -> movedPathsMultiSet.count(move.getBefore()) == 1 && movedPathsMultiSet.count(move.getAfter()) == 1 &&
-           beforePathsMultiSet.count(move.getBefore()) == 1 && afterPathsMultiSet.count(move.getAfter()) == 1 &&
-           beforePathsMultiSet.count(move.getAfter()) == 0 && afterPathsMultiSet.count(move.getBefore()) == 0);
+    return filter(explicitMoves,
+                  move -> movedPathsMultiSet.count(move.getBefore()) == 1 && movedPathsMultiSet.count(move.getAfter()) == 1 &&
+                          beforePathsMultiSet.count(move.getBefore()) == 1 && afterPathsMultiSet.count(move.getAfter()) == 1 &&
+                          beforePathsMultiSet.count(move.getAfter()) == 0 && afterPathsMultiSet.count(move.getBefore()) == 0);
+  }
+
+  private static @NotNull List<CommitChange> collectChangesToCommit(@NotNull Collection<Change> changes) {
+    List<CommitChange> result = new ArrayList<>();
+    MultiMap<VirtualFile, CommitChange> map = new MultiMap<>();
+
+    for (Change change : changes) {
+      CommitChange commitChange = createCommitChange(change);
+      if (commitChange.virtualFile != null) {
+        map.putValue(commitChange.virtualFile, commitChange);
+      }
+      else {
+        result.add(commitChange);
+      }
+    }
+
+    for (Map.Entry<VirtualFile, Collection<CommitChange>> entry : map.entrySet()) {
+      VirtualFile virtualFile = entry.getKey();
+      Collection<CommitChange> fileCommitChanges = entry.getValue();
+      if (fileCommitChanges.size() < 2) {
+        result.addAll(fileCommitChanges);
+        continue;
+      }
+
+      boolean hasSpecificChangelists = exists(fileCommitChanges, change -> change.changelistIds != null);
+      if (!hasSpecificChangelists) {
+        result.addAll(fileCommitChanges);
+        continue;
+      }
+
+      boolean hasNonChangelists = exists(fileCommitChanges, change -> change.changelistIds == null);
+      boolean hasDeletions = exists(fileCommitChanges, change -> change.afterPath == null);
+      boolean hasAdditions = exists(fileCommitChanges, change -> change.beforePath == null);
+      if (hasNonChangelists || hasDeletions) {
+        LOG.warn(String.format("Ignoring changelists on commit of %s: %s", virtualFile, fileCommitChanges));
+        result.addAll(map(fileCommitChanges, change -> new CommitChange(change.beforePath, change.afterPath,
+                                                                        change.beforeRevision, change.afterRevision,
+                                                                        null, change.virtualFile)));
+        continue;
+      }
+
+      CommitChange firstChange = getFirstItem(fileCommitChanges);
+      FilePath beforePath = hasAdditions ? null : firstChange.beforePath;
+      FilePath afterPath = firstChange.afterPath;
+      VcsRevisionNumber beforeRevision = firstChange.beforeRevision;
+      VcsRevisionNumber afterRevision = firstChange.afterRevision;
+      Set<String> combinedChangeListIds = new HashSet<>();
+      boolean hasMismatch = false;
+
+      for (CommitChange change : fileCommitChanges) {
+        combinedChangeListIds.addAll(notNullize(change.changelistIds));
+
+        if (!Objects.equals(beforePath, change.beforePath) ||
+            !Objects.equals(afterPath, change.afterPath)) {
+          // VcsRevisionNumber mismatch is not that important
+          hasMismatch = true;
+        }
+      }
+      if (hasMismatch) {
+        LOG.error(String.format("Change mismatch on commit of %s: %s", virtualFile, fileCommitChanges));
+      }
+
+      result.add(new CommitChange(beforePath, afterPath,
+                                  beforeRevision, afterRevision,
+                                  new ArrayList<>(combinedChangeListIds), virtualFile));
+    }
+
+    return result;
+  }
+
+  private static @NotNull CommitChange createCommitChange(@NotNull Change change) {
+    FilePath beforePath = getBeforePath(change);
+    FilePath afterPath = getAfterPath(change);
+
+    ContentRevision bRev = change.getBeforeRevision();
+    ContentRevision aRev = change.getAfterRevision();
+    VcsRevisionNumber beforeRevision = bRev != null ? bRev.getRevisionNumber() : null;
+    VcsRevisionNumber afterRevision = aRev != null ? aRev.getRevisionNumber() : null;
+
+    List<String> changelistIds = change instanceof ChangeListChange changeListChange ?
+                                 singletonList(changeListChange.getChangeListId()) : null;
+    VirtualFile virtualFile = aRev instanceof CurrentContentRevision currentRevision ? currentRevision.getVirtualFile() : null;
+
+    return new CommitChange(beforePath, afterPath, beforeRevision, afterRevision, changelistIds, virtualFile);
   }
 
 
@@ -978,7 +1076,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     List<GitCheckinExplicitMovementProvider> enabledProviders = filter(allProviders, it -> it.isEnabled(project));
     if (enabledProviders.isEmpty()) return Collections.emptyList();
 
-    List<CommitChange> changes = map(ChangeListManager.getInstance(project).getAllChanges(), CommitChange::new);
+    List<CommitChange> changes = collectChangesToCommit(ChangeListManager.getInstance(project).getAllChanges());
     List<FilePath> beforePaths = mapNotNull(changes, it -> it.beforePath);
     List<FilePath> afterPaths = mapNotNull(changes, it -> it.afterPath);
 
@@ -1001,8 +1099,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     }
 
     public boolean isMove() {
-      if (beforePath == null || afterPath == null) return false;
-      return !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath);
+      return !equalsCaseSensitive(beforePath, afterPath);
     }
 
     @Override
@@ -1015,48 +1112,25 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     public final @Nullable VcsRevisionNumber beforeRevision;
     public final @Nullable VcsRevisionNumber afterRevision;
 
-    public final @Nullable String changelistId;
+    public final @Nullable List<String> changelistIds;
     public final @Nullable VirtualFile virtualFile;
-
-    CommitChange(@NotNull Change change) {
-      super(getBeforePath(change), getAfterPath(change));
-
-      ContentRevision bRev = change.getBeforeRevision();
-      ContentRevision aRev = change.getAfterRevision();
-      this.beforeRevision = bRev != null ? bRev.getRevisionNumber() : null;
-      this.afterRevision = aRev != null ? aRev.getRevisionNumber() : null;
-
-      if (change instanceof ChangeListChange) {
-        this.changelistId = ((ChangeListChange)change).getChangeListId();
-      }
-      else {
-        this.changelistId = null;
-      }
-
-      if (aRev instanceof CurrentContentRevision) {
-        this.virtualFile = ((CurrentContentRevision)aRev).getVirtualFile();
-      }
-      else {
-        this.virtualFile = null;
-      }
-    }
 
     CommitChange(@Nullable FilePath beforePath,
                  @Nullable FilePath afterPath,
                  @Nullable VcsRevisionNumber beforeRevision,
                  @Nullable VcsRevisionNumber afterRevision,
-                 @Nullable String changelistId,
+                 @Nullable List<String> changelistIds,
                  @Nullable VirtualFile virtualFile) {
       super(beforePath, afterPath);
       this.beforeRevision = beforeRevision;
       this.afterRevision = afterRevision;
-      this.changelistId = changelistId;
+      this.changelistIds = changelistIds;
       this.virtualFile = virtualFile;
     }
 
     @Override
     public @NonNls String toString() {
-      return super.toString() + ", changelist: " + changelistId;
+      return super.toString() + ", changelists: " + changelistIds;
     }
   }
 }

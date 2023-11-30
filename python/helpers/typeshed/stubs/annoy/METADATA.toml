@@ -1,5 +1,0 @@
-version = "1.17.*"
-requires = []
-
-[tool.stubtest]
-ignore_missing_stub = false

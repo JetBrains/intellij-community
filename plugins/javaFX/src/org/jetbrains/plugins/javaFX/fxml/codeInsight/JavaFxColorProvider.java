@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight;
 
 import com.intellij.java.JavaBundle;
@@ -22,7 +22,7 @@ import java.util.Set;
 import java.util.StringJoiner;
 import java.util.function.IntFunction;
 
-public class JavaFxColorProvider implements ElementColorProvider {
+public final class JavaFxColorProvider implements ElementColorProvider {
   private static final String COLOR = "color";
   private static final String RGB = "rgb";
   private static final String GRAY = "gray";
@@ -74,8 +74,7 @@ public class JavaFxColorProvider implements ElementColorProvider {
     return aClass != null && JavaFxCommonNames.JAVAFX_SCENE_COLOR.equals(aClass.getQualifiedName());
   }
 
-  @Nullable
-  private static Color getColor(@Nullable String methodName, @NotNull PsiExpressionList argumentList) {
+  private static @Nullable Color getColor(@Nullable String methodName, @NotNull PsiExpressionList argumentList) {
     if (methodName == null) return null;
     Object[] values = getArgumentValues(argumentList.getExpressions());
     return switch (methodName) {
@@ -114,11 +113,10 @@ public class JavaFxColorProvider implements ElementColorProvider {
                              ArrayUtilRt.EMPTY_OBJECT_ARRAY);
   }
 
-  @Nullable
-  private static Color getScaledRgbColor(@Nullable Object redValue,
-                                         @Nullable Object greenValue,
-                                         @Nullable Object blueValue,
-                                         @Nullable Object alphaValue) {
+  private static @Nullable Color getScaledRgbColor(@Nullable Object redValue,
+                                                   @Nullable Object greenValue,
+                                                   @Nullable Object blueValue,
+                                                   @Nullable Object alphaValue) {
     Integer red = getScaledComponent(redValue);
     Integer green = getScaledComponent(greenValue);
     Integer blue = getScaledComponent(blueValue);
@@ -130,11 +128,10 @@ public class JavaFxColorProvider implements ElementColorProvider {
     return null;
   }
 
-  @Nullable
-  private static Color getRgbColor(@Nullable Object redValue,
-                                   @Nullable Object greenValue,
-                                   @Nullable Object blueValue,
-                                   @Nullable Object alphaValue) {
+  private static @Nullable Color getRgbColor(@Nullable Object redValue,
+                                             @Nullable Object greenValue,
+                                             @Nullable Object blueValue,
+                                             @Nullable Object alphaValue) {
     Integer red = getComponent(redValue);
     Integer green = getComponent(greenValue);
     Integer blue = getComponent(blueValue);
@@ -242,18 +239,15 @@ public class JavaFxColorProvider implements ElementColorProvider {
     return null;
   }
 
-  @NotNull
-  private static String getScaledRgbCallText(@NotNull Color color) {
+  private static @NotNull String getScaledRgbCallText(@NotNull Color color) {
     return getCallText(color, COLOR, GRAY, JavaFxColorProvider::formatScaledComponent);
   }
 
-  @NotNull
-  private static String getRgbCallText(@NotNull Color color) {
+  private static @NotNull String getRgbCallText(@NotNull Color color) {
     return getCallText(color, RGB, GRAY_RGB, String::valueOf);
   }
 
-  @NotNull
-  private static String getCallText(@NotNull Color color, String colorMethodName, String grayMethodName, IntFunction<String> formatter) {
+  private static @NotNull String getCallText(@NotNull Color color, String colorMethodName, String grayMethodName, IntFunction<String> formatter) {
     String methodName;
     StringJoiner args = new StringJoiner(",", "(", ")");
     if (color.getRed() == color.getGreen() && color.getRed() == color.getBlue()) {
@@ -272,8 +266,7 @@ public class JavaFxColorProvider implements ElementColorProvider {
     return methodName + args;
   }
 
-  @NotNull
-  private static String formatScaledComponent(int colorComponent) {
+  private static @NotNull String formatScaledComponent(int colorComponent) {
     DecimalFormat df = new DecimalFormat(DECIMAL_FORMAT_PATTERN, DECIMAL_FORMAT_SYMBOLS); // not thread safe - can't have a constant
     return df.format(colorComponent / 255.0);
   }

@@ -2,14 +2,19 @@
 package org.jetbrains.plugins.gitlab.mergerequest.diff.action
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.project.Project
 import com.intellij.util.ui.JButtonAction
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffReviewViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
-import javax.swing.JComponent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSubmitReviewPopup
 
 internal class GitLabMergeRequestDiffSubmitReviewAction
   : JButtonAction(CollaborationToolsBundle.message("review.start.submit.action")) {
@@ -17,9 +22,14 @@ internal class GitLabMergeRequestDiffSubmitReviewAction
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val vm = e.getData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
+    val vm = e.getData(GitLabMergeRequestReviewViewModel.DATA_KEY) ?: e.project?.let(::findGlobalVm)
     val review = vm?.submittableReview?.value
-    e.presentation.isEnabledAndVisible = vm != null && review != null
+    e.presentation.isEnabledAndVisible = review != null
+
+    if (ActionPlaces.isPopupPlace(e.place) && !e.place.contains("gitlab", true)) {
+      e.presentation.text = CollaborationToolsBundle.message("review.start.submit.action")
+      return
+    }
 
     val draftCommentsCount = review?.draftComments ?: 0
     e.presentation.text = if (draftCommentsCount <= 0) {
@@ -30,12 +40,19 @@ internal class GitLabMergeRequestDiffSubmitReviewAction
     }
   }
 
+  private fun findGlobalVm(project: Project): GitLabMergeRequestReviewViewModel? =
+    project.serviceIfCreated<GitLabMergeRequestOnCurrentBranchService>()?.mergeRequestReviewVmState?.value
+
   override fun actionPerformed(e: AnActionEvent) {
-    val vm = e.getRequiredData(GitLabMergeRequestDiffReviewViewModel.DATA_KEY)
-    val component = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) as JComponent
+    //TODO: show under branch widget component - requires fixing action popup context propagation
+    val vm = e.getData(GitLabMergeRequestReviewViewModel.DATA_KEY) ?: e.project?.let(::findGlobalVm) ?: return
+    val component = e.presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY) ?: e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
     // looks fishy but spares us the need to pass component to VM
     vm.submitReviewInputHandler = {
-      GitLabMergeRequestSubmitReviewPopup.show(it, component)
+      withContext(Dispatchers.Main) {
+        if (component != null) GitLabMergeRequestSubmitReviewPopup.show(it, component)
+        else GitLabMergeRequestSubmitReviewPopup.show(it, e.project!!)
+      }
     }
     vm.submitReview()
   }

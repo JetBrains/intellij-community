@@ -7,23 +7,24 @@ import com.intellij.collaboration.ui.codereview.comment.CodeReviewCommentUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.ui.comment.*
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import javax.swing.JComponent
 
-object GitLabMergeRequestDiffInlayComponentsFactory {
+internal object GitLabMergeRequestDiffInlayComponentsFactory {
   fun createDiscussion(project: Project,
                        cs: CoroutineScope,
                        avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                       vm: GitLabMergeRequestDiffDiscussionViewModel): JComponent =
-    GitLabDiscussionComponentFactory.create(project, cs, avatarIconsProvider, vm).apply {
+                       vm: GitLabMergeRequestDiscussionViewModel,
+                       place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent =
+    GitLabDiscussionComponentFactory.create(project, cs, avatarIconsProvider, vm, place).apply {
       border = JBUI.Borders.empty(CodeReviewCommentUIUtil.getInlayPadding(CodeReviewChatItemUIUtil.ComponentType.COMPACT))
     }.let {
       CodeReviewCommentUIUtil.createEditorInlayPanel(it)
@@ -33,20 +34,29 @@ object GitLabMergeRequestDiffInlayComponentsFactory {
                           cs: CoroutineScope,
                           avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                           vm: NewGitLabNoteViewModel,
-                          onCancel: () -> Unit): JComponent {
-    val submitAction = swingAction(CollaborationToolsBundle.message("review.comment.submit")) {
-      vm.submit()
-    }.apply {
-      bindEnabledIn(cs, vm.state.map { it != GitLabNoteEditingViewModel.SubmissionState.Loading })
-    }
+                          onCancel: () -> Unit,
+                          place: GitLabStatistics.MergeRequestNoteActionPlace): JComponent {
+    val addAction = vm.submitActionIn(cs, CollaborationToolsBundle.message("review.comment.submit"),
+                                      project, NewGitLabNoteType.DIFF, place)
+    val addAsDraftAction = vm.submitAsDraftActionIn(cs, CollaborationToolsBundle.message("review.comments.save-as-draft.action"),
+                                                    project, NewGitLabNoteType.DIFF, place)
 
+    val cancelAction = swingAction("") {
+      if (vm.text.value.isBlank()) {
+        onCancel()
+      }
+      else if (yesNo(CollaborationToolsBundle.message("review.comments.discard.new.confirmation.title"),
+                     CollaborationToolsBundle.message("review.comments.discard.new.confirmation")).ask(project)) {
+        onCancel()
+      }
+    }
     val actions = CommentInputActionsComponentFactory.Config(
-      primaryAction = MutableStateFlow(submitAction),
-      cancelAction = MutableStateFlow(swingAction("") { onCancel() }),
+      primaryAction = vm.primarySubmitActionIn(cs, addAction, addAsDraftAction),
+      secondaryActions = vm.secondarySubmitActionIn(cs, addAction, addAsDraftAction),
+      cancelAction = MutableStateFlow(cancelAction),
       submitHint = MutableStateFlow(CollaborationToolsBundle.message("review.comment.hint",
                                                                      CommentInputActionsComponentFactory.submitShortcutText))
     )
-
 
     val itemType = CodeReviewChatItemUIUtil.ComponentType.COMPACT
     val icon = CommentTextFieldFactory.IconConfig.of(itemType, avatarIconsProvider, vm.currentUser)

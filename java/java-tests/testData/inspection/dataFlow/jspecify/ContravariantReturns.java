@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 @NullMarked
 interface ContravariantReturns {
@@ -27,9 +26,8 @@ interface ContravariantReturns {
 
   interface Subtype extends ContravariantReturns {
     @Override
-    @Nullable
     // jspecify_nullness_mismatch
-    Object makeObject();
+    @Nullable Object makeObject();
 
     @Override
     // jspecify_nullness_mismatch

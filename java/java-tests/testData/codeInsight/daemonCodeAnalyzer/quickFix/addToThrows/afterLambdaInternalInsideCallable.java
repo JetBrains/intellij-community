@@ -1,7 +1,7 @@
-// "Add exception to method signature" "true-preview"
+// "Add exception to method signature|->Change only this method" "true-preview"
 class C {
   interface I {
-    void a() throws InterruptedException;
+    void a();
   }
 
   {

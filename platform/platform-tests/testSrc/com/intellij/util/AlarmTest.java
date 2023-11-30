@@ -1,4 +1,4 @@
- // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
  import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -106,9 +106,9 @@ package com.intellij.util;
     LaterInvocator.enterModal(modal);
 
     try {
-      ApplicationManager.getApplication().invokeLater(() -> TimeoutUtil.sleep(10), ModalityState.NON_MODAL);
-      alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
-      alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> TimeoutUtil.sleep(10), ModalityState.nonModal());
+      alarm.addRequest(() -> sb.append("1"), 0, ModalityState.nonModal());
+      alarm.addRequest(() -> sb.append("2"), 5, ModalityState.nonModal());
       UIUtil.dispatchAllInvocationEvents();
       assertEquals("", sb.toString());
     }
@@ -127,8 +127,8 @@ package com.intellij.util;
     Alarm alarm = new Alarm();
     StringBuilder sb = new StringBuilder();
 
-    alarm.addRequest(() -> sb.append("1"), 0, ModalityState.NON_MODAL);
-    alarm.addRequest(() -> sb.append("2"), 5, ModalityState.NON_MODAL);
+    alarm.addRequest(() -> sb.append("1"), 0, ModalityState.nonModal());
+    alarm.addRequest(() -> sb.append("2"), 5, ModalityState.nonModal());
     assertEquals("", sb.toString());
     alarm.drainRequestsInTest();
     assertEquals("12", sb.toString());

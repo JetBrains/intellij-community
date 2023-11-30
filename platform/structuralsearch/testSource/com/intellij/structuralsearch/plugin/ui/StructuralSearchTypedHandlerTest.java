@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.editor.Editor;
@@ -43,6 +43,10 @@ public class StructuralSearchTypedHandlerTest extends BasePlatformTestCase {
 
   public void testOddDollar2() {
     doTest("$ietske<caret>", "$ietske$<caret>");
+  }
+
+  public void testTabs() {
+    doTest("\t\t<caret>", "\t\t$<caret>$");
   }
 
   private void doTest(@NotNull String before, @NotNull String after) {

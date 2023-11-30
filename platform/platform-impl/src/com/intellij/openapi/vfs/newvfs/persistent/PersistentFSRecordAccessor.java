@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.FileIdIndexedStorage;
 import com.intellij.util.BitUtil;
-import com.intellij.util.TimeoutUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -26,82 +26,79 @@ import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.FREE
  * free-list. That free-list is not utilized for re-use, but for various sanity-checking activities
  * during the testing.
  */
-final class PersistentFSRecordAccessor {
+@ApiStatus.Internal
+public final class PersistentFSRecordAccessor {
   private static final Logger LOG = Logger.getInstance(PersistentFSRecordAccessor.class);
 
-  @NotNull
-  private final PersistentFSContentAccessor myPersistentFSContentAccessor;
-  @NotNull
-  private final PersistentFSAttributeAccessor myPersistentFSAttributeAccessor;
-  private final PersistentFSConnection myFSConnection;
 
-  private final Object myNewFreeRecordsSync = new Object();
-  @NotNull
-  private final IntList myNewFreeRecords = IntLists.synchronize(new IntArrayList(), myNewFreeRecordsSync);
+  private final @NotNull PersistentFSConnection connection;
+  private final @NotNull PersistentFSContentAccessor contentAccessor;
+  private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
+
+  private final Object newFreeRecordsSync = new Object();
+
+  private final IntList newFreeRecords = IntLists.synchronize(new IntArrayList(), newFreeRecordsSync);
 
 
   PersistentFSRecordAccessor(@NotNull PersistentFSContentAccessor contentAccessor,
                              @NotNull PersistentFSAttributeAccessor attributeAccessor,
                              @NotNull PersistentFSConnection connection) {
-    myPersistentFSContentAccessor = contentAccessor;
-    myPersistentFSAttributeAccessor = attributeAccessor;
-    myFSConnection = connection;
+    this.contentAccessor = contentAccessor;
+    this.attributeAccessor = attributeAccessor;
+    this.connection = connection;
   }
 
   public void markRecordAsDeleted(int id) throws IOException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      myNewFreeRecords.add(id);
+      newFreeRecords.add(id);
     }
-    // DbConnection.addFreeRecord(id); // important! Do not add fileId to free list until restart
-    myFSConnection.getRecords().setFlags(id, FREE_RECORD_FLAG);
-    myFSConnection.markDirty();
+    // important! Do not add fileId to free list until restart
+    connection.getRecords().setFlags(id, FREE_RECORD_FLAG);
+    connection.markDirty();
   }
 
-  public int createRecord() throws IOException {
-    myFSConnection.markDirty();
+  public int createRecord(Iterable<FileIdIndexedStorage> fileIdIndexedStorages) throws IOException {
+    connection.markDirty();
 
-    final int reusedRecordId = myFSConnection.reserveFreeRecord();
+    if (!FSRecordsImpl.REUSE_DELETED_FILE_IDS) {
+      return connection.getRecords().allocateRecord();
+    }
+
+    final int reusedRecordId = connection.reserveFreeRecord();
     if (reusedRecordId < 0) {
-      return myFSConnection.getRecords().allocateRecord();
+      return connection.getRecords().allocateRecord();
     }
     else {//there is a record for re-use, but let's clean it up first:
+      //TODO RC: Actually, it could significantly slow down new record allocation, so it is better to clear all
+      //         that async, during free records collection.
+      //         We can do that for attributes & content, but we can't do it for fileIdIndexedStorages, since we
+      //         don't know the list of FileIdIndexedStorage storages early on -- fileIdIndexedStorages are collected
+      //         incrementally, as they are registered.
+      //         Actually, by the same reason even current approach is not bulletproof: since .createRecord() could
+      //         be called _before_ all FileIdIndexedStorage are registered, hence reusedRecordId in not-yet-registered
+      //         FileIdIndexedStorage won't be cleaned.
+      //         Alternative solutions could be:
+      //         a) Maintain (i.e. persist) list of 'associated storages' inside VFS, and read all them on startup.
+      //            Need additional fields in storage header (bytesPerRow) to read the storage content.
+      //         b) Clean data associated with removed fileIds on shutdown (when all storages are already registered),
+      //            not on startup. Delays shutdown, and increase chance of VFS corruption if app forcibly terminated
+      //            due to long shutdown.
+      //         c) Don't reuse fileId at all -- just keep allocating new fileIds, and re-build VFS as int32 exhausted
+      //            Actually, quite interesting approach, now under REUSE_DELETED_FILE_IDS feature-flag, but needs careful examination
+      //            (for the next release?)
       deleteContentAndAttributes(reusedRecordId);
-      myFSConnection.getRecords().cleanRecord(reusedRecordId);
+      for (FileIdIndexedStorage storage : fileIdIndexedStorages) {
+        storage.clear(reusedRecordId);
+      }
+      connection.getRecords().cleanRecord(reusedRecordId);
       return reusedRecordId;
     }
   }
 
-  public void checkSanity() throws IOException {
-    final long startedAtNs = System.nanoTime();
-
-    final int recordCount = myFSConnection.getRecords().recordsCount();
-
-    final IntList usedAttributeRecordIds = new IntArrayList();
-    final IntList validAttributeIds = new IntArrayList();
-    final IntList freeRecords = myFSConnection.getFreeRecords();
-    for (int id = FSRecords.MIN_REGULAR_FILE_ID; id < recordCount; id++) {
-      final int flags = myFSConnection.getRecords().getFlags(id);
-      LOG.assertTrue((flags & ~PersistentFS.Flags.getAllValidFlags()) == 0, "Invalid flags: 0x" + Integer.toHexString(flags) + ", id: " + id);
-
-      final boolean recordInFreeList = freeRecords.contains(id);
-      final boolean recordMarkedAsFree = hasDeletedFlag(flags);
-      if (recordMarkedAsFree) {
-        LOG.assertTrue(recordInFreeList, "Record, marked free, not in free list: " + id);
-      }
-      else {
-        LOG.assertTrue(!recordInFreeList, "Record, not marked free, in free list: " + id);
-        //if record is not free -> check its attributes sanity
-        checkRecordSanity(id, recordCount, usedAttributeRecordIds, validAttributeIds);
-      }
-    }
-
-    LOG.info("Sanity check took " + TimeoutUtil.getDurationMillis(startedAtNs) + " ms");
-  }
-
   public boolean isDeleted(int id) throws IOException {
     //TODO RC: why first condition is not enough? How could recordId be in freeRecords, if it doesn't have FREE_RECORD flag on it?
-    final int flags = myFSConnection.getRecords().getFlags(id);
-    return hasDeletedFlag(flags) || myNewFreeRecords.contains(id);
+    final int flags = connection.getRecords().getFlags(id);
+    return hasDeletedFlag(flags) || newFreeRecords.contains(id);
   }
 
   public static boolean hasDeletedFlag(final int flags) {
@@ -109,43 +106,15 @@ final class PersistentFSRecordAccessor {
   }
 
   public @NotNull IntList getNewFreeRecords() {
-    synchronized (myNewFreeRecordsSync) {
-      return new IntArrayList(myNewFreeRecords);
+    synchronized (newFreeRecordsSync) {
+      return new IntArrayList(newFreeRecords);
     }
   }
 
   //=== internals:
 
-  private void checkRecordSanity(int id,
-                                 int totalRecordCount,
-                                 @NotNull IntList usedAttributeRecordIds,
-                                 @NotNull IntList validAttributeIds) throws IOException {
-    PersistentFSConnection connection = myFSConnection;
-    int parentId = connection.getRecords().getParent(id);
-    assert parentId >= 0 && parentId < totalRecordCount;
-    if (parentId > 0 && connection.getRecords().getParent(parentId) > 0) {
-      int parentFlags = connection.getRecords().getFlags(parentId);
-      assert !hasDeletedFlag(parentFlags) : parentId + ": " + Integer.toHexString(parentFlags);
-      assert BitUtil.isSet(parentFlags, PersistentFS.Flags.IS_DIRECTORY) : parentId + ": " + Integer.toHexString(parentFlags);
-    }
-
-    CharSequence name = getName(id);
-    LOG.assertTrue(parentId == 0 || name.length() != 0, "File with empty name found under " + getName(parentId) + ", id=" + id);
-
-    myPersistentFSContentAccessor.checkContentsStorageSanity(id);
-    myPersistentFSAttributeAccessor.checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds);
-
-    long length = connection.getRecords().getLength(id);
-    assert length >= -1 : "Invalid file length found for " + name + ": " + length;
-  }
-
-  @Nullable
-  private CharSequence getName(int fileId) throws IOException {
-    return myFSConnection.getNames().valueOf(myFSConnection.getRecords().getNameId(fileId));
-  }
-
   private void deleteContentAndAttributes(int id) throws IOException {
-    myPersistentFSContentAccessor.deleteContent(id);
-    myPersistentFSAttributeAccessor.deleteAttributes(id);
+    contentAccessor.deleteContent(id);
+    attributeAccessor.deleteAttributes(id);
   }
 }

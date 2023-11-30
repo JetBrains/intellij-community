@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -31,6 +31,7 @@ import org.apache.xerces.xni.XNIException;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
 import org.apache.xerces.xni.parser.XMLInputSource;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -53,8 +54,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   private final Project myProject;
   private final Map<String,String> myExternalResourcesMap = new HashMap<>(1);
   private boolean myStopOnUnDeclaredResource;
-  @NonNls
-  public static final String HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY = "idea.xml.honour.all.schema.locations";
+  public static final @NonNls String HONOUR_ALL_SCHEMA_LOCATIONS_PROPERTY_KEY = "idea.xml.honour.all.schema.locations";
   private final ErrorReporter myErrorReporter;
 
   public XmlResourceResolver(XmlFile _xmlFile, Project _project, final ErrorReporter errorReporter) {
@@ -71,8 +71,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
     return ArrayUtilRt.toStringArray(myExternalResourcesMap.values());
   }
 
-  @Nullable
-  public PsiFile resolve(@Nullable final String baseSystemId, final String _systemId) {
+  public @Nullable PsiFile resolve(final @Nullable String baseSystemId, final String _systemId) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: resolveEntity(baseSystemId='" + baseSystemId + "' systemId='" + _systemId + "," + this + "')");
     }
@@ -232,8 +231,7 @@ public class XmlResourceResolver implements XMLEntityResolver {
   }
 
   @Override
-  @Nullable
-  public XMLInputSource resolveEntity(XMLResourceIdentifier xmlResourceIdentifier) throws XNIException {
+  public @Nullable XMLInputSource resolveEntity(XMLResourceIdentifier xmlResourceIdentifier) throws XNIException {
     String publicId  = xmlResourceIdentifier.getLiteralSystemId() != null ?
                   xmlResourceIdentifier.getLiteralSystemId():
                   xmlResourceIdentifier.getNamespace();
@@ -257,17 +255,11 @@ public class XmlResourceResolver implements XMLEntityResolver {
 
     if (psiFile == null) {
       if (publicId != null && publicId.contains(":/")) {
-        try {
-          myErrorReporter.processError(
-            new SAXParseException(XmlPsiBundle.message("xml.inspections.validate.external.resource.is.not.registered", publicId), publicId, null, 0, 0), ValidateXmlActionHandler.ProblemType.ERROR);
-        }
-        catch (SAXException ignore) {
-
-        }
-        final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
-        source.setPublicId(publicId);
-        source.setCharacterStream(new StringReader(""));
-        return source;
+        return reportUnresolvedUrl(xmlResourceIdentifier, publicId, "");
+      }
+      String expandedSystemId = xmlResourceIdentifier.getExpandedSystemId();
+      if (expandedSystemId != null && isHttpUrl(expandedSystemId)) {
+        return reportUnresolvedUrl(xmlResourceIdentifier, publicId, "unresolved");
       }
       return null;
     }
@@ -286,6 +278,29 @@ public class XmlResourceResolver implements XMLEntityResolver {
     source.setCharacterStream(new StringReader(psiFile.getText()));
 
     return source;
+  }
+
+  private @NotNull XMLInputSource reportUnresolvedUrl(XMLResourceIdentifier xmlResourceIdentifier, String publicId, String defaultText) {
+    try {
+      myErrorReporter.processError(
+        new SAXParseException(XmlPsiBundle.message("xml.inspections.validate.external.resource.is.not.registered", publicId), publicId, null, 0, 0), ValidateXmlActionHandler.ProblemType.ERROR);
+    }
+    catch (SAXException ignore) {
+    }
+    final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
+    source.setPublicId(publicId);
+    source.setCharacterStream(new StringReader(defaultText));
+    return source;
+  }
+
+  private static boolean isHttpUrl(@NotNull String url) {
+    try {
+      String protocol = new URL(url).getProtocol();
+      return protocol.equals("http") || protocol.equals("https");
+    }
+    catch (MalformedURLException e) {
+      return false;
+    }
   }
 
   private static PsiFile resolveByLocation(PsiFile baseFile, String location) {

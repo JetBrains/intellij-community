@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.replaceConstructorWithBuilder;
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
@@ -10,9 +10,9 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,7 @@ public class ReplaceConstructorWithBuilderAction extends PsiElementBaseIntention
 
   @Nullable
   private static PsiMethod getConstructor(@Nullable PsiElement element) {
-    PsiMethod method = RefactoringActionContextUtil.getJavaMethodHeader(element);
+    PsiMethod method = MethodUtils.getJavaMethodFromHeader(element);
     if (method != null && method.isConstructor()) {
       PsiClass aClass = method.getContainingClass();
       if (aClass != null && 

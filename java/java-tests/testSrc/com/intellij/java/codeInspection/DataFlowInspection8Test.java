@@ -149,7 +149,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     setupTypeUseAnnotations("foo", myFixture);
   }
 
-  static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
+   public static void setupTypeUseAnnotations(String pkg, JavaCodeInsightTestFixture fixture) {
     setupCustomAnnotations(pkg, "{ElementType.TYPE_USE}", fixture);
   }
 
@@ -381,6 +381,11 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
     doTest();
   }
+  public void testDefaultAnnotationForLoopParameter() {
+    setupTypeUseAnnotations("typeUse", myFixture);
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    doTest();
+  }
   public void testCheckerDefaultQualifier() {
     addCheckerAnnotations(myFixture);
     doTest();
@@ -395,4 +400,5 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testConsumedStreamDifferentMethods() { doTest(); }
   public void testConsumedStreamWithoutInline()  { doTest(); }
   public void testLocalityAndConditionalExpression() { doTest(); }
+  public void testParallelStreamThreadId() { doTest(); }
 }

@@ -129,18 +129,18 @@ public final class GCWatcher {
 
   /**
    * Attempt to run garbage collector repeatedly until all the objects passed when creating this GCWatcher are GC-ed. If that's impossible,
-   * this method gives up after some time.
+   * this method gives up after some time and throws {@link IllegalStateException}.
    */
   @TestOnly
-  public void ensureCollected() {
+  public void ensureCollected() throws IllegalStateException {
     ensureCollected(EmptyRunnable.getInstance());
   }
   /**
    * Attempt to run garbage collector repeatedly until all the objects passed when creating this GCWatcher are GC-ed. If that's impossible,
-   * this method gives up after some time.
+   * this method gives up after some time and throws {@link IllegalStateException}.
    */
   @TestOnly
-  public void ensureCollected(@NotNull Runnable runWhileWaiting) {
+  public void ensureCollected(@NotNull Runnable runWhileWaiting) throws IllegalStateException {
     StringBuilder log = new StringBuilder();
     if (GCUtil.allocateTonsOfMemory(log, runWhileWaiting, this::isEverythingCollected)) {
       return;

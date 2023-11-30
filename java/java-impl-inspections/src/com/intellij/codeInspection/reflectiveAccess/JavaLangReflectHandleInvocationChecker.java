@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -83,39 +83,22 @@ final class JavaLangReflectHandleInvocationChecker {
 
           final PsiExpression typeExpression = handleFactoryArguments[2];
           switch (factoryMethodName) {
-            case FIND_VIRTUAL:
-            case FIND_SPECIAL:
+            case FIND_VIRTUAL, FIND_SPECIAL -> {
               if (!checkMethodSignature(invokeCall, typeExpression, isExact, false, 1, holder)) return;
               checkCallReceiver(invokeCall, receiverType, holder);
-              break;
-
-            case FIND_STATIC:
-              checkMethodSignature(invokeCall, typeExpression, isExact, false, 0, holder);
-              break;
-
-            case FIND_GETTER:
+            }
+            case FIND_STATIC -> checkMethodSignature(invokeCall, typeExpression, isExact, false, 0, holder);
+            case FIND_GETTER -> {
               if (!checkGetter(invokeCall, typeExpression, isExact, 1, holder)) return;
               checkCallReceiver(invokeCall, receiverType, holder);
-              break;
-
-            case FIND_SETTER:
+            }
+            case FIND_SETTER -> {
               if (!checkSetter(invokeCall, typeExpression, isExact, 1, holder)) return;
               checkCallReceiver(invokeCall, receiverType, holder);
-              break;
-
-            case FIND_STATIC_GETTER:
-              checkGetter(invokeCall, typeExpression, isExact, 0, holder);
-              break;
-
-            case FIND_STATIC_SETTER:
-              checkSetter(invokeCall, typeExpression, isExact, 0, holder);
-              break;
-
-            case FIND_VAR_HANDLE:
-              break;
-
-            case FIND_STATIC_VAR_HANDLE:
-              break;
+            }
+            case FIND_STATIC_GETTER -> checkGetter(invokeCall, typeExpression, isExact, 0, holder);
+            case FIND_STATIC_SETTER -> checkSetter(invokeCall, typeExpression, isExact, 0, holder);
+            case FIND_VAR_HANDLE, FIND_STATIC_VAR_HANDLE -> { }
           }
         }
       }

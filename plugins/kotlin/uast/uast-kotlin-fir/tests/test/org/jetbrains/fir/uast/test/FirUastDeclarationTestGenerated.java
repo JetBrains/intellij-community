@@ -28,6 +28,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/annotationOnElvis.kt");
     }
 
+    @TestMetadata("build.gradle.kts")
+    public void testBuild_gradle() throws Exception {
+        runTest("testData/declaration/build.gradle.kts");
+    }
+
     @TestMetadata("commentsOnDataClass.kt")
     public void testCommentsOnDataClass() throws Exception {
         runTest("testData/declaration/commentsOnDataClass.kt");
@@ -53,6 +58,31 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/constructorWithJvmOverloads.kt");
     }
 
+    @TestMetadata("deprecatedHiddenProperty_accessors.kt")
+    public void testDeprecatedHiddenProperty_accessors() throws Exception {
+        runTest("testData/declaration/deprecatedHiddenProperty_accessors.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_getter.kt")
+    public void testDeprecatedHiddenProperty_getter() throws Exception {
+        runTest("testData/declaration/deprecatedHiddenProperty_getter.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_interface.kt")
+    public void testDeprecatedHiddenProperty_interface() throws Exception {
+        runTest("testData/declaration/deprecatedHiddenProperty_interface.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_noAccesor.kt")
+    public void testDeprecatedHiddenProperty_noAccesor() throws Exception {
+        runTest("testData/declaration/deprecatedHiddenProperty_noAccesor.kt");
+    }
+
+    @TestMetadata("deprecatedHiddenProperty_setter.kt")
+    public void testDeprecatedHiddenProperty_setter() throws Exception {
+        runTest("testData/declaration/deprecatedHiddenProperty_setter.kt");
+    }
+
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
         runTest("testData/declaration/doWhile.kt");
@@ -66,6 +96,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     @TestMetadata("if.kt")
     public void testIf() throws Exception {
         runTest("testData/declaration/if.kt");
+    }
+
+    @TestMetadata("implicitItOfLambdaOverEnumEntries.kt")
+    public void testImplicitItOfLambdaOverEnumEntries() throws Exception {
+        runTest("testData/declaration/implicitItOfLambdaOverEnumEntries.kt");
     }
 
     @TestMetadata("importOnDemand.kt")
@@ -91,6 +126,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     @TestMetadata("mangling.kt")
     public void testMangling() throws Exception {
         runTest("testData/declaration/mangling.kt");
+    }
+
+    @TestMetadata("missingNames.kt")
+    public void testMissingNames() throws Exception {
+        runTest("testData/declaration/missingNames.kt");
     }
 
     @TestMetadata("nullabilityOfTypeParameter.kt")
@@ -121,5 +161,10 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
     @TestMetadata("returns.kt")
     public void testReturns() throws Exception {
         runTest("testData/declaration/returns.kt");
+    }
+
+    @TestMetadata("suspendReturnsResult.kt")
+    public void testSuspendReturnsResult() throws Exception {
+        runTest("testData/declaration/suspendReturnsResult.kt");
     }
 }

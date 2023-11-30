@@ -2,9 +2,8 @@
 package org.jetbrains.plugins.gradle.settings
 
 import com.intellij.openapi.Disposable
-import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 abstract class GradleSubscriptionTestCase : ExternalSystemTestCase() {
@@ -42,14 +41,14 @@ abstract class GradleSubscriptionTestCase : ExternalSystemTestCase() {
   }
 
   protected fun onProjectLinked(subscription: Disposable, listener: () -> Unit) {
-    val settingsListener = object : GradleSettingsListenerAdapter() {
+    val settingsListener = object : GradleSettingsListener {
       override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) = listener()
     }
     ExternalSystemApiUtil.subscribe(myProject, externalSystemId, settingsListener, subscription)
   }
 
   protected fun onProjectLinked(listener: () -> Unit) {
-    val settingsListener = object : GradleSettingsListenerAdapter() {
+    val settingsListener = object : GradleSettingsListener {
       override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) = listener()
     }
     ExternalSystemApiUtil.subscribe(myProject, externalSystemId, settingsListener)

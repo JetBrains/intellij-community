@@ -14,6 +14,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.UserActivityWatcher;
+import com.intellij.util.ui.JBFont;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +33,6 @@ public class MavenRunnerPanel {
   private final boolean myRunConfigurationMode;
 
   private JCheckBox myDelegateToMavenCheckbox;
-  private JCheckBox myRunInBackgroundCheckbox;
   private RawCommandLineEditor myVMParametersEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
   private JLabel myJdkLabel;
@@ -60,7 +60,6 @@ public class MavenRunnerPanel {
 
     myDelegateToMavenCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.delegate"));
 
-    myRunInBackgroundCheckbox = new JCheckBox(MavenConfigurableBundle.message("maven.settings.runner.run.in.background"));
     if (!myRunConfigurationMode) {
       c.gridx = 0;
       c.gridy++;
@@ -68,9 +67,6 @@ public class MavenRunnerPanel {
       c.gridwidth = GridBagConstraints.REMAINDER;
 
       panel.add(myDelegateToMavenCheckbox, c);
-
-      c.gridy++;
-      panel.add(myRunInBackgroundCheckbox, c);
     }
     c.gridwidth = 1;
 
@@ -89,8 +85,7 @@ public class MavenRunnerPanel {
     panel.add(myVMParametersEditor, c);
 
     JLabel labelOverrideJvmConfig = new JLabel(MavenConfigurableBundle.message("maven.settings.vm.options.tooltip"));
-    Font font = labelOverrideJvmConfig.getFont();
-    labelOverrideJvmConfig.setFont(new Font(font.getName(), font.getStyle(), font.getSize() - 2));
+    labelOverrideJvmConfig.setFont(JBFont.small());
     c.gridx = 1;
     c.gridy++;
     c.weightx = 1;
@@ -159,7 +154,6 @@ public class MavenRunnerPanel {
 
   protected void getData(MavenRunnerSettings data) {
     myDelegateToMavenCheckbox.setSelected(data.isDelegateBuildToMaven());
-    myRunInBackgroundCheckbox.setSelected(data.isRunMavenInBackground());
     myVMParametersEditor.setText(data.getVmOptions());
     mySkipTestsCheckBox.setSelected(data.isSkipTests());
 
@@ -175,7 +169,6 @@ public class MavenRunnerPanel {
 
   protected void setData(MavenRunnerSettings data) {
     data.setDelegateBuildToMaven(myDelegateToMavenCheckbox.isSelected());
-    data.setRunMavenInBackground(myRunInBackgroundCheckbox.isSelected());
     data.setVmOptions(myVMParametersEditor.getText().trim());
     data.setSkipTests(mySkipTestsCheckBox.isSelected());
     if (myTargetName == null) {

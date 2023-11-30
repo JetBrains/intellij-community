@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -94,8 +94,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return Language.ANY;
   }
 
@@ -105,8 +104,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   }
 
   @Override
-  @NotNull @NonNls
-  public abstract String getName();
+  public abstract @NotNull @NonNls String getName();
 
   @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
@@ -114,14 +112,12 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   }
 
   @Override
-  @Nullable
-  public PsiFile getContainingFile() {
+  public @Nullable PsiFile getContainingFile() {
     return null;
   }
 
   @Override
-  @Nullable
-  public TextRange getTextRange() {
+  public @Nullable TextRange getTextRange() {
     return null;
   }
 
@@ -146,8 +142,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   }
 
   @Override
-  @Nullable
-  public String getText() {
+  public @Nullable String getText() {
     return null;
   }
 

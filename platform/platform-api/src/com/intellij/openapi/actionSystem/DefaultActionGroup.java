@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,12 +6,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 /**
@@ -33,11 +33,12 @@ public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance(DefaultActionGroup.class);
 
   private final List<AnAction> mySortedChildren = new ArrayList<>();
-  private final List<Pair<AnAction, Constraints>> myPairs = new ArrayList<>();
+  private final List<AnAction> myPendingActions = new ArrayList<>();
+  private final HashMap<AnAction, Constraints> myConstraints = new HashMap<>();
   private int myModificationStamp;
 
   public DefaultActionGroup() {
-    this(Presentation.NULL_STRING, false);
+    super();
   }
 
   /**
@@ -112,13 +113,16 @@ public class DefaultActionGroup extends ActionGroup {
     List<AnAction> uniqueActions = new ArrayList<>(actions.size());
     for (AnAction action : actions) {
       if (action == this) {
-        throw newThisGroupToItselfAddedException();
+        LOG.error(newThisGroupToItselfAddedException());
       }
-      if (action instanceof Separator || actionSet.add(action)) {
-        uniqueActions.add(action);
+      else if (action == null) {
+        LOG.error(nullActionAddedToTheGroupException());
+      }
+      else if (!(action instanceof Separator || actionSet.add(action))) {
+        LOG.error(newDuplicateActionAddedException(action));
       }
       else {
-        LOG.error(newDuplicateActionAddedException(action));
+        uniqueActions.add(action);
       }
     }
     mySortedChildren.addAll(uniqueActions);
@@ -127,6 +131,10 @@ public class DefaultActionGroup extends ActionGroup {
 
   private IllegalArgumentException newThisGroupToItselfAddedException() {
     return new IllegalArgumentException("Cannot add a group to itself: " + this + " (" + getTemplateText() + ")");
+  }
+
+  private IllegalArgumentException nullActionAddedToTheGroupException() {
+    return new IllegalArgumentException("Cannot add null action to the group " + this + " (" + getTemplateText() + ")");
   }
 
   private static IllegalArgumentException newDuplicateActionAddedException(@NotNull AnAction action) {
@@ -199,28 +207,26 @@ public class DefaultActionGroup extends ActionGroup {
       mySortedChildren.add(action);
     }
     else {
-      myPairs.add(Pair.create(action, constraint));
+      myPendingActions.add(action);
     }
+    myConstraints.put(action, constraint);
     addAllToSortedList(actionManager);
     incrementModificationStamp();
     return new ActionInGroup(this, action);
   }
 
   public synchronized boolean containsAction(@NotNull AnAction action) {
-    if (mySortedChildren.contains(action)) return true;
-    for (Pair<AnAction, Constraints> pair : myPairs) {
-      if (action.equals(pair.first)) return true;
-    }
-    return false;
+    return mySortedChildren.contains(action) || myPendingActions.contains(action);
   }
 
   private void addAllToSortedList(@NotNull ActionManager actionManager) {
     outer:
-    while (!myPairs.isEmpty()) {
-      for (int i = 0; i < myPairs.size(); i++) {
-        Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (addToSortedList(pair.first, pair.second, actionManager)) {
-          myPairs.remove(i);
+    while (!myPendingActions.isEmpty()) {
+      for (int i = 0; i < myPendingActions.size(); i++) {
+        AnAction pendingAction = myPendingActions.get(i);
+        Constraints constraints = myConstraints.get(pendingAction);
+        if (constraints != null && addToSortedList(pendingAction, constraints, actionManager)) {
+          myPendingActions.remove(i);
           continue outer;
         }
       }
@@ -272,11 +278,10 @@ public class DefaultActionGroup extends ActionGroup {
   }
 
   public final synchronized void remove(@NotNull AnAction action, @Nullable String id) {
-    boolean removed = mySortedChildren.remove(action);
-    removed = removed || mySortedChildren.removeIf(
-      o -> o instanceof ActionStubBase && ((ActionStubBase)o).getId().equals(id));
-    removed = removed || myPairs.removeIf(
-      o -> o.first.equals(action) || (o.first instanceof ActionStubBase && ((ActionStubBase)o.first).getId().equals(id)));
+    Predicate<AnAction> matchesAction = o -> o.equals(action) || (o instanceof ActionStubBase stub && stub.getId().equals(id));
+    boolean removed = mySortedChildren.removeIf(matchesAction);
+    removed = removed || myPendingActions.removeIf(matchesAction);
+    myConstraints.keySet().removeIf(matchesAction);
     if (removed) {
       incrementModificationStamp();
     }
@@ -287,7 +292,8 @@ public class DefaultActionGroup extends ActionGroup {
    */
   public final synchronized void removeAll() {
     mySortedChildren.clear();
-    myPairs.clear();
+    myPendingActions.clear();
+    myConstraints.clear();
     incrementModificationStamp();
   }
 
@@ -298,20 +304,28 @@ public class DefaultActionGroup extends ActionGroup {
     int index = mySortedChildren.indexOf(oldAction);
     if (index >= 0) {
       mySortedChildren.set(index, newAction);
+      replaceConstraint(oldAction, newAction);
       incrementModificationStamp();
       return true;
     }
     else {
-      for (int i = 0; i < myPairs.size(); i++) {
-        Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (pair.first.equals(newAction)) {
-          myPairs.set(i, Pair.create(newAction, pair.second));
-          incrementModificationStamp();
-          return true;
-        }
+      int indexOld = myPendingActions.indexOf(oldAction);
+      if (indexOld >= 0) {
+        myPendingActions.set(indexOld, newAction);
+        replaceConstraint(oldAction, newAction);
+        incrementModificationStamp();
+        return true;
       }
     }
     return false;
+  }
+
+  private void replaceConstraint(AnAction oldAction, AnAction newAction) {
+    Constraints constraint = myConstraints.get(oldAction);
+    if (constraint != null) {
+      myConstraints.put(newAction, constraint);
+      myConstraints.remove(oldAction);
+    }
   }
 
   /**
@@ -324,8 +338,11 @@ public class DefaultActionGroup extends ActionGroup {
     mySortedChildren.clear();
     mySortedChildren.addAll(other.mySortedChildren);
 
-    myPairs.clear();
-    myPairs.addAll(other.myPairs);
+    myPendingActions.clear();
+    myPendingActions.addAll(other.myPendingActions);
+
+    myConstraints.clear();
+    myConstraints.putAll(other.myConstraints);
     incrementModificationStamp();
   }
 
@@ -355,10 +372,7 @@ public class DefaultActionGroup extends ActionGroup {
         if (!(o instanceof ActionStubBase stub)) continue;
         try {
           AnAction action = actionManager.getAction(stub.getId());
-          if (action == null) {
-            LOG.error("Null action returned for stub in group " + this + " of class " + getClass() + ", id=" + stub.getId());
-          }
-          else {
+          if (action != null) {
             if (stubMap == null) stubMap = new HashMap<>();
             stubMap.put(stub, action);
           }
@@ -397,16 +411,17 @@ public class DefaultActionGroup extends ActionGroup {
         AnAction replacement = stubMap.get((ActionStubBase)action);
         if (replacement != null) {
           it.set(replacement);
+          replaceConstraint(action, replacement);
           replace(action, replacement);
         }
         else {
+          myConstraints.remove(action);
           it.remove();
         }
       }
     }
-    for (ListIterator<Pair<AnAction, Constraints>> it = myPairs.listIterator(); it.hasNext(); ) {
-      Pair<AnAction, Constraints> pair = it.next();
-      AnAction action = pair.first;
+    for (ListIterator<AnAction> it = myPendingActions.listIterator(); it.hasNext(); ) {
+      AnAction action = it.next();
       if (action == null) {
         LOG.error("Empty pair child: " + this + ", " + getClass() + "; index=" + it.previousIndex());
         it.remove();
@@ -414,10 +429,12 @@ public class DefaultActionGroup extends ActionGroup {
       else if (action instanceof ActionStubBase) {
         AnAction replacement = stubMap.get((ActionStubBase)action);
         if (replacement != null) {
-          it.set(Pair.create(replacement, pair.second));
+          it.set(replacement);
+          replaceConstraint(action, replacement);
           replace(action, replacement);
         }
         else {
+          myConstraints.remove(action);
           it.remove();
         }
       }
@@ -428,18 +445,18 @@ public class DefaultActionGroup extends ActionGroup {
    * Returns the number of contained children (including separators).
    */
   public final synchronized int getChildrenCount() {
-    return mySortedChildren.size() + myPairs.size();
+    return mySortedChildren.size() + myPendingActions.size();
   }
 
   public final synchronized AnAction @NotNull [] getChildActionsOrStubs() {
     // Mix sorted actions and pairs
     int sortedSize = mySortedChildren.size();
-    AnAction[] children = new AnAction[sortedSize + myPairs.size()];
+    AnAction[] children = new AnAction[sortedSize + myPendingActions.size()];
     for (int i = 0; i < sortedSize; i++) {
       children[i] = mySortedChildren.get(i);
     }
-    for (int i = 0; i < myPairs.size(); i++) {
-      children[i + sortedSize] = myPairs.get(i).first;
+    for (int i = 0; i < myPendingActions.size(); i++) {
+      children[i + sortedSize] = myPendingActions.get(i);
     }
     return children;
   }
@@ -475,6 +492,10 @@ public class DefaultActionGroup extends ActionGroup {
 
   public void addSeparator(@Nullable @NlsContexts.Separator String separatorText) {
     add(Separator.create(separatorText));
+  }
+
+  public synchronized @Nullable Constraints getConstraints(@NotNull AnAction action) {
+    return myConstraints.get(action);
   }
 
   /**

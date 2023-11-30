@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiImplUtil
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
@@ -30,11 +31,53 @@ interface BaseKotlinUastResolveProviderService {
 
     fun findAttributeValueExpression(uAnnotation: KotlinUAnnotation, arg: ValueArgument): UExpression?
 
-    fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): KtExpression?
+    fun findDefaultValueForAnnotationAttribute(ktCallElement: KtCallElement, name: String): UExpression?
+
+    fun findAttributeValueExpression(annotationClass: PsiClass, name: String): UExpression? {
+        val attributeValue = PsiImplUtil.findAttributeValue(annotationClass, name) ?: return null
+        return attributeValue.toUElement(UExpression::class.java) ?: UastEmptyExpression(null)
+    }
 
     fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression?
 
-    fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression?
+    fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
+        val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
+        // Skip _explicit_ return.
+        if (lastExpression is KtReturnExpression || lastExpression is KtThrowExpression) return null
+
+        /**
+         * This is not fully correct in the case of lambda with [Unit] return type and non-[Unit] return type of the last statement:
+         * ```kotlin
+         * fun foo() {
+         *     42.apply {
+         *         "str"
+         *     }
+         * }
+         * ```
+         * Because here [apply] has [Unit] return type, so we shouldn't have the implicit return here,
+         * but we will create it anyway.
+         * So effectively, this code will mean:
+         * ```kotlin
+         * fun foo() {
+         *     42.apply {
+         *         return@apply "str"
+         *     }
+         * }
+         * ```
+         * in terms of UAST what is wrong, but we agree with this behavior because such real type checks are too expensive.
+         * But it is correct in the case of [Unit] as a return type of the last statement
+         * ```kotlin
+         * fun foo() {
+         *     42.apply {
+         *         return@apply println(this)
+         *     }
+         * }
+         * ```
+         */
+        return KotlinUImplicitReturnExpression(parent).apply {
+            returnExpression = baseKotlinConverter.convertOrEmpty(lastExpression, this)
+        }
+    }
 
     fun getImplicitParameters(
         ktLambdaExpression: KtLambdaExpression,
@@ -96,6 +139,11 @@ interface BaseKotlinUastResolveProviderService {
         ktDeclaration: KtDeclaration,
         containingLightDeclaration: PsiModifierListOwner?,
         isForFake: Boolean = false,
+    ): PsiType?
+
+    fun getSuspendContinuationType(
+        suspendFunction: KtFunction,
+        containingLightDeclaration: PsiModifierListOwner?,
     ): PsiType?
 
     fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType?

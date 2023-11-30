@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -9,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,16 +36,15 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
   private final boolean runInReadAction;
   private final boolean failFastOnAcquireReadAction;
   private final ProgressIndicator progressIndicator;
-  @NotNull
-  private final List<? extends T> array;
-  @NotNull
-  private final Processor<? super T> processor;
+  private final @NotNull List<? extends T> array;
+  private final @NotNull Processor<? super T> processor;
   private final int lo;
   private final int hi;
   private final ApplierCompleter<T> next; // keeps track of right-hand-side tasks
   volatile Throwable throwable;
   private static final AtomicFieldUpdater<ApplierCompleter, Throwable> throwableUpdater = AtomicFieldUpdater.forFieldOfType(ApplierCompleter.class, Throwable.class);
 
+  private final CoroutineContext threadContext;
   // if not null, the read action has failed and this list contains unfinished subtasks
   private final Collection<ApplierCompleter<T>> failedSubTasks;
 
@@ -75,19 +76,22 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
     this.hi = hi;
     this.failedSubTasks = failedSubTasks;
     this.next = next;
+    this.threadContext = ThreadContext.currentThreadContext();
   }
 
   @Override
   public void compute() {
-    if (failFastOnAcquireReadAction) {
-      ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(this::execAndForkSubTasks));
-    }
-    else {
-      wrapInReadActionAndIndicator(this::execAndForkSubTasks);
+    try (AccessToken ignored = ThreadContext.installThreadContext(threadContext, true)) {
+      if (failFastOnAcquireReadAction) {
+        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(this::execAndForkSubTasks));
+      }
+      else {
+        wrapInReadActionAndIndicator(this::execAndForkSubTasks);
+      }
     }
   }
 
-  private void wrapInReadActionAndIndicator(@NotNull final Runnable process) {
+  private void wrapInReadActionAndIndicator(final @NotNull Runnable process) {
     Runnable toRun = runInReadAction ? () -> {
       if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(process)) {
         failedSubTasks.add(this);
@@ -105,11 +109,10 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
     }
   }
 
-  static class ComputationAbortedException extends RuntimeException {}
+  static final class ComputationAbortedException extends RuntimeException {}
   // executes tasks one by one and forks right halves if it takes too much time
   // returns the linked list of forked halves - they all need to be joined; null means all tasks have been executed, nothing was forked
-  @Nullable
-  private ApplierCompleter<T> execAndForkSubTasks() {
+  private @Nullable ApplierCompleter<T> execAndForkSubTasks() {
     int hi = this.hi;
     ApplierCompleter<T> right = null;
     Throwable throwable = null;
@@ -236,8 +239,7 @@ final class ApplierCompleter<T> extends CountedCompleter<Void> {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "("+lo+"-"+hi+")"+(getCompleter() == null ? "" : " parent: "+getCompleter());
   }
 }

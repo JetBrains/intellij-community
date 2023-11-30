@@ -24,5 +24,3 @@ inline fun f(b: Boolean, block: (Int) -> Unit) {
         block(2)
     }
 }
-
-// IGNORE_K2

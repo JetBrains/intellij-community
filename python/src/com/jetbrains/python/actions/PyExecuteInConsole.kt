@@ -64,7 +64,7 @@ private fun executeCodeInConsole(project: Project,
   if (!checkIfAvailableAndShowHint(editor)) return
   if (canUseExistingConsole) {
     if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
-      val (descriptor, listener) = getCustomDescriptor(project, editor)
+      val (descriptor, listener) = getCustomDescriptor(project, virtualFile)
       existingConsole = descriptor
       newConsoleListener = listener
     }
@@ -105,8 +105,7 @@ fun checkIfAvailableAndShowHint(editor: Editor?): Boolean {
   return true
 }
 
-fun getCustomDescriptor(project: Project, editor: Editor?): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
-  val virtualFile = (editor as? EditorImpl)?.virtualFile ?: return Pair(null, null)
+fun getCustomDescriptor(project: Project, virtualFile: VirtualFile): Pair<RunContentDescriptor?, PydevConsoleRunner.ConsoleListener?> {
   val executeCustomizer = PyExecuteConsoleCustomizer.instance
   when (executeCustomizer.getCustomDescriptorType(virtualFile)) {
     DescriptorType.NEW -> {

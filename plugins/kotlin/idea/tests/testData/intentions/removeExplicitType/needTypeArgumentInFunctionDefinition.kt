@@ -1,3 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
+/* KTIJ-25617 */
 // WITH_STDLIB
 fun foo(): <caret>Set<Int> = setOf()

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -273,7 +273,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     return true;
   }
 
-  protected static class OperationFailedException extends Exception {
+  protected static final class OperationFailedException extends Exception {
     public OperationFailedException(@NlsContexts.DialogMessage String message) {
       super(message);
     }

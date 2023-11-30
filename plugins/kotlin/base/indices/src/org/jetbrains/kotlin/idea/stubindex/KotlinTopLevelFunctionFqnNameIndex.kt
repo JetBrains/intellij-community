@@ -18,6 +18,7 @@ class KotlinTopLevelFunctionFqnNameIndex internal constructor() : StringStubInde
 
     override fun getKey(): StubIndexKey<String, KtNamedFunction> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelFunctionFqnNameIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtNamedFunction> {
         return Helper[key, project, scope]
     }

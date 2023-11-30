@@ -2,18 +2,18 @@
 package org.jetbrains.idea.devkit.build
 
 import com.intellij.compiler.impl.BuildTargetScopeProvider
-import com.intellij.openapi.application.runReadAction
+import com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration
 import com.intellij.openapi.compiler.CompileScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import org.jetbrains.idea.devkit.util.PsiUtil
+import com.intellij.util.PathUtil
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 
-class IntelliJModuleRepositoryBuildScopeProvider : BuildTargetScopeProvider() {
+internal class IntelliJModuleRepositoryBuildScopeProvider : BuildTargetScopeProvider() {
   override fun getBuildTargetScopes(baseScope: CompileScope,
                                     project: Project,
                                     forceBuild: Boolean): List<TargetTypeBuildScope> {
-    if (Registry.`is`("devkit.generate.intellij.module.repository") && runReadAction { PsiUtil.isIdeaProject(project) }) {
+    if (Registry.`is`("devkit.generate.intellij.module.repository") && isBuilderPluginEnabled(project)) {
       val scope = TargetTypeBuildScope.newBuilder()
         .setTypeId(TARGET_TYPE_ID)
         .setAllTargets(true)
@@ -24,7 +24,13 @@ class IntelliJModuleRepositoryBuildScopeProvider : BuildTargetScopeProvider() {
     }
     return emptyList()
   }
-  
+
+  private fun isBuilderPluginEnabled(project: Project): Boolean {
+    return BuildProcessCustomPluginsConfiguration.getInstance(project).customPluginsClasspath.any {
+      PathUtil.getFileName(it).startsWith("devkit-runtime-module-repository-jps-")
+    }
+  }
+
   companion object {
     /**
      * Must be equal to [com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants.TARGET_TYPE_ID].

@@ -35,11 +35,15 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
     <orderEntry type="library" name="caffeine" level="project" />
     <orderEntry type="library" name="microba" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
   </component>
 </module>

@@ -1,16 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.guess.GuessManager;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -25,9 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
-public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement
-  implements HighPriorityAction, IntentionActionWithFixAllOption {
-  @SafeFieldForPreview
+public class AddTypeCastFix extends PsiUpdateModCommandAction<PsiExpression> {
   private final PsiType myType;
   private final @IntentionName String myName;
 
@@ -48,35 +46,22 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement
 
   @Override
   @NotNull
-  public String getText() {
-    return myName;
-  }
-
-  @Override
-  @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("add.typecast.family");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    return myType.isValid() &&
-           !PsiTypes.voidType().equals(myType) &&
-           PsiTypesUtil.isDenotableType(myType, startElement) &&
-           PsiTypesUtil.allTypeParametersResolved(startElement, myType) &&
-           BaseIntentionAction.canModify(startElement);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression expr) {
+    if (!myType.isValid() ||
+        PsiTypes.voidType().equals(myType) ||
+        !PsiTypesUtil.isDenotableType(myType, expr) ||
+        !PsiTypesUtil.allTypeParametersResolved(expr, myType)) return null;
+    return Presentation.of(myName).withPriority(PriorityAction.Priority.HIGH).withFixAllOption(this);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    addTypeCast(project, (PsiExpression)startElement, myType);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiExpression expression, @NotNull ModPsiUpdater updater) {
+    addTypeCast(context.project(), expression, myType);
   }
 
   public static void addTypeCast(Project project, PsiExpression originalExpression, PsiType type) {
@@ -169,7 +154,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement
       else if (psiClass.findFieldByName(referenceName, true) == null) {
         continue;
       }
-      registrar.register(fixRange, new AddTypeCastFix(conjunct, qualifier, QuickFixBundle.message("fix.expression.role.qualifier")), null);
+      registrar.register(fixRange, new AddTypeCastFix(conjunct, qualifier, QuickFixBundle.message("fix.expression.role.qualifier")).asIntention(), null);
     }
   }
 }

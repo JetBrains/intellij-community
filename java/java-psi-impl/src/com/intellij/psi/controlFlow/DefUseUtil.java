@@ -31,10 +31,13 @@ public final class DefUseUtil {
     private final PsiElement myContext;
     private final boolean myIsRead;
 
-    public Info(@NotNull PsiVariable variable, @NotNull PsiElement context, boolean read) {
+    private final boolean myWriteOutsideDeclaration;
+
+    public Info(@NotNull PsiVariable variable, @NotNull PsiElement context, boolean read, boolean writeOutsideDeclaration) {
       myVariable = variable;
       myContext = context;
       myIsRead = read;
+      myWriteOutsideDeclaration = writeOutsideDeclaration;
     }
 
     @NotNull
@@ -49,6 +52,13 @@ public final class DefUseUtil {
 
     public boolean isRead() {
       return myIsRead;
+    }
+
+    /**
+     * @return true if this variable was written at least once (except declaration).
+     */
+    public boolean isWriteOutsideDeclaration() {
+      return myWriteOutsideDeclaration;
     }
   }
 
@@ -143,6 +153,7 @@ public final class DefUseUtil {
     }
 
     Set<PsiVariable> assignedVariables = new HashSet<>();
+    Set<PsiVariable> assignedSeveralTimes = new HashSet<>();
     Set<PsiVariable> readVariables = new HashSet<>();
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);
@@ -153,7 +164,9 @@ public final class DefUseUtil {
         context = PsiTreeUtil.getParentOfType(context, PsiStatement.class, false);
         PsiVariable psiVariable = writeInstruction.variable;
         if (context != null && !(context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null)) {
-          assignedVariables.add(psiVariable);
+          if (!assignedVariables.add(psiVariable)) {
+            assignedSeveralTimes.add(psiVariable);
+          }
         }
       }
       else if (instruction instanceof ReadVariableInstruction) {
@@ -241,11 +254,11 @@ public final class DefUseUtil {
           if (context != null) {
             if (context instanceof PsiDeclarationStatement && psiVariable.getInitializer() == null) {
               if (!assignedVariables.contains(psiVariable)) {
-                unusedDefs.add(new Info(psiVariable, context, false));
+                unusedDefs.add(new Info(psiVariable, context, false, assignedSeveralTimes.contains(psiVariable)));
               }
             }
             else {
-              unusedDefs.add(new Info(psiVariable, context, readVariables.contains(psiVariable)));
+              unusedDefs.add(new Info(psiVariable, context, readVariables.contains(psiVariable), assignedSeveralTimes.contains(psiVariable)));
             }
           }
         }

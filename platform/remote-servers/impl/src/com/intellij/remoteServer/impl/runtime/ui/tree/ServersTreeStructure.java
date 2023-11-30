@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import com.intellij.execution.Executor;
@@ -125,7 +125,7 @@ public final class ServersTreeStructure {
         else {
           icon = switch (connection.getStatus()) {
             case CONNECTED -> new BadgeIconSupplier(server.getType().getIcon()).getLiveIndicatorIcon();
-            case DISCONNECTED -> new LayeredIcon(server.getType().getIcon(), AllIcons.RunConfigurations.InvalidConfigurationLayer);
+            case DISCONNECTED -> LayeredIcon.layeredIcon(new Icon[]{server.getType().getIcon(), AllIcons.RunConfigurations.InvalidConfigurationLayer});
             default -> server.getType().getIcon();
           };
         }

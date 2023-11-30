@@ -1,19 +1,24 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
+import com.intellij.java.workspace.entities.asJavaResourceRoot
+import com.intellij.java.workspace.entities.asJavaSourceRoot
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.CachedValueImpl
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.isEqualOrParentOf
-import com.intellij.workspaceModel.ide.toVirtualFileUrl
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaResourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
@@ -53,15 +58,16 @@ internal class ModifiableContentEntryBridge(
     }
 
     val serializer: JpsModuleSourceRootPropertiesSerializer<P> = SourceRootPropertiesHelper.findSerializer(type)
-                                                                 ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
+                                                                 ?: error(
+                                                                   "Module source root type $type is not registered as JpsModelSerializerExtension")
 
     val contentRootEntity = currentContentEntry.value.entity
-    val sourceRootEntity = diff.addSourceRootEntity(
-      contentRoot = contentRootEntity,
-      url = sourceFolderUrl,
-      rootType = serializer.typeId,
-      source = folderEntitySource
-    )
+    val sourceRootEntity = diff addEntity SourceRootEntity(url = sourceFolderUrl,
+                                                           rootType = serializer.typeId,
+                                                           entitySource = folderEntitySource
+    ) {
+      contentRoot = contentRootEntity
+    }
 
     SourceRootPropertiesHelper.addPropertiesEntity(diff, sourceRootEntity, properties, serializer)
 

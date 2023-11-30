@@ -22,6 +22,7 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.Result
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.remote.PyProjectSynchronizer
 import com.jetbrains.python.remote.PyProjectSynchronizerProvider
 import com.jetbrains.python.remote.PythonSshInterpreterManager
@@ -29,8 +30,10 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.associatedModulePath
-import com.jetbrains.python.sdk.targetEnvConfiguration
 import com.jetbrains.python.sdk.sdkSeemsValid
+import com.jetbrains.python.sdk.targetEnvConfiguration
+import com.jetbrains.python.statistics.executionType
+import com.jetbrains.python.statistics.interpreterType
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.JComboBox
@@ -123,6 +126,11 @@ class PyAddExistingSdkPanel(project: Project?,
   private fun needAssociateConfigurationWithModule(configuration: TargetEnvironmentConfiguration?): Boolean {
     if (configuration == null) return false
     return PythonInterpreterTargetEnvironmentFactory.by(configuration)?.needAssociateWithModule() ?: false
+  }
+
+  override fun getStatisticInfo(): InterpreterStatisticsInfo? {
+    val sdk = sdk ?: return null
+    return InterpreterStatisticsInfo(sdk.interpreterType, sdk.executionType, false, false, true)
   }
 
   override fun validateAll(): List<ValidationInfo> =

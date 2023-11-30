@@ -451,9 +451,9 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    class A:
                        pass
 
-                   assert isinstance(A(), <error descr="'Generic' cannot be used with instance and class checks">Generic</error>)
+                   assert isinstance(A(), Generic)
                    B = Generic
-                   assert issubclass(A, <error descr="'Generic' cannot be used with instance and class checks">B</error>)
+                   assert issubclass(A, B)
 
                    assert isinstance(A(), <error descr="'Generic' cannot be used with instance and class checks">Generic[T]</error>)
                    assert issubclass(A, <error descr="'Generic' cannot be used with instance and class checks">B[T]</error>)
@@ -1312,6 +1312,88 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                        def m(self: C):
                            obj: <warning descr="Cannot use 'Self' if 'self' parameter is not 'Self' annotated">Self</warning> = None
                    """);
+  }
+
+  // PY-36317
+  public void testDictSubscriptionNotReportedAsParametrizedGeneric() {
+    doTestByText("""
+                   keys_and_types = {
+                       'comment': (str, type(None)),
+                       'from_budget': (bool, type(None)),
+                       'to_member': (int, type(None)),
+                       'survey_request': (int, type(None)),
+                   }
+                                      
+                   def type_is_valid(test_key, test_value):
+                       return isinstance(test_value, keys_and_types[test_key])
+                   """);
+  }
+
+  // PY-36317
+  public void testTupleSubscriptionNotReportedAsParametrizedGeneric() {
+    doTestByText("""
+                   tuple_of_types = (str, bool, int)
+                   
+                   def my_is_instance(value, index: int) -> bool:
+                       return isinstance(value, tuple_of_types[index])
+                   """);
+  }
+
+  // PY-36317
+  public void testPlainDictTypeSubscriptionNotReportedAsParametrizedGeneric() {
+    doTestByText("""
+                   def foo(d: dict, s: dict):
+                       for key in s.keys():
+                           if not isinstance(d[key], s[key]):
+                               raise TypeError
+                   """);
+  }
+
+  // PY-53105
+  public void testNoVariadicGenericErrorInClassDeclaration() {
+    doTestByText("""
+                   from typing import Generic, TypeVarTuple
+
+                   Shape = TypeVarTuple('Shape')
+
+
+                   class Array(Generic[*Shape]):
+                       ...
+                   """);
+  }
+
+  // PY-53105
+  public void testTypeVarTupleNameAsLiteral() {
+    doTestByText("""
+                   from typing import TypeVarTuple
+
+                   name = 'Ts'
+                   Ts = TypeVarTuple(<warning descr="'TypeVarTuple()' expects a string literal as first argument">name</warning>)
+                   Ts1 = TypeVarTuple('Ts1')""");
+  }
+
+  // PY-53105
+  public void testTypeVarTupleNameAndTargetNameEquality() {
+    doTestByText("""
+                   from typing import TypeVarTuple
+
+                   Ts = TypeVarTuple(<warning descr="The argument to 'TypeVarTuple()' must be a string equal to the variable name to which it is assigned">'T'</warning>)
+                   Ts1 = TypeVarTuple('Ts1')""");
+  }
+
+  // PY-53105
+  public void testTypeVarTupleMoreThanOneUnpacking() {
+    doTestByText("""
+                    from typing import TypeVarTuple
+                    from typing import Generic
+                    
+                    Ts1 = TypeVarTuple("Ts1")
+                    Ts2 = TypeVarTuple("Ts2")
+                    
+                    
+                    class Array(Generic[*Ts1, <error descr="Parameters to generic cannot contain more than one unpacking">*Ts2</error>]):
+                        ...
+                    """);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema;
 
 import com.intellij.json.JsonBundle;
@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 
 @Tag("SchemaInfo")
 public final class UserDefinedJsonSchemaConfiguration {
-  private final static Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
+  private static final Comparator<Item> ITEM_COMPARATOR = (o1, o2) -> {
     if (o1.isPattern() != o2.isPattern()) return o1.isPattern() ? -1 : 1;
     if (o1.isDirectory() != o2.isDirectory()) return o1.isDirectory() ? -1 : 1;
     return o1.path.compareToIgnoreCase(o2.path);
@@ -130,8 +130,7 @@ public final class UserDefinedJsonSchemaConfiguration {
     myCalculatedPatterns.drop();
   }
 
-  @NotNull
-  public List<PairProcessor<Project, VirtualFile>> getCalculatedPatterns() {
+  public @NotNull List<PairProcessor<Project, VirtualFile>> getCalculatedPatterns() {
     return myCalculatedPatterns.getValue();
   }
 
@@ -163,8 +162,7 @@ public final class UserDefinedJsonSchemaConfiguration {
     return result;
   }
 
-  @Nullable
-  private static VirtualFile getRelativeFile(@NotNull final Project project, @NotNull final Item pattern) {
+  private static @Nullable VirtualFile getRelativeFile(final @NotNull Project project, final @NotNull Item pattern) {
     if (project.getBasePath() == null) {
       return null;
     }
@@ -179,8 +177,7 @@ public final class UserDefinedJsonSchemaConfiguration {
     }
   }
 
-  @NotNull
-  private static List<String> pathToPartsList(@NotNull String path) {
+  private static @NotNull List<String> pathToPartsList(@NotNull String path) {
     return ContainerUtil.filter(StringUtil.split(path, "/"), s -> !".".equals(s));
   }
 
@@ -214,7 +211,7 @@ public final class UserDefinedJsonSchemaConfiguration {
   }
 
 
-  public static class Item {
+  public static final class Item {
     public String path;
     public JsonMappingKind mappingKind = JsonMappingKind.File;
 
@@ -231,8 +228,7 @@ public final class UserDefinedJsonSchemaConfiguration {
       this.mappingKind = isPattern ? JsonMappingKind.Pattern : isDirectory ? JsonMappingKind.Directory : JsonMappingKind.File;
     }
 
-    @NotNull
-    private static String normalizePath(@NotNull String path) {
+    private static @NotNull String normalizePath(@NotNull String path) {
       if (preserveSlashes(path)) return path;
       return StringUtil.trimEnd(FileUtilRt.toSystemDependentName(path), File.separatorChar);
     }
@@ -245,8 +241,7 @@ public final class UserDefinedJsonSchemaConfiguration {
              || JsonFileResolver.isTempOrMockUrl(path);
     }
 
-    @NotNull
-    public static String neutralizePath(@NotNull String path) {
+    public static @NotNull String neutralizePath(@NotNull String path) {
       if (preserveSlashes(path)) return path;
       return StringUtil.trimEnd(FileUtilRt.toSystemIndependentName(path), '/');
     }

@@ -216,11 +216,6 @@ class PythonOnboardingTourLesson :
     }
   }
 
-  private fun getCallBackActionId(@Suppress("SameParameterValue") actionId: String): Int {
-    val action = getActionById(actionId)
-    return LearningUiManager.addCallback { invokeActionForFocusContext(action) }
-  }
-
   private fun LessonContext.debugTasks() {
     clearBreakpoints()
 
@@ -249,6 +244,11 @@ class PythonOnboardingTourLesson :
       PythonLessonsBundle.message("python.onboarding.start.debugging", icon(AllIcons.Actions.StartDebugger))
     }
 
+    lateinit var debuggerGotItTaskId: TaskContext.TaskId
+    task {
+      debuggerGotItTaskId = taskId
+    }
+
     highlightDebugActionsToolbar()
 
     task {
@@ -257,7 +257,7 @@ class PythonOnboardingTourLesson :
                 PythonLessonsBundle.message("python.onboarding.balloon.about.debug.panel",
                                             strong(UIBundle.message("tool.window.name.debug")),
                                             strong(LessonsBundle.message("debug.workflow.lesson.name"))))
-      restoreIfModified(sample)
+      restoreByUi(debuggerGotItTaskId)
     }
 
     highlightButtonById("Stop", highlightInside = false, usePulsation = false)

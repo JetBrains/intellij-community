@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -42,8 +42,7 @@ public final class SceneBuilderInfo {
     return false;
   }
 
-  @NotNull
-  public static SceneBuilderInfo get(Project project, boolean choosePathIfEmpty) {
+  public static @NotNull SceneBuilderInfo get(Project project, boolean choosePathIfEmpty) {
     JavaFxSettings settings = JavaFxSettings.getInstance();
     String pathToSceneBuilder = settings.getPathToSceneBuilder();
 
@@ -100,8 +99,7 @@ public final class SceneBuilderInfo {
     return new SceneBuilderInfo(pathToSceneBuilder, sceneBuilderLibsFile == null ? null : sceneBuilderLibsFile.getAbsolutePath());
   }
 
-  @Nullable
-  private static VirtualFile getPredefinedPath() {
+  private static @Nullable VirtualFile getPredefinedPath() {
     String path = null;
     if (SystemInfo.isWindows) {
       List<String> suspiciousPaths = new ArrayList<>();

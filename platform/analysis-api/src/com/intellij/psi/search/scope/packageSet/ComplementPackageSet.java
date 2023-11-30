@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.project.Project;
@@ -9,9 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public class ComplementPackageSet extends PackageSetBase {
-  @NotNull
-  private final PackageSet myComplementarySet;
+public final class ComplementPackageSet extends PackageSetBase {
+  private final @NotNull PackageSet myComplementarySet;
 
   public ComplementPackageSet(@NotNull PackageSet set) {
     myComplementarySet = set;
@@ -24,14 +23,12 @@ public class ComplementPackageSet extends PackageSetBase {
   }
 
   @Override
-  @NotNull
-  public PackageSet createCopy() {
+  public @NotNull PackageSet createCopy() {
     return new ComplementPackageSet(myComplementarySet.createCopy());
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     StringBuilder buf = new StringBuilder();
     boolean needParen = myComplementarySet.getNodePriority() > getNodePriority();
     buf.append('!');
@@ -57,8 +54,7 @@ public class ComplementPackageSet extends PackageSetBase {
     return predicate.test(myComplementarySet);
   }
 
-  @NotNull
-  public PackageSet getComplementarySet() {
+  public @NotNull PackageSet getComplementarySet() {
     return myComplementarySet;
   }
 }

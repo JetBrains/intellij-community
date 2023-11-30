@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.tasks.actions.SwitchTaskAction;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
@@ -61,7 +62,7 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     assertTrue(defaultTask.isDefault());
     assertEquals(defaultTask.getCreated(), defaultTask.getUpdated());
 
-    toolbar.updateActionsImmediately();
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync());
     Presentation presentation = doTest(combo, toolbar);
     assertFalse(presentation.isVisible());
     assertNull(presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY));
@@ -83,7 +84,7 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     assertTrue(presentation.isVisible());
     assertTrue(presentation.isEnabled());
 
-    toolbar.updateActionsImmediately();
+    PlatformTestUtil.waitForFuture(toolbar.updateActionsAsync());
     JComponent component = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     assertNotNull(component);
     assertTrue(component.isVisible());

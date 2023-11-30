@@ -1,36 +1,26 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Batkovich
  */
-public class SwapIfStatementsIntentionAction extends PsiElementBaseIntentionAction {
+public class SwapIfStatementsIntentionAction extends PsiUpdateModCommandAction<PsiKeyword> {
+  public SwapIfStatementsIntentionAction() {
+    super(PsiKeyword.class);
+  }
+  
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-    final PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiKeyword keyword, @NotNull ModPsiUpdater updater) {
+    final PsiIfStatement ifStatement = (PsiIfStatement)keyword.getParent();
     final PsiIfStatement nestedIfStatement = (PsiIfStatement) ifStatement.getElseBranch();
     assert nestedIfStatement != null;
 
@@ -55,27 +45,21 @@ public class SwapIfStatementsIntentionAction extends PsiElementBaseIntentionActi
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-    if (!(element instanceof PsiKeyword) || !PsiKeyword.ELSE.equals(element.getText())) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiKeyword element) {
+    if (!PsiKeyword.ELSE.equals(element.getText())) {
+      return null;
     }
     final PsiElement parent = element.getParent();
-    return isWellFormedIf(parent) && isWellFormedIf(((PsiIfStatement)parent).getElseBranch());
+    return isWellFormedIf(parent) && isWellFormedIf(((PsiIfStatement)parent).getElseBranch()) ? Presentation.of(getFamilyName()) : null;
   }
-
+  
   private static boolean isWellFormedIf(@Nullable PsiElement e) {
-    return e instanceof PsiIfStatement && ((PsiIfStatement)e).getCondition() != null && ((PsiIfStatement)e).getThenBranch() != null;
+    return e instanceof PsiIfStatement ifStatement && ifStatement.getCondition() != null && ifStatement.getThenBranch() != null;
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
     return JavaBundle.message("intention.family.swap.if.statements");
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return getFamilyName();
   }
 }

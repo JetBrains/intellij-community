@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.PluginException;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-class RangesAssert {
+final class RangesAssert {
   private static final Logger LOG = Logger.getInstance(RangesAssert.class);
 
   public void assertInvalidRanges(final int startOffset, final int newEndOffset, FormattingDocumentModel model, String message) {
@@ -51,7 +51,7 @@ class RangesAssert {
       final List<PsiFile> roots = file.getViewProvider().getAllFiles();
       for (PsiFile root : roots) {
         buffer.append("Root ");
-        DebugUtil.treeToBuffer(buffer, root.getNode(), 0, true, true, true, true);
+        DebugUtil.treeToBuffer(buffer, root.getNode(), 0, true, true, true, true, true);
       }
       buffer.append('\n');
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
@@ -98,7 +98,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       : null;
   }
 
-  private class MyAccessibleContext extends JPanel.AccessibleJPanel {
+  private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
     @Override
     public String getAccessibleName() {
       LayoutManager lm = getLayout();
@@ -123,7 +123,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
   }
 
-  public static class ItemMatchers {
+  public static final class ItemMatchers {
     @Nullable public final Matcher nameMatcher;
     @Nullable public final Matcher locationMatcher;
 

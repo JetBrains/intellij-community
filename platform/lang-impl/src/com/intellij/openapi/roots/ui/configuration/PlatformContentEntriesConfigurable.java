@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,7 +20,7 @@ import java.awt.*;
 import java.util.List;
 
 
-public class PlatformContentEntriesConfigurable implements Configurable {
+public final class PlatformContentEntriesConfigurable implements Configurable {
   private final Module myModule;
   private final JpsModuleSourceRootType<?>[] myRootTypes;
   private final JPanel myTopPanel = new JPanel(new BorderLayout());

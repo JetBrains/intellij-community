@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.application.ConfigBackup.Companion.MAX_BACKUPS_NUMBER
+import com.intellij.util.io.write
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import java.io.File
 import java.nio.file.Path
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -14,8 +14,7 @@ import kotlin.io.path.*
 private const val CONFIG_PREFIX = "IntelliJIdea2020.3"
 
 class ConfigBackupTest : ConfigImportHelperBaseTest() {
-
-  private lateinit var dirToBackup: File
+  private lateinit var dirToBackup: Path
   private lateinit var configDir: Path
   private lateinit var backupDir: Path
 
@@ -122,23 +121,16 @@ class ConfigBackupTest : ConfigImportHelperBaseTest() {
     ConfigBackup(configDir).moveToBackup(dirToBackup)
   }
 
-  private fun createBackupDirForDate(date1: String): Path {
-    return backupDir.resolve(date1).createDirectories()
-  }
+  private fun createBackupDirForDate(date1: String): Path = backupDir.resolve(date1).createDirectories()
 
-  private fun createConfigDirToBackup(): File {
-    val configDir = localTempDir.newDirectory("temp-settings")
-    val optionsDir = configDir.resolve("options")
-    assertTrue("Couldn't create $optionsDir", optionsDir.mkdir())
-    val configFile = optionsDir.resolve("config.xml")
-    configFile.writeText("config data")
+  private fun createConfigDirToBackup(): Path {
+    val configDir = localTempDir.newDirectoryPath("temp-settings")
+    configDir.resolve("options/config.xml").write("config data")
     return configDir
   }
 
-  private fun getDateFormattedForBackupDir(dateTime: LocalDateTime): String {
-    val format = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm")
-    return dateTime.format(format)
-  }
+  private fun getDateFormattedForBackupDir(dateTime: LocalDateTime): String =
+    dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm"))
 
   private fun Path.getSingleChild(): Path {
     val children = this.listDirectoryEntries()

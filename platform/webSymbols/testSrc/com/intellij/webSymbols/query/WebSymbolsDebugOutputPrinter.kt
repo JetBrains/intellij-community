@@ -20,6 +20,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
       is WebSymbolNameSegment -> builder.printSegment(level, value)
       is WebSymbolApiStatus -> builder.printApiStatus(value)
+      is Set<*> -> builder.printSet(value)
       else -> super.printValueImpl(builder, level, value)
     }
 
@@ -42,6 +43,9 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "source", item.symbol)
     }
 
+  private fun StringBuilder.printSet(set: Set<*>): StringBuilder {
+    return append(set.toString())
+  }
 
   private fun StringBuilder.printSymbol(topLevel: Int, source: WebSymbol): StringBuilder {
     if (parents.contains(source)) {
@@ -109,6 +113,9 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
   private fun StringBuilder.printApiStatus(apiStatus: WebSymbolApiStatus): StringBuilder =
     when (apiStatus) {
       is WebSymbolApiStatus.Deprecated -> append("deprecated")
+        .applyIf(apiStatus.since != null) { append(" in ").append(apiStatus.since) }
+        .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
+      is WebSymbolApiStatus.Obsolete -> append("obsolete")
         .applyIf(apiStatus.since != null) { append(" in ").append(apiStatus.since) }
         .applyIf(apiStatus.message != null) { append(" (").append(apiStatus.message).append(")") }
       is WebSymbolApiStatus.Experimental -> append("experimental")

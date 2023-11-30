@@ -60,7 +60,8 @@ public final class TextMateFileType extends LanguageFileType implements FileType
   private static boolean isTypeShouldBeReplacedByTextMateType(@Nullable FileType registeredType) {
     return registeredType == UnknownFileType.INSTANCE
            || registeredType == INSTANCE
-           || registeredType == PlainTextFileType.INSTANCE;
+           || registeredType == PlainTextFileType.INSTANCE
+           || registeredType instanceof TextMateBackedFileType;
   }
 
   @Override
@@ -68,7 +69,7 @@ public final class TextMateFileType extends LanguageFileType implements FileType
     return true;
   }
 
-  private static class TextMateFileDetector implements FileTypeRegistry.FileTypeDetector {
+  static final class TextMateFileDetector implements FileTypeRegistry.FileTypeDetector {
     @Override
     public @Nullable FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
       if (file.isDirectory()) {

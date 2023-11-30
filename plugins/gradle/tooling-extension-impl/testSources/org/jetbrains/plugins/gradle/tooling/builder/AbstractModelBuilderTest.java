@@ -1,16 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.amazon.ion.IonType;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
@@ -27,8 +29,8 @@ import org.gradle.util.GradleVersion;
 import org.hamcrest.CustomMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.model.BuildScriptClasspathModel;
-import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider;
 import org.jetbrains.plugins.gradle.model.ClasspathEntryModel;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
@@ -38,9 +40,9 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
@@ -83,13 +85,14 @@ public abstract class AbstractModelBuilderTest {
 
   @Rule public TestName name = new TestName();
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
+  @ClassRule public static final ApplicationRule ourApplicationRule = new ApplicationRule();
 
   public AbstractModelBuilderTest(@NotNull String gradleVersion) {
     this.gradleVersion = gradleVersion;
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-  public static Collection<String[]> data() {
+  public static Iterable<?> data() {
     return Arrays.asList(VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS);
   }
 
@@ -138,20 +141,19 @@ public abstract class AbstractModelBuilderTest {
     final URI distributionUri = new DistributionLocator().getDistributionFor(_gradleVersion);
     connector.useDistribution(distributionUri);
     connector.forProjectDirectory(testDir);
-    int daemonMaxIdleTime = 10;
+    int daemonMaxIdleTimeSeconds = 5;
     try {
-      daemonMaxIdleTime = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "10"));
+      daemonMaxIdleTimeSeconds = Integer.parseInt(System.getProperty("gradleDaemonMaxIdleTime", "5"));
     }
     catch (NumberFormatException ignore) {
     }
 
-    ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTime, TimeUnit.SECONDS);
+    ((DefaultGradleConnector)connector).daemonMaxIdleTime(daemonMaxIdleTimeSeconds, TimeUnit.SECONDS);
 
     try (ProjectConnection connection = connector.connect()) {
-      boolean isCompositeBuildsSupported = _gradleVersion.compareTo(GradleVersion.version("3.1")) >= 0;
-      final ProjectImportAction projectImportAction = new ProjectImportAction(false, isCompositeBuildsSupported);
-      projectImportAction.addProjectImportModelProvider(new ClassSetImportModelProvider(getModels(),
-                                                                                        Collections.<Class<?>>singleton(IdeaProject.class)));
+      final ProjectImportAction projectImportAction = new ProjectImportAction(false);
+      projectImportAction.addProjectImportModelProviders(GradleClassProjectModelProvider.createAll(getModels()));
+      projectImportAction.addProjectImportModelProviders(GradleClassBuildModelProvider.createAll(IdeaProject.class));
       BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
       GradleExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false);
       GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings);
@@ -168,9 +170,8 @@ public abstract class AbstractModelBuilderTest {
   }
 
   public static void assumeGradleCompatibleWithJava(@NotNull String gradleVersion) {
-    assumeTrue("Gradle version [" + gradleVersion + "] is incompatible with Java version [" + JavaVersion.current() + "]",
-               GradleJvmSupportMatrices.isSupported(GradleVersion.version(gradleVersion),
-                                                      JavaVersion.current()));
+    assumeTrue("Gradle [" + gradleVersion + "] cannot be execution on Java [" + JavaVersion.current() + "]",
+               GradleJvmSupportMatrix.isSupported(GradleVersion.version(gradleVersion), JavaVersion.current()));
 
     if (GradleVersion.version(gradleVersion).getBaseVersion().compareTo(GradleVersion.version("4.8")) < 0) {
       assumeThat(JavaVersion.current().feature, new CustomMatcher<Integer>("Java version older than 9") {
@@ -184,7 +185,7 @@ public abstract class AbstractModelBuilderTest {
 
   @NotNull
   public static Set<Class<?>> getToolingExtensionClasses() {
-    return ContainerUtil.immutableSet(
+    return new HashSet<>(Arrays.asList(
       // external-system-rt.jar
       ExternalSystemSourceType.class,
       // gradle-tooling-extension-api jar
@@ -199,7 +200,7 @@ public abstract class AbstractModelBuilderTest {
       IonType.class,
       // util-rt jat
       SystemInfoRt.class // !!! do not replace it with SystemInfo.class from util module
-    );
+    ));
   }
 
   @After
@@ -216,13 +217,10 @@ public abstract class AbstractModelBuilderTest {
     final DomainObjectSet<? extends IdeaModule> ideaModules = allModels.getModel(IdeaProject.class).getModules();
 
     final String filterKey = "to_filter";
-    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, new Function<IdeaModule, Pair<String, T>>() {
-      @Override
-      public Pair<String, T> fun(IdeaModule module) {
-        final T value = allModels.getModel(module, aClass);
-        final String key = value != null ? module.getGradleProject().getPath() : filterKey;
-        return Pair.create(key, value);
-      }
+    final Map<String, T> map = ContainerUtil.map2Map(ideaModules, module -> {
+      final T value = allModels.getModel(module, aClass);
+      final String key = value != null ? module.getGradleProject().getPath() : filterKey;
+      return Pair.create(key, value);
     });
 
     map.remove(filterKey);

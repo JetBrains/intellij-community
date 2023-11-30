@@ -25,28 +25,28 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.reformat.on.type"))
           .bindSelected(
             getter = { settings.state.reformatTablesOnType },
-            setter = { settings.update { state -> state.copy(reformatTablesOnType = it) } }
+            setter = { settings.state.reformatTablesOnType = it }
           )
       }
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.insert.html.line.break"))
           .bindSelected(
             getter = { settings.state.insertHtmlLineBreakInsideTables },
-            setter = { settings.update { state -> state.copy(insertHtmlLineBreakInsideTables = it) } }
+            setter = { settings.state.insertHtmlLineBreakInsideTables = it }
           )
       }
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.insert.new.row"))
           .bindSelected(
             getter = { settings.state.insertNewTableRowOnShiftEnter },
-            setter = { settings.update { state -> state.copy(insertNewTableRowOnShiftEnter = it) } }
+            setter = { settings.state.insertNewTableRowOnShiftEnter = it }
           )
       }
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.tables.use.cell.navigation"))
           .bindSelected(
             getter = { settings.state.useTableCellNavigation },
-            setter = { settings.update { state -> state.copy(useTableCellNavigation = it) } }
+            setter = { settings.state.useTableCellNavigation = it }
           )
       }
     }
@@ -55,21 +55,21 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.adjust.indentation.on.type"))
           .bindSelected(
             getter = { settings.state.adjustListIndentation },
-            setter = { settings.update { state -> state.copy(adjustListIndentation = it) } }
+            setter = { settings.state.adjustListIndentation = it }
           )
       }
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.smart.enter.backspace"))
           .bindSelected(
             getter = { settings.state.smartEnterAndBackspace },
-            setter = { settings.update { state -> state.copy(smartEnterAndBackspace = it) } }
+            setter = { settings.state.smartEnterAndBackspace = it }
           )
       }
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.lists.renumber.lists"))
           .bindSelected(
             getter = { settings.state.renumberListsOnType },
-            setter = { settings.update { state -> state.copy(renumberListsOnType = it) } }
+            setter = { settings.state.renumberListsOnType = it }
           )
       }
     }
@@ -77,8 +77,8 @@ internal class MarkdownSmartKeysConfigurable: UiDslUnnamedConfigurable.Simple(),
       row {
         checkBox(MarkdownBundle.message("markdown.smart.keys.configurable.other.file.drop"))
           .bindSelected(
-            getter = { settings.state.enableFilesDrop },
-            setter = { settings.update { state -> state.copy(enableFilesDrop = it) } }
+            getter = { settings.state.enableFileDrop },
+            setter = { settings.state.enableFileDrop = it }
           )
       }
     }

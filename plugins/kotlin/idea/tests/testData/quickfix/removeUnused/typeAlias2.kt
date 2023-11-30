@@ -7,3 +7,5 @@ enum class MyEnum {
 }
 
 typealias Other<caret> = MyEnum
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SafeDeleteFix

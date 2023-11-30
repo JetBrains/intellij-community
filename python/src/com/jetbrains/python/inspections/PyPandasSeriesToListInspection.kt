@@ -11,6 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyLiteralStringType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -40,7 +41,8 @@ class PyPandasSeriesToListInspection : PyInspection() {
      */
     private fun hasSeriesType(expression: PyExpression, context: TypeEvalContext): Boolean {
       if (expression is PySubscriptionExpression) {
-        return context.getType(expression.indexExpression).isPyClassWithName("str")
+        val type = context.getType(expression.indexExpression)
+        return type.isPyClassWithName("str") || type is PyLiteralStringType
       }
 
       val expressionType = context.getType(expression)

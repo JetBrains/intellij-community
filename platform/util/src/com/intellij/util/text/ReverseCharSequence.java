@@ -3,7 +3,7 @@ package com.intellij.util.text;
 
 import org.jetbrains.annotations.NotNull;
 
-public class ReverseCharSequence implements CharSequence{
+public final class ReverseCharSequence implements CharSequence{
   private final CharSequence mySequence;
 
   public ReverseCharSequence(@NotNull CharSequence sequence) {

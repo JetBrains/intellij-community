@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -95,7 +97,7 @@ public abstract class FileBasedIndex {
   public abstract VirtualFile findFileById(Project project, int id);
 
   public void requestRebuild(@NotNull ID<?, ?> indexId) {
-    requestRebuild(indexId, new Throwable());
+    requestRebuild(indexId, new RebuildRequestedByUserAction(PluginUtil.getInstance().findPluginId(new Throwable())));
   }
 
   @NotNull
@@ -186,6 +188,10 @@ public abstract class FileBasedIndex {
    */
   public abstract void requestRebuild(@NotNull ID<?, ?> indexId, @NotNull Throwable throwable);
 
+  /**
+   * @deprecated use {@link #requestRebuild(ID)} or {@link #requestRebuild(ID, Throwable)}
+   */
+  @Deprecated
   public abstract <K> void scheduleRebuild(@NotNull ID<K, ?> indexId, @NotNull Throwable e);
 
   public abstract void requestReindex(@NotNull VirtualFile file);
@@ -275,18 +281,6 @@ public abstract class FileBasedIndex {
     throw new IncorrectOperationException();
   }
 
-  /**
-   * @return true if input file:
-   * <ul>
-   * <li> was scanned before indexing of some project in current IDE session </li>
-   * <li> contains up-to-date indexed state </li>
-   * </ul>
-   */
-  @ApiStatus.Experimental
-  public boolean isFileIndexedInCurrentSession(@NotNull VirtualFile file, @NotNull ID<?, ?> indexId) {
-    throw new UnsupportedOperationException();
-  }
-
   @ApiStatus.Experimental
   public static class AllKeysQuery<K, V> {
     @NotNull
@@ -372,7 +366,7 @@ public abstract class FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", true);
+  public static final boolean ourSnapshotMappingsEnabled = SystemProperties.getBooleanProperty("idea.index.snapshot.mappings.enabled", false);
 
   @ApiStatus.Internal
   public static boolean isIndexAccessDuringDumbModeEnabled() {
@@ -392,11 +386,17 @@ public abstract class FileBasedIndex {
   }
 
   @ApiStatus.Internal
-  public static <Key, Value> boolean hasSnapshotMapping(@NotNull IndexExtension<Key, Value, ?> indexExtension) {
-    //noinspection unchecked
-    return indexExtension instanceof FileBasedIndexExtension &&
-           ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
-           ourSnapshotMappingsEnabled &&
-           !USE_IN_MEMORY_INDEX;
+  public void loadIndexes() {
+  }
+
+  @ApiStatus.Internal
+  public static class RebuildRequestedByUserAction extends Throwable {
+    private final @Nullable PluginId myRequestorPluginId;
+
+    private RebuildRequestedByUserAction(@Nullable PluginId requestorPluginId) { myRequestorPluginId = requestorPluginId; }
+
+    public @Nullable PluginId getRequestorPluginId() {
+      return myRequestorPluginId;
+    }
   }
 }

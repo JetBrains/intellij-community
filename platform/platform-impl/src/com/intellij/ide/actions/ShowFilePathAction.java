@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -42,7 +43,7 @@ import java.util.function.Consumer;
  *
  * @see RevealFileAction
  */
-public class ShowFilePathAction extends DumbAwareAction {
+public final class ShowFilePathAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
   @Override
   public void update(@NotNull AnActionEvent e) {
     var visible = RevealFileAction.isSupported();
@@ -64,7 +65,7 @@ public class ShowFilePathAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     var file = getFile(e);
     if (file != null) {
-      var asyncContext = Utils.wrapToAsyncDataContext(e.getDataContext());
+      var asyncContext = Utils.createAsyncDataContext(e.getDataContext());
       show(file, popup -> popup.showInBestPositionFor(asyncContext));
     }
   }
@@ -106,7 +107,7 @@ public class ShowFilePathAction extends DumbAwareAction {
         if (vFile.isDirectory()) return AllIcons.Nodes.Folder;
         return FileTypeManager.getInstance().getFileTypeByFile(vFile).getIcon();
       }))
-      .finishOnUiThread(ModalityState.NON_MODAL, icons -> action.accept(createPopup(files, icons)))
+      .finishOnUiThread(ModalityState.nonModal(), icons -> action.accept(createPopup(files, icons)))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 

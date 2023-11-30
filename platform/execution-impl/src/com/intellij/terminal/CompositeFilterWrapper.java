@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class CompositeFilterWrapper {
+final class CompositeFilterWrapper {
 
   private final Project myProject;
   private final TerminalExecutionConsole myConsole;
@@ -38,8 +38,7 @@ class CompositeFilterWrapper {
     myCompositeFilter = null;
   }
 
-  @NotNull
-  private List<Filter> createCompositeFilters() {
+  private @NotNull List<Filter> createCompositeFilters() {
     if (myProject.isDefault()) {
       return Collections.emptyList();
     }

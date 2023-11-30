@@ -1,16 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core
 
-import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
-import org.jetbrains.kotlin.lexer.KotlinLexer
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
-import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeSmart
+import org.jetbrains.kotlin.utils.addIfNotNull
 
+@Suppress("DEPRECATION")
+@Deprecated("Use 'org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester' instead")
 abstract class AbstractKotlinNameSuggester {
     fun suggestNamesByFqName(
         fqName: FqName,
@@ -39,15 +38,15 @@ abstract class AbstractKotlinNameSuggester {
      * @param name to check it in scope
      * @return name or nameI, where I is number
      */
-    fun suggestNameByName(name: String, validator: (String) -> Boolean): String {
-        if (validator(name)) return name
-        var i = 1
-        while (i <= MAX_NUMBER_OF_SUGGESTED_NAME_CHECKS && !validator(name + i)) {
-            ++i
-        }
-
-        return name + i
-    }
+    @Deprecated(
+        "Use 'org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.suggestNameByName' instead",
+        ReplaceWith(
+            "KotlinNameSuggester.suggestNameByName(name, validator)",
+            "org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester"
+        )
+    )
+    fun suggestNameByName(name: String, validator: (String) -> Boolean): String =
+        KotlinNameSuggester.suggestNameByName(name, validator)
 
     fun suggestNamesForTypeParameters(count: Int, validator: (String) -> Boolean): List<String> {
         val result = ArrayList<String>()
@@ -95,75 +94,20 @@ abstract class AbstractKotlinNameSuggester {
         }
     }
 
-    fun getCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean): List<String> {
-        val result = ArrayList<String>()
-        result.addCamelNames(name, validator, startLowerCase)
-        return result
-    }
-
-    protected fun MutableCollection<String>.addCamelNames(name: String, validator: (String) -> Boolean, startLowerCase: Boolean = true) {
-        if (name === "" || !name.unquoteKotlinIdentifier().isIdentifier()) return
-        var s = extractIdentifiers(name)
-
-        for (prefix in ACCESSOR_PREFIXES) {
-            if (!s.startsWith(prefix)) continue
-
-            val len = prefix.length
-            if (len < s.length && Character.isUpperCase(s[len])) {
-                s = s.substring(len)
-                break
-            }
-        }
-
-        var upperCaseLetterBefore = false
-        for (i in s.indices) {
-            val c = s[i]
-            val upperCaseLetter = Character.isUpperCase(c)
-
-            if (i == 0) {
-                addName(if (startLowerCase) s.decapitalizeSmart() else s, validator)
-            } else {
-                if (upperCaseLetter && !upperCaseLetterBefore) {
-                    val substring = s.substring(i)
-                    addName(if (startLowerCase) substring.decapitalizeSmart() else substring, validator)
-                }
-            }
-
-            upperCaseLetterBefore = upperCaseLetter
-        }
-    }
-
-    private fun extractIdentifiers(s: String): String {
-        return buildString {
-            val lexer = KotlinLexer()
-            lexer.start(s)
-            while (lexer.tokenType != null) {
-                if (lexer.tokenType == KtTokens.IDENTIFIER) {
-                    append(lexer.tokenText)
-                }
-                lexer.advance()
-            }
-        }
+    protected fun MutableCollection<String>.addCamelNames(
+        name: String,
+        validator: (String) -> Boolean,
+        mustStartWithLowerCase: Boolean = true
+    ) {
+        addAll(KotlinNameSuggester.getCamelNames(name, validator, mustStartWithLowerCase))
     }
 
     protected fun MutableCollection<String>.addNamesByExpressionPSI(expression: KtExpression?, validator: (String) -> Boolean) {
-        if (expression == null) return
-        when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
-            is KtSimpleNameExpression -> addCamelNames(deparenthesized.getReferencedName(), validator)
-            is KtQualifiedExpression -> addNamesByExpressionPSI(deparenthesized.selectorExpression, validator)
-            is KtCallExpression -> addNamesByExpressionPSI(deparenthesized.calleeExpression, validator)
-            is KtPostfixExpression -> addNamesByExpressionPSI(deparenthesized.baseExpression, validator)
-        }
+        addAll(KotlinNameSuggester.suggestNamesByExpressionPSI(expression, validator))
     }
 
     protected fun MutableCollection<String>.addName(name: String?, validator: (String) -> Boolean) {
-        if (name == null) return
-        val correctedName = when {
-            name.isIdentifier() -> name
-            name == "class" -> "clazz"
-            else -> return
-        }
-        add(suggestNameByName(correctedName, validator))
+        addIfNotNull(KotlinNameSuggester.suggestNameByValidIdentifierName(name, validator, false))
     }
 
     private fun String.withPrefix(prefix: String): String {
@@ -174,8 +118,6 @@ abstract class AbstractKotlinNameSuggester {
     }
 
     companion object {
-        private const val MAX_NUMBER_OF_SUGGESTED_NAME_CHECKS = 1000
         private val COMMON_TYPE_PARAMETER_NAMES = listOf("T", "U", "V", "W", "X", "Y", "Z")
-        private val ACCESSOR_PREFIXES = arrayOf("get", "is", "set")
     }
 }

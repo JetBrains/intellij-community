@@ -19,6 +19,10 @@ import java.util.stream.Stream;
 public class YamlAnyOfType extends YamlComposedTypeBase {
 
   public static YamlMetaType anyOf(YamlMetaType... types) {
+    return anyOf(null, types);
+  }
+
+  public static YamlMetaType anyOf(@Nullable String complexTypeDisplayNameHint, YamlMetaType... types) {
     if (types.length == 0) {
       throw new IllegalArgumentException();
     }
@@ -26,7 +30,7 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
       return types[0];
     }
     String name = "AnyOf[" + Stream.of(types).map(YamlMetaType::getDisplayName).collect(Collectors.joining()) + "]";
-    return new YamlAnyOfType(name, flattenTypes(types));
+    return new YamlAnyOfType(name, complexTypeDisplayNameHint != null ? complexTypeDisplayNameHint : name, flattenTypes(types));
   }
 
   @Override
@@ -35,7 +39,11 @@ public class YamlAnyOfType extends YamlComposedTypeBase {
   }
 
   protected YamlAnyOfType(@NotNull String typeName, List<YamlMetaType> types) {
-    super(typeName, types);
+    this(typeName, typeName, types);
+  }
+
+  protected YamlAnyOfType(@NotNull String typeName, @NotNull String displayName, List<YamlMetaType> types) {
+    super(typeName, displayName, types);
   }
 
   @Override

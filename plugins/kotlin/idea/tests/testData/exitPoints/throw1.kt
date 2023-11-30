@@ -1,12 +1,8 @@
-fun f(a: Int): Int {
+<info descr="null">fun</info> f(a: Int): Int {
     if (a < 5) {
-        return 1
+        <info descr="null">return 1</info>
     }
     else {
-        <caret>throw Error()
+        <info descr="null">~throw Error()</info>
     }
 }
-
-//HIGHLIGHTED: return 1
-//HIGHLIGHTED: f
-//HIGHLIGHTED: throw Error()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -13,14 +13,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.Transferable;
 
-public class PasteAction extends TextComponentEditorAction {
+public final class PasteAction extends TextComponentEditorAction {
   public static final DataKey<Producer<Transferable>> TRANSFERABLE_PROVIDER = DataKey.create("PasteTransferableProvider");
 
   public PasteAction() {
     super(new Handler());
   }
 
-  private static class Handler extends BasePasteHandler {
+  private static final class Handler extends BasePasteHandler {
     @Override
     public void executeWriteAction(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       TextRange range = null;

@@ -52,7 +52,7 @@ internal class GitStageContentProvider(private val project: Project) : ChangesVi
 
   companion object {
     @NonNls
-    val STAGING_AREA_TAB_NAME = "Staging Area"
+    const val STAGING_AREA_TAB_NAME = "Staging Area"
   }
 }
 
@@ -102,14 +102,18 @@ fun showStagingArea(project: Project, commitMessage: String) {
 }
 
 internal fun showStagingArea(project: Project, consumer: (GitStagePanel) -> Unit) {
+  showToolWindowTab(project, STAGING_AREA_TAB_NAME) { (it as? GitStagePanel)?.let(consumer) }
+}
+
+internal fun showToolWindowTab(project: Project, tabName: String, contentConsumer: (JComponent) -> Unit) {
   ToolWindowManager.getInstance(project).invokeLater {
-    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME) ?: return@invokeLater
+    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, tabName) ?: return@invokeLater
     toolWindow.activate({
                           val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
-                          val content = contentManager.findContent(STAGING_AREA_TAB_NAME) ?: return@activate
+                          val content = contentManager.findContent(tabName) ?: return@activate
 
                           contentManager.setSelectedContent(content, true)
-                          (content.component as? GitStagePanel)?.let(consumer)
+                          contentConsumer(content.component)
                         }, true)
   }
 }

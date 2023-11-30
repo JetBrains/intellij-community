@@ -6,11 +6,11 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.execution.wsl.WSLDistribution;
+import com.intellij.execution.wsl.WslPath;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.SuperUserStatus;
@@ -123,7 +123,7 @@ public final class IoTestUtil {
   }
 
   public static @NotNull Path createWslTempDir(@NotNull String wslVm, @NotNull String testName) throws IOException {
-    var parent = Path.of(WslConstants.UNC_PREFIX + wslVm + "\\tmp");
+    var parent = Path.of(new WslPath(wslVm, "/tmp").toWindowsUncPath());
     return Files.createTempDirectory(parent, UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
   }
 

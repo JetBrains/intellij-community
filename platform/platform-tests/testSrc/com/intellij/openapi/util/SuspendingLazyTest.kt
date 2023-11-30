@@ -5,11 +5,11 @@ import com.intellij.openapi.application.impl.assertReferenced
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.testFramework.LeakHunter
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.LazyRecursionPreventedException
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.suspendingLazy
-import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions.*

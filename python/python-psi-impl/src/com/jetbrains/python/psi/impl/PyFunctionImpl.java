@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
@@ -19,10 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -63,6 +59,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   public PyFunctionImpl(PyFunctionStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  @Override
+  @Nullable
+  public PyTypeParameterList getTypeParameterList() {
+    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
   }
 
   private class CachedStructuredDocStringProvider implements CachedValueProvider<StructuredDocString> {
@@ -140,7 +142,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @NotNull PyParameterList getParameterList() {
-    return getRequiredStubOrPsiChild(PyElementTypes.PARAMETER_LIST);
+    return getRequiredStubOrPsiChild(PyStubElementTypes.PARAMETER_LIST);
   }
 
   @Override
@@ -181,7 +183,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @Nullable PyDecoratorList getDecoratorList() {
-    return getStubOrPsiChild(PyElementTypes.DECORATOR_LIST); // PsiTreeUtil.getChildOfType(this, PyDecoratorList.class);
+    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST); // PsiTreeUtil.getChildOfType(this, PyDecoratorList.class);
   }
 
   @Override
@@ -547,7 +549,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public PyAnnotation getAnnotation() {
-    return getStubOrPsiChild(PyElementTypes.ANNOTATION);
+    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION);
   }
 
   @Override

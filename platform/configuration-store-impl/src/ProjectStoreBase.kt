@@ -9,7 +9,6 @@ import com.intellij.openapi.application.appSystemDir
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCoreUtil
 import com.intellij.openapi.project.doGetProjectFileName
@@ -21,7 +20,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.io.Ksuid
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.MessageBus
-import com.intellij.util.text.nullize
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Files
 import java.nio.file.Path
@@ -32,14 +31,14 @@ import java.nio.file.Path
 internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
 private val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
-// cannot be `internal`, used in Upsource
+@ApiStatus.Internal
 abstract class ProjectStoreBase(final override val project: Project) : ComponentStoreWithExtraComponents(), IProjectStore {
   private var dirOrFile: Path? = null
   private var dotIdea: Path? = null
 
   internal fun getNameFile(): Path {
     for (projectNameProvider in ProjectNameProvider.EP_NAME.lazySequence()) {
-      LOG.runAndLogException { projectNameProvider.getNameFile(project)?.let { return it } }
+      runCatching { projectNameProvider.getNameFile(project)?.let { return it } }.getOrLogException(LOG)
     }
     return directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
   }
@@ -96,6 +95,20 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     else {
       return path.parent
     }
+  }
+
+  final override fun getLocationHash(): String {
+    val prefix: String
+    val path: Path
+    if (storageScheme == StorageScheme.DIRECTORY_BASED) {
+      path = dirOrFile ?: throw IllegalStateException("setPath was not yet called")
+      prefix = ""
+    }
+    else {
+      path = projectFilePath
+      prefix = projectName
+    }
+    return "$prefix${Integer.toHexString(path.systemIndependentPath.hashCode())}"
   }
 
   override fun getPresentableUrl(): String {
@@ -208,11 +221,15 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
       }
       result.sortWith(deprecatedComparator)
       if (isDirectoryBased) {
-        for (providerFactory in StreamProviderFactory.EP_NAME.getIterable(project)) {
-          LOG.runAndLogException {
+        for (providerFactory in StreamProviderFactory.EP_NAME.asSequence(project)) {
+          runCatching {
             // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
-            providerFactory?.customizeStorageSpecs(component, storageManager, stateSpec, result!!, operation)?.let { return it }
-          }
+            providerFactory.customizeStorageSpecs(component = component,
+                                                  storageManager = storageManager,
+                                                  stateSpec = stateSpec,
+                                                  storages = result!!,
+                                                  operation = operation)?.let { return it }
+          }.getOrLogException(LOG)
         }
       }
 
@@ -262,8 +279,6 @@ abstract class ProjectStoreBase(final override val project: Project) : Component
     }
     return VfsUtilCore.isAncestorOrSelf(projectFilePath.parent.systemIndependentPath, file)
   }
-
-  override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = dotIdea?.systemIndependentPath.nullize()
 
   final override fun getDirectoryStorePath() = dotIdea
 

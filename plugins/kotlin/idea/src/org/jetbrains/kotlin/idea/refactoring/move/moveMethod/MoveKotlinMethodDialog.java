@@ -18,17 +18,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration;
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.KotlinFileType;
 import org.jetbrains.kotlin.idea.KotlinIconProvider;
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider;
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester;
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator;
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.completion.CompletionUtilsKt;
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject;
 import org.jetbrains.kotlin.idea.core.completion.PackageLookupObject;
 import org.jetbrains.kotlin.idea.projectView.KtClassOrObjectTreeNode;
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringUtilKt;
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.ui.KotlinTypeReferenceEditorComboWithBrowseButton;
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers;
 import org.jetbrains.kotlin.psi.*;
@@ -213,7 +213,7 @@ public class MoveKotlinMethodDialog extends RefactoringDialog {
                         if (!(lookupObject instanceof DescriptorBasedDeclarationLookupObject)) return false;
                         PsiElement psiElement = ((DescriptorBasedDeclarationLookupObject) lookupObject).getPsiElement();
                         if (lookupObject instanceof PackageLookupObject) return true;
-                        return (psiElement instanceof KtObjectDeclaration) && KotlinRefactoringUtilKt.canRefactor(psiElement);
+                        return (psiElement instanceof KtObjectDeclaration) && KotlinCommonRefactoringUtilKt.canRefactorElement(psiElement);
                     }
             );
         }

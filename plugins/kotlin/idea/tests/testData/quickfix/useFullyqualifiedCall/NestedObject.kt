@@ -14,3 +14,5 @@ object Test1 {
         }
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UseFullyQualifiedCallFix

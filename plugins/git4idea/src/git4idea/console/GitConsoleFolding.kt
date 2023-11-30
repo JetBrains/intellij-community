@@ -14,6 +14,9 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 class GitConsoleFolding : VcsConsoleFolding {
+  private val CONFIG_OPTIONS_REGEX: Pattern = Pattern.compile("(\\s-c\\s[\\w.]+=[^ ]*)+")
+  private val GIT_LINE_REGEX: Pattern = Pattern.compile("\\[.*] git ")
+
   override fun getFoldingsForLine(project: Project, line: String): List<Placeholder> {
     if (!isGitCommandLine(line)) return emptyList()
 
@@ -34,11 +37,6 @@ class GitConsoleFolding : VcsConsoleFolding {
 
   private fun isGitCommandLine(line: String): Boolean {
     return GIT_LINE_REGEX.matcher(line).find()
-  }
-
-  companion object {
-    private val CONFIG_OPTIONS_REGEX: Pattern = Pattern.compile("(\\s-c\\s[\\w.]+=[^ ]*)+")
-    private val GIT_LINE_REGEX: Pattern = Pattern.compile("\\[.*] git ")
   }
 }
 

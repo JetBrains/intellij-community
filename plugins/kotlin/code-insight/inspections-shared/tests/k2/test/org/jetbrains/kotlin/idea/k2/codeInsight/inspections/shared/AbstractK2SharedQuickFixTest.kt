@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared
 
 import com.intellij.testFramework.common.runAll
+import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -18,8 +19,8 @@ abstract class AbstractK2SharedQuickFixTest : AbstractQuickFixTest() {
 
     override fun tearDown() {
         runAll(
-          { project.invalidateCaches() },
-          { super.tearDown() }
+            { runInEdtAndWait { project.invalidateCaches() } },
+            { super.tearDown() }
         )
     }
 }

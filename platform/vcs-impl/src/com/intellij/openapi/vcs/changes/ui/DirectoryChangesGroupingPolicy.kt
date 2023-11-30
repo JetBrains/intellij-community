@@ -8,8 +8,10 @@ import java.util.function.Function
 import javax.swing.tree.DefaultTreeModel
 
 class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
-  override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
-    val nextPolicyGroup = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
+  override fun getParentNodeFor(nodePath: StaticFilePath,
+                                node: ChangesBrowserNode<*>,
+                                subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*> {
+    val nextPolicyGroup = nextPolicy?.getParentNodeFor(nodePath, node, subtreeRoot)
     val grandParent = nextPolicyGroup ?: subtreeRoot
     val cachingRoot = getCachingRoot(grandParent, subtreeRoot)
     val pathBuilder = PATH_NODE_BUILDER.getRequired(subtreeRoot)

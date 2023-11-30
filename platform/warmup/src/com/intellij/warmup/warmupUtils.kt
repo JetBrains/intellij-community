@@ -1,7 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
@@ -15,8 +17,10 @@ import kotlinx.coroutines.withContext
 import java.time.Duration
 import kotlin.system.exitProcess
 
-fun waitIndexInitialization() {
-  (FileBasedIndex.getInstance() as FileBasedIndexEx).waitUntilIndicesAreInitialized()
+suspend fun waitIndexInitialization() {
+  val fileBasedIndex = serviceAsync<FileBasedIndex>() as FileBasedIndexEx
+  fileBasedIndex.loadIndexes()
+  fileBasedIndex.waitUntilIndicesAreInitialized()
 }
 
 suspend fun waitUntilProgressTasksAreFinishedOrFail() {
@@ -33,7 +37,9 @@ private suspend fun waitUntilProgressTasksAreFinished() {
   runTaskAndLogTime("Awaiting for progress tasks") {
     while (true) {
       withContext(Dispatchers.EDT) {
-        MergingUpdateQueue.flushAllQueues()
+        blockingContext {
+          MergingUpdateQueue.flushAllQueues()
+        }
       }
       yieldThroughInvokeLater()
       if (CoreProgressManager.getCurrentIndicators().isEmpty()) {

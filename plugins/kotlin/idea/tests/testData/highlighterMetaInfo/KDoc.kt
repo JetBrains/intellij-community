@@ -1,4 +1,6 @@
 // FIR_IDENTICAL
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 /**
  * @param x foo and [baz]
  * @param y bar

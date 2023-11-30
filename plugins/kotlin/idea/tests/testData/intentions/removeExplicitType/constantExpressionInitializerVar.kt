@@ -1,3 +1,3 @@
 // IS_APPLICABLE: false
-// IGNORE_FE10
+// IGNORE_K1
 var foo: <caret>Any = 1 + 1

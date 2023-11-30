@@ -4,6 +4,9 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiProviders.Fe10KotlinModificationTrackerFactory"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.providers.KotlinGlobalModificationService"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.fe10.analysisApiProviders.Fe10KotlinGlobalModificationService"/>
   </extensions>
 
 

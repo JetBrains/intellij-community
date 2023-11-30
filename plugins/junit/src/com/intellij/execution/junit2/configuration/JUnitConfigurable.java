@@ -610,7 +610,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     protected void onClassChosen(@NotNull PsiClass psiClass) {
       final JTextField textField = myPatternTextField.getTextField();
       final String text = textField.getText();
-      textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
+      textField.setText(text + (!text.isEmpty() ? "||" : "") + psiClass.getQualifiedName());
     }
 
     @Override

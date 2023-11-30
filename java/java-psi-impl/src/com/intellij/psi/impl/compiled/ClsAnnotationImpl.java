@@ -41,7 +41,7 @@ public final class ClsAnnotationImpl extends ClsRepositoryPsiElement<PsiAnnotati
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
     PsiAnnotation mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
     setMirror(getNameReferenceElement(), mirror.getNameReferenceElement());

@@ -12,5 +12,6 @@
     <orderEntry type="library" scope="TEST" name="jmh-generator-annprocess" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="fastutil-min" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" scope="TEST" />
   </component>
 </module>

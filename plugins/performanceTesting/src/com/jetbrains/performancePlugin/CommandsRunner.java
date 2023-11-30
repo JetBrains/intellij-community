@@ -22,7 +22,7 @@ public final class CommandsRunner {
 
   //TODO: add methode with project in parameter? AT-114
   public static void doRunScript(@NotNull String text) {
-    ProjectLoaded.runScript(ProjectManager.getInstance().getOpenProjects()[0], text, false);
+    ProjectLoadedKt.runPerformanceScript(ProjectManager.getInstance().getOpenProjects()[0], text, false);
   }
 
   public static void setActionCallback(CompletableFuture<?> actionCallback) {

@@ -8,7 +8,7 @@ internal class InputClassScope(generator: DomainGenerator, namePath: NamePath) :
   override val typeDirection = TypeData.Direction.INPUT
 
   fun generateDeclarationBody(out: TextOutput, list: List<ItemDescriptor.Named>) {
-    for (i in 0 until list.size) {
+    for (i in list.indices) {
       val named = list[i]
       if (named.description != null) {
         out.doc(named.description)

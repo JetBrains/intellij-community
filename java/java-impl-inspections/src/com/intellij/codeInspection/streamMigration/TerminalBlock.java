@@ -275,21 +275,16 @@ final class TerminalBlock {
     boolean flipped = false;
     int delta = 0;
     switch (comparison) {
-      case "==":
-      case ">=":
-        break;
-      case ">":
-        delta = 1;
-        break;
-      case "<":
+      case "==", ">=" -> { }
+      case ">" -> delta = 1;
+      case "<" -> {
         delta = 1;
         flipped = true;
-        break;
-      case "<=":
-        flipped = true;
-        break;
-      default:
+      }
+      case "<=" -> flipped = true;
+      default -> {
         return this;
+      }
     }
     PsiExpression countExpression = PsiUtil.skipParenthesizedExprDown(flipped ? binOp.getROperand() : binOp.getLOperand());
     if(countExpression == null || VariableAccessUtils.variableIsUsed(myVariable, countExpression)) return this;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.diagnostic.PluginException;
@@ -149,8 +149,7 @@ final class CachedValueStabilityChecker {
     return false;
   }
 
-  @NotNull
-  private static @NonNls String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
+  private static @NotNull @NonNls String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
     return "Incorrect CachedValue use: same CV with different captured context, this can cause unstable results and invalid PSI access." +
            "\nField " + field.getName() + " in " + objectClass + " has non-equivalent values:" +
            "\n  " + v1 + (v1 == null ? "" : " (" + v1.getClass().getName() + ")") + " and" +
@@ -172,7 +171,7 @@ final class CachedValueStabilityChecker {
     Class<?> superclass = clazz.getSuperclass();
     if (superclass == null) return false;
 
-    if ((o instanceof Supplier || o instanceof Function || o instanceof java.util.function.Function) &&
+    if ((o instanceof Supplier || o instanceof java.util.function.Function) &&
         Object.class.equals(clazz.getSuperclass())) {
       return true;
     }

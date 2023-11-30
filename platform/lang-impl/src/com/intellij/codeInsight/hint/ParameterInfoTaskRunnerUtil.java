@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.Disposable;
@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.ui.AnimatedIcon;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
@@ -108,7 +109,7 @@ public final class ParameterInfoTaskRunnerUtil {
       JBLoadingPanel loadingPanel =
         new JBLoadingPanel(null, panel -> new LoadingDecorator(panel, disposable, 0, false, new AsyncProcessIcon("ShowParameterInfo")) {
           @Override
-          protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AsyncProcessIcon icon) {
+          protected NonOpaquePanel customizeLoadingLayer(JPanel parent, JLabel text, AnimatedIcon icon) {
             parent.setLayout(new FlowLayout(FlowLayout.LEFT));
             final NonOpaquePanel result = new NonOpaquePanel();
             result.add(icon);

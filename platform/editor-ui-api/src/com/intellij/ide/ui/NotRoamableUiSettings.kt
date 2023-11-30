@@ -5,15 +5,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.FontUtil
-import com.intellij.util.xmlb.Accessor
-import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import java.awt.Font
 
 @Service(Service.Level.APP)
 @State(name = "NotRoamableUiSettings", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
-class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(defaultState()) {
+class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
+  private var initialConfigurationLoaded = false
+  
   companion object {
     fun getInstance(): NotRoamableUiSettings = ApplicationManager.getApplication().service<NotRoamableUiSettings>()
   }
@@ -31,7 +31,7 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
     }
 
   var fontFace: String?
-    get() = state.fontFace
+    get() = state.fontFace ?: JBUIScale.getSystemFontDataIfInitialized()?.first
     set(value) {
       updateState { it.copy(fontFace = value) }
     }
@@ -66,14 +66,20 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
       updateState { it.copy(overrideLafFonts = value) }
     }
 
+  var experimentalSingleStripe: Boolean
+    get() = state.experimentalSingleStripe
+    set(value) {
+      updateState { it.copy(experimentalSingleStripe = value) }
+    }
+
   override fun loadState(state: NotRoamableUiOptions) {
     var fontSize = UISettings.restoreFontSize(state.fontSize, state.fontScale)
     if (fontSize <= 0) {
-      fontSize = UISettingsState.defFontSize
+      fontSize = getDefaultFontSize()
     }
     var ideScale = state.ideScale
     if (ideScale <= 0) {
-      ideScale = UISettingsState.defFontSize
+      ideScale = getDefaultFontSize()
     }
 
     super.loadState(state.copy(
@@ -82,33 +88,14 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
     ))
 
     fixFontSettings()
+    if (initialConfigurationLoaded) {
+      UISettings.getInstance().fireUISettingsChanged()
+    }
+    initialConfigurationLoaded = true
   }
 
-  internal fun migratePresentationModeFontSize(presentationModeFontSize: Int) {
-    if (state.presentationModeIdeScale != 0f) {
-      return
-    }
-
-    if (presentationModeFontSize == 24) {
-      updateState {
-        it.copy(presentationModeIdeScale = UISettingsUtils.defaultScale(true))
-      }
-    }
-    else {
-      updateState {
-        it.copy(presentationModeIdeScale = presentationModeFontSize.toFloat() / it.fontSize)
-      }
-    }
-  }
-
-  internal fun migrateOverrideLafFonts(overrideLafFonts: Boolean) {
-    if (state.overrideLafFontsWasMigrated) {
-      return
-    }
-
-    updateState {
-      it.copy(overrideLafFontsWasMigrated = true, overrideLafFonts = overrideLafFonts)
-    }
+  override fun noStateLoaded() {
+    initialConfigurationLoaded = true
   }
 
   internal fun fixFontSettings() {
@@ -116,34 +103,38 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
 
     // 1. Sometimes system font cannot display standard ASCII symbols.
     // If so, we have to find any other suitable font withing "preferred" fonts first.
-    var fontIsValid = FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, 1).deriveFont(state.fontSize))
-    if (!fontIsValid) {
-      for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
-        if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, 1).deriveFont(state.fontSize))) {
-          updateState { it.copy(fontFace = preferredFont) }
-          fontIsValid = true
-          break
-        }
-      }
+    if (state.fontFace == null || FontUtil.isValidFont(Font(state.fontFace, Font.PLAIN, 1).deriveFont(state.fontSize))) {
+      return
+    }
 
-      // 2. If all preferred fonts are not valid in the current environment,
-      // we have to find the first valid font (if any)
-      if (!fontIsValid) {
-        val fontNames = FontUtil.getValidFontNames(false)
-        if (fontNames.isNotEmpty()) {
-          updateState { it.copy(fontFace = fontNames[0]) }
-        }
+    var fontIsValid = false
+    for (preferredFont in arrayOf("dialog", "Arial", "Tahoma")) {
+      if (FontUtil.isValidFont(Font(preferredFont, Font.PLAIN, 1).deriveFont(state.fontSize))) {
+        updateState { it.copy(fontFace = preferredFont) }
+        fontIsValid = true
+        break
+      }
+    }
+
+    // 2. If all preferred fonts are not valid in the current environment,
+    // we have to find the first valid font (if any)
+    if (!fontIsValid) {
+      val fontNames = FontUtil.getValidFontNames(false)
+      if (fontNames.isNotEmpty()) {
+        updateState { it.copy(fontFace = fontNames[0]) }
       }
     }
   }
-}
 
-private fun defaultState(): NotRoamableUiOptions {
-  val fontData = JBUIScale.getSystemFontData(null)
-  return NotRoamableUiOptions(
-    fontFace = fontData.first,
-    fontSize = fontData.second.toFloat(),
-  )
+  internal fun migratePresentationModeIdeScale(presentationModeFontSize: Int) {
+    if (presentationModeIdeScale != 0f) {
+      return
+    }
+    presentationModeIdeScale = if (presentationModeFontSize == 24 || fontSize == 0f)
+      UISettingsUtils.defaultScale(isPresentation = true)
+    else
+      presentationModeFontSize.toFloat() / fontSize
+  }
 }
 
 data class NotRoamableUiOptions(
@@ -155,11 +146,11 @@ data class NotRoamableUiOptions(
   val fontFace: String? = null,
 
   @JvmField
-  @field:Property(filter = FontFilter::class)
+  @field:Property
   val fontSize: Float = 0f,
 
   @JvmField
-  @field:Property(filter = FontFilter::class)
+  @field:Property
   val fontScale: Float = UISettings.defFontScale,
 
   @JvmField
@@ -178,17 +169,14 @@ data class NotRoamableUiOptions(
   @JvmField
   @OptionTag
   val overrideLafFontsWasMigrated: Boolean = false,
+  @JvmField
+  @OptionTag
+  val experimentalSingleStripe: Boolean = false,
 )
 
-private class FontFilter : SerializationFilter {
-  override fun accepts(accessor: Accessor, bean: Any): Boolean {
-    val settings = bean as NotRoamableUiOptions
-    val fontData = JBUIScale.getSystemFontData(null)
-    if ("fontFace" == accessor.name) {
-      return fontData.first != settings.fontFace
-    }
-    // fontSize/fontScale should either be stored in a pair or not stored at all,
-    // otherwise the fontSize restore logic gets broken (see loadState)
-    return !(fontData.second.toFloat() == settings.fontSize && 1f == settings.fontScale)
-  }
-}
+/**
+ * Returns the default font size scaled by #defFontScale
+ *
+ * @return the default scaled font size
+ */
+internal fun getDefaultFontSize(): Float = JBUIScale.DEF_SYSTEM_FONT_SIZE * UISettings.defFontScale

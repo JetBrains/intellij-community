@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.keymap.impl.ui;
 
@@ -128,8 +128,7 @@ public final class ShortcutTextField extends ExtendableTextField {
     menu.show(this, getWidth() - insets.right, insets.top);
   }
 
-  @NotNull
-  private Action getPopupAction(@NotNull KeyStroke stroke) {
+  private @NotNull Action getPopupAction(@NotNull KeyStroke stroke) {
     return new AbstractAction(IdeBundle.message("button.set.0", KeymapUtil.getKeystrokeText(stroke))) {
       @Override
       public void actionPerformed(ActionEvent event) {
@@ -138,8 +137,7 @@ public final class ShortcutTextField extends ExtendableTextField {
     };
   }
 
-  @NotNull
-  private @NlsContexts.Tooltip String getPopupTooltip() {
+  private @NotNull @NlsContexts.Tooltip String getPopupTooltip() {
     StringBuilder sb = new StringBuilder();
     String prefix = "";
     for (KeyStroke stroke : getKeyStrokes()) {
@@ -151,8 +149,7 @@ public final class ShortcutTextField extends ExtendableTextField {
     return IdeBundle.message("tooltip.text.add.shortcut.with.special.keys", sb.toString());
   }
 
-  @NotNull
-  private Iterable<KeyStroke> getKeyStrokes() {
+  private @NotNull Iterable<KeyStroke> getKeyStrokes() {
     ArrayList<KeyStroke> list = new ArrayList<>();
     addKeyStrokes(list, getFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
     addKeyStrokes(list, getFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));

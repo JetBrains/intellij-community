@@ -1,99 +1,121 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.log
 
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.ByteCountingOutputStream
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.ChunkMMappedFileIO
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.StorageIO
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.SkipListAdvancingPositionTracker
-import com.intellij.openapi.vfs.newvfs.persistent.log.util.trackAdvance
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.io.AppendLogStorage.Companion.Mode
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.fmap
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
-import com.intellij.util.io.ResilientFileChannel
-import java.io.ByteArrayInputStream
-import java.io.DataInputStream
-import java.io.EOFException
-import java.io.OutputStream
-import java.nio.channels.FileChannel
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentSetOf
+import java.io.*
 import java.nio.file.Path
-import java.nio.file.StandardOpenOption.*
-import kotlin.io.path.div
 
 class PayloadStorageImpl(
   storagePath: Path,
 ) : PayloadStorage {
-  private val storageIO: StorageIO
-  private var lastSafeSize by PersistentVar.long(storagePath / "size")
-  private val position: AdvancingPositionTracker
+  override val sourcesDeclaration: PersistentSet<PayloadSource> = persistentSetOf(PayloadSource.PayloadStorage)
+  private val appendLogStorage: AppendLogStorage = AppendLogStorage(storagePath, Mode.ReadWrite, PAGE_SIZE)
 
-  init {
-    FileUtil.ensureExists(storagePath.toFile())
+  override fun appendPayload(sizeBytes: Long): PayloadStorageIO.PayloadAppendContext {
+    require(sizeBytes >= 0)
+    val serializedSizeBuf = ByteArrayOutputStream(10) // 1 + (64 - 6) / 7 < 10
+    DataInputOutputUtil.writeLONG(DataOutputStream(serializedSizeBuf), sizeBytes)
 
-    val fileChannel = ResilientFileChannel(storagePath / "payload", READ, WRITE, CREATE)
-    storageIO = ChunkMMappedFileIO(fileChannel, FileChannel.MapMode.READ_WRITE)
+    val serializedSize = serializedSizeBuf.toByteArray()
+    val fullSize = serializedSize.size.toLong() + sizeBytes
+    val appendContext = appendLogStorage.appendEntry(fullSize)
 
-    position = SkipListAdvancingPositionTracker(lastSafeSize ?: 0L)
-  }
-
-  override fun writePayload(sizeBytes: Long, body: OutputStream.() -> Unit): PayloadRef {
-    assert(sizeBytes >= 0)
-    if (sizeBytes == 0L) {
-      ByteCountingOutputStream().run {
-        body()
-        validateWrittenBytesCount(0L)
+    return object : PayloadStorageIO.PayloadAppendContext {
+      override fun fillData(data: ByteArray, offset: Int, length: Int): PayloadRef {
+        appendContext.fillEntry {
+          write(serializedSize)
+          write(data, offset, length)
+        }
+        return PayloadRef(appendContext.position, PayloadSource.PayloadStorage)
       }
-      return PayloadRef.ZERO_SIZE
-    }
-    val buf = BufferExposingByteArrayOutputStream(10) // 1 + (64 - 6) / 7 < 10
-    val out = DataOutputStream(buf)
-    DataInputOutputUtil.writeLONG(out, sizeBytes)
 
-    val fullSize = out.writtenBytesCount.toLong() + sizeBytes
-    return position.trackAdvance(fullSize) { payloadPos ->
-      storageIO.write(payloadPos, buf.internalBuffer, 0, out.writtenBytesCount)
-      storageIO.offsetOutputStream(payloadPos + out.writtenBytesCount).run {
-        body()
-        validateWrittenBytesCount(sizeBytes)
+      override fun fillData(body: OutputStream.() -> Unit): PayloadRef {
+        appendContext.fillEntry {
+          write(serializedSize)
+          body()
+        }
+        return PayloadRef(appendContext.position, PayloadSource.PayloadStorage)
       }
-      PayloadRef(payloadPos)
+
+      override fun close() {
+        appendContext.close()
+      }
     }
   }
 
-  override fun readAt(ref: PayloadRef): ByteArray? {
-    if (ref == PayloadRef.ZERO_SIZE) return ByteArray(0)
-    // TODO: revisit unexpected value cases
-    if (ref.offset < 0 || ref.offset >= position.getReadyPosition()) return null
+  /**
+   * @return the size of the payload and an absolute data start offset
+   */
+  private fun readSizeMarker(payloadRef: PayloadRef): State.DefinedState<Pair<Long, Long>> {
     val buf = ByteArray(10) // 1 + (64 - 6) / 7 < 10
-    storageIO.read(ref.offset, buf)
+    appendLogStorage.read(payloadRef.offset, buf)
     val inp = ByteArrayInputStream(buf)
     val sizeBytes = try {
       DataInputOutputUtil.readLONG(DataInputStream(inp))
     }
-    catch (e: EOFException) {
-      return null
+    catch (e: IOException) {
+      return State.NotAvailable("failed to read $payloadRef: size marker is malformed", e)
     }
-    // dirty hack: inp.available() = count - pos, so pos = count - inp.available() = buf.size - inp.available()
-    val dataOffset = buf.size - inp.available()
     if (sizeBytes < 0) {
-      return null
+      return State.NotAvailable("failed to read $payloadRef: size marker is negative ($sizeBytes)")
     }
-    val data = ByteArray(sizeBytes.toInt())
-    storageIO.read(ref.offset + dataOffset, data)
-    return data
+    // hack: inp.available() = count - pos, so pos = count - inp.available() = buf.size - inp.available()
+    val dataOffset = buf.size - inp.available()
+    return (sizeBytes to (payloadRef.offset + dataOffset)).let(State::Ready)
   }
 
-  override fun size(): Long = lastSafeSize ?: 0L
+  /**
+   * Returns number of bytes that is dedicated for storing this payload (# bytes for storing payload size + the payload itself).
+   * Current implementation guarantees that payload record resides in `[payloadRef.offset..payloadRef.offset+fullSize)` bytes of
+   * the underlying appendLogStorage.
+   */
+  fun getFullPayloadSize(payloadRef: PayloadRef): State.DefinedState<Long> {
+    require(payloadRef.source == PayloadSource.PayloadStorage) { "PayloadStorageImpl cannot read $payloadRef" }
+    return readSizeMarker(payloadRef).fmap {
+      val (sizeBytes, dataOffset) = it
+      dataOffset + sizeBytes - payloadRef.offset
+    }
+  }
+
+  override fun readPayload(payloadRef: PayloadRef): State.DefinedState<ByteArray> {
+    require(payloadRef.source == PayloadSource.PayloadStorage) { "PayloadStorageImpl cannot read $payloadRef" }
+    if (payloadRef.offset >= appendLogStorage.size()) {
+      return State.NotAvailable("failed to read $payloadRef: data was not written yet")
+    }
+    return readSizeMarker(payloadRef).fmap {
+      val (sizeBytes, dataOffset) = it
+      val data = ByteArray(sizeBytes.toInt())
+      appendLogStorage.read(dataOffset, data)
+      data
+    }
+  }
+
+  fun dropPayloadsUpTo(position: Long): Unit = appendLogStorage.clearUpTo(position)
+
+  override fun size(): Long = appendLogStorage.size() - appendLogStorage.startOffset()
+
+  fun advancePosition(): Long = appendLogStorage.emergingSize()
+  fun startOffset(): Long = appendLogStorage.startOffset()
 
   override fun flush() {
-    val safeSize = position.getReadyPosition()
-    storageIO.force()
-    lastSafeSize = safeSize
+    appendLogStorage.flush()
   }
 
   override fun dispose() {
     flush()
-    storageIO.close()
+    appendLogStorage.close()
+  }
+
+  companion object {
+    private const val MiB = 1024 * 1024
+    private const val PAGE_SIZE = 32 * MiB
   }
 }

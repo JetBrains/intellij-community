@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.ui.popup.list.ListPopupWrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.StatusText;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -104,7 +106,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
           AttachListStep step = new AttachListStep(allItems, XDebuggerBundle.message("xdebugger.attach.popup.title.default"), project);
 
           final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-          final JList mainList = ((ListPopupImpl)popup).getList();
+          final JList mainList = ((ListPopupImpl) ListPopupWrapper.getRootPopup(popup)).getList();
 
           ListSelectionListener listener = event -> {
             if (event.getValueIsAdjusting()) return;
@@ -689,13 +691,12 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
       }
 
       if (selectedValue instanceof AttachHostItem attachHostItem) {
-        return new AsyncPopupStep() {
-          @Override
-          public PopupStep call() {
-            List<AttachItem> attachItems = new ArrayList<>(attachHostItem.getSubItems());
-            return new AttachListStep(attachItems, null, myProject);
-          }
-        };
+        AsyncPromise<PopupStep> promise = new AsyncPromise<>();
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          List<AttachItem> attachItems = new ArrayList<>(attachHostItem.getSubItems());
+          ApplicationManager.getApplication().invokeLater(() -> promise.setResult(new AttachListStep(attachItems, null, myProject)));
+        });
+        return new AsyncPopupStep(promise);
       }
       return null;
     }

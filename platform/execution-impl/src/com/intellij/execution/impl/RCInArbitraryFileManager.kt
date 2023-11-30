@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.execution.impl
@@ -100,7 +100,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
 
   private fun deleteFile(file: VirtualFile) {
     ModalityUiUtil.invokeLaterIfNeeded(
-      ModalityState.NON_MODAL) { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }
+      ModalityState.nonModal()) { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }
   }
 
   /**
@@ -303,7 +303,7 @@ private fun createRootElement() = Element("component").setAttribute("name", "Pro
 
 private fun computeDigest(data: BufferExposingByteArrayOutputStream): LongArray {
   // 128-bit
-  return longArrayOf(Hashing.komihash4_3().hashBytesToLong(data.internalBuffer, 0, data.size()),
-                     Hashing.komihash4_3(745726263).hashBytesToLong(data.internalBuffer, 0, data.size()))
+  return longArrayOf(Hashing.komihash5_0().hashBytesToLong(data.internalBuffer, 0, data.size()),
+                     Hashing.komihash5_0(745726263).hashBytesToLong(data.internalBuffer, 0, data.size()))
 }
 

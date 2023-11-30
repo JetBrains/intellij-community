@@ -9,14 +9,20 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ArrayUtilRt
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-@State(name = "Registry", storages = [Storage("ide.general.xml")], useLoadedStateAsExisting = false, category = SettingsCategory.SYSTEM)
+@State(
+  name = "Registry",
+  storages = [Storage("ide.general.xml", usePathMacroManager = false)],
+  useLoadedStateAsExisting = false,
+  category = SettingsCategory.SYSTEM,
+)
 @ApiStatus.Internal
 internal class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryManager, Disposable {
   init {
@@ -25,20 +31,16 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
     }
     Registry.setValueChangeListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
-        ApplicationManager.getApplication().messageBus.syncPublisher(
-          RegistryManager.TOPIC).afterValueChanged(value)
+        ApplicationManager.getApplication().messageBus.syncPublisher(RegistryManager.TOPIC).afterValueChanged(value)
       }
     })
 
     // EarlyAccessRegistryManager cannot access AppLifecycleListener
     ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
       override fun appWillBeClosed(isRestart: Boolean) {
-        try {
+        runCatching {
           EarlyAccessRegistryManager.syncAndFlush()
-        }
-        catch (e: Throwable) {
-          Logger.getInstance(RegistryManagerImpl::class.java).error(e)
-        }
+        }.getOrLogException(logger<RegistryManagerImpl>())
       }
     })
   }
@@ -47,13 +49,11 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
     Registry.setValueChangeListener(null)
   }
 
-  override fun `is`(key: String): Boolean {
-    return Registry._getWithoutStateCheck(key).asBoolean()
-  }
+  override fun `is`(key: String): Boolean = Registry._getWithoutStateCheck(key).asBoolean()
 
-  override fun intValue(key: String) = Registry._getWithoutStateCheck(key).asInteger()
+  override fun intValue(key: String): Int = Registry._getWithoutStateCheck(key).asInteger()
 
-  override fun stringValue(key: String) = Registry._getWithoutStateCheck(key).asString()
+  override fun stringValue(key: String): @NlsSafe String = Registry._getWithoutStateCheck(key).asString()
 
   override fun intValue(key: String, defaultValue: Int): Int {
     return try {
@@ -64,9 +64,9 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
     }
   }
 
-  override fun get(key: String) = Registry._getWithoutStateCheck(key)
+  override fun get(key: String): RegistryValue = Registry._getWithoutStateCheck(key)
 
-  override fun getState() = Registry.getInstance().state
+  override fun getState(): Element = Registry.getInstance().state
 
   override fun noStateLoaded() {
     Registry.loadState(/* state = */ null, /* earlyAccess = */ EarlyAccessRegistryManager.getOrLoadMap())

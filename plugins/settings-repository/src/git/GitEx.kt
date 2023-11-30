@@ -23,6 +23,8 @@ import org.eclipse.jgit.transport.CredentialsProvider
 import org.eclipse.jgit.transport.FetchResult
 import org.eclipse.jgit.transport.RemoteConfig
 import org.eclipse.jgit.transport.Transport
+import org.eclipse.jgit.transport.SshSessionFactory
+import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory
 import org.eclipse.jgit.treewalk.FileTreeIterator
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.jetbrains.annotations.NonNls
@@ -55,9 +57,18 @@ private fun isAuthFailedMessage(message: String): Boolean {
          message.contains(": reject HostKey:") /* JSch */
 }
 
+private fun ensureSshSessionFactory() {
+  var instance = SshSessionFactory.getInstance()
+  if (instance == null) {
+    instance = JschConfigSessionFactory()
+    SshSessionFactory.setInstance(instance)
+  }
+}
+
 fun Repository.fetch(remoteConfig: RemoteConfig,
                      credentialsProvider: CredentialsProvider? = null,
                      progressMonitor: ProgressMonitor? = null): FetchResult? {
+  ensureSshSessionFactory()
   try {
     Transport.open(this, remoteConfig).use { transport ->
       transport.credentialsProvider = credentialsProvider

@@ -47,7 +47,7 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
            : null;
   }
 
-  private static boolean isEnabled() {
+  static boolean isEnabled() {
     return EditorSettingsExternalizable.getInstance().isFocusMode();
   }
 

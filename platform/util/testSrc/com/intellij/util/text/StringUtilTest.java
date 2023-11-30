@@ -420,7 +420,8 @@ public class StringUtilTest {
   public void testSplitByLineKeepingSeparators() {
     assertThat(StringUtil.splitByLinesKeepSeparators("")).containsExactly("");
     assertThat(StringUtil.splitByLinesKeepSeparators("aa")).containsExactly("aa");
-    assertThat(StringUtil.splitByLinesKeepSeparators("\n\naa\n\nbb\ncc\n\n")).containsExactly("\n", "\n", "aa\n", "\n", "bb\n", "cc\n", "\n");
+    assertThat(StringUtil.splitByLinesKeepSeparators("\n\naa\n\nbb\ncc\n\n")).containsExactly("\n", "\n", "aa\n", "\n", "bb\n", "cc\n",
+                                                                                              "\n");
 
     assertThat(StringUtil.splitByLinesKeepSeparators("\r\r\n\r")).containsExactly("\r", "\r\n", "\r");
     assertThat(StringUtil.splitByLinesKeepSeparators("\r\n\r\r\n")).containsExactly("\r\n", "\r", "\r\n");
@@ -528,19 +529,19 @@ public class StringUtilTest {
         return true;
       };
 
-    assertPrecedence.fun("A","b", true);
-    assertPrecedence.fun("a","aa", true);
-    assertPrecedence.fun("abb","abC", true);
+    assertPrecedence.fun("A", "b", true);
+    assertPrecedence.fun("a", "aa", true);
+    assertPrecedence.fun("abb", "abC", true);
 
-    assertPrecedence.fun("A","a", false);
-    assertPrecedence.fun("Aa","a", false);
-    assertPrecedence.fun("a","aa", false);
-    assertPrecedence.fun("-","A", false);
+    assertPrecedence.fun("A", "a", false);
+    assertPrecedence.fun("Aa", "a", false);
+    assertPrecedence.fun("a", "aa", false);
+    assertPrecedence.fun("-", "A", false);
 
-    assertEquality.fun("a","A",true);
-    assertEquality.fun("aa12b","Aa12B",true);
+    assertEquality.fun("a", "A", true);
+    assertEquality.fun("aa12b", "Aa12B", true);
 
-    assertEquality.fun("aa12b","aa12b",false);
+    assertEquality.fun("aa12b", "aa12b", false);
   }
 
   @Test
@@ -621,7 +622,7 @@ public class StringUtilTest {
     assertEquals("1 ms", StringUtil.formatDuration(1));
     assertEquals("1 s", StringUtil.formatDuration(1000));
     assertEquals("24 d 20 h 31 m 23 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE));
-    assertEquals("82 d 17 h 24 m 43 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE+5000000000L));
+    assertEquals("82 d 17 h 24 m 43 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE + 5000000000L));
 
     assertEquals("1 m 0 s 100 ms", StringUtil.formatDuration(60100));
 
@@ -724,6 +725,16 @@ public class StringUtilTest {
     assertEquals("abc", StringUtil.substringBeforeLast("abc", ""));
     assertEquals("abc", StringUtil.substringBeforeLast("abc", "1"));
     assertEquals("", StringUtil.substringBeforeLast("", "1"));
+    assertEquals("a", StringUtil.substringBeforeLast("abc", "b", false));
+    assertEquals("abab", StringUtil.substringBeforeLast("ababbccc", "b", false));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "", false));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "1", false));
+    assertEquals("", StringUtil.substringBeforeLast("", "1", false));
+    assertEquals("ab", StringUtil.substringBeforeLast("abc", "b", true));
+    assertEquals("ababb", StringUtil.substringBeforeLast("ababbccc", "b", true));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "", true));
+    assertEquals("abc", StringUtil.substringBeforeLast("abc", "1", true));
+    assertEquals("", StringUtil.substringBeforeLast("", "1", true));
   }
 
   @Test
@@ -893,6 +904,7 @@ public class StringUtilTest {
     assertEquals("", StringUtil.trim("", CharFilter.WHITESPACE_FILTER));
     assertEquals("", StringUtil.trim("\n   my string ", ch -> false));
     assertEquals("\n   my string ", StringUtil.trim("\n   my string ", ch -> true));
+    assertEquals("\u00A0   my string", StringUtil.trim("\u00A0   my string ", CharFilter.NOT_WHITESPACE_FILTER));
   }
 
   @Test
@@ -909,11 +921,12 @@ public class StringUtilTest {
     assertEquals("a", removeEllipsisSuffix("a" + ELLIPSIS));
     assertEquals("a...", removeEllipsisSuffix("a..." + ELLIPSIS));
   }
+
   @Test
   public void testEndsWith() {
     assertTrue(StringUtil.endsWith("text", 0, 4, "text"));
     assertFalse(StringUtil.endsWith("text", 4, 4, "-->"));
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, ()->assertFalse(StringUtil.endsWith("text", -1, 4, "t")));
+    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> assertFalse(StringUtil.endsWith("text", -1, 4, "t")));
     assertFalse(StringUtil.endsWith("text", "-->"));
   }
 
@@ -928,5 +941,81 @@ public class StringUtilTest {
     assertTrue(StringUtil.isJavaIdentifier("A\uD835\uDEFC"));
     //noinspection UnnecessaryUnicodeEscape
     assertTrue(StringUtil.isJavaIdentifier("\u03B1A"));
+  }
+
+  @Test
+  public void testSplit() {
+    String spaceSeparator = " ";
+    //noinspection rawtypes
+    List split1 = StringUtil.split("test", spaceSeparator, false, false);
+    List split2 = StringUtil.split(new CharSequenceSubSequence("test"), spaceSeparator, false,
+                                   false);
+    assertTrue(ContainerUtil.getOnlyItem(split1) instanceof String);
+    assertTrue(ContainerUtil.getOnlyItem(split2) instanceof CharSequenceSubSequence);
+
+    assertEquals(Arrays.asList(""), StringUtil.split("", spaceSeparator, false, false));
+    assertEquals(Arrays.asList(), StringUtil.split("", spaceSeparator, true, true));
+
+    assertEquals(Arrays.asList(" ", ""), StringUtil.split(" ", spaceSeparator, false, false));
+    assertEquals(Arrays.asList("", ""), StringUtil.split(" ", spaceSeparator, true, false));
+    assertEquals(Arrays.asList(), StringUtil.split(" ", spaceSeparator, true, true));
+
+    assertEquals(Arrays.asList("a", "b"), StringUtil.split("a  b ", spaceSeparator, true, true));
+    assertEquals(Arrays.asList("a ", " ", "b "), StringUtil.split("a  b ", spaceSeparator, false, true));
+    assertEquals(Arrays.asList("a ", " ", "b ", ""), StringUtil.split("a  b ", spaceSeparator, false, false));
+
+    assertEquals(Arrays.asList("a", "b"), StringUtil.split("a  b", spaceSeparator, true, true));
+    assertEquals(Arrays.asList("a ", " ", "b"), StringUtil.split("a  b", spaceSeparator, false, true));
+    assertEquals(Arrays.asList("a ", " ", "b"), StringUtil.split("a  b", spaceSeparator, false, false));
+
+    assertEquals(Arrays.asList("test"), StringUtil.split("test", spaceSeparator, true, true));
+    assertEquals(Arrays.asList("test"), StringUtil.split("test", spaceSeparator, false, true));
+    assertEquals(Arrays.asList("test"), StringUtil.split("test", spaceSeparator, true, false));
+    assertEquals(Arrays.asList("test"), StringUtil.split("test", spaceSeparator, false, false));
+
+    assertEquals(Arrays.asList("a", " b"), StringUtil.split("a  b ", spaceSeparator, true, true));
+    assertEquals(Arrays.asList("a", "\n\tb"), StringUtil.split("a \n\tb ", spaceSeparator, true, true));
+
+    assertEquals(Arrays.asList("a\u00A0b"), StringUtil.split("a\u00A0b", spaceSeparator, true, true));
+
+    assertEquals(Arrays.asList("  \n\t", " "), StringUtil.split("a  \n\ta ", "a", true, true));
+  }
+
+  @Test
+  public void testSplitCharFilter() {
+    CharFilter spaceSeparator = CharFilter.WHITESPACE_FILTER;
+    //noinspection rawtypes
+    List split1 = StringUtil.split("test", spaceSeparator, false, false);
+    List split2 = StringUtil.split(new CharSequenceSubSequence("test"), spaceSeparator, false,
+                                   false);
+    assertTrue(ContainerUtil.getOnlyItem(split1) instanceof String);
+    assertTrue(ContainerUtil.getOnlyItem(split2) instanceof CharSequenceSubSequence);
+
+    assertEquals(Arrays.asList(""), StringUtil.split("", spaceSeparator, false, false));
+    assertEquals(Arrays.asList(), StringUtil.split("", spaceSeparator, true, true));
+
+    assertEquals(Arrays.asList(" ", ""), StringUtil.split(" ", spaceSeparator, false, false));
+    assertEquals(Arrays.asList("", ""), StringUtil.split(" ", spaceSeparator, true, false));
+    assertEquals(Arrays.asList(), StringUtil.split(" ", spaceSeparator, true, true));
+
+    assertEquals(Arrays.asList("a", "b"), StringUtil.split("a  b ", spaceSeparator, true, true));
+    assertEquals(Arrays.asList("a ", " ", "b "), StringUtil.split("a  b ", spaceSeparator, false, true));
+    assertEquals(Arrays.asList("a ", " ", "b ", ""), StringUtil.split("a  b ", spaceSeparator, false, false));
+
+    assertEquals(Arrays.asList("a", "b"), StringUtil.split("a  b", spaceSeparator, true, true));
+    assertEquals(Arrays.asList("a ", " ", "b"), StringUtil.split("a  b", spaceSeparator, false, true));
+    assertEquals(Arrays.asList("a ", " ", "b"), StringUtil.split("a  b", spaceSeparator, false, false));
+
+    assertEquals(Arrays.asList("test"), StringUtil.split("test", spaceSeparator, true, true));
+    assertEquals(Arrays.asList("test"), StringUtil.split("test", spaceSeparator, false, true));
+    assertEquals(Arrays.asList("test"), StringUtil.split("test", spaceSeparator, true, false));
+    assertEquals(Arrays.asList("test"), StringUtil.split("test", spaceSeparator, false, false));
+
+    assertEquals(Arrays.asList("a", "b"), StringUtil.split("a  b ", spaceSeparator, true, true));
+    assertEquals(Arrays.asList("a", "b"), StringUtil.split("a \n\tb ", spaceSeparator, true, true));
+
+    assertEquals(Arrays.asList("a\u00A0b"), StringUtil.split("a\u00A0b", spaceSeparator, true, true));
+
+    assertEquals(Arrays.asList("  \n\t", " "), StringUtil.split("a  \n\ta ", CharFilter.NOT_WHITESPACE_FILTER, true, true));
   }
 }

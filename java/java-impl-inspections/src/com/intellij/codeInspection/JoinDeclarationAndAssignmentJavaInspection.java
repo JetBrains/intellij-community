@@ -1,18 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Contract;
@@ -20,6 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -55,7 +54,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         }
       }
 
-      public void visitLocation(@Nullable PsiElement location) {
+      private void visitLocation(@Nullable PsiElement location) {
         Context context = getContext(location);
         if (context != null) {
           PsiLocalVariable variable = context.myVariable;
@@ -186,8 +185,30 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     return initializer == null || !SideEffectChecker.checkSideEffects(initializer, null);
   }
 
+  private static class JoinDeclarationAndAssignmentAction extends PsiUpdateModCommandAction<PsiElement> {
+    protected JoinDeclarationAndAssignmentAction(@NotNull PsiElement element) {
+      super(element);
+    }
 
-  private static class JoinDeclarationAndAssignmentFix implements LocalQuickFix {
+    @Override
+    public @NotNull String getFamilyName() {
+      return JavaBundle.message("delete.initializer.completely");
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext actionContext, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      join(element);
+    }
+
+    private static void join(@NotNull PsiElement element) {
+      Context context = getContext(element);
+      if (context != null) {
+        DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment);
+      }
+    }
+  }
+
+  private static class JoinDeclarationAndAssignmentFix extends ModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -196,36 +217,24 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      Context context = getContext(descriptor.getPsiElement());
-      if (context != null) {
-        PsiLocalVariable variable = context.myVariable;
-        PsiAssignmentExpression assignmentExpression = context.myAssignment;
-        PsiExpression initializer = variable.getInitializer();
-        if (initializer != null && assignmentExpression.getOperationTokenType() == JavaTokenType.EQ) {
-          String textAfter = PsiExpressionTrimRenderer.render(initializer) + ";<br>" +
-                             variable.getTypeElement().getText() + ' ' + variable.getName();
-          if (!RemoveInitializerFix.sideEffectAwareRemove(project, initializer, initializer, variable, textAfter)) return;
-        }
-
-        if (!FileModificationService.getInstance().prepareFileForWrite(assignmentExpression.getContainingFile())) return;
-        WriteAction.run(() -> DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment));
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      Context context = getContext(element);
+      if (context == null) return ModCommand.nop();
+      PsiLocalVariable variable = context.myVariable;
+      PsiExpression initializer = variable.getInitializer();
+      List<PsiExpression> sideEffects = initializer == null ||
+                                        context.myAssignment.getOperationTokenType() != JavaTokenType.EQ ? 
+                                        List.of() : SideEffectChecker.extractSideEffectExpressions(initializer);
+      JoinDeclarationAndAssignmentAction action = new JoinDeclarationAndAssignmentAction(element);
+      if (!sideEffects.isEmpty() && !ContainerUtil.exists(sideEffects, se -> variableIsUsed(variable, se))) {
+        List<ModCommandAction> subActions = List.of(
+          new RemoveInitializerFix.SideEffectAwareRemove(initializer, var -> JoinDeclarationAndAssignmentAction.join(var)),
+          action);
+        return ModCommand.chooseAction(JavaBundle.message("inspection.join.declaration.and.assignment.fix.title"), subActions);
       }
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      Context context = getContext(previewDescriptor.getPsiElement());
-      if (context != null) {
-        DeclarationJoinLinesHandler.joinDeclarationAndAssignment(context.myVariable, context.myAssignment);
-        return IntentionPreviewInfo.DIFF;
-      } else {
-        return IntentionPreviewInfo.EMPTY;
+      else {
+        return action.perform(ActionContext.from(descriptor));
       }
     }
   }

@@ -5,9 +5,43 @@ apt-cache
 apt-get
 assoc
 attrib
+aws
 az
+bash
+bazel
 brew
 cargo
+cargo add
+cargo bench
+cargo build
+cargo check
+cargo clean
+cargo doc
+cargo fetch
+cargo fix
+cargo fmt
+cargo generate-lockfile
+cargo help
+cargo init
+cargo install
+cargo locale-project
+cargo metadata
+cargo miri
+cargo new
+cargo pkgid
+cargo remove
+cargo report
+cargo run
+cargo rustc
+cargo rustdoc
+cargo search
+cargo test
+cargo tree
+cargo uninstall
+cargo update
+cargo vendor
+cargo verify-project
+cargo version
 cat
 cd
 chkdsk
@@ -16,9 +50,41 @@ chown
 cipher
 clear
 cls
+cmd
 code
 command
 compact
+composer
+composer audit
+composer bump
+composer check-platform-reqs
+composer clear-cache
+composer completion
+composer config
+composer create-project
+composer depends
+composer diagnose
+composer dump-autoload
+composer exec
+composer global
+composer help
+composer init
+composer install
+composer licenses
+composer list
+composer outdated
+composer prohibits
+composer reinstall
+composer remove
+composer require
+composer run-script
+composer search
+composer self-update
+composer show
+composer status
+composer suggests
+composer update
+composer validate
 copy
 cp
 curl
@@ -32,11 +98,14 @@ docker compose
 docker-compose
 du
 echo
+egrep
 eslint
 exit
 expand
 export
+fgrep
 find
+fish
 format
 free
 g++
@@ -44,25 +113,48 @@ gcc
 gdb
 git
 git add
+git apply
+git bisect
 git branch
 git checkout
+git cherry-pick
+git clean
 git clone
 git commit
+git config
 git diff
+git difftool
+git fetch
+git gc
+git grep
+git help
 git init
 git log
 git merge
+git mergetool
+git mv
+git prune
 git pull
 git push
 git rebase
+git repack
 git reset
+git restore
+git revert
+git rm
+git show
 git stash
 git status
+git submodule
+git switch
 git tag
+git version
+gitk
 gradle
 grep
 grunt
 gulp
+head
 helm
 help
 hg
@@ -79,8 +171,11 @@ karma
 kill
 kubectl
 less
+ll
 ls
 make
+man
+mc
 md
 mkdir
 mocha
@@ -104,6 +199,7 @@ npm test
 npx
 nslookup
 nvm
+pacman
 pathping
 pause
 ping
@@ -121,6 +217,7 @@ pwsh
 python
 rd
 reg
+rgrep
 rm
 rmdir
 route
@@ -133,6 +230,8 @@ scp
 screen
 service
 set
+sh
+shred
 shutdown
 sort
 source
@@ -148,18 +247,22 @@ svn status
 svn update
 systemctl
 systeminfo
+tail
 tar
 taskkill
 tasklist
 taskmgr
 telnet
+terraform
 title
+tmux
 top
 touch
 traceroute
 tracert
 tree
 type
+unalias
 unzip
 vagrant
 valgrind
@@ -167,8 +270,10 @@ ver
 vi
 vim
 vitest
+wc
 webpack
 wget
+whatis
 whence
 where
 which
@@ -180,3 +285,4 @@ yarn run
 yarn test
 yum
 zip
+zsh

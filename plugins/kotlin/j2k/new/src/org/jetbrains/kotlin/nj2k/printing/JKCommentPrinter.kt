@@ -3,34 +3,47 @@
 package org.jetbrains.kotlin.nj2k.printing
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.kotlin.nj2k.tree.JKComment
-import org.jetbrains.kotlin.nj2k.tree.JKDeclaration
-import org.jetbrains.kotlin.nj2k.tree.JKFormattingOwner
+import org.jetbrains.kotlin.nj2k.tree.*
 
 internal class JKCommentPrinter(private val printer: JKPrinter) {
+    // some comments may appear in the AST multiple times, so we keep track
+    // of the already printed comments to avoid printing the same comment twice
     private val printedTokens = mutableSetOf<JKComment>()
 
-    //TODO move to ast transformation phase
-    private fun JKComment.shouldBeDropped(): Boolean =
-        text.startsWith("//noinspection")
+    fun printCommentsAndLineBreaksBefore(element: JKFormattingOwner) {
+        val text = element.commentsBefore.createText()
+        printer.print(text)
 
-    private fun JKComment.createText() =
-        if (this !in printedTokens) {
-            printedTokens += this
+        if (printer.lastSymbolIsLineBreak) return
 
-            // hack till #KT-16845, #KT-23333 are fixed
-            if (!isSingleline && text.lastIndexOf("/*") != text.indexOf("/*")) {
-                text.replace("/*", "/ *")
-                    .replaceFirst("/ *", "/*")
-            } else text
-        } else null
+        val shouldAddLineBreakAfterComment = (element is JKDeclaration && element.commentsBefore.isNotEmpty()) ||
+                text.hasNoLineBreakAfterSingleLineComment()
 
+        if (element.hasLineBreakBefore || shouldAddLineBreakAfterComment) {
+            printer.println()
+        }
+    }
 
-    private fun List<JKComment>.createText(): String = buildString {
+    fun printCommentsAndLineBreaksAfter(element: JKFormattingOwner) {
+        val parent = (element as? JKTreeElement)?.parent as? JKFormattingOwner
+        val text = element.commentsAfter.createText(parent)
+        printer.print(text)
+
+        if (element.hasLineBreakAfter) {
+            printer.println(element.lineBreaksAfter)
+        } else if (text.hasNoLineBreakAfterSingleLineComment()) {
+            printer.println()
+        }
+    }
+
+    private fun List<JKComment>.createText(parent: JKFormattingOwner? = null): String = buildString {
         var needNewLine = false
+
         for (comment in this@createText) {
-            if (comment.shouldBeDropped()) continue
-            val text = comment.createText() ?: continue
+            if (comment.shouldBeDropped(parent)) continue
+
+            printedTokens += comment
+            val text = comment.escapedText()
             if (needNewLine && comment.indent?.let { StringUtil.containsLineBreak(it) } != true) appendLine()
             append(comment.indent ?: ' ')
             append(text)
@@ -38,26 +51,34 @@ internal class JKCommentPrinter(private val printer: JKPrinter) {
         }
     }
 
-    private fun String.hasNoLineBreakAfterSingleLineComment() = lastIndexOf('\n') < lastIndexOf("//")
+    /**
+     * @param parent - the parent element of the comment owner
+     */
+    private fun JKComment.shouldBeDropped(parent: JKFormattingOwner?): Boolean {
+        if (this in printedTokens) return true
+        if (text.startsWith("//noinspection")) return true
+        if (parent?.commentsAfter?.contains(this) == true) {
+            // A comment may be contained in several JK elements (this is a side effect of comments collection in AST building phase).
+            // We already account for this fact and don't print duplicate comments (see `printedTokens` property).
+            // However, if we print a particular comment for a child element instead of the parent,
+            // sometimes we incorrectly add a redundant line break.
+            //
+            // To work around this, if the comment is contained both in the parent and child elements, we print it only for the parent.
+            return true
+        }
 
-
-    fun printLeadingComments(element: JKFormattingOwner) {
-        val text = element.leadingComments.createText()
-        printer.print(text)
-
-        val addNewLine = element.hasLeadingLineBreak || text.hasNoLineBreakAfterSingleLineComment()
-        if (addNewLine) printer.println()
+        return false
     }
 
-
-    fun printTrailingComments(element: JKFormattingOwner) {
-        val text = element.trailingComments.createText()
-        printer.print(text)
-
-        val addNewLine = element.hasTrailingLineBreak
-                || element is JKDeclaration && element.trailingComments.isNotEmpty() // add new line between comment & declaration
-                || text.hasNoLineBreakAfterSingleLineComment()
-
-        if (addNewLine) printer.println()
+    private fun JKComment.escapedText(): String = when {
+        isSingleLine -> text
+        text.indexOf("/*") == text.lastIndexOf("/*") -> text
+        else -> {
+            // hack till #KT-16845, #KT-23333 are fixed
+            text.replace("/*", "/ *").replaceFirst("/ *", "/*")
+        }
     }
+
+    private fun String.hasNoLineBreakAfterSingleLineComment(): Boolean =
+        lastIndexOf('\n') < lastIndexOf("//")
 }

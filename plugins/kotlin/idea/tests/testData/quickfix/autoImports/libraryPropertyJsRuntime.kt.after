@@ -1,5 +1,5 @@
 // "Import property 'localStorage'" "true"
-// JS
+// JS_WITH_DOM_API_COMPAT
 
 package test
 
@@ -8,3 +8,6 @@ import kotlinx.browser.localStorage
 fun foo() {
     localStorage
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

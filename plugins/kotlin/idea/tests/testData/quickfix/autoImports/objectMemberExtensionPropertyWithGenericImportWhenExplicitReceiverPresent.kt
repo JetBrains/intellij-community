@@ -10,3 +10,5 @@ object TopLevelObject1 {
 fun usage(t: T) {
     t.<caret>foobar
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

@@ -75,7 +75,7 @@ public abstract class FileIndentOptionsProvider {
    * @deprecated Use {@link #notifyIndentOptionsChanged(Project, VirtualFile)} or {@link #notifyIndentOptionsChanged(Project)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected static void notifyIndentOptionsChanged(@NotNull Project project, @Nullable PsiFile file) {
     CodeStyleSettingsManager.getInstance(project).fireCodeStyleSettingsChanged(file);
   }

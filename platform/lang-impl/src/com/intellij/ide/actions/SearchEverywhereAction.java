@@ -9,6 +9,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
@@ -37,8 +38,15 @@ public class SearchEverywhereAction extends SearchEverywhereBaseAction
 
   public static final Key<ConcurrentHashMap<ClientId, JBPopup>> SEARCH_EVERYWHERE_POPUP = new Key<>("SearchEverywherePopup");
 
-  static {
+  private static void registerShortcut() {
     ModifierKeyDoubleClickHandler.getInstance().registerAction(IdeActions.ACTION_SEARCH_EVERYWHERE, KeyEvent.VK_SHIFT, -1, false);
+  }
+
+  static final class ShortcutTracker implements ActionConfigurationCustomizer {
+    @Override
+    public void customize(@NotNull ActionManager actionManager) {
+      registerShortcut();
+    }
   }
 
   public SearchEverywhereAction() {

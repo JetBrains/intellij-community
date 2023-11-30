@@ -16,24 +16,29 @@ import org.jetbrains.intellij.build.dependencies.DotNetPackagesCredentials.setup
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
+import org.jetbrains.jps.cmdline.LogSetup
 import org.jetbrains.jps.incremental.MessageHandler
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.Properties
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
+import java.util.logging.Level
 import java.util.stream.Collectors
+import kotlin.io.path.bufferedWriter
 
-class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myModel: JpsModel?, jpsBootstrapWorkDir: Path, kotlincHome: Path?) {
+class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myModel: JpsModel, jpsBootstrapWorkDir: Path, kotlincHome: Path?) {
   private val myModuleNames: Set<String>
   private val myDataStorageRoot: Path
   private val myJpsLogDir: Path
 
   init {
-    myModuleNames = myModel!!.project.modules.stream().map { obj: JpsModule -> obj.name }.collect(Collectors.toUnmodifiableSet())
+    myModuleNames = myModel.project.modules.stream().map { obj: JpsModule -> obj.name }.collect(Collectors.toUnmodifiableSet())
     myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data")
     System.setProperty("aether.connector.resumeDownloads", "false")
     System.setProperty("jps.kotlin.home", kotlincHome.toString())
@@ -52,6 +57,7 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
     System.setProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false")
     System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "true")
     myJpsLogDir = jpsBootstrapWorkDir.resolve("log")
+    setupJpsLogging()
     System.setProperty(GlobalOptions.LOG_DIR_OPTION, myJpsLogDir.toString())
     val url = "file://" + FileUtilRt.toSystemIndependentName(jpsBootstrapWorkDir.resolve("out").toString())
     JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myModel.project).outputUrl = url
@@ -185,6 +191,32 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
     ${errors[0]}
     """.trimIndent())
       }
+    }
+  }
+
+  private fun setupJpsLogging() {
+    val logSettingsFile = myJpsLogDir.resolve(LogSetup.LOG_CONFIG_FILE_NAME)
+    Files.deleteIfExists(logSettingsFile) // non-existing file will reset JPS logging settings to defaults
+
+    val debugCategories = System.getProperty("intellij.build.debug.logging.categories", "")
+      .split(",")
+      .filterNot(String::isBlank)
+    if (debugCategories.isEmpty()) {
+      return
+    }
+
+    val level = Level.FINER.name
+    info("Setting logging level to $level for: $debugCategories")
+
+    val loggingSettingsProperties = Properties().apply {
+      debugCategories.forEach { category ->
+        setProperty("$category.level", level)
+      }
+    }
+
+    Files.createDirectories(myJpsLogDir)
+    logSettingsFile.bufferedWriter().use { writer ->
+      loggingSettingsProperties.store(writer, "Created by ${JpsBuild::class.qualifiedName}")
     }
   }
 

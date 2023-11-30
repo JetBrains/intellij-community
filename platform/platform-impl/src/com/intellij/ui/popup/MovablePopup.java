@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,7 +15,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.Field;
 
-public class MovablePopup {
+public final class MovablePopup {
   private final HierarchyListener myListener = event -> setVisible(false);
   private Runnable myOnAncestorFocusLost = null;
   private final WindowAdapter myWindowFocusAdapter = new WindowAdapter() {
@@ -181,6 +182,17 @@ public class MovablePopup {
         if (myHeavyWeight) {
           JWindow view = new JWindow(owner);
           view.setType(Window.Type.POPUP);
+          if (StartupUiUtil.isWaylandToolkit()) {
+            // Wayland popups *must* know their parent in order to be
+            // placed on the screen relative to it.
+            try {
+              Field field = Window.class.getDeclaredField("popupParent");
+              field.setAccessible(true);
+              field.set(view, owner);
+            }
+            catch (NoSuchFieldException| IllegalAccessException ignore) {
+            }
+          }
           setAlwaysOnTop(view, myAlwaysOnTop);
           setWindowFocusable(view, myWindowFocusable);
           setWindowShadow(view, myWindowShadow);
@@ -216,7 +228,11 @@ public class MovablePopup {
           SwingUtilities.convertPointFromScreen(location, parent);
           myViewBounds.setLocation(location);
         }
-        myView.setBackground(myTransparent ? Gray.TRANSPARENT : UIUtil.getLabelBackground());
+        boolean isTranslucencySupported =
+          !(myView instanceof Window) ||
+          GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+            .isWindowTranslucencySupported(GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT);
+        myView.setBackground(myTransparent && isTranslucencySupported ? Gray.TRANSPARENT : UIUtil.getLabelBackground());
         myView.setBounds(myViewBounds);
         myView.setVisible(true);
         myViewBounds = null;

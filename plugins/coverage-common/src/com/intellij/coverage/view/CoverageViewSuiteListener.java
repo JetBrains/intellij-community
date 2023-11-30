@@ -16,40 +16,32 @@
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 public class CoverageViewSuiteListener implements CoverageSuiteListener {
-  private final CoverageDataManager myDataManager;
   private final Project myProject;
 
-  public CoverageViewSuiteListener(CoverageDataManager dataManager, Project project) {
-    myDataManager = dataManager;
+  public CoverageViewSuiteListener(Project project) {
     myProject = project;
   }
 
   @Override
   public void beforeSuiteChosen() {
-    final CoverageSuitesBundle suitesBundle = myDataManager.getCurrentSuitesBundle();
-    if (suitesBundle != null) {
-      CoverageViewManager.getInstance(myProject).closeView(CoverageViewManager.getDisplayName(suitesBundle));
-    }
+    // Call here to ensure that toolwindow is created
+    CoverageViewManager.getInstance(myProject);
   }
 
   @Override
-  public void afterSuiteChosen() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-    final CoverageSuitesBundle suitesBundle = myDataManager.getCurrentSuitesBundle();
-    if (suitesBundle == null) return;
-    final CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
+  public void coverageDataCalculated(@NotNull CoverageSuitesBundle suitesBundle) {
+    CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
     if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, viewManager.getStateBean()) != null) {
-      viewManager.createToolWindow(CoverageViewManager.getDisplayName(suitesBundle), shouldActivate(suitesBundle));
+      viewManager.createToolWindow(suitesBundle, shouldActivate(suitesBundle));
     }
   }
 
   private static boolean shouldActivate(CoverageSuitesBundle suitesBundle) {
+    if (!suitesBundle.shouldActivateToolWindow()) return false;
     final CoverageSuite[] suites = suitesBundle.getSuites();
     for (CoverageSuite suite : suites) {
       if (!(suite.getCoverageDataFileProvider() instanceof DefaultCoverageFileProvider)) return false;

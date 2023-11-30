@@ -14,7 +14,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.NameUtil
-import com.intellij.ui.dsl.listCellRenderer.LcrTextInitParams
+import com.intellij.ui.dsl.listCellRenderer.LcrInitParams
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.Processor
 import com.intellij.util.text.Matcher
@@ -121,29 +121,29 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
   }
 
   private val renderer = listCellRenderer<Any> {
-    val icon = icon()
-    val center = text {
-      grow = true
-    }
-    val right = text {
-      style = LcrTextInitParams.Style.GRAYED
+    val value = this.value
+    val iconBg = selectionColor ?: JBUI.CurrentTheme.List.BACKGROUND
+
+    icon(
+      if (value is VcsRef) LabelIcon(list, JBUI.scale(16), iconBg, listOf(value.type.backgroundColor)) else AllIcons.Vcs.CommitNode)
+
+    text(when (value) {
+           is VcsRef -> value.name
+           is VcsCommitMetadata -> value.subject
+           else -> ""
+         }) {
+      align = LcrInitParams.Align.LEFT
     }
 
-    renderer { list, value, index, isSelected, cellHasFocus, rowParams ->
-      val background = rowParams.background ?: JBUI.CurrentTheme.List.BACKGROUND
-      icon.icon = when (value) {
-                       is VcsRef -> LabelIcon(list, JBUI.scale(16), background, listOf(value.type.backgroundColor))
-                       else -> AllIcons.Vcs.CommitNode
-                     }
-      center.text = when (value) {
-        is VcsRef -> value.name
-        is VcsCommitMetadata -> value.subject
-        else -> null
-      }
-      right.text = when (value) {
-        is VcsRef -> getTrackingRemoteBranchName(value)
-        is VcsCommitMetadata -> value.id.toShortString()
-        else -> null
+    @NlsSafe
+    val rightText = when (value) {
+      is VcsRef -> getTrackingRemoteBranchName(value)
+      is VcsCommitMetadata -> value.id.toShortString()
+      else -> null
+    }
+    if (rightText != null) {
+      text(rightText) {
+        foreground = greyForeground
       }
     }
   }

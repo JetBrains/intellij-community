@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -16,9 +16,8 @@ public final class DfaTypeValue extends DfaValue {
     myType = type;
   }
 
-  @NotNull
   @Override
-  public DfType getDfType() {
+  public @NotNull DfType getDfType() {
     return myType;
   }
 

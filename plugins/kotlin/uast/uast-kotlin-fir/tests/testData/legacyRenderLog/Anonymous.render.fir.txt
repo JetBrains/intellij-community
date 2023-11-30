@@ -6,7 +6,7 @@ public final class AnonymousKt {
         var runnable: java.lang.Runnable = anonymous object : Runnable { override fun run() {} }
         runnable.run()
         var runnable2: java.lang.Runnable = Runnable({
-            println()
+            return println()
         })
         runnable2.run()
         var closeableRunnable: java.lang.Object = anonymous object : Runnable, Closeable { override fun close() {} override fun run() {} }

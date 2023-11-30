@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.icons.AllIcons;
@@ -19,7 +19,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.SingleAlarm;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
@@ -28,18 +28,17 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class ContentTabLabel extends ContentLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
 
-  private final LayeredIcon myActiveCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(true));
-  private final LayeredIcon myRegularCloseIcon = new LayeredIcon(JBUI.CurrentTheme.ToolWindow.closeTabIcon(false));
-  @NotNull
-  protected final Content myContent;
+  private final LayeredIcon myActiveCloseIcon = LayeredIcon.layeredIcon(() -> new Icon[]{JBUI.CurrentTheme.ToolWindow.closeTabIcon(true)});
+  private final LayeredIcon myRegularCloseIcon = LayeredIcon.layeredIcon(() -> new Icon[]{JBUI.CurrentTheme.ToolWindow.closeTabIcon(false)});
+  protected final @NotNull Content myContent;
   private final TabContentLayout myLayout;
 
   private @NlsContexts.Label String myText;
-  private final SingleAlarm myRevalidateAlarm;
 
   @Override
   protected void handleMouseClick(@NotNull MouseEvent e) {
@@ -68,6 +67,7 @@ public class ContentTabLabel extends ContentLabel {
     updateText();
   }
 
+  private boolean textUpdateScheduled;
   private void updateText() {
     try {
       if (myText != null && myText.startsWith("<html>")) {
@@ -91,8 +91,16 @@ public class ContentTabLabel extends ContentLabel {
     }
     finally {
       //noinspection ConstantConditions
-      if (myContent != null && !(myContent instanceof SingleContentLayout.SubContent) && !Disposer.isDisposed(myContent)) {
-        myRevalidateAlarm.request();
+      if (myContent != null && !(myContent instanceof SingleContentLayout.SubContent) && !Disposer.isDisposed(myContent) && !textUpdateScheduled) {
+        textUpdateScheduled = true;
+        EdtScheduledExecutorService.getInstance().schedule(() -> {
+          textUpdateScheduled = false;
+          Container parent = getParent();
+          if (parent != null) {
+            parent.revalidate();
+            parent.repaint();
+          }
+        }, 50, TimeUnit.MILLISECONDS);
       }
     }
   }
@@ -117,13 +125,6 @@ public class ContentTabLabel extends ContentLabel {
       SwingUtilities.invokeLater(this::updateCloseIcon);
     }
     setMaximumSize(new Dimension(MAX_WIDTH, getMaximumSize().height));
-    myRevalidateAlarm = new SingleAlarm(() -> {
-      Container parent = getParent();
-      if (parent != null) {
-        parent.revalidate();
-        parent.repaint();
-      }
-    }, 50, myContent);
   }
 
   @Override
@@ -205,18 +206,16 @@ public class ContentTabLabel extends ContentLabel {
     return super._getGraphics(g);
   }
 
-  @NotNull
-  private ContentManager getContentManager() {
+  private @NotNull ContentManager getContentManager() {
     return myUi.getContentManager();
   }
 
-  @NotNull
   @Override
-  public Content getContent() {
+  public @NotNull Content getContent() {
     return myContent;
   }
 
-  private class CloseContentTabAction extends ContentTabAction {
+  private final class CloseContentTabAction extends ContentTabAction {
     private CloseContentTabAction() {
       super(new ActiveIcon(myActiveCloseIcon, myRegularCloseIcon));
     }
@@ -241,9 +240,8 @@ public class ContentTabLabel extends ContentLabel {
       return UISettings.getShadowInstance().getCloseTabButtonOnTheRight() || !UISettings.getShadowInstance().getShowCloseButton();
     }
 
-    @NotNull
     @Override
-    public String getTooltip() {
+    public @NotNull String getTooltip() {
       if (getContent().isPinned()) {
         return IdeBundle.message("action.unpin.tab.tooltip");
       }

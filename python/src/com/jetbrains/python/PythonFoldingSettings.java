@@ -15,6 +15,7 @@ public class PythonFoldingSettings implements PersistentStateComponent<PythonFol
   public boolean COLLAPSE_LONG_STRINGS;
   public boolean COLLAPSE_LONG_COLLECTIONS;
   public boolean COLLAPSE_SEQUENTIAL_COMMENTS;
+  public boolean COLLAPSE_TYPE_ANNOTATIONS;
 
   @Nullable
   @Override
@@ -44,4 +45,7 @@ public class PythonFoldingSettings implements PersistentStateComponent<PythonFol
     return COLLAPSE_SEQUENTIAL_COMMENTS;
   }
 
+  public boolean isCollapseTypeAnnotations() {
+    return COLLAPSE_TYPE_ANNOTATIONS;
+  }
 }

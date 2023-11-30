@@ -24,7 +24,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
-public class InvertBooleanProcessor extends BaseRefactoringProcessor {
+public final class InvertBooleanProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InvertBooleanProcessor.class);
   private final InvertBooleanDelegate myDelegate;
 

@@ -4,9 +4,11 @@
 package org.jetbrains.kotlin.script
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import kotlin.script.experimental.dependencies.DependenciesResolver
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use ScriptDefinitionContributor EP and loadDefinitionsFromTemplates top level function")
 internal interface ScriptTemplatesProvider {
 

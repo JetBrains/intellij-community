@@ -169,7 +169,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     }
   }
 
-  private class ListItr extends Itr implements ListIterator<E> {
+  private final class ListItr extends Itr implements ListIterator<E> {
     ListItr(int index) {
       cursor = index;
     }
@@ -213,7 +213,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
     }
   }
 
-  private static class SubList<E> extends ImmutableList<E> {
+  private static final class SubList<E> extends ImmutableList<E> {
     private final List<? extends E> l;
     private final int offset;
     private final int size;
@@ -255,7 +255,7 @@ public abstract class ImmutableList<E> extends AbstractCollection<E> implements 
   static @NotNull <T> ImmutableList<T> singleton(T element) {
     return new Singleton<>(element);
   }
-  private static class Singleton<E> extends ImmutableList<E> {
+  private static final class Singleton<E> extends ImmutableList<E> {
     private final E element;
 
     Singleton(E e) {

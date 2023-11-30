@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.util.containers.ContainerUtil;
@@ -80,7 +80,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
     if (indices.length > 0) {
       inlineNodesRemoved(indices, removed);
     }
-    if (children.size() == 0) {
+    if (children.isEmpty()) {
       allChildrenRemoved();
     }
   }
@@ -179,7 +179,7 @@ public class InlineWatchesRootNode extends WatchesRootNode {
         children.remove(node);
         inlineNodesRemoved(new int[]{index}, new TreeNode[]{node});
       }
-      if (children.size() == 0) {
+      if (children.isEmpty()) {
         allChildrenRemoved();
       }
       return index;

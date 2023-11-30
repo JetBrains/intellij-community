@@ -10,6 +10,8 @@ public final class YamlJsonSchemaTestSuite {
     final TestSuite suite = new TestSuite(YamlJsonSchemaTestSuite.class.getSimpleName());
     suite.addTestSuite(YamlByJsonSchemaDocumentationTest.class);
     suite.addTestSuite(YamlByJsonSchemaCompletionTest.class);
+    suite.addTestSuite(YamlByJsonSchemaNestedCompletionTest.class);
+    suite.addTestSuite(YamlByJsonSchemaHeavyNestedCompletionTest.class);
     suite.addTestSuite(YamlByJsonSchemaHeavyCompletionTest.class);
     suite.addTestSuite(YamlByJsonSchemaHighlightingTest.class);
     suite.addTestSuite(YamlByJsonSchemaQuickFixTest.class);

@@ -67,5 +67,5 @@ class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
     return metrics
   }
 
-  override fun requiresReadAccess() = true
+  override fun requiresReadAccess(): Boolean = true
 }

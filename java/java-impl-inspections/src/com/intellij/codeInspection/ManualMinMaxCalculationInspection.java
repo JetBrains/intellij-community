@@ -3,6 +3,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -119,7 +121,7 @@ public class ManualMinMaxCalculationInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final CommentTracker ct = new CommentTracker();
       if (element instanceof PsiConditionalExpression) {
         ConditionalModel model = ConditionalModel.from((PsiConditionalExpression)element);

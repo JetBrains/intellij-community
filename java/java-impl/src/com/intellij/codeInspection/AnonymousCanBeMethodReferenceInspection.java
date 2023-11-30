@@ -5,6 +5,8 @@ import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection.MethodRe
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -100,35 +102,35 @@ public class AnonymousCanBeMethodReferenceInspection extends AbstractBaseJavaLoc
     };
   }
 
-  private static class ReplaceWithMethodRefFix implements LocalQuickFix {
-      @NotNull
-      @Override
-      public String getFamilyName() {
-        return JavaBundle.message("quickfix.family.replace.with.method.reference");
-      }
+  private static class ReplaceWithMethodRefFix extends PsiUpdateModCommandQuickFix {
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return JavaBundle.message("quickfix.family.replace.with.method.reference");
+    }
 
     @Override
-      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-        final PsiElement element = descriptor.getPsiElement();
-        if (element instanceof PsiNewExpression) {
-          final PsiAnonymousClass anonymousClass = ((PsiNewExpression)element).getAnonymousClass();
-          if (anonymousClass == null) return;
-          final PsiMethod[] methods = anonymousClass.getMethods();
-          if (methods.length != 1) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiNewExpression newExpression) {
+        final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+        if (anonymousClass == null) return;
+        final PsiMethod[] methods = anonymousClass.getMethods();
+        if (methods.length != 1) return;
 
-          final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
-          final PsiType functionalInterfaceType = anonymousClass.getBaseClassType();
-          MethodReferenceCandidate methodRefCandidate =
-            LambdaCanBeMethodReferenceInspection.extractMethodReferenceCandidateExpression(methods[0].getBody());
-          if (methodRefCandidate == null) return;
-          final PsiExpression candidate = LambdaCanBeMethodReferenceInspection
-            .canBeMethodReferenceProblem(parameters, functionalInterfaceType, anonymousClass.getParent(), methodRefCandidate.myExpression);
+        final PsiParameter[] parameters = methods[0].getParameterList().getParameters();
+        final PsiType functionalInterfaceType = anonymousClass.getBaseClassType();
+        MethodReferenceCandidate methodRefCandidate =
+          LambdaCanBeMethodReferenceInspection.extractMethodReferenceCandidateExpression(methods[0].getBody());
+        if (methodRefCandidate == null) return;
+        final PsiExpression candidate = LambdaCanBeMethodReferenceInspection
+          .canBeMethodReferenceProblem(parameters, functionalInterfaceType, anonymousClass.getParent(), methodRefCandidate.myExpression);
 
-          final String methodRefText = LambdaCanBeMethodReferenceInspection.createMethodReferenceText(candidate, functionalInterfaceType, parameters);
+        final String methodRefText =
+          LambdaCanBeMethodReferenceInspection.createMethodReferenceText(candidate, functionalInterfaceType, parameters);
 
-          replaceWithMethodReference(project, methodRefText, anonymousClass.getBaseClassType(), anonymousClass.getParent());
-        }
+        replaceWithMethodReference(project, methodRefText, anonymousClass.getBaseClassType(), anonymousClass.getParent());
       }
+    }
   }
 
   static void replaceWithMethodReference(@NotNull Project project,

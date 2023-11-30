@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.indentation;
 
 import com.intellij.core.CoreBundle;
@@ -30,15 +16,13 @@ public abstract class AbstractIndentParser implements PsiParser {
   protected IndentPsiBuilder myBuilder;
 
   @Override
-  @NotNull
-  public ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
+  public @NotNull ASTNode parse(@NotNull IElementType root, @NotNull PsiBuilder builder) {
     myBuilder = createPsiBuilder(builder);
     parseRoot(root);
     return myBuilder.getTreeBuilt();
   }
 
-  @NotNull
-  protected IndentPsiBuilder createPsiBuilder(@NotNull PsiBuilder builder) {
+  protected @NotNull IndentPsiBuilder createPsiBuilder(@NotNull PsiBuilder builder) {
     return new IndentPsiBuilder(builder);
   }
 
@@ -55,19 +39,19 @@ public abstract class AbstractIndentParser implements PsiParser {
     return mark(false);
   }
 
-  public void done(@NotNull final PsiBuilder.Marker marker, @NotNull final IElementType elementType) {
+  public void done(final @NotNull PsiBuilder.Marker marker, final @NotNull IElementType elementType) {
     marker.done(elementType);
   }
 
-  public static void collapse(@NotNull final PsiBuilder.Marker marker, @NotNull final IElementType elementType) {
+  public static void collapse(final @NotNull PsiBuilder.Marker marker, final @NotNull IElementType elementType) {
     marker.collapse(elementType);
   }
 
-  protected static void drop(@NotNull final PsiBuilder.Marker marker) {
+  protected static void drop(final @NotNull PsiBuilder.Marker marker) {
     marker.drop();
   }
 
-  protected void rollbackTo(@NotNull final PsiBuilder.Marker marker) {
+  protected void rollbackTo(final @NotNull PsiBuilder.Marker marker) {
     marker.rollbackTo();
   }
 
@@ -87,12 +71,11 @@ public abstract class AbstractIndentParser implements PsiParser {
     myBuilder.error(message);
   }
 
-  @Nullable
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     return myBuilder.getTokenType();
   }
 
-  protected static boolean tokenIn(@Nullable final IElementType elementType, IElementType... tokens) {
+  protected static boolean tokenIn(final @Nullable IElementType elementType, IElementType... tokens) {
     return ArrayUtil.indexOfIdentity(tokens, elementType) != -1;
   }
 
@@ -100,12 +83,11 @@ public abstract class AbstractIndentParser implements PsiParser {
     return tokenIn(getTokenType(), tokens);
   }
 
-  protected boolean currentTokenIn(@NotNull final TokenSet tokenSet) {
+  protected boolean currentTokenIn(final @NotNull TokenSet tokenSet) {
     return tokenSet.contains(getTokenType());
   }
 
-  @NotNull
-  protected String getTokenText() {
+  protected @NotNull String getTokenText() {
     String result = myBuilder.getTokenText();
     if (result == null) {
       result = "";
@@ -113,11 +95,11 @@ public abstract class AbstractIndentParser implements PsiParser {
     return result;
   }
 
-  protected boolean expect(@NotNull final IElementType elementType) {
+  protected boolean expect(final @NotNull IElementType elementType) {
     return expect(elementType, CoreBundle.message("parsing.error.expected.element", elementType));
   }
 
-  protected boolean expect(@NotNull final IElementType elementType, @NotNull @NlsContexts.ParsingError String expectedMessage) {
+  protected boolean expect(final @NotNull IElementType elementType, @NotNull @NlsContexts.ParsingError String expectedMessage) {
     if (getTokenType() == elementType) {
       advance();
       return true;
@@ -126,13 +108,11 @@ public abstract class AbstractIndentParser implements PsiParser {
     return false;
   }
 
-  @Nullable
-  public IElementType lookAhead(int step) {
+  public @Nullable IElementType lookAhead(int step) {
     return myBuilder.lookAhead(step);
   }
 
-  @Nullable
-  public IElementType rawLookup(int step) {
+  public @Nullable IElementType rawLookup(int step) {
     return myBuilder.rawLookup(step);
   }
 

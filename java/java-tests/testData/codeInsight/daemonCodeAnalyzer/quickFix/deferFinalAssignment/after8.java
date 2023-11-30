@@ -4,11 +4,11 @@ import java.io.*;
 class a {
     void f(InputStream in) {
         final int n;
-        int n1;
+        int <caret>n1;
         try {
             n1 = in.read();
         } catch (IOException e) {
-            <caret>n1 = -1;
+            n1 = -1;
             f(in);
         }
 

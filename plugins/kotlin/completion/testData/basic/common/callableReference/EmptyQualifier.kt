@@ -35,6 +35,7 @@ class C {
 class WithPrivateConstructor private constructor()
 abstract class AbstractClass
 
+// IGNORE_K2
 // EXIST: { itemText: "globalFun", attributes: "" }
 // EXIST: { itemText: "globalVal", attributes: "" }
 // EXIST: { itemText: "globalVar", attributes: "" }

@@ -1,30 +1,31 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.intellij.platform.diagnostic.telemetry.Storage
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantReadWriteLockUsageMonitor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedStorageOTelMonitor
+import com.intellij.platform.diagnostic.telemetry.Storage
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantReadWriteLockUsageMonitor
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
-import com.intellij.util.io.DirectByteBufferAllocator
-import com.intellij.util.io.StorageLockContext
-import com.intellij.util.io.delete
+import com.intellij.util.io.*
 import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
 import com.intellij.util.io.stats.PersistentHashMapStatistics
 import com.intellij.util.io.stats.StorageStatsRegistrar
+import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.IOException
 import java.nio.file.Path
 import java.time.Instant
 import java.time.LocalDateTime
@@ -32,7 +33,7 @@ import java.time.ZoneId
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.absolute
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
@@ -54,8 +55,11 @@ object StorageDiagnosticData {
   @Volatile
   private var regularDumpHandle: Future<*>? = null
 
+  @Volatile
+  private var mmappedStoragesMonitoringHandle: MappedStorageOTelMonitor? = null
+
   @JvmStatic
-  fun dumpPeriodically() {
+  fun startPeriodicDumping() {
     setupReportingToOpenTelemetry()
 
     val executor = AppExecutorUtil.createBoundedScheduledExecutorService(
@@ -76,6 +80,13 @@ object StorageDiagnosticData {
       regularDumpHandleLocalCopy.cancel(false)
       regularDumpHandle = null
     }
+
+    val mmappedStoragesMonitoringHandleLocalCopy = mmappedStoragesMonitoringHandle
+    if (mmappedStoragesMonitoringHandleLocalCopy != null) {
+      mmappedStoragesMonitoringHandleLocalCopy.close()
+      mmappedStoragesMonitoringHandle = null
+    }
+
     dump(onShutdown = true)
   }
 
@@ -89,9 +100,12 @@ object StorageDiagnosticData {
       val file = getDumpFile(sessionLocalDateTime, onShutdown)
       IndexDiagnosticDumperUtils.writeValue(file, stats)
     }
-    catch (e: AlreadyDisposedException){
+    catch (e: AlreadyDisposedException) {
       //e.g. IDEA-313757
       thisLogger().info("Can't collect storage statistics: ${e.message} -- probably, already a shutdown?")
+    }
+    catch (e: IOException) {
+      thisLogger().warn(e)
     }
     catch (e: Exception) {
       thisLogger().error(e)
@@ -180,11 +194,8 @@ object StorageDiagnosticData {
   private fun vfsStorageStatistics(mapStats: MutableMap<Path, PersistentHashMapStatistics>,
                                    enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>)
     : StatsPerStorage {
-    val cachesDir = Path.of(FSRecords.getCachesDir()).absolute()
-    return StatsPerStorage(
-      filterStatsForStoragesUnderDir(mapStats, cachesDir),
-      filterStatsForStoragesUnderDir(enumeratorStats, cachesDir)
-    )
+    val cacheDir = FSRecords.getCacheDir().toAbsolutePath()
+    return StatsPerStorage(filterStatsForStoragesUnderDir(mapStats, cacheDir), filterStatsForStoragesUnderDir(enumeratorStats, cacheDir))
   }
 
   private fun <Stats> filterStatsForStoragesUnderDir(mapStats: MutableMap<Path, Stats>, dir: Path): SortedMap<String, Stats> {
@@ -212,7 +223,7 @@ object StorageDiagnosticData {
     val statsPerEnumerator: SortedMap<String, PersistentEnumeratorStatistics>,
   ) {
     companion object {
-      val EMPTY = StatsPerStorage(sortedMapOf(), sortedMapOf())
+      val EMPTY: StatsPerStorage = StatsPerStorage(sortedMapOf(), sortedMapOf())
     }
 
     operator fun plus(another: StatsPerStorage): StatsPerStorage {
@@ -247,7 +258,7 @@ object StorageDiagnosticData {
   //         b) we already have monitoring of FilePageCache here, so better to keep old/new monitoring in one
   //            place for a while
   private fun setupReportingToOpenTelemetry() {
-    val otelMeter = TelemetryTracer.getMeter(Storage)
+    val otelMeter = TelemetryManager.getMeter(Storage)
 
     if (MONITOR_STORAGE_LOCK) {
       ReentrantReadWriteLockUsageMonitor(
@@ -257,6 +268,112 @@ object StorageDiagnosticData {
       )
     }
 
+    setupFilePageCacheReporting(otelMeter)
+
+    if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
+      setupFilePageCacheLockFreeReporting(otelMeter)
+    }
+
+    otelMeter.counterBuilder("FileChannelInterruptsRetryer.totalRetriedAttempts").buildWithCallback {
+      it.record(FileChannelInterruptsRetryer.totalRetriedAttempts())
+    }
+
+    mmappedStoragesMonitoringHandle = MappedStorageOTelMonitor(otelMeter)
+  }
+
+  private fun setupFilePageCacheLockFreeReporting(otelMeter: Meter) {
+    val totalNativeBytesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalNativeBytesAllocated").buildObserver()
+    val totalNativeBytesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalNativeBytesReclaimed").buildObserver()
+    val totalHeapBytesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalHeapBytesAllocated").buildObserver()
+    val totalHeapBytesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalHeapBytesReclaimed").buildObserver()
+
+    val totalNativeBytesInUse = otelMeter.gaugeBuilder("FilePageCacheLockFree.nativeBytesInUse").ofLongs().buildObserver()
+    val totalHeapBytesInUse = otelMeter.gaugeBuilder("FilePageCacheLockFree.heapBytesInUse").ofLongs().buildObserver()
+
+    val totalPagesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesAllocated").buildObserver()
+    val totalPagesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesReclaimed").buildObserver()
+    val totalPagesHandedOver = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesHandedOver").buildObserver()
+    val totalPageAllocationsWaited = otelMeter.counterBuilder("FilePageCacheLockFree.totalPageAllocationsWaited").buildObserver()
+
+    val totalBytesRead = otelMeter.counterBuilder("FilePageCacheLockFree.totalBytesRead").buildObserver()
+    val totalBytesWritten = otelMeter.counterBuilder("FilePageCacheLockFree.totalBytesWritten").buildObserver()
+
+    val totalPagesWritten = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesWritten").buildObserver()
+    val totalPagesRequested = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesRequested").buildObserver()
+
+    val totalBytesRequested = otelMeter.counterBuilder("FilePageCacheLockFree.totalBytesRequested").buildObserver()
+
+    val totalPagesRequestsMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesRequestsMs").buildObserver()
+    val totalPagesReadMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesReadMs").buildObserver()
+    val totalPagesWriteMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesWriteMs").buildObserver()
+
+    val housekeeperTurnsDone = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnsDone").buildObserver()
+    val housekeeperTimeSpentMs = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTimeSpentMs").buildObserver()
+    val housekeeperTurnsSkipped = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnsSkipped").buildObserver()
+
+    val totalClosedStoragesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalClosedStoragesReclaimed").buildObserver()
+
+    otelMeter.batchCallback(
+      {
+        try {
+          StorageLockContext.getNewCacheStatistics()?.let {
+            totalNativeBytesAllocated.record(it.totalNativeBytesAllocated())
+            totalNativeBytesReclaimed.record(it.totalNativeBytesReclaimed())
+
+            totalHeapBytesAllocated.record(it.totalHeapBytesAllocated())
+            totalHeapBytesReclaimed.record(it.totalHeapBytesReclaimed())
+
+            totalHeapBytesInUse.record(it.heapBytesCurrentlyUsed())
+            totalNativeBytesInUse.record(it.nativeBytesCurrentlyUsed())
+
+            totalPagesAllocated.record(it.totalPagesAllocated().toLong())
+            totalPagesReclaimed.record(it.totalPagesReclaimed().toLong())
+            totalPagesHandedOver.record(it.totalPagesHandedOver().toLong())
+            totalPageAllocationsWaited.record(it.totalPageAllocationsWaited().toLong())
+
+            totalBytesRead.record(it.totalBytesRead())
+            totalBytesWritten.record(it.totalBytesWritten())
+
+            totalPagesWritten.record(it.totalPagesWritten())
+            totalPagesRequested.record(it.totalPagesRequested())
+
+            totalBytesRequested.record(it.totalBytesRequested())
+
+            totalPagesRequestsMs.record(it.totalPagesRequests(MILLISECONDS))
+            totalPagesReadMs.record(it.totalPagesRead(MILLISECONDS))
+            totalPagesWriteMs.record(it.totalPagesWrite(MILLISECONDS))
+
+            totalClosedStoragesReclaimed.record(it.totalClosedStoragesReclaimed().toLong())
+
+            housekeeperTurnsSkipped.record(it.housekeeperTurnsSkipped())
+            housekeeperTurnsDone.record(it.housekeeperTurnsDone())
+            housekeeperTimeSpentMs.record(it.housekeeperTimeSpent(MILLISECONDS))
+          }
+        }
+        catch (_: AlreadyDisposedException) {
+
+        }
+      },
+      totalNativeBytesAllocated, totalNativeBytesReclaimed,
+      totalHeapBytesAllocated, totalHeapBytesReclaimed,
+
+      totalHeapBytesInUse, totalNativeBytesInUse,
+
+      totalPagesAllocated, totalPagesReclaimed, totalPagesHandedOver, totalPageAllocationsWaited,
+
+      totalBytesRead, totalBytesWritten, totalPagesWritten,
+
+      totalPagesRequested, totalBytesRequested,
+      totalPagesRequestsMs, totalPagesReadMs, totalPagesWriteMs,
+
+      totalClosedStoragesReclaimed,
+
+      housekeeperTurnsDone, housekeeperTurnsSkipped, housekeeperTimeSpentMs
+    )
+
+  }
+
+  private fun setupFilePageCacheReporting(otelMeter: Meter) {
     val uncachedFileAccess = otelMeter.counterBuilder("FilePageCache.uncachedFileAccess").buildObserver()
     val maxRegisteredFiles = otelMeter.gaugeBuilder("FilePageCache.maxRegisteredFiles").ofLongs().buildObserver()
 

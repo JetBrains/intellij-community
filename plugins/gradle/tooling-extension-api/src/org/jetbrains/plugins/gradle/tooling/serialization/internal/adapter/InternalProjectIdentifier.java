@@ -17,6 +17,10 @@ public final class InternalProjectIdentifier implements ProjectIdentifier {
     this.projectPath = projectPath;
   }
 
+  public InternalProjectIdentifier(File rootDir, String projectPath) {
+    this(new InternalBuildIdentifier(rootDir), projectPath);
+  }
+
   @Override
   public InternalBuildIdentifier getBuildIdentifier() {
     return this.build;
@@ -32,7 +36,7 @@ public final class InternalProjectIdentifier implements ProjectIdentifier {
   }
 
   public String toString() {
-    return String.format("project=%s, %s", this.projectPath, this.build);
+    return String.format("project=%s, %s", projectPath, build);
   }
 
   @Override

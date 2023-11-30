@@ -16,20 +16,25 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 
-const val kotlincStdlibFileName = "kotlinc_kotlin_stdlib.xml"
-
 object TestKotlinArtifacts {
+    private val kotlinCLibrariesVersion by lazy {
+        val libraryNameToGetVersionFrom = "kotlinc_high_level_api.xml"
+        KotlinMavenUtils.findLibraryVersion(libraryNameToGetVersionFrom)
+    }
+
     private fun getLibraryFile(groupId: String, artifactId: String, libraryFileName: String): File {
         val version = KotlinMavenUtils.findLibraryVersion(libraryFileName)
         return KotlinMavenUtils.findArtifactOrFail(groupId, artifactId, version).toFile()
     }
 
     private fun getJar(artifactId: String): File =
-        downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName))
+        downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion)
+
+    private fun getKlib(artifactId: String): File =
+        downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = ".klib")
 
     private fun getSourcesJar(artifactId: String): File {
-        val version = KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName)
-        return downloadOrReportUnavailability(artifactId, version, suffix = "-sources.jar")
+        return downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = "-sources.jar")
             .copyTo(                                       // Some tests hardcode jar names in their test data
                 File(PathManager.getCommunityHomePath())   // (KotlinReferenceTypeHintsProviderTestGenerated).
                     .resolve("out")                        // That's why we need to strip version from the jar name
@@ -57,10 +62,12 @@ object TestKotlinArtifacts {
     @JvmStatic val kotlinStdlibJdk7Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk7") }
     @JvmStatic val kotlinStdlibJdk8: File by lazy { getJar("kotlin-stdlib-jdk8") }
     @JvmStatic val kotlinStdlibJdk8Sources: File by lazy { getSourcesJar("kotlin-stdlib-jdk8") }
-    @JvmStatic val kotlinStdlibJs: File by lazy { getJar("kotlin-stdlib-js") }
+    @JvmStatic val kotlinStdlibJs: File by lazy { getKlib("kotlin-stdlib-js") }
+    @JvmStatic val kotlinDomApiCompat: File by lazy { getKlib("kotlin-dom-api-compat") }
+    @JvmStatic val kotlinStdlibWasmJs: File by lazy { getKlib("kotlin-stdlib-wasm-js") }
     @JvmStatic val kotlinStdlibSources: File by lazy { getSourcesJar("kotlin-stdlib") }
     @JvmStatic val kotlinTest: File by lazy { getJar("kotlin-test") }
-    @JvmStatic val kotlinTestJs: File by lazy { getJar("kotlin-test-js") }
+    @JvmStatic val kotlinTestJs: File by lazy { getKlib("kotlin-test-js") }
     @JvmStatic val kotlinTestJunit: File by lazy { getJar("kotlin-test-junit") }
     @JvmStatic val parcelizeRuntime: File by lazy { getJar("parcelize-compiler-plugin-for-ide") }
 
@@ -134,7 +141,8 @@ object TestKotlinArtifacts {
 
         if (!libFile.exists()) {
             val archiveFilePath = Paths.get(downloadOut)
-            downloadFile(downloadUrl, Paths.get(downloadOut))
+            Files.deleteIfExists(archiveFilePath)
+            downloadFile(downloadUrl, archiveFilePath)
             unpackPrebuildArchive(archiveFilePath, Paths.get("$baseDir/$prebuilt"))
             Files.deleteIfExists(archiveFilePath)
         }

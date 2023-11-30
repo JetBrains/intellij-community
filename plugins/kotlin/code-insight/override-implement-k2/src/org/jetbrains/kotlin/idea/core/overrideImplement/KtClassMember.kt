@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiDocCommentOwner
+import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.annotations.KtAnnotationApplication
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererModifierFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KtRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
@@ -94,8 +95,9 @@ internal fun createKtClassMember(
     preferConstructorParameter: Boolean
 ): KtClassMember = KtClassMember(memberInfo, bodyType, preferConstructorParameter)
 
+context(KtAnalysisSession)
 @ApiStatus.Internal
-fun KtAnalysisSession.generateMember(
+fun generateMember(
     project: Project,
     ktClassMember: KtClassMember,
     symbol: KtCallableSymbol,
@@ -119,7 +121,14 @@ fun KtAnalysisSession.generateMember(
         }
 
         modifiersRenderer = modifiersRenderer.with {
-            modifierFilter = KtRendererModifierFilter.without(KtTokens.OPERATOR_KEYWORD)
+            keywordsRenderer = keywordsRenderer.with {
+                keywordFilter = KtRendererKeywordFilter.without(
+                    TokenSet.orSet(
+                        KtTokens.VISIBILITY_MODIFIERS,
+                        TokenSet.create(KtTokens.OPERATOR_KEYWORD, KtTokens.INFIX_KEYWORD, KtTokens.LATEINIT_KEYWORD),
+                    )
+                )
+            }
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
 
@@ -177,7 +186,8 @@ fun KtAnalysisSession.generateMember(
 /**
  * Returns true if the annotation itself is marked with @RequiresOptIn (or the old @Experimental), or if an extension wants to keep it.
  */
-private fun KtAnalysisSession.keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): Boolean {
+context(KtAnalysisSession)
+private fun keepAnnotation(annotation: KtAnnotationApplication, file: KtFile?): Boolean {
     val classId = annotation.classId ?: return false
     val symbol = getClassOrObjectSymbolByClassId(classId)
 
@@ -192,7 +202,8 @@ private fun KtClassOrObjectSymbol.hasRequiresOptInAnnotation(): Boolean = annota
     fqName == OptInNames.REQUIRES_OPT_IN_FQ_NAME || fqName == FqNames.OptInFqNames.OLD_EXPERIMENTAL_FQ_NAME
 }
 
-private fun KtAnalysisSession.generateConstructorParameter(
+context(KtAnalysisSession)
+private fun generateConstructorParameter(
     project: Project,
     symbol: KtCallableSymbol,
     renderer: KtDeclarationRenderer,
@@ -200,7 +211,8 @@ private fun KtAnalysisSession.generateConstructorParameter(
     return KtPsiFactory(project).createParameter(symbol.render(renderer))
 }
 
-private fun KtAnalysisSession.generateFunction(
+context(KtAnalysisSession)
+private fun generateFunction(
     project: Project,
     symbol: KtFunctionSymbol,
     renderer: KtDeclarationRenderer,
@@ -221,7 +233,8 @@ private fun KtAnalysisSession.generateFunction(
     return factory.createFunction(functionText)
 }
 
-private fun KtAnalysisSession.generateProperty(
+context(KtAnalysisSession)
+private fun generateProperty(
     project: Project,
     symbol: KtPropertySymbol,
     renderer: KtDeclarationRenderer,
@@ -288,31 +301,6 @@ private fun <T> KtAnalysisSession.generateUnsupportedOrSuperCall(
                 }
                 paramTexts.joinTo(this, prefix = "(", postfix = ")")
             }
-        }
-    }
-}
-
-private object RenderOptions {
-    val overrideRenderOptions = KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.with {
-        annotationRenderer = annotationRenderer.with {
-            annotationFilter = KtRendererAnnotationsFilter.NONE
-        }
-        modifiersRenderer = modifiersRenderer.with {
-            modifierFilter = KtRendererModifierFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD)
-        }
-    }
-
-    val actualRenderOptions = overrideRenderOptions.with {
-        modifiersRenderer = modifiersRenderer.with {
-            modifierFilter = modifierFilter or
-                    KtRendererModifierFilter.onlyWith(KtTokens.INNER_KEYWORD) or
-                    KtRendererModifierFilter.onlyWith(KtTokens.VISIBILITY_MODIFIERS)
-            KtRendererModifierFilter.onlyWith(KtTokens.MODALITY_MODIFIERS)
-        }
-    }
-    val expectRenderOptions = actualRenderOptions.with {
-        modifiersRenderer = modifiersRenderer.with {
-            modifierFilter = modifierFilter or KtRendererModifierFilter.onlyWith(KtTokens.ACTUAL_KEYWORD)
         }
     }
 }

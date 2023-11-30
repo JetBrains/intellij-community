@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.search;
 
@@ -7,17 +7,19 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
-public class TodoItemImpl implements TodoItem {
+public final class TodoItemImpl implements TodoItem {
   private final PsiFile myFile;
   private final int myStartOffset;
   private final int myEndOffset;
-  private final TodoPattern myPattern;
+  private final @Nullable TodoPattern myPattern;
   private final List<TextRange> myAdditionalRanges;
 
-  public TodoItemImpl(@NotNull PsiFile file, int startOffset, int endOffset, @NotNull TodoPattern pattern,
+  public TodoItemImpl(@NotNull PsiFile file, int startOffset, int endOffset, @Nullable TodoPattern pattern,
                       @NotNull List<TextRange> additionalRanges) {
     myFile = file;
     myStartOffset = startOffset;
@@ -26,32 +28,28 @@ public class TodoItemImpl implements TodoItem {
     myAdditionalRanges = additionalRanges;
   }
 
-  @NotNull
   @Override
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
-  @NotNull
   @Override
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return new TextRange(myStartOffset, myEndOffset);
   }
 
-  @NotNull
   @Override
-  public List<TextRange> getAdditionalTextRanges() {
+  public @NotNull List<TextRange> getAdditionalTextRanges() {
     return myAdditionalRanges;
   }
 
-  @NotNull
   @Override
-  public TodoPattern getPattern() {
+  public @Nullable TodoPattern getPattern() {
     return myPattern;
   }
 
-  public int hashCode(){
-    return myFile.hashCode()+myStartOffset+myEndOffset+myPattern.hashCode();
+  public int hashCode() {
+    return myFile.hashCode() + myStartOffset + myEndOffset + (myPattern != null ? myPattern.hashCode() : 0);
   }
 
   public boolean equals(Object obj){
@@ -61,6 +59,6 @@ public class TodoItemImpl implements TodoItem {
     return myFile.equals(todoItem.myFile) &&
            myStartOffset == todoItem.myStartOffset &&
            myEndOffset == todoItem.myEndOffset &&
-           myPattern.equals(todoItem.myPattern);
+           Objects.equals(myPattern, todoItem.myPattern);
   }
 }

@@ -1,21 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class AddMissingDeconstructionComponentsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-
-  @SafeFieldForPreview
+public class AddMissingDeconstructionComponentsFix extends PsiUpdateModCommandAction<PsiDeconstructionList> {
   private final @NotNull Collection<Pattern> myMissingPatterns;
 
   public AddMissingDeconstructionComponentsFix(@NotNull PsiDeconstructionList deconstructionList,
@@ -30,23 +27,13 @@ public class AddMissingDeconstructionComponentsFix extends LocalQuickFixAndInten
   }
 
   @Override
-  public @NotNull String getText() {
-    return getFamilyName();
-  }
-
-  @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiDeconstructionList deconstructionList = (PsiDeconstructionList)startElement;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiDeconstructionList deconstructionList, @NotNull ModPsiUpdater updater) {
     if (deconstructionList.getParent() instanceof PsiDeconstructionPattern deconstructionPattern) {
       boolean isEmptyList = deconstructionList.getDeconstructionComponents().length == 0;
       String deconstructionListText = deconstructionList.getText();
       String prefix = deconstructionListText.substring(0, deconstructionListText.length() - 1) + (isEmptyList ? "" : ",");
       String newDeconstructionListText = StreamEx.of(myMissingPatterns).map(Pattern::toString).joining(",", prefix, ")");
-      PsiElementFactory factory = PsiElementFactory.getInstance(project);
+      PsiElementFactory factory = PsiElementFactory.getInstance(context.project());
       String text = "o instanceof " + deconstructionPattern.getTypeElement().getText() + newDeconstructionListText;
       PsiInstanceOfExpression instanceOf = (PsiInstanceOfExpression)factory.createExpressionFromText(text, null);
       PsiDeconstructionPattern newPattern = (PsiDeconstructionPattern)instanceOf.getPattern();

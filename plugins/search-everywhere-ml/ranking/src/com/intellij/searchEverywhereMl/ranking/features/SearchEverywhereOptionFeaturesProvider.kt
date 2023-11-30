@@ -12,11 +12,16 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereGeneralActionFeaturesProvider.Companion.IS_ENABLED
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereGeneralActionFeaturesProvider.Fields.IS_ENABLED
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereOptionFeaturesProvider.Fields.FROM_CONFIGURABLE
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereOptionFeaturesProvider.Fields.IS_BOOLEAN_OPTION
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereOptionFeaturesProvider.Fields.IS_NOT_DEFAULT
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereOptionFeaturesProvider.Fields.IS_OPTION
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereOptionFeaturesProvider.Fields.IS_REGISTRY_OPTION
 
 internal class SearchEverywhereOptionFeaturesProvider :
   SearchEverywhereElementFeaturesProvider(ActionSearchEverywhereContributor::class.java, TopHitSEContributor::class.java) {
-  companion object {
+  object Fields {
     internal val IS_OPTION = EventFields.Boolean("isOption")
     internal val IS_BOOLEAN_OPTION = EventFields.Boolean("isBooleanOption")
     internal val IS_REGISTRY_OPTION = EventFields.Boolean("isRegistryOption")

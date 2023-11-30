@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -10,39 +10,41 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// this class is used in bootstrap - please use only JDK API
-
 /**
- * A class representing a version of some Java platform - e.g. the runtime the class is loaded into, or some installed JRE.
+ * <p>A class representing a version of some Java platform - e.g. the runtime the class is loaded into, or some installed JRE.</p>
  *
- * Based on <a href="http://openjdk.org/jeps/322">JEP 322 "Time-Based Release Versioning"</a> (Java 10+), but also supports JEP 223
- * "New Version-String Scheme" (Java 9), as well as earlier version's formats.
+ * <p>Based on <a href="http://openjdk.org/jeps/322">JEP 322 "Time-Based Release Versioning"</a> (Java 10+), but also supports JEP 223
+ * "New Version-String Scheme" (Java 9), as well as earlier version's formats.</p>
  *
- * @see #parse(String) for examples of supported version strings
+ * <p>See {@link #parse(String)} for examples of supported version strings.</p>
+ *
+ * @implNote the class is used in bootstrap - please use only JDK API
  */
+@SuppressWarnings("DuplicatedCode")
 public final class JavaVersion implements Comparable<JavaVersion> {
   /**
    * The major version.
-   * Corresponds to the first number of 9+ format (<b>9</b>.0.1) / the second number of 1.x format (1.<b>8</b>.0_60).
+   * Corresponds to the first number of the 9+ format (<b>9</b>.0.1) / the second number of the 1.x format (1.<b>8</b>.0_60).
    */
   public final int feature;
 
   /**
    * The minor version.
-   * Corresponds to the second number of 9+ format (9.<b>0</b>.1) / the third number of 1.x format (1.8.<b>0</b>_60).
+   * Corresponds to the second number of the 9+ format (9.<b>0</b>.1) / the third number of 1.x the format (1.8.<b>0</b>_60).
    * Was used in version strings prior to 1.5, in newer strings is always {@code 0}.
    */
   public final int minor;
 
   /**
    * The patch version.
-   * Corresponds to the third number of 9+ format (9.0.<b>1</b>) / the number after an underscore of 1.x format (1.8.0_<b>60</b>).
+   * Corresponds to the third number of the 9+ format (9.0.<b>1</b>) / the number after an underscore of the 1.x format (1.8.0_<b>60</b>).
    */
   public final int update;
 
   /**
    * The build number.
-   * Corresponds to a number prefixed by the "plus" sign in 9+ format (9.0.1+<b>7</b>) / by "-b" string in 1.x format (1.8.0_60-b<b>12</b>).
+   * Corresponds to a number prefixed by the "plus" sign in the 9+ format (9.0.1+<b>7</b>) /
+   * by "-b" string in the 1.x format (1.8.0_60-b<b>12</b>).
    */
   public final int build;
 
@@ -148,7 +150,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
   /**
    * Composes a version object out of given parameters.
    *
-   * @throws IllegalArgumentException when any of numbers is negative
+   * @throws IllegalArgumentException when any of the numbers is negative
    */
   public static @NotNull JavaVersion compose(int feature, int minor, int update, int build, boolean ea) throws IllegalArgumentException {
     if (feature < 0) throw new IllegalArgumentException();
@@ -261,7 +263,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
           }
           if (p < separators.size()) {
             String s = separators.get(p);
-            if (s != null && s.length() != 0 && s.charAt(0) == '-') {
+            if (s != null && !s.isEmpty() && s.charAt(0) == '-') {
               ea = startsWithWord(s, "-ea") || startsWithWord(s, "-internal");
               if (p < numbers.size() && s.charAt(s.length() - 1) == '+') {
                 build = Integer.parseInt(numbers.get(p));
@@ -284,7 +286,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
                 update = Integer.parseInt(numbers.get(3));
                 if (separators.size() > 4) {
                   String s = separators.get(4);
-                  if (s != null && s.length() != 0 && s.charAt(0) == '-') {
+                  if (s != null && !s.isEmpty() && s.charAt(0) == '-') {
                     ea = startsWithWord(s, "-ea") || startsWithWord(s, "-internal");
                   }
                   p = 4;
@@ -310,7 +312,7 @@ public final class JavaVersion implements Comparable<JavaVersion> {
   }
 
   /**
-   * A safe version of {@link #parse(String)} - returns {@code null} if can't parse a version string.
+   * A safe version of {@link #parse(String)} - returns {@code null} when unable to parse a version string.
    */
   public static @Nullable JavaVersion tryParse(String versionString) {
     if (versionString != null) {

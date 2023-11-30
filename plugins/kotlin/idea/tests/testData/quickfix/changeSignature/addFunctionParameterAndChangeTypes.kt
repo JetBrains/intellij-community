@@ -8,3 +8,5 @@ fun foo(x: Int, i: Double) {
     foo(1.5, 4, <caret>5, 6);
     foo(2, 3, sdsd);
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureFixFactory$applicator$1

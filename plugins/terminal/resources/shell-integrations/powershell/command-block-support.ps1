@@ -1,3 +1,7 @@
+if ([string]::IsNullOrEmpty($Env:INTELLIJ_TERMINAL_COMMAND_BLOCKS)) {
+  return
+}
+
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 function Global:__JetBrainsIntellijEncode([string]$value) {

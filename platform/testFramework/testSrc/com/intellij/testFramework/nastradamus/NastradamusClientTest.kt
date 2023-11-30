@@ -5,9 +5,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.nastradamus.NastradamusClient
 import com.intellij.nastradamus.model.*
 import com.intellij.teamcity.TeamCityClient
-import com.intellij.tool.Cache
+import com.intellij.tool.NastradamusCache
 import com.intellij.tool.withErrorThreshold
-import com.intellij.util.io.readText
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.*
@@ -20,15 +19,16 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.path.readText
 
 class NastradamusClientTest {
   init {
-    Cache.eraseCache()
+    NastradamusCache.eraseCache()
   }
 
   @JvmField
   @Rule
-  val timeoutRule = Timeout(30, TimeUnit.SECONDS)
+  val timeoutRule: Timeout = Timeout(30, TimeUnit.SECONDS)
 
   @JvmField
   @Rule
@@ -54,7 +54,7 @@ class NastradamusClientTest {
   @After
   fun afterEach() {
     tcMockServer.shutdown()
-    Cache.eraseCache()
+    NastradamusCache.eraseCache()
   }
 
   private fun setBuildParams(vararg buildProperties: Pair<String, String>): Path {
@@ -299,7 +299,7 @@ class NastradamusClientTest {
     )
 
     val xxHash3TestClassResult = testResultRequestEntity.testRunResults
-      .single { it.fullName == "org.jetbrains.xxh3.XxHash3Test" }
+      .single { it.fullName == "com.intellij.util.lang.XxHash3Test" }
 
     Assert.assertTrue("""
       XxHash3Test class must have 184 tests and be with correct duration and bucket attributes.

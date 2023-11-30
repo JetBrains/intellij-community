@@ -18,7 +18,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.version
 
 import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
-import com.jetbrains.packagesearch.intellij.plugin.util.versionTokenPriorityProvider
+import com.jetbrains.packagesearch.intellij.plugin.util.VersionTokenPrioritizer
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -63,7 +63,7 @@ sealed class NormalizedPackageVersion<T : PackageVersion> : Comparable<Normalize
             val nameComparisonResult = VersionComparatorUtil.compare(
                 semanticPartWithStabilityMarker,
                 other.semanticPartWithStabilityMarker,
-                ::versionTokenPriorityProvider
+                VersionTokenPrioritizer
             )
             if (nameComparisonResult != 0) return nameComparisonResult
 
@@ -77,7 +77,7 @@ sealed class NormalizedPackageVersion<T : PackageVersion> : Comparable<Normalize
             // If both have a comparable non-semantic suffix, and they're different, that determines the result.
             // Blank/null suffixes aren't comparable, so if they're both null/blank, we move to the next step
             if (canBeUsedForComparison(nonSemanticSuffix) && canBeUsedForComparison(other.nonSemanticSuffix)) {
-                val comparisonResult = VersionComparatorUtil.compare(versionName, other.versionName, ::versionTokenPriorityProvider)
+                val comparisonResult = VersionComparatorUtil.compare(versionName, other.versionName, VersionTokenPrioritizer)
                 if (comparisonResult != 0) return comparisonResult
             }
 
@@ -89,8 +89,7 @@ sealed class NormalizedPackageVersion<T : PackageVersion> : Comparable<Normalize
             if (nonSemanticSuffix.isNullOrBlank()) return false
             val normalizedSuffix = nonSemanticSuffix.trim().lowercase()
             val hasGitHashLength = normalizedSuffix.length in 7..10 || normalizedSuffix.length == 40
-            if (hasGitHashLength && normalizedSuffix.all { it.isDigit() || it in HEX_CHARS || !it.isLetter() }) return false
-            return true
+            return !(hasGitHashLength && normalizedSuffix.all { it.isDigit() || it in HEX_CHARS || !it.isLetter() })
         }
 
         override fun equals(other: Any?): Boolean {
@@ -133,7 +132,7 @@ sealed class NormalizedPackageVersion<T : PackageVersion> : Comparable<Normalize
             val nameComparisonResult = VersionComparatorUtil.compare(
                 timestampPrefixWithStabilityMarker,
                 other.timestampPrefixWithStabilityMarker,
-                ::versionTokenPriorityProvider
+                VersionTokenPrioritizer
             )
 
             return if (nameComparisonResult == 0) {

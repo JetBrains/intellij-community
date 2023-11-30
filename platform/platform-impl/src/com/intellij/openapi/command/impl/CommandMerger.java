@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.*;
@@ -15,6 +14,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,12 +31,9 @@ public final class CommandMerger {
   private boolean myTransparent;
   private @NlsContexts.Command String myCommandName;
   private boolean myValid = true;
-  @NotNull
-  private List<UndoableAction> myCurrentActions = new ArrayList<>();
-  @NotNull
-  private Set<DocumentReference> myAllAffectedDocuments = new HashSet<>();
-  @NotNull
-  private Set<DocumentReference> myAdditionalAffectedDocuments = new HashSet<>();
+  private @NotNull List<UndoableAction> myCurrentActions = new ArrayList<>();
+  private @NotNull Set<DocumentReference> myAllAffectedDocuments = new HashSet<>();
+  private @NotNull Set<DocumentReference> myAdditionalAffectedDocuments = new HashSet<>();
   private EditorAndState myStateBefore;
   private EditorAndState myStateAfter;
   private UndoConfirmationPolicy myUndoConfirmationPolicy = UndoConfirmationPolicy.DEFAULT;
@@ -118,7 +115,7 @@ public final class CommandMerger {
 
   // remove all references to document to avoid memory leaks
   void clearDocumentReferences(@NotNull Document document) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     // DocumentReference for document is not equal to the DocumentReference from the file of that doc, so try both
     DocumentReference refByFile = DocumentReferenceManager.getInstance().create(document);
     DocumentReference refByDoc = new DocumentReferenceByDocument(document);
@@ -173,7 +170,7 @@ public final class CommandMerger {
     }
   }
 
-  private static class MyEmptyUndoableAction extends BasicUndoableAction {
+  private static final class MyEmptyUndoableAction extends BasicUndoableAction {
     MyEmptyUndoableAction(DocumentReference @NotNull [] refs) {
       super(refs);
     }
@@ -310,8 +307,7 @@ public final class CommandMerger {
     }
   }
 
-  @Nullable
-  private UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
+  private @Nullable UndoRedo createUndoOrRedo(FileEditor editor, boolean isUndo) {
     if (!myManager.isUndoOrRedoAvailable(editor, isUndo)) return null;
     return isUndo ? new Undo(myState, editor) : new Redo(myState, editor);
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
@@ -290,7 +290,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
         }
         OurWeightMap baseSet = nonItalicsByWeight.isEmpty() ? italicsByWeight : nonItalicsByWeight;
 
-        class Candidate {
+        final class Candidate {
           final int desiredWeight;
           String bestSubFamily;
           int bestDistance = Integer.MAX_VALUE;
@@ -428,7 +428,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     }
   }
 
-  private static class OurWeightMap extends MultiMap<Integer, String> {
+  private static final class OurWeightMap extends MultiMap<Integer, String> {
     private OurWeightMap() {
       super(new TreeMap<>());
     }

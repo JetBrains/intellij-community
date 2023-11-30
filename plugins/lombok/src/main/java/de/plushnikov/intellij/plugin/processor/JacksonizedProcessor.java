@@ -17,7 +17,7 @@ import java.util.Collections;
  *
  * @author Plushnikov Michail
  */
-public class JacksonizedProcessor extends AbstractProcessor {
+public final class JacksonizedProcessor extends AbstractProcessor {
 
   public JacksonizedProcessor() {
     super(PsiElement.class, LombokClassNames.JACKSONIZED);

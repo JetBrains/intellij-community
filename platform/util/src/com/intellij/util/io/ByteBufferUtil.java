@@ -89,7 +89,7 @@ public final class ByteBufferUtil {
   }
 
   public static void copyMemory(@NotNull ByteBuffer src, int index, byte[] dst, int dstIndex, int length) {
-    if (address != null) {
+    if (address != null && src.isDirect()) {
       try {
         long address = (long)ByteBufferUtil.address.invoke(src);
         Unsafe.copyMemory(null, address + index, dst, byteArrayBaseOffset + dstIndex, length);

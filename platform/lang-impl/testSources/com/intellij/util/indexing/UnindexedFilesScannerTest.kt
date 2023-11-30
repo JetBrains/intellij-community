@@ -8,7 +8,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
@@ -23,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.application
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import com.intellij.util.indexing.diagnostic.ProjectScanningHistory
 import com.intellij.util.indexing.diagnostic.ScanningType
 import com.intellij.util.indexing.diagnostic.dto.JsonScanningStatistics
 import com.intellij.util.indexing.mocks.*
@@ -57,7 +56,7 @@ class UnindexedFilesScannerTest {
 
   @Rule
   @JvmField
-  val tempDir = TemporaryDirectory()
+  val tempDir: TemporaryDirectory = TemporaryDirectory()
 
   private lateinit var project: Project
   private lateinit var testRootDisposable: CheckedDisposable
@@ -342,18 +341,19 @@ class UnindexedFilesScannerTest {
     return Pair(scanningStat, dirtyFiles)
   }
 
-  private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectIndexingHistoryImpl, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
-    val indexingHistoryRef = Ref<ProjectIndexingHistoryImpl>()
+  private fun scanFiles(filesAndDirs: IndexableFilesIterator): Pair<ProjectScanningHistory, Map<IndexableFilesIterator, Collection<VirtualFile>>> {
+    val scanningHistoryRef = Ref<ProjectScanningHistory>()
     val scanningTask = object : UnindexedFilesScanner(project, false, false, listOf(filesAndDirs), null, "Test", ScanningType.PARTIAL) {
-      override fun performScanningAndIndexing(indicator: ProgressIndicator): ProjectIndexingHistoryImpl {
-        return super.performScanningAndIndexing(indicator).also(indexingHistoryRef::set)
+      override fun performScanningAndIndexing(indicator: CheckCancelOnlyProgressIndicator,
+                                              progressReporter: IndexingProgressReporter): ProjectScanningHistory {
+        return super.performScanningAndIndexing(indicator, progressReporter).also(scanningHistoryRef::set)
       }
     }
     scanningTask.setFlushQueueAfterScanning(false)
     val indicator = EmptyProgressIndicator()
     ProgressManager.getInstance().runProcess({ scanningTask.perform(indicator) }, indicator)
 
-    val history = indexingHistoryRef.get()
+    val history = scanningHistoryRef.get()
     val dirtyFilesPerOrigin = project.service<PerProjectIndexingQueue>().getFilesAndClear()
     return Pair(history, dirtyFilesPerOrigin)
   }

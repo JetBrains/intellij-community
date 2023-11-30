@@ -27,7 +27,7 @@ class ProjectAware(
 ) : ExternalSystemProjectAware {
 
   private val systemId = projectId.systemId
-  private val projectPath = projectId.externalProjectPath
+  private val externalProjectPath = projectId.externalProjectPath
 
   override val settingsFiles: Set<String>
     get() {
@@ -43,7 +43,7 @@ class ProjectAware(
     }
 
   private val externalProjectFiles: List<File>
-    get() = autoImportAware.getAffectedExternalProjectFiles(projectPath, project)
+    get() = autoImportAware.getAffectedExternalProjectFiles(externalProjectPath, project)
 
   override fun subscribe(listener: ExternalSystemProjectListener, parentDisposable: Disposable) {
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
@@ -59,7 +59,7 @@ class ProjectAware(
     if (!project.isTrusted()) {
       importSpec.usePreviewMode()
     }
-    ExternalSystemUtil.refreshProject(projectPath, importSpec)
+    ExternalSystemUtil.refreshProject(externalProjectPath, importSpec)
   }
 
   private inner class TaskNotificationListener(
@@ -69,7 +69,7 @@ class ProjectAware(
 
     override fun onStart(id: ExternalSystemTaskId, workingDir: String?) {
       if (id.type != RESOLVE_PROJECT) return
-      if (!FileUtil.pathsEqual(workingDir, projectPath)) return
+      if (!FileUtil.pathsEqual(workingDir, externalProjectPath)) return
 
       val task = ApplicationManager.getApplication().getService(ExternalSystemProcessingManager::class.java).findTask(id)
       if (task is ExternalSystemResolveProjectTask) {

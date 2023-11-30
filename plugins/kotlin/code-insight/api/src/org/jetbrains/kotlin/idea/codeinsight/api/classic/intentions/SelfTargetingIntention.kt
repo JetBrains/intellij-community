@@ -88,6 +88,9 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
                 if (isApplicableTo(element as TElement, offset)) {
                     return element
                 }
+                if (visitTargetTypeOnlyOnce()) {
+                    return null
+                }
             }
             if (element.textRange.containsInside(offset) && skipProcessingFurtherElementsAfter(element)) break
         }
@@ -103,6 +106,8 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
 
     /** Whether to skip looking for targets after having processed the given element, which contains the cursor. */
     protected open fun skipProcessingFurtherElementsAfter(element: PsiElement): Boolean = element is KtBlockExpression
+
+    protected open fun visitTargetTypeOnlyOnce(): Boolean = false
 
     final override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
         if (isUnitTestMode()) {

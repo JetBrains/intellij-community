@@ -34,5 +34,8 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.python.parser" />
   </component>
 </module>

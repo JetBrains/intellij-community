@@ -12,7 +12,7 @@ import org.junit.Test
 class GradleProjectResolverTest : GradleProjectResolverTestCase() {
   @Test
   fun `test setup of project sdk for newly opened project`() {
-    val jdk = findRealTestSdk() ?: return
+    val jdk = resolveRealTestSdk()
     createGradleSubProject()
 
     environment.withVariables(JAVA_HOME to jdk.homePath) {
@@ -27,7 +27,7 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
 
   @Test
   fun `test setup of project sdk for newly opened project in clean IDEA`() {
-    val jdk = findRealTestSdk() ?: return
+    val jdk = resolveRealTestSdk()
     createGradleSubProject()
 
     environment.withVariables(JAVA_HOME to jdk.homePath) {
@@ -42,7 +42,7 @@ class GradleProjectResolverTest : GradleProjectResolverTestCase() {
 
   @Test
   fun `test project-module sdk replacing`() {
-    val jdk = findRealTestSdk() ?: return
+    val jdk = resolveRealTestSdk()
     val sdk = TestSdkGenerator.createNextSdk()
     createGradleSubProject()
 

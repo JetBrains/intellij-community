@@ -2,7 +2,7 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.openapi.project.Project
-import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.annotations.ApiStatus
 
 /**

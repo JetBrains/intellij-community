@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.ide.highlighter.XmlFileType;
@@ -44,17 +44,15 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
   }
 
   @Override
-  @NotNull
-  public KeyDescriptor<String> getKeyDescriptor() {
+  public @NotNull KeyDescriptor<String> getKeyDescriptor() {
     return EnumeratorStringDescriptor.INSTANCE;
   }
 
-  @NotNull
   @Override
-  public FileBasedIndex.InputFilter getInputFilter() {
+  public @NotNull FileBasedIndex.InputFilter getInputFilter() {
     return new DefaultFileTypeSpecificInputFilter(XmlFileType.INSTANCE) {
       @Override
-      public boolean acceptInput(@NotNull final VirtualFile file) {
+      public boolean acceptInput(final @NotNull VirtualFile file) {
         if (!"xsd".equals(file.getExtension())) {
           return false;
         }

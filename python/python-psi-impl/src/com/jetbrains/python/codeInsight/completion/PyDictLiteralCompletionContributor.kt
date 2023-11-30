@@ -54,7 +54,7 @@ private class DictLiteralCompletionProvider : CompletionProvider<CompletionParam
       val argumentIndex = PyPsiUtils.findArgumentIndex(callExpression, possibleSequenceExpr)
       if (argumentIndex < 0) return
       val params = callType.getParameters(typeEvalContext) ?: return
-      if (params.size < argumentIndex) return
+      if (params.size <= argumentIndex) return
       val expectedType = params[argumentIndex].getType(typeEvalContext)
       val actualType = typeEvalContext.getType(possibleSequenceExpr)
 

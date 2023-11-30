@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ProjectUtilCore")
 package com.intellij.openapi.project
 
@@ -11,10 +11,10 @@ import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil.ELLIPSIS
-import com.intellij.openapi.vfs.LocalFileProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.PlatformUtils
+import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
 
 @NlsSafe
@@ -42,17 +42,12 @@ fun displayUrlRelativeToProject(file: VirtualFile, @NlsSafe url: String, project
   return appendModuleName(file, project, result, moduleOnTheLeft)
 }
 
-fun decorateWithLibraryName(file: VirtualFile,
-                                    project: Project,
-                                    result: String): String? {
-  if (file.fileSystem is LocalFileProvider) {
-    @Suppress("DEPRECATION") val localFile = (file.fileSystem as LocalFileProvider).getLocalVirtualFileFor(file)
-    if (localFile != null) {
-      val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
-      when {
-        libraryEntry is JdkOrderEntry -> return "$result [${libraryEntry.jdkName}]"
-        libraryEntry != null -> return "$result [${libraryEntry.presentableName}]"
-      }
+fun decorateWithLibraryName(file: VirtualFile, project: Project, result: String): String? {
+  if (file.fileSystem.protocol == URLUtil.JAR_PROTOCOL) {
+    val libraryEntry = LibraryUtil.findLibraryEntry(file, project)
+    when {
+      libraryEntry is JdkOrderEntry -> return "${result} [${libraryEntry.jdkName}]"
+      libraryEntry != null -> return "${result} [${libraryEntry.presentableName}]"
     }
   }
   return null
@@ -78,14 +73,14 @@ val Project.isExternalStorageEnabled: Boolean
       return false
     }
 
-    val manager = this.getService(ExternalStorageConfigurationManager::class.java) ?: return false
+    val manager = ExternalStorageConfigurationManager.getInstance(this) ?: return false
     if (manager.isEnabled) return true
     val testMode = ApplicationManager.getApplication()?.isUnitTestMode ?: false
     return testMode && enableExternalStorageByDefaultInTests
   }
 
 /**
- * By default external storage is enabled in tests. Wrap code which loads the project into this call to always use explicit option value.
+ * By default, external storage is enabled in tests. Wrap code which loads the project into this call to always use explicit option value.
  */
 @TestOnly
 fun doNotEnableExternalStorageByDefaultInTests(action: () -> Unit) {

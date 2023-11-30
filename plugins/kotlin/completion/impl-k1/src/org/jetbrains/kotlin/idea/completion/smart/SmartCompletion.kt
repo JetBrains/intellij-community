@@ -45,6 +45,7 @@ class SmartCompletion(
     private val bindingContext: BindingContext,
     private val moduleDescriptor: ModuleDescriptor,
     private val visibilityFilter: (DeclarationDescriptor) -> Boolean,
+    private val applicabilityFilter: (DeclarationDescriptor) -> Boolean,
     private val indicesHelper: KotlinIndicesHelper,
     private val prefixMatcher: PrefixMatcher,
     private val inheritorSearchScope: GlobalSearchScope,
@@ -157,6 +158,9 @@ class SmartCompletion(
         settings: LanguageVersionSettings,
     ): Collection<LookupElement> {
         ProgressManager.checkCanceled()
+
+        if (!applicabilityFilter(descriptor)) return emptyList()
+
         if (descriptor in descriptorsToSkip) return emptyList()
 
         val result = SmartList<LookupElement>()
@@ -212,6 +216,7 @@ class SmartCompletion(
             }
             KeywordValues.process(
                 keywordValueConsumer,
+                expression,
                 callTypeAndReceiver,
                 bindingContext,
                 resolutionFacade,
@@ -240,12 +245,13 @@ class SmartCompletion(
                 ).addTo(items, inheritanceSearchers, expectedInfos)
 
                 if (expression is KtSimpleNameExpression) {
-                    StaticMembers(bindingContext, lookupElementFactory, resolutionFacade, moduleDescriptor).addToCollection(
+                    StaticMembers(bindingContext, lookupElementFactory, resolutionFacade, moduleDescriptor, applicabilityFilter)
+                      .addToCollection(
                         items,
                         expectedInfos,
                         expression,
                         descriptorsToSkip
-                    )
+                      )
                 }
 
                 ClassLiteralItems.addToCollection(items, expectedInfos, lookupElementFactory.basicFactory, isJvmModule)

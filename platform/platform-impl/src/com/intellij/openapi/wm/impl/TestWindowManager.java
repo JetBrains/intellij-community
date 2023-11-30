@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import kotlin.jvm.functions.Function0;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -173,7 +174,7 @@ public final class TestWindowManager extends WindowManagerEx {
     }
 
     @Override
-    public @Nullable StatusBar createChild(@NotNull Disposable disposable,
+    public @Nullable StatusBar createChild(@NotNull CoroutineScope coroutineScope,
                                            @NotNull IdeFrame frame,
                                            @NotNull Function0<? extends FileEditor> editorProvider) {
       return null;

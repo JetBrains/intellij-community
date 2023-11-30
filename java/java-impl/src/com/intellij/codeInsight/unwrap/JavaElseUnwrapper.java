@@ -48,7 +48,7 @@ public class JavaElseUnwrapper extends JavaElseUnwrapperBase {
     context.delete(parent);
   }
 
-  private PsiElement findTopmostIfStatement(PsiElement parent) {
+  private static PsiElement findTopmostIfStatement(PsiElement parent) {
     while (parent.getParent() instanceof PsiIfStatement) {
       parent = parent.getParent();
     }

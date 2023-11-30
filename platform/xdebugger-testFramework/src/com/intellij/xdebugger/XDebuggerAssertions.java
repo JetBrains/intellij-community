@@ -74,6 +74,13 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
   public static void assertVariable(@NotNull Collection<? extends XValue> vars,
                                     @Nullable String name,
                                     @Nullable String type,
+                                    @Nullable String value) {
+    assertVariable(vars, name, type, value, null, null);
+  }
+
+  public static void assertVariable(@NotNull Collection<? extends XValue> vars,
+                                    @Nullable String name,
+                                    @Nullable String type,
                                     @Nullable String value,
                                     @Nullable Boolean hasChildren) {
     assertVariable(vars, name, type, value, hasChildren, null);

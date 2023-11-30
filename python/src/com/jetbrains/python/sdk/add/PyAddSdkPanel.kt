@@ -16,7 +16,6 @@
 package com.jetbrains.python.sdk.add
 
 import com.intellij.CommonBundle
-import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager
@@ -28,14 +27,19 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PySdkBundle
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
+import com.jetbrains.python.pathValidation.PlatformAndRoot
+import com.jetbrains.python.pathValidation.ValidationRequest
+import com.jetbrains.python.pathValidation.validateEmptyDir
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
-import com.jetbrains.python.sdk.add.target.ValidationRequest
-import com.jetbrains.python.sdk.add.target.validateEmptyDir
-import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
+import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
+import com.jetbrains.python.ui.pyModalBlocking
 import icons.PythonIcons
 import java.awt.Component
 import javax.swing.Icon
@@ -69,6 +73,8 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   override fun getOrCreateSdk(): Sdk? = sdk
 
+  open fun getStatisticInfo(): InterpreterStatisticsInfo? = null
+
   override fun onSelected(): Unit = Unit
 
   override fun validateAll(): List<ValidationInfo> = emptyList()
@@ -77,16 +83,22 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   companion object {
     @JvmStatic
-    fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton, pathInfoProvider: TargetConfigurationReadableFs? = null): ValidationInfo? =
-      validateEmptyDir(
-        ValidationRequest(
-          path = field.text,
-          fieldIsEmpty = PySdkBundle.message("python.venv.location.field.empty"),
-          pathInfoProvider = pathInfoProvider
-        ),
-        notADirectory = PySdkBundle.message("python.venv.location.field.not.directory"),
-        directoryNotEmpty = PySdkBundle.message("python.venv.location.directory.not.empty")
-      )
+    @RequiresEdt
+    @RequiresBlockingContext
+    fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton, platformAndRoot: PlatformAndRoot): ValidationInfo? {
+      val path = field.text
+      return pyModalBlocking {
+        validateEmptyDir(
+          ValidationRequest(
+            path = path,
+            fieldIsEmpty = PySdkBundle.message("python.venv.location.field.empty"),
+            platformAndRoot = platformAndRoot
+          ),
+          notADirectory = PySdkBundle.message("python.venv.location.field.not.directory"),
+          directoryNotEmpty = PySdkBundle.message("python.venv.location.directory.not.empty")
+        )
+      }
+    }
 
     /** Should be protected. Please, don't use outside the class. KT-48508 */
     @JvmStatic
@@ -181,7 +193,7 @@ fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
     { findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() } ?: getSdksToInstall() },
     {
       sdkComboBox.apply {
-        val preferredSdk = PyProjectVirtualEnvConfiguration.findPreferredVirtualEnvBaseSdk(items)
+        val preferredSdk = findPreferredVirtualEnvBaseSdk(items)
         if (preferredSdk != null) {
           if (items.find { it.homePath == preferredSdk.homePath } == null) {
             addSdkItemOnTop(preferredSdk)

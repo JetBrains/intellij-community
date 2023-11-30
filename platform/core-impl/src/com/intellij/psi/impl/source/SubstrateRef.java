@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase;
@@ -34,30 +20,24 @@ import org.jetbrains.annotations.Nullable;
 public abstract class SubstrateRef {
   private static final Logger LOG = Logger.getInstance(SubstrateRef.class);
 
-  @NotNull
-  public abstract ASTNode getNode();
+  public abstract @NotNull ASTNode getNode();
 
-  @Nullable
-  public Stub getStub() {
+  public @Nullable Stub getStub() {
     return null;
   }
 
-  @Nullable
-  public Stub getGreenStub() {
+  public @Nullable Stub getGreenStub() {
     return getStub();
   }
 
   public abstract boolean isValid();
 
-  @NotNull
-  public abstract PsiFile getContainingFile();
+  public abstract @NotNull PsiFile getContainingFile();
 
-  @NotNull
-  static SubstrateRef createInvalidRef(@NotNull StubBasedPsiElementBase<?> psi) {
+  static @NotNull SubstrateRef createInvalidRef(@NotNull StubBasedPsiElementBase<?> psi) {
     return new SubstrateRef() {
-      @NotNull
       @Override
-      public ASTNode getNode() {
+      public @NotNull ASTNode getNode() {
         throw new PsiInvalidElementAccessException(psi);
       }
 
@@ -66,9 +46,8 @@ public abstract class SubstrateRef {
         return false;
       }
 
-      @NotNull
       @Override
-      public PsiFile getContainingFile() {
+      public @NotNull PsiFile getContainingFile() {
         throw new PsiInvalidElementAccessException(psi);
       }
     };
@@ -77,9 +56,8 @@ public abstract class SubstrateRef {
   public static @NotNull SubstrateRef createAstStrongRef(@NotNull ASTNode node) {
     return new SubstrateRef() {
 
-      @NotNull
       @Override
-      public ASTNode getNode() {
+      public @NotNull ASTNode getNode() {
         return node;
       }
 
@@ -90,9 +68,8 @@ public abstract class SubstrateRef {
         return file != null && file.isValid();
       }
 
-      @NotNull
       @Override
-      public PsiFile getContainingFile() {
+      public @NotNull PsiFile getContainingFile() {
         PsiFile file = SharedImplUtil.getContainingFile(node);
         if (file == null) throw PsiInvalidElementAccessException.createByNode(node, null);
         return file;
@@ -107,15 +84,13 @@ public abstract class SubstrateRef {
       myStub = stub;
     }
 
-    @NotNull
     @Override
-    public ASTNode getNode() {
+    public @NotNull ASTNode getNode() {
       throw new UnsupportedOperationException();
     }
 
-    @NotNull
     @Override
-    public Stub getStub() {
+    public @NotNull Stub getStub() {
       return myStub;
     }
 
@@ -127,9 +102,8 @@ public abstract class SubstrateRef {
       return psi != null && psi.isValid();
     }
 
-    @NotNull
     @Override
-    public PsiFile getContainingFile() {
+    public @NotNull PsiFile getContainingFile() {
       PsiFileStub<?> stub = myStub.getContainingFileStub();
       if (stub == null) {
         throw new PsiInvalidElementAccessException(myStub.getPsi(),

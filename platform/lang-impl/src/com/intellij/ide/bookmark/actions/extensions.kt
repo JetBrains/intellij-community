@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.actions
 
 import com.intellij.ide.bookmark.Bookmark
+import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.ide.bookmark.providers.LineBookmarkProvider
@@ -26,19 +27,19 @@ import javax.swing.JTree
 import javax.swing.KeyStroke
 
 
-internal val AnActionEvent.bookmarksManager
+internal val AnActionEvent.bookmarksManager: BookmarksManager?
   get() = project?.let { BookmarksManager.getInstance(it) }
 
-internal val AnActionEvent.bookmarksViewState
+internal val AnActionEvent.bookmarksViewState: BookmarksViewState?
   get() = project?.let { BookmarksViewState.getInstance(it) }
 
-internal val AnActionEvent.bookmarksView
+internal val AnActionEvent.bookmarksView: BookmarksView?
   get() = getData(BookmarksView.BOOKMARKS_VIEW)
 
 internal val AnActionEvent.bookmarkNodes: List<AbstractTreeNode<*>>?
   get() = bookmarksView?.let { getData(PlatformDataKeys.SELECTED_ITEMS)?.asList() as? List<AbstractTreeNode<*>> }
 
-internal val AnActionEvent.selectedGroupNode
+internal val AnActionEvent.selectedGroupNode: GroupNode?
   get() = bookmarkNodes?.singleOrNull() as? GroupNode
 
 internal val AnActionEvent.contextBookmark: Bookmark?
@@ -56,7 +57,7 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     }
 
     if (editor != null) {
-      val provider = LineBookmarkProvider.find(project) ?: return null
+      val provider = LineBookmarkProvider.Util.find(project) ?: return null
       val line = getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR)
       return provider.createBookmark(editor, line)
     }
@@ -90,10 +91,10 @@ internal val AnActionEvent.contextBookmarks: List<Bookmark>?
   }
 
 
-internal val Bookmark.bookmarksManager
+internal val Bookmark.bookmarksManager: BookmarksManager?
   get() = BookmarksManager.getInstance(provider.project)
 
-internal val Bookmark.firstGroupWithDescription
+internal val Bookmark.firstGroupWithDescription: BookmarkGroup?
   get() = bookmarksManager?.getGroups(this)?.firstOrNull { it.getDescription(this).isNullOrBlank().not() }
 
 
@@ -113,7 +114,7 @@ internal fun JComponent.registerBookmarkTypeAction(parent: Disposable, type: Boo
 /**
  * Creates an action that navigates to a selected bookmark by the EditSource shortcut.
  */
-internal fun JComponent.registerEditSourceAction(parent: Disposable) = LightEditActionFactory
+internal fun JComponent.registerEditSourceAction(parent: Disposable): Unit = LightEditActionFactory
   .create { OpenSourceUtil.navigate(*it.getData(CommonDataKeys.NAVIGATABLE_ARRAY).orEmpty()) }
   .registerCustomShortcutSet(CommonShortcuts.getEditSource(), this, parent)
 

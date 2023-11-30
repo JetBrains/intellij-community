@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl.singleRow;
 
 import com.intellij.ui.ExperimentalUI;
@@ -147,9 +147,8 @@ public class ScrollableSingleRowLayout extends SingleRowLayout {
            || bounds.height < label.getPreferredSize().height - deadzone;
   }
 
-  @Nullable
   @Override
-  protected TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
+  protected @Nullable TabLabel findLastVisibleLabel(SingleRowPassInfo data) {
     int i = data.toLayout.size() - 1;
     while (i >= 0) {
       TabInfo info = data.toLayout.get(i);

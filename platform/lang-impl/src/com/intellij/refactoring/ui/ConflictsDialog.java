@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -15,6 +14,7 @@ import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.util.ArrayUtilRt;
@@ -32,6 +32,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBase {
@@ -87,6 +88,19 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
     init();
+  }
+
+  public List<String> getConflictDescriptions() {
+    return List.of(myConflictDescriptions);
+  }
+
+  @Override
+  public boolean showAndGet() {
+    if (UiInterceptors.tryIntercept(this)) {
+      disposeIfNeeded();
+      return true;
+    }
+    return super.showAndGet();
   }
 
   @Override
@@ -153,7 +167,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     myCommandName = commandName;
   }
 
-  private class CancelAction extends AbstractAction {
+  private final class CancelAction extends AbstractAction {
     CancelAction() {
       super(RefactoringBundle.message("cancel.button"));
       putValue(DEFAULT_ACTION,Boolean.TRUE);
@@ -169,7 +183,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
     return myDoRefactoringRunnable;
   }
 
-  private class MyShowConflictsInUsageViewAction extends AbstractAction {
+  private final class MyShowConflictsInUsageViewAction extends AbstractAction {
 
 
     MyShowConflictsInUsageViewAction() {
@@ -224,7 +238,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       close(SHOW_CONFLICTS_EXIT_CODE);
     }
 
-    private class DescriptionOnlyUsage implements Usage {
+    private final class DescriptionOnlyUsage implements Usage {
       private final @NlsContexts.Tooltip String myConflictDescription;
 
       DescriptionOnlyUsage(@NotNull @NlsContexts.Tooltip String conflictDescription) {
@@ -241,7 +255,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       }
 
       @Contract(pure = true)
-      private String getEscapedDescription(String conflictsMessage) {
+      private static String getEscapedDescription(String conflictsMessage) {
         return Pattern.compile("<[^<>]*>").matcher(conflictsMessage).replaceAll("");
       }
 

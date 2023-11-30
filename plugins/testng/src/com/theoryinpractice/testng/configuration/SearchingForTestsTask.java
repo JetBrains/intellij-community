@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -57,7 +57,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
 
   @Override
   protected void onFound() {
-    if (myClasses.size() > 0) {
+    if (!myClasses.isEmpty()) {
       composeTestSuiteFromClasses();
     }
     else if (TestType.SUITE.getType().equals(myData.TEST_OBJECT)) {
@@ -188,8 +188,8 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       VirtualFile root = index.getClassRootForFile(virtualFile);
       if (root != null) {
         VirtualFileSystem fileSystem = root.getFileSystem();
-        if (fileSystem instanceof JarFileSystem) {
-          VirtualFile localFile = ((JarFileSystem)fileSystem).getLocalVirtualFileFor(root);
+        if (fileSystem instanceof JarFileSystem jarFs) {
+          VirtualFile localFile = jarFs.getLocalByEntry(root);
           if (localFile != null) {
             String name = localFile.getNameWithoutExtension();
             if (name.startsWith("testng-")) {

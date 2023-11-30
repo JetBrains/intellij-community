@@ -20,8 +20,8 @@
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="commons-cli" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
@@ -29,8 +29,9 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="library" name="opentelemetry" level="project" />
-    <orderEntry type="library" name="commons-lang" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
 </module>

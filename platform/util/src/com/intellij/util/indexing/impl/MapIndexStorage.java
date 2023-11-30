@@ -70,7 +70,7 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   protected void initMapAndCache() throws IOException {
     ValueContainerMap<Key, Value> map = createValueContainerMap();
-    myCache = MapIndexStorageCacheProvider.getActualProvider().createCache(
+    myCache = MapIndexStorageCacheProvider.Companion.getActualProvider().createCache(
       key -> map.getModifiableValueContainer(key),
       (key, container) -> onDropFromCache(key, container),
       myKeyDescriptor,
@@ -209,6 +209,21 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
   }
 
   @Override
+  public boolean isDirty() {
+    if (myMap.isDirty()) {
+      return true;
+    }
+
+    for (ChangeTrackingValueContainer<Value> container : myCache.getCachedValues()) {
+      if (container.isDirty()) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  @Override
   public int keysCountApproximately() {
     return myMap.getStorageMap().keysCount();
   }
@@ -310,7 +325,9 @@ public class MapIndexStorage<Key, Value> implements IndexStorage<Key, Value>, Me
 
   @Override
   public void clearCaches() {
-    myCache.processCachedValues(container -> container.dropMergedData());
+    for (ChangeTrackingValueContainer<Value> container : myCache.getCachedValues()) {
+      container.dropMergedData();
+    }
   }
 
   @ApiStatus.Internal

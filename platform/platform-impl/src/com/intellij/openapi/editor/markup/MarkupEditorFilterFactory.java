@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diff.impl.DiffUtil;
@@ -8,18 +8,15 @@ public final class MarkupEditorFilterFactory {
   private static final MarkupEditorFilter IS_DIFF_FILTER = editor -> DiffUtil.isDiffEditor(editor);
   private static final MarkupEditorFilter NOT_DIFF_FILTER = createNotFilter(IS_DIFF_FILTER);
 
-  @NotNull
-  public static MarkupEditorFilter createNotFilter(@NotNull MarkupEditorFilter filter) {
+  public static @NotNull MarkupEditorFilter createNotFilter(@NotNull MarkupEditorFilter filter) {
     return editor -> !filter.avaliableIn(editor);
   }
 
-  @NotNull
-  public static MarkupEditorFilter createIsDiffFilter() {
+  public static @NotNull MarkupEditorFilter createIsDiffFilter() {
     return IS_DIFF_FILTER;
   }
 
-  @NotNull
-  public static MarkupEditorFilter createIsNotDiffFilter() {
+  public static @NotNull MarkupEditorFilter createIsNotDiffFilter() {
     return NOT_DIFF_FILTER;
   }
 }

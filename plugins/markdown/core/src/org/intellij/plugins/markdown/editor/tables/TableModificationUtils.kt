@@ -202,7 +202,7 @@ object TableModificationUtils {
     columnIndex: Int,
     after: Boolean = true,
     alignment: CellAlignment = CellAlignment.NONE,
-    columnWidth: Int = 5
+    columnWidth: Int = 3
   ) {
     val cells = getColumnCells(columnIndex, withHeader = false)
     val headerCell = headerRow?.getCell(columnIndex)!!

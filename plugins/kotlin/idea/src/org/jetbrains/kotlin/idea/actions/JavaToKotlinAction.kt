@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.actions
 
-import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
@@ -53,7 +53,7 @@ import kotlin.io.path.notExists
 import kotlin.system.measureTimeMillis
 
 class JavaToKotlinAction : AnAction() {
-    companion object {
+    object Handler {
         private fun uniqueKotlinFileName(javaFile: VirtualFile): String {
             val nioFile = javaFile.fileSystem.getNioPath(javaFile)
 
@@ -91,7 +91,7 @@ class JavaToKotlinAction : AnAction() {
                         mapping.setMapping(virtualFile, KotlinFileType.INSTANCE.language)
                     } else {
                         val fileName = uniqueKotlinFileName(virtualFile)
-                        virtualFile.pathBeforeJavaToKotlinConversion = virtualFile.path
+                        virtualFile.putUserData(pathBeforeJavaToKotlinConversion, virtualFile.path)
                         virtualFile.rename(this, fileName)
                     }
                     result += virtualFile
@@ -227,10 +227,24 @@ class JavaToKotlinAction : AnAction() {
                 newFiles
             }
         }
+
+        internal fun selectedJavaFiles(e: AnActionEvent): Sequence<PsiJavaFile> {
+            val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return sequenceOf()
+            val project = e.project ?: return sequenceOf()
+            return allJavaFiles(virtualFiles, project)
+        }
+
+        private fun allJavaFiles(filesOrDirs: Array<VirtualFile>, project: Project): Sequence<PsiJavaFile> {
+            val manager = PsiManager.getInstance(project)
+            return getAllFilesRecursively(filesOrDirs)
+                .asSequence()
+                .mapNotNull { manager.findFile(it) as? PsiJavaFile }
+                .filter { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
+        }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val javaFiles = selectedJavaFiles(e).filter { it.isWritable }.toList()
+        val javaFiles = Handler.selectedJavaFiles(e).filter { it.isWritable }.toList()
         val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
         val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
 
@@ -262,18 +276,18 @@ class JavaToKotlinAction : AnAction() {
             if (Messages.showOkCancelDialog(
                     project,
                     question,
-                    title,
+                    Handler.title,
                     okText,
                     cancelText,
                     Messages.getWarningIcon()
                 ) == Messages.OK
             ) {
-                NavigationUtil.activateFileWithPsiElement(firstSyntaxError.navigationElement)
+                activateFileWithPsiElement(firstSyntaxError.navigationElement)
                 return
             }
         }
 
-        convertFiles(javaFiles, project, module)
+        Handler.convertFiles(javaFiles, project, module)
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -308,19 +322,5 @@ class JavaToKotlinAction : AnAction() {
         }
 
         return files.any(::isWritableJavaFile)
-    }
-
-    private fun selectedJavaFiles(e: AnActionEvent): Sequence<PsiJavaFile> {
-        val virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return sequenceOf()
-        val project = e.project ?: return sequenceOf()
-        return allJavaFiles(virtualFiles, project)
-    }
-
-    private fun allJavaFiles(filesOrDirs: Array<VirtualFile>, project: Project): Sequence<PsiJavaFile> {
-        val manager = PsiManager.getInstance(project)
-        return getAllFilesRecursively(filesOrDirs)
-            .asSequence()
-            .mapNotNull { manager.findFile(it) as? PsiJavaFile }
-            .filter { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
     }
 }

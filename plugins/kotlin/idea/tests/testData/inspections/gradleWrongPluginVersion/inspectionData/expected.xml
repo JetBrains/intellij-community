@@ -61,13 +61,4 @@
         <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Kotlin Gradle and IDE plugins versions are different</problem_class>
         <description>Kotlin version that is used for building with Gradle (1.1.10) is not properly supported in the IDE plugin ($PLUGIN_VERSION)</description>
     </problem>
-
-    <problem>
-        <file>wrongPluginWithFutureKotlinVersion.gradle</file>
-        <line>6</line>
-        <module>light_idea_test_case</module>
-        <entry_point TYPE="file" FQNAME="wrongPluginWithFutureKotlinVersion.gradle"/>
-        <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Kotlin Gradle and IDE plugins versions are different</problem_class>
-        <description>Kotlin version that is used for building with Gradle (2.0.0) is not properly supported in the IDE plugin ($PLUGIN_VERSION)</description>
-    </problem>
 </problems>

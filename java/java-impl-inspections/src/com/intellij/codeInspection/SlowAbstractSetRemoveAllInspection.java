@@ -8,6 +8,8 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -109,7 +111,7 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
       if (call == null) return;
       final PsiExpression[] args = call.getArgumentList().getExpressions();

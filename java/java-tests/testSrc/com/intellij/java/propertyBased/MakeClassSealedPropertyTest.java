@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.SealClassAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -49,7 +51,7 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
     Generator<PsiJavaFile> javaFiles = psiJavaFiles();
     PsiJavaFile psiFile = env.generateValue(javaFiles, "Open %s in editor");
 
-    SealClassAction makeSealedAction = new SealClassAction();
+    IntentionAction makeSealedAction = new SealClassAction().asIntention();
     FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
     Editor editor = editorManager.openTextEditor(new OpenFileDescriptor(myProject, psiFile.getVirtualFile()), true);
 
@@ -90,11 +92,12 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
   }
 
   private static boolean convertToSealedClass(@NotNull Editor editor,
-                                              @NotNull SealClassAction makeSealedAction,
+                                              @NotNull IntentionAction makeSealedAction,
                                               @NotNull PsiIdentifier classIdentifier) {
     try {
       PsiFile containingFile = classIdentifier.getContainingFile();
       ShowIntentionActionsHandler.chooseActionAndInvoke(containingFile, editor, makeSealedAction, makeSealedAction.getText());
+      NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
       return true;
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
@@ -103,11 +106,11 @@ public class MakeClassSealedPropertyTest extends BaseUnivocityTest {
   }
 
   private static boolean canConvertToSealedClass(@NotNull Editor editor,
-                                                 @NotNull SealClassAction makeSealedAction,
+                                                 @NotNull IntentionAction makeSealedAction,
                                                  @NotNull PsiClass psiClass) {
     PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
     if (nameIdentifier == null) return false;
     editor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
-    return makeSealedAction.isAvailable(psiClass.getProject(), editor, nameIdentifier);
+    return makeSealedAction.isAvailable(psiClass.getProject(), editor, nameIdentifier.getContainingFile());
   }
 }

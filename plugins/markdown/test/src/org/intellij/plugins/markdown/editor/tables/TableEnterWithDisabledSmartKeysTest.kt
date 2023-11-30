@@ -11,7 +11,10 @@ import org.junit.runners.JUnit4
 @Suppress("MarkdownIncorrectTableFormatting", "MarkdownNoTableBorders")
 class TableEnterWithDisabledSmartKeysTest: LightPlatformCodeInsightTestCase() {
   @get:Rule
-  val rule = MarkdownCodeInsightSettingsRule { it.copy(insertHtmlLineBreakInsideTables = false, insertNewTableRowOnShiftEnter = false) }
+  val rule = MarkdownCodeInsightSettingsRule {
+    it.insertHtmlLineBreakInsideTables = false
+    it.insertNewTableRowOnShiftEnter = false
+  }
 
   @Test
   fun `test single enter inside cell`() {

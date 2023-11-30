@@ -18,6 +18,9 @@ public class DelombokValueActionTest extends LombokLightActionTestCase {
   public void testValuePlain() throws Exception {
     doTest();
   }
+  public void testValueWithEAHCExclude() throws Exception {
+    doTest();
+  }
 
   public void testValueNonFinalOnField() throws Exception {
     doTest();

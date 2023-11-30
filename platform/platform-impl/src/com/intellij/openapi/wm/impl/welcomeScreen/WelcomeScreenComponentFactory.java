@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
-import com.intellij.application.Topics;
 import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.AboutPopup;
+import com.intellij.ide.actions.AboutDialog;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -14,6 +13,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -33,6 +33,7 @@ import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import org.jetbrains.annotations.Nls;
@@ -59,21 +60,19 @@ public final class WelcomeScreenComponentFactory {
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
     String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
-    if (welcomeScreenLogoUrl != null) {
-      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
-      JLabel logo = new JLabel() {
-        @Override
-        public void updateUI() {
-          super.updateUI();
-          float scale = JBUIScale.scale(28f) / icon.getIconWidth();
-          Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
-          setIcon(smallLogoIcon);
-        }
-      };
-      logo.setBorder(JBUI.Borders.empty(29, 0, 27, 0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.WEST);
-    }
+    Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
+    JLabel logo = new JLabel() {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        float scale = JBUIScale.scale(28f) / icon.getIconWidth();
+        Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
+        setIcon(smallLogoIcon);
+      }
+    };
+    logo.setBorder(JBUI.Borders.empty(29, 0, 27, 0));
+    logo.setHorizontalAlignment(SwingConstants.CENTER);
+    panel.add(logo, BorderLayout.WEST);
 
     String applicationName = getAppName();
     JLabel appName = new JLabel(applicationName);
@@ -100,7 +99,7 @@ public final class WelcomeScreenComponentFactory {
     textPanel.add(namePanel);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
-    panel.setToolTipText(applicationName + " " + appVersion);
+    panel.setToolTipText(IdeBundle.message("about.box.build.number", appInfo.getBuild()));
 
     panel.addMouseListener(new MouseAdapter() {
       @Override
@@ -121,13 +120,10 @@ public final class WelcomeScreenComponentFactory {
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
-    String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
-    if (welcomeScreenLogoUrl != null) {
-      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader()));
-      logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.NORTH);
-    }
+    JLabel logo = new JLabel(IconLoader.getIcon(appInfo.getApplicationSvgIconUrl(), WelcomeScreenComponentFactory.class.getClassLoader()));
+    logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
+    logo.setHorizontalAlignment(SwingConstants.CENTER);
+    panel.add(logo, BorderLayout.NORTH);
 
     JLabel appName = new JLabel(getAppName());
     appName.setForeground(JBColor.foreground());
@@ -152,7 +148,7 @@ public final class WelcomeScreenComponentFactory {
 
   private static AnAction createCopyAboutAction() {
     return DumbAwareAction.create(e -> {
-      CopyPasteManager.getInstance().setContents(new StringSelection(AboutPopup.getAboutText()));
+      CopyPasteManager.getInstance().setContents(new StringSelection(new AboutDialog(null).getExtendedAboutText()));
     });
   }
 
@@ -285,7 +281,7 @@ public final class WelcomeScreenComponentFactory {
    * @deprecated use {@link NotificationEventAction} instead
    */
   @Deprecated
-  public static @NotNull JComponent createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
+  public static @NotNull JComponent createEventLink(@NotNull @Nls String linkText, @NotNull SimpleMessageBusConnection busConnection) {
     SelectablePanel selectablePanel = new SelectablePanel();
     ActionLink actionLink = new ActionLink(linkText, getNotificationIcon(Collections.emptyList(), null), new DumbAwareAction() {
       private boolean hideListenerInstalled = false;
@@ -298,12 +294,11 @@ public final class WelcomeScreenComponentFactory {
             welcomeBalloonLayout.setHideListener(() -> selectablePanel.setSelectionColor(null));
             hideListenerInstalled = true;
           }
-          welcomeBalloonLayout.showPopup();
           selectablePanel.setSelectionColor(JBUI.CurrentTheme.ActionButton.pressedBackground());
+          welcomeBalloonLayout.showPopup();
         }
       }
     });
-
 
     JComponent panel = wrapActionLink(actionLink);
     selectablePanel.setLayout(new BorderLayout());
@@ -314,7 +309,7 @@ public final class WelcomeScreenComponentFactory {
     panel.setBorder(null);
     selectablePanel.setVisible(false);
 
-    Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
+    busConnection.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, types -> {
       BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
       if (balloonLayout instanceof WelcomeBalloonLayoutImpl welcomeBalloonLayout) {
         if (welcomeBalloonLayout.getLocationComponent() == null) {
@@ -372,14 +367,39 @@ public final class WelcomeScreenComponentFactory {
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setActionButtonBorder(horizontalGap, 1);
 
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+      .subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, new WelcomeBalloonLayoutImpl.BalloonNotificationListener() {
+        @Override
+        public void notificationsChanged(List<NotificationType> types) {
+        }
+
+        @Override
+        public void newNotifications() {
+          UIUtil.invokeLaterIfNeeded(() -> {
+            Disposable disposable = Disposer.newDisposable(parentDisposable);
+            toolbar.addListener(new ActionToolbarListener() {
+              @Override
+              public void actionsUpdated() {
+                Disposer.dispose(disposable);
+                BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
+                if (balloonLayout instanceof WelcomeSeparateBalloonLayoutImpl layout) {
+                  layout.autoPopup();
+                }
+              }
+            }, disposable);
+            toolbar.updateActionsAsync();
+          });
+        }
+      });
+
     JComponent result = toolbar.getComponent();
     toolbar.setTargetComponent(result);
     result.setOpaque(false);
     if (ExperimentalUI.isNewUI()) {
-      result.setBorder(JBUI.Borders.empty(9, 0, 15, 24 - horizontalGap));
+      result.setBorder(JBUI.Borders.empty(0, 0, 15, 24 - horizontalGap));
     }
     else {
-      result.setBorder(JBUI.Borders.empty(10, 0, 5, 8));
+      result.setBorder(JBUI.Borders.empty(0, 0, 5, 8));
     }
     return result;
   }
@@ -390,7 +410,7 @@ public final class WelcomeScreenComponentFactory {
   @Deprecated
   public static @NotNull JPanel createNotificationPanel(@NotNull Disposable parentDisposable) {
     JComponent errorsLink = createErrorsLink(parentDisposable);
-    JComponent eventLink = createEventLink("", parentDisposable);
+    JComponent eventLink = createEventLink("", ApplicationManager.getApplication().getMessageBus().connect(parentDisposable));
     JPanel panel = new NonOpaquePanel();
     if (ExperimentalUI.isNewUI()) {
       panel.setLayout(new FlowLayout(FlowLayout.RIGHT, 0, 0));

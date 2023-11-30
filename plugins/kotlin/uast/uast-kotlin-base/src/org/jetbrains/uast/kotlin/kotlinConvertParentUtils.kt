@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -227,11 +228,21 @@ internal fun convertParentImpl(
         }.expressions.single()
     }
 
-    if (result is KotlinULambdaExpression.Body && element is UExpression && result.implicitReturn?.returnExpression == element) {
-        return result.implicitReturn!!
+    if (result is KotlinULambdaExpression.Body && element is UExpression && element.sourcePsi?.canBeImplicitReturnIn(result) == true) {
+        result.implicitReturn?.takeIf { it.returnExpression.sourcePsi == element.sourcePsi }?.let { return it }
     }
 
     return result
+}
+
+private fun PsiElement.canBeImplicitReturnIn(body: KotlinULambdaExpression.Body): Boolean {
+    val lastStatement = body.sourcePsi.statements.lastOrNull() ?: return false
+    // It is _explicit_ return so we skip
+    if (lastStatement is KtReturnExpression) return false
+
+    // We can't be sure that lastStatement after transformations will contain exactly the last statement element,
+    // so we play safe here
+    return lastStatement.isAncestor(this, strict = false)
 }
 
 private fun isInConditionBranch(element: UElement, result: USwitchClauseExpressionWithBody) =

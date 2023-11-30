@@ -7,7 +7,7 @@ import com.intellij.codeInspection.miscGenerics.IterableUsedAsVarargInspection;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_10;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11;
 
 
 public class IterableUsedAsVarargInspectionTest extends LightQuickFixParameterizedTestCase {
@@ -19,7 +19,7 @@ public class IterableUsedAsVarargInspectionTest extends LightQuickFixParameteriz
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_10;
+    return JAVA_11;
   }
 
   @Override

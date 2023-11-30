@@ -10,8 +10,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Iconable.IconFlags
-import com.intellij.openapi.util.registry.EarlyAccessRegistryManager.getBoolean
 import com.intellij.psi.PsiFile
+import com.intellij.ui.NewUiValue
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
@@ -35,7 +35,7 @@ class EmptyIntentionGeneratorIntention(val name: @IntentionFamilyName String, va
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = true
 
   override fun getIcon(@IconFlags flags: Int): Icon =
-    if (getBoolean("ide.experimental.ui")) EmptyIcon.ICON_0 else AllIcons.Actions.RealIntentionBulb
+    if (NewUiValue.isEnabled()) EmptyIcon.ICON_0 else AllIcons.Actions.RealIntentionBulb
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

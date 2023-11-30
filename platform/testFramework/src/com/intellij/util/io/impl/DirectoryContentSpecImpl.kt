@@ -15,9 +15,10 @@ import java.util.*
 import java.util.jar.JarFile
 import java.util.jar.Manifest
 import java.util.zip.Deflater
+import kotlin.io.path.*
 import kotlin.io.path.exists
-import kotlin.io.path.extension
-import kotlin.io.path.name
+import kotlin.io.path.isDirectory
+import kotlin.io.path.readBytes
 
 sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
   /**
@@ -215,14 +216,14 @@ private fun assertDirectoryContentMatches(file: Path,
       assertDirectoryMatches(file, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
     }
     is ZipSpecBase -> {
-      errorReporter.assertTrue(relativePath, "$file is not a file", file.isFile())
+      errorReporter.assertTrue(relativePath, "$file is not a file", file.isRegularFile())
       val dirForExtracted = FileUtil.createTempDirectory("extracted-${file.name}", null, false).toPath()
       ZipUtil.extract(file, dirForExtracted, null)
       assertDirectoryMatches(dirForExtracted, spec, relativePath, fileTextMatcher, filePathFilter, errorReporter, expectedDataIsInSpec)
       FileUtil.delete(dirForExtracted)
     }
     is FileSpec -> {
-      errorReporter.assertTrue(relativePath, "$file is not a file", file.isFile())
+      errorReporter.assertTrue(relativePath, "$file is not a file", file.isRegularFile())
       if (spec.content != null) {
         val fileBytes = file.readBytes()
         if (!fileBytes.contentEquals(spec.content)) {
@@ -234,7 +235,8 @@ private fun assertDirectoryContentMatches(file: Path,
               val specFilePath = spec.originalFile?.toFile()?.absolutePath
               val (expected, actual) = if (expectedDataIsInSpec) specString to fileString else fileString to specString
               val (expectedPath, actualPath) = if (expectedDataIsInSpec) specFilePath to null else null to specFilePath
-              errorReporter.reportError(relativePath, FileComparisonFailure("File content mismatch$place:", expected, actual, expectedPath, actualPath))
+              errorReporter.reportError(relativePath,
+                                        FileComparisonFailure("File content mismatch$place:", expected, actual, expectedPath, actualPath))
             }
           }
           else {
@@ -301,7 +303,7 @@ private fun createSpecByPath(path: Path, originalFile: Path?): DirectoryContentS
     val dirForExtracted = FileUtil.createTempDirectory("extracted-${path.name}", null, false).toPath()
     ZipUtil.extract(path, dirForExtracted, null)
     val spec = if (path.extension == "jar") JarSpec() else ZipSpec()
-    fillSpecFromDirectory(spec, dirForExtracted, null) 
+    fillSpecFromDirectory(spec, dirForExtracted, null)
     FileUtil.delete(dirForExtracted)
     return spec
   }

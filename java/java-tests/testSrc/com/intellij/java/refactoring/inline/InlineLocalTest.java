@@ -1,28 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLocalVariable;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.inline.InlineLocalHandler;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 public class InlineLocalTest extends LightJavaCodeInsightTestCase {
@@ -33,27 +29,27 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testInference() {
-    doTest(false);
+    doTest();
   }
 
   public void testQualifier() {
-    doTest(false);
+    doTest();
   }
 
   public void testInnerInnerClass() {
-    doTest(true);
+    doTest();
   }
 
   public void testIDEADEV950() {
-    doTest(false);
+    doTest();
   }
 
   public void testNoRedundantCasts() {
-    doTest(false);
+    doTest();
   }
 
   public void testIdeaDEV9404() {
-    doTest(false);
+    doTest();
   }
 
   @Override
@@ -62,309 +58,327 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testIDEADEV12244() {
-    doTest(false);
+    doTest();
   }
 
   public void testIDEADEV10376() {
-    doTest(true);
+    doTest();
   }
 
   public void testIDEADEV13151() {
-    doTest(true);
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
+    doTest();
   }
 
   public void testArrayInitializer() {
-    doTest(false);
+    doTest();
   }
 
   public void testNonWriteUnaryExpression() {
-    doTest(true);
+    doTest();
   }
 
   public void testNewExpression() {
-    doTest(false);
+    doTest();
   }
 
   public void testNewExpressionWithDiamond() {
-    doTest(false);
+    doTest();
   }
 
   public void testNewExpressionWithPreservedDiamond() {
-    doTest(false);
+    doTest();
   }
 
   public void testAugmentedAssignment() {
-    String exception = null;
-    try {
-      doTest(false);
-    }
-    catch (RuntimeException ex) {
-      exception = ex.getMessage();
-    }
-    String error = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", "text"));
-    assertEquals(error, exception);
+    doTest();
   }
 
   public void testUsedInInnerClass() {       // IDEADEV-28786
-    doTest(true);
+    doTest();
   }
 
   public void testUsedInInnerClass2() {       // IDEADEV-28786
-    doTest(true);
+    doTest();
   }
 
   public void testUsedInInnerClass3() {       // IDEADEV-28786
-    doTest(true);
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
+    doTest();
   }
 
   public void testUsedInInnerClass4() {       // IDEADEV-28786
-    doTest(true);
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
+    doTest();
   }
 
   public void testAnotherDefinitionUsed() {
-    doTest(true, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one");
+    doTest("Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one");
   }
 
   public void testAnotherDefinitionUsed1() {
-    doTest(false, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one");
+    doTest("Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one");
   }
 
   public void testTypeArgumentsStatic() {
-    doTest(true);
+    doTest();
   }
 
   public void testTypeArguments() {
-    doTest(true);
+    doTest();
   }
 
   public void testWildcard() {
-    doTest(true);
+    doTest();
   }
 
   public void testStaticImported() {
-    doTest(true);
+    doTest();
   }
 
   public void testQualified() {
-    doTest(true);
+    doTest();
   }
 
   public void testAssignmentToArrayElement() {
-    doTest(true, "Cannot perform refactoring.\n" +
-                 "Variable 'arr' is accessed for writing");
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
+    doTest("Cannot perform refactoring.\n" +
+           "Variable 'arr' is accessed for writing");
   }
 
   public void testArrayMethodCallInitialized() {
-    doTest(false);
+    doTest();
   }
 
   public void testArrayIndex() {
-    doTest(true);
+    doTest();
   }
 
   public void testNonEqAssignment() {
-    doTest(false, "Cannot perform refactoring.\n" +
-                  "Variable 'x' is accessed for writing");
+    doTest("Cannot perform refactoring.\n" +
+           "Cannot find a single definition to inline");
   }
 
   public void testInlineFromTryCatch() {
-    doTest(true, "Unable to inline outside try/catch statement");
+    doTest("Unable to inline outside try/catch statement");
   }
 
   public void testInlineFromTryCatchAvailable() {
-    doTest(true);
+    doTest();
   }
 
   public void testConditionExpr() {
-    doTest(true);
+    doTest();
   }
 
   public void testLambdaExpr() {
-    doTest(true, LanguageLevel.JDK_1_8);
+    doTest(LanguageLevel.JDK_1_8);
   }
 
   public void testLambdaExprAsRefQualifier() {
-    doTest(true, LanguageLevel.JDK_1_8);
+    doTest(LanguageLevel.JDK_1_8);
   }
 
   public void testMethodRefAsRefQualifier() {
-    doTest(true, LanguageLevel.JDK_1_8);
+    doTest(LanguageLevel.JDK_1_8);
   }
 
   public void testLocalVarInsideLambdaBody() {
-    doTest(true, LanguageLevel.JDK_1_8);
+    UiInterceptors.register(new ChooserInterceptor(List.of("This reference only", "All 2 references and remove the variable"),
+                                                   "All 2 references and remove the variable"));
+    doTest(LanguageLevel.JDK_1_8);
   }
 
   public void testLocalVarInsideLambdaBody1() {
-    doTest(true, LanguageLevel.JDK_1_8);
+    doTest(LanguageLevel.JDK_1_8);
   }
 
-  public void testLocalVarInsideLambdaBody2() { doTest(true, LanguageLevel.JDK_1_8); }
-  public void testLocalVarUsedInLambdaBody() { doTest(true, LanguageLevel.JDK_1_8); }
-  public void testCastAroundLambda() { doTest(true, LanguageLevel.JDK_1_8); }
-  public void testNoCastAroundLambda() { doTest(true, LanguageLevel.JDK_1_8); }
-  public void testNoCastWithVar() { doTest(true, LanguageLevel.JDK_10); }
-  public void testDiamondInAnonymousClass() { doTest(true, LanguageLevel.JDK_11); }
-  public void testAssignmentInAnonymousClass() { doTest(true); }
-  public void testAssignmentInAnonymousClass2() { doTest(true); }
+  public void testLocalVarInsideLambdaBody2() { doTest(LanguageLevel.JDK_1_8); }
+
+  public void testLocalVarUsedInLambdaBody() { doTest(LanguageLevel.JDK_1_8); }
+
+  public void testCastAroundLambda() { doTest(LanguageLevel.JDK_1_8); }
+
+  public void testNoCastAroundLambda() { doTest(LanguageLevel.JDK_1_8); }
+
+  public void testNoCastWithVar() { doTest(LanguageLevel.JDK_10); }
+
+  public void testDiamondInAnonymousClass() { doTest(LanguageLevel.JDK_11); }
+
+  public void testAssignmentInAnonymousClass() { doTest(); }
+
+  public void testAssignmentInAnonymousClass2() { doTest(); }
 
   public void testUncheckedCast() {
-    doTest(true);
+    doTest();
   }
 
   public void testUncheckedCastNotNeeded() {
-    doTest(true);
+    doTest();
   }
 
   public void testCastNotNeeded() {
-    doTest(true);
+    doTest();
   }
 
   public void testResourceVariable() {
-    doTest(false);
+    doTest();
   }
 
   public void testEnclosingThisExpression() {
-    doTest(true);
+    doTest();
   }
 
   public void testParentStaticQualifier() {
-    doTest(true);
+    doTest();
   }
 
   public void testCollapseArrayCreation() {
-    doTest(true);
+    doTest();
   }
 
   public void testRenameLambdaParamsToAvoidConflicts() {
-    doTest(true);
+    doTest();
   }
 
   public void testParenthesisAroundInlinedLambda() {
-    doTest(true);
+    doTest();
   }
 
   public void testArrayAccessPriority() {
-    doTest(true);
+    doTest();
   }
 
   public void testDecodeRefsBeforeCheckingOverRedundantCasts() {
-    doTest(true);
+    doTest();
   }
 
   public void testDontOpenMultidimensionalArrays() {
-    doTest(false);
+    doTest();
   }
 
   public void testInsertNarrowingCastToAvoidSemanticsChange() {
-    doTest(false);
+    doTest();
   }
 
   public void testInsertCastToGenericTypeToProvideValidReturnType() {
-    doTest(false);
+    doTest();
   }
 
   public void testDisableShortCircuit() {
-    doTest(false);
+    doTest();
   }
 
   public void testOperationPrecedenceWhenInlineToStringConcatenation() {
-    doTest(false);
+    doTest();
   }
 
   public void testParenthesisAroundCast() {
-    doTest(false);
+    doTest();
   }
 
   public void testLocalVarInsideLambdaBodyWriteUsage() {
-    doTest(true, "Cannot perform refactoring.\n" +
-                 "Variable 'hello' is accessed for writing");
+    UiInterceptors.register(new ChooserInterceptor(
+      List.of("This reference only", "All 2 references and remove the variable"),
+      "All 2 references and remove the variable"));
+    doTest("Cannot perform refactoring.\n" +
+           "Variable 'hello' is accessed for writing");
   }
 
   public void testInlineVariableIntoNestedLambda() {
-    doTest(false);
+    doTest();
   }
 
   public void testAvoidTypeSpecificationWhenPossibleToAvoid() {
-    doTest(false);
+    doTest();
   }
 
-  public void testLocalInsideLambdaWithNestedLambda() { doTest(true); }
-  public void testDefInMultiAssignmentStatement() { doTest(true); }
-  public void testPrivateOverload() { doTest(true); }
+  public void testLocalInsideLambdaWithNestedLambda() { doTest(); }
+
+  public void testDefInMultiAssignmentStatement() { doTest(); }
+
+  public void testPrivateOverload() { doTest(); }
 
   public void testAssignedVarsUpdatedBeforeRead() {
-    doTestConflict("Variable 'p2' is changed before last access to variable 'f'.",
-                   "Variable 'p1' is changed before last access to variable 'f'.",
-                   "Variable 'p2' is changed before last access to variable 'f'.");
+    UiInterceptors.register(new ChooserInterceptor(List.of("Highlight 3 conflicting writes", "Ignore writes and continue"), 
+                                                   "Ignore writes and continue"));
+    doTest();
   }
 
   public void testAssignedVarUpdatedAfterRead() {
-    doTest(false);
+    doTest();
   }
 
   public void testAssignmentAndReassignmentInLoop() {
-    doTestConflict("Variable 'replacement' is changed before last access to variable 'original'.");
+    UiInterceptors.register(new ChooserInterceptor(List.of("Highlight 1 conflicting write", "Ignore writes and continue"),
+                                                   "Ignore writes and continue"));
+    doTest();
   }
 
   public void testLoopReassignment() {
-    doTestConflict("Variable 'replacement' is changed before last access to variable 'original'.");
+    UiInterceptors.register(new ChooserInterceptor(List.of("Highlight 1 conflicting write", "Ignore writes and continue"),
+                                                   "Ignore writes and continue"));
+    doTest();
   }
 
   public void testOuterLoopReassignment() {
-    doTestConflict("Variable 'replacement' is changed before last access to variable 'original'.");
+    UiInterceptors.register(new ChooserInterceptor(List.of("Highlight 1 conflicting write", "Ignore writes and continue"),
+                                                   "Ignore writes and continue"));
+    doTest();
   }
 
   public void testUnusedReassignmentInLoop() {
-    doTest(false);
+    doTest();
+  }
+  
+  public void testCompilationError() {
+    doTest();
+  }
+
+  public void testCompilationErrorAtRef() {
+    doTest();
+  }
+
+  public void testCompilationErrorAssignment() {
+    doTest("Cannot perform refactoring.\n" +
+           "Code contains syntax errors. Cannot perform necessary analysis.");
   }
 
   public void testEolComment() {
-    doTest(false);
+    doTest();
   }
   
-  private void doTest(final boolean inlineDef, String conflictMessage) {
+  public void testCompositeAssignment() { doTest(); }
+  
+  public void testCompositeAssignmentCast() { doTest(); }
+
+  private void doTest(String conflictMessage) {
     try {
-      doTest(inlineDef);
+      doTest();
       fail("Conflict was not detected");
     }
-    catch (RuntimeException e) {
+    catch (RuntimeException | AssertionError e) {
       assertEquals(conflictMessage, e.getMessage());
     }
   }
 
   public void testVariableInsideResourceList() {
-    doTest(false, "Cannot perform refactoring.\n" +
-                  "Variable is used as resource reference");
+    doTest("Cannot perform refactoring.\n" +
+           "Variable is used as resource reference");
   }
 
-  private void doTest(final boolean inlineDef) {
-    doTest(inlineDef, LanguageLevel.JDK_1_7);
+  private void doTest() {
+    doTest(LanguageLevel.JDK_1_7);
   }
 
-  private void doTest(final boolean inlineDef, LanguageLevel languageLevel) {
+  private void doTest(LanguageLevel languageLevel) {
     String fileName = prepareTest(languageLevel);
-    if (!inlineDef) {
-      performInline(getProject(), getEditor());
-    }
-    else {
-      performDefInline(getProject(), getEditor());
-    }
-    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    performInline(getProject(), getEditor());
     checkResultByFile(fileName + ".after");
-  }
-
-  private void doTestConflict(@NotNull final String conflict, final String @NotNull ... rest) {
-    List<String> expected = new ArrayList<>(Arrays.asList(rest));
-    expected.add(conflict);
-
-    try {
-      doTest(false);
-      fail("Conflict weren't found");
-    } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      Collection<String> actual = e.getMessages();
-      assertSameElements(expected, actual);
-    }
   }
 
   private String prepareTest(LanguageLevel languageLevel) {
@@ -385,15 +399,7 @@ public class InlineLocalTest extends LightJavaCodeInsightTestCase {
 
   public static void performInline(Project project, Editor editor) {
     PsiLocalVariable element = getTarget(editor);
-    InlineLocalHandler.inlineVariable(project, editor, element, null);
-  }
-
-  public static void performDefInline(Project project, Editor editor) {
-    PsiReference reference = TargetElementUtil.findReference(editor);
-    assertTrue(reference instanceof PsiReferenceExpression);
-    final PsiElement local = reference.resolve();
-    assertTrue(local instanceof PsiLocalVariable);
-
-    InlineLocalHandler.inlineVariable(project, editor, (PsiLocalVariable)local, (PsiReferenceExpression)reference);
+    new InlineLocalHandler().inlineElement(project, editor, element);
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
   }
 }

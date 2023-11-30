@@ -1,18 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -28,50 +23,41 @@ import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
+public class FillPermitsListFix extends PsiBasedModCommandAction<PsiIdentifier> {
 
   public FillPermitsListFix(PsiIdentifier classIdentifier) {
     super(classIdentifier);
   }
 
   @Override
-  public @IntentionName @NotNull String getText() {
-    return JavaBundle.message("inspection.fill.permits.list.fix.name");
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
+    return Presentation.of(getFamilyName()).withFixAllOption(this);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiIdentifier startElement) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(startElement, PsiClass.class);
-    if (psiClass == null) return;
+    if (psiClass == null) return ModCommand.nop();
     PsiJavaFile psiJavaFile = tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
-    if (psiJavaFile == null) return;
+    if (psiJavaFile == null) return ModCommand.nop();
     Set<PsiClass> permittedClasses = ContainerUtil.map2Set(psiClass.getPermitsListTypes(), PsiClassType::resolve);
-    Collection<String> missingInheritors = getMissingInheritors(project, psiJavaFile, psiClass, permittedClasses);
-    if (missingInheritors == null) return;
-    SealedUtils.fillPermitsList(psiClass, missingInheritors);
+    return getMissingInheritors(psiJavaFile, psiClass, permittedClasses);
   }
 
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return getText();
+    return JavaBundle.message("inspection.fill.permits.list.fix.name");
   }
 
-  @Nullable
-  private static Collection<String> getMissingInheritors(@NotNull Project project,
-                                                         @NotNull PsiJavaFile psiJavaFile,
-                                                         @NotNull PsiClass psiClass,
-                                                         @NotNull Set<PsiClass> permittedClasses) {
+  private static @NotNull ModCommand getMissingInheritors(@NotNull PsiJavaFile psiJavaFile,
+                                                          @NotNull PsiClass psiClass,
+                                                          @NotNull Set<PsiClass> permittedClasses) {
     Collection<String> missingInheritors = new SmartList<>();
     PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(psiClass);
     for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass)) {
       String errorTitle = SealedUtils.checkInheritor(psiJavaFile, module, inheritor);
       if (errorTitle != null) {
-        reportError(project, JavaBundle.message(errorTitle));
-        return null;
+        return ModCommand.error(JavaBundle.message(errorTitle));
       }
       String qualifiedName = Objects.requireNonNull(inheritor.getQualifiedName());
       if (!ContainerUtil.exists(permittedClasses, cls -> cls.isEquivalentTo(inheritor))) missingInheritors.add(qualifiedName);
@@ -79,16 +65,8 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
 
     if (missingInheritors.isEmpty()) {
       String message = JavaBundle.message("inspection.fill.permits.list.no.missing.inheritors");
-      reportError(project, message);
-      return null;
+      return ModCommand.error(message);
     }
-    return missingInheritors;
-  }
-
-  private static void reportError(@NotNull Project project, @NotNull @NlsContexts.HintText String message) {
-    if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
-    Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor == null) return;
-    HintManager.getInstance().showErrorHint(editor, message);
+    return ModCommand.psiUpdate(psiClass, cls -> SealedUtils.fillPermitsList(cls, missingInheritors));
   }
 }

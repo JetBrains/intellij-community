@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.*;
 import com.intellij.build.events.impl.FailureResultImpl;
 import com.intellij.build.events.impl.SkippedResultImpl;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.execution.actions.ClearConsoleAction;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -950,7 +951,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       Disposer.register(this, myView);
       if (executionConsole != null) {
         String nodeConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
-        myView.addViewAndShowIfNeeded(executionConsole, nodeConsoleViewName, true);
+        myView.addViewAndShowIfNeeded(executionConsole, nodeConsoleViewName, true, false);
         myNodeConsoleViewName.set(nodeConsoleViewName);
       }
       ConsoleView emptyConsole = new ConsoleViewImpl(project, GlobalSearchScope.EMPTY_SCOPE, true, false);
@@ -1011,6 +1012,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
         }
       });
       textConsoleToolbarActionGroup.add(new ScrollEditorToTheEndAction(this));
+      textConsoleToolbarActionGroup.add(new ClearConsoleAction());
       return textConsoleToolbarActionGroup;
     }
 
@@ -1146,7 +1148,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       myPanel.setVisible(false);
     }
 
-    private static class PresentableBuildEventExecutionConsole implements ExecutionConsole {
+    private static final class PresentableBuildEventExecutionConsole implements ExecutionConsole {
       private final ExecutionConsole myExecutionConsole;
       private final @Nullable ActionGroup myActions;
 
@@ -1173,7 +1175,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private static class ProblemOccurrenceNavigatorSupport extends OccurenceNavigatorSupport {
+  private static final class ProblemOccurrenceNavigatorSupport extends OccurenceNavigatorSupport {
     ProblemOccurrenceNavigatorSupport(final Tree tree) {
       super(tree);
     }
@@ -1205,7 +1207,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private static class ScrollEditorToTheEndAction extends ToggleAction implements DumbAware {
+  private static final class ScrollEditorToTheEndAction extends ToggleAction implements DumbAware {
     private final @NotNull ConsoleViewHandler myConsoleViewHandler;
 
     ScrollEditorToTheEndAction(@NotNull ConsoleViewHandler handler) {
@@ -1242,7 +1244,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private static class MyNodeRenderer extends NodeRenderer {
+  private static final class MyNodeRenderer extends NodeRenderer {
     private String myDurationText;
     private Color myDurationColor;
     private int myDurationWidth;
@@ -1314,7 +1316,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private class MyTreeStructure extends AbstractTreeStructure {
+  private final class MyTreeStructure extends AbstractTreeStructure {
     @Override
     public @NotNull Object getRootElement() {
       return myRootNode;
@@ -1351,7 +1353,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
     }
   }
 
-  private class ExecutionNodeAutoExpandingListener implements TreeModelListener {
+  private final class ExecutionNodeAutoExpandingListener implements TreeModelListener {
     @Override
     public void treeNodesInserted(TreeModelEvent e) {
       maybeExpand(e.getTreePath());

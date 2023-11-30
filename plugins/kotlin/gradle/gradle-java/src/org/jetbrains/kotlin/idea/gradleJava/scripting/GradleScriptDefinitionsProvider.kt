@@ -8,8 +8,8 @@ import com.intellij.util.EnvironmentUtil
 import com.intellij.util.io.systemIndependentPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.core.script.*
+import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.gradle.scripting.GradleKotlinScriptDefinitionWrapper
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslSyncListener
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.scripting.definitions.KotlinScriptDefinitionAdapterF
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import org.jetbrains.kotlin.scripting.resolve.KotlinScriptDefinitionFromAnnotatedTemplate
-import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
@@ -103,11 +102,11 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
                 .use(DirectoryStream<Path>::toList)
                 .ifEmpty { error(KotlinIdeaGradleBundle.message("error.text.missing.jars.in.gradle.directory")) }
 
-            scriptingDebugLog { "gradle script templates classpath $templateClasspath" }
+            scriptingDebugLog { "Gradle definitions classpath: $templateClasspath" }
 
             val additionalClassPath = kotlinStdlibAndCompiler(gradleLibDir)
 
-            scriptingDebugLog { "gradle script templates additional classpath $templateClasspath" }
+            scriptingDebugLog { "Gradle definitions additional classpath: $templateClasspath" }
 
             return templateClasspath to additionalClassPath
         }
@@ -293,7 +292,7 @@ class GradleScriptDefinitionsContributor(private val project: Project) : ScriptD
     }
 
     private fun subscribeToGradleSettingChanges() {
-        val listener = object : GradleSettingsListenerAdapter() {
+        val listener = object : GradleSettingsListener {
             override fun onGradleVmOptionsChange(oldOptions: String?, newOptions: String?) {
                 forceReload()
             }

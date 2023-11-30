@@ -6,3 +6,5 @@ fun <R : Any> foo(x: R) {}
 fun <T> bar(x: T) {
     foo(<caret>x)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.HighPriorityMakeUpperBoundNonNullableFix

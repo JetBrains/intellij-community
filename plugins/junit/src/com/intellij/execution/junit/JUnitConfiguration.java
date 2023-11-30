@@ -221,7 +221,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   @Override
   public String suggestedName() {
     String repeat = switch (getRepeatMode()) {
-      case RepeatCount.UNLIMITED, RepeatCount.UNTIL_FAILURE -> " [*]";
+      case RepeatCount.UNLIMITED, RepeatCount.UNTIL_FAILURE, RepeatCount.UNTIL_SUCCESS -> " [*]";
       case RepeatCount.N -> " [" + getRepeatCount() + "]";
       default -> "";
     };
@@ -559,7 +559,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
 
     String tags = persistentData.getTags();
-    if (tags != null && tags.length() > 0) {
+    if (tags != null && !tags.isEmpty()) {
       Element tagsElement = new Element("tag");
       tagsElement.setAttribute("value", tags);
       element.addContent(tagsElement);
@@ -815,13 +815,13 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
         final String packageName = TEST_PACKAGE.equals(TEST_OBJECT)
                                    ? getPackageName()
                                    : StringUtil.getShortName(FileUtil.toSystemIndependentName(getDirName()), '/');
-        if (packageName.length() == 0) {
-          if (moduleName.length() > 0) {
+        if (packageName.isEmpty()) {
+          if (!moduleName.isEmpty()) {
             return JUnitBundle.message("default.junit.config.name.all.in.module", moduleName);
           }
           return getDefaultPackageName();
         }
-        if (moduleName.length() > 0) {
+        if (!moduleName.isEmpty()) {
           return JUnitBundle.message("default.junit.config.name.all.in.package.in.module", packageName, moduleName);
         }
         return packageName;
@@ -852,7 +852,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
                : JUnitBundle.message("default.junit.config.name.temp.suite");
       }
       if (TEST_TAGS.equals(TEST_OBJECT)) {
-        return TAGS != null && TAGS.length() > 0
+        return TAGS != null && !TAGS.isEmpty()
                ? JUnitBundle.message("default.junit.config.name.tags", TAGS)
                : JUnitBundle.message("default.junit.config.name.temp.suite");
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -311,7 +311,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       return true;
     }
 
-    ModalityState current = ApplicationManager.getApplication().getCurrentModalityState();
+    ModalityState current = ModalityState.current();
     ModalityState modalityState = getModalityState();
     return !current.dominates(modalityState);
   }
@@ -345,7 +345,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       each.setRejected();
     }
     else {
-      each.run();
+      each.runUpdate();
     }
   }
 
@@ -360,7 +360,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     if (myPassThrough) {
-      update.run();
+      update.runUpdate();
       finishActivity();
       return;
     }
@@ -396,10 +396,11 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
 
     for (Update eachInQueue : getAllScheduledUpdates()) {
-      if (eachInQueue.canEat(update)) {
+      if (eachInQueue.actuallyCanEat(update)) {
+        update.setRejected();
         return true;
       }
-      if (update.canEat(eachInQueue)) {
+      if (update.actuallyCanEat(eachInQueue)) {
         myScheduledUpdates.get(eachInQueue.getPriority()).remove(eachInQueue);
         eachInQueue.setRejected();
       }
@@ -432,6 +433,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
       myActive = false;
       finishActivity();
       clearWaiter();
+      cancelAllUpdates();
     }
     finally {
       if (ourQueues != null) {
@@ -457,7 +459,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   @NotNull
   public ModalityState getModalityState() {
     if (myModalityStateComponent == null) {
-      return ModalityState.NON_MODAL;
+      return ModalityState.nonModal();
     }
     return ModalityState.stateForComponent(myModalityStateComponent);
   }
@@ -479,7 +481,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return myFlushing;
   }
 
-  public void setTrackUiActivity(boolean trackUiActivity) {
+  protected void setTrackUiActivity(boolean trackUiActivity) {
     if (myTrackUiActivity && !trackUiActivity) {
       finishActivity();
     }

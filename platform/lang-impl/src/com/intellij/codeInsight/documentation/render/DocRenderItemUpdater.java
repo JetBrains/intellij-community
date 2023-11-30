@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.CustomFoldRegion;
@@ -77,7 +78,7 @@ public final class DocRenderItemUpdater implements Runnable {
     }
     while (!toProcess.isEmpty() && System.currentTimeMillis() < deadline);
     keepers.values().forEach(k -> k.restorePosition(false));
-    if (!myQueue.isEmpty()) SwingUtilities.invokeLater(this);
+    if (!myQueue.isEmpty()) SwingUtilities.invokeLater(ThreadContext.captureThreadContext(this));
   }
 
   private static int getVisibleOffset(Editor editor, Object2IntMap<Editor> memoMap) {

@@ -11,16 +11,19 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.SourcesetTy
 import java.nio.file.Path
 import java.util.*
 
+enum class SourcesetSourceType {
+    RESOURCES, KOTLIN, JAVA
+}
 
 sealed class SourcesetIR : BuildSystemIR {
     abstract val sourcesetType: SourcesetType
-    abstract val path: Path?
     abstract val original: Sourceset
+    abstract val sourcePaths: Map<SourcesetSourceType, Path>
 }
 
 data class SingleplatformSourcesetIR(
     override val sourcesetType: SourcesetType,
-    override val path: Path?,
+    override val sourcePaths: Map<SourcesetSourceType, Path>,
     override val irs: PersistentList<BuildSystemIR>,
     override val original: Sourceset
 ) : SourcesetIR(), IrsOwner {
@@ -30,7 +33,7 @@ data class SingleplatformSourcesetIR(
 
 data class MultiplatformSourcesetIR(
     override val sourcesetType: SourcesetType,
-    override val path: Path?,
+    override val sourcePaths: Map<SourcesetSourceType, Path>,
     val targetName: String,
     override val irs: PersistentList<BuildSystemIR>,
     override val original: Sourceset

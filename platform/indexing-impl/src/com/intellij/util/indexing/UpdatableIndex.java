@@ -26,13 +26,35 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
 
   /**
    * Goal of {@code getFileIndexMetaData()} is to allow
-   * saving important data to a cache to use later without read lock in analog of {@link UpdatableIndex#setIndexedStateForFile(int, IndexedFile)}
+   * saving important data to a cache to use later without read lock in analog of {@link UpdatableIndex#setIndexedStateForFile(int, IndexedFile, boolean)}
    */
   @Nullable FileIndexMetaData getFileIndexMetaData(@NotNull IndexedFile file);
 
-  void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileIndexMetaData data);
+  /**
+   * @deprecated use {@linkplain #setIndexedStateForFileOnFileIndexMetaData(int, Object, boolean)}
+   */
+  @Deprecated
+  default void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable FileIndexMetaData data) {
+    throw new IllegalStateException("Please override setIndexedStateForFileOnFileIndexMetaData(int, FileIndexMetaData, boolean)");
+  }
 
-  void setIndexedStateForFile(int fileId, @NotNull IndexedFile file);
+  default void setIndexedStateForFileOnFileIndexMetaData(int fileId,
+                                                         @Nullable FileIndexMetaData fileIndexMetaData,
+                                                         boolean isProvidedByInfrastructureExtension) {
+    setIndexedStateForFileOnFileIndexMetaData(fileId, fileIndexMetaData);
+  }
+
+  /**
+   * @deprecated use {@linkplain #setIndexedStateForFile(int, IndexedFile, boolean)}
+   */
+  @Deprecated
+  default void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
+    throw new IllegalStateException("Please override setIndexedStateForFile(int, IndexedFile, boolean)");
+  }
+
+  default void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
+    setIndexedStateForFile(fileId, file);
+  }
 
   void invalidateIndexedStateForFile(int fileId);
 
@@ -58,4 +80,6 @@ public interface UpdatableIndex<Key, Value, Input, FileIndexMetaData> extends In
 
   @TestOnly
   void cleanupForNextTest();
+
+  boolean isDirty();
 }

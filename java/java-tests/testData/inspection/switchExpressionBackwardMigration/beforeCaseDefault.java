@@ -5,7 +5,7 @@ class SwitchExpressionMigration {
   private void matchingSwitchError(Object obj) {
     int i = switch<caret> (obj) {
       case String s -> 0;
-      case default -> 1;
+      default -> 1;
     };
   }
 }

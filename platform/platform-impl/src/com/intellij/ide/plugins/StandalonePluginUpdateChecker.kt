@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeBundle
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.VersionComparatorUtil
 import java.io.IOException
@@ -36,7 +37,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.Icon
 
 sealed class PluginUpdateStatus {
-  val timestamp = System.currentTimeMillis()
+  val timestamp: Long = System.currentTimeMillis()
 
   object LatestVersionInstalled : PluginUpdateStatus()
 
@@ -77,10 +78,13 @@ sealed class PluginUpdateStatus {
   }
 }
 
+/**
+ * When [notificationGroup] is null, [StandalonePluginUpdateChecker] doesn't create any notifications about available plugin updates.
+ */
 open class StandalonePluginUpdateChecker(
   val pluginId: PluginId,
   private val updateTimestampProperty: String,
-  private val notificationGroup: NotificationGroup,
+  private val notificationGroup: NotificationGroup?,
   private val notificationIcon: Icon?
 ): Disposable {
 
@@ -119,7 +123,7 @@ open class StandalonePluginUpdateChecker(
   }
 
   protected fun queueUpdateCheck(callback: (PluginUpdateStatus) -> Boolean) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (checkQueued.compareAndSet(/* expectedValue = */ false, /* newValue = */ true)) {
       alarm.addRequest(
         {
@@ -247,6 +251,8 @@ open class StandalonePluginUpdateChecker(
   }
 
   private fun notifyPluginUpdateAvailable(update: PluginUpdateStatus.Update) {
+    if (notificationGroup == null) return
+
     val pluginName = findPluginDescriptor().name
     notificationGroup
       .createNotification(
@@ -317,6 +323,8 @@ open class StandalonePluginUpdateChecker(
   }
 
   private fun notifyNotInstalled(message: String?) {
+    if (notificationGroup == null) return
+
     val content = when (message) {
       null -> IdeBundle.message("plugin.updater.not.installed")
       else -> IdeBundle.message("plugin.updater.not.installed.misc", message)
@@ -332,12 +340,12 @@ open class StandalonePluginUpdateChecker(
       .notify(null)
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   companion object {
     private const val INITIAL_UPDATE_DELAY = 2000L
     @JvmStatic
-    protected val CACHED_REQUEST_DELAY = TimeUnit.DAYS.toMillis(1)
+    protected val CACHED_REQUEST_DELAY: Long = TimeUnit.DAYS.toMillis(1)
     private val LOG = Logger.getInstance(StandalonePluginUpdateChecker::class.java)
   }
 }

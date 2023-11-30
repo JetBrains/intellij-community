@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.ide.plugins
 
-import com.intellij.util.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
+import kotlinx.collections.immutable.toPersistentList
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -36,7 +36,7 @@ open class ModuleGraphBase protected constructor(
 
   override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependents(descriptor).iterator()
 
-  fun builder() = DFSTBuilder(this, null, true)
+  fun builder(): DFSTBuilder<IdeaPluginDescriptorImpl> = DFSTBuilder(this, null, true)
 
   internal fun sorted(builder: DFSTBuilder<IdeaPluginDescriptorImpl> = builder()): SortedModuleGraph {
     return SortedModuleGraph(
@@ -72,7 +72,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     val implicitDep = if (hasAllModules) getImplicitDependency(module, moduleMap) else null
     if (implicitDep != null) {
       if (module === implicitDep) {
-        PluginManagerCore.getLogger().error("Plugin $module depends on self")
+        PluginManagerCore.logger.error("Plugin $module depends on self")
       }
       else {
         result.add(implicitDep)
@@ -90,7 +90,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     }
 
     if (!result.isEmpty()) {
-      directDependencies.put(module, Java11Shim.INSTANCE.copyOfCollection(result))
+      directDependencies.put(module, result.toPersistentList())
       result.clear()
     }
   }
@@ -115,7 +115,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
 
 private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
   // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
-  // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
+  // so, ensure that core plugin is always first (otherwise not possible to register actions - a parent group not defined)
   // don't use sortWith here - avoid loading kotlin stdlib
   return Comparator { o1, o2 ->
     when {
@@ -193,7 +193,7 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
       // can be such requirements removed or not
       if (rootDescriptor === dep) {
         if (rootDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-          PluginManagerCore.getLogger().error("Plugin $rootDescriptor depends on self (${dependency})")
+          PluginManagerCore.logger.error("Plugin $rootDescriptor depends on self (${dependency})")
         }
       }
       else {

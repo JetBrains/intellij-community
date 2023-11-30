@@ -1,12 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.projectActions
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.IdeBundle
-import com.intellij.ide.RecentProjectIconHelper
+import com.intellij.ide.*
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
-import com.intellij.ide.RecentProjectsManager
-import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
@@ -44,8 +41,7 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val reopenProjectAction = getSelectedItem(event) as RecentProjectItem
-    val projectPath = reopenProjectAction.projectPath
+    val projectPath = getProjectPath(event)!!
     val basePath = RecentProjectIconHelper.getDotIdeaPath(projectPath) ?: return
 
     val ui = ProjectIconUI(projectPath)
@@ -77,10 +73,18 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
         VfsUtil.markDirtyAndRefresh(false, false, false, iconSvg)
         FileUtil.delete(iconPng)
         RecentProjectIconHelper.refreshProjectIcon(projectPath)
+        event.project?.let {
+          val customizer = ProjectWindowCustomizerService.getInstance()
+          customizer.dropProjectIconCache(it)
+          customizer.setIconMainColorAsProjectColor(it)
+        }
       }
       if (ui.iconRemoved) {
         FileUtil.delete(ui.pathToIcon())
         RecentProjectIconHelper.refreshProjectIcon(projectPath)
+        event.project?.let {
+          ProjectWindowCustomizerService.getInstance().dropProjectIconCache(it)
+        }
       }
       // Actually, we can try to drop the needed icon,
       // but it is a very rare action and this whole cache drop will not have any performance impact.
@@ -89,9 +93,16 @@ internal class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase()
     }
   }
 
+  fun getProjectPath(event: AnActionEvent): String? {
+    val selectedItem = getSelectedItem(event)
+    if (selectedItem is RecentProjectItem) {
+      return selectedItem.projectPath
+    }
+    return event.project?.let { ProjectWindowCustomizerService.projectPath(it) }
+  }
+
   override fun update(event: AnActionEvent) {
-    val item = getSelectedItem(event)
-    event.presentation.isEnabled = item is RecentProjectItem
+    event.presentation.isEnabled = getProjectPath(event) != null
   }
 }
 
@@ -141,7 +152,7 @@ private class ProjectIconUI(private val projectPath: @SystemIndependent String) 
       .apply { targetComponent = iconLabel }
   }
 
-  fun pathToIcon() = Path("${projectPath}/.idea/icon.svg")
+  fun pathToIcon() = RecentProjectIconHelper.getDotIdeaPath(projectPath)?.resolve("icon.svg") ?: Path("${projectPath}/.idea/icon.svg")
 }
 
 private class IconPreviewPanel(component: JComponent) : JPanel(BorderLayout()) {

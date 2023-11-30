@@ -5,8 +5,12 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 public final class EditorUIUtil {
@@ -30,5 +34,24 @@ public final class EditorUIUtil {
     if (editor instanceof EditorImpl) {
       ((EditorImpl)editor).hideCursor();
     }
+  }
+
+  public static Icon scaleIcon(Icon icon, EditorImpl editor) {
+    float scale = getEditorScaleFactor(editor);
+    return scale == 1 ? icon : IconUtil.scale(icon, editor.getComponent(), scale);
+  }
+
+  public static int scaleWidth(int width, EditorImpl editor) {
+    return (int)(getEditorScaleFactor(editor) * width);
+  }
+
+  private static float getEditorScaleFactor(@NotNull EditorImpl editor) {
+    if (Registry.is("editor.scale.gutter.icons")) {
+      float scale = editor.getScale();
+      if (Math.abs(1f - scale) > 0.10f) {
+        return scale;
+      }
+    }
+    return 1f;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.impl.softwrap.*;
 import com.intellij.openapi.editor.impl.softwrap.mapping.CachingSoftWrapDataMapper;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
@@ -25,6 +26,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +49,7 @@ import java.util.List;
  * <p/>
  * Not thread-safe.
  */
-public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
+public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   implements SoftWrapModelEx, PrioritizedDocumentListener, FoldingListener,
              PropertyChangeListener, Dumpable, Disposable
 {
@@ -71,8 +73,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   private       SoftWrapPainter                    myPainter;
   private final SoftWrapApplianceManager           myApplianceManager;
 
-  @NotNull
-  private final EditorImpl myEditor;
+  private final @NotNull EditorImpl myEditor;
 
   private boolean myUseSoftWraps;
   private int myTabWidth = -1;
@@ -136,7 +137,16 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   private void forceSoftWraps() {
-    ((SettingsImpl)myEditor.getSettings()).setUseSoftWrapsQuiet();
+    EditorSettings editorSettings = myEditor.getSettings();
+
+    if (editorSettings instanceof SettingsImpl) {
+      ((SettingsImpl)editorSettings).setUseSoftWrapsQuiet();
+    }
+    else {
+      LOG.error(new IllegalStateException("Unexpected implementation class of editor settings: " +
+                                          "class=" + editorSettings.getClass() + "editor=" + myEditor));
+    }
+
     myEditor.putUserData(EditorImpl.FORCED_SOFT_WRAPS, Boolean.TRUE);
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     Project project = myEditor.getProject();
@@ -198,7 +208,9 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
       myDeferredFoldRegions.clear();
       myStorage.removeAll();
       myEditor.myView.reinitSettings();
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      if (AsyncEditorLoader.isEditorLoaded(myEditor)) {
+        myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      }
     }
   }
 
@@ -214,13 +226,12 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   @Override
   public boolean isSoftWrappingEnabled() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return myUseSoftWraps && !myEditor.isPurePaintingMode();
   }
 
   @Override
-  @Nullable
-  public SoftWrap getSoftWrap(int offset) {
+  public @Nullable SoftWrap getSoftWrap(int offset) {
     if (!isSoftWrappingEnabled()) {
       return null;
     }
@@ -235,9 +246,8 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     return myStorage.getSoftWrapIndex(offset);
   }
 
-  @NotNull
   @Override
-  public List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
+  public @NotNull List<? extends SoftWrap> getSoftWrapsForRange(int start, int end) {
     if (!isSoftWrappingEnabled() || end < start) {
       return Collections.emptyList();
     }
@@ -263,8 +273,7 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
   }
 
   @Override
-  @NotNull
-  public List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
+  public @NotNull List<? extends SoftWrap> getSoftWrapsForLine(int documentLine) {
     if (!isSoftWrappingEnabled() || documentLine < 0) {
       return Collections.emptyList();
     }
@@ -606,10 +615,8 @@ public class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myApplianceManager.setSoftWrapPainter(painter);
   }
 
-  @NotNull
-  @NonNls
   @Override
-  public String dumpState() {
+  public @NotNull @NonNls String dumpState() {
     return String.format("""
 
                            use soft wraps: %b, tab width: %d, additional columns: %b, update in progress: %b, bulk update in progress: %b, dirty: %b, deferred regions: %s

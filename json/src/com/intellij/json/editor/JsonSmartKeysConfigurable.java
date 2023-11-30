@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor;
 
 import com.intellij.json.JsonBundle;
@@ -7,7 +7,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class JsonSmartKeysConfigurable extends ConfigurableBuilder implements SearchableConfigurable {
+public final class JsonSmartKeysConfigurable extends ConfigurableBuilder implements SearchableConfigurable {
   public JsonSmartKeysConfigurable() {
     JsonEditorOptions settings = JsonEditorOptions.getInstance();
     if (settings == null) return;
@@ -37,15 +37,13 @@ public class JsonSmartKeysConfigurable extends ConfigurableBuilder implements Se
              v -> settings.COMMA_MOVE_OUTSIDE_QUOTES = v);
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
   @Override
-  public String getDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getDisplayName() {
     return JsonBundle.message("configurable.JsonSmartKeysConfigurable.display.name");
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return "editor.preferences.jsonOptions";
   }
 }

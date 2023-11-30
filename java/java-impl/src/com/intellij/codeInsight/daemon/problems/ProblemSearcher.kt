@@ -20,9 +20,7 @@ class Problem(val reportedElement: PsiElement, val context: PsiElement) {
 
     other as Problem
 
-    if (context != other.context) return false
-
-    return true
+    return context == other.context
   }
 
   override fun hashCode(): Int {
@@ -79,7 +77,6 @@ internal class ProblemSearcher(private val file: PsiFile, private val memberType
   override fun visitForeachStatement(statement: PsiForeachStatement) {
     visitStatement(statement)
     val element = statement.iterationParameter
-    if (element == null) return;
     findProblem(element)
   }
 

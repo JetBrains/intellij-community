@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.committed.CommittedChangesBrowserUseCase
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.ui.StatusText;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +27,7 @@ public class LoadingCommittedChangeListPanel implements Disposable {
   public LoadingCommittedChangeListPanel(@NotNull Project project) {
     myChangesPanel = new CommittedChangeListPanel(project);
 
-    StatusText emptyText = myChangesPanel.getChangesBrowser().getViewer().getEmptyText();
-    myLoadingPanel = new LoadingChangesPanel(myChangesPanel, emptyText, this);
+    myLoadingPanel = new LoadingChangesPanel(myChangesPanel, this);
   }
 
   @Override

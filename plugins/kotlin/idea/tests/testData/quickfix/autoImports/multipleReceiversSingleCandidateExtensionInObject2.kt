@@ -21,3 +21,6 @@ object CExtObject {
 fun usage(a: A, b: B, c: C) {
     a.run { b.run { c.run { b.<caret>extension() } } }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

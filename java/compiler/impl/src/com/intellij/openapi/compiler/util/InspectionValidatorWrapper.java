@@ -5,13 +5,13 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.xml.XMLLanguage;
@@ -328,32 +328,31 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
   private Map<ProblemDescriptor, HighlightDisplayLevel> runXmlFileSchemaValidation(@NotNull XmlFile xmlFile) {
-    AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSession(xmlFile), false);
-
-    List<ExternalAnnotator<?,?>> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
-    for (ExternalAnnotator<?, ?> annotator : annotators) {
-      processAnnotator(xmlFile, holder, annotator);
-    }
-    holder.assertAllAnnotationsCreated();
-
-    if (!holder.hasAnnotations()) return Collections.emptyMap();
-
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<>();
-    for (Annotation annotation : holder) {
-      HighlightInfo info = HighlightInfo.fromAnnotation(annotation);
-      if (info.getSeverity() == HighlightSeverity.INFORMATION) continue;
+    return AnnotationSessionImpl.computeWithSession(xmlFile, false, holder -> {
+      List<ExternalAnnotator<?,?>> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
+      for (ExternalAnnotator<?, ?> annotator : annotators) {
+        processAnnotator(xmlFile, holder, annotator);
+        for (Annotation annotation : holder) {
+          HighlightInfo info = HighlightInfo.fromAnnotation(annotator, annotation);
+          if (info.getSeverity() == HighlightSeverity.INFORMATION) continue;
 
-      PsiElement startElement = xmlFile.findElementAt(info.startOffset);
-      PsiElement endElement = info.startOffset == info.endOffset ? startElement : xmlFile.findElementAt(info.endOffset - 1);
-      if (startElement == null || endElement == null) continue;
+          PsiElement startElement = xmlFile.findElementAt(info.startOffset);
+          PsiElement endElement = info.startOffset == info.endOffset ? startElement : xmlFile.findElementAt(info.endOffset - 1);
+          if (startElement == null || endElement == null) continue;
 
-      ProblemDescriptor descriptor =
-        myInspectionManager.createProblemDescriptor(startElement, endElement, info.getDescription(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                    false);
-      HighlightDisplayLevel level = info.getSeverity() == HighlightSeverity.ERROR? HighlightDisplayLevel.ERROR: HighlightDisplayLevel.WARNING;
-      problemsMap.put(descriptor, level);
-    }
-    return problemsMap;
+          ProblemDescriptor descriptor =
+            myInspectionManager.createProblemDescriptor(startElement, endElement, info.getDescription(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                        false);
+          HighlightDisplayLevel level = info.getSeverity() == HighlightSeverity.ERROR? HighlightDisplayLevel.ERROR: HighlightDisplayLevel.WARNING;
+          problemsMap.put(descriptor, level);
+        }
+      }
+      holder.assertAllAnnotationsCreated();
+
+      if (!holder.hasAnnotations()) return Collections.emptyMap();
+      return problemsMap;
+    });
   }
 
   private static <X, Y> void processAnnotator(@NotNull XmlFile xmlFile, AnnotationHolderImpl holder, ExternalAnnotator<X, Y> annotator) {

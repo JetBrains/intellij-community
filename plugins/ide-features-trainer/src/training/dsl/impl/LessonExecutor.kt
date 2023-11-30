@@ -2,7 +2,6 @@
 package training.dsl.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.impl.ActionUpdateEdtExecutor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -13,9 +12,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.intellij.lang.annotations.Language
 import training.dsl.*
 import training.learn.ActionsRecorder
@@ -30,6 +29,7 @@ import training.util.getLearnToolWindowForProject
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.max
 
 internal class LessonExecutor(val lesson: KLesson,
@@ -94,7 +94,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   internal val visualIndexNumber: Int get() = taskActions[currentTaskIndex].taskVisualIndex ?: 0
 
-  private var continueHighlighting: Ref<Boolean> = Ref(true)
+  private var continueHighlighting = AtomicBoolean(true)
 
   internal val internalProblems: MutableSet<LearningInternalProblems> = mutableSetOf()
 
@@ -134,7 +134,7 @@ internal class LessonExecutor(val lesson: KLesson,
   }
 
   fun task(taskContent: TaskContext.() -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
 
     val taskProperties = LessonExecutorUtil.taskProperties(taskContent, project)
     addTaskAction(taskProperties, taskContent) {
@@ -149,7 +149,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   override fun dispose() {
     if (hasBeenStopped) return
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val lessonPassed = currentTaskIndex == taskActions.size
     val visualIndex = if(lessonPassed) currentVisualIndex else (taskActions[currentTaskIndex].taskVisualIndex ?: 0)
     lesson.onStop(project, lessonPassed, currentTaskIndex, visualIndex, internalProblems)
@@ -194,7 +194,9 @@ internal class LessonExecutor(val lesson: KLesson,
   inline fun taskInvokeLater(modalityState: ModalityState? = null, crossinline runnable: () -> Unit) {
     invokeLater(modalityState) {
       try {
-        runnable()
+        if (!hasBeenStopped) {
+          runnable()
+        }
       }
       catch (e: Throwable) {
         thisLogger().error(getLessonInfoString(), e)
@@ -208,7 +210,7 @@ internal class LessonExecutor(val lesson: KLesson,
     taskInvokeLater(ModalityState.any()) {
       disposeRecorders()
       continueHighlighting.set(false)
-      continueHighlighting = Ref(true)
+      continueHighlighting = AtomicBoolean(true)
       currentTaskIndex = taskIndex
       processNextTask2()
     }
@@ -216,7 +218,7 @@ internal class LessonExecutor(val lesson: KLesson,
 
   private fun processNextTask2() {
     LessonManager.instance.clearRestoreMessage()
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (currentTaskIndex == taskActions.size) {
       LessonManager.instance.passLesson(lesson)
       return
@@ -251,7 +253,7 @@ internal class LessonExecutor(val lesson: KLesson,
   }
 
   private fun processTask(taskContent: TaskContext.() -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     val recorder = ActionsRecorder(project, selectedEditor?.document, this)
     currentRecorder = recorder
     val taskCallbackData = TaskData()
@@ -286,7 +288,7 @@ internal class LessonExecutor(val lesson: KLesson,
     val condition = continueHighlighting
     ApplicationManager.getApplication().executeOnPooledThread {
       var ui = component
-      while (ActionUpdateEdtExecutor.computeOnEdt { condition.get() } == true) {
+      while (condition.get()) {
         if (ui == null || !ui.isShowing || ui.bounds.isEmpty) {
           ui = highlightingFunction()
         }
@@ -394,7 +396,9 @@ internal class LessonExecutor(val lesson: KLesson,
     taskContext.steps.forEach { step ->
       step.thenAccept {
         try {
-          stepHasBeenCompleted(taskContext, taskActions[currentTaskIndex])
+          if (!hasBeenStopped) {
+            stepHasBeenCompleted(taskContext, taskActions[currentTaskIndex])
+          }
         }
         catch (e: Throwable) {
           thisLogger().error("Step exception: ", e)
@@ -404,7 +408,7 @@ internal class LessonExecutor(val lesson: KLesson,
   }
 
   private fun stepHasBeenCompleted(taskContext: TaskContextImpl, taskInfo: TaskInfo) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     // do not process the next task if the current task is not fully completed
     // or lesson has been stopped during task completion (dialogs in Recent Files and Restore removed code lessons)
     // or the next task already has been processed

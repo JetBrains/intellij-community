@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.scratch.actions
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.task.ProjectTaskManager
+import com.intellij.task.impl.ProjectTaskManagerImpl
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
@@ -64,6 +65,7 @@ class RunScratchAction : ScratchAction(
             log.printDebugMessage("Run Action: module = ${module?.name}")
 
             if (!isAutoRun && module != null && isMakeBeforeRun) {
+                ProjectTaskManagerImpl.putBuildOriginator(project, this.javaClass)
                 ProjectTaskManager.getInstance(project).build(module).onSuccess { executionResult ->
                     if (executionResult.isAborted || executionResult.hasErrors()) {
                         executor.errorOccurs(KotlinJvmBundle.message("there.were.compilation.errors.in.module.0", module.name))

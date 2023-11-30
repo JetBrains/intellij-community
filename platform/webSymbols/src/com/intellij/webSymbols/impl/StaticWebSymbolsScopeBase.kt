@@ -32,47 +32,51 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
   final override fun getModificationCount(): Long =
     modCount
 
-  final override fun getSymbols(namespace: SymbolNamespace,
-                                kind: String,
-                                name: String?,
-                                params: WebSymbolsNameMatchQueryParams,
-                                scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+  final override fun getMatchingSymbols(qualifiedName: WebSymbolQualifiedName,
+                                        params: WebSymbolsNameMatchQueryParams,
+                                        scope: Stack<WebSymbolsScope>): List<WebSymbol> =
     getMaps(params).flatMap {
-      it.getSymbols(namespace, kind, name, params, Stack(scope))
+      it.getMatchingSymbols(qualifiedName, params, Stack(scope))
     }.toList()
 
+  final override fun getSymbols(qualifiedKind: WebSymbolQualifiedKind,
+                                params: WebSymbolsListSymbolsQueryParams,
+                                scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+    getMaps(params).flatMap {
+      it.getSymbols(qualifiedKind, params)
+    }.toList()
 
-  final override fun getCodeCompletions(namespace: SymbolNamespace,
-                                        kind: String,
-                                        name: String?,
+  final override fun getCodeCompletions(qualifiedName: WebSymbolQualifiedName,
                                         params: WebSymbolsCodeCompletionQueryParams,
                                         scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getMaps(params).flatMap {
-      it.getCodeCompletions(namespace, kind, name, params, Stack(scope))
+      it.getCodeCompletions(qualifiedName, params, Stack(scope))
     }.toList()
 
-  internal fun getSymbols(contribution: Contribution,
-                          defaultNamespace: SymbolNamespace,
-                          origin: Origin,
-                          namespace: SymbolNamespace?,
-                          kind: String,
-                          name: String?,
-                          params: WebSymbolsNameMatchQueryParams,
-                          scopeStack: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
+  internal fun getMatchingSymbols(contribution: Contribution,
+                                  origin: Origin,
+                                  qualifiedName: WebSymbolQualifiedName,
+                                  params: WebSymbolsNameMatchQueryParams,
+                                  scopeStack: Stack<WebSymbolsScope>): List<WebSymbol> =
     getMap(params.queryExecutor, contribution, origin)
-      .getSymbols(namespace ?: defaultNamespace, kind, name, params, scopeStack)
+      .getMatchingSymbols(qualifiedName, params, scopeStack)
+      .toList()
+
+  internal fun getSymbols(contribution: Contribution,
+                          origin: Origin,
+                          qualifiedKind: WebSymbolQualifiedKind,
+                          params: WebSymbolsListSymbolsQueryParams): List<WebSymbolsScope> =
+    getMap(params.queryExecutor, contribution, origin)
+      .getSymbols(qualifiedKind, params)
       .toList()
 
   internal fun getCodeCompletions(contribution: Contribution,
-                                  defaultNamespace: SymbolNamespace,
                                   origin: Origin,
-                                  namespace: SymbolNamespace?,
-                                  kind: String,
-                                  name: String?,
+                                  qualifiedName: WebSymbolQualifiedName,
                                   params: WebSymbolsCodeCompletionQueryParams,
                                   scopeStack: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     getMap(params.queryExecutor, contribution, origin)
-      .getCodeCompletions(namespace ?: defaultNamespace, kind, name, params, scopeStack)
+      .getCodeCompletions(qualifiedName, params, scopeStack)
       .toList()
 
 
@@ -167,7 +171,7 @@ abstract class StaticWebSymbolsScopeBase<Root : Any, Contribution : Any, Origin 
     : SearchMap<StaticSymbolContributionAdapter>(namesProvider) {
 
     fun add(item: StaticSymbolContributionAdapter) {
-      add(item.namespace, item.kind, item.name, item.pattern, item)
+      add(WebSymbolQualifiedName(item.namespace, item.kind, item.name), item.pattern, item)
     }
 
     override fun Sequence<StaticSymbolContributionAdapter>.mapAndFilter(params: WebSymbolsQueryParams): Sequence<WebSymbol> {

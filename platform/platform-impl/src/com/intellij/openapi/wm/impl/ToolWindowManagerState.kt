@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -13,6 +12,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
@@ -39,24 +39,24 @@ private const val MORE_BUTTON_TAG = "moreButton"
 class ToolWindowManagerStateImpl : ToolWindowManagerState {
   private val isNewUi = ExperimentalUI.isNewUI()
 
-  override var layout = DesktopLayout()
-  override var noStateLoaded = false
+  override var layout: DesktopLayout = DesktopLayout()
+  override var noStateLoaded: Boolean = false
     private set
   override var oldLayout: DesktopLayout? = null
     private set
   override var layoutToRestoreLater: DesktopLayout? = null
-  override val recentToolWindows = LinkedList<String>()
-  override val scheduledLayout = AtomicProperty<DesktopLayout?>(null)
+  override val recentToolWindows: LinkedList<String> = LinkedList<String>()
+  override val scheduledLayout: AtomicProperty<DesktopLayout?> = AtomicProperty(null)
 
   override val isEditorComponentActive: Boolean
     get() {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       return ComponentUtil.getParentOfType(EditorsSplitters::class.java, IdeFocusManager.getGlobalInstance().focusOwner) != null
     }
 
   override var frame: ProjectFrameHelper? = null
 
-  override var moreButton = ToolWindowAnchor.LEFT
+  override var moreButton: ToolWindowAnchor = ToolWindowAnchor.LEFT
 
   override fun getState(): Element? {
     if (frame == null) {
@@ -82,7 +82,7 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
       }
       element.addContent(recentState)
     }
-    if (moreButton !== ToolWindowAnchor.LEFT) {
+    if (moreButton != ToolWindowAnchor.LEFT) {
       element.addContent(Element(MORE_BUTTON_TAG).setAttribute("side", moreButton.toString()))
     }
     return element

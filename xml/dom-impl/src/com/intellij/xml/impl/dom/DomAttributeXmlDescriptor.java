@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.dom;
 
 import com.intellij.openapi.project.Project;
@@ -48,8 +48,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
   }
 
   @Override
-  @Nullable
-  public String getDefaultValue() {
+  public @Nullable String getDefaultValue() {
     return null;
   }//todo: refactor to hierarchy of value descriptor?
 
@@ -64,20 +63,17 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
   }
 
   @Override
-  @Nullable
-  public String validateValue(final XmlElement context, final String value) {
+  public @Nullable String validateValue(final XmlElement context, final String value) {
     return null;
   }
 
   @Override
-  @Nullable
-  public PsiElement getDeclaration() {
+  public @Nullable PsiElement getDeclaration() {
     return myDescription.getDeclaration(myProject);
   }
 
   @Override
-  @NonNls
-  public String getName(final PsiElement context) {
+  public @NonNls String getName(final PsiElement context) {
     return getQualifiedAttributeName(context, myDescription.getXmlName());
   }
 
@@ -100,8 +96,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
   }
 
   @Override
-  @NonNls
-  public String getName() {
+  public @NonNls String getName() {
     return getLocalName();
   }
 
@@ -110,8 +105,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
   }
 
   @Override
-  @Nullable
-  public String getNamespace(@NotNull XmlTag context) {
+  public @Nullable String getNamespace(@NotNull XmlTag context) {
     final DomInvocationHandler handler = DomManagerImpl.getDomManager(myProject).getDomHandler(context);
 
     if (handler == null) {

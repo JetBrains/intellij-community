@@ -21,13 +21,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath;
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.statistics.MavenImportCollector;
@@ -37,11 +37,12 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.IOException;
 import java.util.*;
 
-class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
+@ApiStatus.Internal
+@ApiStatus.Obsolete
+public class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectLegacyImporter.class);
   private final Map<VirtualFile, Module> myFileToModuleMapping;
   private volatile Set<MavenProject> myAllProjects;
-  private final boolean myImportModuleGroupsRequired;
 
   private Module myPreviewModule;
 
@@ -54,13 +55,11 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
   MavenProjectLegacyImporter(@NotNull Project p,
                              @NotNull MavenProjectsTree projectsTree,
                              @NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
-                             boolean importModuleGroupsRequired,
                              @NotNull IdeModifiableModelsProvider modelsProvider,
                              @NotNull MavenImportingSettings importingSettings,
                              @Nullable Module previewModule) {
     super(p, projectsTree, importingSettings, projectsToImportWithChanges, modelsProvider);
     myFileToModuleMapping = getFileToModuleMapping(p, previewModule, modelsProvider);
-    myImportModuleGroupsRequired = importModuleGroupsRequired;
     myPreviewModule = previewModule;
   }
 
@@ -92,13 +91,10 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
       hasChanges = true;
       StructuredIdeActivity createModulesPhase = MavenImportCollector.LEGACY_CREATE_MODULES_PHASE.startedWithParent(myProject, activity);
       extensionImporters.addAll(importModules());
-      scheduleRefreshResolvedArtifacts(postTasks, myProjectsToImportWithChanges.keySet());
+      if (!MavenUtil.isMavenUnitTestModeEnabled()) {
+        scheduleRefreshResolvedArtifacts(postTasks, myProjectsToImportWithChanges.keySet());
+      }
       createModulesPhase.finished();
-    }
-
-    if (projectsHaveChanges || myImportModuleGroupsRequired) {
-      hasChanges = true;
-      configModuleGroups();
     }
 
     if (myProject.isDisposed()) return null;
@@ -277,16 +273,34 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
     }
   }
 
+  @TestOnly
+  // this is legacy code anyway
+  public static void setAnswerToDeleteObsoleteModulesQuestion(boolean answer) {
+    answerToDeleteObsoleteModulesQuestion = answer;
+  }
+  @TestOnly
+  public static Boolean getAnswerToDeleteObsoleteModulesQuestion() {
+    return answerToDeleteObsoleteModulesQuestion;
+  }
+  private static Boolean answerToDeleteObsoleteModulesQuestion = null;
+
   private boolean isDeleteObsoleteModules(@NotNull List<Module> obsoleteModules) {
     if (obsoleteModules.isEmpty()) {
       return false;
+    }
+    String message = MavenProjectBundle.message("maven.import.message.delete.obsolete", formatModules(obsoleteModules));
+    MavenLog.LOG.warn("Asking about deleting obsolete modules. " + message);
+    if (null != answerToDeleteObsoleteModulesQuestion) {
+      var delete = answerToDeleteObsoleteModulesQuestion;
+      MavenLog.LOG.warn("This should only happen in tests. Delete obsolete modules: " + delete);
+      answerToDeleteObsoleteModulesQuestion = null;
+      return delete;
     }
     if (!ApplicationManager.getApplication().isHeadlessEnvironment() || MavenUtil.isMavenUnitTestModeEnabled()) {
       final int[] result = new int[1];
       MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(),
                               () -> result[0] = Messages.showYesNoDialog(myProject,
-                                                                         MavenProjectBundle.message("maven.import.message.delete.obsolete",
-                                                                                                    formatModules(obsoleteModules)),
+                                                                         message,
                                                                          MavenProjectBundle.message("maven.project.import.title"),
                                                                          Messages.getQuestionIcon()));
 
@@ -340,11 +354,19 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
       }
     }
 
-    MavenModuleNameMapper.map(myAllProjects,
-                              myMavenProjectToModule,
-                              myMavenProjectToModuleName,
-                              myMavenProjectToModulePath,
-                              myImportingSettings.getDedicatedModuleDir());
+    Map<VirtualFile, String> existingMavenProjectToModuleName = new HashMap<>();
+    for (var projectToModule : myMavenProjectToModule.entrySet()) {
+      var module = projectToModule.getValue();
+      if (null != module) {
+        existingMavenProjectToModuleName.put(projectToModule.getKey().getFile(), module.getName());
+      }
+    }
+    myMavenProjectToModuleName.putAll(MavenModuleNameMapper.mapModuleNames(myAllProjects, existingMavenProjectToModuleName));
+    MavenModulePathMapper.resolveModulePaths(myAllProjects,
+                                             myMavenProjectToModule,
+                                             myMavenProjectToModuleName,
+                                             myMavenProjectToModulePath,
+                                             myImportingSettings.getDedicatedModuleDir());
   }
 
   private List<MavenLegacyModuleImporter.ExtensionImporter> importModules() {
@@ -457,55 +479,6 @@ class MavenProjectLegacyImporter extends MavenProjectImporterLegacyBase {
       changes,
       myMavenProjectToModuleName,
       false);
-  }
-
-  private void configModuleGroups() {
-    if (!myImportingSettings.isCreateModuleGroups()) return;
-
-    final Stack<String> groups = new Stack<>();
-    final boolean createTopLevelGroup = myProjectsTree.getRootProjects().size() > 1;
-
-    myProjectsTree.visit(new MavenProjectsTree.SimpleVisitor() {
-      int depth = 0;
-
-      @Override
-      public boolean shouldVisit(MavenProject project) {
-        // in case some project has been added while we were importing
-        return myMavenProjectToModuleName.containsKey(project);
-      }
-
-      @Override
-      public void visit(MavenProject each) {
-        depth++;
-
-        String name = myMavenProjectToModuleName.get(each);
-
-        if (shouldCreateGroup(each)) {
-          groups.push(MavenProjectBundle.message("module.group.name", name));
-        }
-
-        if (!shouldCreateModuleFor(each)) {
-          return;
-        }
-
-        Module module = myModuleModel.findModuleByName(name);
-        if (module == null) return;
-        myModuleModel.setModuleGroupPath(module, groups.isEmpty() ? null : ArrayUtilRt.toStringArray(groups));
-      }
-
-      @Override
-      public void leave(MavenProject each) {
-        if (shouldCreateGroup(each)) {
-          groups.pop();
-        }
-        depth--;
-      }
-
-      private boolean shouldCreateGroup(MavenProject project) {
-        return !myProjectsTree.getModules(project).isEmpty()
-               && (createTopLevelGroup || depth > 1);
-      }
-    });
   }
 
   private boolean removeUnusedProjectLibraries() {

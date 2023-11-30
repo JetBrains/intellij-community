@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
@@ -22,14 +22,11 @@ import javax.swing.*;
  * 
  */
 public interface DirectoryProjectGenerator<T> {
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  default String getDescription() {
+  default @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription() {
     return null;
   }
 
-  @Nullable
-  default String getHelpId() {
+  default @Nullable String getHelpId() {
     return null;
   }
 
@@ -43,16 +40,14 @@ public interface DirectoryProjectGenerator<T> {
   @NlsContexts.Label
   String getName();
 
-  @NotNull
-  default NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+  default @NotNull NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
     return NotNullLazyValue.lazy(this::createPeer);
   }
 
   /**
    * Creates new peer - new project settings and UI for them
    */
-  @NotNull
-  default ProjectGeneratorPeer<T> createPeer() {
+  default @NotNull ProjectGeneratorPeer<T> createPeer() {
     return new GeneratorPeerImpl<>();
   }
 

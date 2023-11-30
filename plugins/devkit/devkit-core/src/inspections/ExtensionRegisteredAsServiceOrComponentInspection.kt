@@ -5,7 +5,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.components.Service
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.xml.XmlTag
@@ -15,7 +14,7 @@ import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.UClass
 
-class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBase(UClass::class.java) {
+internal class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBase(UClass::class.java) {
 
   private val serviceAttributeNames = setOf("service")
 
@@ -65,10 +64,6 @@ class ExtensionRegisteredAsServiceOrComponentInspection : DevKitUastInspectionBa
   private fun isValueOfServiceAttribute(tag: XmlTag, value: String?): Boolean {
     val attributeNames = tag.attributes.filter { it.value == value }.map { it.name }.toSet()
     return serviceAttributeNames.containsAll(attributeNames)
-  }
-
-  private fun isLightService(uClass: UClass): Boolean {
-    return uClass.findAnnotation(Service::class.java.canonicalName) != null
   }
 
   private fun isRegisteredComponentImplementation(psiClass: PsiClass): Boolean {

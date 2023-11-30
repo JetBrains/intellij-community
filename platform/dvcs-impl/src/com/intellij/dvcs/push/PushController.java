@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.push;
 
 import com.intellij.diff.util.DiffUtil;
@@ -283,6 +283,8 @@ public final class PushController implements Disposable {
   private <R extends Repository, S extends PushSource, T extends PushTarget> void loadCommits(@NotNull final MyRepoModel<R, S, T> model,
                                                                                               @NotNull final RepositoryNode node,
                                                                                               final boolean initial) {
+    if (myDialog.isDisposed()) return;
+
     node.cancelLoading();
     node.setEnabled(true);
 
@@ -300,6 +302,7 @@ public final class PushController implements Disposable {
       result.compareAndSet(null, outgoing);
       try {
         ApplicationManager.getApplication().invokeAndWait(() -> {
+          if (myDialog.isDisposed()) return;
           OutgoingResult outgoing1 = result.get();
           List<VcsError> errors = outgoing1.getErrors();
           boolean shouldBeSelected;
@@ -420,8 +423,11 @@ public final class PushController implements Disposable {
   @NotNull
   @CalledInAny
   public PrePushHandler.Result executeHandlers(@NotNull ProgressIndicator indicator) throws ProcessCanceledException, HandlerException {
-    List<PrePushHandler> handlers = PrePushHandler.EP_NAME.getExtensionList(myProject);
-    if (handlers.isEmpty()) return PrePushHandler.Result.OK;
+    List<PrePushHandler> handlers = PrePushHandler.EP_NAME.getExtensionList();
+    if (handlers.isEmpty()) {
+      return PrePushHandler.Result.OK;
+    }
+
     List<PushInfo> pushDetails = preparePushDetails();
     StepsProgressIndicator stepsIndicator = new StepsProgressIndicator(indicator, handlers.size());
     stepsIndicator.setIndeterminate(false);
@@ -432,7 +438,7 @@ public final class PushController implements Disposable {
       stepsIndicator.setText(handler.getPresentableName());
       PrePushHandler.Result prePushHandlerResult;
       try {
-        prePushHandlerResult = handler.handle(pushDetails, stepsIndicator);
+        prePushHandlerResult = handler.handle(myProject, pushDetails, stepsIndicator);
       }
       catch (Throwable e) {
         List<String> skippedHandlers = handlers.stream()
@@ -465,7 +471,7 @@ public final class PushController implements Disposable {
     Pusher<R, S, T> pusher = support.getPusher();
     Map<R, PushSpec<S, T>> specs = collectPushSpecsForVcs(support);
     if (!specs.isEmpty()) {
-      pusher.push(specs, options, force);
+      pusher.push(specs, options, force, myDialog.getCustomParams());
     }
   }
 
@@ -591,7 +597,16 @@ public final class PushController implements Disposable {
     for (PushSupport<?, ?, ?> support : myPushSupports) {
       ContainerUtil.putIfNotNull(support, support.createOptionsPanel(), result);
     }
+
     return result;
+  }
+
+  @ApiStatus.Experimental
+  public Map<String, VcsPushOptionsPanel> createCustomPanels(Collection<? extends Repository> repos) {
+    return ContainerUtil.map2MapNotNull(CustomPushOptionsPanelFactory.EP_NAME.getExtensionList(), panelProvider -> {
+      VcsPushOptionsPanel panel = panelProvider.createOptionsPanel(this, repos);
+      return panel != null ? Pair.pair(panelProvider.getId(), panel) : null;
+    });
   }
 
   @NotNull

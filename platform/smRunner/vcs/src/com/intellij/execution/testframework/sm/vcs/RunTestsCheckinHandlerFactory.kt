@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.vcs
 
 import com.intellij.build.BuildView
@@ -31,8 +31,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressSink
-import com.intellij.openapi.progress.progressSink
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
@@ -46,11 +44,14 @@ import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.forEachWithProgress
+import com.intellij.platform.util.progress.progressReporter
+import com.intellij.platform.util.progress.progressStep
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.*
-import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
 private val LOG = logger<RunTestsCheckinHandlerFactory>()
@@ -113,7 +114,11 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
     get() = ExecutionBundle.message("commit.checks.run.configuration.failed.show.details.action")
 }
 
-data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val configuration: RunnerAndConfigurationSettings?, val configName: String?)
+data class FailureDescription(val historyFileName: String,
+                              val failed: Int,
+                              val ignored: Int,
+                              val configuration: RunnerAndConfigurationSettings?,
+                              val configName: String?)
 
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
@@ -127,32 +132,40 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
 
   override suspend fun runCheck(commitInfo: CommitInfo): FailedTestCommitProblem? {
     val configurationBean = settings.myState.configuration ?: return null
-    val configurationSettings = RunManager.getInstance(project).findConfigurationByTypeAndName(configurationBean.configurationId, configurationBean.name)
+    val configurationSettings = RunManager.getInstance(project).findConfigurationByTypeAndName(configurationBean.configurationId,
+                                                                                               configurationBean.name)
     if (configurationSettings == null) {
       return createCommitProblem(listOf(FailureDescription("", 0, 0, configuration = null, configurationBean.name)))
     }
-    coroutineContext.progressSink?.text(SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
 
-    return withContext(Dispatchers.IO) {
-      val problems = ArrayList<FailureDescription>()
-      val executor = DefaultRunExecutor.getRunExecutorInstance()
-      val configuration = configurationSettings.configuration
-      if (configuration is CompoundRunConfiguration) {
-        val runManager = RunManagerImpl.getInstanceImpl(project)
-        configuration.getConfigurationsWithTargets(runManager)
-          .map { runManager.findSettings(it.key) }
-          .filterNotNull()
-          .forEach { startConfiguration(executor, it, problems) }
-      }
-      else {
-        startConfiguration(executor, configurationSettings, problems)
-      }
+    val problems = ArrayList<FailureDescription>()
+    progressStep(1.0, SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name)) {
+      withContext(Dispatchers.IO) {
+        val executor = DefaultRunExecutor.getRunExecutorInstance()
+        val configuration = configurationSettings.configuration
+        if (configuration is CompoundRunConfiguration) {
+          val runManager = RunManagerImpl.getInstanceImpl(project)
+          configuration.getConfigurationsWithTargets(runManager).keys
+            .forEachWithProgress { runConfiguration ->
+              runManager.findSettings(runConfiguration)?.let { runnerAndConfigurationSettings ->
+                startConfiguration(executor, runnerAndConfigurationSettings, problems)
+              }
+            }
+        }
+        else {
+          startConfiguration(executor, configurationSettings, problems)
+        }
 
-      return@withContext createCommitProblem(problems)
+      }
     }
+
+    return createCommitProblem(problems)
   }
 
-  private data class TestResultsFormDescriptor(val executionConsole: ExecutionConsole, val rootNode : SMTestProxy.SMRootTestProxy, val historyFileName: String)
+  private data class TestResultsFormDescriptor(val executionConsole: ExecutionConsole,
+                                               val rootNode: SMTestProxy.SMRootTestProxy,
+                                               val historyFileName: String)
+
   private suspend fun startConfiguration(executor: Executor,
                                          configurationSettings: RunnerAndConfigurationSettings,
                                          problems: ArrayList<FailureDescription>) {
@@ -160,7 +173,7 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
     val executionTarget = ExecutionTargetManager.getInstance(project).findTarget(configurationSettings.configuration)
     val environment = environmentBuilder.target(executionTarget).build()
     environment.setHeadless()
-    val sink = coroutineContext.progressSink
+    val reporter = currentCoroutineContext().progressReporter?.rawReporter()
     val formDescriptor = suspendCancellableCoroutine<TestResultsFormDescriptor?> { continuation ->
       val messageBus = project.messageBus
       messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
@@ -174,7 +187,7 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
       })
       ProgramRunnerUtil.executeConfigurationAsync(environment, false, true) {
         if (it != null) {
-          onProcessStarted(sink, it, continuation)
+          onProcessStarted(reporter, it, continuation)
         }
       }
     } ?: return
@@ -191,20 +204,25 @@ class RunTestsBeforeCheckinHandler(private val project: Project) : CheckinHandle
     disposeConsole(formDescriptor.executionConsole)
   }
 
-  private fun onProcessStarted(sink: ProgressSink?, descriptor: RunContentDescriptor, continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
+  private fun onProcessStarted(reporter: RawProgressReporter?,
+                               descriptor: RunContentDescriptor,
+                               continuation: CancellableContinuation<TestResultsFormDescriptor?>) {
     val handler = descriptor.processHandler
     if (handler != null) {
       val executionConsole = descriptor.console
       val resultsForm = executionConsole?.resultsForm
-      val formDescriptor = if (resultsForm != null) TestResultsFormDescriptor(executionConsole, resultsForm.testsRootNode, resultsForm.historyFileName) else null
+      val formDescriptor = when {
+        resultsForm != null -> TestResultsFormDescriptor(executionConsole, resultsForm.testsRootNode, resultsForm.historyFileName)
+        else -> null
+      }
       val processListener = object : ProcessAdapter() {
         override fun processTerminated(event: ProcessEvent) = continuation.resume(formDescriptor)
       }
 
       handler.addProcessListener(processListener)
-      if (sink != null) {
+      if (reporter != null) {
         resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
-          override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = sink.details(test.getFullName())
+          override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = reporter.details(test.getFullName())
         })
       }
 

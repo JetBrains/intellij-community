@@ -7,3 +7,4 @@ fun test() {
     list.forEach { (foo<caret>, bar) ->
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddDataModifierFix

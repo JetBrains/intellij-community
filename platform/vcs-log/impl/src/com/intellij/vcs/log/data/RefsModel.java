@@ -34,8 +34,9 @@ public class RefsModel implements VcsLogRefs {
 
     myBestRefForHead = new Int2ObjectOpenHashMap<>();
     myRootForHead = new Int2ObjectOpenHashMap<>();
+    Map<@NotNull Integer, @NotNull CommitId> commitIds = myStorage.getCommitIds(heads);
     for (int head : heads) {
-      CommitId commitId = myStorage.getCommitId(head);
+      CommitId commitId = commitIds.get(head);
       if (commitId != null) {
         VirtualFile root = commitId.getRoot();
         myRootForHead.put(head, root);
@@ -55,7 +56,7 @@ public class RefsModel implements VcsLogRefs {
     return myBestRefForHead.get(headIndex);
   }
 
-  public @NotNull VirtualFile rootAtHead(int headIndex) {
+  public @Nullable VirtualFile rootAtHead(int headIndex) {
     return myRootForHead.get(headIndex);
   }
 

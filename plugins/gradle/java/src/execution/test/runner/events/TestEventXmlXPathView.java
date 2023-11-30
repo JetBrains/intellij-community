@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner.events;
 
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.JavaXmlDocumentKt;
 import org.jetbrains.annotations.NotNull;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
@@ -30,11 +30,8 @@ public class TestEventXmlXPathView implements TestEventXmlView {
   public TestEventXmlXPathView(String xml) throws XmlParserException {
     xpath = XPathFactory.newDefaultInstance().newXPath();
     try {
-      DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
       InputSource is = new InputSource(new StringReader(xml));
-      factory.setNamespaceAware(false);
-      factory.setValidating(false);
-      xmlDocument = factory.newDocumentBuilder().parse(is);
+      xmlDocument = JavaXmlDocumentKt.createDocumentBuilder().parse(is);
     }
     catch (Exception ex) {
       throw new XmlParserException(ex);

@@ -1,9 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator.intentions
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiReferenceList.Role
@@ -11,18 +11,19 @@ import com.intellij.psi.PsiReferenceList.Role.*
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.asSafely
 import org.jetbrains.plugins.groovy.GroovyBundle
-import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
 
-sealed class AddToReferenceListFix(private val role: Role, private val addedName: String, private val hostClassName : String) : LocalQuickFix {
+sealed class AddToReferenceListFix(private val role: Role, private val addedName: String, private val hostClassName : String) : ModCommandQuickFix() {
 
   override fun getName(): String = GroovyBundle.message("intention.name.add.to.clause", addedName, role.getRepresentation(), hostClassName)
 
-  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val (dependentClass, listToInsert) = generateNewList(descriptor) ?: return
-    appendReferenceList(dependentClass, listToInsert)
+  override fun perform(project: Project, descriptor: ProblemDescriptor): ModCommand {
+    val (dependentClass, listToInsert) = generateNewList(descriptor) ?: return ModCommand.nop()
+    return ModCommand.psiUpdate(dependentClass) { cls, updater -> 
+      appendReferenceList(cls, updater.getWritable(listToInsert))
+    }
   }
 
   private fun generateNewList(descriptor: ProblemDescriptor) : Pair<PsiClass, GrReferenceList>? {
@@ -56,13 +57,6 @@ sealed class AddToReferenceListFix(private val role: Role, private val addedName
     else {
       listToReplace.replace(listToInsert)
     }
-  }
-
-  override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
-    val (dependentClass, newList) = generateNewList(previewDescriptor) ?: return IntentionPreviewInfo.EMPTY
-    val copy = dependentClass.copy() as PsiClass
-    appendReferenceList(copy, newList)
-    return IntentionPreviewInfo.CustomDiff(GroovyFileType.GROOVY_FILE_TYPE, dependentClass.text, copy.text)
   }
 
   override fun getFamilyName(): String = GroovyBundle.message("intention.family.name.add.class.to.clause")

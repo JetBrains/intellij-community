@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AnimatedIcon;
@@ -28,10 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * @author amakeev
- */
-public class MyDiffContainer extends JBLayeredPane implements Disposable {
+public final class MyDiffContainer extends JBLayeredPane implements Disposable {
   private final AnimatedIcon myIcon = new AsyncProcessIcon(getClass().getName());
 
   private final JComponent myContent;
@@ -44,7 +26,6 @@ public class MyDiffContainer extends JBLayeredPane implements Disposable {
     myLoadingPanel = new JPanel(new MyPanelLayout());
     myLoadingPanel.setOpaque(false);
     myLoadingPanel.add(myIcon);
-    Disposer.register(this, myIcon);
     myJLabel = new JLabel(text);
     myJLabel.setForeground(NamedColorUtil.getInactiveTextColor());
     myLoadingPanel.add(myJLabel);
@@ -57,6 +38,7 @@ public class MyDiffContainer extends JBLayeredPane implements Disposable {
 
   @Override
   public void dispose() {
+    myIcon.dispose();
   }
 
   void startUpdating() {
@@ -69,12 +51,10 @@ public class MyDiffContainer extends JBLayeredPane implements Disposable {
     myLoadingPanel.setVisible(false);
   }
 
-  private class MyOverlayLayout extends AbstractLayoutManager {
+  private final class MyOverlayLayout extends AbstractLayoutManager {
     @Override
     public void layoutContainer(Container parent) {
-      /*
-        Propogate bound to all children
-       */
+      // propagate bound to all children
       for(int i = 0; i< getComponentCount(); i++) {
         getComponent(i).setBounds(0, 0, getWidth(), getHeight());
       }
@@ -90,7 +70,7 @@ public class MyDiffContainer extends JBLayeredPane implements Disposable {
     return myContent;
   }
 
-  private class MyPanelLayout extends AbstractLayoutManager {
+  private final class MyPanelLayout extends AbstractLayoutManager {
     @Override
     public void layoutContainer(Container parent) {
       Dimension size = myIcon.getPreferredSize();

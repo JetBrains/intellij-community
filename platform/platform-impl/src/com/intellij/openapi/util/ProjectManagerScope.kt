@@ -4,4 +4,4 @@ package com.intellij.openapi.util
 import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
-val ProjectManagerScope = Scope("projectManager")
+val ProjectManagerScope: Scope = Scope("projectManager")

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,8 +23,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   private static final Logger LOG = Logger.getInstance(StubUpdatingIndexStorage.class);
 
   private StubIndexImpl myStubIndex;
-  @Nullable
-  private final CompositeBinaryBuilderMap myCompositeBinaryBuilderMap = FileBasedIndex.USE_IN_MEMORY_INDEX
+  private final @Nullable CompositeBinaryBuilderMap myCompositeBinaryBuilderMap = FileBasedIndex.USE_IN_MEMORY_INDEX
                                                                         ? null
                                                                         : new CompositeBinaryBuilderMap();
   private final @NotNull SerializationManagerEx mySerializationManager;
@@ -48,8 +47,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
     }
   }
 
-  @NotNull
-  private StubIndexImpl getStubIndex() {
+  private @NotNull StubIndexImpl getStubIndex() {
     StubIndexImpl index = myStubIndex;
     if (index == null) {
       myStubIndex = index = (StubIndexImpl)StubIndex.getInstance();
@@ -60,29 +58,49 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   @Override
   public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content)
     throws MapReduceIndexMappingException, ProcessCanceledException {
-    Computable<Boolean> indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
-    IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
+    try {
+      Computable<Boolean> indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
+      IndexingStampInfo indexingStampInfo = content == null ? null : StubUpdatingIndex.calculateIndexingStamp(content);
 
-    return () -> {
-      try {
-        Boolean result = indexUpdateComputable.compute();
-        if (Boolean.TRUE.equals(result) && !StaleIndexesChecker.isStaleIdDeletion()) {
-          StubTreeLoaderImpl.saveIndexingStampInfo(indexingStampInfo, inputId);
+      return () -> {
+        try {
+          Boolean result = indexUpdateComputable.compute();
+          if (Boolean.TRUE.equals(result) && !StaleIndexesChecker.isStaleIdDeletion()) {
+            ((StubTreeLoaderImpl)StubTreeLoader.getInstance()).saveIndexingStampInfo(indexingStampInfo, inputId);
+            if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+              LOG.info("Updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+            }
+          }
+          else {
+            // this is valuable information. Log it even without TRACE_STUB_INDEX_UPDATES flag
+            LOG.info("Not updating IndexingStampInfo. inputId=" + inputId + ",result=" + result);
+          }
+          return result;
         }
-        return result;
+        catch (Throwable t) {
+          // ProcessCanceledException is not expected here
+          LOG.error("Could not compute indexUpdateComputable", t);
+          throw t;
+        }
+      };
+    }
+    catch (ProcessCanceledException pce) {
+      if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+        LOG.infoWithDebug("mapInputAndPrepareUpdate interrupted,inputId=" + inputId + "," + pce, new RuntimeException(pce));
       }
-      catch (ProcessCanceledException e) {
-        LOG.error("ProcessCanceledException is not expected here", e);
-        throw e;
-      }
-    };
+      throw pce;
+    }
+    catch (Throwable t) {
+      LOG.warn("mapInputAndPrepareUpdate interrupted,inputId=" + inputId + "," + t, FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES ? t : null);
+      throw t;
+    }
   }
 
   @Override
   public void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder) {
     Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> maps = getStubIndexMaps((StubCumulativeInputDiffBuilder)diffBuilder);
 
-    if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+    if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
       LOG.info("removing transient data for inputId = " + inputId +
                ", keys = " + ((StubCumulativeInputDiffBuilder)diffBuilder).getKeys() +
                ", data = " + maps);
@@ -99,8 +117,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
     }
   }
 
-  @NotNull
-  private static Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndexMaps(@NotNull StubCumulativeInputDiffBuilder diffBuilder) {
+  private static @NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndexMaps(@NotNull StubCumulativeInputDiffBuilder diffBuilder) {
     SerializedStubTree tree = diffBuilder.getSerializedStubTree();
     return tree == null ? Collections.emptyMap() : tree.getStubIndicesValueMap();
   }
@@ -129,7 +146,7 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
     }
   }
 
-  static class Data extends IndexerIdHolder {
+  static final class Data extends IndexerIdHolder {
     private final FileType myFileType;
 
     Data(int indexerId, FileType type) {
@@ -146,15 +163,17 @@ public final class StubUpdatingIndexStorage extends TransientFileContentIndex<In
   }
 
   @Override
-  public void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable StubUpdatingIndexStorage.Data fileData) {
-    super.setIndexedStateForFileOnFileIndexMetaData(fileId, fileData);
+  public void setIndexedStateForFileOnFileIndexMetaData(int fileId,
+                                                        @Nullable StubUpdatingIndexStorage.Data fileData,
+                                                        boolean isProvidedByInfrastructureExtension) {
+    super.setIndexedStateForFileOnFileIndexMetaData(fileId, fileData, isProvidedByInfrastructureExtension);
     LOG.assertTrue(fileData != null, "getFileIndexMetaData doesn't return null");
     setBinaryBuilderConfiguration(fileId, fileData);
   }
 
   @Override
-  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
-    super.setIndexedStateForFile(fileId, file);
+  public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
+    super.setIndexedStateForFile(fileId, file, isProvidedByInfrastructureExtension);
     setBinaryBuilderConfiguration(fileId, file);
   }
 

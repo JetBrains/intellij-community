@@ -30,7 +30,10 @@ abstract class IdeVersionedDataUpdater<T: IdeVersionedDataState>(
       val state = dataStorage.state
       val lastUpdateTime = state?.lastUpdateTime ?: 0
       if (lastUpdateTime + TimeUnit.DAYS.toMillis(updateInterval.toLong()) <= System.currentTimeMillis()) {
+        LOG.info("Updating version compatibility for ${this::class.java.name}. Last update was: ${lastUpdateTime}. Update interval: ${updateInterval} Url to update $configUrl")
         retrieveNewData(configUrl)
+      } else {
+        LOG.debug("Will not update version compatibility for ${this::class.java.name}. Last update was: ${lastUpdateTime}. Update interval: ${updateInterval} Url to update $configUrl")
       }
     }
   }
@@ -42,6 +45,7 @@ abstract class IdeVersionedDataUpdater<T: IdeVersionedDataState>(
         .productNameAsUserAgent()
         .readString()
       dataStorage.setStateAsString(json)
+      LOG.info("IDE versioned data for ${this::class.java.name} was updated")
     }
     catch (e: Exception) {
       LOG.warn("Could not download new IDE versioned data for ${this::class.java.name}", e)

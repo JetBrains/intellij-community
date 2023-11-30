@@ -3,14 +3,15 @@ package demo
 import demo.One
 
 internal class Container {
-    var myInt = 1
+    var myInt: Int = 1
 }
 
 internal object One {
-    var myContainer = Container()
+    var myContainer: Container = Container()
 }
 
 internal class IntContainer(i: Int)
+
 internal class Test {
     fun putInt(i: Int) {}
     fun test() {

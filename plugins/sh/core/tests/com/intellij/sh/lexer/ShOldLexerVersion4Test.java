@@ -8,18 +8,18 @@ import com.intellij.openapi.application.PluginPathManager;
 
 public class ShOldLexerVersion4Test extends LexerTestCase {
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return new ShLexer();
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return PluginPathManager.getPluginHomePath("sh") + "/core/testData/oldLexer/v4";
   }
 
   @NotNull
   @Override
-  protected String getPathToTestDataFile(String extension) {
+  protected String getPathToTestDataFile(@NotNull String extension) {
     return getDirPath() + "/" + getTestName(true) + extension;
   }
 

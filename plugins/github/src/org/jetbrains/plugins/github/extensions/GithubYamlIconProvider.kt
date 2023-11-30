@@ -19,7 +19,7 @@ internal class GithubYamlIconProvider : FileIconProvider {
     if (extension != "yml" && extension != "yaml") return null
 
     val schemaFiles = project.service<JsonSchemaService>().getSchemaFilesForFile(file)
-    if (schemaFiles.any { GITHUB_SCHEMA_NAMES.contains(it.name) }) {
+    if (schemaFiles.any { GITHUB_SCHEMA_NAMES.contains(it.nameWithoutExtension) }) {
       return AllIcons.Vcs.Vendors.Github
     }
 

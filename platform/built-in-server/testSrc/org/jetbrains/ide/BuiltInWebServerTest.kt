@@ -14,7 +14,6 @@ import com.intellij.testFramework.*
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
-import com.intellij.util.io.writeChild
 import io.netty.handler.codec.http.HttpHeaderNames
 import io.netty.handler.codec.http.HttpResponseStatus
 import org.assertj.core.api.Assertions.assertThat
@@ -55,7 +54,7 @@ internal class BuiltInWebServerTest : BuiltInServerTestCase() {
   private fun testIndex(vararg paths: String) {
     val project = projectRule.project
     val newPath = tempDirManager.newPath()
-    newPath.writeChild(manager.filePath!!, "hello")
+    newPath.resolve(manager.filePath!!).write("hello".toByteArray())
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPath)
 
     createModule(newPath, project)
@@ -136,7 +135,7 @@ internal class BuiltInWebServerAbsolutePathTest : BuiltInServerTestCase() {
   fun `absolute path reference`() {
     val project = projectRule.project
     val newPath = tempDirManager.newPath()
-    newPath.writeChild("script.js", "hello")
+    newPath.resolve("script.js").write("hello".toByteArray())
     LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newPath)
     createModule(newPath, project)
 

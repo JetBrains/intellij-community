@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.CommonBundle;
@@ -41,6 +41,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBInsets;
@@ -146,7 +147,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   @NotNull
   @Override
   public JComponent createComponent() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
     myPanel = new JPanel(new BorderLayout());
     myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE));
@@ -389,7 +390,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   protected Map<VirtualFile, T> getNewMappings() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myModel == null) {
       throw new AssertionError("createComponent() was not called first on " + getClass().getName());
     }
@@ -794,7 +795,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return group;
   }
 
-  private static class MyModel<T> extends AbstractTableModel {
+  private static final class MyModel<T> extends AbstractTableModel {
     final String[] columnNames;
     final List<Pair<Object, T>> data = new ArrayList<>();
 

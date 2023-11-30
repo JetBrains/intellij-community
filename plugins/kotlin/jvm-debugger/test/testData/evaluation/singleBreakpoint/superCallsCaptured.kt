@@ -27,3 +27,5 @@ fun block(block: () -> Unit) {
 
 // EXPRESSION: super.foo()
 // RESULT: 5: I
+
+// IGNORE_K2

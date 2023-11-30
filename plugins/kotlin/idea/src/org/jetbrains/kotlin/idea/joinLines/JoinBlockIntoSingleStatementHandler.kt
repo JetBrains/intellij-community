@@ -8,8 +8,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeInsight.intentions.shared.MergeIfsIntention
 import org.jetbrains.kotlin.idea.inspections.UseExpressionBodyInspection
-import org.jetbrains.kotlin.idea.intentions.MergeIfsIntention
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -42,7 +42,7 @@ class JoinBlockIntoSingleStatementHandler : JoinLinesHandlerDelegate {
                 // if outer if has else-branch and inner does not have it, do not remove braces otherwise else-branch will belong to different if!
                 if (pparent.`else` != null) return CANNOT_JOIN
 
-                return MergeIfsIntention.applyTo(pparent)
+                return MergeIfsIntention.Holder.applyTo(pparent)
             }
 
             if (block == pparent.`else`) {

@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
-import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import it.unimi.dsi.fastutil.longs.LongArraySet
 import it.unimi.dsi.fastutil.longs.LongSet
@@ -161,7 +160,7 @@ class PerProjectIndexingQueue(private val project: Project) {
   private var scanningIds: LongSet = createSetForScanningIds()
 
   // Code under read lock still runs in parallel, so all the counters (e.g. [cntFilesSoFar]) and collections (e.g. [filesSoFar]) still have
-  // to be thread-safe. It is only required that the state must be consistent under write lock (e.g. [cntFilesSoFar] corresponds to total
+  // to be thread-safe. It is only required that the state must be consistent under the write lock (e.g. [cntFilesSoFar] corresponds to total
   // count of files in [filesSoFar])
   private val lock = ReentrantReadWriteLock()
 
@@ -169,7 +168,7 @@ class PerProjectIndexingQueue(private val project: Project) {
   // Accepting `List<VirtualFile>` delays the moment when we know that many files have changed, and we need a dumb mode.
   // Accepting [VirtualFile] without intermediate buffering ([PerProviderSink] is essentially a non-thread safe buffer) and adding
   // them directly to [filesSoFar] will likely slow down the process (though this assumption is not properly verified)
-  private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) { //todo[lene] write to a set
+  private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) {
     lock.read {
       filesSoFar.compute(iterator) { _, old ->
         return@compute if (old == null) ArrayList(files) else old + files
@@ -195,14 +194,14 @@ class PerProjectIndexingQueue(private val project: Project) {
     }
   }
 
-  fun flushNowSync(projectIndexingHistory: ProjectIndexingHistoryImpl, indicator: ProgressIndicator) {
+  fun flushNowSync(indexingReason: String?, indicator: ProgressIndicator) {
     val (filesInQueue, totalFiles, scanningIds) = getAndResetQueuedFiles()
     if (totalFiles > 0) {
-      val indexingReason = projectIndexingHistory.indexingReason ?: "Flushing queue of project ${project.name}"
       val projectDumbIndexingHistory = ProjectDumbIndexingHistoryImpl(project)
       try {
-        UnindexedFilesIndexer(project, filesInQueue, indexingReason, scanningIds).indexFiles(projectIndexingHistory,
-                                                                                             projectDumbIndexingHistory, indicator)
+        UnindexedFilesIndexer(project, filesInQueue, indexingReason ?: "Flushing queue of project ${project.name}",
+                              scanningIds).indexFiles(
+          projectDumbIndexingHistory, indicator)
       }
       catch (e: Throwable) {
         projectDumbIndexingHistory.setWasInterrupted()

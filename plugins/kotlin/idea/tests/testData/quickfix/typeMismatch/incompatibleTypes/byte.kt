@@ -4,3 +4,4 @@ fun test(b: Byte, i: Int) {
         <caret>i -> {}
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.NumberConversionFix

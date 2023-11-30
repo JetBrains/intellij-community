@@ -6,7 +6,7 @@ import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EmptyForwardIndex implements ForwardIndex, MeasurableIndexStore {
+public final class EmptyForwardIndex implements ForwardIndex, MeasurableIndexStore {
   @Override
   public @Nullable ByteArraySequence get(@NotNull Integer key) {
     return null;
@@ -23,6 +23,11 @@ public class EmptyForwardIndex implements ForwardIndex, MeasurableIndexStore {
 
   @Override
   public void force() { }
+
+  @Override
+  public boolean isDirty() {
+    return false;
+  }
 
   @Override
   public int keysCountApproximately() {

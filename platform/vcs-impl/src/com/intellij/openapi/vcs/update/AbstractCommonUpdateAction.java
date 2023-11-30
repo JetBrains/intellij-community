@@ -9,22 +9,19 @@ import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.AbstractVcsAction;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
 import com.intellij.openapi.vcs.changes.VcsAnnotationRefresher;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -53,7 +50,7 @@ import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.UPDATE_ACTIVITY;
 import static com.intellij.util.ui.UIUtil.BR;
 
-public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
+public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
   private final static Logger LOG = Logger.getInstance(AbstractCommonUpdateAction.class);
 
   private final boolean myAlwaysVisible;
@@ -72,14 +69,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return ActionUpdateThread.BGT;
   }
 
-  private @NlsActions.ActionText String getCompleteActionName(VcsContext dataContext) {
-    return myActionInfo.getActionName(myScopeInfo.getScopeName(dataContext, myActionInfo));
-  }
-
   @Override
-  protected void actionPerformed(@NotNull final VcsContext context) {
-    final Project project = context.getProject();
-    boolean showUpdateOptions = myActionInfo.showOptions(project);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    final Project project = e.getProject();
+    boolean showUpdateOptions = isShowOptions(project);
 
     LOG.debug("project: " + project + ", show update options: " + showUpdateOptions);
 
@@ -88,8 +81,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     try {
-      final FilePath[] filePaths = myScopeInfo.getRoots(context, myActionInfo);
-      final FilePath[] roots = DescindingFilesFilter.filterDescindingFiles(filterRoots(filePaths, context), project);
+      FilePath[] roots = getRoots(project, e.getDataContext());
       if (roots.length == 0) {
         LOG.debug("No roots found.");
         return;
@@ -106,8 +98,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
       }
 
-      if (showUpdateOptions || OptionsDialog.shiftIsPressed(context.getModifiers())) {
-        showOptionsDialog(vcsToVirtualFiles, project, context);
+      if (showUpdateOptions || OptionsDialog.shiftIsPressed(e.getModifiers())) {
+        String scopeName = myScopeInfo.getScopeName(e.getDataContext(), myActionInfo);
+        showOptionsDialog(vcsToVirtualFiles, project, scopeName);
       }
 
       if (ApplicationManager.getApplication().isDispatchThread()) {
@@ -139,7 +132,11 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
   }
 
-  protected void onSuccess() {}
+  protected boolean isShowOptions(Project project) {
+    return myActionInfo.showOptions(project);
+  }
+
+  protected void onSuccess() { }
 
   private static boolean someSessionWasCanceled(List<? extends UpdateSession> updateSessions) {
     for (UpdateSession updateSession : updateSessions) {
@@ -160,17 +157,20 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   }
 
   private void showOptionsDialog(final Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles, final Project project,
-                                 final VcsContext dataContext) {
+                                 final String scopeName) {
     LinkedHashMap<Configurable, AbstractVcs> envToConfMap = createConfigurableToEnvMap(updateEnvToVirtualFiles);
     LOG.debug("configurables map: " + envToConfMap);
     if (!envToConfMap.isEmpty()) {
-      UpdateOrStatusOptionsDialog dialogOrStatus = myActionInfo.createOptionsDialog(project, envToConfMap,
-                                                                                    myScopeInfo.getScopeName(dataContext,
-                                                                                                             myActionInfo));
+      UpdateOrStatusOptionsDialog dialogOrStatus = myActionInfo.createOptionsDialog(project, envToConfMap, scopeName);
       if (!dialogOrStatus.showAndGet()) {
         throw new ProcessCanceledException();
       }
     }
+  }
+
+  private FilePath[] getRoots(Project project, @NotNull DataContext context) {
+    List<FilePath> filePaths = myScopeInfo.getRoots(context, myActionInfo);
+    return DescindingFilesFilter.filterDescindingFiles(filterRoots(project, filePaths), project);
   }
 
   private LinkedHashMap<Configurable, AbstractVcs> createConfigurableToEnvMap(Map<AbstractVcs, Collection<FilePath>> updateEnvToVirtualFiles) {
@@ -182,6 +182,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       }
     }
     return envToConfMap;
+  }
+
+  public LinkedHashMap<Configurable, AbstractVcs> getConfigurableToEnvMap(Project project) {
+    FilePath[] roots = getRoots(project, dataId -> CommonDataKeys.PROJECT.is(dataId) ? project : null);
+    Map<AbstractVcs, Collection<FilePath>> vcsToFilesMap = createVcsToFilesMap(roots, project);
+    return createConfigurableToEnvMap(vcsToFilesMap);
   }
 
   private Map<AbstractVcs, Collection<FilePath>> createVcsToFilesMap(FilePath @NotNull [] roots, @NotNull Project project) {
@@ -204,10 +210,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     return result;
   }
 
-  private FilePath @NotNull [] filterRoots(FilePath[] roots, VcsContext vcsContext) {
+  private FilePath @NotNull [] filterRoots(@NotNull Project project, @NotNull List<FilePath> roots) {
     final ArrayList<FilePath> result = new ArrayList<>();
-    final Project project = vcsContext.getProject();
-    assert project != null;
     for (FilePath file : roots) {
       AbstractVcs vcs = VcsUtil.getVcsFor(project, file);
       if (vcs != null) {
@@ -220,7 +224,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         else {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile != null && virtualFile.isDirectory()) {
-            final VirtualFile[] vcsRoots = ProjectLevelVcsManager.getInstance(vcsContext.getProject()).getAllVersionedRoots();
+            final VirtualFile[] vcsRoots = ProjectLevelVcsManager.getInstance(project).getAllVersionedRoots();
             for (VirtualFile vcsRoot : vcsRoots) {
               if (VfsUtilCore.isAncestor(virtualFile, vcsRoot, false)) {
                 result.add(file);
@@ -236,8 +240,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
   protected abstract boolean filterRootsBeforeAction();
 
   @Override
-  protected void update(@NotNull VcsContext vcsContext, @NotNull Presentation presentation) {
-    Project project = vcsContext.getProject();
+  public void update(@NotNull AnActionEvent e) {
+    Presentation presentation = e.getPresentation();
+    Project project = e.getProject();
 
     if (project == null) {
       presentation.setEnabledAndVisible(false);
@@ -251,8 +256,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       return;
     }
 
-    String actionName = getCompleteActionName(vcsContext);
-    if (myActionInfo.showOptions(project) || OptionsDialog.shiftIsPressed(vcsContext.getModifiers())) {
+    String scopeName = myScopeInfo.getScopeName(e.getDataContext(), myActionInfo);
+    String actionName = myActionInfo.getActionName(scopeName);
+    if (myActionInfo.showOptions(project) || OptionsDialog.shiftIsPressed(e.getModifiers())) {
       actionName += "...";
     }
     presentation.setText(actionName);
@@ -263,7 +269,8 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     if (filterRootsBeforeAction()) {
-      FilePath[] roots = filterRoots(myScopeInfo.getRoots(vcsContext, myActionInfo), vcsContext);
+      List<FilePath> filePaths = myScopeInfo.getRoots(e.getDataContext(), myActionInfo);
+      FilePath[] roots = filterRoots(project, filePaths);
       if (roots.length == 0) {
         presentation.setVisible(myAlwaysVisible);
         presentation.setEnabled(false);
@@ -307,7 +314,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     private final ActionInfo myActionInfo;
     private final @Nls String myActionName;
 
-    public Updater(final Project project,
+    public Updater(@NotNull Project project,
                    final FilePath[] roots,
                    final Map<AbstractVcs, Collection<FilePath>> vcsToVirtualFiles,
                    final ActionInfo actionInfo,
@@ -503,7 +510,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
     private void onSuccessImpl(final boolean wasCanceled) {
       if (!myProject.isOpen() || myProject.isDisposed()) {
-        StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
         LocalHistory.getInstance().putSystemLabel(myProject, VcsBundle.message("local.history.update.from.vcs")); // TODO check why this label is needed
         return;
       }
@@ -608,7 +614,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
       }
     }
-
 
     private void showContextInterruptedError() {
       gatherContextInterruptedMessages();

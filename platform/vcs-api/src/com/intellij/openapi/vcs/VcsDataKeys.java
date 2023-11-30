@@ -17,7 +17,6 @@ import com.intellij.vcs.commit.CommitWorkflowHandler;
 import com.intellij.vcs.commit.CommitWorkflowUi;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.io.File;
 import java.util.List;
 
 
@@ -33,8 +32,6 @@ public interface VcsDataKeys {
   DataKey<VcsRevisionNumber[]> VCS_REVISION_NUMBERS = DataKey.create("VCS_REVISION_NUMBERS");
   DataKey<String[]> VCS_COMMIT_SUBJECTS = DataKey.create("VCS_COMMIT_SUBJECTS");
 
-  DataKey<File> IO_FILE = DataKey.create("IO_FILE");
-  DataKey<File[]> IO_FILE_ARRAY = DataKey.create("IO_FILE_ARRAY");
   DataKey<VirtualFile> VCS_VIRTUAL_FILE = DataKey.create("VCS_VIRTUAL_FILE");
   DataKey<FilePath> FILE_PATH = DataKey.create("FILE_PATH");
 

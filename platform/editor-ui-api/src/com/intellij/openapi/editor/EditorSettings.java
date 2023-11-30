@@ -121,6 +121,9 @@ public interface EditorSettings {
   boolean isBlockCursor();
   void setBlockCursor(boolean blockCursor);
 
+  boolean isFullLineHeightCursor();
+  void setFullLineHeightCursor(boolean fullLineHeightCursor);
+
   boolean isCaretRowShown();
   void setCaretRowShown(boolean caretRowShown);
 
@@ -205,21 +208,9 @@ public interface EditorSettings {
   LineNumerationType getLineNumerationType();
   void setLineNumerationType(LineNumerationType value);
 
-  /**
-   * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
-   */
-  @Deprecated
-  default @Nullable Boolean isShowVisualFormattingLayer() { return null; }
-
-  /**
-   * @deprecated This method is a stub. Related functionality has been moved to {@code VisualFormattingLayerService}.
-   */
-  @Deprecated
-  default void setShowVisualFormattingLayer(@Nullable Boolean showVisualFormattingLayer) {}
-
   boolean isInsertParenthesesAutomatically();
 
-  public enum LineNumerationType {
+  enum LineNumerationType {
     ABSOLUTE,
     RELATIVE,
     HYBRID,

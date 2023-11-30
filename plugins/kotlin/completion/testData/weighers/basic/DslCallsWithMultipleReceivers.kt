@@ -35,6 +35,7 @@ fun foo1(i: Int) {
 
 }
 
+// IGNORE_K2
 // ORDER: foo2
 // ORDER: foo5
 // ORDER: foo10

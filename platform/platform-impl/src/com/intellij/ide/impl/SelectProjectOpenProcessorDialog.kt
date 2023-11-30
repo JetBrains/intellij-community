@@ -62,7 +62,7 @@ class SelectProjectOpenProcessorDialog(
         app != null && app.isUnitTestMode -> testShowAndGetChoice(processors, file)
         else -> {
           val environmentService = service<EnvironmentService>()
-          val id = environmentService.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR)
+          val id = environmentService.getEnvironmentValue(ProjectOpenKeyProvider.Keys.PROJECT_OPEN_PROCESSOR)
           val processor = processors.find { it.name == id }
           if (processor != null) {
             return processor

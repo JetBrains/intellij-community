@@ -12,7 +12,7 @@ import javax.accessibility.AccessibleRole.HYPERLINK
 import javax.swing.*
 
 open class ActionLink() : JButton() {
-  override fun getUIClassID() = "LinkButtonUI"
+  override fun getUIClassID(): String = "LinkButtonUI"
 
   init {
     @Suppress("LeakingThis")
@@ -37,7 +37,7 @@ open class ActionLink() : JButton() {
     listener?.let { addActionListener(it) }
   }
 
-  var autoHideOnDisable = true
+  var autoHideOnDisable: Boolean = true
     set(newValue) {
       val oldValue = field
       if (oldValue == newValue) return
@@ -46,7 +46,7 @@ open class ActionLink() : JButton() {
       isVisible = !newValue || isEnabled
     }
 
-  var visited = false
+  var visited: Boolean = false
     set(newValue) {
       val oldValue = field
       if (oldValue == newValue) return
@@ -55,10 +55,10 @@ open class ActionLink() : JButton() {
       repaint()
     }
 
-  fun setLinkIcon() = setIcon(AllIcons.Ide.Link, false)
-  fun setContextHelpIcon() = setIcon(AllIcons.General.ContextHelp, false)
-  fun setExternalLinkIcon() = setIcon(AllIcons.Ide.External_link_arrow, true)
-  fun setDropDownLinkIcon() = setIcon(AllIcons.General.LinkDropTriangle, true)
+  fun setLinkIcon(): Unit = setIcon(AllIcons.Ide.Link, false)
+  fun setContextHelpIcon(): Unit = setIcon(AllIcons.General.ContextHelp, false)
+  fun setExternalLinkIcon(): Unit = setIcon(AllIcons.Ide.External_link_arrow, true)
+  fun setDropDownLinkIcon(): Unit = setIcon(AllIcons.General.LinkDropTriangle, true)
   fun setIcon(anIcon: Icon, atRight: Boolean) {
     icon = anIcon
     iconTextGap = scale(if (atRight) 1 else 4)
@@ -70,7 +70,7 @@ open class ActionLink() : JButton() {
     return this
   }
 
-  override fun getAccessibleContext() = myAccessibleContext
+  override fun getAccessibleContext(): AccessibleContext = myAccessibleContext
   private val myAccessibleContext: AccessibleContext by lazy {
     object : AccessibleAbstractButton() {
       override fun getAccessibleRole() = HYPERLINK

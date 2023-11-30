@@ -1,7 +1,11 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
-import com.intellij.cce.actions.CompletionGolfMode
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.CodeLine
+import com.intellij.cce.core.CodeToken
+import com.intellij.cce.core.Language
+import com.intellij.cce.evaluable.golf.CompletionGolfMode
 import com.intellij.cce.util.CompletionGolfTextUtil.isValuableString
 import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.lang.ASTNode
@@ -17,14 +21,14 @@ import com.jetbrains.python.psi.*
 
 class PythonCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
   override val language: Language = Language.PYTHON
-  override fun createVisitor(mode: CompletionGolfMode): CompletionGolfEvaluationVisitor {
+  override fun createVisitor(featureName: String, mode: CompletionGolfMode): CompletionGolfEvaluationVisitor {
     when (mode) {
-      CompletionGolfMode.ALL -> return AllVisitor()
-      CompletionGolfMode.TOKENS -> return TokensVisitor()
+      CompletionGolfMode.ALL -> return AllVisitor(featureName)
+      CompletionGolfMode.TOKENS -> return TokensVisitor(featureName)
     }
   }
 
-  class AllVisitor : CompletionGolfAllEvaluationVisitor, PyRecursiveElementVisitor() {
+  class AllVisitor(override val feature: String) : CompletionGolfAllEvaluationVisitor, PyRecursiveElementVisitor() {
     override val language: Language = Language.PYTHON
     override val processor = CompletionGolfAllEvaluationVisitor.Processor()
 
@@ -56,7 +60,7 @@ class PythonCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
     }
   }
 
-  class TokensVisitor : CompletionGolfEvaluationVisitor, PyRecursiveElementVisitor() {
+  class TokensVisitor(override val feature: String) : CompletionGolfEvaluationVisitor, PyRecursiveElementVisitor() {
     private var codeFragment: CodeFragment? = null
     private val tokenSetContributor = PythonTokenSetContributor()
     private val lines = mutableListOf<CodeLine>()
@@ -85,7 +89,8 @@ class PythonCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
     override fun visitElement(element: PsiElement) {
       if (tokenSetContributor.keywordTokens.contains(element.elementType)) {
         addElement(element.node)
-      } else if (element is PsiNameIdentifierOwner) {
+      }
+      else if (element is PsiNameIdentifierOwner) {
         element.nameIdentifier?.node?.let { addElement(it) }
       }
       super.visitElement(element)
@@ -104,7 +109,8 @@ class PythonCompletionGolfVisitorFactory : CompletionGolfVisitorFactory {
     override fun visitPyStringLiteralExpression(node: PyStringLiteralExpression) {
       if (node.parent is PySubscriptionExpression) {
         addElement(node.node)
-      } else {
+      }
+      else {
         super.visitPyStringLiteralExpression(node)
       }
     }

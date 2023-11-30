@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -26,7 +26,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   private static boolean ourForceStartMatching;
   private final boolean myTypoTolerant;
 
-  public CamelHumpMatcher(@NotNull final String prefix) {
+  public CamelHumpMatcher(final @NotNull String prefix) {
     this(prefix, true);
   }
 
@@ -75,7 +75,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  public boolean prefixMatches(@NotNull final String name) {
+  public boolean prefixMatches(final @NotNull String name) {
     if (name.startsWith("_") &&
         CodeInsightSettings.getInstance().getCompletionCaseSensitive() == CodeInsightSettings.FIRST_LETTER &&
         firstLetterCaseDiffers(name)) {
@@ -98,7 +98,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  public boolean prefixMatches(@NotNull final LookupElement element) {
+  public boolean prefixMatches(final @NotNull LookupElement element) {
     return prefixMatchersInternal(element, !element.isCaseSensitive());
   }
 
@@ -117,8 +117,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  @NotNull
-  public PrefixMatcher cloneWithPrefix(@NotNull final String prefix) {
+  public @NotNull PrefixMatcher cloneWithPrefix(final @NotNull String prefix) {
     if (prefix.equals(myPrefix)) {
       return this;
     }
@@ -180,8 +179,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return matchingDegree(string, matchingFragments(string));
   }
 
-  @Nullable
-  public FList<TextRange> matchingFragments(String string) {
+  public @Nullable FList<TextRange> matchingFragments(String string) {
     return myMatcher.matchingFragments(string);
   }
 

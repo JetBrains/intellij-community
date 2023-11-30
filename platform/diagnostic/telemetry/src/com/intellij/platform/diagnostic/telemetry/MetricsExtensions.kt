@@ -3,4 +3,4 @@ package com.intellij.platform.diagnostic.telemetry
 
 import io.opentelemetry.sdk.metrics.data.MetricData
 
-fun MetricData.belongsToScope(scope: Scope) = this.instrumentationScopeInfo.name.startsWith(scope.toString())
+fun MetricData.belongsToScope(scope: Scope): Boolean = this.instrumentationScopeInfo.name.startsWith(scope.toString())

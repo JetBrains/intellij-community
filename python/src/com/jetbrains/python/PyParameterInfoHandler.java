@@ -24,6 +24,8 @@ import java.util.Map;
 
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, Pair<PyCallExpression, PyCallableType>> {
   private static final int MY_PARAM_LENGTH_LIMIT = 50;
+  private static final int MAX_PARAMETER_INFO_TO_SHOW = 20;
+
   private static final EnumMap<ParameterFlag, ParameterInfoUIContextEx.Flag> PARAM_FLAG_TO_UI_FLAG = new EnumMap<>(Map.of(
     ParameterFlag.HIGHLIGHT, ParameterInfoUIContextEx.Flag.HIGHLIGHT,
     ParameterFlag.DISABLE, ParameterInfoUIContextEx.Flag.DISABLE,
@@ -39,6 +41,9 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
 
     List<Pair<PyCallExpression, PyCallableType>> parameterInfos = PyParameterInfoUtils.findCallCandidates(argumentList);
     if (parameterInfos != null) {
+      if (parameterInfos.size() > MAX_PARAMETER_INFO_TO_SHOW) {
+        parameterInfos = parameterInfos.subList(0, MAX_PARAMETER_INFO_TO_SHOW);
+      }
       Object[] infoArr = parameterInfos.toArray();
       context.setItemsToShow(infoArr);
       return argumentList;

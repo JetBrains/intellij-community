@@ -52,7 +52,8 @@ public class GoToCommand extends AbstractCommand {
       });
     } else {
       final int line = Integer.parseInt(args[0]) - 1;
-      final int column = Integer.parseInt(args[1]) - 1;
+      final int columnArg = Integer.parseInt(args[1]);
+      final int column = columnArg == 0 ? 0 : columnArg - 1;
 
       ApplicationManager.getApplication().invokeLater(() -> {
         Project project = context.getProject();

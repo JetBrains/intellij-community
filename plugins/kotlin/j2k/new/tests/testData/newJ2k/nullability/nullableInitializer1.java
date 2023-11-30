@@ -1,5 +1,3 @@
-import org.jetbrains.annotations.Nullable;
-
 public class Test {
     public String nullableString(int p) {
         return p > 0 ? "response" : null;
@@ -10,7 +8,7 @@ public class Test {
     public String nullableInitializerPublicField = nullableString(3);
 
     public void testProperty() {
-        nullableInitializerField = "aaa"
+        nullableInitializerField = "aaa";
 
         nullableInitializerField.charAt(0);
         nullableInitializerFieldFinal.charAt(0);

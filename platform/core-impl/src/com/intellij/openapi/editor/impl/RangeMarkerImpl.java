@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,8 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx {
   private static final Logger LOG = Logger.getInstance(RangeMarkerImpl.class);
 
-  @NotNull
-  private final Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
+  private final @NotNull Object myDocumentOrFile; // either VirtualFile (if any) or DocumentEx if no file associated
   RangeMarkerTree.RMNode<RangeMarkerEx> myNode;
 
   private volatile long myId;
@@ -133,8 +132,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Override
-  @NotNull
-  public final DocumentEx getDocument() {
+  public final @NotNull DocumentEx getDocument() {
     Object file = myDocumentOrFile;
     DocumentEx document =
       file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file) : (DocumentEx)file;
@@ -369,8 +367,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "RangeMarker" + (isGreedyToLeft() ? "[" : "(")
            + (isValid() ? "" : "invalid:") + getStartOffset() + "," + getEndOffset()
            + (isGreedyToRight() ? "]" : ")")

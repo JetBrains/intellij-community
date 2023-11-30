@@ -1,28 +1,33 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.PopupStep;
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.modcommand.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.psi.util.ImportsUtil.*;
 
-public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction {
-  private static final String REPLACE_THIS_OCCURRENCE = "Replace this occurrence and keep the import";
-  private static final String REPLACE_ALL_AND_DELETE_IMPORT = "Replace all and delete the import";
+public class ExpandStaticImportAction extends PsiBasedModCommandAction<PsiIdentifier> {
+  private final @NotNull ThreeState myExpandAll;
+  
+  public ExpandStaticImportAction() {
+    super(PsiIdentifier.class);
+    myExpandAll = ThreeState.UNSURE;
+  }
 
+  private ExpandStaticImportAction(boolean expandAll) {
+    super(PsiIdentifier.class);
+    myExpandAll = ThreeState.fromBoolean(expandAll);
+  }
+  
   @Override
   @NotNull
   public String getFamilyName() {
@@ -30,66 +35,57 @@ public class ExpandStaticImportAction extends BaseElementAtCaretIntentionAction 
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
-    final PsiElement parent = element.getParent();
-    if (!(element instanceof PsiIdentifier) || !(parent instanceof PsiJavaCodeReferenceElement referenceElement)) {
-      return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
+    if (!PsiUtil.isLanguageLevel5OrHigher(element) || !(element.getParent() instanceof PsiJavaCodeReferenceElement referenceElement)) {
+      return null;
     }
-    final PsiElement resolveScope = getImportStaticStatement(referenceElement);
-    if (resolveScope instanceof PsiImportStaticStatement) {
-      final PsiClass targetClass = ((PsiImportStaticStatement)resolveScope).resolveTargetClass();
-      if (targetClass == null) return false;
-      setText(JavaBundle.message("intention.text.replace.static.import.with.qualified.access.to.0", targetClass.getName()));
-      return true;
-    }
-    return false;
+    final PsiImportStaticStatement importStatement = getImportStaticStatement(referenceElement);
+    if (importStatement == null) return null;
+    final PsiClass targetClass = importStatement.resolveTargetClass();
+    if (targetClass == null) return null;
+    String message = switch (myExpandAll) {
+      case YES -> JavaBundle.message("intention.text.replace.all.delete.import");
+      case NO -> JavaBundle.message("intention.text.replace.this.occurrence.keep.import");
+      case UNSURE -> JavaBundle.message("intention.text.replace.static.import.with.qualified.access.to.0", targetClass.getName());
+    };
+    return Presentation.of(message);
   }
 
-  private static PsiElement getImportStaticStatement(PsiJavaCodeReferenceElement referenceElement) {
+  private static PsiImportStaticStatement getImportStaticStatement(PsiJavaCodeReferenceElement referenceElement) {
     PsiElement parent = referenceElement.getParent();
-    return parent instanceof PsiImportStaticStatement ? parent
-                                                      : referenceElement.advancedResolve(true).getCurrentFileResolveScope();
-  }
-
-  public void invoke(final Project project, final PsiFile file, final Editor editor, PsiElement element) {
-    final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
-    final PsiImportStaticStatement staticImport = (PsiImportStaticStatement) getImportStaticStatement(refExpr);
-    final List<PsiJavaCodeReferenceElement> expressionToExpand = collectReferencesThrough(file, refExpr, staticImport);
-
-    if (expressionToExpand.isEmpty()) {
-      expand(refExpr, staticImport);
-      staticImport.delete();
-    }
-    else {
-      if (ApplicationManager.getApplication().isUnitTestMode() || refExpr.getParent() instanceof PsiImportStaticStatement ||
-          !file.isPhysical()) {
-        replaceAllAndDeleteImport(expressionToExpand, refExpr, staticImport);
-      }
-      else {
-        final BaseListPopupStep<String> step =
-          new BaseListPopupStep<>(JavaBundle.message("multiple.usages.of.static.import.found"), REPLACE_THIS_OCCURRENCE,
-                                  REPLACE_ALL_AND_DELETE_IMPORT) {
-            @Override
-            public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
-              WriteCommandAction.writeCommandAction(project).withName(ExpandStaticImportAction.this.getText()).run(() -> {
-                if (selectedValue.equals(REPLACE_THIS_OCCURRENCE)) {
-                  expand(refExpr, staticImport);
-                }
-                else {
-                  replaceAllAndDeleteImport(expressionToExpand, refExpr, staticImport);
-                }
-              });
-              return FINAL_CHOICE;
-            }
-          };
-        JBPopupFactory.getInstance().createListPopup(step).showInBestPositionFor(editor);
-      }
-    }
+    return parent instanceof PsiImportStaticStatement importStatic ? importStatic :
+           ObjectUtils.tryCast(referenceElement.advancedResolve(true).getCurrentFileResolveScope(), PsiImportStaticStatement.class);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    invoke(project, element.getContainingFile(), editor, element);
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiIdentifier element) {
+    final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
+    ThreeState expandAll = myExpandAll == ThreeState.UNSURE && refExpr.getParent() instanceof PsiImportStaticStatement ? ThreeState.YES :
+                           myExpandAll;
+
+    return switch (expandAll) {
+      case YES -> ModCommand.psiUpdate(refExpr, refExprCopy -> {
+        PsiImportStaticStatement staticImport = getImportStaticStatement(refExprCopy);
+        List<PsiJavaCodeReferenceElement> expressionToExpand = collectReferencesThrough(
+          refExprCopy.getContainingFile(), refExprCopy, staticImport);
+        replaceAllAndDeleteImport(expressionToExpand, refExprCopy, staticImport);
+      });
+      case NO -> ModCommand.psiUpdate(refExpr, refExprCopy -> expand(refExprCopy, getImportStaticStatement(refExprCopy)));
+      case UNSURE -> {
+        final PsiImportStaticStatement staticImport = Objects.requireNonNull(getImportStaticStatement(refExpr));
+        List<PsiJavaCodeReferenceElement> expressionToExpand = collectReferencesThrough(context.file(), refExpr, staticImport);
+
+        if (expressionToExpand.isEmpty()) {
+          yield ModCommand.psiUpdate(context, updater -> {
+            PsiImportStaticStatement staticImportCopy = updater.getWritable(staticImport);
+            PsiJavaCodeReferenceElement refExprCopy = updater.getWritable(refExpr);
+            expand(refExprCopy, staticImportCopy);
+            staticImportCopy.delete();
+          });
+        }
+        yield ModCommand.chooseAction(JavaBundle.message("multiple.usages.of.static.import.found"),
+                                      new ExpandStaticImportAction(false), new ExpandStaticImportAction(true));
+      }
+    };
   }
 }

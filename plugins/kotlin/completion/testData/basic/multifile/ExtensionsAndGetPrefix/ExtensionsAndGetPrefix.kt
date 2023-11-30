@@ -5,5 +5,6 @@ fun f() {
     "".get<caret>
 }
 
+// IGNORE_K2
 // EXIST: thisFileExtension
 // EXIST: notImportedExtension

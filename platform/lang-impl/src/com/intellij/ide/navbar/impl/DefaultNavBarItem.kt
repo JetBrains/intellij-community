@@ -41,7 +41,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-
+@Internal
 open class DefaultNavBarItem<out T>(val data: T) : NavBarItem {
 
   override fun createPointer(): Pointer<out NavBarItem> = hardPointer(this)
@@ -85,7 +85,7 @@ internal class ProjectNavBarItem(data: Project) : DefaultNavBarItem<Project>(dat
 
   override fun dereference(): NavBarItem? = if (data.isDisposed) null else this
 
-  override fun getIcon() = AllIcons.Nodes.Project
+  override fun getIcon(): Icon = AllIcons.Nodes.Project
 
   override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
     val problemSolver = WolfTheProblemSolver.getInstanceIfCreated(data) ?: return REGULAR_ATTRIBUTES
@@ -117,7 +117,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
     })
   }
 
-  override fun getIcon() = ModuleType.get(data).icon
+  override fun getIcon(): Icon = ModuleType.get(data).icon
 
   override fun getTextAttributes(selected: Boolean): SimpleTextAttributes {
     val problemSolver = WolfTheProblemSolver.getInstance(data.project)
@@ -126,7 +126,7 @@ internal class ModuleNavBarItem(data: Module) : DefaultNavBarItem<Module>(data),
     return if (hasProblems) navBarErrorAttributes else REGULAR_ATTRIBUTES
   }
 
-  override fun weight() = 5
+  override fun weight(): Int = 5
 }
 
 internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelExtension?) : DefaultNavBarItem<PsiElement>(
@@ -205,7 +205,7 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
 }
 
 internal class OrderEntryNavBarItem(data: OrderEntry) : DefaultNavBarItem<OrderEntry>(data) {
-  override fun getIcon() = when (data) {
+  override fun getIcon(): Icon? = when (data) {
     is JdkOrderEntry -> (data.jdk?.sdkType as? SdkType)?.icon
     is LibraryOrderEntry -> AllIcons.Nodes.PpLibFolder
     is ModuleOrderEntry -> data.module?.let { ModuleType.get(it) }?.icon
@@ -214,7 +214,7 @@ internal class OrderEntryNavBarItem(data: OrderEntry) : DefaultNavBarItem<OrderE
 }
 
 @Internal
-val navBarErrorAttributes =
+val navBarErrorAttributes: SimpleTextAttributes =
   EditorColorsManager.getInstance()
     .schemeForCurrentUITheme
     .getAttributes(ERRORS_ATTRIBUTES)

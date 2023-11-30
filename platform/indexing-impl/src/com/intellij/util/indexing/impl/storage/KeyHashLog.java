@@ -72,13 +72,14 @@ final class KeyHashLog<Key> implements Closeable {
 
   @NotNull IntSet getSuitableKeyHashes(@NotNull IdFilter filter, @NotNull Project project) throws StorageException {
     IdFilter.FilterScopeType filteringScopeType = filter.getFilteringScopeType();
-    if (filteringScopeType == IdFilter.FilterScopeType.OTHER) {
-      filteringScopeType = IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES;
-    }
     IntSet hashMaskSet = null;
     long l = System.currentTimeMillis();
 
-    @NotNull Path sessionProjectCacheFile = getSavedProjectFileValueIds(myLastScannedId, filteringScopeType, project);
+    @NotNull Path sessionProjectCacheFile = getSavedProjectFileValueIds(myLastScannedId,
+                                                                        filteringScopeType == IdFilter.FilterScopeType.OTHER
+                                                                        ? IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES
+                                                                        : filteringScopeType,
+                                                                        project);
     int id = myKeyHashToVirtualFileMapping.getCurrentLength();
 
     final boolean useCachedHashIds = ENABLE_CACHED_HASH_IDS;
@@ -95,7 +96,7 @@ final class KeyHashLog<Key> implements Closeable {
     if (hashMaskSet == null) {
       if (useCachedHashIds && myLastScannedId != 0) {
         try {
-          Files.delete(sessionProjectCacheFile);
+          FileUtil.delete(sessionProjectCacheFile);
         }
         catch (NoSuchFileException ignored) {
 
@@ -107,7 +108,7 @@ final class KeyHashLog<Key> implements Closeable {
 
       hashMaskSet = getSuitableKeyHashes(filter);
 
-      if (useCachedHashIds) {
+      if (useCachedHashIds && filteringScopeType != IdFilter.FilterScopeType.OTHER) {
         saveHashedIds(hashMaskSet, id, filteringScopeType, project);
       }
     }
@@ -200,7 +201,6 @@ final class KeyHashLog<Key> implements Closeable {
       Path oldDataFile = getDataFile();
 
       AppendableStorageBackedByResizableMappedFile<int[]> oldMapping = openMapping(oldDataFile, 0);
-      oldMapping.lockRead();
       try {
         oldMapping.processAll((offset, key) -> {
           int inputId = key[1];
@@ -218,10 +218,15 @@ final class KeyHashLog<Key> implements Closeable {
           }
           return true;
         });
-        oldMapping.close();
       }
       finally {
-        oldMapping.unlockRead();
+        oldMapping.lockRead();
+        try {
+          oldMapping.close();
+        }
+        finally {
+          oldMapping.unlockRead();
+        }
       }
 
       String dataFileName = oldDataFile.getFileName().toString();
@@ -231,15 +236,19 @@ final class KeyHashLog<Key> implements Closeable {
 
       newMapping.lockWrite();
       try {
-        for (Int2ObjectMap.Entry<IntSet> entry : data.int2ObjectEntrySet()) {
-          int keyHash = entry.getIntKey();
-          IntIterator inputIdIterator = entry.getValue().iterator();
-          while (inputIdIterator.hasNext()) {
-            int inputId = inputIdIterator.nextInt();
-            newMapping.append(new int[]{keyHash, inputId});
+        try {
+          for (Int2ObjectMap.Entry<IntSet> entry : data.int2ObjectEntrySet()) {
+            int keyHash = entry.getIntKey();
+            IntIterator inputIdIterator = entry.getValue().iterator();
+            while (inputIdIterator.hasNext()) {
+              int inputId = inputIdIterator.nextInt();
+              newMapping.append(new int[]{keyHash, inputId});
+            }
           }
         }
-        newMapping.close();
+        finally {
+          newMapping.close();
+        }
       }
       finally {
         newMapping.unlockWrite();
@@ -259,9 +268,10 @@ final class KeyHashLog<Key> implements Closeable {
       try {
         Files.delete(getCompactionMarker());
       }
-      catch (IOException ignored) {}
-
-    } catch (ProcessCanceledException e) {
+      catch (IOException ignored) {
+      }
+    }
+    catch (ProcessCanceledException e) {
       LOG.error(e);
       throw e;
     }
@@ -301,6 +311,7 @@ final class KeyHashLog<Key> implements Closeable {
 
   private static volatile Path mySessionDirectory;
   private static final Object mySessionDirectoryLock = new Object();
+
   private static Path getSessionDir() {
     Path sessionDirectory = mySessionDirectory;
     if (sessionDirectory == null) {
@@ -310,7 +321,8 @@ final class KeyHashLog<Key> implements Closeable {
           try {
             mySessionDirectory = sessionDirectory = FileUtil
               .createTempDirectory(new File(PathManager.getTempPath()), Long.toString(System.currentTimeMillis()), "", true).toPath();
-          } catch (IOException ex) {
+          }
+          catch (IOException ex) {
             throw new RuntimeException("Can not create temp directory", ex);
           }
         }
@@ -340,7 +352,8 @@ final class KeyHashLog<Key> implements Closeable {
     }
     try {
       r.run();
-    } finally {
+    }
+    finally {
       if (read) {
         myKeyHashToVirtualFileMapping.unlockRead();
       }
@@ -359,7 +372,8 @@ final class KeyHashLog<Key> implements Closeable {
       Files.createDirectories(marker.getParent());
       Files.createFile(marker);
     }
-    catch (FileAlreadyExistsException ignored) { }
+    catch (FileAlreadyExistsException ignored) {
+    }
     catch (IOException e) {
       LOG.error(e);
     }
@@ -379,8 +393,9 @@ final class KeyHashLog<Key> implements Closeable {
     return myBaseStorageFile.resolveSibling(myBaseStorageFile.getFileName() + ".project");
   }
 
-  private static class IntPairInArrayKeyDescriptor implements DataExternalizer<int[]> {
+  private static final class IntPairInArrayKeyDescriptor implements DataExternalizer<int[]> {
     private static final IntPairInArrayKeyDescriptor INSTANCE = new IntPairInArrayKeyDescriptor();
+
     @Override
     public void save(@NotNull DataOutput out, int[] value) throws IOException {
       DataInputOutputUtil.writeINT(out, value[0]);
@@ -389,7 +404,7 @@ final class KeyHashLog<Key> implements Closeable {
 
     @Override
     public int[] read(@NotNull DataInput in) throws IOException {
-      return new int[] {DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in)};
+      return new int[]{DataInputOutputUtil.readINT(in), DataInputOutputUtil.readINT(in)};
     }
   }
 

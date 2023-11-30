@@ -36,7 +36,7 @@ public class BeforeTestEventProcessor extends AbstractTestEventProcessor {
   @Override
   public void process(@NotNull ExternalSystemProgressEvent<? extends TestOperationDescriptor> testEvent) {
     getExecutionConsole().getFileComparisonEventPatcher()
-      .setGradleTestEventsUsed();
+      .setBuiltInTestEventsUsed();
 
     var testDescriptor = testEvent.getDescriptor();
     var testId = testEvent.getEventId();

@@ -45,4 +45,10 @@ class MetadataConsistencyTest {
 
   @Test
   fun testCidrMetadata() = ExperimentCidrMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testHTMLMetadata() = ExperimentalHTMLMLRankingProvider().assertModelMetadataConsistent()
+
+  @Test
+  fun testCSSMetadata() = ExperimentalCSSMLRankingProvider().assertModelMetadataConsistent()
 }

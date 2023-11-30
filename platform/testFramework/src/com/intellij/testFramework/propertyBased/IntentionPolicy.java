@@ -28,7 +28,7 @@ public class IntentionPolicy {
    * </li> 
    */
   public boolean mayInvokeIntention(@NotNull IntentionAction action) {
-    if (!action.startInWriteAction() || shouldSkipIntention(action.getText())) {
+    if ((!action.startInWriteAction() && action.asModCommandAction() == null) || shouldSkipIntention(action.getText())) {
       return false;
     }
     IntentionAction original = IntentionActionDelegate.unwrap(action);

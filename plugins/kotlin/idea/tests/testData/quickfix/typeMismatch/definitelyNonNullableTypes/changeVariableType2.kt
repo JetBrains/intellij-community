@@ -9,3 +9,5 @@ fun <T> bar(x: T) {
     val z: T = x
     foo(z<caret>)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix

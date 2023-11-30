@@ -1,22 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 
 public final class AdditionalIndexedRootsScope extends GlobalSearchScope {
   private final GlobalSearchScope myBaseScope;
-  @NotNull
-  private final IndexableFileSet myFileSet;
+  private final @NotNull IndexableFileSet myFileSet;
 
   public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope) {
     this(baseScope, new AdditionalIndexableFileSet(null));
   }
 
   public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope, @NotNull Class<? extends IndexableSetContributor> providerClass) {
-    this(baseScope, new AdditionalIndexableFileSet(null, IndexableSetContributor.EP_NAME.findExtension(providerClass)));
+    this(baseScope, new AdditionalIndexableFileSet(null, CollectionsKt.listOfNotNull(IndexableSetContributor.EP_NAME.findExtension(providerClass))));
   }
 
   public AdditionalIndexedRootsScope(@NotNull GlobalSearchScope baseScope, @NotNull IndexableFileSet myFileSet) {

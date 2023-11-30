@@ -2,24 +2,34 @@
 package com.intellij.codeWithMe
 
 import com.intellij.concurrency.currentThreadContext
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.client.ClientSessionsManager
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 import java.util.function.Function
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+
+private val logger = logger<ClientId>()
 
 /**
  * ClientId is a global context class that is used to distinguish the originator of an action in multi-client systems
@@ -35,14 +45,14 @@ data class ClientId(val value: String) {
     RETURN_LOCAL,
 
     /**
-     * Throw an exception if ClientId is not set
+     * Write error to logger and return localId
      */
-    THROW
+    LOG_ERROR,
   }
 
   companion object {
     private val LOG = Logger.getInstance(ClientId::class.java)
-    fun getClientIdLogger() = LOG
+    fun getClientIdLogger(): Logger = LOG
 
     /**
      * Default client id for local application
@@ -52,7 +62,45 @@ data class ClientId(val value: String) {
     /**
      * Specifies behavior for [ClientId.current]
      */
-    private var AbsenceBehaviorValue: AbsenceBehavior = AbsenceBehavior.RETURN_LOCAL
+    val absenceBehaviorValue: AbsenceBehavior get() {
+      if (!LoadingState.COMPONENTS_LOADED.isOccurred)
+        return AbsenceBehavior.RETURN_LOCAL
+      if (!Registry.getInstance().isLoaded) {
+        return AbsenceBehavior.RETURN_LOCAL
+      }
+      return absenceBehaviorValueCached
+    }
+
+    // This set used to avoid leaking frontend session client ids to global world,
+    // because it can cause bugs with mixing frontend and remote sessions
+    //
+    // We originally planned to have multiple local sessions (one for each rider backend process),
+    // but this doesn't work because many places use ClientId.Local or try to guess the local identifier (e.g. com.intellij.codeInsight.actions.ReaderModeSettingsImpl is registered as local)
+    // and this prevents the rider from opening multiple projects.
+    // So for now we have this hack and when Rider can open each project in a separate process (or fix all the problems with multiple local sessions)
+    // we will be able to get rid of this hack and mark frontend sessions as local
+    private val fakeLocalIds = ConcurrentHashMap<String, Unit>().keySet(Unit)
+
+    @ApiStatus.Internal
+    @Deprecated("This api will be removed")
+    // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
+    fun isFakeLocalId(clientId: ClientId) = fakeLocalIds.contains(clientId.value)
+
+    @ApiStatus.Internal
+    @Deprecated("This api will be removed")
+    // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
+    fun isFakeLocalId(clientId: String) = fakeLocalIds.contains(clientId)
+
+    private val absenceBehaviorValueCached: AbsenceBehavior by lazy {
+      val selectedOption = Registry.get("clientid.absence.behavior").selectedOption ?: return@lazy AbsenceBehavior.RETURN_LOCAL
+      return@lazy try {
+        AbsenceBehavior.valueOf(selectedOption)
+      }
+      catch (t: Throwable) {
+        logger.error("Wrong option '$selectedOption' for registry key 'clientid.absence.behavior'")
+        AbsenceBehavior.RETURN_LOCAL
+      }
+    }
 
     /**
      * Controls propagation behavior. When false, decorateRunnable does nothing.
@@ -84,18 +132,27 @@ data class ClientId(val value: String) {
     @JvmStatic
     val isCurrentlyUnderLocalId: Boolean
       get() {
-        val clientIdValue = getCachedService()?.clientIdValue
-        return clientIdValue == null || clientIdValue == localId.value
+        val clientIdValue = currentClientIdString
+        return clientIdValue == null || clientIdValue == localId.value || fakeLocalIds.contains(clientIdValue)
       }
 
     /**
-     * Gets the current [ClientId]. Subject to [AbsenceBehaviorValue]
+     * Gets the current [ClientId]. Subject to [absenceBehaviorValue]
      */
     @JvmStatic
     val current: ClientId
-      get() = when (AbsenceBehaviorValue) {
+      get() = when (absenceBehaviorValue) {
         AbsenceBehavior.RETURN_LOCAL -> currentOrNull ?: localId
-        AbsenceBehavior.THROW -> currentOrNull ?: throw NullPointerException("ClientId not set")
+        AbsenceBehavior.LOG_ERROR -> {
+          val currentId = currentOrNull
+          if (currentId == null) {
+            logger.error("'ClientId.current' is not set'")
+            localId
+          }
+          else {
+            currentId
+          }
+        }
       }
 
     @JvmStatic
@@ -103,7 +160,7 @@ data class ClientId(val value: String) {
     // optimization method for avoiding allocating ClientId in the hot path
     fun getCurrentValue(): String {
       val service = getCachedService()
-      return if (service == null) localId.value else service.clientIdValue ?: localId.value
+      return if (service == null) localId.value else currentClientIdString ?: localId.value
     }
 
     /**
@@ -111,7 +168,7 @@ data class ClientId(val value: String) {
      */
     @JvmStatic
     val currentOrNull: ClientId?
-      get() = getCachedService()?.clientIdValue?.let(::ClientId)
+      get() = currentClientIdString?.let(::ClientId)
 
     /**
      * Overrides the ID of the owner of CWM/RD session.
@@ -140,90 +197,132 @@ data class ClientId(val value: String) {
       localId = newId
     }
 
+    @ApiStatus.Internal
+    @Deprecated("This api will be removed")
+    // This api will be removed as soon as Rider is able to run separate projects in different processes. Ask Rider Team
+    fun addFakeLocalId(id: ClientId, parentDisposable: Disposable) {
+      fakeLocalIds.add(id.value)
+
+      fun unregister() {
+        fakeLocalIds.remove(id.value)
+      }
+
+      if (!Disposer.tryRegister(parentDisposable, ::unregister))
+        unregister()
+    }
+
     /**
      * Is true if and only if the given ID is considered to be local to this process
      */
     @JvmStatic
     val ClientId?.isLocal: Boolean
-      get() = this == null || this == localId
-
-    /**
-     * Is true if the given ID is local or a client is still in the session.
-     * Consider subscribing to a proper lifetime instead of this check
-     */
-    @JvmStatic
-    val ClientId?.isValid: Boolean
-      get() = getCachedService()?.isValid(this) ?: true
+      get() = this == null || this == localId || fakeLocalIds.contains(value)
 
     /**
      * Computes a value under given [ClientId]
+     *
+     * **Note:** This method should not be called within a suspend context.
+     * It is recommended to use `withContext(clientId.asContextElement())` instead.
      */
     @JvmStatic
+    @RequiresBlockingContext
     inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
       val service = getCachedService() ?: return action()
 
-      val newClientIdValue = if (service.isValid(clientId)) {
-        clientId?.value
+      val newClientIdValue = if (clientId == null || service.isValid(clientId)) {
+        if (clientId != null && isFakeLocalId(clientId))
+          localId.value
+        else
+          clientId?.value
       }
       else {
         getClientIdLogger().trace { "Invalid ClientId $clientId replaced with null at ${Throwable().fillInStackTrace()}" }
         null
       }
 
-      val oldClientIdValue = service.clientIdValue
+      val oldClientIdValue = currentClientIdString
       try {
-        service.clientIdValue = newClientIdValue
+        currentClientIdString = newClientIdValue
         return action()
       }
       finally {
-        service.clientIdValue = oldClientIdValue
+        currentClientIdString = oldClientIdValue
       }
     }
 
     class ClientIdAccessToken(private val oldClientIdValue: String?) : AccessToken() {
       override fun finish() {
-        getCachedService()?.clientIdValue = oldClientIdValue
+        currentClientIdString = oldClientIdValue
       }
     }
 
+    /**
+     * Computes a value under given [ClientId]
+     *
+     * **Note:** This method should not be called within a suspend context.
+     * It is recommended to use `withContext(clientId.asContextElement())` instead.
+     */
     @JvmStatic
+    @RequiresBlockingContext
     fun withClientId(clientId: ClientId?): AccessToken {
       if (clientId == null) {
+        if (absenceBehaviorValue == AbsenceBehavior.LOG_ERROR) {
+          LOG.error("Attempt to call withClientId with ClientId==null")
+        }
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
       return withClientId(clientId.value)
     }
 
+    /**
+     * Computes a value under given [ClientId]
+     *
+     * **Note:** This method should not be called within a suspend context.
+     * It is recommended to use `withContext(clientId.asContextElement())` instead.
+     */
     @JvmStatic
+    @RequiresBlockingContext
     fun withClientId(clientIdValue: String): AccessToken {
       val service = getCachedService()
       if (service == null) {
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
-      val oldClientIdValue = service.clientIdValue ?: localId.value
+      val oldClientIdValue = currentClientIdString ?: localId.value
       if (clientIdValue == oldClientIdValue) {
         return AccessToken.EMPTY_ACCESS_TOKEN
       }
 
       val newClientIdValue = if (service.isValid(ClientId(clientIdValue))) {
-        clientIdValue
+        if (fakeLocalIds.contains(clientIdValue))
+          localId.value
+        else
+          clientIdValue
       }
       else {
         LOG.trace { "Invalid ClientId $clientIdValue replaced with null at ${Throwable().fillInStackTrace()}" }
         null
       }
 
-      service.clientIdValue = newClientIdValue
+      currentClientIdString = newClientIdValue
       return ClientIdAccessToken(oldClientIdValue)
     }
 
-    private var service: Ref<ClientIdService?>? = null
+    private var service: Ref<ClientSessionsManager<*>?>? = null
 
     @ApiStatus.Internal
-    fun getCachedService(): ClientIdService? {
+    fun getCachedService(): ClientSessionsManager<*>? {
       val cached = service
       if (cached != null) return cached.get()
-      val instance = ClientIdService.tryGetInstance()
+      if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
+        return null
+      }
+
+      val app = ApplicationManager.getApplication()
+      if (app == null || app.isDisposed) {
+        return null
+      }
+
+      val instance = app.serviceOrNull<ClientSessionsManager<*>>()
       if (instance != null) {
         service = Ref.create(instance)
       }
@@ -309,13 +408,20 @@ fun isOnGuest(): Boolean {
   return ClientId.localId != ClientId.defaultLocalId
 }
 
-fun ClientId.asContextElement(): CoroutineContext.Element = ClientIdElement(this)
+fun ClientId.asContextElement(): CoroutineContext.Element {
+  if (ClientId.isFakeLocalId(this))
+    return ClientIdElement(ClientId.localId)
+
+  return ClientIdElement(this)
+}
 
 private object ClientIdElementKey : CoroutineContext.Key<ClientIdElement>
 
 private class ClientIdElement(private val clientId: ClientId) : ThreadContextElement<AccessToken> {
 
   override val key: CoroutineContext.Key<*> get() = ClientIdElementKey
+
+  override fun toString(): String = clientId.toString()
 
   override fun updateThreadContext(context: CoroutineContext): AccessToken {
     return ClientId.withClientId(clientId)
@@ -333,8 +439,21 @@ private class ClientIdElement2(val clientId: ClientId) : AbstractCoroutineContex
   object Key : CoroutineContext.Key<ClientIdElement2>
 }
 
+// TODO: it's a temporary solution that solves stofl problem
+private val threadLocalClientIdString = ThreadLocal.withInitial<String?> { null }
+@get:ApiStatus.Internal
+@set:ApiStatus.Internal
+var currentClientIdString: String?
+  get() = threadLocalClientIdString.get()
+  set(value) = threadLocalClientIdString.set(value)
+
 @ApiStatus.Internal
-fun ClientId.asContextElement2(): CoroutineContext.Element = ClientIdElement2(this)
+fun ClientId.asContextElement2(): CoroutineContext.Element {
+  if (ClientId.isFakeLocalId(this))
+    return ClientIdElement2(ClientId.localId)
+
+  return ClientIdElement2(this)
+}
 
 @ApiStatus.Internal
 fun CoroutineContext.clientId(): ClientId? = this[ClientIdElement2.Key]?.clientId

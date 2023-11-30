@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -130,7 +130,7 @@ public final class BraceMatchingUtil {
     return PsiUtilBase.getPsiFileAtOffset(file, offset).getFileType();
   }
 
-  private static class MatchBraceContext {
+  private static final class MatchBraceContext {
     private final CharSequence fileText;
     private final FileType fileType;
     private final HighlighterIterator iterator;
@@ -411,7 +411,7 @@ public final class BraceMatchingUtil {
     }
   }
 
-  private static class BraceMatcherHolder {
+  private static final class BraceMatcherHolder {
     private static final BraceMatcher ourDefaultBraceMatcher = new DefaultBraceMatcher();
   }
 
@@ -494,7 +494,7 @@ public final class BraceMatchingUtil {
     return null;
   }
 
-  private static class DefaultBraceMatcher implements BraceMatcher {
+  private static final class DefaultBraceMatcher implements BraceMatcher {
     @Override
     public int getBraceTokenGroupId(@NotNull IElementType tokenType) {
       return UNDEFINED_TOKEN_GROUP;

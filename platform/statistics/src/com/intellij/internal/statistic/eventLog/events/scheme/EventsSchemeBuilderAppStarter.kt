@@ -1,26 +1,29 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events.scheme
 
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonElement
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.internal.statistic.config.SerializationHelper
+import com.intellij.internal.statistic.eventLog.validator.storage.persistence.EventLogTestMetadataPersistence
 import com.intellij.openapi.application.ApplicationStarter
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import java.io.File
-import java.lang.reflect.Type
 import kotlin.system.exitProcess
+
 
 private const val outputFileParameter = "--outputFile="
 private const val pluginsFileParameter = "--pluginsFile="
 private const val pluginIdParameter = "--pluginId="
 private const val errorsFileParameter = "--errorsFile="
+private const val recorderIdParameter = "--recorderId="
+private const val testEventSchemeParameter = "--testEventScheme="
+
+private val LOG: Logger
+  get() = logger<EventsSchemeBuilderAppStarter>()
 
 internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
-  private val LOG = logger<EventsSchemeBuilderAppStarter>()
-
   override val commandName: String
     get() = "buildEventsScheme"
 
@@ -29,6 +32,8 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
     var pluginsFile: String? = null
     var pluginId: String? = null
     var errorsFile: String? = null
+    var recorderId: String? = null
+    var testEventsScheme = false
 
     for (arg in args) {
       if (arg.startsWith(outputFileParameter)) {
@@ -43,9 +48,23 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       else if (arg.startsWith(errorsFileParameter)) {
         errorsFile = arg.substringAfter(errorsFileParameter)
       }
+      else if (arg.startsWith(recorderIdParameter)) {
+        recorderId = arg.substringAfter(recorderIdParameter)
+      }
+      else if (arg.startsWith(testEventSchemeParameter)) {
+        testEventsScheme = arg.substringAfter(testEventSchemeParameter).toBoolean()
+      }
     }
 
-    val groups = EventsSchemeBuilder.buildEventsScheme(null, pluginId, getPluginsToSkipSchemeGeneration())
+    val groups: List<GroupDescriptor>
+    try {
+      groups = EventsSchemeBuilder.buildEventsScheme(recorderId, pluginId, getPluginsToSkipSchemeGeneration())
+    }
+    catch (e: IllegalMetadataSchemeStateException) {
+      LOG.error(e)
+      if (errorsFile != null) FileUtil.writeToFile(File(errorsFile), e.toString())
+      exitProcess(0)
+    }
     val errors = EventSchemeValidator.validateEventScheme(groups)
     val errorsList = errors.values.flatten()
     if (errorsList.isNotEmpty()) {
@@ -53,27 +72,63 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       LOG.error(IllegalStateException(errorsListString))
       if (errorsFile != null) FileUtil.writeToFile(File(errorsFile), errorsListString)
     }
-    val eventsScheme = EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
-                                    System.getenv("IDEA_BUILD_NUMBER"),
-                                    groups.filter { errors[it]?.isEmpty() ?: true })
-    val text = GsonBuilder()
-      .registerTypeAdapter(FieldDataType::class.java, FieldDataTypeSerializer)
-      .setPrettyPrinting()
-      .create()
-      .toJson(eventsScheme)
-    logEnabledPlugins(pluginsFile)
+
+    val text: String
+    if (!testEventsScheme) {
+      val eventsScheme = EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
+                                      System.getenv("IDEA_BUILD_NUMBER"),
+                                      groups.filter { errors[it]?.isEmpty() ?: true })
+      text = SerializationHelper.serialize(eventsScheme)
+      logEnabledPlugins(pluginsFile)
+    }
+    else {
+      val groupsDescriptor = EventGroupRemoteDescriptors()
+      for (group in groups) {
+        groupsDescriptor.groups.add(
+          EventLogTestMetadataPersistence.createGroupWithCustomRules(group.id, SerializationHelper.serialize(createValidationRules(group))))
+      }
+      text = SerializationHelper.serialize(groupsDescriptor)
+    }
+
     if (outputFile != null) {
       FileUtil.writeToFile(File(outputFile), text)
     }
     else {
       println(text)
     }
+
     exitProcess(0)
+  }
+
+  private fun createValidationRules(group: GroupDescriptor): EventGroupRemoteDescriptors.GroupRemoteRule? {
+    val eventIds = hashSetOf<String>()
+    val eventData = hashMapOf<String, MutableSet<String>>()
+    val events = group.schema
+    events.forEach { event ->
+      eventIds.add(event.event)
+      event.fields.forEach { dataField ->
+        val validationRule = dataField.value
+        val validationRules = eventData[dataField.path]
+        if (validationRules == null) {
+          eventData[dataField.path] = validationRule.toHashSet()
+        }
+        else {
+          validationRules.addAll(validationRule)
+        }
+      }
+    }
+
+    if (eventIds.isEmpty() && eventData.isEmpty()) return null
+
+    val rules = EventGroupRemoteDescriptors.GroupRemoteRule()
+    rules.event_id = eventIds
+    rules.event_data = eventData
+    return rules
   }
 
   private fun logEnabledPlugins(pluginsFile: String?) {
     val text = buildString {
-      for (descriptor in PluginManagerCore.getLoadedPlugins()) {
+      for (descriptor in PluginManagerCore.loadedPlugins) {
         if (descriptor.isEnabled) {
           appendLine(descriptor.pluginId.idString)
         }
@@ -92,14 +147,5 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
     val skipGenerationOfBrokenPlugins = System.getenv("SKIP_GENERATION_OF_BROKEN_PLUGINS")
     if (skipGenerationOfBrokenPlugins == null) return emptySet()
     return skipGenerationOfBrokenPlugins.split(",").toSet()
-  }
-
-  object FieldDataTypeSerializer : JsonSerializer<FieldDataType> {
-    override fun serialize(src: FieldDataType?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
-      if (src == FieldDataType.PRIMITIVE || src == null) {
-        return context!!.serialize(null)
-      }
-      return context!!.serialize(src.name)
-    }
   }
 }

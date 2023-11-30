@@ -66,7 +66,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   private JPanel myPanel;
   private JPanel myTreePanel;
-  private MultiLineLabel myPropertiesLabel;
+  protected MultiLineLabel myPropertiesLabel;
   private JPanel myPropertiesPanel;
   private JLabel myBottomLabel;
   private LibraryPropertiesEditor myPropertiesEditor;
@@ -303,7 +303,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   @Nullable
   public VirtualFile getBaseDirectory() {
     if (myProject != null) {
-      //todo[nik] perhaps we shouldn't select project base dir if global library is edited
+      //todo perhaps we shouldn't select project base dir if global library is edited
       return myProject.getBaseDir();
     }
     return null;

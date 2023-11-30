@@ -6,6 +6,6 @@ class B {
         yY += "a"
     }
 
-    var yY = ""
+    var yY: String = ""
         private set
 }

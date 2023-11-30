@@ -13,13 +13,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-public class ChangeRange {
+public final class ChangeRange {
   private static final Logger LOG = Logger.getInstance(ChangeRange.class);
 
   private final IdeaGateway myGateway;
   private final LocalHistoryFacade myVcs;
   private final Long myFromChangeId;
-  @Nullable private final Long myToChangeId;
+  private final @Nullable Long myToChangeId;
 
   public ChangeRange(IdeaGateway gw, LocalHistoryFacade vcs, @NotNull Long changeId) {
     this(gw, vcs, changeId, changeId);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.icons.AllIcons;
@@ -483,7 +483,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     }
   }
 
-  private static class SubclassGotoClassModel<T extends PsiNamedElement> extends MyGotoClassModel<T> {
+  private static final class SubclassGotoClassModel<T extends PsiNamedElement> extends MyGotoClassModel<T> {
     private final BaseClassInheritorsProvider<T> myInheritorsProvider;
 
     private boolean myFastMode = true;
@@ -532,7 +532,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     }
   }
 
-  private class MyCallback extends ChooseByNamePopupComponent.Callback {
+  private final class MyCallback extends ChooseByNamePopupComponent.Callback {
     @Override
     public void elementChosen(Object element) {
       mySelectedClass = (T)element;

@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -30,11 +29,16 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.JBColor;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +46,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 
-public class ShowAutoImportPass extends TextEditorHighlightingPass {
+public final class ShowAutoImportPass extends TextEditorHighlightingPass {
   private final Editor myEditor;
 
   private final PsiFile myFile;
@@ -91,10 +95,16 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @Override
   public void doApplyInformationToEditor() {
-    ApplicationManager.getApplication().invokeLater(()-> {
-      if (!UIUtil.hasFocus(myEditor.getContentComponent())) return;
-      if (DumbService.isDumb(myProject) || !myFile.isValid()) return;
-      if (myEditor.isDisposed() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) return;
+    ApplicationManager.getApplication().invokeLater(() -> {
+      if (!UIUtil.hasFocus(myEditor.getContentComponent())) {
+        return;
+      }
+      if (DumbService.isDumb(myProject) || !myFile.isValid()) {
+        return;
+      }
+      if (myEditor.isDisposed() || myEditor instanceof EditorWindow window && !window.isValid()) {
+        return;
+      }
 
       int caretOffset = myEditor.getCaretModel().getOffset();
       importUnambiguousImports();
@@ -110,11 +120,11 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
           }
         }
       }
-    });
+    }, myProject.getDisposed());
   }
 
   private void importUnambiguousImports() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!mayAutoImportNow(myFile, true, ThreeState.UNSURE)) return;
     for (BooleanSupplier autoImportAction : autoImportActions) {
       autoImportAction.getAsBoolean();
@@ -141,11 +151,10 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
     return ContainerUtil.exists(ReferenceImporter.EP_NAME.getExtensionList(), importer -> importer.isAddUnambiguousImportsOnTheFlyEnabled(psiFile));
   }
 
-  @NotNull
-  private static List<HighlightInfo> getVisibleHighlights(@NotNull TextRange visibleRange,
-                                                          @NotNull Project project,
-                                                          @NotNull Editor editor,
-                                                          boolean isDirty) {
+  private static @NotNull List<HighlightInfo> getVisibleHighlights(@NotNull TextRange visibleRange,
+                                                                   @NotNull Project project,
+                                                                   @NotNull Editor editor,
+                                                                   boolean isDirty) {
     List<HighlightInfo> highlights = new ArrayList<>();
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzerEx.processHighlights(editor.getDocument(), project, null, visibleRange.getStartOffset(), visibleRange.getEndOffset(), info -> {
@@ -175,23 +184,30 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
            DaemonCodeAnalyzer.getInstance(myProject).isImportHintsEnabled(myFile);
   }
 
-  @NotNull
-  static List<HintAction> extractHints(@NotNull HighlightInfo info) {
+  static @NotNull List<HintAction> extractHints(@NotNull HighlightInfo info) {
     List<HintAction> result = new ArrayList<>();
     info.findRegisteredQuickFix((descriptor, range) -> {
       ProgressManager.checkCanceled();
       IntentionAction action = descriptor.getAction();
-      if (action instanceof HintAction) {
-        result.add((HintAction)action);
+      if (action instanceof HintAction hint) {
+        result.add(hint);
       }
       return null;
     });
     return result;
   }
 
+  public static @NotNull @NlsContexts.HintText String getMessage(boolean multiple, @Nullable String kind, @NotNull String name) {
+    return kind != null && ExperimentalUI.isNewUI() ? getMessage(kind, name) : getMessage(multiple, name);
+  }
 
-  @NotNull
-  public static @NlsContexts.HintText String getMessage(boolean multiple, @NotNull String name) {
+  public static @NotNull @NlsContexts.HintText String getMessage(@NotNull String kind, @NotNull String name) {
+    String action = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));
+    String actionColor = ColorUtil.toHex(JBColor.namedColor("shortcutForeground", 0x818594, 0x6F737A));
+    return DaemonBundle.message("import.popup.hint.text", kind, name, action, actionColor);
+  }
+
+  public static @NotNull @NlsContexts.HintText String getMessage(boolean multiple, @NotNull String name) {
     String messageKey = multiple ? "import.popup.multiple" : "import.popup.text";
     String hintText = DaemonBundle.message(messageKey, name);
     hintText += " " + KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS));

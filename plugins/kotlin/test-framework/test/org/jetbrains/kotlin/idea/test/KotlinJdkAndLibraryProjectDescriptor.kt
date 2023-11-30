@@ -4,13 +4,18 @@ package org.jetbrains.kotlin.idea.test
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import java.io.File
 
-open class KotlinJdkAndLibraryProjectDescriptor(val libraryFiles: List<File>, val librarySourceFiles: List<File> = emptyList()) :
-    KotlinLightProjectDescriptor() {
+open class KotlinJdkAndLibraryProjectDescriptor(
+    val libraryFiles: List<File>,
+    val librarySourceFiles: List<File> = emptyList(),
+    val javaLanguageVersion: LanguageLevel? = null,
+) : KotlinLightProjectDescriptor() {
 
     constructor(libraryFile: File) : this(listOf(libraryFile))
 
@@ -30,6 +35,10 @@ open class KotlinJdkAndLibraryProjectDescriptor(val libraryFiles: List<File>, va
             for (librarySrcFile in librarySourceFiles) {
                 addRoot(librarySrcFile, OrderRootType.SOURCES)
             }
+        }
+
+        javaLanguageVersion?.let {
+            model.getModuleExtension(LanguageLevelModuleExtension::class.java).setLanguageLevel(it);
         }
     }
 

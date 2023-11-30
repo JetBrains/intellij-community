@@ -12,25 +12,18 @@ import com.intellij.openapi.module.impl.ModuleManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider.LibraryRoots;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.*;
-import com.intellij.workspaceModel.ide.VirtualFileUrls;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import kotlin.sequences.Sequence;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -92,7 +85,7 @@ class RootIndex {
 
           info.excludedFromModule.put(excludeRoot, module);
         }
-        VirtualFile contentRoot = myRootSupplier.getContentRoot(contentEntry);//todo[lene] here!
+        VirtualFile contentRoot = myRootSupplier.getContentRoot(contentEntry);
         if (contentRoot != null && ensureValid(contentRoot, module)) {
           if (!info.contentRootOf.containsKey(contentRoot)) {
             info.contentRootOf.put(contentRoot, module);
@@ -215,87 +208,7 @@ class RootIndex {
       }
     }
 
-    EntityStorage snapshot = WorkspaceModel.getInstance(project).getCurrentSnapshot();
-    for (CustomEntityProjectModelInfoProvider<?> provider : CustomEntityProjectModelInfoProvider.EP.getExtensionList()) {
-      handleCustomEntities(provider, info, snapshot);
-    }
-
     return info;
-  }
-
-  private <T extends WorkspaceEntity> void handleCustomEntities(@NotNull CustomEntityProjectModelInfoProvider<T> provider,
-                                                                @NotNull RootInfo info,
-                                                                @NotNull EntityStorage snapshot) {
-    Sequence<T> entities = snapshot.entities(provider.getEntityClass());
-
-    for (CustomEntityProjectModelInfoProvider.CustomContentRoot<T> customContentRoot :
-      SequencesKt.asIterable(provider.getContentRoots(entities, snapshot))) {
-      VirtualFile root = myRootSupplier.correctRoot(customContentRoot.root, customContentRoot.generativeEntity, provider);
-      if (root == null) {
-        continue;
-      }
-      if (!info.contentRootOf.containsKey(root)) {
-        Module module = ModuleEntityUtils.findModule(customContentRoot.parentModule, snapshot);
-        if (module != null) {
-          info.contentRootOf.put(root, module);
-        }
-      }
-    }
-
-    for (LibraryRoots<T> libraryRoots : SequencesKt.asIterable(provider.getLibraryRoots(entities, snapshot))) {
-      T entity = libraryRoots.generativeEntity;
-      for (VirtualFile root : libraryRoots.sources) {
-        VirtualFile librarySource = myRootSupplier.correctRoot(root, entity, provider);
-        if (librarySource == null) continue;
-
-        info.libraryOrSdkSources.add(librarySource);
-        info.classAndSourceRoots.add(librarySource);
-        info.sourceOfLibraries.putValue(librarySource, entity);
-      }
-
-      for (VirtualFile root : libraryRoots.classes) {
-        VirtualFile libraryClass = myRootSupplier.correctRoot(root, entity, provider);
-        if (libraryClass == null) continue;
-
-        info.libraryOrSdkClasses.add(libraryClass);
-        info.classAndSourceRoots.add(libraryClass);
-        info.classOfLibraries.putValue(libraryClass, entity);
-      }
-
-      for (VirtualFile root : libraryRoots.excluded) {
-        VirtualFile libraryExcluded = myRootSupplier.correctRoot(root, entity, provider);
-        if (libraryExcluded == null) continue;
-
-        info.excludedFromLibraries.putValue(libraryExcluded, entity);
-      }
-
-      SyntheticLibrary.ExcludeFileCondition excludeFileCondition = libraryRoots.excludeFileCondition;
-      if (excludeFileCondition != null) {
-        Set<VirtualFile> allRoots = ContainerUtil.union(libraryRoots.sources, libraryRoots.classes);
-        info.customEntitiesExcludeConditions.put(entity, excludeFileCondition.transformToCondition(allRoots));
-      }
-    }
-    for (CustomEntityProjectModelInfoProvider.@NotNull ExcludeStrategy<T> excludeStrategy :
-      SequencesKt.asIterable(provider.getExcludeSdkRootStrategies(entities, snapshot))) {
-      T entity = excludeStrategy.generativeEntity;
-      List<VirtualFile> files = ContainerUtil.mapNotNull(excludeStrategy.excludeUrls, VirtualFileUrls::getVirtualFile);
-      info.excludedFromProject.addAll(ContainerUtil.filter(files, file -> RootFileSupplier.ensureValid(file, entity, provider)));
-
-      java.util.function.@Nullable Function<Sdk, List<VirtualFile>> fun = excludeStrategy.excludeSdkRootsStrategy;
-
-      if (fun != null) {
-        Set<Sdk> sdks = collectSdks();
-        Set<VirtualFile> roots = collectSdkClasses(sdks);
-
-        for (Sdk sdk : sdks) {
-          for (VirtualFile file : fun.apply(sdk)) {
-            if (!roots.contains(file)) {
-              ContainerUtil.addIfNotNull(info.excludedFromSdkRoots, myRootSupplier.correctRoot(file, sdk, provider));
-            }
-          }
-        }
-      }
-    }
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-expect sealed class <!LINE_MARKER("descr='Has actuals in [platformAY, platformAX] modules'"), LINE_MARKER("descr='Is subclassed by CommonAImplTestClass CommonImplTestClass PlatformAXImplTestClass PlatformAYImplTestClass Press ... to navigate'")!>TestClass<!>()
+expect sealed class <!LINE_MARKER("descr='Has actuals in [platformAY, platformAX] modules'; targets=[(text=platformAY); (text=platformAX)]"), LINE_MARKER("descr='Is subclassed by CommonAImplTestClass CommonImplTestClass PlatformAXImplTestClass PlatformAYImplTestClass Press ... to navigate'")!>TestClass<!>()
 class CommonImplTestClass: TestClass()
 
 

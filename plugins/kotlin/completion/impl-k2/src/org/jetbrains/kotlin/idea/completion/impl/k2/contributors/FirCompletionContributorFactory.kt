@@ -2,63 +2,74 @@
 
 package org.jetbrains.kotlin.idea.completion.contributors
 
+import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.recording
 
-internal class FirCompletionContributorFactory(private val basicContext: FirBasicCompletionContext) {
+internal class FirCompletionContributorFactory(
+    private val basicContext: FirBasicCompletionContext,
+    private val resultController: PolicyController,
+) {
     fun keywordContributor(priority: Int = 0) =
-        FirKeywordCompletionContributor(basicContext, priority)
+        FirKeywordCompletionContributor(basicContext, priority).recording(resultController)
 
     fun classReferenceContributor(priority: Int = 0) =
-        FirClassReferenceCompletionContributor(basicContext, priority)
+        FirClassReferenceCompletionContributor(basicContext, priority).recording(resultController)
 
     fun callableContributor(priority: Int = 0) =
-        FirCallableCompletionContributor(basicContext, priority)
+        FirCallableCompletionContributor(basicContext, priority).recording(resultController)
 
     fun superMemberContributor(priority: Int) =
-        FirSuperMemberCompletionContributor(basicContext, priority)
+        FirSuperMemberCompletionContributor(basicContext, priority).recording(resultController)
 
     fun infixCallableContributor(priority: Int = 0) =
-        FirInfixCallableCompletionContributor(basicContext, priority)
+        FirInfixCallableCompletionContributor(basicContext, priority).recording(resultController)
 
     fun callableReferenceContributor(priority: Int = 0) =
-        FirCallableReferenceCompletionContributor(basicContext, priority)
+        FirCallableReferenceCompletionContributor(basicContext, priority).recording(resultController)
 
     fun classifierContributor(priority: Int = 0) =
-        FirClassifierCompletionContributor(basicContext, priority)
+        FirClassifierCompletionContributor(basicContext, priority).recording(resultController)
 
     fun classifierReferenceContributor(priority: Int = 0) =
-        FirClassifierReferenceCompletionContributor(basicContext, priority)
+        FirClassifierReferenceCompletionContributor(basicContext, priority).recording(resultController)
 
     fun annotationsContributor(priority: Int = 0) =
-        FirAnnotationCompletionContributor(basicContext, priority)
+        FirAnnotationCompletionContributor(basicContext, priority).recording(resultController)
 
     fun packageCompletionContributor(priority: Int = 0) =
-        FirPackageCompletionContributor(basicContext, priority)
+        FirPackageCompletionContributor(basicContext, priority).recording(resultController)
 
     fun importDirectivePackageMembersContributor(priority: Int = 0) =
-        FirImportDirectivePackageMembersCompletionContributor(basicContext, priority)
+        FirImportDirectivePackageMembersCompletionContributor(basicContext, priority).recording(resultController)
 
     fun typeParameterConstraintNameInWhereClauseContributor(priority: Int = 0) =
-        FirTypeParameterConstraintNameInWhereClauseCompletionContributor(basicContext, priority)
+        FirTypeParameterConstraintNameInWhereClauseCompletionContributor(basicContext, priority).recording(resultController)
 
     fun classifierNameContributor(priority: Int = 0) =
-        FirSameAsFileClassifierNameCompletionContributor(basicContext, priority)
+        FirSameAsFileClassifierNameCompletionContributor(basicContext, priority).recording(resultController)
 
     fun whenWithSubjectConditionContributor(priority: Int = 0) =
-        FirWhenWithSubjectConditionContributor(basicContext, priority)
+        FirWhenWithSubjectConditionContributor(basicContext, priority).recording(resultController)
 
     fun superEntryContributor(priority: Int) =
-        FirSuperEntryContributor(basicContext, priority)
+        FirSuperEntryContributor(basicContext, priority).recording(resultController)
 
     fun declarationFromUnresolvedNameContributor(priority: Int) =
-        FirDeclarationFromUnresolvedNameContributor(basicContext, priority)
+        FirDeclarationFromUnresolvedNameContributor(basicContext, priority).recording(resultController)
 
     fun declarationFromOverridableMembersContributor(priority: Int) =
-        FirDeclarationFromOverridableMembersContributor(basicContext, priority)
+        FirDeclarationFromOverridableMembersContributor(basicContext, priority).recording(resultController)
 
     fun namedArgumentContributor(priority: Int = 0) =
-        FirNamedArgumentCompletionContributor(basicContext, priority)
+        FirNamedArgumentCompletionContributor(basicContext, priority).recording(resultController)
 
     fun variableOrParameterNameWithTypeContributor(priority: Int) =
-        FirVariableOrParameterNameWithTypeCompletionContributor(basicContext, priority)
+        FirVariableOrParameterNameWithTypeCompletionContributor(basicContext, priority).recording(resultController)
+
+    fun kDocParameterNameContributor(priority: Int) =
+        FirKDocParameterNameContributor(basicContext, priority).recording(resultController)
+
+    fun kDocCallableContributor(priority: Int) =
+        FirKDocCallableCompletionContributor(basicContext, priority).recording(resultController)
 }

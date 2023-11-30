@@ -44,6 +44,11 @@ import java.util.function.Predicate;
 import static com.intellij.openapi.actionSystem.Anchor.AFTER;
 import static com.intellij.util.containers.ContainerUtil.filter;
 
+/**
+ * Responsible for building the content of the Run or Debug tool window.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
+ */
 public final class RunContentBuilder extends RunTab {
   @ApiStatus.Experimental
   public static final String RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP = "RunTab.TopToolbar.Old";
@@ -67,8 +72,7 @@ public final class RunContentBuilder extends RunTab {
 
   private @Nullable SingleContentSupplier mySupplier;
 
-  @NotNull
-  public static ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable ProgramRunner runner) {
+  public static @NotNull ExecutionEnvironment fix(@NotNull ExecutionEnvironment environment, @Nullable ProgramRunner runner) {
     if (runner == null || runner.equals(environment.getRunner())) {
       return environment;
     }
@@ -77,12 +81,11 @@ public final class RunContentBuilder extends RunTab {
     }
   }
 
-  public void addAction(@NotNull final AnAction action) {
+  public void addAction(final @NotNull AnAction action) {
     myRunnerActions.add(action);
   }
 
-  @NotNull
-  private RunContentDescriptor createDescriptor() {
+  private @NotNull RunContentDescriptor createDescriptor() {
     RunProfile profile = myEnvironment.getRunProfile();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return new RunContentDescriptor(profile, myExecutionResult, myUi);
@@ -165,15 +168,13 @@ public final class RunContentBuilder extends RunTab {
             return List.of(myUi.getOptions().getLayoutActions());
           }
 
-          @NotNull
           @Override
-          public String getMainToolbarPlace() {
+          public @NotNull String getMainToolbarPlace() {
             return ActionPlaces.RUNNER_TOOLBAR;
           }
 
-          @NotNull
           @Override
-          public String getContentToolbarPlace() {
+          public @NotNull String getContentToolbarPlace() {
             return ActionPlaces.RUNNER_TOOLBAR;
           }
         };
@@ -199,8 +200,7 @@ public final class RunContentBuilder extends RunTab {
     return mySupplier;
   }
 
-  @NotNull
-  private static String getRunnerType(@Nullable ExecutionConsole console) {
+  private static @NotNull String getRunnerType(@Nullable ExecutionConsole console) {
     if (console instanceof ExecutionConsoleEx) {
       String id = ((ExecutionConsoleEx)console).getExecutionConsoleId();
       if (id != null) {
@@ -210,8 +210,7 @@ public final class RunContentBuilder extends RunTab {
     return JAVA_RUNNER;
   }
 
-  @NotNull
-  public static Content buildConsoleUiDefault(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
+  public static @NotNull Content buildConsoleUiDefault(@NotNull RunnerLayoutUi ui, @NotNull ExecutionConsole console) {
     Content consoleContent = ui.createContent(ExecutionConsole.CONSOLE_CONTENT_ID, console.getComponent(),
                                               CommonBundle.message("title.console"),
                                               null,
@@ -234,8 +233,7 @@ public final class RunContentBuilder extends RunTab {
     consoleContent.setActions(consoleActions, ActionPlaces.RUNNER_TOOLBAR, console.getComponent());
   }
 
-  @NotNull
-  private DefaultActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions, AnAction @NotNull [] additionalActions) {
+  private @NotNull DefaultActionGroup createActionToolbar(AnAction @NotNull [] restartActions, AnAction @NotNull [] consoleActions, AnAction @NotNull [] additionalActions) {
     boolean isNewLayout = UIExperiment.isNewDebuggerUIEnabled();
 
     String mainGroupId = isNewLayout ? RUN_TOOL_WINDOW_TOP_TOOLBAR_GROUP : RUN_TOOL_WINDOW_TOP_TOOLBAR_OLD_GROUP;
@@ -290,7 +288,6 @@ public final class RunContentBuilder extends RunTab {
       addActionsWithConstraints(afterStopActions.getChildren(null), new Constraints(AFTER, IdeActions.ACTION_STOP_PROGRAM),
                                 actionGroup, moreGroup);
       moreGroup.addSeparator();
-      moreGroup.add(new CreateAction());
 
       if (additionalActions.length > 0) {
         moreGroup.addSeparator();
@@ -298,6 +295,7 @@ public final class RunContentBuilder extends RunTab {
       }
 
       actionGroup.add(moreGroup);
+      moreGroup.add(new CreateAction());
     }
     return actionGroup;
   }
@@ -315,10 +313,10 @@ public final class RunContentBuilder extends RunTab {
   }
 
   public static final class ConsoleToFrontListener implements ObservableConsoleView.ChangeListener {
-    @NotNull private final Project myProject;
-    @NotNull private final Executor myExecutor;
-    @NotNull private final RunContentDescriptor myRunContentDescriptor;
-    @NotNull private final RunnerLayoutUi myUi;
+    private final @NotNull Project myProject;
+    private final @NotNull Executor myExecutor;
+    private final @NotNull RunContentDescriptor myRunContentDescriptor;
+    private final @NotNull RunnerLayoutUi myUi;
     private final boolean myShowConsoleOnStdOut;
     private final boolean myShowConsoleOnStdErr;
     private final AtomicBoolean myFocused = new AtomicBoolean();
@@ -349,7 +347,7 @@ public final class RunContentBuilder extends RunTab {
     }
   }
 
-  private static class EmptyWhenDuplicate extends ActionGroup implements ActionWithDelegate<ActionGroup> {
+  private static final class EmptyWhenDuplicate extends ActionGroup implements ActionWithDelegate<ActionGroup> {
 
     private final @NotNull ActionGroup myDelegate;
     private final @NotNull Predicate<? super ActionGroup> myDuplicatePredicate;
@@ -368,7 +366,7 @@ public final class RunContentBuilder extends RunTab {
     }
 
     @Nullable
-    protected Component getEventComponent(@Nullable AnActionEvent e) {
+    private static Component getEventComponent(@Nullable AnActionEvent e) {
       if (e == null) return null;
       SingleContentSupplier supplier = e.getData(SingleContentSupplier.KEY);
       return supplier != null ? supplier.getTabs().getComponent() : null;

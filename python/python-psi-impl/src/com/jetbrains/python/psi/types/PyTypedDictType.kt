@@ -279,8 +279,8 @@ class PyTypedDictType @JvmOverloads constructor(private val name: String,
      * @see <a href=https://www.python.org/dev/peps/pep-0589/#type-consistency>PEP-589</a>
      */
     private fun checkStructuralCompatibility(expected: PyType?,
-                                     actual: PyTypedDictType,
-                                     context: TypeEvalContext): TypeCheckingResult? {
+                                             actual: PyTypedDictType,
+                                             context: TypeEvalContext): TypeCheckingResult? {
       if (expected is PyCollectionType && PyTypingTypeProvider.MAPPING == expected.classQName) {
         val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
         val elementTypes = expected.elementTypes

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.dsl.inspections
 
 import org.gradle.util.GradleVersion
@@ -29,6 +29,15 @@ class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @BaseGradleVersionSource
+  fun testNoUsageOfBundle(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, "", """
+        [bundles]
+        <warning>ui</warning> = []
+    """.trimIndent())
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
   fun testNoUsageOfPlugin(gradleVersion: GradleVersion) {
     runTest(gradleVersion, "", """
         [plugins]
@@ -42,6 +51,26 @@ class GradleUnusedVersionCatalogInspectionTest : GradleCodeInsightTestCase() {
     runTest(gradleVersion, "libs.groovy.core", """
         [libraries]
         groovy-core = "aa:bb:2.0.0"      
+    """.trimIndent())
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testUsageOfLibraryInBundle(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, "", """
+        [libraries]
+        groovy-core = "aa:bb:2.0.0"   
+        [bundles]
+        <warning>aa</warning> = [ "groovy-core" ]
+    """.trimIndent())
+  }
+
+  @ParameterizedTest
+  @BaseGradleVersionSource
+  fun testUsageOfBundle(gradleVersion: GradleVersion) {
+    runTest(gradleVersion, "libs.bundles.ui", """
+        [bundles]
+        ui = []
     """.trimIndent())
   }
 

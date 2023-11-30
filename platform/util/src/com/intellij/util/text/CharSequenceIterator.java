@@ -8,7 +8,7 @@ import java.text.CharacterIterator;
 /**
  * {@link CharacterIterator} implementation for a given fragment of a {@link CharSequence}.
  */
-public class CharSequenceIterator implements CharacterIterator {
+public final class CharSequenceIterator implements CharacterIterator {
   private final @NotNull CharSequence myText;
   private final int myStart;
   private final int myEnd;

@@ -1,8 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory
+import com.intellij.collaboration.ui.codereview.details.CodeReviewDetailsActionsComponentFactory.CodeReviewActions
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRole
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
@@ -10,11 +12,13 @@ import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.collaboration.ui.util.toAnAction
+import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
@@ -36,51 +40,92 @@ internal object GHPRDetailsActionsComponentFactory {
 
   fun create(
     scope: CoroutineScope,
+    project: Project,
     reviewRequestState: Flow<ReviewRequestState>,
     reviewFlowVm: GHPRReviewFlowViewModel,
     dataProvider: GHPRDataProvider
   ): JComponent {
-    val reviewActions = CodeReviewDetailsActionsComponentFactory.CodeReviewActions(
-      requestReviewAction = GHPRRequestReviewAction(scope, reviewFlowVm),
-      reRequestReviewAction = GHPRReRequestReviewAction(scope, reviewFlowVm),
-      closeReviewAction = GHPRCloseAction(scope, reviewFlowVm),
-      reopenReviewAction = GHPRReopenAction(scope, reviewFlowVm),
-      setMyselfAsReviewerAction = GHPRSetMyselfAsReviewerAction(scope, reviewFlowVm),
-      postReviewAction = GHPRPostReviewAction(scope, reviewFlowVm),
-      mergeReviewAction = GHPRCommitMergeAction(scope, reviewFlowVm),
-      mergeSquashReviewAction = GHPRSquashMergeAction(scope, reviewFlowVm),
-      rebaseReviewAction = GHPRRebaseMergeAction(scope, reviewFlowVm)
+    val reviewActions = CodeReviewActions(
+      requestReviewAction = GHPRRequestReviewAction(scope, project, reviewFlowVm),
+      reRequestReviewAction = GHPRReRequestReviewAction(scope, project, reviewFlowVm),
+      closeReviewAction = GHPRCloseAction(scope, project, reviewFlowVm),
+      reopenReviewAction = GHPRReopenAction(scope, project, reviewFlowVm),
+      setMyselfAsReviewerAction = GHPRSetMyselfAsReviewerAction(scope, project, reviewFlowVm),
+      postReviewAction = GHPRPostReviewAction(scope, project, reviewFlowVm),
+      mergeReviewAction = GHPRCommitMergeAction(scope, project, reviewFlowVm),
+      mergeSquashReviewAction = GHPRSquashMergeAction(scope, project, reviewFlowVm),
+      rebaseReviewAction = GHPRRebaseMergeAction(scope, project, reviewFlowVm)
     )
     val moreActionsGroup = DefaultActionGroup(GithubBundle.message("pull.request.merge.commit.action"), true)
 
     return Wrapper().apply {
-      bindContentIn(scope, reviewFlowVm.role.map { role ->
+      bindContentIn(scope, reviewFlowVm.role) { role ->
         val mainPanel = when (role) {
-          ReviewRole.AUTHOR -> CodeReviewDetailsActionsComponentFactory.createActionsForAuthor(
-            scope, reviewFlowVm.reviewState, reviewFlowVm.requestedReviewers, reviewActions, moreActionsGroup
-          )
-          ReviewRole.REVIEWER -> createActionsForReviewer(scope, reviewFlowVm, dataProvider, reviewActions, moreActionsGroup)
-          ReviewRole.GUEST -> CodeReviewDetailsActionsComponentFactory.createActionsForGuest(reviewActions, moreActionsGroup)
+          ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm, reviewActions, moreActionsGroup)
+          ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, dataProvider, reviewActions, moreActionsGroup)
+          ReviewRole.GUEST -> CodeReviewDetailsActionsComponentFactory.createActionsForGuest(reviewActions, moreActionsGroup,
+                                                                                             ::createMergeActionGroup)
         }
 
-        return@map CodeReviewDetailsActionsComponentFactory.createActionsComponent(
-          scope, reviewRequestState,
+        CodeReviewDetailsActionsComponentFactory.createActionsComponent(
+          this, reviewRequestState,
           openedStatePanel = mainPanel,
           CodeReviewDetailsActionsComponentFactory.createActionsForMergedReview(),
           CodeReviewDetailsActionsComponentFactory.createActionsForClosedReview(reviewActions.reopenReviewAction),
           CodeReviewDetailsActionsComponentFactory.createActionsForDraftReview(reviewActions.postReviewAction)
         )
-      })
+      }
     }
   }
 
-  private fun createActionsForReviewer(
-    scope: CoroutineScope,
+  private fun CoroutineScope.createActionsForAuthor(
     reviewFlowVm: GHPRReviewFlowViewModel,
-    dataProvider: GHPRDataProvider,
-    reviewActions: CodeReviewDetailsActionsComponentFactory.CodeReviewActions,
+    reviewActions: CodeReviewActions,
     moreActionsGroup: DefaultActionGroup
   ): JComponent {
+    val cs = this
+    val reviewState = reviewFlowVm.reviewState
+    val requestedReviewers = reviewFlowVm.requestedReviewers
+
+    val requestReviewButton = CodeReviewDetailsActionsComponentFactory.createRequestReviewButton(
+      cs, reviewState, requestedReviewers, reviewActions.requestReviewAction
+    )
+    val reRequestReviewButton = CodeReviewDetailsActionsComponentFactory.createReRequestReviewButton(
+      cs, reviewState, requestedReviewers, reviewActions.reRequestReviewAction
+    )
+    val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions)
+    val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
+    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+      reviewState.collect { reviewState ->
+        moreActionsGroup.removeAll()
+        when (reviewState) {
+          ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
+            moreActionsGroup.add(createMergeActionGroup(reviewActions))
+            moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
+          }
+          ReviewState.ACCEPTED -> {
+            moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
+            moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
+          }
+        }
+      }
+    }
+
+    return HorizontalListPanel(BUTTONS_GAP).apply {
+      add(requestReviewButton)
+      add(reRequestReviewButton)
+      add(mergeReviewButton)
+      add(moreActionsButton)
+    }
+  }
+
+  private fun CoroutineScope.createActionsForReviewer(
+    reviewFlowVm: GHPRReviewFlowViewModel,
+    dataProvider: GHPRDataProvider,
+    reviewActions: CodeReviewActions,
+    moreActionsGroup: DefaultActionGroup
+  ): JComponent {
+    val cs = this
     val submitReviewButton = JButton().apply {
       isOpaque = false
       addActionListener {
@@ -92,33 +137,27 @@ internal object GHPRDetailsActionsComponentFactory {
         val anActionEvent = AnActionEvent.createFromDataContext("github.review.details", presentation, dataContext)
         GHPRReviewSubmitAction().actionPerformed(anActionEvent)
       }
-      bindTextIn(scope, reviewFlowVm.pendingComments.map { pendingComments ->
+      bindTextIn(cs, reviewFlowVm.pendingComments.map { pendingComments ->
         GithubBundle.message("pull.request.review.actions.submit", pendingComments)
       })
-      bindVisibilityIn(scope, reviewFlowVm.reviewState.map {
+      bindVisibilityIn(cs, reviewFlowVm.reviewState.map {
         it == ReviewState.WAIT_FOR_UPDATES || it == ReviewState.NEED_REVIEW
       })
     }
-    val mergeReviewButton = JBOptionButton(
-      reviewActions.mergeReviewAction,
-      arrayOf(reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
-    ).apply {
-      bindVisibilityIn(scope, reviewFlowVm.reviewState.map { it == ReviewState.ACCEPTED })
-    }
-
+    val mergeReviewButton = createMergeReviewOptionButton(cs, reviewFlowVm, reviewActions)
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
-    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    cs.launch(start = CoroutineStart.UNDISPATCHED) {
       reviewFlowVm.reviewState.collect { reviewState ->
         moreActionsGroup.removeAll()
         when (reviewState) {
           ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
-            moreActionsGroup.add(GHPRRequestReviewAction(scope, reviewFlowVm).toAnAction())
-            moreActionsGroup.add(CodeReviewDetailsActionsComponentFactory.createMergeActionGroup(reviewActions))
-            moreActionsGroup.add(GHPRCloseAction(scope, reviewFlowVm).toAnAction())
+            moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
+            moreActionsGroup.add(createMergeActionGroup(reviewActions))
+            moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
           }
           ReviewState.ACCEPTED -> {
-            moreActionsGroup.add(GHPRRequestReviewAction(scope, reviewFlowVm).toAnAction())
-            moreActionsGroup.add(GHPRCloseAction(scope, reviewFlowVm).toAnAction())
+            moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
+            moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
           }
         }
       }
@@ -128,6 +167,33 @@ internal object GHPRDetailsActionsComponentFactory {
       add(submitReviewButton)
       add(mergeReviewButton)
       add(moreActionsButton)
+    }
+  }
+
+  private fun createMergeReviewOptionButton(
+    cs: CoroutineScope,
+    reviewFlowVm: GHPRReviewFlowViewModel,
+    reviewActions: CodeReviewActions
+  ): JBOptionButton {
+    // Usual order: [0] -- "Merge", [1] -- "Squash and Merge", [2] -- "Rebase"
+    val actions = mutableListOf(reviewActions.mergeReviewAction, reviewActions.mergeSquashReviewAction, reviewActions.rebaseReviewAction)
+    val restrictions = reviewFlowVm.repositoryRestrictions
+    val mainAction = when {
+      restrictions.isMergeAllowed -> actions.removeAt(0)
+      restrictions.isSquashMergeAllowed -> actions.removeAt(1)
+      else -> actions.removeAt(2)
+    }
+
+    return JBOptionButton(mainAction, actions.toTypedArray()).apply {
+      bindVisibilityIn(cs, reviewFlowVm.reviewState.map { it == ReviewState.ACCEPTED })
+    }
+  }
+
+  private fun createMergeActionGroup(reviewActions: CodeReviewActions): ActionGroup {
+    return DefaultActionGroup(CollaborationToolsBundle.message("review.details.action.merge.group"), true).apply {
+      add(reviewActions.mergeReviewAction.toAnAction())
+      add(reviewActions.mergeSquashReviewAction.toAnAction())
+      add(reviewActions.rebaseReviewAction.toAnAction())
     }
   }
 }

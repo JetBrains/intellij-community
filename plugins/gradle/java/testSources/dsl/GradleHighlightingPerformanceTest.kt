@@ -40,7 +40,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
             fixture.doHighlighting()
             fixture.completeBasic()
           }
-        }.assertTiming()
+        }.assertTiming(GradleHighlightingPerformanceTest::testPerformance)
       }
     }
   }
@@ -70,7 +70,7 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
           val rangeMarkers = ArrayList<RangeMarker>()
           document.asSafely<DocumentEx>()?.processRangeMarkers { rangeMarkers.add(it) }
           rangeMarkers.forEach { marker -> document.asSafely<DocumentEx>()?.removeRangeMarker(marker as RangeMarkerEx) }
-        }.usesAllCPUCores().assertTiming()
+        }.usesAllCPUCores().assertTiming(GradleHighlightingPerformanceTest::testCompletionPerformance)
       }
     }
   }
@@ -105,14 +105,10 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         setProjectName("GradleCompletionPerformanceTest")
       }
       withBuildFile(gradleVersion) {
-        withPrefix {
-          call("plugins") {
-            call("id", string("java"))
-            call("id", string("groovy"))
-            call("id", string("scala"))
-          }
-        }
-        addRepository("mavenCentral()")
+        withPlugin("java")
+        withPlugin("groovy")
+        withPlugin("scala")
+        withMavenCentral()
         withPostfix {
           call("dependencies") {
 

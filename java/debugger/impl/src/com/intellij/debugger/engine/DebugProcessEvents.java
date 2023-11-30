@@ -13,11 +13,15 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.Requestor;
 import com.intellij.debugger.settings.DebuggerSettings;
+import com.intellij.debugger.statistics.DebuggerStatistics;
+import com.intellij.debugger.statistics.StatisticsStorage;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.InstrumentationTracker;
 import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.overhead.OverheadProducer;
 import com.intellij.debugger.ui.overhead.OverheadTimings;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,8 +33,10 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -511,6 +517,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
     preprocessEvent(suspendContext, thread);
 
     RequestHint hint = getRequestHint(event);
+    Object commandToken = getCommandToken(event);
 
     deleteStepRequests(event.thread());
 
@@ -519,7 +526,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
     final Project project = getProject();
     while (true) {
       if (hint != null) {
-        final int nextStepDepth = hint.getNextStepDepth(suspendContext);
+        final RequestHint currentHint = hint;
+        final Ref<Integer> stepDepth = Ref.create();
+        long timeMs = TimeoutUtil.measureExecutionTime(() -> stepDepth.set(currentHint.getNextStepDepth(suspendContext)));
+        StatisticsStorage.addStepping(this, commandToken, timeMs);
+
+        final int nextStepDepth = stepDepth.get();
         if (nextStepDepth == RequestHint.RESUME) {
           getSession().clearSteppingThrough();
           shouldResume = true;
@@ -532,7 +544,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
         else {
           final ThreadReferenceProxyImpl threadProxy = suspendContext.getThread();
-          hint.doStep(this, suspendContext, threadProxy, hint.getSize(), nextStepDepth);
+          hint.doStep(this, suspendContext, threadProxy, hint.getSize(), nextStepDepth, commandToken);
           shouldResume = true;
         }
 
@@ -545,15 +557,17 @@ public class DebugProcessEvents extends DebugProcessImpl {
         getSuspendManager().voteResume(suspendContext);
       }
       else {
+        StatisticsStorage.stepRequestCompleted(this, commandToken);
         showStatusText("");
         stopWatchingMethodReturn();
         getSuspendManager().voteSuspend(suspendContext);
         if (hint != null) {
           final MethodFilter methodFilter = hint.getMethodFilter();
-          if (methodFilter instanceof NamedMethodFilter && !hint.wasStepTargetMethodMatched()) {
-            final String message =
-              JavaDebuggerBundle.message("notification.method.has.not.been.called", ((NamedMethodFilter)methodFilter).getMethodName());
+          if (methodFilter instanceof NamedMethodFilter namedMethodFilter && !hint.wasStepTargetMethodMatched()) {
+            String methodName = namedMethodFilter.getMethodName();
+            String message = JavaDebuggerBundle.message("notification.method.has.not.been.called", methodName);
             XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.INFO).notify(project);
+            DebuggerStatistics.logMethodSkippedDuringStepping(project, StatisticsStorage.getSteppingStatisticOrNull(commandToken));
           }
           if (hint.wasStepTargetMethodMatched()) {
             suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
@@ -594,6 +608,10 @@ public class DebugProcessEvents extends DebugProcessImpl {
     return (RequestHint)event.request().getProperty("hint");
   }
 
+  private static Object getCommandToken(Event event) {
+    return event.request().getProperty("commandToken");
+  }
+
   private void processLocatableEvent(final SuspendContextImpl suspendContext, final LocatableEvent event) {
     ThreadReference thread = event.thread();
     //LOG.assertTrue(thread.isSuspended());
@@ -617,13 +635,30 @@ public class DebugProcessEvents extends DebugProcessImpl {
           return;
         }
 
+        // Skip breakpoints in other threads during suspend-all stepping.
+        //
+        // Don't try to check breakpoint's condition or evaluate its log expression,
+        // because these evaluations may lead to skipping of more important stepping events,
+        // see IDEA-336282.
+        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
+          ThreadReference filteredThread = getRequestsManager().getFilterThread();
+          if (filteredThread != null && !Comparing.equal(filteredThread, thread)) {
+            notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
+            suspendManager.voteResume(suspendContext);
+            return;
+          }
+        }
+
         boolean resumePreferred = requestor != null && DebuggerSettings.SUSPEND_NONE.equals(requestor.getSuspendPolicy());
         boolean requestHit = false;
-        long start = requestor instanceof OverheadProducer && ((OverheadProducer)requestor).track() ? System.currentTimeMillis() : 0;
+        long startTimeNs = System.nanoTime();
+        long endTimeNs = 0;
         try {
           requestHit = (requestor != null) && requestor.processLocatableEvent(this, event);
         }
         catch (final LocatableEventRequestor.EventProcessingException ex) {
+          // stop timer here to prevent reporting dialog opened time
+          endTimeNs = System.nanoTime();
           if (LOG.isDebugEnabled()) {
             LOG.debug(ex.getMessage());
           }
@@ -632,7 +667,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
             final String displayName = requestor instanceof Breakpoint ? ((Breakpoint<?>)requestor).getDisplayName() : requestor.getClass().getSimpleName();
             final String message = JavaDebuggerBundle.message("error.evaluating.breakpoint.condition.or.action", displayName, ex.getMessage());
             considerRequestHit[0] = Messages.showYesNoDialog(getProject(), message, ex.getTitle(), Messages.getQuestionIcon()) == Messages.YES;
-          }, ModalityState.NON_MODAL);
+          }, ModalityState.nonModal());
           requestHit = considerRequestHit[0];
           resumePreferred = !requestHit;
         }
@@ -643,10 +678,17 @@ public class DebugProcessEvents extends DebugProcessImpl {
           LOG.error(e);
         }
         finally {
-          if (start > 0) {
+          if (endTimeNs == 0) {
+            endTimeNs = System.nanoTime();
+          }
+          long timeMs = TimeUnit.NANOSECONDS.toMillis(endTimeNs - startTimeNs);
+          if (requestor instanceof Breakpoint<?> breakpoint) {
+            DebuggerStatistics.logBreakpointVisit(breakpoint, timeMs);
+          }
+          if (requestor instanceof OverheadProducer && ((OverheadProducer)requestor).track()) {
             OverheadTimings.add(DebugProcessEvents.this, (OverheadProducer)requestor,
                                 requestHit || requestor instanceof StackCapturingLineBreakpoint ? 1 : 0,
-                                System.currentTimeMillis() - start);
+                                timeMs);
           }
         }
 
@@ -661,15 +703,6 @@ public class DebugProcessEvents extends DebugProcessImpl {
               }
             }
           });
-        }
-
-        // Skip breakpoints in other threads during suspend-all stepping:
-        if (!DebuggerSession.filterBreakpointsDuringSteppingUsingDebuggerEngine()) {
-          ThreadReference filteredThread = getRequestsManager().getFilterThread();
-          if (filteredThread != null && !Comparing.equal(filteredThread, thread)) {
-            notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
-            resumePreferred = true;
-          }
         }
 
         // special check for smart step into with this breakpoint inside the expressions
@@ -727,6 +760,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       };
       XDebuggerManagerImpl.getNotificationGroup()
         .createNotification(message, MessageType.WARNING)
+        .addAction(NotificationAction.createSimpleExpiring(JavaDebuggerBundle.message("message.breakpoint.skipped.learn.more"), () -> {
+          BrowserUtil.browse("https://www.jetbrains.com/help/idea/?skipped.breakpoints");
+        }))
         .notify(getProject());
     }
   }

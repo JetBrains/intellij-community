@@ -14,8 +14,23 @@ fun <T> seq(block: SeqScope<T>.() -> Unit): Sequence<T> = Sequence {
 
 
 private class DefaultSeqScope<T> : SeqScope<T>() {
-    val values: MutableList<() -> T?> = mutableListOf()
+    val values: MutableList<Iterable<T>> = mutableListOf()
     override fun yield(value: () -> T?) {
+        values.add(object : Iterable<T> {
+            override fun iterator(): Iterator<T> = object : TransformingIterator<T>() {
+                private var provider: (() -> T?)? = value
+                override fun calculateHasNext(): Boolean = provider != null
+
+                override fun calculateNext(): T? {
+                    val p = provider ?: throw NoSuchElementException()
+                    provider = null
+                    return p()
+                }
+            }
+        })
+    }
+
+    override fun yieldAll(value: Iterable<T>) {
         values.add(value)
     }
 }
@@ -23,12 +38,12 @@ private class DefaultSeqScope<T> : SeqScope<T>() {
 abstract class TransformingIterator<T> : Iterator<T> {
     protected var next: T? = null
 
-    protected abstract fun internalHasNext(): Boolean
-    protected abstract fun internalNext(): T?
+    protected abstract fun calculateHasNext(): Boolean
+    protected abstract fun calculateNext(): T?
 
     override fun hasNext(): Boolean {
-        while (internalHasNext()) {
-            val t = internalNext()
+        while (calculateHasNext()) {
+            val t = calculateNext()
             if (t != null) {
                 next = t
                 return true
@@ -51,18 +66,40 @@ abstract class TransformingIterator<T> : Iterator<T> {
 
 }
 
-private class SeqIterator<T>(providers: List<() -> T?>) : TransformingIterator<T>() {
-    private var iterator: Iterator<() -> T?>? = providers.iterator()
-    override fun internalHasNext(): Boolean {
-        return iterator?.hasNext() == true
+class MappingIterator<K, T>(
+    private val iterator: Iterator<K>,
+    private val mapping: (K) -> T?
+): TransformingIterator<T>() {
+    override fun calculateHasNext(): Boolean = iterator.hasNext()
+
+    override fun calculateNext(): T? = mapping(iterator.next())
+}
+
+private class SeqIterator<T>(providers: List<Iterable<T?>>) : TransformingIterator<T>() {
+    private var providersIterator: Iterator<Iterable<T?>>? = providers.iterator()
+    private var iterator: Iterator<T?>? = null
+    override fun calculateHasNext(): Boolean {
+        while (providersIterator != null) {
+            if (iterator?.hasNext() == true) return true
+            val providersIt = providersIterator
+            if (providersIt?.hasNext() != true) {
+                return false
+            }
+            val next = providersIt.next()
+            val nextIterator = next.iterator()
+            iterator = nextIterator
+            if (nextIterator.hasNext()) return true
+        }
+        return false
     }
 
-    override fun internalNext(): T? = iterator?.next()?.invoke()
+    override fun calculateNext(): T? = iterator?.next()
 
     override fun hasNext(): Boolean {
         val hasNext = super.hasNext()
         if (!hasNext) {
             iterator = null
+            providersIterator = null
         }
         return hasNext
     }
@@ -71,5 +108,7 @@ private class SeqIterator<T>(providers: List<() -> T?>) : TransformingIterator<T
 @ApiStatus.Internal
 abstract class SeqScope<in T> internal constructor() {
     abstract fun yield(value: () -> T?)
+
+    abstract fun yieldAll(value: Iterable<T>)
 
 }

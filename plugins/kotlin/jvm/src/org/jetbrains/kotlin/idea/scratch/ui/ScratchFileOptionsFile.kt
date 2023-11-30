@@ -6,11 +6,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
+import org.jetbrains.kotlin.idea.core.util.AbstractFileGistService
 import org.jetbrains.kotlin.idea.scratch.ScratchFileOptions
 
-@Service
-internal class ScratchFileOptionsFile: AbstractFileAttributePropertyService<ScratchFileOptions>(
+@Service(Service.Level.PROJECT)
+internal class ScratchFileOptionsFile: AbstractFileGistService<ScratchFileOptions>(
     name = "kotlin-scratch-file-options",
     version = 1,
     read = { ScratchFileOptions(readBoolean(), readBoolean(), readBoolean()) },

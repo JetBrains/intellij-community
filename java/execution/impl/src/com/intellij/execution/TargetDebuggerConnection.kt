@@ -3,6 +3,7 @@ package com.intellij.execution
 
 import com.intellij.execution.configurations.RemoteConnection
 import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.localPort
 
 /**
  * Allows to resolve the stored debugger connection configuration against
@@ -14,7 +15,7 @@ internal class TargetDebuggerConnection(private val remoteConnection: RemoteConn
   private var remoteConnectionResolved: Boolean = false
 
   fun resolveRemoteConnection(environment: TargetEnvironment) {
-    val localPort = environment.targetPortBindings[debuggerPortRequest]
+    val localPort = environment.targetPortBindings[debuggerPortRequest]?.localPort
     remoteConnection.apply {
       debuggerHostName = "localhost"
       debuggerAddress = localPort.toString()

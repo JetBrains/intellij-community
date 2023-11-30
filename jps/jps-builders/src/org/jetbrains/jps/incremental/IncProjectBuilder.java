@@ -64,6 +64,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.jetbrains.jps.builders.java.JavaBuilderUtil.isDepGraphEnabled;
+
 /**
  * @author Eugene Zhuravlev
  */
@@ -133,6 +135,7 @@ public final class IncProjectBuilder {
       context = createContext(scope);
       final BuildFSState fsState = myProjectDescriptor.fsState;
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
+        context.checkCanceled();
         if (scope.isAffected(target)) {
           BuildOperations.ensureFSStateInitialized(context, target, true);
           final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);
@@ -264,6 +267,9 @@ public final class IncProjectBuilder {
     if (myIsTestMode || isAutoBuild()) {
       // do not use the heuristic in tests in order to properly test all cases
       // automatic builds should not cause start full project rebuilds to avoid situations when rebuild is not expected by user
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Rebuild heuristic: skipping the check; isTestMode = " + myIsTestMode + "; isAutoBuild = " + isAutoBuild());
+      }
       return;
     }
     final BuildTargetsState targetsState = myProjectDescriptor.getTargetsState();
@@ -277,7 +283,16 @@ public final class IncProjectBuilder {
     // check that this is a whole-project incremental build
     // checking only JavaModuleBuildTargetType because these target types directly correspond to project modules
     for (BuildTargetType<?> type : JavaModuleBuildTargetType.ALL_TYPES) {
-      if (!scope.isBuildIncrementally(type) || !scope.isAllTargetsOfTypeAffected(type)) {
+      if (!scope.isBuildIncrementally(type)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Rebuild heuristic: skipping the check because rebuild is forced for targets of type " + type.getTypeId());
+        }
+        return;
+      }
+      if (!scope.isAllTargetsOfTypeAffected(type)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Rebuild heuristic: skipping the check because some targets are excluded from compilation scope, e.g. targets of type " + type.getTypeId());
+        }
         return;
       }
     }
@@ -407,7 +422,9 @@ public final class IncProjectBuilder {
              "; isMake:" +
              context.isMake() +
              " parallel compilation:" +
-             isParallelBuild());
+             isParallelBuild() +
+             "; dependency graph enabled:" +
+             isDepGraphEnabled());
 
     context.addBuildListener(new ChainedTargetsBuildListener(context));
 
@@ -1050,7 +1067,7 @@ public final class IncProjectBuilder {
       span.complete();
     }
 
-    public void buildInParallel() throws IOException, ProjectBuildException {
+    public void buildInParallel() throws ProjectBuildException {
       List<BuildChunkTask> initialTasks = new ArrayList<>();
       for (BuildChunkTask task : myTasks) {
         if (task.isReady()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.action.mq;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -7,7 +7,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogCommitSelection;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -19,7 +22,7 @@ import java.util.List;
 
 public class HgQGotoFromLogAction extends HgMqAppliedPatchAction {
 
-  protected void actionPerformed(@NotNull final HgRepository repository, @NotNull final VcsFullCommitDetails commit) {
+  protected void actionPerformed(final @NotNull HgRepository repository, final @NotNull VcsFullCommitDetails commit) {
     final Project project = repository.getProject();
     List<Hash> parents = commit.getParents();
     final Hash parentHash = parents.isEmpty() ? null : parents.get(0);

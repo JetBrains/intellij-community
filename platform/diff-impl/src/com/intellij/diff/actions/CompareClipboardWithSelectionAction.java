@@ -96,10 +96,21 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(project, content2);
     content1.putUserData(BlankDiffWindowUtil.REMEMBER_CONTENT_KEY, true);
 
+    VirtualFile editorFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    String editorContentTitle = editorFile != null
+                                ? DiffRequestFactory.getInstance().getContentTitle(editorFile)
+                                : DiffBundle.message("diff.content.editor.content.title");
+    if (editor.getSelectionModel().hasSelection()) {
+      editorContentTitle = DiffBundle.message("diff.content.selection.from.file.content.title", editorContentTitle);
+    }
+
     MutableDiffRequestChain chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, null);
-    chain.setWindowTitle(DiffBundle.message("diff.clipboard.vs.editor.dialog.title"));
+    String windowTitle = editorFile != null ? DiffBundle.message("diff.clipboard.vs.editor.dialog.title.with.filename",
+                                                                 editorFile.getName())
+                                            : DiffBundle.message("diff.clipboard.vs.editor.dialog.title");
+    chain.setWindowTitle(windowTitle);
     chain.setTitle1(DiffBundle.message("diff.content.clipboard.content.title"));
-    chain.setTitle2(createContentTitle(editor));
+    chain.setTitle2(editorContentTitle);
 
     int currentLine = editor.getCaretModel().getLogicalPosition().line;
     chain.putRequestUserData(DiffUserDataKeys.SCROLL_TO_LINE, Pair.create(Side.RIGHT, currentLine));
@@ -135,19 +146,5 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
     if (editor.isViewer()) content.putUserData(DiffUserDataKeys.FORCE_READ_ONLY, true);
 
     return content;
-  }
-
-  @NotNull
-  private static String createContentTitle(@NotNull Editor editor) {
-    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
-    String title = file != null
-                   ? DiffRequestFactory.getInstance().getContentTitle(file)
-                   : DiffBundle.message("diff.content.editor.content.title");
-
-    if (editor.getSelectionModel().hasSelection()) {
-      title = DiffBundle.message("diff.content.selection.from.file.content.title", title);
-    }
-
-    return title;
   }
 }

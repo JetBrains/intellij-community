@@ -3,22 +3,26 @@ package com.intellij.settingsSync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.SettingsSnapshotZipSerializer.deserializeSettingsProviders
 import com.intellij.settingsSync.SettingsSnapshotZipSerializer.serializeSettingsProviders
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
 import com.intellij.ui.JBAccountInfoService
-import com.intellij.util.io.createFile
-import com.intellij.util.io.readText
+import com.intellij.util.io.createParentDirectories
+import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
+import org.eclipse.jgit.dircache.DirCache
+import org.eclipse.jgit.errors.LockFailedException
+import org.eclipse.jgit.events.IndexChangedListener
+import org.eclipse.jgit.internal.storage.file.LockFile
 import org.eclipse.jgit.lib.*
 import org.eclipse.jgit.lib.Constants.R_HEADS
 import org.eclipse.jgit.revwalk.RevCommit
@@ -32,8 +36,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.function.Consumer
 import java.util.regex.Pattern
-import kotlin.io.path.div
-import kotlin.io.path.exists
+import kotlin.io.path.*
 
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
@@ -60,8 +63,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   override fun initialize() {
     configureJGit()
+    initRepository()
+  }
 
-    val dotGit = settingsSyncStorage.resolve(".git")
+  private fun initRepository() {
+    val dotGit: Path = settingsSyncStorage.resolve(".git")
     repository = FileRepositoryBuilder().setGitDir(dotGit.toFile()).setAutonomous(true).readEnvironment().build()
     git = Git(repository)
 
@@ -69,9 +75,23 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     if (newRepository) {
       LOG.info("Initializing new Git repository for Settings Sync at $settingsSyncStorage")
       repository.create()
-      initRepository(repository)
+      addInitialCommit(repository)
+    } else {
+      val lockEntries = dotGit.listDirectoryEntries("*.lock")
+      val FIVE_SECONDS = 5000
+      for(lock in lockEntries) {
+        if (System.currentTimeMillis() - lock.getLastModifiedTime().toMillis() > FIVE_SECONDS) {
+          FileUtil.delete(lock)
+        } else {
+          // Repository is currently in process of operating.
+          // Shouldn't delete the lock, otherwise we'll damage the repo. Just log instead
+          LOG.warn("Found new lock (${lock.fileName}) modified ${lock.getLastModifiedTime().toInstant()}. Repo initialization might fail")
+        }
+      }
     }
-
+    if (!repository.headCommitExists()) {
+      addInitialCommit(repository)
+    }
     createBranchIfNeeded(MASTER_REF_NAME, newRepository)
     createBranchIfNeeded(CLOUD_REF_NAME, newRepository)
     createBranchIfNeeded(IDE_REF_NAME, newRepository)
@@ -102,8 +122,8 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     applyState(IDE_REF_NAME, snapshot, "Copy current configs", warnAboutEmptySnapshot = false)
   }
 
-  private fun initRepository(repository: Repository?) {
-    val gitignore = settingsSyncStorage.resolve(".gitignore").createFile()
+  private fun addInitialCommit(repository: Repository) {
+    val gitignore = settingsSyncStorage.resolve(".gitignore").createParentDirectories().createFile()
     gitignore.write("""
           event-log-metadata
           jdbc-drivers
@@ -209,7 +229,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
         .setSign(false)
 
       userDataProvider()?.let {
-        val personIdent = PersonIdent(it.loginName, it.email)
+        val personIdent = PersonIdent(it.loginName ?: "", it.email ?: "<>")
         commitData.author = personIdent
         commitData.committer = personIdent
       }
@@ -397,8 +417,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     cloudBranchTip: RevCommit,
     serializer: (T) -> String,
     deserializer: (String) -> T,
-    merger: (T?, T, T) -> T): String
-  {
+    merger: (T?, T, T) -> T): String {
     val ideContent = getFileContentInBranch(relativePath, ideBranchTip)
     val ideState = deserializer(ideContent)
     val cloudContent = getFileContentInBranch(relativePath, cloudBranchTip)
@@ -527,7 +546,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     override fun toString(): String = id.substring(0, 8)
   }
 
-  private companion object {
+  companion object {
     val LOG = logger<GitSettingsLog>()
 
     const val MASTER_REF_NAME = "master"
@@ -550,7 +569,12 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 }
 
+internal fun Repository.headCommitExists(): Boolean {
+  val ref = this.findRef(Constants.HEAD) ?: return false
+  return ref.objectId != null
+}
+
 internal fun Repository.headCommit(): RevCommit {
-  val ref = this.findRef(Constants.HEAD)
+  val ref = this.findRef(Constants.HEAD) ?: throw RuntimeException("No HEAD commit found for the repo")
   return this.parseCommit(ref.objectId)
 }

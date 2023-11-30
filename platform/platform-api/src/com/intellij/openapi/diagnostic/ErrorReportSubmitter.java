@@ -6,14 +6,19 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
 /**
- * This class should be extended by plugin vendor and provided by means of {@link com.intellij.ExtensionPoints#ERROR_HANDLER_EP}
- * if reporting errors that happened in plugin code to vendor is desirable.
+ * Override this class and register the implementation in the plugin.xml file to provide custom reporting for errors related to the plugin:  
+ * <pre>{@code
+ *   <extensions xmlns="com.intellij">
+ *     <errorHandler implementation="my.plugin.package.MyErrorHandler"/>
+ *   </extensions>
+ * }</pre>
  */
 public abstract class ErrorReportSubmitter implements PluginAware {
   private PluginDescriptor myPlugin;
@@ -41,6 +46,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   /**
    * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
    */
+  @RequiresBackgroundThread
   public @DetailedDescription @Nullable String getPrivacyNoticeText() {
     return null;
   }
@@ -49,6 +55,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * If this reporter allows a user to identify themselves, the method should return either the name of an account that will be used
    * for submitting reports or an empty string. Otherwise, it should return {@code null}.
    */
+  @RequiresBackgroundThread
   public @Nullable String getReporterAccount() {
     return null;
   }

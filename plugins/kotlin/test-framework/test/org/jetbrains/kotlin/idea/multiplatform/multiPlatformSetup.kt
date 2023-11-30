@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import org.jetbrains.kotlin.checkers.utils.clearFileFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import org.jetbrains.kotlin.idea.base.platforms.KotlinJavaScriptLibraryKind
+import org.jetbrains.kotlin.idea.base.platforms.KotlinWasmLibraryKind
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
@@ -21,15 +22,13 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.sourceRoots
-import org.jetbrains.kotlin.platform.CommonPlatforms
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.projectModel.*
 import org.jetbrains.kotlin.test.TestJdkKind
 import org.jetbrains.kotlin.types.typeUtil.closure
@@ -172,6 +171,7 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                         platform.isCommon() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibCommon, kind = KotlinCommonLibraryKind)
                         platform.isJvm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlib)
                         platform.isJs() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibJs, kind = KotlinJavaScriptLibraryKind)
+                        platform.isWasm() -> module.addLibrary(TestKotlinArtifacts.kotlinStdlibWasmJs, kind = KotlinWasmLibraryKind)
                         else -> error("Unknown platform $this")
                     }
                 }
@@ -219,13 +219,13 @@ private fun AbstractMultiModuleTest.doSetupProject(rootInfos: List<RootInfo>) {
                     pureKotlinSourceFolders = pureKotlinSourceFolders,
                     additionalVisibleModuleNames = additionalVisibleModuleNames
                 )
-                module.enableMultiPlatform()
 
                 modulesById[commonModuleId]?.let { commonModule ->
                     module.addDependency(commonModule)
                 }
             }
         }
+        module.enableMultiPlatform()
     }
 }
 
@@ -260,6 +260,7 @@ private val platformNames = mapOf(
     listOf("java8", "jvm8") to JvmPlatforms.jvm8,
     listOf("java6", "jvm6") to JvmPlatforms.jvm6,
     listOf("js", "javascript") to JsPlatforms.defaultJsPlatform,
+    listOf("wasm") to WasmPlatforms.Default,
     listOf("native") to NativePlatforms.unspecifiedNativePlatform
 )
 

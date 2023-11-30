@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.FieldInplaceActionButtonLook;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -18,6 +17,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ClientProperty;
@@ -25,6 +25,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.SearchFieldWithExtension;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
@@ -71,7 +72,6 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull MainVcsLogUiProperties myUiProperties;
   private final @NotNull VcsLogColorManager myColorManager;
-  private final @NotNull SearchFieldWithExtension mySearchComponent;
 
   private @NotNull VcsLogDataPack myDataPack;
 
@@ -80,6 +80,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   protected final @NotNull FilterModel<VcsLogDateFilter> myDateFilterModel;
   protected final @NotNull FileFilterModel myStructureFilterModel;
   protected final @NotNull TextFilterModel myTextFilterModel;
+
+  private final @NotNull VcsLogTextFilterField myTextFilterField;
 
   private final @NotNull EventDispatcher<VcsLogFilterListener> myFilterListenerDispatcher = EventDispatcher.create(VcsLogFilterListener.class);
 
@@ -103,7 +105,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     TextFilterField textFilterField = new TextFilterField(myTextFilterModel, parentDisposable);
     ActionToolbar toolbar = createTextActionsToolbar(textFilterField.getTextEditor());
-    mySearchComponent = new SearchFieldWithExtension(toolbar.getComponent(), textFilterField);
+    myTextFilterField = new MyVcsLogTextFilterField(new SearchFieldWithExtension(toolbar.getComponent(), textFilterField));
 
     FilterModel[] models = {myBranchFilterModel, myUserFilterModel, myDateFilterModel, myStructureFilterModel, myTextFilterModel};
     for (FilterModel<?> model : models) {
@@ -167,40 +169,49 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
   }
 
   @Override
-  public @NotNull SearchFieldWithExtension getTextFilterComponent() {
-    return mySearchComponent;
+  public @NotNull VcsLogTextFilterField getTextFilterComponent() {
+    return myTextFilterField;
+  }
+
+  private static final class MyVcsLogTextFilterField implements VcsLogTextFilterField {
+    private final @NotNull SearchFieldWithExtension mySearchField;
+
+    private MyVcsLogTextFilterField(@NotNull SearchFieldWithExtension field) { mySearchField = field; }
+
+    @NotNull
+    @Override
+    public JComponent getComponent() {
+      return mySearchField;
+    }
+
+    @NotNull
+    @Override
+    public JComponent getFocusedComponent() {
+      return mySearchField.getTextField();
+    }
+
+    @NotNull
+    @Override
+    public String getText() {
+      return mySearchField.getTextField().getText();
+    }
+
+    @Override
+    public void setText(@NotNull String s) {
+      mySearchField.getTextField().setText(s);
+    }
   }
 
   @Override
   public @NotNull ActionGroup createActionGroup() {
-    DefaultActionGroup actionGroup = new DefaultActionGroup();
-
-    FilterActionComponent branchComponent = createBranchComponent();
-    if (branchComponent != null) {
-      actionGroup.add(branchComponent);
-    }
-
-    FilterActionComponent userComponent = createUserComponent();
-    if (userComponent != null) {
-      actionGroup.add(userComponent);
-    }
-
-    FilterActionComponent dateComponent = createDateComponent();
-    if (dateComponent != null) {
-      actionGroup.add(dateComponent);
-    }
-
-    FilterActionComponent structureFilterComponent = createStructureFilterComponent();
-    if (structureFilterComponent != null) {
-      actionGroup.add(structureFilterComponent);
-    }
-
-    return actionGroup;
+    List<AnAction> actions = ContainerUtil.packNullables(createBranchComponent(), createUserComponent(), createDateComponent(),
+                                                         createStructureFilterComponent());
+    return new DefaultActionGroup(actions);
   }
 
   @Override
   public @NotNull VcsLogFilterCollection getFilters() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return VcsLogFilterObject.collection(myBranchFilterModel.getBranchFilter(), myBranchFilterModel.getRevisionFilter(),
                                          myBranchFilterModel.getRangeFilter(),
                                          myTextFilterModel.getFilter1(), myTextFilterModel.getFilter2(),
@@ -210,7 +221,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
   @Override
   public void setFilters(@NotNull VcsLogFilterCollection collection) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myBranchFilterModel.setFilter(new BranchFilters(collection.get(BRANCH_FILTER),
                                                     collection.get(REVISION_FILTER),
                                                     collection.get(RANGE_FILTER)));
@@ -221,22 +232,22 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     myUserFilterModel.setFilter(collection.get(USER_FILTER));
   }
 
-  protected @Nullable FilterActionComponent createBranchComponent() {
+  protected @Nullable AnAction createBranchComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.branch.filter.action.text"),
                                      () -> new BranchFilterPopupComponent(myUiProperties, myBranchFilterModel).initUi());
   }
 
-  protected @Nullable FilterActionComponent createUserComponent() {
+  protected @Nullable AnAction createUserComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.user.filter.action.text"),
                                      () -> new UserFilterPopupComponent(myUiProperties, myLogData, myUserFilterModel).initUi());
   }
 
-  protected @Nullable FilterActionComponent createDateComponent() {
+  protected @Nullable AnAction createDateComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.date.filter.action.text"),
                                      () -> new DateFilterPopupComponent(myDateFilterModel).initUi());
   }
 
-  protected @Nullable FilterActionComponent createStructureFilterComponent() {
+  protected @Nullable AnAction createStructureFilterComponent() {
     return new FilterActionComponent(VcsLogBundle.messagePointer("vcs.log.path.filter.action.text"),
                                      () -> new StructureFilterPopupComponent(myUiProperties, myStructureFilterModel,
                                                                              myColorManager).initUi());
@@ -649,7 +660,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       return ContainerUtil.map(filter.getRoots(), VirtualFile::getPath);
     }
 
-    static @NotNull List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
+    public static @NotNull List<String> getFilterValues(@NotNull VcsLogStructureFilter filter) {
       return ContainerUtil.map(filter.getFiles(), path -> (path.isDirectory() ? DIR : FILE) + path.getPath());
     }
 
@@ -697,20 +708,23 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
     }
 
     static @NotNull VcsLogStructureFilter createStructureFilter(@NotNull List<String> values) {
-      return VcsLogFilterObject.fromPaths(ContainerUtil.map(values, path -> {
-        if (path.startsWith(DIR)) {
-          return VcsUtil.getFilePath(path.substring(DIR.length()), true);
-        }
-        else if (path.startsWith(FILE)) {
-          return VcsUtil.getFilePath(path.substring(FILE.length()), false);
-        }
-        return VcsUtil.getFilePath(path);
-      }));
+      return VcsLogFilterObject.fromPaths(ContainerUtil.map(values, FileFilterModel::extractPath));
+    }
+
+    @NotNull
+    public static FilePath extractPath(String path) {
+      if (path.startsWith(DIR)) {
+        return VcsUtil.getFilePath(path.substring(DIR.length()), true);
+      }
+      else if (path.startsWith(FILE)) {
+        return VcsUtil.getFilePath(path.substring(FILE.length()), false);
+      }
+      return VcsUtil.getFilePath(path);
     }
   }
 
-  private static class DateFilterModel extends FilterModel.SingleFilterModel<VcsLogDateFilter> {
-    DateFilterModel(@NotNull MainVcsLogUiProperties uiProperties, @Nullable VcsLogFilterCollection filters) {
+  public static class DateFilterModel extends FilterModel.SingleFilterModel<VcsLogDateFilter> {
+    public DateFilterModel(@NotNull MainVcsLogUiProperties uiProperties, @Nullable VcsLogFilterCollection filters) {
       super(DATE_FILTER, uiProperties, filters);
     }
 
@@ -734,10 +748,19 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
 
     @Override
     protected @NotNull List<String> getFilterValues(@NotNull VcsLogDateFilter filter) {
+      return getDateValues(filter);
+    }
+
+    @NotNull
+    public static List<String> getDateValues(@NotNull VcsLogDateFilter filter) {
       Date after = filter.getAfter();
       Date before = filter.getBefore();
       return Arrays.asList(after == null ? "" : Long.toString(after.getTime()),
                            before == null ? "" : Long.toString(before.getTime()));
+    }
+
+    public void updateFilterFromProperties() {
+      setFilter(getFilterFromProperties());
     }
   }
 
@@ -764,6 +787,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       super(VCS_LOG_TEXT_FILTER_HISTORY);
       myTextFilterModel = model;
       setText(myTextFilterModel.getText());
+      getTextEditor().getEmptyText().setText(VcsLogBundle.message("vcs.log.filter.text.hash.empty.text"));
       getTextEditor().addActionListener(e -> applyFilter(true));
       addDocumentListener(new DocumentAdapter() {
         @Override

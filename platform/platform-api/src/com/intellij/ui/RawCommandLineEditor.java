@@ -30,6 +30,8 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor, Fragme
   public RawCommandLineEditor(final Function<? super String, ? extends List<String>> lineParser, final Function<? super List<String>, String> lineJoiner) {
     super(new BorderLayout());
     myEditor = new ExpandableTextField(lineParser, lineJoiner);
+    // required! otherwise JPanel will occasionally gain focus instead of the component
+    setFocusable(false);
     add(myEditor, BorderLayout.CENTER);
     setDescriptor(null);
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));

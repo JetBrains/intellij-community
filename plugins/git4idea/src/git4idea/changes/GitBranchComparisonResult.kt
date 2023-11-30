@@ -5,12 +5,11 @@ import com.intellij.diff.comparison.ComparisonManagerImpl.getInstanceImpl
 import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.isValidRanges
-import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
 
 /**
  * Represents a set of changes in a branch compared to some other branch via three-dot-diff (via merge base)
@@ -29,22 +28,9 @@ interface GitBranchComparisonResult {
   val changes: List<Change>
 
   val commits: List<GitCommitShaWithPatches>
-  val changesByCommits: Map<String, Collection<Change>>
-  val commitByChange: Map<Change, String>
+  val changesByCommits: Map<String, List<Change>>
 
   val patchesByChange: Map<Change, GitTextFilePatchWithHistory>
-
-  companion object {
-    val REVISION_COMPARISON_HASHING_STRATEGY: HashingStrategy<Change> = object : HashingStrategy<Change> {
-      override fun equals(o1: Change?, o2: Change?): Boolean {
-        return o1 == o2 &&
-               o1?.beforeRevision == o2?.beforeRevision &&
-               o1?.afterRevision == o2?.afterRevision
-      }
-
-      override fun hashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
-    }
-  }
 }
 
 fun GitBranchComparisonResult.findCumulativeChange(commitSha: String, filePath: String): Change? {
@@ -56,7 +42,11 @@ fun GitBranchComparisonResult.findCumulativeChange(commitSha: String, filePath: 
   return null
 }
 
-fun GitTextFilePatchWithHistory.getDiffComputer(): DiffUserDataKeysEx.DiffComputer {
+fun GitTextFilePatchWithHistory.getDiffComputer(): DiffUserDataKeysEx.DiffComputer? {
+  if (patch.hunks.isEmpty()) {
+    logger<GitBranchComparisonResult>().info("Empty diff in patch $patch")
+    return null
+  }
   val diffRanges = patch.hunks.map(PatchHunkUtil::getChangeOnlyRanges).flatten()
   return DiffUserDataKeysEx.DiffComputer { text1, text2, policy, innerChanges, indicator ->
     val comparisonManager = getInstanceImpl()

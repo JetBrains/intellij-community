@@ -1,8 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.NewUiValue;
 import com.intellij.ui.components.JBFontScaler;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,7 +19,7 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class JBFont extends Font {
-  private final UpdateScaleHelper myScaleUpdateHelper = new UpdateScaleHelper(() -> { return labelFont().getSize2D(); });
+  private final UpdateScaleHelper myScaleUpdateHelper = new UpdateScaleHelper(false, () -> { return labelFont().getSize2D(); });
   private final JBFontScaler myFontScaler;
   private Font myScaledFont;
 
@@ -72,8 +72,7 @@ public class JBFont extends Font {
     return UIManager.getFont("Label.font");
   }
 
-  @NotNull
-  public static JBFont label() {
+  public static @NotNull JBFont label() {
     return create(labelFont(), false);
   }
 
@@ -81,8 +80,7 @@ public class JBFont extends Font {
     return create(font, true);
   }
 
-  @NotNull
-  public static JBFont create(@NotNull Font font, boolean tryToScale) {
+  public static @NotNull JBFont create(@NotNull Font font, boolean tryToScale) {
     if (font instanceof JBFont) {
       return ((JBFont)font);
     }
@@ -176,10 +174,12 @@ public class JBFont extends Font {
    * and {@link #small()} for old UI. Will be replaced by {@link #medium()} after full migration to new UI
    */
   @ApiStatus.Internal
-  public static JBFont smallOrNewUiMedium() { return Registry.is("ide.experimental.ui") ? medium() : small(); }
+  public static JBFont smallOrNewUiMedium() {
+    return NewUiValue.isEnabled() ? medium() : small();
+  }
 
   private static boolean mediumAndSmallFontsAsRegular() {
-    return SystemInfo.isWindows && !Registry.is("ide.experimental.ui");
+    return SystemInfo.isWindows && !NewUiValue.isEnabled();
   }
 
   public static float scaleFontSize(float fontSize, float scale) {

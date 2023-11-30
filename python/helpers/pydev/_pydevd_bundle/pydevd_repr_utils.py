@@ -165,6 +165,16 @@ if IS_PY3K:
             result = _get_external_collection_repr(x)
             if result is not None:
                 return result
+
+            # if `__repr__` is overridden, then use `reprlib`
+            if x.__class__.__repr__ != object.__repr__:
+                return super().repr_instance(x, level)
+
+            # if `__str__` is overridden, then return str(x)
+            if x.__class__.__str__ != object.__str__:
+                return str(x)
+
+            # else use `reprlib`
             return super().repr_instance(x, level)
 
 
@@ -183,7 +193,11 @@ else:
                     return ('%s' % take_first_n_coll_elements(value, MAX_REPR_ITEM_SIZE)).rstrip(')]}') + '...'
                 return None
 
-        # other types
+        # if `__repr__` is overridden, then return repr(value)
+        if hasattr(value.__class__, "__repr__"):
+            return repr(value)
+
+        # else
         return str(value)
 
 

@@ -5,9 +5,14 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import org.intellij.lang.annotations.Pattern
+import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 
-abstract class BaseEventId @JvmOverloads constructor(val eventId: String, val recorder: String = "FUS") {
+abstract class BaseEventId(val eventId: String, val recorder: String) {
+  @Deprecated("Recorder ID should be explicitly provided", replaceWith = ReplaceWith("BaseEventId(eventId, recorder)"))
+  constructor(eventId: String) : this(eventId, "FUS")
+
   internal fun getLogger(): StatisticsEventLogger = StatisticsEventLogProviderUtil.getEventLogProvider(recorder).logger
 
   abstract fun getFields(): List<EventField<*>>
@@ -15,7 +20,7 @@ abstract class BaseEventId @JvmOverloads constructor(val eventId: String, val re
 
 class EventId(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
 ) : BaseEventId(eventId, group.recorder) {
 
   fun log() {
@@ -23,11 +28,11 @@ class EventId(
   }
 
   fun log(project: Project?) {
-    getLogger().logAsync(group, eventId, FeatureUsageData().addProject(project).build(), false)
+    getLogger().logAsync(group, eventId, FeatureUsageData(group.recorder).addProject(project).build(), false)
   }
 
   fun metric(): MetricEvent {
-    return MetricEvent(eventId, null)
+    return MetricEvent(eventId, null, group.recorder)
   }
 
   override fun getFields(): List<EventField<*>> = emptyList()
@@ -35,7 +40,7 @@ class EventId(
 
 class EventId1<in T>(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
   private val field1: EventField<T>,
 ) : BaseEventId(eventId, group.recorder) {
 
@@ -48,11 +53,11 @@ class EventId1<in T>(
   }
 
   fun metric(value1: T): MetricEvent {
-    return MetricEvent(eventId, buildUsageData(value1))
+    return MetricEvent(eventId, buildUsageData(value1), group.recorder)
   }
 
   private fun buildUsageData(value1: T): FeatureUsageData {
-    val data = FeatureUsageData()
+    val data = FeatureUsageData(group.recorder)
     field1.addData(data, value1)
     return data
   }
@@ -62,7 +67,7 @@ class EventId1<in T>(
 
 class EventId2<in T1, in T2>(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
 ) : BaseEventId(eventId, group.recorder) {
@@ -76,11 +81,11 @@ class EventId2<in T1, in T2>(
   }
 
   fun metric(value1: T1, value2: T2): MetricEvent {
-    return MetricEvent(eventId, buildUsageData(value1, value2))
+    return MetricEvent(eventId, buildUsageData(value1, value2), group.recorder)
   }
 
   private fun buildUsageData(value1: T1, value2: T2): FeatureUsageData {
-    val data = FeatureUsageData()
+    val data = FeatureUsageData(group.recorder)
     field1.addData(data, value1)
     field2.addData(data, value2)
     return data
@@ -91,7 +96,7 @@ class EventId2<in T1, in T2>(
 
 class EventId3<in T1, in T2, in T3>(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
   private val field1: EventField<T1>,
   private val field2: EventField<T2>,
   private val field3: EventField<T3>,
@@ -106,11 +111,11 @@ class EventId3<in T1, in T2, in T3>(
   }
 
   fun metric(value1: T1, value2: T2, value3: T3): MetricEvent {
-    return MetricEvent(eventId, buildUsageData(value1, value2, value3))
+    return MetricEvent(eventId, buildUsageData(value1, value2, value3), group.recorder)
   }
 
   private fun buildUsageData(value1: T1, value2: T2, value3: T3): FeatureUsageData {
-    val data = FeatureUsageData()
+    val data = FeatureUsageData(group.recorder)
     field1.addData(data, value1)
     field2.addData(data, value2)
     field3.addData(data, value3)
@@ -130,7 +135,7 @@ class EventDataCollector : ArrayList<EventPair<*>>() {
 
 class VarargEventId internal constructor(
   private val group: EventLogGroup,
-  eventId: String,
+  @NonNls @EventIdName eventId: String,
   vararg fields: EventField<*>,
 ) : BaseEventId(eventId, group.recorder) {
 
@@ -177,11 +182,11 @@ class VarargEventId internal constructor(
   }
 
   fun metric(pairs: List<EventPair<*>>): MetricEvent {
-    return MetricEvent(eventId, buildUsageData(pairs))
+    return MetricEvent(eventId, buildUsageData(pairs), group.recorder)
   }
 
   private fun buildUsageData(pairs: List<EventPair<*>>): FeatureUsageData {
-    val data = FeatureUsageData()
+    val data = FeatureUsageData(group.recorder)
     for (pair in pairs) {
       if (pair.field !in fields) throw IllegalArgumentException("Field ${pair.field.name} not in fields for event ID $eventId")
       @Suppress("UNCHECKED_CAST")

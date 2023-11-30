@@ -323,7 +323,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       return myTarget == null ? null : myTarget.getRange();
     }
 
-    public String render(Document doc, CauseItem parent) {
+    public @Nls String render(Document doc, CauseItem parent) {
       String title = null;
       Segment range = getTargetSegment();
       if (range != null) {
@@ -1014,7 +1014,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
         CauseItem[] result = new CauseItem[0];
         for (DfaRelation deduced : chain) {
           CauseItem[] cause =
-            findRelationCause(deduced.getRelation(), change, deduced.getLeftOperand(), change, deduced.getRightOperand());
+            findRelationCause(deduced.relationType(), change, deduced.leftOperand(), change, deduced.rightOperand());
           result = ArrayUtil.mergeArrays(result, cause);
         }
         if (result.length > 1) {
@@ -1087,13 +1087,13 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   private static boolean isSameRelation(DfaRelation dfaRel, DfaVariableValue var, Relation relation) {
     DfaValue counterpart;
     RelationType type;
-    if (dfaRel.getLeftOperand() == var) {
-      type = dfaRel.getRelation();
-      counterpart = dfaRel.getRightOperand();
+    if (dfaRel.leftOperand() == var) {
+      type = dfaRel.relationType();
+      counterpart = dfaRel.rightOperand();
     }
-    else if (dfaRel.getRightOperand() == var) {
-      type = dfaRel.getRelation().getFlipped();
-      counterpart = dfaRel.getLeftOperand();
+    else if (dfaRel.rightOperand() == var) {
+      type = dfaRel.relationType().getFlipped();
+      counterpart = dfaRel.leftOperand();
     }
     else {
       return false;
@@ -1357,16 +1357,13 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     for (MethodContract c : contracts) {
       ThreeState applies = contractApplies(call, c);
       switch (applies) {
-        case NO:
-          break;
-        case UNSURE:
-          unsureContracts.add(c);
-          break;
-        case YES:
+        case NO -> { }
+        case UNSURE -> unsureContracts.add(c);
+        case YES -> {
           if (unsureContracts.isEmpty() && contractReturnValue.isSuperValueOf(c.getReturnValue())) {
             return fromSingleContract(history, call, method, c);
           }
-          break;
+        }
       }
     }
     if (unsureContracts.size() == 1) {

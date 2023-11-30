@@ -8,10 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.io.lastModified
 import org.junit.Assert
 import java.nio.file.Files
-import kotlin.streams.toList
+import kotlin.io.path.getLastModifiedTime
 
 class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
   fun `test infrastructure extension drops all indexes when it requires invalidation`() {
@@ -19,7 +18,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
     Disposer.register(testRootDisposable, loadExtensionWithText(text))
 
     val before = Files.list(PathManager.getIndexRoot()).use {
-      it.toList().associate { p -> p.fileName.toString() to p.lastModified().toMillis() }.toSortedMap()
+      it.toList().associate { p -> p.fileName.toString() to p.getLastModifiedTime().toMillis() }.toSortedMap()
     }
 
     val switcher = FileBasedIndexTumbler("test")
@@ -27,7 +26,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
     switcher.turnOn()
 
     val after = Files.list(PathManager.getIndexRoot()).use {
-      it.toList().associate { p -> p.fileName.toString() to p.lastModified().toMillis() }.toSortedMap()
+      it.toList().associate { p -> p.fileName.toString() to p.getLastModifiedTime().toMillis() }.toSortedMap()
     }
 
     var containsExtensionCaches = false
@@ -42,7 +41,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 }
 
-const val testInfraExtensionFile = "_test_extension"
+const val testInfraExtensionFile: String = "_test_extension"
 
 @InternalIgnoreDependencyViolation
 class TestIndexInfrastructureExtension : FileBasedIndexInfrastructureExtension {
@@ -55,18 +54,20 @@ class TestIndexInfrastructureExtension : FileBasedIndexInfrastructureExtension {
     return null
   }
 
-  override fun onFileBasedIndexVersionChanged(indexId: ID<*, *>) = Unit
+  override fun onFileBasedIndexVersionChanged(indexId: ID<*, *>) {}
 
-  override fun onStubIndexVersionChanged(indexId: StubIndexKey<*, *>) = Unit
+  override fun onStubIndexVersionChanged(indexId: StubIndexKey<*, *>) {}
 
   override fun initialize(indexLayoutId: String?): FileBasedIndexInfrastructureExtension.InitializationResult
   = FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED
 
-  override fun resetPersistentState() = Unit
+  override fun attachData(project: Project) {}
 
-  override fun resetPersistentState(indexId: ID<*, *>) = Unit
+  override fun resetPersistentState() {}
 
-  override fun shutdown() = Unit
+  override fun resetPersistentState(indexId: ID<*, *>) {}
+
+  override fun shutdown() {}
 
   override fun getVersion(): Int = 0
 

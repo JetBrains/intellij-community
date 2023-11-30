@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.ide.IdeBundle;
@@ -33,7 +33,7 @@ public class PluginUpdatesService {
   private static boolean myReset;
 
   private Consumer<? super Integer> myCountCallback;
-  private Consumer<? super Collection<IdeaPluginDescriptor>> myUpdateCallback;
+  private List<Consumer<? super Collection<IdeaPluginDescriptor>>> myUpdateCallbacks;
 
   static {
     PluginStateManager.addStateListener(new PluginStateListener() {
@@ -44,7 +44,7 @@ public class PluginUpdatesService {
 
       @Override
       public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
-        install(descriptor);
+        finishUpdate(descriptor);
       }
     });
   }
@@ -66,10 +66,9 @@ public class PluginUpdatesService {
     return service;
   }
 
-  @NotNull
-  public static PluginUpdatesService connectWithUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
+  public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
     PluginUpdatesService service = new PluginUpdatesService();
-    service.myUpdateCallback = callback;
+    service.myUpdateCallbacks = Collections.singletonList(callback);
 
     synchronized (ourLock) {
       SERVICES.add(service);
@@ -84,7 +83,10 @@ public class PluginUpdatesService {
 
   public void calculateUpdates(@NotNull Consumer<? super Collection<IdeaPluginDescriptor>> callback) {
     synchronized (ourLock) {
-      myUpdateCallback = callback;
+      if (myUpdateCallbacks == null) {
+        myUpdateCallbacks = new ArrayList<>();
+      }
+      myUpdateCallbacks.add(callback);
 
       if (myPrepared) {
         callback.accept(myCache);
@@ -181,8 +183,7 @@ public class PluginUpdatesService {
     return InstalledPluginsState.getInstance().hasNewerVersion(pluginId);
   }
 
-  @Nullable
-  public static Collection<IdeaPluginDescriptor> getUpdates() {
+  public static @Nullable Collection<IdeaPluginDescriptor> getUpdates() {
     synchronized (ourLock) {
       return !myPrepared || myPreparing || myCache == null ? null : myCache;
     }
@@ -239,8 +240,10 @@ public class PluginUpdatesService {
   private void runAllCallbacks(@Nullable Integer countValue) {
     runCountCallbacks(countValue);
 
-    if (myUpdateCallback != null) {
-      myUpdateCallback.accept(countValue == null ? null : myCache);
+    if (myUpdateCallbacks != null) {
+      for (var callback : myUpdateCallbacks) {
+        callback.accept(countValue == null ? null : myCache);
+      }
     }
   }
 
@@ -250,8 +253,7 @@ public class PluginUpdatesService {
     }
   }
 
-  @Nullable
-  private static Integer getCount() {
+  private static @Nullable Integer getCount() {
     return myCache == null ? null : myCache.size();
   }
 }

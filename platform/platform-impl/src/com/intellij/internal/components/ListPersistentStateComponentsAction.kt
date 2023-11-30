@@ -19,7 +19,7 @@ import javax.swing.table.AbstractTableModel
 
 internal class ListPersistentStateComponentsAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     ComponentListDialog().show()
@@ -53,8 +53,8 @@ internal class ListPersistentStateComponentsAction : AnAction() {
     class ComponentTableModel : AbstractTableModel() {
 
       companion object {
-        val columnNames = arrayOf("Plugin", "Class Name", "Roaming Type", "Category")
-        val columnWidths = arrayOf(250, -1, 100, 100)
+        val columnNames: Array<String> = arrayOf("Plugin", "Class Name", "Roaming Type", "Category")
+        val columnWidths: Array<Int> = arrayOf(250, -1, 100, 100)
       }
 
       private val descriptors = ArrayList<ComponentDescriptor>()
@@ -120,9 +120,9 @@ internal class ListPersistentStateComponentsAction : AnAction() {
         return ""
       }
 
-      override fun getRowCount() = descriptors.size
+      override fun getRowCount(): Int = descriptors.size
 
-      override fun getColumnCount() = 4
+      override fun getColumnCount(): Int = 4
 
       override fun getValueAt(rowIndex: Int, columnIndex: Int): Any {
         return when (columnIndex) {

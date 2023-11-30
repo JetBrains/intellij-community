@@ -5,3 +5,4 @@ fun takeShort(x: Short) {}
 fun foo() {
     takeShort(1 + 1<caret>)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddConversionCallFix

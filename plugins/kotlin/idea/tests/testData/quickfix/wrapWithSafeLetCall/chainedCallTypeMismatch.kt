@@ -7,3 +7,5 @@ fun Int.foo(x: Int) = this + x
 val arg: Int? = 42
 
 val res = 24.hashCode().foo(<caret>arg) + 1
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithSafeLetCallFix

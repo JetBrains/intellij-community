@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.io.isDirectory
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -26,6 +25,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
+import kotlin.io.path.isDirectory
 
 @State(name = "MavenWrapperMapping",
   storages = [Storage(value = "maven.wrapper.mapping.xml", roamingType = RoamingType.PER_OS)],

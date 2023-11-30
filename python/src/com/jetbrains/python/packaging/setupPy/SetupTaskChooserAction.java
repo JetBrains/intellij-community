@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.setupPy;
 
 import com.intellij.execution.ExecutionException;
@@ -52,7 +52,7 @@ public class SetupTaskChooserAction extends AnAction {
       public void elementChosen(Object element) {
         if (element != null) {
           final SetupTask task = (SetupTask) element;
-          ApplicationManager.getApplication().invokeLater(() -> runSetupTask(task.getName(), module), ModalityState.NON_MODAL);
+          ApplicationManager.getApplication().invokeLater(() -> runSetupTask(task.getName(), module), ModalityState.nonModal());
         }
       }
     }, ModalityState.current(), false);
@@ -70,7 +70,7 @@ public class SetupTaskChooserAction extends AnAction {
     e.getPresentation().setEnabled(module != null && PyPackageUtil.hasSetupPy(module) && PythonSdkUtil.findPythonSdk(module) != null);
   }
 
-  public static void runSetupTask(@NlsSafe String taskName, Module module) {
+  private static void runSetupTask(@NlsSafe String taskName, @NotNull Module module) {
     final List<SetupTask.Option> options = SetupTaskIntrospector.getSetupTaskOptions(module, taskName);
     List<String> parameters = new ArrayList<>();
     parameters.add(taskName);
@@ -84,7 +84,7 @@ public class SetupTaskChooserAction extends AnAction {
     runSetupTask(taskName, module, parameters);
   }
 
-  public static void runSetupTask(@NlsSafe String taskName, Module module, List<String> parameters) {
+  public static void runSetupTask(@NlsSafe String taskName, @NotNull Module module, List<String> parameters) {
     try {
       final PyFile setupPy = PyPackageUtil.findSetupPy(module);
       if (setupPy == null) return;

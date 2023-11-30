@@ -21,8 +21,7 @@ internal class OnChangeManager<T : JComponent>(private val component: T) {
 
   @Throws(UiDslException::class)
   fun register(listener: (component: T, context: ChangeContext) -> Unit) {
-    val interactiveComponent = component.interactiveComponent
-    when (interactiveComponent) {
+    when (val interactiveComponent = component.interactiveComponent) {
       is DropDownLink<*> ->
         interactiveComponent.addItemListener {
           if (it.stateChange == ItemEvent.SELECTED) {

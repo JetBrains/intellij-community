@@ -1,17 +1,19 @@
 // FIR_IDENTICAL
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Target<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>CLASS<!>, <!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>EXPRESSION<!>)
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Retention<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM'")!>AnnotationRetention<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_ENUM_ENTRY'")!>SOURCE<!>)
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>Ann<!>
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@Target<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ENUM_ENTRY'")!>CLASS<!>, <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ENUM'")!>AnnotationTarget<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ENUM_ENTRY'")!>EXPRESSION<!>)
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@Retention<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ENUM'")!>AnnotationRetention<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ENUM_ENTRY'")!>SOURCE<!>)
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>annotation<!> class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>Ann<!>
 
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>A<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>A<!>
 
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>block<!>: () -> <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>Int<!>) = <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("textAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>block<!>()
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>bar<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>block<!>: () -> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>Int<!>) = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_VARIABLE_AS_FUNCTION'")!>block<!>()
 
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>private<!>
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
-    1 + <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 2
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_BUILTIN_ANNOTATION'")!>private<!>
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>foo<!>() {
+    1 + <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 2
 
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 3 + 4
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> 3 + 4
 
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>bar<!> <!HIGHLIGHTING("textAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> { 1 }
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PACKAGE_FUNCTION_CALL'")!>bar<!> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_ANNOTATION'")!>@Ann<!> { 1 }
 }

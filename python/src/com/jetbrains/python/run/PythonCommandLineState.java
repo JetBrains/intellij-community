@@ -4,6 +4,7 @@ package com.jetbrains.python.run;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.collect.Streams;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -17,6 +18,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.impl.ProcessStreamsSynchronizer;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -28,7 +30,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -85,14 +86,15 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
+import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
+
 /**
  * Since this state is async, any method could be called on any thread
  *
  * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
-  private final static Logger LOG = Logger.getInstance(PythonCommandLineState.class);
-
   // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
 
   public static final String GROUP_EXE_OPTIONS = "Exe Options";
@@ -255,7 +257,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     // TODO workaround
     if (PythonSdkUtil.isRemote(myConfig.getSdk()) && processHandler instanceof ProcessControlWithMappings) {
       consoleView
-        .addMessageFilter(new PyRemoteTracebackFilter(project, myConfig.getWorkingDirectory(), (ProcessControlWithMappings)processHandler));
+        .addMessageFilter(new PyRemoteTracebackFilter(project, getExpandedWorkingDir(myConfig), (ProcessControlWithMappings)processHandler));
     }
     else {
       consoleView.addMessageFilter(new PythonTracebackFilter(project, myConfig.getWorkingDirectorySafe()));
@@ -319,7 +321,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk sdk = getSdk();
     if (sdk != null) {
       RunConfigurationTargetEnvironmentAdjuster adjuster =
-        RunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
+        RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk);
       if (adjuster != null) {
         adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
       }
@@ -343,9 +345,11 @@ public abstract class PythonCommandLineState extends CommandLineState {
     TargetEnvironment targetEnvironment =
       helpersAwareTargetRequest.getTargetEnvironmentRequest().prepareEnvironment(TargetProgressIndicator.EMPTY);
 
-    List<String> interpreterParameters = getConfiguredInterpreterParameters();
+    // TODO Detect and discard existing overrides of configured parameters.
+    List<String> allInterpreterParameters = Streams.concat(getConfiguredInterpreterParameters().stream(),
+                                                        realPythonExecution.getAdditionalInterpreterParameters().stream()).toList();
     TargetedCommandLine targetedCommandLine =
-      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, interpreterParameters, myRunWithPty);
+      PythonScripts.buildTargetedCommandLine(realPythonExecution, targetEnvironment, sdk, allInterpreterParameters, myRunWithPty);
 
     // TODO [Targets API] `myConfig.isPassParentEnvs` must be handled (at least for the local case)
     ProcessHandler processHandler = doStartProcess(targetEnvironment, targetedCommandLine, progressIndicator);
@@ -378,7 +382,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   protected @Nullable Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
     // the following working directory is located on the local machine
-    String workingDir = myConfig.getWorkingDirectory();
+    String workingDir = myConfig.getWorkingDirectorySafe();
     if (!StringUtil.isEmptyOrSpaces(workingDir)) {
       return getTargetPath(targetEnvironmentRequest, Path.of(workingDir));
     }
@@ -419,7 +423,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Process process = targetEnvironment.createProcess(commandLine, progressIndicator);
     // TODO [Targets API] [major] The command line should be prefixed with the interpreter identifier (f.e. Docker container id)
     String commandLineString = StringUtil.join(commandLine.getCommandPresentation(targetEnvironment), " ");
-    processHandler = createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
+    processHandler = createPtyAwaredProcessHandler(process, commandLineString, targetEnvironment, commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
@@ -477,6 +481,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
+  private ProcessHandler createPtyAwaredProcessHandler(@NotNull Process process,
+                                                       @NotNull String commandLineString,
+                                                       @NotNull TargetEnvironment targetEnvironment,
+                                                       @NotNull TargetedCommandLine commandLine) {
+    ProcessHandler processHandler = createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
+    if (processHandler instanceof OSProcessHandler osProcessHandler) {
+      osProcessHandler.setHasPty(myRunWithPty);
+    }
+    return processHandler;
+  }
+
+  @NotNull
   protected ProcessHandler createProcessHandler(@NotNull Process process,
                                                 @NotNull String commandLineString,
                                                 @NotNull TargetEnvironment targetEnvironment,
@@ -500,9 +516,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (sdkPathMappings != null) {
       pathMappingSettings.addAll(sdkPathMappings);
     }
+    final boolean isMostlySilentProcess = false;
     PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
-    return PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, commandLine.getCharset(),
-                                                               consolidatedPathMappings);
+    return PyCustomProcessHandlerProvider.createProcessHandler(process, targetEnvironment, commandLineString, commandLine.getCharset(),
+                                                               consolidatedPathMappings, isMostlySilentProcess, myRunWithPty);
   }
 
   private @Nullable PathMappingSettings getSdkPathMappings() {
@@ -655,6 +672,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                       @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                       @Nullable Sdk sdk) {
     Map<String, String> env = Maps.newHashMap();
+    var envParameters = configureEnvsFromFiles(runParams, true);
+    env.putAll(envParameters);
     if (runParams.getEnvs() != null) {
       env.putAll(runParams.getEnvs());
     }
@@ -757,9 +776,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                      @Nullable PyRemotePathMapper pathMapper,
                                      boolean isDebug,
                                      @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    Module module = getModule(project, config);
-    buildPythonPath(project, module, pythonScript, config.getSdkHome(), pathMapper, config.isPassParentEnvs(),
-                    config.shouldAddContentRoots(), config.shouldAddSourceRoots(), isDebug, targetEnvironmentRequest);
+    Sdk sdk = config.getSdk();
+    if (sdk != null) {
+      Module module = getModule(project, config);
+      buildPythonPath(project, module, pythonScript, sdk, pathMapper, config.isPassParentEnvs(),
+                      config.shouldAddContentRoots(), config.shouldAddSourceRoots(), isDebug, targetEnvironmentRequest);
+    }
   }
 
   public static void buildPythonPath(@Nullable Module module,
@@ -781,24 +803,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static void buildPythonPath(@NotNull Project project,
                                      @Nullable Module module,
                                      @NotNull PythonExecution pythonScript,
-                                     @Nullable String sdkHome,
+                                     @NotNull Sdk pythonSdk,
                                      @Nullable PyRemotePathMapper pathMapper,
                                      boolean passParentEnvs,
                                      boolean shouldAddContentRoots,
                                      boolean shouldAddSourceRoots,
                                      boolean isDebug,
                                      @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    Sdk pythonSdk = PythonSdkUtil.findSdkByPath(sdkHome);
-    if (pythonSdk != null) {
-      List<Function<TargetEnvironment, String>> pathList = new ArrayList<>();
-      var data = pythonSdk.getSdkAdditionalData();
-      if (data != null) {
-        pathList.addAll(TargetedPythonPaths.getAddedPaths(data));
-      }
-      pathList.addAll(TargetedPythonPaths.collectPythonPath(project, module, sdkHome, pathMapper,
-                                                            shouldAddContentRoots, shouldAddSourceRoots, isDebug));
-      initPythonPath(pythonScript, passParentEnvs, pathList, targetEnvironmentRequest);
+    List<Function<TargetEnvironment, String>> pathList = new ArrayList<>();
+    var data = pythonSdk.getSdkAdditionalData();
+    if (data != null) {
+      pathList.addAll(TargetedPythonPaths.getAddedPaths(data));
     }
+    pathList.addAll(TargetedPythonPaths.collectPythonPath(project, module, pythonSdk, pathMapper,
+                                                          shouldAddContentRoots, shouldAddSourceRoots, isDebug));
+    initPythonPath(pythonScript, passParentEnvs, pathList, targetEnvironmentRequest);
   }
 
   /**
@@ -847,7 +866,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
         addIfNeeded(realFile, pathList);
       }
     }
-    else {
+    else if (file.isDirectory()) {
       addIfNeeded(file, pathList);
     }
   }

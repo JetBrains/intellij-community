@@ -1,91 +1,61 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AddTypeArgumentsConditionalFix implements IntentionAction, HighPriorityAction {
+public class AddTypeArgumentsConditionalFix extends PsiUpdateModCommandAction<PsiMethodCallExpression> {
   private static final Logger LOG = Logger.getInstance(AddTypeArgumentsConditionalFix.class);
 
   private final PsiSubstitutor mySubstitutor;
-  private final PsiMethodCallExpression myExpression;
   private final PsiMethod myMethod;
 
   public AddTypeArgumentsConditionalFix(PsiSubstitutor substitutor, PsiMethodCallExpression expression, PsiMethod method) {
+    super(expression);
     mySubstitutor = substitutor;
-    myExpression = expression;
     myMethod = method;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new AddTypeArgumentsConditionalFix(mySubstitutor, PsiTreeUtil.findSameElementInCopy(myExpression, target), myMethod);
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return JavaAnalysisBundle.message("add.explicit.type.arguments");
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return getText();
+    return JavaAnalysisBundle.message("add.explicit.type.arguments");
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (mySubstitutor.isValid() && myExpression.isValid() && myMethod.isValid()) {
-      return true;
-    }
-    return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiMethodCallExpression element) {
+    if (!mySubstitutor.isValid() || !myMethod.isValid()) return null;
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiMethodCallExpression call, @NotNull ModPsiUpdater updater) {
     final PsiTypeParameter[] typeParameters = myMethod.getTypeParameters();
     final String typeArguments = "<" + StringUtil.join(typeParameters, parameter -> {
       final PsiType substituteTypeParam = mySubstitutor.substitute(parameter);
       LOG.assertTrue(substituteTypeParam != null);
       return GenericsUtil.eliminateWildcards(substituteTypeParam).getCanonicalText();
     }, ", ") + ">";
-    final PsiExpression expression = myExpression.getMethodExpression().getQualifierExpression();
+    final PsiExpression expression = call.getMethodExpression().getQualifierExpression();
     String withTypeArgsText;
     if (expression != null) {
       withTypeArgsText = expression.getText();
     }
     else {
-      if (isInStaticContext(myExpression, null) || myMethod.hasModifierProperty(PsiModifier.STATIC)) {
+      if (isInStaticContext(call, null) || myMethod.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiClass aClass = myMethod.getContainingClass();
         LOG.assertTrue(aClass != null);
         withTypeArgsText = aClass.getQualifiedName();
@@ -94,17 +64,14 @@ public class AddTypeArgumentsConditionalFix implements IntentionAction, HighPrio
         withTypeArgsText = PsiKeyword.THIS;
       }
     }
-    withTypeArgsText += "." + typeArguments + myExpression.getMethodExpression().getReferenceName();
-    final PsiExpression withTypeArgs = JavaPsiFacade.getElementFactory(project).createExpressionFromText(withTypeArgsText + myExpression.getArgumentList().getText(), myExpression);
-    myExpression.replace(withTypeArgs);
+    withTypeArgsText += "." + typeArguments + call.getMethodExpression().getReferenceName();
+    final PsiExpression withTypeArgs = JavaPsiFacade.getElementFactory(context.project())
+      .createExpressionFromText(withTypeArgsText + call.getArgumentList().getText(), call);
+    call.replace(withTypeArgs);
   }
 
   public static boolean isInStaticContext(PsiElement element, @Nullable final PsiClass aClass) {
     return PsiUtil.getEnclosingStaticElement(element, aClass) != null;
-  }
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 
   public static void register(@NotNull HighlightInfo.Builder highlightInfo, @Nullable PsiExpression expression, @NotNull PsiType lType) {

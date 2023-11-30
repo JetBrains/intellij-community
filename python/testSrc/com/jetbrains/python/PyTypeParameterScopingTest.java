@@ -355,41 +355,181 @@ public class PyTypeParameterScopingTest extends PyTestCase {
                                """);
   }
 
+  public void testFunctionDeclaresOwnTypeVarTuple() {
+    assertTypeParameterOwner("func", "func",
+                             """
+                              from typing import TypeVarTuple
+                               
+                              Ts = TypeVarTuple('Ts')
+                               
+                              def func(xs: tuple[*Ts]) -> tuple[*Ts]:
+                                  pass
+                              """);
+  }
+
+  public void testMethodDeclaresOwnTypeVarTuple() {
+    assertTypeParameterOwner("C.m", "C.m",
+                             """
+                               from typing import TypeVarTuple
+                                                             
+                               Ts = TypeVarTuple('Ts')
+                                                            
+                               class C:
+                                   def m(self, xs: tuple[*Ts]) -> tuple[*Ts]:
+                                       pass
+                               """);
+  }
+
+  public void testMethodUsesTypeVarTupleOfItsClass() {
+    assertTypeParameterOwner("C.m", "C",
+                             """
+                               from typing import Generic, TypeVarTuple
+                                                             
+                               Ts = TypeVarTuple('Ts')
+                                                            
+                               class C(Generic[*Ts]):
+                                   def m(self, xs: tuple[*Ts]) -> tuple[*Ts]:
+                                       pass
+                               """);
+  }
+
+  public void testClassDeclaresItsOwnTypeVarTuple() {
+    assertTypeParameterOwner("C", "C",
+                             """
+                               from typing import Generic, TypeVarTuple
+                               
+                               Ts = TypeVarTuple('Ts')
+                               
+                               class C(Generic[*Ts]):
+                                   pass
+                               """
+    );
+  }
+
+  public void testFunctionUsesTypeVarTupleOfEnclosingFunction() {
+    assertTypeParameterOwner("dec.g", "dec",
+                             """
+                               from typing import TypeVarTuple
+
+                               Ts = TypeVarTuple('Ts')
+
+                               def dec(x: tuple[*Ts]):
+                                   def g(func) -> tuple[*Ts]:
+                                       ...
+                                   return g
+                               """);
+  }
+
+  // PY-61883
+  public void testFunctionDeclaresOwnTypeVarWithPEP695Syntax() {
+    assertTypeParameterOwner("func", "func",
+                             """
+                               def func[T](x) -> T:
+                                   pass
+                               """
+    );
+  }
+
+  // PY-61883
+  public void testMethodUsesTypeVarOfItsClassInAnnotationWithPEP695Syntax() {
+    assertTypeParameterOwner("C.m", "C",
+                             """
+                               class C[T]:
+                                   def m(self, x: T) -> T:
+                                       pass
+                               """
+    );
+  }
+
+  // PY-61883
+  public void testMethodDeclaresOwnTypeVarWithPEP695Syntax() {
+    assertTypeParameterOwner("C.m", "C.m",
+                             """
+                               class C[T]:
+                                   def m[V](self, x: V) -> V:
+                                       pass
+                               """);
+  }
+
+  // PY-61883
+  public void testInstanceAttributeUsesTypeVarOfItsClassWithPEP695Syntax() {
+    assertTypeParameterOwner("C.attr", "C",
+                             """
+                               class C[T]:
+                                   def __init__(self):
+                                       self.attr: T = ...
+                               """);
+  }
+
+  // PY-61883
+  public void testClassDeclaresOwnParamSpecWithPEP695Syntax() {
+    assertTypeParameterOwner("C", "C",
+                             """                       
+                               class C[**P]:
+                                   ...
+                               """);
+  }
+
+  // PY-61883
+  public void testFunctionUsesTypeVarOfEnclosingFunctionWithPEP695Syntax() {
+    assertTypeParameterOwner("dec.g", "dec",
+                             """
+                               def dec[T](x: T):
+                                   def g(func) -> T:
+                                       ...
+                                   return g
+                               """);
+  }
+
+  // PY-61883
+  public void testFunctionUsesTypeVarOfEnclosingMethodClassWithPEP695Syntax() {
+    assertTypeParameterOwner("C.method.f", "C",
+                             """
+                               class C[T]:
+                                   def method(self, x: T) -> None:
+                                       def f() -> T:
+                                           ...
+                               """);
+  }
+
   private void assertTypeParameterOwner(@NotNull String elementQName, @NotNull String scopeOwnerQName, @NotNull String text) {
-      VirtualFile virtualFile;
-      try {
-        virtualFile = myFixture.getTempDirFixture().createFile("a.py", text);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
-      PyFile pyFile = (PyFile)PsiManager.getInstance(myFixture.getProject()).findFile(virtualFile);
+    VirtualFile virtualFile;
+    try {
+      virtualFile = myFixture.getTempDirFixture().createFile("a.py", text);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile());
+    PyFile pyFile = (PyFile)PsiManager.getInstance(myFixture.getProject()).findFile(virtualFile);
 
-      QualifiedName elementQualifiedName = QualifiedName.fromDottedString(elementQName);
-      PsiElement resolvedElement = resolveQualifiedName(pyFile, elementQualifiedName, typeEvalContext);
-      assertNotNull(elementQName, resolvedElement);
-      PyTypedElement typedElement = assertInstanceOf(resolvedElement, PyTypedElement.class);
-      PyType type = typeEvalContext.getType(typedElement);
-      if (type instanceof PyClassType classType) {
-        PyCollectionType genericClassType = PyTypeChecker.findGenericDefinitionType(classType.getPyClass(), typeEvalContext);
-        assertNotNull(genericClassType);
-        type = genericClassType.getElementTypes().get(0);
+    QualifiedName elementQualifiedName = QualifiedName.fromDottedString(elementQName);
+    PsiElement resolvedElement = resolveQualifiedName(pyFile, elementQualifiedName, typeEvalContext);
+    assertNotNull(elementQName, resolvedElement);
+    PyTypedElement typedElement = assertInstanceOf(resolvedElement, PyTypedElement.class);
+    PyType type = typeEvalContext.getType(typedElement);
+    if (type instanceof PyClassType classType) {
+      PyCollectionType genericClassType = PyTypeChecker.findGenericDefinitionType(classType.getPyClass(), typeEvalContext);
+      assertNotNull(genericClassType);
+      type = genericClassType.getElementTypes().get(0);
+    }
+    else if (type instanceof PyFunctionType functionType) {
+      type = functionType.getReturnType(typeEvalContext);
+      if (type instanceof PyCallableType callableType && !(type instanceof PyClassLikeType)) {
+        // For ParamSpecs, they cannot appear as a standalone type
+        type = callableType.getParameters(typeEvalContext).get(0).getType(typeEvalContext);
       }
-      else if (type instanceof PyFunctionType functionType) {
-        type = functionType.getReturnType(typeEvalContext);
-        if (type instanceof PyCallableType callableType) {
-          // For ParamSpecs, they cannot appear as a standalone type
-          type = callableType.getParameters(typeEvalContext).get(0).getType(typeEvalContext);
-        }
-      }
-      PyTypeParameterType typeVar = assertInstanceOf(type, PyTypeParameterType.class);
-      QualifiedName ownerQualifiedName = QualifiedName.fromDottedString(scopeOwnerQName);
-      PsiElement owner = resolveQualifiedName(pyFile, ownerQualifiedName, typeEvalContext);
-      assertNotNull(scopeOwnerQName, owner);
-      assertEquals(owner, typeVar.getScopeOwner());
+    }
+    if (type instanceof PyTupleType tupleType) {
+      type = tupleType.getElementType(0);
+    }
+    PyTypeParameterType typeVar = assertInstanceOf(type, PyTypeParameterType.class);
+    QualifiedName ownerQualifiedName = QualifiedName.fromDottedString(scopeOwnerQName);
+    PsiElement owner = resolveQualifiedName(pyFile, ownerQualifiedName, typeEvalContext);
+    assertNotNull(scopeOwnerQName, owner);
+    assertEquals(owner, typeVar.getScopeOwner());
 
-      assertNotParsed(pyFile);
+    assertNotParsed(pyFile);
   }
 
   private static @Nullable PsiElement resolveQualifiedName(@NotNull PyFile pyFile,

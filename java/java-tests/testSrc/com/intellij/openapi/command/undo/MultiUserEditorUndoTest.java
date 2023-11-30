@@ -12,9 +12,11 @@ import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import kotlin.Unit;
 import kotlin.coroutines.EmptyCoroutineContext;
@@ -303,7 +305,13 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
 
   private static void registerAppSession(@NotNull ClientId clientId, @NotNull Disposable disposable) {
     ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
-    ClientAppSessionImpl clientAppSession = new ClientAppSessionImpl(clientId, ClientType.GUEST, application);
+    ClientAppSessionImpl clientAppSession = new ClientAppSessionImpl(clientId, ClientType.GUEST, application) {
+      @NotNull
+      @Override
+      public @NlsSafe String getName() {
+        return clientId.getValue();
+      }
+    };
     registerSession(clientAppSession, application, disposable);
     PluginDescriptor descriptor = ComponentManagerImpl.fakeCorePluginDescriptor;
     clientAppSession.registerServiceInstance(ClientCopyPasteManager.class, new MockCopyPasteManager(), descriptor);
@@ -340,6 +348,21 @@ public class MultiUserEditorUndoTest extends EditorUndoTestCase {
     @Override
     public boolean removeIf(@NotNull Predicate<? super Transferable> predicate) {
       return false;
+    }
+
+    @Override
+    public void addContentChangedListener(CopyPasteManager.@NotNull ContentChangedListener listener) {
+
+    }
+
+    @Override
+    public void addContentChangedListener(CopyPasteManager.@NotNull ContentChangedListener listener, @NotNull Disposable parentDisposable) {
+
+    }
+
+    @Override
+    public void removeContentChangedListener(CopyPasteManager.@NotNull ContentChangedListener listener) {
+
     }
 
     @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,10 +63,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
-  @NotNull
   @Override
-  public RMNode<T> addInterval(@NotNull T interval, int start, int end,
-                               boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  public @NotNull RMNode<T> addInterval(@NotNull T interval, int start, int end,
+                                        boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     ((RangeMarkerImpl)interval).setValid(true);
     RMNode<T> node = (RMNode<T>)super.addInterval(interval, start, end, greedyToLeft, greedyToRight, stickingToRight, layer);
 
@@ -98,10 +97,9 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     return null;
   }
 
-  @NotNull
   @Override
-  protected RMNode<T> createNewNode(@NotNull T key, int start, int end,
-                                    boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
+  protected @NotNull RMNode<T> createNewNode(@NotNull T key, int start, int end,
+                                             boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
   }
 
@@ -201,8 +199,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   // return invalidated markers
-  @NotNull
-  private List<T> updateMarkersOnChange(@NotNull DocumentEvent e) {
+  private @NotNull List<T> updateMarkersOnChange(@NotNull DocumentEvent e) {
     checkMax(true);
 
     incModCount();
@@ -221,8 +218,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
   }
 
   // return invalidated markers
-  @NotNull
-  private List<T> updateAffectedNodes(@NotNull DocumentEvent e, int reTargetShift,
+  private @NotNull List<T> updateAffectedNodes(@NotNull DocumentEvent e, int reTargetShift,
                                       @NotNull List<? extends IntervalNode<T>> affected) {
     List<T> invalidated = affected.isEmpty() ? Collections.emptyList() : new ArrayList<>(affected.size());
     // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
@@ -275,8 +271,7 @@ class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> imple
     return invalidated;
   }
 
-  @Nullable
-  private static <T extends RangeMarkerEx> RangeMarkerImpl getAnyNodeMarker(@NotNull IntervalNode<T> node, @NotNull List<? super T> invalidated) {
+  private static @Nullable <T extends RangeMarkerEx> RangeMarkerImpl getAnyNodeMarker(@NotNull IntervalNode<T> node, @NotNull List<? super T> invalidated) {
     List<Supplier<? extends T>> keys = node.intervals;
     for (int i = keys.size() - 1; i >= 0; i--) {
       Supplier<? extends T> key = keys.get(i);

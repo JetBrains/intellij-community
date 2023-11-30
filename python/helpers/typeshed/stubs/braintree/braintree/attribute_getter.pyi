@@ -1,4 +1,4 @@
-from typing import Any
+from _typeshed import Incomplete
 
 class AttributeGetter:
-    def __init__(self, attributes: Any | None = ...) -> None: ...
+    def __init__(self, attributes: Incomplete | None = None) -> None: ...

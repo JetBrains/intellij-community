@@ -10,7 +10,6 @@ import java.net.URISyntaxException
 
 private val LOG = logger<JBProtocolNavigateCommand>()
 
-@VisibleForTesting
 fun areOriginsEqual(originUrl: String?, projectOriginUrl: String?): Boolean {
   if (originUrl.isNullOrBlank() || projectOriginUrl.isNullOrBlank()) return false
 

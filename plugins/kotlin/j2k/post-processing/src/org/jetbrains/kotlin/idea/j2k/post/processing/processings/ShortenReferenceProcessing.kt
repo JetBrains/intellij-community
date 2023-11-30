@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.core.ShortenReferences
@@ -25,11 +26,11 @@ internal class ShortenReferenceProcessing : FileBasedPostProcessing() {
 
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
         if (rangeMarker != null) {
-            if (rangeMarker.isValid) {
+            if (runReadAction { rangeMarker.isValid }) {
                 ShortenReferences.DEFAULT.process(
                     file,
-                    rangeMarker.startOffset,
-                    rangeMarker.endOffset,
+                    runReadAction { rangeMarker.startOffset },
+                    runReadAction { rangeMarker.endOffset },
                     filter,
                     runImmediately = false
                 )

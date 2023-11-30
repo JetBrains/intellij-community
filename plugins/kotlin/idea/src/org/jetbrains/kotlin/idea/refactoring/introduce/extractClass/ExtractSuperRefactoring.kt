@@ -38,8 +38,8 @@ import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.getChildrenToAnalyze
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.toJavaMemberInfo
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerInfo
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerSupport
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.checkAllConflicts
 import org.jetbrains.kotlin.idea.refactoring.pullUp.checkVisibilityInAbstractedMembers
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
@@ -164,9 +164,7 @@ class ExtractSuperRefactoring(
                             }
                         }
                     }
-                    conflicts.putAllValues(
-                        KotlinMoveConflictCheckerSupport.getInstance().checkAllConflicts(conflictChecker, usages, LinkedHashSet())
-                    )
+                    conflicts.putAllValues(checkAllConflicts(conflictChecker, usages, LinkedHashSet()))
                     if (targetParent is PsiDirectory) {
                         ExtractSuperClassUtil.checkSuperAccessible(targetParent, conflicts, originalClass.toLightClass())
                     }

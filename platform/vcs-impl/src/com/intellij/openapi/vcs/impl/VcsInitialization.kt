@@ -1,21 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.diagnostic.runActivity
+import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.util.TimeoutUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -25,6 +25,21 @@ import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<VcsInitialization>()
 private val EP_NAME = ExtensionPointName<VcsStartupActivity>("com.intellij.vcsStartupActivity")
+
+/**
+ * An ordered pipeline for initialization of VCS-related services. Typically, it should not be needed by plugins.
+ *
+ * @see ProjectLevelVcsManager.runAfterInitialization
+ * @see ProjectActivity
+ */
+interface VcsStartupActivity {
+  /**
+   * @see VcsInitObject.getOrder
+   */
+  val order: Int
+
+  fun runActivity(project: Project)
+}
 
 @Service(Service.Level.PROJECT)
 class VcsInitialization(private val project: Project, private val coroutineScope: CoroutineScope) {
@@ -57,13 +72,9 @@ class VcsInitialization(private val project: Project, private val coroutineScope
     fun getInstance(project: Project): VcsInitialization = project.service()
   }
 
-  private fun startInitialization() {
-    future = coroutineScope.launch {
-      @Suppress("DialogTitleCapitalization")
-      withBackgroundProgress(project, VcsBundle.message("impl.vcs.initialization")) {
-        execute()
-      }
-    }
+  private fun startInitializationJob(job: Job) {
+    future = job
+    job.start()
   }
 
   fun add(vcsInitObject: VcsInitObject, runnable: Runnable) {
@@ -108,7 +119,7 @@ class VcsInitialization(private val project: Project, private val coroutineScope
     }
   }
 
-  private suspend fun execute() {
+  internal suspend fun execute() {
     LOG.assertTrue(!project.isDefault)
     try {
       runInitStep(current = Status.PENDING,
@@ -147,22 +158,21 @@ class VcsInitialization(private val project: Project, private val coroutineScope
       pendingActivities.clear()
     }
 
+    activities.sortWith(Comparator.comparingInt { it.order })
     runActivities(activities)
   }
 
-  private suspend fun runActivities(activities: MutableList<VcsStartupActivity>) {
-    coroutineContext.ensureActive()
-
-    activities.sortWith(Comparator.comparingInt { it.order })
-    for (activity in activities) {
-      coroutineContext.ensureActive()
-      LOG.debug { "running activity: $activity" }
-      runActivity("VcsInitialization (${activity.javaClass.name})") {
-        runCatching {
+  private suspend fun runActivities(activities: List<VcsStartupActivity>) {
+    CoroutineTracerShim.coroutineTracer.span("VcsInitialization.runActivities") {
+      for (activity in activities) {
+        CoroutineTracerShim.coroutineTracer.span(activity.javaClass.name) {
+          LOG.debug { "running activity: $activity" }
           blockingContext {
-            activity.runActivity(project)
+            runCatching {
+              activity.runActivity(project)
+            }.getOrLogException(LOG)
           }
-        }.getOrLogException(LOG)
+        }
       }
     }
   }
@@ -171,13 +181,13 @@ class VcsInitialization(private val project: Project, private val coroutineScope
     val future = future ?: return
     future.cancel()
 
-    // do not leave VCS initialization run in background when the project is closed
+    // do not leave VCS initialization run in the background when the project is closed
     LOG.debug {
       "cancelBackgroundInitialization() future=${future} from ${Thread.currentThread()}" +
       " with write access=${ApplicationManager.getApplication().isWriteAccessAllowed}"
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-      // dispose happens without prior project close (most likely light project case in tests)
+      // dispose happens without a prior project close (a most likely light project case in tests)
       // get out of write action and wait there
       SwingUtilities.invokeLater { waitNotRunning() }
     }
@@ -203,7 +213,7 @@ class VcsInitialization(private val project: Project, private val coroutineScope
 
   private fun waitFor(predicate: (Status) -> Boolean): Boolean {
     require(!project.isDefault)
-    // have to wait for task completion to avoid running it in background for closed project
+    // have to wait for task completion to avoid running it in the background for a closed project
     val start = System.currentTimeMillis()
     while (System.currentTimeMillis() < start + 10000) {
       synchronized(lock) {
@@ -218,22 +228,27 @@ class VcsInitialization(private val project: Project, private val coroutineScope
 
   internal class StartUpActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
-      getInstance(project).startInitialization()
+      val vcsInitialization = project.serviceAsync<VcsInitialization>()
+      coroutineScope {
+        val task = launch(context = CoroutineName("VcsInitialization"), start = CoroutineStart.LAZY) {
+          vcsInitialization.execute()
+        }
+        vcsInitialization.startInitializationJob(task)
+      }
     }
   }
 
   private class ProxyVcsStartupActivity(vcsInitObject: VcsInitObject, private val runnable: Runnable) : VcsStartupActivity {
-    private val order = vcsInitObject.order
+    override val order = vcsInitObject.order
 
     override fun runActivity(project: Project) {
       runnable.run()
     }
 
-    override fun getOrder(): Int = order
-
     override fun toString(): String = "ProxyVcsStartupActivity{runnable=${runnable}, order=${order}}" //NON-NLS
   }
 }
+
 private fun isInitActivity(activity: VcsStartupActivity): Boolean {
   return activity.order < VcsInitObject.AFTER_COMMON.order
 }

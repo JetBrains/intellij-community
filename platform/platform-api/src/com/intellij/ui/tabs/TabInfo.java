@@ -8,7 +8,10 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.reference.SoftReference;
-import com.intellij.ui.*;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.PlaceProvider;
+import com.intellij.ui.SimpleColoredText;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.AlertIcon;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.ui.JBUI;
@@ -140,7 +143,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
 
   public @NotNull TabInfo setIcon(Icon icon) {
     Icon old = myIcon;
-    if (!IconDeferrer.getInstance().equalIcons(old, icon)) {
+    if (!Objects.equals(old, icon)) {
       myIcon = icon;
       myChangeSupport.firePropertyChange(ICON, old, icon);
     }

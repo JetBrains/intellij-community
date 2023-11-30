@@ -22,15 +22,6 @@ interface SuggestedRefactoringSupport {
   }
 
   /**
-   * Returns true, if given PsiElement is a declaration which may be subject of suggested refactoring.
-   *
-   * Note, that if Change Signature is supported then individual parameters must not be considered as declarations
-   * for they are part of a bigger declaration.
-   */
-  @Deprecated(message = "Use isAnchor instead", replaceWith = ReplaceWith("isAnchor(psiElement)"))
-  fun isDeclaration(psiElement: PsiElement): Boolean = throw NotImplementedError("Will be removed")
-
-  /**
    * Returns true, if given PsiElement is an anchor element where suggested refactoring can start.
    *
    * It could be either a declaration or a call-site if suggested refactoring from the call-site is supported.
@@ -38,8 +29,7 @@ interface SuggestedRefactoringSupport {
    * Note, that if Change Signature is supported then individual parameters must not be considered as anchors
    * for they are part of a bigger anchor (method or function).
    */
-  @Suppress("DEPRECATION")
-  fun isAnchor(psiElement: PsiElement): Boolean = isDeclaration(psiElement)
+  fun isAnchor(psiElement: PsiElement): Boolean
 
   /**
    * Returns "signature range" for a given anchor.

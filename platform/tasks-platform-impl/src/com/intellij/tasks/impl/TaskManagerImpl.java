@@ -512,6 +512,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   private LocalTask doActivate(Task origin, boolean explicitly) {
     final LocalTaskImpl task = origin instanceof LocalTaskImpl ? (LocalTaskImpl)origin : new LocalTaskImpl(origin);
     if (explicitly) {
+      TaskManagementUsageCollector.logExplicitlyActivatedTask(myProject);
       task.setUpdated(new Date());
     }
     myActiveTask.setActive(false);

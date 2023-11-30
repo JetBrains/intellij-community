@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
-import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import java.io.File
 
 @ApiStatus.NonExtendable
 @Suppress("MemberVisibilityCanBePrivate")
@@ -81,9 +79,6 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun addBuildScriptClasspath(dependency: Expression) =
     withBuildScriptDependency { call("classpath", dependency) }
 
-  override fun addBuildScriptClasspath(vararg dependencies: File) =
-    addBuildScriptClasspath(call("files", dependencies.map { it.absolutePath }.map(::toSystemIndependentName).map(::argument)))
-
   override fun withBuildScriptMavenCentral() =
     withBuildScriptRepository {
       call("mavenCentral")
@@ -96,12 +91,12 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
 
   override fun applyPlugin(plugin: String) =
     withPrefix {
-      call("apply", argument("plugin", string(plugin)))
+      call("apply", "plugin" to plugin)
     }
 
   override fun applyPluginFrom(path: String) =
     withPrefix {
-      call("apply", argument("from", string(path)))
+      call("apply", "from" to path)
     }
 
   override fun withPlugin(id: String, version: String?) =
@@ -124,14 +119,22 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
   override fun withIdeaPlugin() =
     withPlugin("idea")
 
-  override fun withKotlinJvmPlugin() =
-    withPlugin("org.jetbrains.kotlin.jvm", kotlinVersion)
+  override fun withKotlinJvmPlugin() = withKotlinJvmPlugin(kotlinVersion)
 
   override fun withKotlinJsPlugin() =
     withPlugin("org.jetbrains.kotlin.js", kotlinVersion)
 
   override fun withKotlinMultiplatformPlugin() =
     withPlugin("org.jetbrains.kotlin.multiplatform", kotlinVersion)
+
+  override fun withKotlinJvmToolchain(jvmTarget: Int): BSB = apply {
+    withPostfix {
+      call("kotlin") {
+        // We use a code here to force the generator to use parenthesis in Groovy, to be in-line with the documentation
+        code("jvmToolchain($jvmTarget)")
+      }
+    }
+  }
 
   override fun withGroovyPlugin() =
     withGroovyPlugin(groovyVersion)
@@ -194,4 +197,36 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
       call("useJUnitPlatform")
     }
   }
+
+  override fun targetCompatibility(level: String) = apply {
+    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+      withPostfix {
+        assign("targetCompatibility", level)
+      }
+    }
+    else {
+      withJava {
+        assign("targetCompatibility", level)
+      }
+    }
+  }
+
+  override fun sourceCompatibility(level: String) = apply {
+    if (gradleVersion.baseVersion < GradleVersion.version("8.2")) {
+      withPostfix {
+        assign("sourceCompatibility", level)
+      }
+    }
+    else {
+      withJava {
+        assign("sourceCompatibility", level)
+      }
+    }
+  }
+
+  override fun project(name: String): Expression =
+    call("project", name)
+
+  override fun project(name: String, configuration: String): Expression =
+    call("project", "path" to name, "configuration" to configuration)
 }

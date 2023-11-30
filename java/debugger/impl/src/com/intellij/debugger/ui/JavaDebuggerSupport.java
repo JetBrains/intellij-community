@@ -12,7 +12,7 @@ public final class JavaDebuggerSupport {
   /** @deprecated This method is an unreliable hack, find another way to locate a project instance. */
   @Deprecated(forRemoval = true)
   public static Project getContextProjectForEditorFieldsInDebuggerConfigurables() {
-    //todo[nik] improve
+    //todo improve
     IdeFrame frame = IdeFocusManager.getGlobalInstance().getLastFocusedFrame();
     if (frame != null) {
       Project project = frame.getProject();

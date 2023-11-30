@@ -43,7 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.DocumentEvent;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.datatransfer.Transferable;
@@ -148,10 +148,10 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         return item.directory ? "--" : Formats.formatFileSize(item.size);
       }
     };
-    var dateColumn = new MyColumnInfo(UIBundle.message("file.chooser.column.date"), 20, Comparator.comparing(item -> item.lastUpdated)) {
+    var dateColumn = new MyColumnInfo(UIBundle.message("file.chooser.column.date"), 15, Comparator.comparing(item -> item.lastUpdated)) {
       @Override
       public String valueOf(FsItem item) {
-        return DateFormatUtil.formatBetweenDates(item.lastUpdated, System.currentTimeMillis());
+        return DateFormatUtil.formatPrettyDateTime(item.lastUpdated);
       }
     };
     myModel = new ListTableModel<>(nameColumn, sizeColumn, dateColumn);
@@ -242,13 +242,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         if (myPath.isPopupVisible()) {
           myPath.setPopupVisible(false);
         }
-        var path = typedPath();
-        if (path != null) {
-          load(path, null, Set.of());
-        }
-        else if (((String)myPath.getEditor().getItem()).isBlank()) {
-          load(null, null, Set.of());
-        }
+        load(typedPath(), null, Set.of());
       }
     });
   }
@@ -270,10 +264,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void setupDirectoryView() {
     myList.getTableHeader().setDefaultRenderer(new MyHeaderCellRenderer(myList.getTableHeader().getDefaultRenderer()));
     myList.setDefaultRenderer(Object.class, new MyTableCellRenderer(myList.getDefaultRenderer(Object.class)));
-    myList.putClientProperty("Table.isFileList", Boolean.TRUE);
     myList.resetDefaultFocusTraversalKeys();
     myList.setShowGrid(false);
+    myList.setCellSelectionEnabled(false);
     myList.setColumnSelectionAllowed(false);
+    myList.setRowSelectionAllowed(true);
     myList.setSelectionMode(myDescriptor.isChooseMultiple() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
     myList.addFocusListener(new FocusAdapter() {
       @Override
@@ -587,7 +582,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     var selection = new AtomicReference<FsItem>();
     var error = new AtomicReference<String>();
     try {
-      PlatformNioHelper.visitDirectory(directory, (file, result) -> {
+      PlatformNioHelper.visitDirectory(directory, null, (file, result) -> {
         BasicFileAttributes attrs;
         try {
           attrs = result.get();
@@ -804,7 +799,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   }
 
   private void reportError(String key, AtomicReference<String> error) {
-    String message = error.get();
+    var message = error.get();
     myErrorSink.accept(message != null ? UIBundle.message(key, message) : null);
   }
 
@@ -872,7 +867,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     };
   }
 
-  private static abstract class MyDelegatingTableCellRenderer implements TableCellRenderer {
+  private abstract static class MyDelegatingTableCellRenderer implements TableCellRenderer {
     private final TableCellRenderer myDelegate;
 
     private MyDelegatingTableCellRenderer(TableCellRenderer delegate) {
@@ -898,7 +893,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     @Override
     protected void customizeComponent(JTable table, int row, int column, JLabel label) {
-      label.setHorizontalAlignment(column == 0 ? SwingConstants.LEFT : SwingConstants.RIGHT);
+      label.setHorizontalAlignment(SwingConstants.LEFT);
     }
   }
 
@@ -911,13 +906,13 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     protected void customizeComponent(JTable table, int row, int column, JLabel label) {
       @SuppressWarnings("unchecked") var item = ((TableView<FsItem>)table).getRow(row);
       label.setIcon(column == 0 ? item.icon : null);
-      label.setHorizontalAlignment(column == 0 ? SwingConstants.LEFT : SwingConstants.RIGHT);
-      label.setToolTipText(column == 2 ? DateFormatUtil.formatDateTime(item.lastUpdated) : null);
+      label.setHorizontalAlignment(SwingConstants.LEFT);
+      label.setToolTipText(column == 1 ? DateFormatUtil.formatDateTime(item.lastUpdated) : null);
       label.setEnabled(item.selectable);
     }
   }
 
-  private static abstract class MyColumnInfo extends ColumnInfo<FsItem, String> {
+  private abstract static class MyColumnInfo extends ColumnInfo<FsItem, String> {
     private final int myWidth;
     private final Comparator<FsItem> myComparator;
 

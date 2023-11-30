@@ -2,11 +2,9 @@
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.Disposer
 import com.intellij.ui.dsl.builder.*
 import javax.swing.JLabel
 
@@ -14,10 +12,14 @@ import javax.swing.JLabel
 @Demo(title = "Components",
   description = "There are many different components supported by UI DSL. Here are some of them.",
   scrollbar = true)
-fun demoComponents(parentDisposable: Disposable): DialogPanel {
+fun demoComponents(): DialogPanel {
   val panel = panel {
     row {
       checkBox("checkBox")
+    }
+
+    row {
+      threeStateCheckBox("threeStateCheckBox")
     }
 
     var radioButtonValue = 2
@@ -52,7 +54,7 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
     }
 
     row("segmentedButton:") {
-      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { it }
+      segmentedButton(listOf("Button 1", "Button 2", "Button Last")) { text = it }
     }
 
     row("tabbedPaneHeader:") {
@@ -137,10 +139,6 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
       comboBox(listOf("Item 1", "Item 2"))
     }
   }
-
-  val disposable = Disposer.newDisposable()
-  panel.registerValidators(disposable)
-  Disposer.register(parentDisposable, disposable)
 
   return panel
 }

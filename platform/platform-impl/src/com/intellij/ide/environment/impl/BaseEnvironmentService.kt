@@ -4,17 +4,18 @@ package com.intellij.ide.environment.impl
 import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.ide.environment.EnvironmentService
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 
 abstract class BaseEnvironmentService : EnvironmentService {
   companion object {
     @JvmStatic
-    protected val LOG = logger<EnvironmentService>()
+    protected val LOG: Logger = logger<EnvironmentService>()
   }
 
   protected fun checkKeyRegistered(key: EnvironmentKey) {
     val isKeyRegistered = EnvironmentKeyProvider.EP_NAME.extensionList.any { provider ->
-      provider.getKnownKeys().any { it.key == key }
+      provider.knownKeys.any { it.key == key }
     }
     if (!isKeyRegistered) {
       LOG.warn("The key '${key.id}' is not registered in any 'com.intellij.ide.environment.EnvironmentKeyRegistry'. " +

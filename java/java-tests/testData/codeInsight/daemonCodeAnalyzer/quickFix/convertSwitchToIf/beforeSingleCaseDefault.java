@@ -4,7 +4,7 @@ abstract class Test {
 
   void foo() {
     <caret>switch (o) {
-      case default -> System.out.println("hello");
+      default -> System.out.println("hello");
     }
   }
 }

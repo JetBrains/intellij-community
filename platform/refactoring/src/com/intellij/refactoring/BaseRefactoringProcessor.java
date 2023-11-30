@@ -6,12 +6,9 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
-import com.intellij.model.ModelBranch;
-import com.intellij.model.ModelPatch;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
@@ -25,6 +22,7 @@ import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessagesService;
@@ -32,7 +30,6 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
@@ -62,7 +59,10 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -167,16 +167,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    */
   protected abstract void performRefactoring(UsageInfo @NotNull [] usages);
 
-  @ApiStatus.Experimental
-  protected boolean canPerformRefactoringInBranch() {
-    return false;
-  }
-
-  @ApiStatus.Experimental
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, ModelBranch branch) {
-    throw new UnsupportedOperationException();
-  }
-
   protected abstract @NotNull @Command String getCommandName();
 
   protected void doRun() {
@@ -210,8 +200,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     };
 
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"),
-                                                                           true, myProject)) {
+    long findUsagesStart = System.currentTimeMillis();
+    boolean isProgressFinished = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject);
+    long findUsagesDuration = System.currentTimeMillis() - findUsagesStart;
+    RefactoringUsageCollector.USAGES_SEARCHED.log(this.getClass(), !isProgressFinished, findUsagesDuration);
+    if (!isProgressFinished) {
       return;
     }
 
@@ -220,7 +214,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       return;
     }
     if (!indexNotReadyException.isNull() || DumbService.isDumb(myProject)) {
-      DumbService.getInstance(myProject).showDumbModeNotification(RefactoringBundle.message("refactoring.dumb.mode.notification"));
+      DumbService.getInstance(myProject).showDumbModeNotificationForFunctionality(RefactoringBundle.message("refactoring.dumb.mode.notification"),
+                                                                                  DumbModeBlockedFunctionality.Refactoring);
       return;
     }
     if (!refProcessCanceled.isNull()) {
@@ -244,6 +239,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         RefactoringUiService.getInstance().setStatusBarInfo(myProject, RefactoringBundle.message("readonly.occurences.found"));
       }
     }
+    long executeStart = System.currentTimeMillis();
     if (isPreview) {
       for (UsageInfo usage : usages) {
         LOG.assertTrue(usage != null, getClass());
@@ -253,6 +249,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     else {
       execute(usages);
     }
+    long executeDuration = System.currentTimeMillis() - executeStart;
+    RefactoringUsageCollector.EXECUTED.log(this.getClass(), executeDuration);
   }
 
   @TestOnly
@@ -523,11 +521,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
 
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
-      boolean inBranch = Registry.is("run.refactorings.in.model.branch") && canPerformRefactoringInBranch();
-      if (inBranch) {
-        performInBranch(writableUsageInfos);
-      }
-      else if (Registry.is("run.refactorings.under.progress")) {
+      if (Registry.is("run.refactorings.under.progress")) {
         app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null,
                                                                      indicator -> performRefactoring(writableUsageInfos));
       }
@@ -542,13 +536,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         e.getKey().performOperation(myProject, e.getValue());
       }
       myTransaction.commit();
-      if (!inBranch) {
-        if (Registry.is("run.refactorings.under.progress")) {
-          app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performPsiSpoilingRefactoring());
-        }
-        else {
-          app.runWriteAction(this::performPsiSpoilingRefactoring);
-        }
+      if (Registry.is("run.refactorings.under.progress")) {
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null,
+                                                                     indicator -> performPsiSpoilingRefactoring());
+      }
+      else {
+        app.runWriteAction(this::performPsiSpoilingRefactoring);
       }
     }
     finally {
@@ -571,29 +564,15 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
-  private void performInBranch(UsageInfo[] usageInfos) {
-    ThrowableComputable<ModelPatch, RuntimeException> computable = () -> ReadAction.compute(() -> {
-      return ModelBranch.performInBranch(myProject, branch -> performRefactoringInBranch(usageInfos, branch));
-    });
-    ModelPatch patch = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      computable, getCommandName(), true, myProject);
-
-    if (!ApplicationManager.getApplication().isUnitTestMode() && isPreviewUsages()) {
-      RefactoringUiService.getInstance().displayPreview(myProject, patch);
-    }
-    WriteAction.run(() -> patch.applyBranchChanges());
-  }
-
   protected boolean isToBeChanged(@NotNull UsageInfo usageInfo) {
     return usageInfo.isWritable();
   }
 
   /**
-   * Non-ModelBranch refactorings that spoil PSI (write something directly to documents etc.) should
+   * Refactorings that spoil PSI (write something directly to documents etc.) should
    * do that in this method.<br>
    * This method is called immediately after
    * <code>{@link #performRefactoring(UsageInfo[])}</code>.
-   * For branch-aware refactorings, please do this work inside {@link #performRefactoringInBranch}.
    */
   protected void performPsiSpoilingRefactoring() {
   }
@@ -765,6 +744,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     @Override
     public void redo() {
+      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).redoRefactoring(myRefactoringId);
     }
   }
 }

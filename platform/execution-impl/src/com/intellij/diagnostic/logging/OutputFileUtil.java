@@ -35,7 +35,7 @@ public final class OutputFileUtil {
   private OutputFileUtil() {
   }
 
-  public static File getOutputFile(@NotNull final RunConfigurationBase configuration) {
+  public static File getOutputFile(final @NotNull RunConfigurationBase configuration) {
     String outputFilePath = configuration.getOutputFilePath();
     if (outputFilePath != null) {
       final String filePath = FileUtil.toSystemDependentName(outputFilePath);
@@ -51,7 +51,7 @@ public final class OutputFileUtil {
     return null;
   }
 
-  public static void attachDumpListener(@NotNull final RunConfigurationBase configuration, @NotNull final ProcessHandler startedProcess, @Nullable final ExecutionConsole console) {
+  public static void attachDumpListener(final @NotNull RunConfigurationBase configuration, final @NotNull ProcessHandler startedProcess, final @Nullable ExecutionConsole console) {
     if (!configuration.isSaveOutputToFile()) {
       return;
     }
@@ -91,7 +91,7 @@ public final class OutputFileUtil {
     }
   }
 
-  private static class ShowOutputFileFilter implements Filter {
+  private static final class ShowOutputFileFilter implements Filter {
     @Override
     public Result applyFilter(@NotNull String line, int entireLength) {
       if (line.startsWith(CONSOLE_OUTPUT_FILE_MESSAGE)) {

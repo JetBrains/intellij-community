@@ -9,8 +9,10 @@
               "stepIntoMyCode.svg": "icons/com/jetbrains/python/debug/StepIntoMyCode.svg"
             },
             "anaconda.svg": "icons/com/jetbrains/python/anaconda.svg",
+            "attachDebugger.svg": "icons/com/jetbrains/python/attachDebugger.svg",
             "commandQueue.svg": "icons/com/jetbrains/python/commandQueue.svg",
             "condaEnv.svg": "icons/com/jetbrains/python/condaenv.svg",
+            "executeCurrentStatement.svg": "icons/com/jetbrains/python/executeCurrentStatement.svg",
             "function.svg": "icons/com/jetbrains/python/function.svg",
             "python.svg": "icons/com/jetbrains/python/python.svg",
             "pythonClosed.svg": "icons/com/jetbrains/python/pythonClosed.svg",

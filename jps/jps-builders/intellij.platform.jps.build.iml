@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="11" />
-            <stringArg name="apiVersion" arg="1.8" />
-            <stringArg name="languageVersion" arg="1.8" />
+            <stringArg name="apiVersion" arg="1.9" />
+            <stringArg name="languageVersion" arg="1.9" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -33,7 +33,7 @@
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
-    <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.nanoxml" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="RUNTIME" />
@@ -44,7 +44,13 @@
     <orderEntry type="library" name="javax.annotation-api" level="project" />
     <orderEntry type="module-library">
       <library name="qdox-java-parser" type="repository">
-        <properties maven-id="com.thoughtworks.qdox:qdox:2.0.1" />
+        <properties maven-id="com.thoughtworks.qdox:qdox:2.0.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1.jar">
+              <sha256sum>c28db4602da9f3817a59de9be137c1f6083a9cb95fa1781f54eda75763a95c67</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/com/thoughtworks/qdox/qdox/2.0.1/qdox-2.0.1.jar!/" />
         </CLASSES>
@@ -61,7 +67,7 @@
     <orderEntry type="module" module-name="intellij.platform.jps.build.javac.rt" exported="" />
     <orderEntry type="module" module-name="intellij.platform.tracing.rt" exported="" />
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
-    <orderEntry type="module" module-name="intellij.platform.util.trove" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
+    <orderEntry type="library" name="caffeine" level="project" />
   </component>
 </module>

@@ -9,13 +9,14 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-public final class CloseViewAction extends BaseViewAction {
+public final class CloseViewAction extends BaseViewAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

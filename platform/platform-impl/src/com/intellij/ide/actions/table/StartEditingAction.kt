@@ -4,12 +4,13 @@ package com.intellij.ide.actions.table
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.SwingActionDelegate
 import com.intellij.util.ui.table.EditableTable
 import javax.swing.JTable
 
-internal class StartEditingAction : DumbAwareAction() {
+internal class StartEditingAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   private val AnActionEvent.contextTable
     get() = getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JTable
 

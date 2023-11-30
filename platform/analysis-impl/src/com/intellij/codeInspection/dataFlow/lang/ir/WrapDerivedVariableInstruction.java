@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -14,8 +14,8 @@ import org.jetbrains.annotations.NotNull;
  * In particular, could be used to box the stack value on JVM (with field = SpecialField.UNBOX).
  */
 public class WrapDerivedVariableInstruction extends EvalInstruction {
-  @NotNull private final DfType myTargetType;
-  @NotNull private final DerivedVariableDescriptor myDerivedVariableDescriptor;
+  private final @NotNull DfType myTargetType;
+  private final @NotNull DerivedVariableDescriptor myDerivedVariableDescriptor;
 
   public WrapDerivedVariableInstruction(@NotNull DfType targetType, @NotNull DerivedVariableDescriptor field) {
     super(null, 1);

@@ -28,7 +28,6 @@ class FileComparisonTestEventLogger {
   }
 
   private static boolean isFileComparisonTestResult(TestResult testResult) {
-    return 'com.intellij.rt.execution.junit.FileComparisonFailure' == testResult.exception?.class?.name ||
-           'com.intellij.rt.execution.junit.FileComparisonFailure' == testResult.exception?.cause?.class?.name
+    return 'com.intellij.rt.execution.junit.FileComparisonFailure' == testResult.exception?.class?.name
   }
 }

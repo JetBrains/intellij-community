@@ -3,12 +3,12 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.openapi.ui.playback.PlaybackContext
-import com.intellij.openapi.ui.playback.commands.AbstractCommand
-import org.jetbrains.concurrency.Promise
+import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
+import kotlinx.coroutines.future.asDeferred
 
-class RecordCounterCollectorBaselinesCommand(text: String, line: Int) : AbstractCommand(text, line) {
-  override fun _execute(context: PlaybackContext): Promise<Any?> {
-    return FUCounterUsageLogger.getInstance().logRegisteredGroups().toPromise()
+class RecordCounterCollectorBaselinesCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
+  override suspend fun doExecute(context: PlaybackContext) {
+    FUCounterUsageLogger.getInstance().logRegisteredGroups().asDeferred().join()
   }
 
   companion object {

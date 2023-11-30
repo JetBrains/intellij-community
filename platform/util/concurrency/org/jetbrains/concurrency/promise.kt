@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmMultifileClass
 @file:JvmName("Promises")
+@file:Suppress("ReplaceGetOrSet")
 
 package org.jetbrains.concurrency
 
@@ -248,6 +249,27 @@ fun <T> CompletableFuture<T>.asPromise(): Promise<T> {
     }
     else {
       promise.setError(throwable)
+    }
+    result
+  }
+  return promise
+}
+
+fun <T> CompletableFuture<T>.asCancellablePromise(): CancellablePromise<T> {
+  val promise = AsyncPromise<T>()
+  val future = this
+  handle { result, throwable ->
+    if (throwable == null) {
+      promise.setResult(result)
+    }
+    else {
+      promise.setError(throwable)
+    }
+    result
+  }
+  promise.f.handle { result, throwable ->
+    if (throwable == AsyncPromise.CANCELED && !future.isDone) {
+      future.completeExceptionally(throwable)
     }
     result
   }

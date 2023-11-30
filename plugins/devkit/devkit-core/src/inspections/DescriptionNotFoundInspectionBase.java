@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -45,10 +44,6 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
       return null;
     }
 
-    if (TestSourcesFilter.isTestSources(psiClass.getContainingFile().getVirtualFile(), manager.getProject())) {
-      return null;
-    }
-
     ProblemsHolder holder = new ProblemsHolder(manager, psiClass.getContainingFile(), isOnTheFly);
     boolean registered;
     if (myDescriptionType.isFixedDescriptionFilename()) {
@@ -66,6 +61,10 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
   }
 
   protected abstract boolean skipIfNotRegistered(PsiClass epClass);
+
+  protected boolean skipOptionalBeforeAfter(PsiClass epClass) {
+    return false;
+  }
 
   protected boolean checkDynamicDescription(ProblemsHolder holder, Module module, PsiClass psiClass) {
     throw new IllegalStateException("must be implemented for " + getClass());
@@ -86,7 +85,8 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
       final PsiFile descr = dir.findFile("description.html");
       if (descr == null) continue;
 
-      if (!hasBeforeAndAfterTemplate(dir.getVirtualFile())) {
+      if (!hasBeforeAndAfterTemplate(dir.getVirtualFile()) &&
+          !skipOptionalBeforeAfter(psiClass)) {
         ProblemHolderUtilKt.registerUProblem(holder, uClass, getHasNotBeforeAfterError());
       }
       return true;

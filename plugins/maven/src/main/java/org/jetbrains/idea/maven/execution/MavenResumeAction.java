@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.ExecutionBundle;
@@ -40,12 +26,9 @@ import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.ArrayList;
@@ -105,17 +88,20 @@ public class MavenResumeAction extends AnAction {
   private static String getMavenVersion(MavenRunConfiguration runConfiguration) {
     MavenGeneralSettings generalSettings = runConfiguration.getGeneralSettings();
     if (generalSettings == null) {
-      MavenDistribution maven = MavenDistribution.fromSettings(runConfiguration.getProject());
-      if (maven == null) {
-        String version = MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion();
-        MavenLog.LOG
-          .warn("Cannot determine maven version from run configuration and project settings, use embedded as version: " + version);
-        return version;
-      }
+      MavenDistribution maven = MavenDistributionsCache.getInstance(runConfiguration.getProject())
+        .getMavenDistribution(runConfiguration.getRunnerParameters().getWorkingDirPath());
       return maven.getVersion();
     }
     else {
-      return MavenUtil.getMavenVersion(generalSettings.getEffectiveMavenHome());
+      MavenHomeType type = generalSettings.getMavenHomeType();
+      if (type instanceof StaticResolvedMavenHomeType st) {
+        return MavenUtil.getMavenVersion(st);
+      }
+      else {
+        return MavenDistributionsCache.getInstance(runConfiguration.getProject())
+          .getMavenDistribution(runConfiguration.getRunnerParameters().getWorkingDirPath()).getVersion();
+      }
+
     }
   }
 
@@ -175,7 +161,7 @@ public class MavenResumeAction extends AnAction {
     return candidate;
   }
 
-  public static boolean isApplicable(@Nullable Project project, JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
+  public static boolean isApplicable(@NotNull Project project, JavaParameters javaParameters, MavenRunConfiguration runConfiguration) {
     if (hasResumeFromParameter(runConfiguration)) { // This runConfiguration was created by other MavenResumeAction.
       MavenRunConfiguration clonedRunConf = runConfiguration.clone();
       List<String> clonedGoals = clonedRunConf.getRunnerParameters().getGoals();
@@ -293,29 +279,27 @@ public class MavenResumeAction extends AnAction {
       }
 
       switch (myState) {
-        case STATE_INITIAL: // initial state.
+        case STATE_INITIAL -> { // initial state.
           if (textWithoutInfo.equals("Reactor build order:")) {
             myState = STATE_READING_PROJECT_LIST_OLD_MAVEN;
           }
           else if (textWithoutInfo.equals("Reactor Build Order:")) {
             myState = STATE_READING_PROJECT_LIST;
           }
-          break;
-
-        case STATE_READING_PROJECT_LIST:
+        }
+        case STATE_READING_PROJECT_LIST -> {
           if (textWithoutInfo.equals("------------------------------------------------------------------------")) {
             myState = STATE_WAIT_FOR_BUILD;
           }
-          else if (textWithoutInfo.length() > 0) {
+          else if (!textWithoutInfo.isEmpty()) {
             myMavenProjectNames.add(textWithoutInfo);
           }
           else if (!myMavenProjectNames.isEmpty()) {
             myState = STATE_WAIT_FOR______;
           }
-          break;
-
-        case STATE_READING_PROJECT_LIST_OLD_MAVEN:
-          if (textWithoutInfo.length() > 0) {
+        }
+        case STATE_READING_PROJECT_LIST_OLD_MAVEN -> {
+          if (!textWithoutInfo.isEmpty()) {
             if (text.startsWith("[INFO]   ")) {
               myMavenProjectNames.add(textWithoutInfo);
             }
@@ -323,9 +307,8 @@ public class MavenResumeAction extends AnAction {
               myState = STATE_WAIT_FOR_BUILD;
             }
           }
-          break;
-
-        case STATE_WAIT_FOR_BUILD:
+        }
+        case STATE_WAIT_FOR_BUILD -> {
           if (textWithoutInfo.startsWith("Building ")) {
             String projectName = textWithoutInfo.substring("Building ".length());
             if (myBuildingProjectIndex >= myMavenProjectNames.size() ||
@@ -339,19 +322,14 @@ public class MavenResumeAction extends AnAction {
             myBuildingProjectIndex++;
           }
           myState = STATE_WAIT_FOR______;
-          break;
-
-        case STATE_WAIT_FOR______:
+        }
+        case STATE_WAIT_FOR______ -> {
           if (textWithoutInfo.equals("------------------------------------------------------------------------")) {
             myState = STATE_WAIT_FOR_BUILD;
           }
-          break;
-
-        case STATE_WTF:
-          break;
-
-        default:
-          throw new IllegalStateException();
+        }
+        case STATE_WTF -> { }
+        default -> throw new IllegalStateException();
       }
     }
   }

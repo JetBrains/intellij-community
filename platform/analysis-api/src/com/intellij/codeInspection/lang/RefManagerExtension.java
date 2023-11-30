@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.lang;
 
@@ -28,8 +28,7 @@ public interface RefManagerExtension<T> {
   @NotNull
   Key<T> getID();
 
-  @NotNull
-  default Collection<Language> getLanguages() {
+  default @NotNull Collection<Language> getLanguages() {
     return Collections.singleton(getLanguage());
   }
 
@@ -55,8 +54,7 @@ public interface RefManagerExtension<T> {
    *
    * @return container element for given psiElement
    */
-  @Nullable
-  default PsiNamedElement getElementContainer(@NotNull PsiElement psiElement) {
+  default @Nullable PsiNamedElement getElementContainer(@NotNull PsiElement psiElement) {
     return null;
   }
 
@@ -84,8 +82,7 @@ public interface RefManagerExtension<T> {
     return false;
   }
 
-  @NotNull
-  default Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
+  default @NotNull Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
     return Stream.empty();
   }
 

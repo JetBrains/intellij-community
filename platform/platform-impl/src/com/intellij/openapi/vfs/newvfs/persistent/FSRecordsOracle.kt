@@ -8,140 +8,139 @@ import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsOracle.LogDistanceEva
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogContext
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.mapCases
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle.LookupResult.Companion.toState
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.bind
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.LazyProperty
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsStateOracle
+import com.intellij.util.io.SimpleStringPersistentEnumerator
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+/**
+ * May be used only in ReadAction and there must be no pending writes in VfsLog.
+ */
 @ApiStatus.Internal
 @ApiStatus.Experimental
 class FSRecordsOracle(
   cacheDir: Path,
   errorHandler: ErrorHandler,
-  private val vfsLogContext: VfsLogContext,
+  private val queryContext: VfsLogQueryContext,
   private val distanceEvaluator: LogDistanceEvaluator = LogDistanceEvaluator { iterator ->
-    vfsLogContext.operationLogStorage.end().getPosition() - iterator.getPosition() < 8_000_000 // 8mb, TODO can be smarter, like 20% or smth
+    queryContext.end().getPosition() - iterator.getPosition() < 8_000_000 // 8mb, TODO can be smarter, like 20% or smth
   }
 ) : VfsStateOracle {
-  private val fsRecords: FSRecordsImpl = FSRecordsImpl.connect(cacheDir, emptyList(), errorHandler)
+  private val fsRecords: FSRecordsImpl = FSRecordsImpl.connect(cacheDir, emptyList(), false, errorHandler)
 
   fun interface LogDistanceEvaluator {
     fun isWorthLookingUpFrom(iterator: OperationLogStorage.Iterator): Boolean
   }
 
-  fun getNameByNameId(id: Int): String? = fsRecords.getNameByNameId(id)?.toString()
+  fun getNameByNameId(nameId: Int): State.DefinedState<String> {
+    return fsRecords.getNameByNameId(nameId)?.toString()?.let(State::Ready) ?: State.NotAvailable()
+  }
 
-  fun disposeConnection() = fsRecords.dispose()
+  fun disposeConnection(): Unit = fsRecords.close()
 
   override fun getSnapshot(point: OperationLogStorage.Iterator): VfsSnapshot? {
     if (!distanceEvaluator.isWorthLookingUpFrom(point)) return null
-    return Snapshot(point)
+    return Snapshot(point, this)
   }
 
-  private inner class Snapshot(point: OperationLogStorage.Iterator) : VfsSnapshot {
+  private class Snapshot(point: OperationLogStorage.Iterator, val oracle: FSRecordsOracle) : VfsSnapshot {
     override val point = point.constCopier()
-
-    override fun getFileById(fileId: Int): VfsSnapshot.VirtualFileSnapshot {
-      return OracledVirtualFileSnapshot(fileId)
+    override fun getNameByNameId(nameId: Int): State.DefinedState<String> {
+      return oracle.getNameByNameId(nameId)
     }
 
-    inner class OracledVirtualFileSnapshot(override val fileId: Int) : VfsSnapshot.VirtualFileSnapshot {
-      override val nameId: Property<Int> = OracledProp(
-        queryLog = {
-          VfsChronicle.lookupNameId(point(), fileId, direction = TraverseDirection.PLAY).toState()
-        },
-        queryFsRecords = { fsRecords.getNameIdByFileId(fileId) }
-      )
-      override val name: Property<String> = nameId.bind {
-        fsRecords.getNameByNameId(it)?.toString()?.let(State::Ready) ?: State.NotAvailable()
+    override fun getAttributeValueEnumerator(): SimpleStringPersistentEnumerator = oracle.fsRecords.enumeratedAttributes
+
+    override fun getContent(contentRecordId: Int): State.DefinedState<ByteArray> {
+      if (!oracle.distanceEvaluator.isWorthLookingUpFrom(point())) return State.NotAvailable()
+      val lookup = VfsChronicle.lookupContentOperation(point(), contentRecordId, TraverseDirection.PLAY)
+      if (lookup.found) { // some operation took place in between (point(), end()) so FSRecords may not contain value as at point()
+        return State.NotAvailable()
       }
+      // content at point() is the same as in FSRecords
+      return oracle.fsRecords.readContentById(contentRecordId).readAllBytes().let(State::Ready)
+    }
 
-      override val parentId: Property<Int> = OracledProp(
-        queryLog = {
-          VfsChronicle.lookupParentId(point(), fileId, direction = TraverseDirection.PLAY).toState()
-        },
-        queryFsRecords = { fsRecords.getParent(fileId) }
-      )
-      override val parent: Property<VfsSnapshot.VirtualFileSnapshot?> = parentId.fmap {
-        if (it == 0) null else getFileById(it)
+    override fun getFileById(fileId: Int): VfsSnapshot.VirtualFileSnapshot {
+      return OracledVirtualFileSnapshot(fileId, this)
+    }
+
+    override fun getChildrenIdsOf(fileId: Int): State.DefinedState<VfsSnapshot.RecoveredChildrenIds> {
+      if (point() == oracle.queryContext.end()) {
+        val childrenIds = oracle.fsRecords.listIds(fileId).toList()
+        return VfsSnapshot.RecoveredChildrenIds.of(childrenIds, true).let(State::Ready)
       }
+      // it's not clear how to easily check that events in (point(), end()) don't mutate children ids of fileId
+      return State.NotAvailable()
+    }
 
-      override val length: Property<Long> = OracledProp(
+    class OracledVirtualFileSnapshot(override val fileId: Int, override val vfsSnapshot: Snapshot) : VfsSnapshot.VirtualFileSnapshot {
+      override val nameId: LazyProperty<Int> = OracledProp(
         queryLog = {
-          VfsChronicle.lookupLength(point(), fileId, direction = TraverseDirection.PLAY).toState()
+          VfsChronicle.lookupNameId(vfsSnapshot.point(), fileId, direction = TraverseDirection.PLAY).toState()
         },
-        queryFsRecords = { fsRecords.getLength(fileId) }
-      )
-      override val timestamp: Property<Long> = OracledProp(
-        queryLog = {
-          VfsChronicle.lookupTimestamp(point(), fileId, direction = TraverseDirection.PLAY).toState()
-        },
-        queryFsRecords = { fsRecords.getTimestamp(fileId) }
-      )
-      override val flags: Property<Int> = OracledProp(
-        queryLog = {
-          VfsChronicle.lookupFlags(point(), fileId, direction = TraverseDirection.PLAY).toState()
-        },
-        queryFsRecords = { fsRecords.getFlags(fileId) }
-      )
-      override val contentRecordId: Property<Int> = OracledProp(
-        queryLog = {
-          VfsChronicle.lookupContentRecordId(point(), fileId, direction = TraverseDirection.PLAY).toState()
-        },
-        queryFsRecords = { fsRecords.getContentRecordId(fileId) }
-      )
-      override val attributesRecordId: Property<Int> = OracledProp(
-        queryLog = {
-          VfsChronicle.lookupAttributeRecordId(point(), fileId, direction = TraverseDirection.PLAY).toState()
-        },
-        queryFsRecords = { fsRecords.getAttributeRecordId(fileId) }
+        queryFsRecords = { vfsSnapshot.oracle.fsRecords.getNameIdByFileId(fileId) }
       )
 
-      override fun getContent(): State.DefinedState<ByteArray> = contentRecordId.bind {
-        if (it == 0) return@bind State.NotAvailable()
-        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return@bind State.NotAvailable()
-        val lookup = VfsChronicle.lookupContentOperation(point(), it, TraverseDirection.PLAY)
-        if (lookup.found) { // some operation took place in between (point(), end()) so FSRecords may not contain value as at point()
-          return@bind State.NotAvailable()
-        }
-        // content at point() is the same as in FSRecords
-        return@bind fsRecords.readContentById(it).readAllBytes().let(State::Ready)
-      }.observeState()
+      override val parentId: LazyProperty<Int> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupParentId(vfsSnapshot.point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { vfsSnapshot.oracle.fsRecords.getParent(fileId) }
+      )
+
+      override val length: LazyProperty<Long> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupLength(vfsSnapshot.point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { vfsSnapshot.oracle.fsRecords.getLength(fileId) }
+      )
+      override val timestamp: LazyProperty<Long> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupTimestamp(vfsSnapshot.point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { vfsSnapshot.oracle.fsRecords.getTimestamp(fileId) }
+      )
+      override val flags: LazyProperty<Int> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupFlags(vfsSnapshot.point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { vfsSnapshot.oracle.fsRecords.getFlags(fileId) }
+      )
+      override val contentRecordId: LazyProperty<Int> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupContentRecordId(vfsSnapshot.point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { vfsSnapshot.oracle.fsRecords.getContentRecordId(fileId) }
+      )
+      override val attributesRecordId: LazyProperty<Int> = OracledProp(
+        queryLog = {
+          VfsChronicle.lookupAttributeRecordId(vfsSnapshot.point(), fileId, direction = TraverseDirection.PLAY).toState()
+        },
+        queryFsRecords = { vfsSnapshot.oracle.fsRecords.getAttributeRecordId(fileId) }
+      )
 
       override fun readAttribute(fileAttribute: FileAttribute): State.DefinedState<AttributeInputStream?> {
-        if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.NotAvailable()
-        val attrId = vfsLogContext.stringEnumerator.enumerate(fileAttribute.id)
-        val attrData = VfsChronicle.lookupAttributeData(point(), fileId, attrId, direction = TraverseDirection.PLAY)
+        if (!vfsSnapshot.oracle.distanceEvaluator.isWorthLookingUpFrom(vfsSnapshot.point())) return State.NotAvailable()
+        val attrId = vfsSnapshot.oracle.queryContext.enumerateAttribute(fileAttribute)
+        val attrData = VfsChronicle.lookupAttributeData(vfsSnapshot.point(), fileId, attrId, direction = TraverseDirection.PLAY)
         if (attrData.found) return State.NotAvailable() // some operation took place in between (point(), end())
-        return fsRecords.readAttributeWithLock(fileId, fileAttribute).let(State::Ready)
-      }
-
-      override fun getRecoverableChildrenIds(): State.DefinedState<RecoveredChildrenIds> {
-        if (point() == vfsLogContext.operationLogStorage.end()) {
-          val childrenIds = fsRecords.listIds(fileId).toList()
-          return object : RecoveredChildrenIds, List<Int> by childrenIds {
-            override val isComplete: Boolean = true
-          }.let(State::Ready)
-        }
-        // it's not clear how to easily check that events in (point(), end()) don't mutate children ids of fileId
-        return State.NotAvailable()
+        return vfsSnapshot.oracle.fsRecords.readAttributeWithLock(fileId, fileAttribute).let(State::Ready)
       }
 
       private inner class OracledProp<T>(
         val queryLog: () -> State.DefinedState<T>,
         val queryFsRecords: () -> T,
-      ) : Property<T>() {
+      ) : LazyProperty<T>() {
         override fun compute(): State.DefinedState<T> {
-          if (!distanceEvaluator.isWorthLookingUpFrom(point())) return State.NotAvailable()
+          if (!vfsSnapshot.oracle.distanceEvaluator.isWorthLookingUpFrom(vfsSnapshot.point())) return State.NotAvailable()
           /* tricky: we must return the value at point(), so if queryLog() returns Ready, then the property has been changed in
              between (point(), end()) of log, so value at point() may not be the same as it is in FSRecords */
           return queryLog().mapCases(onNotAvailable = { State.Ready(queryFsRecords()) }) { State.NotAvailable() }

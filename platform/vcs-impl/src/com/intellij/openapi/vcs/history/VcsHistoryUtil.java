@@ -187,7 +187,7 @@ public final class VcsHistoryUtil {
       }
 
       @NotNull
-      private @NlsContexts.Label String makeTitle(@NotNull VcsFileRevision revision) {
+      private static @NlsContexts.Label String makeTitle(@NotNull VcsFileRevision revision) {
         return revision.getRevisionNumber().asString() +
                (revision instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
       }

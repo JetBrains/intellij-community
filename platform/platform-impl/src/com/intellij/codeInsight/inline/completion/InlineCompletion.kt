@@ -1,23 +1,44 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
-import com.intellij.openapi.Disposable
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionDocumentListener
+import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocusListener
+import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
 import com.intellij.openapi.editor.Editor
-import org.jetbrains.annotations.ApiStatus
-import java.awt.Rectangle
+import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.observable.util.addKeyListener
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.application
+import kotlinx.coroutines.CoroutineScope
 
-@ApiStatus.Experimental
-interface InlineCompletion : Disposable {
-  val offset: Int?
-  val isEmpty: Boolean
+object InlineCompletion {
 
-  fun render(proposal: InlineCompletionElement, offset: Int)
-  fun getBounds(): Rectangle?
-  fun reset()
+  private val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
 
-  companion object {
-    fun forEditor(editor: Editor): InlineCompletion {
-      return EditorInlineInlineCompletion(editor)
+  fun getHandlerOrNull(editor: Editor): InlineCompletionHandler? = editor.getUserData(KEY)
+
+  fun install(editor: EditorEx, scope: CoroutineScope) {
+    val disposable = Disposer.newDisposable("inline-completion").also {
+      EditorUtil.disposeWithEditor(editor, it)
     }
+
+    val workingScope = scope.childScope(supervisor = !application.isUnitTestMode) // Completely fail only in tests
+    val handler = InlineCompletionHandler(workingScope, editor, disposable)
+    editor.putUserData(KEY, handler)
+
+    editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
+    editor.addFocusListener(InlineCompletionFocusListener(), disposable)
+    editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
+    editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
+  }
+
+  fun remove(editor: Editor) {
+    editor.getUserData(KEY)?.cancel(FinishType.EDITOR_REMOVED)
+    editor.putUserData(KEY, null)
   }
 }

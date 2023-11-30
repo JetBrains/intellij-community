@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.resolve;
 
-import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -48,6 +47,18 @@ public final class QualifiedNameFinder {
   public static String findShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
     final QualifiedName qName = findShortestImportableQName(foothold, vfile);
     return qName == null ? null : qName.toString();
+  }
+
+  @Nullable
+  public static QualifiedName findCachedShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile virtualFile) {
+    final PythonPathCache cache = ResolveImportUtil.getPathCache(foothold);
+    if (cache != null) {
+      final List<QualifiedName> names = cache.getNames(virtualFile);
+      if (names != null) {
+        return shortestQName(names);
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -293,8 +304,7 @@ public final class QualifiedNameFinder {
 
   @Nullable
   private static QualifiedName computeQualifiedNameInRoot(@NotNull VirtualFile root, @NotNull VirtualFile file) {
-    VirtualFile effectiveRoot = ModelBranchUtil.obtainCopyFromTheSameBranch(file, root);
-    String relativePath = VfsUtilCore.getRelativePath(file, effectiveRoot, VfsUtilCore.VFS_SEPARATOR_CHAR);
+    String relativePath = VfsUtilCore.getRelativePath(file, root, VfsUtilCore.VFS_SEPARATOR_CHAR);
     if (StringUtil.isEmpty(relativePath)) {
       return null;
     }

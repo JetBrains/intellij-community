@@ -7,62 +7,110 @@ import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.completion.ml.ngram.NGram
 import com.intellij.completion.ml.util.prefix
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
+import kotlin.math.abs
 
 class CommonLocationFeatures : ContextFeatureProvider {
   override fun getName(): String = "common"
   override fun calculateFeatures(environment: CompletionEnvironment): Map<String, MLFeatureValue> {
-    val lookup = environment.lookup
-    val editor = lookup.topLevelEditor
-    val caretOffset = lookup.lookupStart
-    val logicalPosition = editor.offsetToLogicalPosition(caretOffset)
-    val lineStartOffset = editor.document.getLineStartOffset(logicalPosition.line)
-    val lineEndOffset = editor.document.getLineEndOffset(logicalPosition.line)
-    val position = environment.parameters.position
-    val prefixLength = lookup.prefix().length
-    val linePrefix = editor.document.getText(TextRange(lineStartOffset, caretOffset))
+    val result = mutableMapOf<String, MLFeatureValue>()
 
     putNGramScorers(environment)
-    val prefixToDrop = if (prefixLength > 0) prefixLength else 0
-    putContextSimilarityScorers(linePrefix.dropLast(prefixToDrop), position, environment)
 
-    val result = mutableMapOf(
-      "line_num" to MLFeatureValue.float(logicalPosition.line),
-      "col_num" to MLFeatureValue.float(logicalPosition.column),
-      "indent_level" to MLFeatureValue.float(LocationFeaturesUtil.indentLevel(linePrefix, EditorUtil.getTabSize(editor))),
-      "is_in_line_beginning" to MLFeatureValue.binary(StringUtil.isEmptyOrSpaces(linePrefix)),
-      "chars_in_line_after_caret" to MLFeatureValue.float(lineEndOffset - caretOffset)
-    )
+    result.addTextFeatures(environment)
 
-    result["is_completion_performance_mode"] = MLFeatureValue.binary(false)
-
-    if (DumbService.isDumb(lookup.project)) {
+    val project = environment.lookup.project
+    if (DumbService.isDumb(project)) {
       result["dumb_mode"] = MLFeatureValue.binary(true)
     }
 
-    val projectInfo = CurrentProjectInfo.getInstance(lookup.project)
-    if (projectInfo.isIdeaProject) {
-      result["is_idea_project"] = MLFeatureValue.binary(true)
-    }
-    result["modules_count"] = MLFeatureValue.Companion.numerical(projectInfo.modulesCount.roundDown())
-    result["libraries_count"] = MLFeatureValue.Companion.numerical(projectInfo.librariesCount.roundDown())
-    result["files_count"] = MLFeatureValue.Companion.numerical(projectInfo.filesCount.roundDown())
+    result.addProjectFeatures(project)
 
     val caseSensitive = CaseSensitivity.fromSettings(CodeInsightSettings.getInstance())
     if (caseSensitive != CaseSensitivity.NONE) {
       result["case_sensitivity"] = MLFeatureValue.categorical(caseSensitive)
     }
 
+    val position = environment.parameters.position
     result["is_after_dot"] = MLFeatureValue.binary(isAfterDot(position))
 
     result.addPsiParents(position, 10)
+
     return result
+  }
+
+  private fun MutableMap<String, MLFeatureValue>.addTextFeatures(environment: CompletionEnvironment) {
+    val lookup = environment.lookup
+    val editor = lookup.topLevelEditor
+    val caretOffset = lookup.lookupStart
+    val logicalPosition = editor.offsetToLogicalPosition(caretOffset)
+    val document = editor.document
+    val lineStartOffset = document.getLineStartOffset(logicalPosition.line)
+    val lineEndOffset = document.getLineEndOffset(logicalPosition.line)
+    val position = environment.parameters.position
+    val prefixLength = lookup.prefix().length
+    val linePrefix = document.getText(TextRange(lineStartOffset, caretOffset))
+    val lineSuffix = document.getText(TextRange(caretOffset, lineEndOffset))
+    val textLength = document.textLength
+
+    val prefixToDrop = if (prefixLength > 0) prefixLength else 0
+    putContextSimilarityScorers(linePrefix.dropLast(prefixToDrop), position, environment)
+
+    this["line_num"] = MLFeatureValue.float(logicalPosition.line)
+    this["col_num"] = MLFeatureValue.float(logicalPosition.column)
+    this["indent_level"] = MLFeatureValue.float(LocationFeaturesUtil.indentLevel(linePrefix, EditorUtil.getTabSize(editor)))
+    this["is_in_line_beginning"] = MLFeatureValue.binary(linePrefix.isBlank())
+    this["is_in_line_end"] = MLFeatureValue.binary(lineSuffix.isBlank())
+    this["prefix_length"] = MLFeatureValue.float(prefixLength)
+    captureNearestNonEmptyLineInfo(document, logicalPosition, true)
+    captureNearestNonEmptyLineInfo(document, logicalPosition, false)
+    this["offset"] = MLFeatureValue.float(caretOffset)
+    this["text_length"] = MLFeatureValue.float(textLength)
+    this["offset_text_length_ratio"] = MLFeatureValue.float(if (textLength == 0) 0.0 else caretOffset.toDouble() / textLength)
+    if (linePrefix.isNotBlank()) {
+      this["is_whitespace_before_caret"] = MLFeatureValue.binary(linePrefix.last().isWhitespace())
+      val trimmedPrefix = linePrefix.trim()
+      this["symbols_in_line_before_caret"] = MLFeatureValue.float(trimmedPrefix.length)
+      CharCategory.find(trimmedPrefix.last())?.let { this["non_space_symbol_before_caret"] = MLFeatureValue.categorical(it) }
+    }
+    if (lineSuffix.isNotBlank()) {
+      this["is_whitespace_after_caret"] = MLFeatureValue.binary(lineSuffix.first().isWhitespace())
+      val trimmedSuffix = lineSuffix.trim()
+      this["symbols_in_line_after_caret"] = MLFeatureValue.float(trimmedSuffix.length)
+      CharCategory.find(trimmedSuffix.first())?.let { this["non_space_symbol_after_caret"] = MLFeatureValue.categorical(it) }
+    }
+  }
+
+  private fun MutableMap<String, MLFeatureValue>.captureNearestNonEmptyLineInfo(document: Document,
+                                                                                position: LogicalPosition,
+                                                                                previous: Boolean) {
+    val (name, delta) = if (previous) "previous" to -1 else "following" to 1
+    val startLineNumber = position.line
+    var lineNumber = startLineNumber + delta
+    var text: String? = null
+    while (lineNumber >= 0 && lineNumber < document.lineCount && document.getLineText(lineNumber).also { text = it }.isBlank()) lineNumber += delta
+    this["${name}_empty_lines_count"] = MLFeatureValue.float(abs(lineNumber - startLineNumber) - 1)
+    text?.let { this["${name}_non_empty_line_length"] = MLFeatureValue.float(it.length) }
+  }
+
+  private fun Document.getLineText(line: Int) = getText(TextRange(getLineStartOffset(line), getLineEndOffset(line)))
+
+  private fun MutableMap<String, MLFeatureValue>.addProjectFeatures(project: Project) {
+    val projectInfo = CurrentProjectInfo.getInstance(project)
+    if (projectInfo.isIdeaProject) {
+      this["is_idea_project"] = MLFeatureValue.binary(true)
+    }
+    this["modules_count"] = MLFeatureValue.numerical(projectInfo.modulesCount.roundDown())
+    this["libraries_count"] = MLFeatureValue.numerical(projectInfo.librariesCount.roundDown())
+    this["files_count"] = MLFeatureValue.numerical(projectInfo.filesCount.roundDown())
   }
 
   private fun putNGramScorers(environment: CompletionEnvironment) {
@@ -90,7 +138,7 @@ class CommonLocationFeatures : ContextFeatureProvider {
     }
   }
 
-  private fun isAfterDot(position: PsiElement) : Boolean {
+  private fun isAfterDot(position: PsiElement): Boolean {
     val prev = PsiTreeUtil.prevVisibleLeaf(position)
     return prev != null && prev.text == "."
   }

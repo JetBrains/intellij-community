@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SystemProperties.getBooleanProperty
 import com.intellij.util.io.*
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
@@ -30,7 +31,7 @@ object PersistentFSRecordsStorageFactory {
   }
 
   private var RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(
-    System.getProperty("vfs.records-storage-impl", RecordsStorageKind.OVER_MMAPPED_FILE.name))
+    System.getProperty("vfs.records-storage.impl", RecordsStorageKind.OVER_MMAPPED_FILE.name))
 
 
   @JvmStatic
@@ -40,35 +41,28 @@ object PersistentFSRecordsStorageFactory {
   @JvmStatic
   @JvmName("setRecordsStorageImplementation")
   fun setRecordsStorageImplementation(value: RecordsStorageKind) {
-    RECORDS_STORAGE_KIND = value;
+    RECORDS_STORAGE_KIND = value
   }
 
   @VisibleForTesting
   @JvmStatic
   @JvmName("resetRecordsStorageImplementation")
   fun resetRecordsStorageImplementation() {
-    RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage-impl", RecordsStorageKind.REGULAR.name))
+    RECORDS_STORAGE_KIND = RecordsStorageKind.valueOf(System.getProperty("vfs.records-storage.impl", RecordsStorageKind.REGULAR.name))
   }
 
 
   @JvmStatic
-  fun recordsLength(): Int =
-    when (RECORDS_STORAGE_KIND) {
-      RecordsStorageKind.REGULAR, RecordsStorageKind.IN_MEMORY -> PersistentFSSynchronizedRecordsStorage.RECORD_SIZE
-      RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE -> PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES
-      RecordsStorageKind.OVER_MMAPPED_FILE -> PersistentFSRecordsLockFreeOverMMappedFile.RECORD_SIZE_IN_BYTES
-    }
-
-  @JvmStatic
   @Throws(IOException::class)
   fun createStorage(file: Path): PersistentFSRecordsStorage {
-    FSRecords.LOG.info("using $RECORDS_STORAGE_KIND storage for VFS records")
+    FSRecords.LOG.trace("using $RECORDS_STORAGE_KIND storage for VFS records")
 
     return when (RECORDS_STORAGE_KIND) {
-      RecordsStorageKind.REGULAR -> PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, recordsLength()))
+      RecordsStorageKind.REGULAR -> PersistentFSSynchronizedRecordsStorage(openRMappedFile(file, PersistentFSSynchronizedRecordsStorage.RECORD_SIZE))
       RecordsStorageKind.IN_MEMORY -> PersistentInMemoryFSRecordsStorage(file,  /*max size: */1 shl 24)
       RecordsStorageKind.OVER_LOCK_FREE_FILE_CACHE -> createLockFreeStorage(file)
       RecordsStorageKind.OVER_MMAPPED_FILE -> {
+        //TODO RC: this should be replaced with/encapsulated into StorageFactory<PersistentFSStorage>
         if (FAIL_EARLY_IF_LEGACY_STORAGE_DETECTED) {
           val legacyLengthFile = file.resolveSibling(file.fileName.toString() + ".len")
           if (legacyLengthFile.exists()) {
@@ -112,9 +106,9 @@ object PersistentFSRecordsStorageFactory {
     val recordLength = PersistentFSRecordsOverLockFreePagedStorage.RECORD_SIZE_IN_BYTES
     val pageSize = PageCacheUtils.DEFAULT_PAGE_SIZE
 
-    if (!PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+    if (!PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       throw AssertionError(
-        "Bug: PageCacheUtils.LOCK_FREE_VFS_ENABLED=false " +
+        "Bug: PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED=false " +
         "=> can't create PersistentFSRecordsOverLockFreePagedStorage if FilePageCacheLockFree is disabled")
     }
 
@@ -123,11 +117,12 @@ object PersistentFSRecordsStorageFactory {
       throw AssertionError("Bug: record length(=$recordLength) is not aligned with page size(=$pageSize)")
     }
 
-    val storage = PagedFileStorageLockFree(
+    val storage = PagedFileStorageWithRWLockedPageContent(
       file,
       PERSISTENT_FS_STORAGE_CONTEXT_RW,
       pageSize,
-      IOUtil.useNativeByteOrderForByteBuffers()
+      IOUtil.useNativeByteOrderForByteBuffers(),
+      PageContentLockingStrategy.LOCK_PER_PAGE
     )
     try {
       return PersistentFSRecordsOverLockFreePagedStorage(storage)

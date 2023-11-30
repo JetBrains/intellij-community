@@ -1,13 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.integrate;
-
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
-import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
-import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
-import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
-import static org.jetbrains.idea.svn.integrate.SvnBranchPointsCalculator.WrapperInvertor;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -16,8 +8,6 @@ import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import java.io.File;
-import java.util.List;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +16,17 @@ import org.jetbrains.idea.svn.BackgroundTaskGroup;
 import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.history.SvnChangeList;
+
+import java.io.File;
+import java.util.List;
+
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.checkRepositoryVersion15;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
+import static org.jetbrains.idea.svn.WorkingCopyFormat.ONE_DOT_EIGHT;
+import static org.jetbrains.idea.svn.integrate.SvnBranchPointsCalculator.WrapperInvertor;
 
 public class QuickMerge extends BackgroundTaskGroup {
 
@@ -139,15 +140,9 @@ public class QuickMerge extends BackgroundTaskGroup {
       myInteraction.selectMergeItems(task.getChangeLists(), task.getMergeChecker(), allStatusesCalculated, task.areAllListsLoaded());
 
     switch (result.getResultCode()) {
-      case all:
-        mergeAll(true);
-        break;
-      case select:
-      case showLatest:
-        merge(result.getSelectedLists());
-        break;
-      case cancel:
-        break;
+      case all -> mergeAll(true);
+      case select, showLatest -> merge(result.getSelectedLists());
+      case cancel -> { }
     }
   }
 

@@ -2,7 +2,7 @@
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.ZstdDirectBufferDecompressingStreamNoFinalizer
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -34,7 +34,7 @@ internal fun downloadCompilationCache(serverUrl: String,
                                       saveHash: Boolean): List<FetchAndUnpackItem> {
   var urlWithPrefix = "$serverUrl/$prefix/"
   // first let's check for initial redirect (mirror selection)
-  spanBuilder("mirror selection").useWithScope { span ->
+  spanBuilder("mirror selection").useWithScopeBlocking { span ->
     client.newCall(Request.Builder()
                      .url(urlWithPrefix)
                      .head()
@@ -87,7 +87,7 @@ internal fun downloadCompilationCache(serverUrl: String,
         }
       }
 
-      spanBuilder("unpack").setAttribute("name", item.name).useWithScope {
+      spanBuilder("unpack").setAttribute("name", item.name).useWithScopeBlocking {
         unpackArchive(item, saveHash)
       }
       null

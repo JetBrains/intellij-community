@@ -26,6 +26,7 @@ class KotlinFullClassNameIndex internal constructor() : StringStubIndexExtension
 
     override fun getKey(): StubIndexKey<String, KtClassOrObject> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinFullClassNameIndex[fqName, project, scope]"))
     override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtClassOrObject> {
         return Helper[fqName, project, scope]
     }

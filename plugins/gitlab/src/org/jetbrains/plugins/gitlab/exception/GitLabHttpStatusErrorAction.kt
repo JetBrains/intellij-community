@@ -20,7 +20,7 @@ internal sealed class GitLabHttpStatusErrorAction(@Nls name: String) : AbstractA
     private val account: GitLabAccount,
     private val accountManager: GitLabAccountManager,
     private val resetAction: () -> Unit = {}
-  ) : GitLabHttpStatusErrorAction(CollaborationToolsBundle.message("repository.and.account.selector.login.again.action.text")) {
+  ) : GitLabHttpStatusErrorAction(CollaborationToolsBundle.message("login.again.action.text")) {
     override fun actionPerformed(event: ActionEvent) {
       val parentComponent = event.source as? JComponent ?: return
       val token = GitLabLoginUtil.updateToken(project, parentComponent, account) { _, _ -> true } ?: return

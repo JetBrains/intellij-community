@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.module.Module;
@@ -44,6 +44,11 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isInSourceContent(@NotNull VirtualFile file) {
     return myFileIndex.isInSourceContent(file);
+  }
+
+  @Override
+  public boolean isInLibrary(@NotNull VirtualFile file) {
+    return myFileIndex.isInLibrary(file);
   }
 
   @Override
@@ -101,7 +106,7 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isInProjectScope(@NotNull VirtualFile file) {
     // optimization: equivalent to the super method but has fewer getInfoForFile() calls
-    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false);
+    WorkspaceFileInternalInfo fileInfo = myWorkspaceFileIndex.getFileInfo(file, true, true, true, false, false);
     if (fileInfo instanceof WorkspaceFileInternalInfo.NonWorkspace) {
       return false;
     }

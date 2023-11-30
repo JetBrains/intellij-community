@@ -2,26 +2,37 @@
 package com.intellij.devkit.workspaceModel
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.devkit.workspaceModel.WorkspaceModelGenerator.Companion.modulesWithAbstractTypes
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.javaSourceRoots
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.*
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
+import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
+import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializersImpl
+import com.intellij.platform.workspace.storage.CodeGeneratorVersions
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.platform.workspaceModel.jps.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
-import com.intellij.workspaceModel.ide.toVirtualFileUrl
-import com.intellij.workspaceModel.storage.CodeGeneratorVersions
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.workspaceModel.storage.impl.url.toVirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
+import com.intellij.workspaceModel.ide.impl.jps.serialization.SerializationContextForTests
+import com.intellij.workspaceModel.ide.impl.jps.serialization.saveAllEntities
 import junit.framework.AssertionFailedError
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -35,15 +46,10 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   private val LOG = logger<AllIntellijEntitiesGenerationTest>()
 
   private val virtualFileManager = IdeVirtualFileUrlManagerImpl()
-  private val modulesWithUnknownFields: Set<String> = setOf("intellij.platform.workspaceModel.storage.testEntities")
 
-  private val skippedModulePaths: Set<Pair<String, String>> = setOf(
-    "intellij.platform.workspaceModel.storage.tests" to
-      "com/intellij/platform/workspaceModel/storage/tests",
-    "intellij.platform.workspaceModel.storage.testEntities" to
-      "com/intellij/platform/workspaceModel/storage/testEntities/entities",
-    "intellij.platform.workspaceModel.storage" to
-      "com/intellij/workspaceModel/storage"
+  private val skippedModulePaths: Set<Pair<String, Path>> = setOf(
+    "intellij.platform.workspace.storage.tests" to
+      Paths.get("com/intellij/platform/workspace/storage/tests"),
   )
 
   private val modulesWithCustomIndentSize: Map<String, Int> = mapOf("kotlin.base.scripting" to 4)
@@ -65,7 +71,7 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
   override val testDataDirectory: File
     get() = File(IdeaTestExecutionPolicy.getHomePathWithPolicy())
 
-  fun `test generation of all entities in intellij codebase`() {
+  fun `_test generation of all entities in intellij codebase`() {
     executeEntitiesGeneration(::generateAndCompare)
   }
 
@@ -79,47 +85,127 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     executeEntitiesGeneration(::generate)
   }
 
-  private fun executeEntitiesGeneration(generationFunction: (MutableEntityStorage, ModuleEntity, SourceRootEntity, Set<String>, Boolean) -> Boolean) {
-    val regex = Regex("interface [a-zA-Z0-9]+\\s*:\\s*WorkspaceEntity[a-zA-Z0-9]*")
+  private fun executeEntitiesGeneration(generationFunction: (MutableEntityStorage, ModuleEntity, SourceRootEntity, Set<String>, Boolean, Boolean) -> Boolean) {
+    // TODO :: Fix detection of entities in modules
+    val regexToDetectWsmClasses = Regex(mergePatterns(
+      // Regex for searching entities that implements `ModuleSettingsBase`
+      "interface [a-zA-Z0-9]+\\s*:\\s*ModuleSettingsBase[a-zA-Z0-9]*",
+      // Regex for searching regular entities in modules
+      "interface [a-zA-Z0-9]+\\s*:\\s*WorkspaceEntity[a-zA-Z0-9]*",
+      // Regex for searching entity source implementations in modules
+      "(class|object) [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*EntitySource",
+      // Regex for searching symbolic id implementations in modules
+      "(class|object) [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*SymbolicEntityId<[a-zA-Z0-9]*>"
+    ))
+
+    val regexToDetectOutdatedGeneratedFiles = Regex(
+      // Regex for searching generated implementations of MetadataStorage
+      "object [a-zA-Z0-9]+\\s*(\\(.*\\))?\\s*:\\s*MetadataStorage\\s*\\{"
+    )
+
     val (storage, jpsProjectSerializer) = runBlocking { loadProjectIntellijProject() }
 
+    val filesToRemove = arrayListOf<File>()
     val modulesToCheck = mutableMapOf<Pair<ModuleEntity, SourceRootEntity>, MutableSet<String>>()
+
     storage.entities(SourceRootEntity::class.java).forEach { sourceRoot ->
       val moduleEntity = sourceRoot.contentRoot.module
 
-      File(sourceRoot.url.presentableUrl).walk().forEach {
-        if (it.isFile && it.extension == "kt") {
-          if (regex.containsMatchIn(it.readText())) {
-            val relativePath = Path.of(sourceRoot.url.presentableUrl).relativize(Path.of(it.parent)).systemIndependentPath
+      val relativePaths: MutableSet<Path> = hashSetOf()
+      File(sourceRoot.url.presentableUrl).walk().forEach { file ->
+        if (file.isFile && file.extension == "kt") {
+          processFileIfMatch(file, regexToDetectWsmClasses) {
+            val relativePath = Path.of(sourceRoot.url.presentableUrl).relativize(Path.of(it.parent))
             if (moduleEntity.name to relativePath !in skippedModulePaths) {
-              modulesToCheck.getOrPut(moduleEntity to sourceRoot){ mutableSetOf() }.add(relativePath)
+              relativePaths.add(relativePath)
             }
+          }
+
+          processFileIfMatch(file, regexToDetectOutdatedGeneratedFiles) {
+            filesToRemove.add(it)
           }
         }
       }
+
+      if (relativePaths.isNotEmpty()) {
+        modulesToCheck.getOrPut(moduleEntity to sourceRoot) { mutableSetOf() }
+          .addAll(relativePaths.onlySubpaths().map { it.systemIndependentPath })
+      }
     }
+
+    //Remove outdated files (MetadataStorageImpl)
+    filesToRemove.forEach { FileUtil.delete(it) } //TODO(Delete all files, if generation was successful)
+    //TODO(Delete empty folder)
 
     var storageChanged = false
     modulesToCheck.forEach { (moduleEntity, sourceRoot), pathToPackages ->
       when (moduleEntity.name) {
-        "intellij.platform.workspaceModel.storage" -> {
+        "intellij.platform.workspace.storage"-> {
           runWriteActionAndWait {
             val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
             removeWorkspaceStorageLibrary(modifiableModel)
             modifiableModel.commit()
           }
-          storageChanged = storageChanged || generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false)
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, true)
+          storageChanged = storageChanged || projectModelUpdateResult
           runWriteActionAndWait {
             val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
             addWorkspaceStorageLibrary(modifiableModel)
             modifiableModel.commit()
           }
         }
-        in modulesWithUnknownFields -> {
-          storageChanged = storageChanged || generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, true)
+        "intellij.platform.workspace.jps"-> {
+          runWriteActionAndWait {
+            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+            removeWorkspaceJpsEntitiesLibrary(modifiableModel)
+            modifiableModel.commit()
+          }
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false)
+          storageChanged = storageChanged || projectModelUpdateResult
+          runWriteActionAndWait {
+            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+            addWorkspaceJpsEntitiesLibrary(modifiableModel)
+            modifiableModel.commit()
+          }
+        }
+        "intellij.javaee.platform", "intellij.javaee.ejb", "intellij.javaee.web" -> {
+          // For these modules we need to have reference to `ConfigFileItem` thus we added its module as library
+          runWriteActionAndWait {
+            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+            addIntellijJavaLibrary(modifiableModel)
+            modifiableModel.commit()
+          }
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false)
+          storageChanged = storageChanged || projectModelUpdateResult
+          runWriteActionAndWait {
+            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+            removeIntellijJavaLibrary(modifiableModel)
+            modifiableModel.commit()
+          }
+        }
+        "kotlin.base.facet" -> {
+          runWriteActionAndWait {
+            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+            addIntellijJavaLibrary(modifiableModel)
+            addKotlinJpsCommonJar(modifiableModel)
+            modifiableModel.commit()
+          }
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false)
+          storageChanged = storageChanged || projectModelUpdateResult
+          runWriteActionAndWait {
+            val modifiableModel = ModuleRootManager.getInstance(module).modifiableModel
+            removeIntellijJavaLibrary(modifiableModel)
+            removeKotlinJpsCommonJar(modifiableModel)
+            modifiableModel.commit()
+          }
+        }
+        in modulesWithAbstractTypes -> {
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, true, false)
+          storageChanged = storageChanged || projectModelUpdateResult
         }
         else -> {
-          storageChanged = storageChanged || generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false)
+          val projectModelUpdateResult = generationFunction(storage, moduleEntity, sourceRoot, pathToPackages, false, false)
+          storageChanged = storageChanged || projectModelUpdateResult
         }
       }
     }
@@ -129,8 +215,11 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
-  private fun generate(storage: MutableEntityStorage, moduleEntity: ModuleEntity, sourceRoot: SourceRootEntity, pathToPackages: Set<String>,
-                       keepUnknownFields: Boolean = false): Boolean {
+  private fun generate(
+    storage: MutableEntityStorage, moduleEntity: ModuleEntity,
+    sourceRoot: SourceRootEntity, pathToPackages: Set<String>,
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
+  ): Boolean {
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
     myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
     LOG.info("Generating entities for module: ${moduleEntity.name}")
@@ -138,7 +227,13 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
 
     val result = pathToPackages.map { pathToPackage ->
       val packagePath = pathToPackage.replace(".", "/")
-      val (srcRoot, genRoot) = generateCode(packagePath, keepUnknownFields)
+
+      val (srcRoot, genRoot) = generateCode(
+        relativePathToEntitiesDirectory = packagePath,
+        processAbstractTypes = processAbstractTypes,
+        explicitApiEnabled = explicitApiEnabled
+      )
+
       runWriteActionAndWait {
         var storageChanged = false
         val genSourceRoot = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.firstOrNull { it.generated }?.sourceRoot ?: run {
@@ -172,8 +267,11 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     return result
   }
 
-  private fun generateAndCompare(storage: MutableEntityStorage, moduleEntity: ModuleEntity, sourceRoot: SourceRootEntity,
-                                 pathToPackages: Set<String>, keepUnknownFields: Boolean = false): Boolean {
+  private fun generateAndCompare(
+    storage: MutableEntityStorage, moduleEntity: ModuleEntity,
+    sourceRoot: SourceRootEntity, pathToPackages: Set<String>,
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
+  ): Boolean {
     val genSourceRoots = sourceRoot.contentRoot.sourceRoots.flatMap { it.javaSourceRoots }.filter { it.generated }
     val relativize = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).relativize(Path.of(sourceRoot.url.presentableUrl))
     myFixture.copyDirectoryToProject(relativize.systemIndependentPath, "")
@@ -183,7 +281,13 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     pathToPackages.forEach { pathToPackage ->
       val apiRootPath = Path.of(sourceRoot.url.presentableUrl, pathToPackage)
       val implRootPath = Path.of(genSourceRoots.first().sourceRoot.url.presentableUrl, pathToPackage)
-      generateAndCompare(apiRootPath, implRootPath, keepUnknownFields, pathToPackage)
+      generateAndCompare(
+        dirWithExpectedApiFiles = apiRootPath,
+        dirWithExpectedImplFiles = implRootPath,
+        pathToPackage = pathToPackage,
+        processAbstractTypes = processAbstractTypes,
+        explicitApiEnabled = explicitApiEnabled
+      )
     }
 
     resetCustomIndent(moduleEntity)
@@ -226,6 +330,24 @@ class AllIntellijEntitiesGenerationTest : CodeGenerationTestBase() {
     val projectDir = testDataDirectory.toVirtualFileUrl(virtualFileManager)
     return JpsProjectConfigLocation.DirectoryBased(projectDir, projectDir.append(PathMacroUtil.DIRECTORY_STORE_NAME))
   }
+
+  private fun mergePatterns(vararg patterns: String): String {
+    return patterns.joinToString("|") { "($it)" }
+  }
+
+  private fun processFileIfMatch(file: File, regex: Regex, function: (File) -> Unit) {
+    if (regex.containsMatchIn(file.readText())) {
+      function.invoke(file)
+    }
+  }
+
+  private fun Iterable<Path>.onlySubpaths(): Iterable<Path> {
+    return filter { path -> none { anotherPath -> anotherPath != path && anotherPath.isSubPathOf(path) } }
+  }
+
+  private fun Path.isSubPathOf(anotherPath: Path): Boolean
+    = anotherPath.startsWith(this)
+
 
   internal object TestErrorReporter : ErrorReporter {
     override fun reportError(message: String, file: VirtualFileUrl) {

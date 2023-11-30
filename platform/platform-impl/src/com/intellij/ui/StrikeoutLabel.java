@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -8,7 +8,7 @@ import org.intellij.lang.annotations.JdkConstants;
 import javax.swing.*;
 import java.awt.*;
 
-public class StrikeoutLabel extends JLabel{
+public final class StrikeoutLabel extends JLabel{
   private boolean myStrikeout = false;
 
   public StrikeoutLabel(@NlsContexts.Label String text, @JdkConstants.HorizontalAlignment int horizontalAlignment) {

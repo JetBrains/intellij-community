@@ -336,10 +336,8 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression arrayInitializer) {
       super.visitArrayInitializerExpression(arrayInitializer);
       if (IGNORE_UNCHECKED_ASSIGNMENT) return;
-      final PsiType type = arrayInitializer.getType();
-      if (!(type instanceof PsiArrayType)) return;
-      final PsiType componentType = ((PsiArrayType)type).getComponentType();
-
+      if (!(arrayInitializer.getType() instanceof PsiArrayType arrayType)) return;
+      final PsiType componentType = arrayType.getComponentType();
 
       boolean arrayTypeFixChecked = false;
       VariableArrayTypeFix fix = null;
@@ -361,7 +359,7 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
           }
 
           if (fix != null) {
-            registerProblem(description, null, expression, new LocalQuickFix[]{fix});
+            registerProblem(description, null, expression, new LocalQuickFix[]{LocalQuickFix.from(fix)});
           }
         }
       }

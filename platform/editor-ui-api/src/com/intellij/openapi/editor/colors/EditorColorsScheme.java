@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -7,6 +7,7 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeMetaInfo;
 import com.intellij.openapi.util.NlsSafe;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,7 +16,6 @@ import java.awt.*;
 
 public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Scheme, SchemeMetaInfo {
   @NonNls String DEFAULT_SCHEME_NAME = "Default";
-  @NonNls String DEFAULT_SCHEME_ALIAS = "Classic Light";
 
   void setName(String name);
 
@@ -148,4 +148,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   void setConsoleLineSpacing(float lineSpacing);
 
   void readExternal(Element parentNode);
+
+  @ApiStatus.Internal
+  boolean isReadOnly();
 }

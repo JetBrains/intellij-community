@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -29,7 +29,7 @@ import java.util.List;
  *   <li>Component Interface/Implementation</li>
  * </ul>
  */
-public final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
+final class PluginDescriptorDeclarationRelatedItemLineMarkerProvider extends DevkitRelatedClassLineMarkerProviderBase {
 
   @Override
   public String getName() {

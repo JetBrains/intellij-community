@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -32,6 +33,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -118,7 +120,7 @@ final class ModuleHighlightUtil {
         .descriptionAndTooltip(message);
       rootModuleInfos.stream().map(f -> PsiManager.getInstance(project).findFile(f)).filter(f -> f != file).findFirst().ifPresent(
         duplicate -> {
-          IntentionAction action = new GoToSymbolFix(duplicate, JavaErrorBundle
+          var action = new GoToSymbolFix(duplicate, JavaErrorBundle
             .message("module.open.duplicate.text"));
           info.registerFix(action, null, null, null, null);
         }
@@ -128,18 +130,18 @@ final class ModuleHighlightUtil {
     return null;
   }
 
-  static void checkDuplicateStatements(@NotNull PsiJavaModule module, @NotNull HighlightInfoHolder holder) {
-    checkDuplicateRefs(module.getRequires(), st -> st.getModuleName(), "module.duplicate.requires", holder);
-    checkDuplicateRefs(module.getExports(), st -> st.getPackageName(), "module.duplicate.exports", holder);
-    checkDuplicateRefs(module.getOpens(), st -> st.getPackageName(), "module.duplicate.opens", holder);
-    checkDuplicateRefs(module.getUses(), st -> qName(st.getClassReference()), "module.duplicate.uses", holder);
-    checkDuplicateRefs(module.getProvides(), st -> qName(st.getInterfaceReference()), "module.duplicate.provides", holder);
+  static void checkDuplicateStatements(@NotNull PsiJavaModule module, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
+    checkDuplicateRefs(module.getRequires(), st -> st.getModuleName(), "module.duplicate.requires", errorSink);
+    checkDuplicateRefs(module.getExports(), st -> st.getPackageName(), "module.duplicate.exports", errorSink);
+    checkDuplicateRefs(module.getOpens(), st -> st.getPackageName(), "module.duplicate.opens", errorSink);
+    checkDuplicateRefs(module.getUses(), st -> qName(st.getClassReference()), "module.duplicate.uses", errorSink);
+    checkDuplicateRefs(module.getProvides(), st -> qName(st.getInterfaceReference()), "module.duplicate.provides", errorSink);
   }
 
   private static <T extends PsiStatement> void checkDuplicateRefs(@NotNull Iterable<? extends T> statements,
                                                                   @NotNull Function<? super T, String> ref,
                                                                   @NotNull @PropertyKey(resourceBundle = JavaErrorBundle.BUNDLE) String key,
-                                                                  @NotNull HighlightInfoHolder holder) {
+                                                                  @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     Set<String> filter = new HashSet<>();
     for (T statement : statements) {
       String refText = ref.apply(statement);
@@ -149,16 +151,16 @@ final class ModuleHighlightUtil {
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
         IntentionAction action1 = QuickFixFactory.getInstance().createDeleteFix(statement);
         info.registerFix(action1, null, null, null, null);
-        IntentionAction action = MergeModuleStatementsFix.createFix(statement);
+        var action = MergeModuleStatementsFix.createFix(statement);
         if (action != null) {
           info.registerFix(action, null, null, null, null);
         }
-        holder.add(info.create());
+        errorSink.accept(info);
       }
     }
   }
 
-  static void checkUnusedServices(@NotNull PsiJavaModule module, @NotNull PsiFile file, @NotNull HighlightInfoHolder holder) {
+  static void checkUnusedServices(@NotNull PsiJavaModule module, @NotNull PsiFile file, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     Module host = ModuleUtilCore.findModuleForFile(file);
     if (host == null) {
       return;
@@ -178,11 +180,11 @@ final class ModuleHighlightUtil {
               String message = JavaErrorBundle.message("module.service.unused");
               HighlightInfo.Builder info =
                 HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(range(ref)).descriptionAndTooltip(message);
-              IntentionAction action1 = new AddExportsDirectiveFix(module, packageName, "");
+              ModCommandAction action1 = new AddExportsDirectiveFix(module, packageName, "");
               info.registerFix(action1, null, null, null, null);
-              IntentionAction action = new AddUsesDirectiveFix(module, className);
+              ModCommandAction action = new AddUsesDirectiveFix(module, className);
               info.registerFix(action, null, null, null, null);
-              holder.add(info.create());
+              errorSink.accept(info);
             }
           }
         }
@@ -319,7 +321,7 @@ final class ModuleHighlightUtil {
   }
 
   static void checkPackageAccessTargets(@NotNull PsiPackageAccessibilityStatement statement,
-                                        @NotNull HighlightInfoHolder holder) {
+                                        @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     Set<String> targets = new HashSet<>();
     for (PsiJavaModuleReferenceElement refElement : statement.getModuleReferences()) {
       String refText = refElement.getReferenceText();
@@ -329,11 +331,13 @@ final class ModuleHighlightUtil {
         boolean exports = statement.getRole() == Role.EXPORTS;
         String message = JavaErrorBundle.message(exports ? "module.duplicate.exports.target" : "module.duplicate.opens.target", refText);
         HighlightInfo.Builder info = createDuplicateReference(refElement, message);
-        holder.add(info.create());
+        errorSink.accept(info);
       }
       else if (ref.multiResolve(true).length == 0) {
         String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
-        holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message).create());
+        HighlightInfo.Builder info =
+          HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(refElement).descriptionAndTooltip(message);
+        errorSink.accept(info);
       }
     }
   }
@@ -355,7 +359,7 @@ final class ModuleHighlightUtil {
   }
 
   static void checkServiceImplementations(@NotNull PsiProvidesStatement statement, @NotNull PsiFile file,
-                                          @NotNull HighlightInfoHolder holder) {
+                                          @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     PsiReferenceList implRefList = statement.getImplementationList();
     if (implRefList == null) return;
 
@@ -368,7 +372,7 @@ final class ModuleHighlightUtil {
       if (!filter.add(refText)) {
         String message = JavaErrorBundle.message("module.duplicate.impl", refText);
         HighlightInfo.Builder info = createDuplicateReference(implRef, message);
-        holder.add(info.create());
+        errorSink.accept(info);
         continue;
       }
 
@@ -378,7 +382,9 @@ final class ModuleHighlightUtil {
       if (implTarget instanceof PsiClass implClass) {
         if (ModuleUtilCore.findModuleForFile(file) != ModuleUtilCore.findModuleForFile(implClass.getContainingFile())) {
           String message = JavaErrorBundle.message("module.service.alien");
-          holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+          HighlightInfo.Builder info =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
+          errorSink.accept(info);
         }
 
         PsiMethod provider = ContainerUtil.find(
@@ -389,21 +395,29 @@ final class ModuleHighlightUtil {
           PsiClass typeClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
           if (!InheritanceUtil.isInheritorOrSelf(typeClass, (PsiClass)intTarget, true)) {
             String message = JavaErrorBundle.message("module.service.provider.type", implClass.getName());
-            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+            HighlightInfo.Builder info =
+              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
+            errorSink.accept(info);
           }
         }
         else if (InheritanceUtil.isInheritorOrSelf(implClass, (PsiClass)intTarget, true)) {
           if (implClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
             String message = JavaErrorBundle.message("module.service.abstract", implClass.getName());
-            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+            HighlightInfo.Builder info =
+              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
+            errorSink.accept(info);
           }
           else if (!(ClassUtil.isTopLevelClass(implClass) || implClass.hasModifierProperty(PsiModifier.STATIC))) {
             String message = JavaErrorBundle.message("module.service.inner", implClass.getName());
-            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+            HighlightInfo.Builder info =
+              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
+            errorSink.accept(info);
           }
           else if (!PsiUtil.hasDefaultConstructor(implClass)) {
             String message = JavaErrorBundle.message("module.service.no.ctor", implClass.getName());
-            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message).create());
+            HighlightInfo.Builder info =
+              HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range(implRef)).descriptionAndTooltip(message);
+            errorSink.accept(info);
           }
         }
         else {
@@ -413,7 +427,7 @@ final class ModuleHighlightUtil {
           PsiClassType type = JavaPsiFacade.getElementFactory(file.getProject()).createType((PsiClass)intTarget);
           IntentionAction action = QuickFixFactory.getInstance().createExtendsListFix(implClass, type, true);
           info.registerFix(action, null, null, null, null);
-          holder.add(info.create());
+          errorSink.accept(info);
         }
       }
     }
@@ -430,7 +444,7 @@ final class ModuleHighlightUtil {
     return null;
   }
 
-  static void checkModifiers(@NotNull PsiRequiresStatement statement, @NotNull HighlightInfoHolder holder) {
+  static void checkModifiers(@NotNull PsiRequiresStatement statement, @NotNull Consumer<? super HighlightInfo.Builder> errorSink) {
     PsiModifierList modList = statement.getModifierList();
     if (modList != null && PsiJavaModule.JAVA_BASE.equals(statement.getModuleName())) {
       PsiTreeUtil.processElements(modList, PsiKeyword.class, keyword -> {
@@ -439,7 +453,7 @@ final class ModuleHighlightUtil {
         HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(keyword).descriptionAndTooltip(message);
         IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(modList, modifier, false, false);
         info.registerFix(action, null, null, null, null);
-        holder.add(info.create());
+        errorSink.accept(info);
         return true;
       });
     }

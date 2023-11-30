@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.imports;
 
+import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -59,6 +60,7 @@ public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPrio
 
     final String message = ShowAutoImportPass.getMessage(
       imports.size() > 1,
+      DaemonBundle.message("symbol"),
       ImportCandidateHolder.getQualifiedName(initialName, imports.get(0).getPath(), imports.get(0).getImportElement())
     );
     final ImportFromExistingAction action = myDelegate.createAction(element);

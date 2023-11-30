@@ -30,6 +30,8 @@ interface SearchEverywhereMlService {
     }
   }
 
+  val shouldAllTabPrioritizeRecentFiles: Boolean
+
   /**
    * Indicates whether machine learning in Search Everywhere is enabled.
    * This method can return false if ML-ranking is disabled and no experiments are allowed

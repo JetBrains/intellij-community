@@ -13,14 +13,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.configuration.ConfigureUnloadedModulesDialog
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.util.xmlb.annotations.XCollection
-import com.intellij.workspaceModel.ide.UnloadedModulesNameHolder
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.getModuleLevelLibraries
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.launch
 
@@ -89,7 +88,7 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
   }
 
   private fun processTransitiveDependencies(moduleId: ModuleId, storage: EntityStorage, unloadedEntitiesStorage: EntityStorage,
-                                            explicitlyUnloadedHolder: UnloadedModulesNameHolder, result: MutableSet<String>) {
+                                            explicitlyUnloadedHolder: com.intellij.platform.workspace.jps.UnloadedModulesNameHolder, result: MutableSet<String>) {
     if (explicitlyUnloadedHolder.isUnloaded(moduleId.name)) return
     val moduleEntity = storage.resolve(moduleId) ?: unloadedEntitiesStorage.resolve(moduleId) ?: return
     if (!result.add(moduleEntity.name)) return
@@ -166,5 +165,5 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
 
 class LoadedModulesListStorage : BaseState() {
   @get:XCollection(elementName = "module", valueAttributeName = "name", propertyElementName = "loaded-modules")
-  val modules by list<String>()
+  val modules: MutableList<String> by list()
 }

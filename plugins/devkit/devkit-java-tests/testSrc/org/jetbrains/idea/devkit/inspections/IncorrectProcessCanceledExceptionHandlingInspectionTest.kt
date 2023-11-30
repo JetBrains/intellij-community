@@ -7,6 +7,15 @@ import org.jetbrains.idea.devkit.DevkitJavaTestsUtil
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/incorrectPceHandling")
 class IncorrectProcessCanceledExceptionHandlingInspectionTest : IncorrectProcessCanceledExceptionHandlingInspectionTestBase() {
 
+  override fun setUp() {
+    super.setUp()
+    myFixture.addClass("""
+        package com.example;
+        import com.intellij.openapi.progress.ProcessCanceledException;
+        public class SubclassOfProcessCanceledException extends ProcessCanceledException {}
+        """.trimIndent())
+  }
+
   fun testIncorrectPceHandlingTests() {
     doTest()
   }

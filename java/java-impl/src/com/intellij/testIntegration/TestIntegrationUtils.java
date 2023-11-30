@@ -24,6 +24,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -309,7 +310,9 @@ public final class TestIntegrationUtils {
   }
 
   public static List<TestFramework> findSuitableFrameworks(PsiClass targetClass) {
-    List<TestFramework> frameworks = TestFramework.EXTENSION_NAME.getExtensionList();
+    List<TestFramework> frameworks = ContainerUtil.filter(TestFramework.EXTENSION_NAME.getExtensionList(), framework ->
+      TestFrameworks.isSuitableByLanguage(targetClass, framework)
+    );
     Project project = targetClass.getProject();
 
     List<TestFramework> result = new SmartList<>();

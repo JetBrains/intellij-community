@@ -53,8 +53,7 @@ public abstract class FileStatusManager {
   public void addFileStatusListener(@NotNull FileStatusListener listener, @NotNull Disposable parentDisposable) {
   }
 
-  @Nullable
-  public Color getNotChangedDirectoryColor(@NotNull VirtualFile file) {
+  public @Nullable Color getNotChangedDirectoryColor(@NotNull VirtualFile file) {
     return getRecursiveStatus(file).getColor();
   }
 
@@ -63,6 +62,5 @@ public abstract class FileStatusManager {
    * @see FileStatus#NOT_CHANGED_IMMEDIATE
    * @see FileStatus#NOT_CHANGED_RECURSIVE
    */
-  @NotNull
-  public abstract FileStatus getRecursiveStatus(@NotNull VirtualFile file);
+  public abstract @NotNull FileStatus getRecursiveStatus(@NotNull VirtualFile file);
 }

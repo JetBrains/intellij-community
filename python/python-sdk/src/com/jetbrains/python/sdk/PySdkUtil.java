@@ -26,6 +26,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -112,6 +113,14 @@ public final class PySdkUtil {
                                                @Nullable @NonNls Map<String, String> extraEnv,
                                                int timeout,
                                                byte @Nullable [] stdin, boolean needEOFMarker) {
+    return getProcessOutput(cmd, homePath, extraEnv, timeout, stdin, needEOFMarker, null);
+  }
+
+  public static ProcessOutput getProcessOutput(@NotNull GeneralCommandLine cmd, @Nullable String homePath,
+                                               @Nullable @NonNls Map<String, String> extraEnv,
+                                               int timeout,
+                                               byte @Nullable [] stdin, boolean needEOFMarker,
+                                               @Nullable @Nls(capitalization = Nls.Capitalization.Title) String customTitle) {
     if (homePath == null || !new File(homePath).exists()) {
       return new ProcessOutput();
     }
@@ -149,8 +158,8 @@ public final class PySdkUtil {
         assert application.isUnitTestMode() ||
                application.isHeadlessEnvironment() ||
                !application.isWriteAccessAllowed() : "Background task can't be run under write action";
-        return progressManager.runProcessWithProgressSynchronously(() -> processHandler.runProcess(timeout),
-                                                                   PySdkBundle.message("python.sdk.run.wait"), false, null);
+        String dialogTitle = customTitle != null ? customTitle : PySdkBundle.message("python.sdk.run.wait");
+        return progressManager.runProcessWithProgressSynchronously(() -> processHandler.runProcess(timeout), dialogTitle , false, null);
       }
       else {
         return processHandler.runProcess();

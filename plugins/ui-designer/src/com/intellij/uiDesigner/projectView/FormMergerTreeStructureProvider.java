@@ -131,10 +131,10 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   }
 
   private static final class MyDeleteProvider implements DeleteProvider {
-    private final PsiElement[] myElements;
+    private final AbstractTreeNode<?>[] myNodes;
 
-    MyDeleteProvider(final Collection<? extends AbstractTreeNode<?>> selected) {
-      myElements = collectFormPsiElements(selected);
+    MyDeleteProvider(Collection<? extends AbstractTreeNode<?>> nodes) {
+      myNodes = nodes.toArray(AbstractTreeNode[]::new);
     }
 
     @Override
@@ -145,15 +145,17 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
     @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      DeleteHandler.deletePsiElement(myElements, project);
+      PsiElement[] elements = collectFormPsiElements(myNodes);
+      DeleteHandler.deletePsiElement(elements, project);
     }
 
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      return DeleteHandler.shouldEnableDeleteAction(myElements);
+      PsiElement[] elements = collectFormPsiElements(myNodes);
+      return DeleteHandler.shouldEnableDeleteAction(elements);
     }
 
-    private static PsiElement[] collectFormPsiElements(Collection<? extends AbstractTreeNode<?>> selected) {
+    private static PsiElement[] collectFormPsiElements(AbstractTreeNode<?>[] selected) {
       Set<PsiElement> result = new HashSet<>();
       for(AbstractTreeNode<?> node: selected) {
         if (node.getValue() instanceof Form form) {

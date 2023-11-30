@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.openapi.util.registry.Registry
@@ -25,7 +25,7 @@ abstract class BaseMethodProcessor(private val name: String) : ProcessorWithHint
 
   protected val myCandidates = SmartList<GroovyMethodResult>()
   private var myApplicable: ApplicabilitiesResult<GroovyMethodResult>? = null
-  val acceptMore: Boolean get() = myApplicable?.first.isNullOrEmpty()
+  val acceptMore: Boolean get() = myApplicable?.first?.size != 1
 
   final override fun execute(element: PsiElement, state: ResolveState): Boolean {
     if (!acceptMore) {

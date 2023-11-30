@@ -111,6 +111,7 @@
   <technology name="groovy" root="groovy.lang"/>
   <technology name="grpc" root="io.grpc"/>
   <technology name="gson" root="com.google.gson"/>
+  <technology name="guava" root="com.google.common.base"/>
   <technology name="guice" root="com.google.inject"/>
   <technology name="gwt" root="com.google.gwt"/>
   <technology name="h2" root="org.h2"/>
@@ -162,6 +163,7 @@
   <technology name="jetbrains-annotations" root="org.jetbrains.annotations"/>
   <technology name="jetbrains-compose" root="org.jetbrains.compose"/>
   <technology name="jhipster" root="io.github.jhipster"/>
+  <technology name="jhipster" root="tech.jhipster"/>
   <technology name="jmockit" root="mockit"/>
   <technology name="jodd-db" root="jodd.db"/>
   <technology name="jooby" root="org.jooby"/>
@@ -316,6 +318,7 @@
   <technology name="spring-integration" root="org.springframework.integration"/>
   <technology name="spring-integration-amqp" root="org.springframework.integration.amqp"/>
   <technology name="spring-kafka" root="org.springframework.kafka"/>
+  <technology name="spring-modulith" root="org.springframework.modulith"/>
   <technology name="spring-osgi" root="org.springframework.osgi"/>
   <technology name="spring-security" root="org.springframework.security"/>
   <technology name="spring-security-oauth2" root="org.springframework.security.oauth2"/>

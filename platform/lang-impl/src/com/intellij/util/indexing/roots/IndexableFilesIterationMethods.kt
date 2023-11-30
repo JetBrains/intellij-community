@@ -7,6 +7,8 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -27,10 +29,46 @@ object IndexableFilesIterationMethods {
   ): Boolean {
     val projectFileIndex = ProjectFileIndex.getInstance(project)
     val rootsSet = roots.toSet()
-    val finalFileFilter = fileFilter.and { shouldIndexFile(it, projectFileIndex, rootsSet, excludeNonProjectRoots) }
+    val finalFileFilter = if (project.isDefault) fileFilter else fileFilter.and { shouldIndexFile(it, projectFileIndex, rootsSet, excludeNonProjectRoots) }
     return roots.all { root ->
       VfsUtilCore.iterateChildrenRecursively(root, finalFileFilter, contentIterator)
     }
+  }
+
+  private fun iterateRootsNonRecursively(project: Project,
+                                         roots: Iterable<VirtualFile>,
+                                         contentIterator: ContentIterator,
+                                         fileFilter: VirtualFileFilter,
+                                         excludeNonProjectRoots: Boolean): Boolean {
+    val projectFileIndex = ProjectFileIndex.getInstance(project)
+    val rootsSet = roots.toSet()
+    for (root in roots) {
+      if (fileFilter.accept(root) && shouldIndexFile(root, projectFileIndex, rootsSet, excludeNonProjectRoots)) {
+        if (!contentIterator.processFile(root)) return false
+      }
+    }
+    return true
+  }
+
+  fun iterateRoots(project: Project,
+                   roots: IndexingRootHolder,
+                   contentIterator: ContentIterator,
+                   fileFilter: VirtualFileFilter,
+                   excludeNonProjectRoots: Boolean = true
+  ): Boolean {
+    val recursiveResult = iterateRoots(project, roots.roots, contentIterator, fileFilter, excludeNonProjectRoots)
+    if (!recursiveResult) return false
+    return iterateRootsNonRecursively(project, roots.nonRecursiveRoots, contentIterator, fileFilter, excludeNonProjectRoots)
+  }
+
+  fun iterateRoots(project: Project,
+                   rootsHolder: IndexingSourceRootHolder,
+                   contentIterator: ContentIterator,
+                   fileFilter: VirtualFileFilter,
+                   excludeNonProjectRoots: Boolean = true
+  ): Boolean {
+    val roots = rootsHolder.roots + rootsHolder.sourceRoots
+    return iterateRoots(project, roots, contentIterator, fileFilter, excludeNonProjectRoots)
   }
 
   @JvmOverloads

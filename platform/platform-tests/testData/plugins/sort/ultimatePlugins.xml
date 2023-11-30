@@ -822,11 +822,6 @@
     <name>Mercurial</name>
     <depends>com.intellij.modules.vcs</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.javaee.appServers.tcServer/META-INF/plugin.xml">
-    <id>-com-intellij-tcserver-</id>
-    <name>tc Server Support</name>
-    <depends>-com-intellij-javaee-</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.vcs.github/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-github-</id>
     <name>GitHub</name>
@@ -919,12 +914,6 @@
     <depends>-com-intellij-properties-</depends>
     <depends>-com-intellij-javaee-</depends>
     <depends>com.intellij.modules.ultimate</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.clouds.cloudFoundry/META-INF/plugin.xml">
-    <id>-CloudFoundry-</id>
-    <name>Cloud Foundry</name>
-    <depends>-com-intellij-javaee-</depends>
-    <depends>-com-intellij-spring-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.spring.batch/META-INF/plugin.xml">
     <id>-com-intellij-spring-batch-</id>
@@ -1111,11 +1100,6 @@
     <name>tslint</name>
     <depends>-JavaScript-</depends>
     <depends>com.intellij.modules.platform</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.cloudConfig/META-INF/plugin.xml">
-    <id>-com-intellij-CloudConfig-</id>
-    <name>IDE Settings Sync</name>
-    <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.markdown/META-INF/plugin.xml">
     <id>-org-intellij-plugins-markdown-</id>

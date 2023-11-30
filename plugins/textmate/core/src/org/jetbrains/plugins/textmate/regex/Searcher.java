@@ -3,7 +3,7 @@ package org.jetbrains.plugins.textmate.regex;
 import org.joni.Matcher;
 import org.joni.Option;
 
-public class Searcher {
+public final class Searcher {
   private final Matcher myMatcher;
   private int currentPosition = 0;
   private int currentCharPosition = 0;
@@ -20,7 +20,7 @@ public class Searcher {
     }
     final int searchResult = myMatcher.search(currentPosition, myStringBytes.length, Option.CAPTURE_GROUP);
     if (searchResult > -1) {
-      setCurrentPosition(myMatcher.getEagerRegion().end[0]);
+      setCurrentPosition(myMatcher.getEagerRegion().getEnd(0));
     }
     else {
       setCurrentPosition(searchResult);

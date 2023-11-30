@@ -12,13 +12,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 
-private class ToggleEssentialHighlightingAction : ToggleAction() {
+class ToggleEssentialHighlightingAction : ToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun isSelected(e: AnActionEvent): Boolean {
     return EssentialHighlightingMode.isEnabled()
   }

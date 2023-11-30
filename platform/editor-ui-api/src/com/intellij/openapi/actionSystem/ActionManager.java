@@ -150,7 +150,7 @@ public abstract class ActionManager {
   /**
    * @deprecated use {@link #addTimerListener(TimerListener)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addTimerListener(int unused, @NotNull TimerListener listener) {
     addTimerListener(listener);
   }
@@ -176,12 +176,6 @@ public abstract class ActionManager {
   public void addAnActionListener(AnActionListener listener, Disposable parentDisposable) {
     ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(AnActionListener.TOPIC, listener);
   }
-
-  /**
-   * @deprecated Use {@link AnActionListener#TOPIC}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void removeAnActionListener(AnActionListener listener);
 
   public abstract @Nullable KeyboardShortcut getKeyboardShortcut(@NonNls @NotNull String actionId);
 }

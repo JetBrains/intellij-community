@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
-
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.impl.use
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtilRt
 import com.intellij.util.SystemProperties
 import io.opentelemetry.api.common.AttributeKey
@@ -47,7 +46,6 @@ fun createCompilationContextBlocking(communityHome: BuildDependenciesCommunityRo
                                      projectHome: Path,
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
-  @Suppress("RAW_RUN_BLOCKING")
   return runBlocking(Dispatchers.Default) {
     createCompilationContext(communityHome = communityHome,
                              projectHome = projectHome,
@@ -60,9 +58,9 @@ suspend fun createCompilationContext(communityHome: BuildDependenciesCommunityRo
                                      projectHome: Path,
                                      defaultOutputRoot: Path,
                                      options: BuildOptions = BuildOptions()): CompilationContextImpl {
-  val logDir = options.logPath?.let { Path.of(it).toAbsolutePath().normalize() }
+  val logDir = options.logPath?.let { Path.of(it) }
                ?: (options.outputRootPath ?: defaultOutputRoot).resolve("log")
-  TracerProviderManager.setOutput(logDir.resolve("trace.json"))
+  JaegerJsonSpanExporterManager.setOutput(logDir.toAbsolutePath().normalize().resolve("trace.json"))
   return CompilationContextImpl.createCompilationContext(communityHome = communityHome,
                                                          projectHome = projectHome,
                                                          setupTracer = false,
@@ -88,7 +86,7 @@ class CompilationContextImpl private constructor(
   override val paths: BuildPaths,
   override val options: BuildOptions,
 ) : CompilationContext {
-  val global: JpsGlobal
+  val global: JpsGlobal = model.global
   private val nameToModule: Map<String?, JpsModule>
 
   override var classesOutputDirectory: Path
@@ -101,31 +99,39 @@ class CompilationContextImpl private constructor(
       JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project).outputUrl = url
     }
 
-  override val project: JpsProject
+  override val project: JpsProject = model.project
   override val projectModel: JpsModel = model
   override val dependenciesProperties: DependenciesProperties
   override val bundledRuntime: BundledRuntime
   override lateinit var compilationData: JpsCompilationData
 
-  override val stableJdkHome: Path by lazy {
-    JdkDownloader.getJdkHome(communityHome, Span.current()::addEvent)
+  @Volatile
+  private var cachedJdkHome: Path? = null
+
+  override suspend fun getStableJdkHome(): Path {
+    var jdkHome = cachedJdkHome
+    if (jdkHome == null) {
+      jdkHome = JdkDownloader.getJdkHome(communityHome, Span.current()::addEvent)
+      cachedJdkHome = jdkHome
+    }
+    return jdkHome
   }
 
   override val stableJavaExecutable: Path by lazy {
-    JdkDownloader.getJavaExecutable(stableJdkHome)
+    var jdkHome = cachedJdkHome
+    if (jdkHome == null) {
+      // blocking doesn't matter, getStableJdkHome is mostly always called before
+      jdkHome = JdkDownloader.blockingGetJdkHome(communityHome, Span.current()::addEvent)
+      cachedJdkHome = jdkHome
+    }
+    JdkDownloader.getJavaExecutable(jdkHome)
   }
 
   init {
-    project = model.project
-    global = model.global
     val modules = project.modules
     nameToModule = modules.associateByTo(HashMap(modules.size)) { it.name }
     dependenciesProperties = DependenciesProperties(paths.communityHomeDirRoot)
-    bundledRuntime = BundledRuntimeImpl(options = options,
-                                        paths = paths,
-                                        dependenciesProperties = dependenciesProperties,
-                                        error = messages::error,
-                                        info = messages::info)
+    bundledRuntime = BundledRuntimeImpl(context = this)
   }
 
   companion object {
@@ -168,7 +174,7 @@ class CompilationContextImpl private constructor(
       // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
       // (see createCopyForProduct)
       if (setupTracer) {
-        TracerProviderManager.setOutput(buildPaths.logDir.resolve("trace.json"))
+        JaegerJsonSpanExporterManager.setOutput(buildPaths.logDir.resolve("trace.json"))
       }
 
       val context = CompilationContextImpl(model = model,
@@ -180,16 +186,16 @@ class CompilationContextImpl private constructor(
        * [defineJavaSdk] may be skipped using [CompiledClasses.isCompilationRequired]
        * after removing workaround from [JpsCompilationRunner.compileMissingArtifactsModules].
        */
-      spanBuilder("define JDK").useWithScope2 {
+      spanBuilder("define JDK").useWithScope {
         defineJavaSdk(context)
       }
-      spanBuilder("prepare for build").useWithScope2 {
+      spanBuilder("prepare for build").useWithScope {
         context.prepareForBuild()
       }
 
       messages.setDebugLogPath(context.paths.logDir.resolve("debug.log"))
 
-      // this is not a proper place to initialize logging but this is the only place which is called in most build scripts
+      // this is not a proper place to initialize logging, but this is the only place called in most build scripts
       BuildMessagesHandler.initLogging(messages)
       return context
     }
@@ -285,7 +291,7 @@ class CompilationContextImpl private constructor(
 
   override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): List<String> {
     val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
-      // if project requires different SDKs they all shouldn't be added to test classpath
+      // if a project requires different SDKs, they all shouldn't be added to test classpath
       .also { if (forTests) it.withoutSdk() }
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
     return enumerator.classes().roots.map { it.absolutePath }
@@ -324,7 +330,7 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
   }
 
   withContext(Dispatchers.IO) {
-    spanBuilder("load project").useWithScope2 { span ->
+    spanBuilder("load project").useWithScope { span ->
       pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(
         Path.of(SystemProperties.getUserHome(), ".m2/repository").toString()))
       val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
@@ -358,8 +364,8 @@ private class BuildPathsImpl(communityHome: BuildDependenciesCommunityRoot, proj
   }
 }
 
-private fun defineJavaSdk(context: CompilationContext) {
-  val homePath = context.stableJdkHome
+private suspend fun defineJavaSdk(context: CompilationContext) {
+  val homePath = context.getStableJdkHome()
   val jbrVersionName = "jbr-17"
   defineJdk(global = context.projectModel.global, jdkName = jbrVersionName, homeDir = homePath)
   readModulesFromReleaseFile(model = context.projectModel, sdkName = jbrVersionName, sdkHome = homePath)
@@ -381,8 +387,8 @@ private fun defineJavaSdk(context: CompilationContext) {
     }
 
     if (context.projectModel.global.libraryCollection.findLibrary(sdkName) == null) {
-      defineJdk(context.projectModel.global, sdkName, homePath)
-      readModulesFromReleaseFile(context.projectModel, sdkName, homePath)
+      defineJdk(global = context.projectModel.global, jdkName = sdkName, homeDir = homePath)
+      readModulesFromReleaseFile(model = context.projectModel, sdkName = sdkName, sdkHome = homePath)
     }
   }
 }

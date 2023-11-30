@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.MarkdownUsageCollector.Companion.RUNNER_EXECUTED
+import org.intellij.plugins.markdown.MarkdownUsageCollector.RUNNER_EXECUTED
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.trimPrompt

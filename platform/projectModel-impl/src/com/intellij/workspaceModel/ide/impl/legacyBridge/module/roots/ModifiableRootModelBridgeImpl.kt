@@ -15,27 +15,29 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.workspaceModel.jps.CustomModuleEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsFileDependentEntitySource
-import com.intellij.platform.workspaceModel.jps.JpsFileEntitySource
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.CustomModuleEntitySource
+import com.intellij.platform.workspace.jps.JpsFileDependentEntitySource
+import com.intellij.platform.workspace.jps.JpsFileEntitySource
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.ArrayUtilRt
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
-import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -94,6 +96,7 @@ class ModifiableRootModelBridgeImpl(
       savedModuleEntity = actualModuleEntity
       return actualModuleEntity
     }
+
   // It's needed to track changed dependency to create new instance of Library if e.g dependency scope was changed
   private val changedLibraryDependency = mutableSetOf<LibraryId>()
   private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this)
@@ -199,7 +202,8 @@ class ModifiableRootModelBridgeImpl(
   override fun addContentEntry(url: String, useSourceOfModule: Boolean): ContentEntry {
     assertModelIsLive()
 
-    val finalSource = if (useSourceOfModule) moduleEntity.entitySource else getInternalFileSource(moduleEntity.entitySource) ?: moduleEntity.entitySource
+    val finalSource = if (useSourceOfModule) moduleEntity.entitySource
+    else getInternalFileSource(moduleEntity.entitySource) ?: moduleEntity.entitySource
     return addEntityAndContentEntry(url, finalSource)
   }
 
@@ -210,13 +214,12 @@ class ModifiableRootModelBridgeImpl(
       return existingEntry
     }
 
-    diff.addContentRootEntity(
-      module = moduleEntity,
-      excludedUrls = emptyList(),
-      excludedPatterns = emptyList(),
-      url = virtualFileUrl,
-      source = entitySource
-    )
+    diff addEntity ContentRootEntity(url = virtualFileUrl,
+                                     excludedPatterns = emptyList<@NlsSafe String>(),
+                                     entitySource = entitySource
+    ) {
+      module = moduleEntity
+    }
 
     // TODO It's N^2 operations since we need to recreate contentEntries every time
     return contentEntries.firstOrNull { it.contentEntryUrl == virtualFileUrl }
@@ -321,7 +324,8 @@ class ModifiableRootModelBridgeImpl(
   override fun addModuleEntries(modules: MutableList<Module>, scope: DependencyScope, exported: Boolean) {
     val dependencyScope = scope.toEntityDependencyScope()
     appendDependencies(modules.map {
-      ModuleDependencyItem.Exportable.ModuleDependency((it as ModuleBridge).moduleEntityId, exported, dependencyScope, productionOnTest = false)
+      ModuleDependencyItem.Exportable.ModuleDependency((it as ModuleBridge).moduleEntityId, exported, dependencyScope,
+                                                       productionOnTest = false)
     })
   }
 
@@ -509,12 +513,12 @@ class ModifiableRootModelBridgeImpl(
 
       if (customImlDataEntity?.rootManagerTagCustomData != elementAsString) {
         when {
-          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> diff.addModuleCustomImlDataEntity(
-            module = moduleEntity,
-            rootManagerTagCustomData = elementAsString,
-            customModuleOptions = emptyMap(),
-            source = moduleEntity.entitySource
-          )
+          customImlDataEntity == null && !JDOMUtil.isEmpty(element) -> diff addEntity ModuleCustomImlDataEntity(HashMap(),
+                                                                                                                moduleEntity.entitySource
+          ) {
+            rootManagerTagCustomData = elementAsString
+            module = moduleEntity
+          }
 
           customImlDataEntity == null && JDOMUtil.isEmpty(element) -> Unit
 
@@ -560,13 +564,14 @@ class ModifiableRootModelBridgeImpl(
     val moduleDiff = module.diff
     if (moduleDiff != null) {
       moduleDiff.addDiff(diff)
+      postCommit()
     }
     else {
       WorkspaceModel.getInstance(project).updateProjectModel("Root model commit") {
         it.addDiff(diff)
       }
+      postCommit()
     }
-    postCommit()
   }
 
   override fun prepareForCommit() {
@@ -698,7 +703,8 @@ class ModifiableRootModelBridgeImpl(
   override fun getSourceRoots(): Array<VirtualFile> = currentModel.sourceRoots
   override fun getSourceRoots(includingTests: Boolean): Array<VirtualFile> = currentModel.getSourceRoots(includingTests)
   override fun getSourceRoots(rootType: JpsModuleSourceRootType<*>): MutableList<VirtualFile> = currentModel.getSourceRoots(rootType)
-  override fun getSourceRoots(rootTypes: MutableSet<out JpsModuleSourceRootType<*>>): MutableList<VirtualFile> = currentModel.getSourceRoots(rootTypes)
+  override fun getSourceRoots(rootTypes: MutableSet<out JpsModuleSourceRootType<*>>): MutableList<VirtualFile> = currentModel.getSourceRoots(
+    rootTypes)
 
   override fun getContentRoots(): Array<VirtualFile> = currentModel.contentRoots
   override fun getContentRootUrls(): Array<String> = currentModel.contentRootUrls

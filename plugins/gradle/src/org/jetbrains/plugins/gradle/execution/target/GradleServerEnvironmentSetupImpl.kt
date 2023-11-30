@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
@@ -20,7 +20,6 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
-import com.intellij.util.io.isDirectory
 import com.intellij.util.text.nullize
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
@@ -38,11 +37,12 @@ import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
 import org.slf4j.LoggerFactory
-import org.slf4j.impl.JDK14LoggerFactory
+import org.slf4j.jul.JDK14LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.isDirectory
 
 internal class GradleServerEnvironmentSetupImpl(private val project: Project,
                                                 private val classpathInferer: GradleServerClasspathInferer,
@@ -281,7 +281,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     configuration: TargetEnvironmentConfiguration
   ): List<Pair<String, TargetValue<String>?>> {
     val targetBuildArguments = ArrayList<Pair<String, TargetValue<String>?>>()
-    val iterator = parameters.arguments?.iterator() ?: return targetBuildArguments;
+    val iterator = parameters.arguments?.iterator() ?: return targetBuildArguments
     while (iterator.hasNext()) {
       val arg = iterator.next()
       if (arg == INIT_SCRIPT_CMD_OPTION && iterator.hasNext()) {
@@ -414,7 +414,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
       request.targetPortBindings.add(binding)
       val result = DeferredLocalTargetValue(targetPort)
       doWhenEnvironmentPrepared { environment, _ ->
-        val localPort = environment.targetPortBindings[binding]
+        val localPort = environment.targetPortBindings[binding]?.localEndpoint?.port
         result.resolve(localPort)
       }
       return result

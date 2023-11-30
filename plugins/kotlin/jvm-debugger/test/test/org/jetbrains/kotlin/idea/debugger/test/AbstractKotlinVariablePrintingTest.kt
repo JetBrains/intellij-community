@@ -8,8 +8,6 @@ import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import org.jetbrains.kotlin.idea.debugger.test.util.FramePrinter
 
 abstract class AbstractKotlinVariablePrintingTest : KotlinDescriptorTestCaseWithStepping() {
-    override fun useIrBackend() = true
-
     override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
         for (i in 0..countBreakpointsNumber(files.wholeFile)) {
             doOnBreakpoint {

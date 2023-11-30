@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -65,7 +65,9 @@ class ClassLoaderConfigurator(
     if (mainDescriptor.pluginDependencies.find { it.subDescriptor === moduleDescriptor && it.isOptional } != null) {
       // dynamically enabled optional dependency module in old format
       // based on what's happening in [configureDependenciesInOldFormat]
-      assert(moduleDescriptor.pluginClassLoader == null) { "subdescriptor $moduleDescriptor of $mainDescriptor seems to be already enabled" }
+      assert(moduleDescriptor.pluginClassLoader == null) {
+        "sub descriptor $moduleDescriptor of $mainDescriptor seems to be already enabled"
+      }
       val mainDependentClassLoader = mainDescriptor.pluginClassLoader
       assert(mainDependentClassLoader != null) { "plugin $mainDescriptor is not yet enabled"}
       moduleDescriptor.pluginClassLoader = mainDependentClassLoader!!
@@ -110,7 +112,10 @@ class ClassLoaderConfigurator(
       }
 
       val mimicJarUrlConnection = !module.isBundled && module.vendor != "JetBrains"
-      val pluginClassPath = ClassPath(files, DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection)
+      val pluginClassPath = ClassPath(/* files = */ files,
+                                      /* configuration = */ DEFAULT_CLASSLOADER_CONFIGURATION,
+                                      /* resourceFileFactory = */ resourceFileFactory,
+                                      /* mimicJarUrlConnection = */ mimicJarUrlConnection)
       val mainInfo = MainInfo(classPath = pluginClassPath, files = files, libDirectories = libDirectories)
       val existing = mainToClassPath.put(module.pluginId, mainInfo)
       if (existing != null) {
@@ -308,7 +313,7 @@ private fun createModuleResolveScopeManager(): ResolveScopeManager {
   }
 }
 
-private fun createScopeWithExtraPackage(customPackage: String): ResolveScopeManager {
+private fun createScopeWithExtraPackage(@Suppress("SameParameterValue") customPackage: String): ResolveScopeManager {
   return object : ResolveScopeManager {
     override fun isDefinitelyAlienClass(name: String, packagePrefix: String, force: Boolean): String? {
       if (!force &&
@@ -326,7 +331,8 @@ private fun createScopeWithExtraPackage(customPackage: String): ResolveScopeMana
 
 // package of module is not taken in an account to support resolving of module libraries -
 // instead, only classes from plugin's modules (content or dependencies) are excluded.
-private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): ResolveScopeManager? {
+@VisibleForTesting
+fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): ResolveScopeManager? {
   val contentPackagePrefixes = getContentPackagePrefixes(descriptor)
   val dependencyPackagePrefixes = getDependencyPackagePrefixes(descriptor, pluginSet)
   if (contentPackagePrefixes.isEmpty() && dependencyPackagePrefixes.isEmpty()) {
@@ -340,9 +346,10 @@ private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDes
         return null
       }
 
-      for (prefix in contentPackagePrefixes) {
+      for ((prefix, moduleName) in contentPackagePrefixes) {
         if (name.startsWith(prefix)) {
-          return "Class $name must not be requested from main classloader of $pluginId plugin"
+          return "Class $name must not be requested from main classloader of $pluginId plugin. Matches content module " +
+                 "(packagePrefix=$prefix, moduleName=$moduleName)."
         }
       }
 
@@ -356,18 +363,17 @@ private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDes
     }
   }}
 
-private fun getContentPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): List<String> {
+private fun getContentPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): List<Pair<String, String?>> {
   val modules = descriptor.content.modules
   if (modules.isEmpty()) {
-    return Collections.emptyList()
+    return emptyList()
   }
 
   val result = Array(modules.size) {
     val module = modules.get(it).requireDescriptor()
-    "${module.packagePrefix ?: throw PluginException("Package is not specified (module=$module)", module.pluginId)}."
+    "${module.packagePrefix ?: throw PluginException("Package is not specified (module=$module)", module.pluginId)}." to module.moduleName
   }
-  @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-  return Arrays.asList(*result)
+  return result.asList()
 }
 
 private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): List<String> {
@@ -429,15 +435,23 @@ private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: Ide
 
 @VisibleForTesting
 fun sortDependenciesInPlace(dependencies: Array<IdeaPluginDescriptorImpl>) {
-  if (dependencies.size <= 1) return
+  if (dependencies.size <= 1) {
+    return
+  }
 
   fun getWeight(module: IdeaPluginDescriptorImpl) = if (module.moduleName == null) 1 else 0
 
   // java sort is stable, so, it is safe to not use topological comparator here
-  Arrays.sort(dependencies, kotlin.Comparator { o1, o2 ->
-    // parent plugin must be after content module because otherwise will be an assert about requesting class from the main classloader
-    getWeight(o1) - getWeight(o2)
-  })
+  dependencies.sortWith { o1, o2 ->
+    // parent plugin must be after content module because otherwise will be asserted about requesting class from the main classloader
+    val diff = getWeight(o1) - getWeight(o2)
+    if (diff == 0) {
+      (o2.packagePrefix ?: "").compareTo(o1.packagePrefix ?: "")
+    }
+    else {
+      diff
+    }
+  }
 }
 
 private class MainInfo(

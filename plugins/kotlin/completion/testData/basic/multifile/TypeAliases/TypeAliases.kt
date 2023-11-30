@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 package test
 
 typealias MySameFileAlias = (String) -> Int

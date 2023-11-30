@@ -9,6 +9,7 @@ fun foo() {
     xxx_<caret>
 }
 
+// IGNORE_K2
 // INVOCATION_COUNT: 2
 // ORDER: xxx_fun2FromP5O1
 // ORDER: xxx_fun1FromP5O1

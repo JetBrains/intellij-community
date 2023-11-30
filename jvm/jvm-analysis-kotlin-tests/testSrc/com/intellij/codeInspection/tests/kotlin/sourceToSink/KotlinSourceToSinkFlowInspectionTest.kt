@@ -1,8 +1,8 @@
 package com.intellij.codeInspection.tests.kotlin.sourceToSink
 
 import com.intellij.analysis.JvmAnalysisBundle
-import com.intellij.codeInspection.tests.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.jvm.analysis.KotlinJvmAnalysisTestUtil
+import com.intellij.jvm.analysis.internal.testFramework.sourceToSink.SourceToSinkFlowInspectionTestBase
 import com.intellij.testFramework.TestDataPath
 
 private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow"
@@ -132,5 +132,52 @@ class KotlinSourceToSinkFlowInspectionTest : SourceToSinkFlowInspectionTestBase(
   fun testDropLocality() {
     prepareCheckFramework()
     myFixture.testHighlighting("DropLocality.kt")
+  }
+
+  fun `test forEachLoop`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("ForEachLoop.kt")
+  }
+
+  fun `test lambdaWithForEachLoop`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("LambdaWithForEachLoop.kt")
+  }
+  fun `test if`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("ifStatement.kt")
+  }
+
+  fun `test custom through tables`() {
+    inspection.untaintedParameterIndex.apply {
+      this.clear()
+      this.add("1")
+    }
+    inspection.untaintedParameterMethodClass.apply {
+      this.clear()
+      this.add("FromMethod")
+    }
+    inspection.untaintedParameterMethodName.apply {
+      this.clear()
+      this.add("sink")
+    }
+
+    inspection.taintedParameterIndex.apply {
+      this.clear()
+      this.add("0")
+    }
+    inspection.taintedParameterMethodClass.apply {
+      this.clear()
+      this.add("FromMethod")
+    }
+    inspection.taintedParameterMethodName.apply {
+      this.clear()
+      this.add("test")
+    }
+
+    inspection.setTaintedMethod("java.lang.String", "toString")
+    inspection.setUntaintedMethod("java.lang.String", "trim")
+
+    myFixture.testHighlighting("FromMethod.kt")
   }
 }

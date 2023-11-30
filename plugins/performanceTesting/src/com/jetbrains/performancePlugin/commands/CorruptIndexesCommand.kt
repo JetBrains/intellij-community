@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
@@ -15,7 +16,7 @@ class CorruptIndexesCommand(text: String, line: Int) : AbstractCommand(text, lin
 
   companion object {
     const val PREFIX = CMD_PREFIX + "corruptIndex"
-    private val LOG = Logger.getInstance(CorruptIndexesCommand::class.java)
+    private val LOG = logger<CorruptIndexesCommand>()
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {

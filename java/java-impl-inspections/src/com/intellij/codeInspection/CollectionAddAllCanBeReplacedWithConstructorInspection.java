@@ -2,12 +2,13 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionController;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.TextRange;
@@ -25,17 +26,12 @@ import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-/**
- * @author Dmitry Batkovich
- */
-public class CollectionAddAllCanBeReplacedWithConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
-
+public final class CollectionAddAllCanBeReplacedWithConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
   private final CollectionsListSettings mySettings = new CollectionsListSettings() {
     @Override
     protected Collection<String> getDefaultSettings() {
@@ -223,7 +219,7 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     return isReplaceable[0];
   }
 
-  private static class ReplaceAddAllWithConstructorFix implements LocalQuickFix {
+  private static class ReplaceAddAllWithConstructorFix extends PsiUpdateModCommandQuickFix {
     private final SmartPsiElementPointer<PsiMethodCallExpression> myMethodCallExpression;
     private final SmartPsiElementPointer<PsiNewExpression> myNewExpression;
     private final String methodName;
@@ -233,16 +229,6 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
       myMethodCallExpression = smartPointerManager.createSmartPsiElementPointer(expression);
       myNewExpression = smartPointerManager.createSmartPsiElementPointer(newExpression);
       this.methodName = methodName;
-    }
-
-    @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      PsiMethodCallExpression call = myMethodCallExpression.getElement();
-      PsiNewExpression newExpression = myNewExpression.getElement();
-      if (call == null || newExpression == null) return null;
-      return new ReplaceAddAllWithConstructorFix(PsiTreeUtil.findSameElementInCopy(newExpression, target),
-                                                 PsiTreeUtil.findSameElementInCopy(call, target),
-                                                 methodName);
     }
 
     @Nls
@@ -259,12 +245,12 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends Abst
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression methodCallExpression = myMethodCallExpression.getElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiMethodCallExpression methodCallExpression = updater.getWritable(myMethodCallExpression.getElement());
       if (methodCallExpression == null) return;
       PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(methodCallExpression.getParent(), PsiExpressionStatement.class);
       if (expressionStatement == null) return;
-      final PsiNewExpression newExpression = myNewExpression.getElement();
+      final PsiNewExpression newExpression = updater.getWritable(myNewExpression.getElement());
       if (newExpression == null) return;
       PsiElement parent = PsiUtil.skipParenthesizedExprUp(newExpression.getParent());
       PsiVariable variable = null;

@@ -3,7 +3,7 @@ package com.intellij.webSymbols.customElements
 
 import com.intellij.webSymbols.WebSymbol
 
-interface CustomElementsSymbol: WebSymbol {
+interface CustomElementsSymbol : WebSymbol {
 
 
   companion object {

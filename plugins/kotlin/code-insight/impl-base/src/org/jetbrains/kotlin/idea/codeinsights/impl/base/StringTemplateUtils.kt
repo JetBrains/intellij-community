@@ -69,9 +69,7 @@ fun isFirstStringPlusExpressionWithoutNewLineInOperands(element: KtBinaryExpress
     if (!isStringPlusExpressionWithoutNewLineInOperands(element)) return false
 
     val parent = element.parent
-    if (parent is KtBinaryExpression && isStringPlusExpressionWithoutNewLineInOperands(parent)) return false
-
-    return true
+    return !(parent is KtBinaryExpression && isStringPlusExpressionWithoutNewLineInOperands(parent))
 }
 
 /**

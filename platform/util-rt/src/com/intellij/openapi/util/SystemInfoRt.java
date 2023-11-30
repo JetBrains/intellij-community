@@ -40,6 +40,8 @@ public final class SystemInfoRt {
   public static final boolean isUnix = !isWindows;
   public static final boolean isXWindow = isUnix && !isMac;
 
+  public static final boolean isJBSystemMenu = isMac && Boolean.parseBoolean(System.getProperty("jbScreenMenuBar.enabled", "true"));
+
   public static final boolean isFileSystemCaseSensitive =
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
 }

@@ -312,17 +312,17 @@ private class PyDataclassParametersBuilder(private val type: Type, decorator: Qu
 
     when (name) {
       "init" -> {
-        init = PyEvaluator.evaluateAsBoolean(value, DEFAULT_INIT)
+        init = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_INIT
         initArgument = argument
         return
       }
       "repr" -> {
-        repr = PyEvaluator.evaluateAsBoolean(value, DEFAULT_REPR)
+        repr = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_REPR
         reprArgument = argument
         return
       }
       "frozen" -> {
-        frozen = PyEvaluator.evaluateAsBoolean(value, DEFAULT_FROZEN)
+        frozen = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_FROZEN
         frozenArgument = argument
         return
       }
@@ -331,22 +331,22 @@ private class PyDataclassParametersBuilder(private val type: Type, decorator: Qu
     if (type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
       when (name) {
         "eq" -> {
-          eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
+          eq = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_EQ
           eqArgument = argument
           return
         }
         "order" -> {
-          order = PyEvaluator.evaluateAsBoolean(value, DEFAULT_ORDER)
+          order = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_ORDER
           orderArgument = argument
           return
         }
         "unsafe_hash" -> {
-          unsafeHash = PyEvaluator.evaluateAsBoolean(value, DEFAULT_UNSAFE_HASH)
+          unsafeHash = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_UNSAFE_HASH
           unsafeHashArgument = argument
           return
         }
         "kw_only" -> {
-          kwOnly = PyEvaluator.evaluateAsBoolean(value, DEFAULT_KW_ONLY)
+          kwOnly = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_KW_ONLY
           kwOnlyArgument = argument
           return
         }
@@ -355,7 +355,7 @@ private class PyDataclassParametersBuilder(private val type: Type, decorator: Qu
     else if (type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
       when (name) {
         "eq" -> {
-          eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
+          eq = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_EQ
           eqArgument = argument
 
           if (orderArgument == null) {
@@ -365,12 +365,12 @@ private class PyDataclassParametersBuilder(private val type: Type, decorator: Qu
         }
         "order" -> {
           if (argument !is PyNoneLiteralExpression) {
-            order = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
+            order = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_EQ
             orderArgument = argument
           }
         }
         "cmp" -> {
-          eq = PyEvaluator.evaluateAsBoolean(value, DEFAULT_EQ)
+          eq = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_EQ
           eqArgument = argument
 
           order = eq
@@ -378,12 +378,12 @@ private class PyDataclassParametersBuilder(private val type: Type, decorator: Qu
           return
         }
         "hash" -> {
-          unsafeHash = PyEvaluator.evaluateAsBoolean(value, DEFAULT_UNSAFE_HASH)
+          unsafeHash = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_UNSAFE_HASH
           unsafeHashArgument = argument
           return
         }
         "kw_only" -> {
-          kwOnly = PyEvaluator.evaluateAsBoolean(value, DEFAULT_KW_ONLY)
+          kwOnly = PyEvaluator.evaluateAsBooleanNoResolve(value) ?: DEFAULT_KW_ONLY
           kwOnlyArgument = argument
           return
         }

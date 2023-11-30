@@ -7,7 +7,8 @@ import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.ui.scale.paint.ImageComparator.AASmootherComparator
 import com.intellij.ui.svg.SvgCacheClassifier
 import com.intellij.ui.svg.SvgCacheManager
-import com.intellij.ui.svg.createSvgCacheManager
+import com.intellij.ui.svg.createIconCacheKey
+import com.intellij.util.ArrayUtilRt
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -18,10 +19,10 @@ import java.nio.file.Path
 
 class SVGLoaderCacheTest {
   @Test
-  fun testNoEntry(@TempDir dir: Path) = runBlocking {
+  fun noEntry(@TempDir dir: Path) = runBlocking {
     val cache = createCache(dir)
     try {
-      assertThat(cache.loadFromCache(byteArrayOf(), 0, SvgCacheClassifier(1f))).isNull()
+      assertThat(cache.loadFromCache(longArrayOf(42, 123))).isNull()
     }
     finally {
       cache.close()
@@ -29,25 +30,25 @@ class SVGLoaderCacheTest {
   }
 
   @Test
-  fun testSaveAndLoad(@TempDir dir: Path) = runBlocking {
+  fun saveAndLoad(@TempDir dir: Path) = runBlocking {
     var cache = createCache(dir)
     try {
       val i = BufferedImage(10, 10, BufferedImage.TYPE_INT_ARGB)
       i.setRGB(0, 0, 0xff00ff)
       i.setRGB(0, 1, 0x00ff00)
       val imageBytes = byteArrayOf(1, 2, 3)
-      val theme = 0L
+      val colorPatcherDigest = ArrayUtilRt.EMPTY_LONG_ARRAY
       val svgCacheClassifier = SvgCacheClassifier(1f)
-      cache.storeLoadedImage(0, theme, imageBytes, svgCacheClassifier, i)
+      cache.storeLoadedImage(createIconCacheKey(imageBytes = imageBytes, compoundKey = svgCacheClassifier, colorPatcherDigest = colorPatcherDigest), i)
       cache.close()
       cache = createCache(dir)
-      val copy = cache.loadFromCache(imageBytes, theme, svgCacheClassifier)
-      assertThat(copy!!.width).isEqualTo(10)
+      val copy = cache.loadFromCache(createIconCacheKey(imageBytes = imageBytes, colorPatcherDigest = colorPatcherDigest, compoundKey = svgCacheClassifier))!!
+      assertThat(copy.width).isEqualTo(10)
       assertThat(copy.height).isEqualTo(10)
       ImageComparator.compareAndAssert(AASmootherComparator(0.1, 0.1, Color(0, 0, 0, 0)), i, copy, null)
-      assertThat(cache.loadFromCache(imageBytes, 123, SvgCacheClassifier(1f, false, false))).isNull()
-      assertThat(cache.loadFromCache(byteArrayOf(6, 7), theme, SvgCacheClassifier(1f, false, false))).isNull()
-      assertThat(cache.loadFromCache(imageBytes, theme, SvgCacheClassifier(2f, false, false))).isNull()
+      assertThat(cache.loadFromCache((createIconCacheKey(imageBytes, SvgCacheClassifier(1f, false, false), longArrayOf(123))))).isNull()
+      assertThat(cache.loadFromCache(createIconCacheKey(byteArrayOf(6, 7), SvgCacheClassifier(1f, false, false), colorPatcherDigest))).isNull()
+      assertThat(cache.loadFromCache(createIconCacheKey(imageBytes, SvgCacheClassifier(2f, false, false), colorPatcherDigest))).isNull()
     }
     finally {
       cache.close()
@@ -56,6 +57,6 @@ class SVGLoaderCacheTest {
 }
 
 private suspend fun createCache(dir: Path): SvgCacheManager {
-  return createSvgCacheManager(dir.resolve("db.db"))!!
+  return SvgCacheManager.createSvgCacheManager(dir.resolve("db.db"))!!
 }
 

@@ -73,9 +73,7 @@ class TargetGTDActionData(private val project: Project, private val targetData: 
       1 -> {
         // don't compute presentation for single target
         val (navigationTarget, navigationProvider) = result.single()
-        navigationTarget.navigationRequest()?.let { request ->
-          SingleTarget(request, navigationProvider)
-        }
+        SingleTarget(navigationTarget::navigationRequest, navigationProvider)
       }
       else -> {
         val targets = result.map { (navigationTarget, navigationProvider) ->
@@ -86,7 +84,7 @@ class TargetGTDActionData(private val project: Project, private val targetData: 
     }
   }
 
-  fun isDeclared() = targetData is TargetData.Declared
+  fun isDeclared(): Boolean = targetData is TargetData.Declared
 
   private fun extractSingleTargetResult(symbol: Symbol, navigationProvider: Any?): SingleTarget? {
     val el = PsiSymbolService.getInstance().extractElementFromSymbol(symbol) ?: return null
@@ -95,7 +93,7 @@ class TargetGTDActionData(private val project: Project, private val targetData: 
       return null
     }
     return nav.navigationRequest()?.let { request ->
-      SingleTarget(request, navigationProvider)
+      SingleTarget({ request }, navigationProvider)
     }
   }
 }

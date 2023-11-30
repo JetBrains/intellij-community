@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import org.jetbrains.annotations.NotNull;
@@ -15,21 +15,18 @@ public class CommaSeparatedValuesAccessor extends ValueListPropertyAccessor<Stri
     super(object, field);
   }
 
-  @Nullable
   @Override
-  protected String fromExternal(@NotNull List<String> extVal) {
+  protected @Nullable String fromExternal(@NotNull List<String> extVal) {
     return toCommaSeparatedString(extVal);
   }
 
-  @NotNull
   @Override
-  protected List<String> toExternal(@NotNull String value) {
+  protected @NotNull List<String> toExternal(@NotNull String value) {
     return getValueList(value);
   }
 
-  @Nullable
   @Override
-  protected String valueToString(@NotNull List<String> value) {
+  protected @Nullable String valueToString(@NotNull List<String> value) {
     return fromExternal(value);
   }
 

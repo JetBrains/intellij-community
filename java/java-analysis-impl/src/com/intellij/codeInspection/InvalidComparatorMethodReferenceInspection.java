@@ -1,7 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -53,7 +55,7 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
     return ((PsiClass)refType).getQualifiedName();
   }
 
-  private static class ReplaceWithComparatorQuickFix implements LocalQuickFix {
+  private static class ReplaceWithComparatorQuickFix extends PsiUpdateModCommandQuickFix {
     private final boolean reverse;
 
     ReplaceWithComparatorQuickFix(boolean reverse) {
@@ -75,8 +77,7 @@ public class InvalidComparatorMethodReferenceInspection extends AbstractBaseJava
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement parent = element.getParent();
       if (parent != null) {
         PsiExpression newMethodExpression = JavaPsiFacade.getElementFactory(project)

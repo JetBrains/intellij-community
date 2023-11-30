@@ -19,18 +19,21 @@ import java.util.function.Supplier
 
 @ApiStatus.Internal
 class DescriptorListLoadingContext(
-  @JvmField val disabledPlugins: Set<PluginId> = DisabledPluginsState.getDisabledIds(),
-  @JvmField val expiredPlugins: Set<PluginId> = ExpiredPluginsState.expiredPluginIds,
-  @ApiStatus.Experimental @JvmField val enabledOnDemandPlugins: Set<PluginId> = EnabledOnDemandPluginsState.enabledPluginIds,
-  private val brokenPluginVersions: Map<PluginId, Set<String?>> = getBrokenPluginVersions(),
-  @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.getBuildNumber() },
+  private val customDisabledPlugins: Set<PluginId>? = null,
+  private val customExpiredPlugins: Set<PluginId>? = null,
+  private val customBrokenPluginVersions: Map<PluginId, Set<String?>>? = null,
+  @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
   @JvmField val transient: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
+  val disabledPlugins by lazy { customDisabledPlugins ?: DisabledPluginsState.getDisabledIds() }
+  val expiredPlugins by lazy { customExpiredPlugins ?: ExpiredPluginsState.expiredPluginIds }
+  private val brokenPluginVersions by lazy { customBrokenPluginVersions ?: getBrokenPluginVersions() }
+  
   @JvmField
-  internal val globalErrors = CopyOnWriteArrayList<Supplier<String>>()
+  internal val globalErrors: CopyOnWriteArrayList<Supplier<String>> = CopyOnWriteArrayList<Supplier<String>>()
 
   internal fun copyGlobalErrors(): MutableList<Supplier<String>> = ArrayList(globalErrors)
 
@@ -57,7 +60,7 @@ class DescriptorListLoadingContext(
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
-    PluginManagerCore.getLogger().warn("Cannot load $file", e)
+    PluginManagerCore.logger.warn("Cannot load $file", e)
     globalErrors.add(Supplier {
       CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", pluginPathToUserString(file))
     })
@@ -100,7 +103,7 @@ class DescriptorListLoadingContext(
       return false
     }
 
-    PluginManagerCore.getLogger().error("Optional config file with name $configFile already registered by $oldPluginId. " +
+    PluginManagerCore.logger.error("Optional config file with name $configFile already registered by $oldPluginId. " +
               "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
               "Current plugin: $descriptor.")
     return true

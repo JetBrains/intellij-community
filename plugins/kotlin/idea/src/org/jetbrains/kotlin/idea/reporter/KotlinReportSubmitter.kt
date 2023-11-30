@@ -2,9 +2,9 @@
 
 package org.jetbrains.kotlin.idea.reporter
 
+import com.intellij.diagnostic.IdeaReportingEvent
 import com.intellij.diagnostic.ReportMessages
 import com.intellij.ide.DataManager
-import com.intellij.ide.plugins.PluginUpdateStatus
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -16,8 +16,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.Consumer
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.map2Array
 import org.jetbrains.annotations.Nls
-import org.jetbrains.kotlin.idea.KotlinPluginUpdater
+import org.jetbrains.kotlin.idea.KotlinPluginReleaseDateProvider
+import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -41,6 +43,8 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         private const val ENABLED_VALUE = "enabled"
 
         private const val KOTLIN_PLUGIN_RELEASE_DATE = "kotlin.plugin.releaseDate"
+
+        private const val KOTLIN_K2_MESSAGE = "This report is from the K2 Kotlin plugin."
 
         private val LOG = Logger.getInstance(KotlinReportSubmitter::class.java)
 
@@ -75,11 +79,11 @@ class KotlinReportSubmitter : ITNReporterCompat() {
             ApplicationManager.getApplication().executeOnPooledThread {
                 val releaseDate =
                     try {
-                        KotlinPluginUpdater.fetchPluginReleaseDate(KotlinIdePlugin.id, KotlinIdePlugin.version, null)
+                        KotlinPluginReleaseDateProvider.fetchPluginReleaseDate(KotlinIdePlugin.id, KotlinIdePlugin.version, null)
                     } catch (e: IOException) {
                         LOG.warn(e)
                         null
-                    } catch (e: KotlinPluginUpdater.Companion.ResponseParseException) {
+                    } catch (e: KotlinPluginReleaseDateProvider.ResponseParseException) {
                         // Exception won't be shown, but will be logged
                         LOG.error(e)
                         return@executeOnPooledThread
@@ -158,9 +162,6 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         }
     }
 
-    private var hasUpdate = false
-    private var hasLatestVersion = false
-
     override fun showErrorInRelease(event: IdeaLoggingEvent): Boolean {
         if (isApplicationInternalMode()) {
             // Reporting is always enabled for internal mode in the platform
@@ -169,10 +170,6 @@ class KotlinReportSubmitter : ITNReporterCompat() {
 
         if (isUnitTestMode()) {
             return true
-        }
-
-        if (hasUpdate) {
-            return false
         }
 
         val kotlinNotificationEnabled = DISABLED_VALUE != System.getProperty(KOTLIN_FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE)
@@ -208,17 +205,9 @@ class KotlinReportSubmitter : ITNReporterCompat() {
         parentComponent: Component?,
         consumer: Consumer<in SubmittedReportInfo>
     ): Boolean {
-        if (hasUpdate) {
-            if (isApplicationInternalMode()) {
-                return super.submitCompat(events, additionalInfo, parentComponent, consumer)
-            }
-
-            // TODO: What happens here? User clicks report but no report is send?
-            return true
-        }
-
-        if (hasLatestVersion) {
-            return super.submitCompat(events, additionalInfo, parentComponent, consumer)
+        val effectiveEvents = when {
+            isK2Plugin() -> events.map2Array(::markEventForK2)
+            else -> events
         }
 
         val project: Project? = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
@@ -230,37 +219,24 @@ class KotlinReportSubmitter : ITNReporterCompat() {
             return true
         }
 
-        KotlinPluginUpdater.getInstance().runUpdateCheck { status ->
-            if (status is PluginUpdateStatus.Update) {
-                hasUpdate = true
+        return super.submitCompat(effectiveEvents, additionalInfo, parentComponent, consumer)
+    }
 
-                if (isApplicationInternalMode()) {
-                    super.submitCompat(events, additionalInfo, parentComponent, consumer)
-                }
-
-                val rc = showDialog(
-                    parentComponent,
-                    KotlinBundle.message(
-                        "reporter.message.text.you.re.running.kotlin.plugin.version",
-                        KotlinIdePlugin.version,
-                        status.pluginDescriptor.version
-                    ),
-                    KotlinBundle.message("reporter.title.update.kotlin.plugin"),
-                    arrayOf(KotlinBundle.message("reporter.button.text.update"), KotlinBundle.message("reporter.button.text.ignore")),
-                    0, Messages.getInformationIcon()
-                )
-
-                if (rc == 0) {
-                    KotlinPluginUpdater.getInstance().installPluginUpdate(status)
-                }
-            } else {
-                hasLatestVersion = true
-                super.submitCompat(events, additionalInfo, parentComponent, consumer)
-            }
-            false
+    private fun markEventForK2(event: IdeaLoggingEvent): IdeaLoggingEvent {
+        fun patchMessage(message: String): String {
+            return if (message.isBlank()) KOTLIN_K2_MESSAGE else "$message\n$KOTLIN_K2_MESSAGE"
         }
 
-        return true
+        if (event is IdeaReportingEvent) {
+            return IdeaReportingEvent(event.data, patchMessage(event.message ?: ""), event.throwableText, event.plugin)
+        }
+
+        if (event.javaClass == IdeaLoggingEvent::class.java) {
+            return IdeaLoggingEvent(patchMessage(event.message ?: ""), event.throwable, event.data)
+        }
+
+        // Leave foreign event as is (Android Studio, etc.)
+        return event
     }
 
     fun showDialog(parent: Component?, @Nls message: String, @Nls title: String, options: Array<String>, defaultOptionIndex: Int, icon: Icon?): Int {

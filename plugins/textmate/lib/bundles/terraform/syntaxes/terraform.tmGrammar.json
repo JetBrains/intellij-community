@@ -90,7 +90,7 @@
         "1": {
           "patterns": [
             {
-              "match": "\\bresource|provider|variable|output|locals|module|data|terraform\\b",
+              "match": "\\bdata|check|import|locals|module|output|provider|resource|terraform|variable\\b",
               "comment": "Known block type",
               "name": "entity.name.type.terraform"
             },
@@ -291,7 +291,7 @@
         "1": {
           "patterns": [
             {
-              "match": "abspath|abs|ceil|floor|log|max|min|pow|signum|chomp|formatlist|indent|join|lower|regexall|regex|replace|split|strrev|substr|title|trimspace|upper|chunklist|coalescelist|coalesce|compact|concat|contains|distinct|element|flatten|index|keys|length|lookup|matchkeys|merge|range|reverse|setintersection|setproduct|setunion|slice|sort|transpose|values|zipmap|base64decode|base64encode|base64gzip|csvdecode|jsondecode|jsonencode|urlencode|yamldecode|yamlencode|dirname|pathexpand|basename|fileexists|fileset|filebase64|templatefile|formatdate|timeadd|timestamp|base64sha256|base64sha512|bcrypt|filebase64sha256|filebase64sha512|filemd5|filemd1|filesha256|filesha512|md5|rsadecrypt|sha1|sha256|sha512|uuidv5|uuid|cidrhost|cidrnetmask|cidrsubnet|tobool|tolist|tomap|tonumber|toset|tostring|file|format",
+              "match": "\\b(abs|abspath|alltrue|anytrue|base64decode|base64encode|base64gzip|base64sha256|base64sha512|basename|bcrypt|can|ceil|chomp|chunklist|cidrhost|cidrnetmask|cidrsubnet|cidrsubnets|coalesce|coalescelist|compact|concat|contains|csvdecode|dirname|distinct|element|endswith|file|filebase64|filebase64sha256|filebase64sha512|fileexists|filemd5|fileset|filesha1|filesha256|filesha512|flatten|floor|format|formatdate|formatlist|indent|index|join|jsondecode|jsonencode|keys|length|log|lookup|lower|matchkeys|max|md5|merge|min|nonsensitive|one|parseint|pathexpand|plantimestamp|pow|range|regex|regexall|replace|reverse|rsadecrypt|sensitive|setintersection|setproduct|setsubtract|setunion|sha1|sha256|sha512|signum|slice|sort|split|startswith|strcontains|strrev|substr|sum|templatefile|textdecodebase64|textencodebase64|timeadd|timecmp|timestamp|title|tobool|tolist|tomap|tonumber|toset|tostring|transpose|trim|trimprefix|trimspace|trimsuffix|try|upper|urlencode|uuid|uuidv5|values|yamldecode|yamlencode|zipmap)\\b",
               "name": "support.function.builtin.terraform"
             }
           ]

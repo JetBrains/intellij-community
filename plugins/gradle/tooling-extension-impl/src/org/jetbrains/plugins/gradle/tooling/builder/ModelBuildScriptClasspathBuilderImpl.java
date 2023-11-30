@@ -1,21 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.impl.util.GradleDependencyArtifactPolicyUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.plugins.ide.idea.IdeaPlugin;
-import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
 
 import java.io.File;
@@ -32,7 +31,6 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
 
   private static final String CLASSPATH_CONFIGURATION_NAME = "classpath";
   private final Map<String, BuildScriptClasspathModelImpl> cache = new ConcurrentHashMap<>();
-  private SourceSetCachedFinder mySourceSetFinder = null;
 
   @Override
   public boolean canBuild(String modelName) {
@@ -45,24 +43,14 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     BuildScriptClasspathModelImpl buildScriptClasspath = cache.get(project.getPath());
     if (buildScriptClasspath != null) return buildScriptClasspath;
 
-    if (mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(context);
-
     buildScriptClasspath = new BuildScriptClasspathModelImpl();
     final File gradleHomeDir = project.getGradle().getGradleHomeDir();
     buildScriptClasspath.setGradleHomeDir(gradleHomeDir);
     buildScriptClasspath.setGradleVersion(GradleVersion.current().getVersion());
 
-    boolean downloadJavadoc = false;
-    boolean downloadSources = true;
-
-    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
-    if (ideaPlugin != null) {
-      final IdeaModule ideaModule = ideaPlugin.getModel().getModule();
-      downloadJavadoc = ideaModule.isDownloadJavadoc();
-      downloadSources = ideaModule.isDownloadSources();
-    }
-    boolean forceDisableSourceDownload = Boolean.parseBoolean(System.getProperty("idea.disable.gradle.download.sources", "true"));
-    downloadSources = downloadSources && forceDisableSourceDownload;
+    final boolean downloadJavadoc = GradleDependencyArtifactPolicyUtil.shouldDownloadJavadoc(project);
+    final boolean downloadSources = GradleDependencyArtifactPolicyUtil.shouldDownloadSources(project);
+    GradleDependencyArtifactPolicyUtil.setPolicy(project, downloadSources, downloadJavadoc);
 
     Project parent = project.getParent();
     if (parent != null) {
@@ -76,7 +64,8 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     Configuration classpathConfiguration = project.getBuildscript().getConfigurations().findByName(CLASSPATH_CONFIGURATION_NAME);
     if (classpathConfiguration == null) return null;
 
-    Collection<ExternalDependency> dependencies = new DependencyResolverImpl(project, downloadJavadoc, downloadSources, mySourceSetFinder).resolveDependencies(classpathConfiguration);
+    Collection<ExternalDependency> dependencies = new DependencyResolverImpl(context, project, downloadJavadoc, downloadSources)
+      .resolveDependencies(classpathConfiguration);
 
     for (ExternalDependency dependency : new DependencyTraverser(dependencies)) {
       if (dependency instanceof ExternalProjectDependency) {
@@ -86,7 +75,7 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
         buildScriptClasspath.add(new ClasspathEntryModelImpl(
           projectDependencyArtifacts,
           projectDependencyArtifactsSources,
-          Collections.<File>emptySet()
+          Collections.emptySet()
         ));
       }
       else if (dependency instanceof ExternalLibraryDependency) {
@@ -109,8 +98,8 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
         FileCollectionDependency fileCollectionDependency = (FileCollectionDependency)dependency;
         buildScriptClasspath.add(new ClasspathEntryModelImpl(
           fileCollectionDependency.getFiles(),
-          Collections.<File>emptySet(),
-          Collections.<File>emptySet()
+          Collections.emptySet(),
+          Collections.emptySet()
         ));
       }
     }
@@ -119,16 +108,24 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     return buildScriptClasspath;
   }
 
-  @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder.create(
-      project, e, "Project build classpath resolve errors"
-    ).withDescription("Unable to resolve additional buildscript classpath dependencies");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup(Messages.BUILDSCRIPT_CLASSPATH_MODEL_GROUP)
+      .withKind(Message.Kind.WARNING)
+      .withTitle("Project build classpath resolve failure")
+      .withText("Unable to resolve additional buildscript classpath dependencies")
+      .withException(exception)
+      .reportMessage(project);
   }
 
   @NotNull
   private static List<File> singletonListOrEmpty(@Nullable File file) {
-    return file == null ? Collections.<File>emptyList() : Collections.singletonList(file);
+    return file == null ? Collections.emptyList() : Collections.singletonList(file);
   }
 }

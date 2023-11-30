@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
@@ -12,14 +11,7 @@ import java.awt.*;
 
 import static java.lang.String.format;
 
-public class FieldInplaceActionButtonLook extends IdeaActionButtonLook {
-
-  private static final JBColor BUTTON_SELECTED_BACKGROUND =
-    JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
-  private static final JBColor BUTTON_SELECTED_PRESSED_BACKGROUND =
-    JBColor.namedColor("SearchOption.selectedPressedBackground", JBUI.CurrentTheme.ActionButton.pressedBackground());
-  private static final JBColor BUTTON_SELECTED_HOVERED_BACKGROUND =
-    JBColor.namedColor("SearchOption.selectedHoveredBackground", JBUI.CurrentTheme.ActionButton.pressedBackground());
+public final class FieldInplaceActionButtonLook extends IdeaActionButtonLook {
 
   @Override
   public void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state) {
@@ -48,7 +40,7 @@ public class FieldInplaceActionButtonLook extends IdeaActionButtonLook {
       Rectangle rect = new Rectangle(component.getSize());
       JBInsets.removeFrom(rect, component.getInsets());
       if (!ExperimentalUI.isNewUI() || isSelected) {
-        paintLookBackground(g, rect, BUTTON_SELECTED_BACKGROUND);
+        paintLookBackground(g, rect, JBUI.CurrentTheme.SearchOption.BUTTON_SELECTED_BACKGROUND);
       }
     }
   }
@@ -61,7 +53,8 @@ public class FieldInplaceActionButtonLook extends IdeaActionButtonLook {
       if (state == ActionButtonComponent.SELECTED) {
         ActionButton actionButton = (ActionButton)component;
         boolean isMouseDown = actionButton.isMouseDown();
-        return isMouseDown ? BUTTON_SELECTED_PRESSED_BACKGROUND : BUTTON_SELECTED_HOVERED_BACKGROUND;
+        return isMouseDown ? JBUI.CurrentTheme.SearchOption.BUTTON_SELECTED_PRESSED_BACKGROUND
+                           : JBUI.CurrentTheme.SearchOption.BUTTON_SELECTED_HOVERED_BACKGROUND;
       }
     }
 

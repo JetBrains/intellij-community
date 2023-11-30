@@ -6,5 +6,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 class HighlightingCheckConfiguration {
     var skipCodeHighlighting: Boolean = false
     var hideLineMarkers: Boolean = false
+    var renderLineMarkersTargetIcons: Boolean = false
     var hideHighlightsBelow: HighlightSeverity = HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING
+    var checkLibrarySources: Boolean = false
 }

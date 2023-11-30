@@ -86,9 +86,12 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
         )
 
         val actualProjectReport = buildProjectReport(project, actualTestProjectRoot, testConfiguration, kotlinPluginVersion)
-        val expectedProjectReport = WorkspaceModelTestReportParser.parse(expectedTestDataFile.readText())
 
-        val correctedReport = actualProjectReport.applyCommentsFrom(expectedProjectReport)
+        val expectedProjectReport = if (expectedTestDataFile.exists())
+            WorkspaceModelTestReportParser.parse(expectedTestDataFile.readText()) else null
+
+        val correctedReport = if (expectedProjectReport != null)
+            actualProjectReport.applyCommentsFrom(expectedProjectReport) else actualProjectReport
 
         val actualWorkspaceModelText = correctedReport.render(respectOrder)
 
@@ -137,7 +140,7 @@ abstract class WorkspaceModelChecker<V : Any>(private val respectOrder: Boolean)
         return modules.filterNot { it.shouldRemoveModule() }
     }
 
-    private fun renderModuleFilteringConfiguration(testConfiguration: TestConfiguration): List<String>  {
+    private fun renderModuleFilteringConfiguration(testConfiguration: TestConfiguration): List<String> {
         val configuration = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
 
         val hidden = buildList {

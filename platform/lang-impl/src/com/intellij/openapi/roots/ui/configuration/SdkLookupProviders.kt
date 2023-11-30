@@ -12,7 +12,7 @@ internal class SdkLookupProviders {
     providers.getOrPut(providerId) { SdkLookupProviderImpl() }
 
   companion object {
-    fun getProvider(project: Project, providerId: SdkLookupProvider.Id) =
+    fun getProvider(project: Project, providerId: SdkLookupProvider.Id): SdkLookupProvider =
       project.service<SdkLookupProviders>().getProvider(providerId)
   }
 }

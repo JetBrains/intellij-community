@@ -3,3 +3,5 @@ fun foo(
     x: String = <caret>y(),
     y: () -> String = { "OK" }
 ) = Unit
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReorderParametersFix

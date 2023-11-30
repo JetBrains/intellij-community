@@ -18,14 +18,13 @@ package org.jetbrains.plugins.gradle.execution.test.runner.events;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.event.*;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestsExecutionConsole;
 
 public class AfterTestEventProcessor extends AbstractTestEventProcessor {
 
-  private static final Logger LOG = Logger.getInstance(AfterTestEventProcessor.class);
+  private static final Logger LOG = Logger.getInstance("com.intellij.openapi.externalSystem.event-processing");
 
   public AfterTestEventProcessor(GradleTestsExecutionConsole executionConsole) {
     super(executionConsole);
@@ -94,7 +93,7 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
     else {
-      LOG.error("Undefined test result: " + testResult.getClass().getName());
+      LOG.warn("Undefined test result: " + testResult.getClass().getName());
       getResultsViewer().onTestFinished(testProxy);
       getExecutionConsole().getEventPublisher().onTestFinished(testProxy);
     }
@@ -105,7 +104,7 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
       processTestFailureResult(testProxy, testFailure);
     }
     else {
-      LOG.error("Undefined test failure type: " + failure.getClass().getName());
+      LOG.warn("Undefined test failure type: " + failure.getClass().getName());
       var message = ObjectUtils.doIfNotNull(failure, it -> it.getMessage());
       var description = ObjectUtils.doIfNotNull(failure, it -> it.getDescription());
       testProxy.setTestFailed(message, description, true);
@@ -116,25 +115,15 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
   }
 
   private static void processTestFailureResult(@NotNull SMTestProxy testProxy, @NotNull TestFailure failure) {
-    var message = ObjectUtils.doIfNotNull(failure, it -> it.getMessage());
-    var stackTrace = failure.getStackTrace();
-    var comparisonResult = ObjectUtils.doIfNotNull(message, it -> AssertionParser.parse(it));
-    if (failure instanceof TestAssertionFailure assertionFailure) {
-      var localizedMessage = comparisonResult == null ? message : comparisonResult.getMessage();
+    var convertedFailure = GradleAssertionTestEventConverter.convertTestFailure(failure);
+    var message = convertedFailure.getMessage();
+    var stackTrace = convertedFailure.getStackTrace();
+    if (convertedFailure instanceof TestAssertionFailure assertionFailure) {
       var actualText = assertionFailure.getActualText();
       var expectedText = assertionFailure.getExpectedText();
       var actualFile = assertionFailure.getActualFile();
       var expectedFile = assertionFailure.getExpectedFile();
-      testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, actualFile, expectedFile, true);
-    }
-    else if (comparisonResult != null && failure.getCauses().isEmpty()) {
-      var localizedMessage = comparisonResult.getMessage();
-      var actualText = comparisonResult.getActual();
-      var expectedText = comparisonResult.getExpected();
-      testProxy.setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText);
-    }
-    else if (message != null && stackTrace != null && StringUtil.contains(stackTrace, message)) {
-      testProxy.setTestFailed(null, stackTrace, failure.isTestError());
+      testProxy.setTestComparisonFailed(message, stackTrace, actualText, expectedText, actualFile, expectedFile, true);
     }
     else {
       testProxy.setTestFailed(message, stackTrace, failure.isTestError());

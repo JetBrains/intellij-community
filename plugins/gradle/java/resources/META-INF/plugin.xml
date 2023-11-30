@@ -36,11 +36,14 @@
     <extensionPoint name="dslInspectionProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.plugins.gradle.codeInspection.GradleDslInspectionProvider"/>
     </extensionPoint>
+    <extensionPoint name="initScriptGenerator" interface="org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver"/>
     <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.MavenRepositoriesProjectResolver"/>
+    <projectResolve implementation="org.jetbrains.plugins.gradle.service.project.JarTaskManifestResolver"/>
     <executionEnvironmentProvider implementation="org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProvider"/>
 
     <settingsControlProvider implementation="org.jetbrains.plugins.gradle.service.settings.JavaGradleSettingsControlProvider"/>
@@ -99,7 +102,8 @@
     <starter.moduleImporter implementation="org.jetbrains.plugins.gradle.starters.GradleStarterModuleImporter"/>
 
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector"/>
-    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleNewProjectWizardCollector$GradleVersionValidationRule"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.service.project.wizard.statistics.GradleVersionValidationRule"/>
+
     <dependencyCollector kind="java" implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyCollector"/>
     <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleDependencyUpdater"/>
     <newProjectWizard.java.buildSystem implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizard"/>

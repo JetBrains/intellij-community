@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
@@ -14,10 +15,12 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
+import java.io.IOException
 
 /**
  * Represents some check or code modification that is performed when changes are committed into VCS.
@@ -51,7 +54,7 @@ interface CommitCheck : PossiblyDumbAware {
    * Consider using explicit context (e.g. [kotlinx.coroutines.Dispatchers.Default]) for potentially long operations,
    * that can be performed on pooled thread.
    *
-   * Use [com.intellij.openapi.progress.progressSink] to report progress state.
+   * Use [com.intellij.openapi.progress.progressStep] to report progress state.
    *
    * @return a commit problem found by the commit check or `null` if no problems found
    */
@@ -74,6 +77,12 @@ interface CommitCheck : PossiblyDumbAware {
      */
     LATE,
 
+    /**
+     * Slow checks that can be performed in background after the actual commit.
+     * These can be handled as [LATE] checks in some situations (ex: [git4idea.checkin.GitCommitAndPushExecutor]).
+     *
+     * @see com.intellij.vcs.commit.isPostCommitCheck
+     */
     POST_COMMIT
   }
 }
@@ -130,20 +139,31 @@ interface CommitProblem {
 
   companion object {
     fun createError(e: Throwable): CommitProblem {
-      val err = e.message
-      val message = when {
-        err.isNullOrBlank() -> VcsBundle.message("before.checkin.error.unknown")
-        else -> VcsBundle.message("before.checkin.error.unknown.details", err)
+      val pluginUtil = PluginUtil.getInstance()
+      val pluginName = pluginUtil.findPluginId(e)?.let { pluginId -> pluginUtil.findPluginName(pluginId) }
+
+      var message = when {
+        pluginName != null -> VcsBundle.message("before.checkin.error.in.plugin", pluginName)
+        else -> VcsBundle.message("before.checkin.error.internal")
       }
+
+      val ioException = ExceptionUtil.findCause(e, IOException::class.java)
+      if (ioException != null) {
+        message += ". " + ioException.message
+      }
+
       return TextCommitProblem(message)
     }
   }
 }
 
+/**
+ * Allows to show a link near the error, that can be used to show more detailed explanation or propose a quick fix for the problem.
+ */
 @ApiStatus.Experimental
 interface CommitProblemWithDetails : CommitProblem {
   /**
-   * If null, [text] will be used instead.
+   * If null, the whole [CommitProblem.text] will become a link.
    */
   val showDetailsLink: @NlsContexts.LinkLabel String? get() = null
 
@@ -161,6 +181,10 @@ class TextCommitProblem(override val text: String) : CommitProblem
 
 interface CommitInfo {
   val commitContext: CommitContext
+
+  /**
+   * Whether commit will be performed using [com.intellij.openapi.vcs.changes.CommitSession.VCS_COMMIT] aka [CheckinEnvironment].
+   */
   val isVcsCommit: Boolean
   val executor: CommitExecutor?
 
@@ -169,7 +193,7 @@ interface CommitInfo {
   val commitMessage: @Nls String
 
   /**
-   * Commit action name, without mnemonics and ellipsis. Ex: 'Amend Commit'.
+   * Commit action name, without ellipsis. May contain mnemonic. Ex: 'Amend Comm&it'.
    */
   val commitActionText: @Nls String
 }

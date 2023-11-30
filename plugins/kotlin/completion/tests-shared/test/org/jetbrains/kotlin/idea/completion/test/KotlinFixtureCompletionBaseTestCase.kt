@@ -41,15 +41,14 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
                     { completionType, count -> complete(completionType, count) },
                     defaultCompletionType(),
                     defaultInvocationCount(),
-                    ignoreProperties = ignoreProperties,
-                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.FIR_IDENTICAL
+                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES
+                            + listOf(IgnoreTests.DIRECTIVES.FIR_IDENTICAL, IgnoreTests.DIRECTIVES.IGNORE_K2,
+                                     IgnoreTests.DIRECTIVES.IGNORE_K1)
                             + listOf(CONFIGURE_LIBRARY_PREFIX, "WITH_STDLIB")
                 )
             }
         }
     }
-
-    open val ignoreProperties: Collection<String> = emptyList()
 
     protected open fun executeTest(test: () -> Unit) {
         test()

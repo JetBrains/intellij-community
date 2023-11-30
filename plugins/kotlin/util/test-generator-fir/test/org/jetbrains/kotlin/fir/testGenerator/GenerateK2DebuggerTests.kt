@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.kotlin.idea.k2.debugger.test.cases.*
+import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.testGenerator.model.*
 
 internal fun MutableTWorkspace.generateK2DebuggerTests() {
@@ -22,28 +23,11 @@ internal fun MutableTWorkspace.generateK2DebuggerTests() {
                 model("stepping/custom", pattern = Patterns.KT_WITHOUT_DOTS, testMethodName = "doCustomTest")
             }
         }
-        //
-        //testClass<AbstractKotlinEvaluateExpressionTest> {
-        //    model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
-        //    model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
-        //}
-        //
-        //testClass<AbstractIrKotlinEvaluateExpressionTest> {
-        //    model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
-        //    model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
-        //}
-        //
-        //testClass<AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest> {
-        //    model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-        //    model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-        //}
-        //
-        //testClass<AbstractKotlinEvaluateExpressionInMppTest> {
-        //    model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
-        //    model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
-        //    model("evaluation/multiplatform", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
-        //}
-        //
+        testClass<AbstractK2IdeK2CodeKotlinEvaluateExpressionTest> {
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            // TODO support "evaluation/multiplatform"
+        }
 
         testClass<AbstractK2SelectExpressionForDebuggerTest> {
             model("selectExpression")

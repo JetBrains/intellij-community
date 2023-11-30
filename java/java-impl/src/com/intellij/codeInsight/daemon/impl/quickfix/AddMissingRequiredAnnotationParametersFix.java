@@ -1,21 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TextExpression;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -30,30 +22,28 @@ import java.util.TreeSet;
 /**
 * @author Dmitry Batkovich
 */
-public final class AddMissingRequiredAnnotationParametersFix implements IntentionAction {
+public final class AddMissingRequiredAnnotationParametersFix extends PsiUpdateModCommandAction<PsiAnnotation> {
   private static final Logger LOG = Logger.getInstance(AddMissingRequiredAnnotationParametersFix.class);
 
-  private final PsiAnnotation myAnnotation;
   private final PsiMethod[] myAnnotationMethods;
   private final Collection<String> myMissedElements;
 
   public AddMissingRequiredAnnotationParametersFix(final PsiAnnotation annotation,
                                                    final PsiMethod[] annotationMethods,
                                                    final Collection<String> missedElements) {
+    super(annotation);
     if (missedElements.isEmpty()) {
       throw new IllegalArgumentException("missedElements can't be empty");
     }
-    myAnnotation = annotation;
     myAnnotationMethods = annotationMethods;
     myMissedElements = missedElements;
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return myMissedElements.size() == 1
+  protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiAnnotation element) {
+    return Presentation.of(myMissedElements.size() == 1
            ? QuickFixBundle.message("add.missing.annotation.single.parameter.fix", ContainerUtil.getFirstItem(myMissedElements))
-           : QuickFixBundle.message("add.missing.annotation.parameters.fix", StringUtil.join(myMissedElements, ", "));
+           : QuickFixBundle.message("add.missing.annotation.parameters.fix", StringUtil.join(myMissedElements, ", ")));
   }
 
   @NotNull
@@ -63,13 +53,8 @@ public final class AddMissingRequiredAnnotationParametersFix implements Intentio
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    return myAnnotation.isValid();
-  }
-
-  @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiNameValuePair[] addedParameters = myAnnotation.getParameterList().getAttributes();
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAnnotation annotation, @NotNull ModPsiUpdater updater) {
+    final PsiNameValuePair[] addedParameters = annotation.getParameterList().getAttributes();
 
     final Object2IntMap<String> annotationsOrderMap = getAnnotationsOrderMap();
     final SortedSet<Pair<String, PsiAnnotationMemberValue>> newParameters =
@@ -78,7 +63,7 @@ public final class AddMissingRequiredAnnotationParametersFix implements Intentio
     final boolean order = isAlreadyAddedOrdered(annotationsOrderMap, addedParameters);
     if (order) {
       if (addedParameters.length != 0) {
-        final PsiAnnotationParameterList parameterList = myAnnotation.getParameterList();
+        final PsiAnnotationParameterList parameterList = annotation.getParameterList();
         parameterList.deleteChildRange(addedParameters[0], addedParameters[addedParameters.length - 1]);
         for (final PsiNameValuePair addedParameter : addedParameters) {
           String name = addedParameter.getName();
@@ -95,7 +80,7 @@ public final class AddMissingRequiredAnnotationParametersFix implements Intentio
       }
     }
 
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(context.project());
     for (PsiMethod method : myAnnotationMethods) {
       if (myMissedElements.contains(method.getName())) {
         PsiType type = method.getReturnType();
@@ -112,33 +97,14 @@ public final class AddMissingRequiredAnnotationParametersFix implements Intentio
       }
     }
 
-    TemplateBuilderImpl builder = null;
+    ModTemplateBuilder builder = updater.templateBuilder();
     for (final Pair<String, PsiAnnotationMemberValue> newParameter : newParameters) {
       final PsiAnnotationMemberValue value =
-        myAnnotation.setDeclaredAttributeValue(newParameter.getFirst(), newParameter.getSecond());
+        annotation.setDeclaredAttributeValue(newParameter.getFirst(), newParameter.getSecond());
       if (myMissedElements.contains(newParameter.getFirst())) {
-        if (builder == null) {
-          builder = new TemplateBuilderImpl(myAnnotation.getParameterList());
-        }
-        builder.replaceElement(value, new TextExpression(newParameter.getSecond().getText()), true);
+        builder.field(value, new TextExpression(newParameter.getSecond().getText()));
       }
     }
-    
-    if (!file.isPhysical()) return;
-
-    editor.getCaretModel().moveToOffset(myAnnotation.getParameterList().getTextRange().getStartOffset());
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final Document document = documentManager.getDocument(file);
-    if (document == null) {
-      throw new IllegalStateException();
-    }
-    documentManager.doPostponedOperationsAndUnblockDocument(document);
-    TemplateManager.getInstance(project).startTemplate(editor, builder.buildInlineTemplate(), null);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 
   private Object2IntMap<String> getAnnotationsOrderMap() {
@@ -162,11 +128,5 @@ public final class AddMissingRequiredAnnotationParametersFix implements Intentio
       previousOrder = currentOrder;
     }
     return true;
-  }
-
-  @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new AddMissingRequiredAnnotationParametersFix(PsiTreeUtil.findSameElementInCopy(myAnnotation, target), myAnnotationMethods,
-                                                         myMissedElements);
   }
 }

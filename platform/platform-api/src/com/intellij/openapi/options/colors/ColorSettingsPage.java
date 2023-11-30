@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors;
 
 import com.intellij.openapi.editor.Editor;
@@ -61,13 +61,13 @@ public interface ColorSettingsPage extends ColorAndFontDescriptorsProvider {
    */
   @Nullable Map<String,TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap();
 
-  @Nullable default Map<String,TextAttributesKey> getAdditionalInlineElementToDescriptorMap() { return null; }
+  default @Nullable Map<String,TextAttributesKey> getAdditionalInlineElementToDescriptorMap() { return null; }
 
   /**
    * Specifies tag-to-'color key' mapping for regions with presentation containing additional colors from color map. 
    * It's used to implement navigation between the list of keys and regions in sample editor.
    */
-  @Nullable default Map<String, ColorKey> getAdditionalHighlightingTagToColorKeyMap() { return null; }
+  default @Nullable Map<String, ColorKey> getAdditionalHighlightingTagToColorKeyMap() { return null; }
 
   /**
    * Allows to define additional customizations for the preview editor, which cannot be configured by markup in demo text.

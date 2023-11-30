@@ -46,15 +46,15 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
 
-fun KotlinGradleImportingTestCase.facetSettings(moduleName: String): KotlinFacetSettings {
+fun KotlinGradleImportingTestCase.facetSettings(moduleName: String): IKotlinFacetSettings {
     val facet = KotlinFacet.get(getModule(moduleName)) ?: error("Kotlin facet not found in module $moduleName")
     return facet.configuration.settings
 }
 
-val KotlinGradleImportingTestCase.facetSettings: KotlinFacetSettings
+val KotlinGradleImportingTestCase.facetSettings: IKotlinFacetSettings
     get() = facetSettings("project.main")
 
-val KotlinGradleImportingTestCase.testFacetSettings: KotlinFacetSettings
+val KotlinGradleImportingTestCase.testFacetSettings: IKotlinFacetSettings
     get() = facetSettings("project.test")
 
 class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
@@ -595,6 +595,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("<7.6")
     fun testNoFacetInModuleWithoutKotlinPlugin() {
         configureByFiles()
 
@@ -830,7 +831,8 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
 
         importProject()
 
-        TestCase.assertEquals("1.1", holder.settings.languageVersion)
+        // Different language versions -> there is no common language version
+        TestCase.assertNull(holder.settings.languageVersion)
     }
 
     @Test

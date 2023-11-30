@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
@@ -21,6 +21,8 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicMenuUI;
 import java.awt.*;
+
+import static com.intellij.ui.plaf.beg.BegMenuItemUI.isSelected;
 
 public class IdeaMenuUI extends BasicMenuUI {
   private static final Rectangle ourZeroRect = new Rectangle(0, 0, 0, 0);
@@ -106,7 +108,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   }
 
   @ApiStatus.Internal
-  static public @NotNull Color getMenuBackgroundColor() {
+  public static @NotNull Color getMenuBackgroundColor() {
     return JBColor.namedColor("MainMenu.background", UIManager.getColor("Menu.background"));
   }
 
@@ -188,7 +190,7 @@ public class IdeaMenuUI extends BasicMenuUI {
         icon.paintIcon(comp, g, ourIconRect.x, ourIconRect.y);
       }
     }
-    if (s1 != null && s1.length() > 0){
+    if (s1 != null && !s1.isEmpty()){
       if (buttonmodel.isEnabled()){
         if (buttonmodel.isArmed() || buttonmodel.isSelected()){
           g.setColor(selectionForeground);
@@ -436,7 +438,7 @@ public class IdeaMenuUI extends BasicMenuUI {
     LinePainter2D.paint((Graphics2D)g, i1, l1, k1, l1);
   }
 
-  private void resetRects() {
+  private static void resetRects() {
     ourIconRect.setBounds(ourZeroRect);
     ourTextRect.setBounds(ourZeroRect);
     ourAcceleratorRect.setBounds(ourZeroRect);
@@ -447,6 +449,9 @@ public class IdeaMenuUI extends BasicMenuUI {
 
   private Icon getAllowedIcon() {
     Icon icon = menuItem.isEnabled() ? menuItem.getIcon() : menuItem.getDisabledIcon();
+    if (menuItem.isEnabled() && isSelected(menuItem) && menuItem.getSelectedIcon() != null) {
+      icon = menuItem.getSelectedIcon();
+    }
     if (icon != null && icon.getIconWidth() > myMaxGutterIconWidth){
       icon = null;
     }

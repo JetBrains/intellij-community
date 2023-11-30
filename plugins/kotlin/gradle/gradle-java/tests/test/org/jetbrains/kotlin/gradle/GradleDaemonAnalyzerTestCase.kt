@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -58,7 +59,7 @@ abstract class GradleDaemonAnalyzerTestCase(
     //   expected test data
     // - no API to sanitize error descriptions (in particular, we have to remove endlines in diagnostic messages,
     //   otherwise parser in testdata goes completely insane)
-    override fun doCheckResult(data: ExpectedHighlightingData, infos: MutableCollection<HighlightInfo>, text: String) {
+    override fun doCheckResult(data: ExpectedHighlightingData, infos: Collection<HighlightInfo>, text: String) {
         performGenericHighlightingAndLineMarkersChecks(infos, text)
         performAdditionalChecksAfterHighlighting(editor)
     }
@@ -74,8 +75,8 @@ abstract class GradleDaemonAnalyzerTestCase(
         }
 
         val filteredHighlights = infos.filterNot {
-            it.severity == HighlightSeverity.INFORMATION && !checkInfos ||
-                    it.severity == HighlightSeverity.WARNING && !checkWarnings
+            (it.severity == HighlightSeverity.INFORMATION || it.severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY) && !checkInfos ||
+             it.severity == HighlightSeverity.WARNING && !checkWarnings
         }
         val highlightsTags: List<TagInfo<*>> = TagsTestDataUtil.toHighlightTagPoints(filteredHighlights)
 

@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.caches.trackers
 
-import com.intellij.AppTopics
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -25,7 +24,6 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
-import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -72,11 +70,6 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
         private inline fun isCommentChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiComment }
 
         private inline fun isFormattingChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) { it is PsiWhiteSpace }
-
-        private inline fun isStringLiteralChange(changeSet: TreeChangeEvent): Boolean = isSpecificChange(changeSet) {
-            it?.elementType == KtTokens.REGULAR_STRING_PART &&
-                    it?.psi?.parentOfTypes(KtAnnotationEntry::class, KtIfExpression::class, KtWhenCondition::class) == null
-        }
 
         /**
          * Has to be aligned with [getInsideCodeBlockModificationScope] :
@@ -274,10 +267,7 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
                     // skip change if it contains only virtual/fake change
                     if (changedElements.isNotEmpty()) {
                         // ignore formatting (whitespaces etc)
-                        if (isFormattingChange(changeSet) ||
-                            isCommentChange(changeSet) ||
-                            isStringLiteralChange(changeSet)
-                        ) return
+                        if (isFormattingChange(changeSet) || isCommentChange(changeSet)) return
                     }
 
                     val inBlockElements = inBlockModifications(changedElements)
@@ -295,7 +285,7 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
             },
             this,
         )
-        project.messageBus.connect(this).subscribe(AppTopics.FILE_DOCUMENT_SYNC, object : FileDocumentManagerListener {
+        project.messageBus.connect(this).subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
             override fun fileWithNoDocumentChanged(file: VirtualFile) {
                 //no document means no pomModel change
                 //if psi was not loaded, then the count would be modified by PsiTreeChangeEvent.PROP_UNLOADED_PSI

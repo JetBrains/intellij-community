@@ -26,6 +26,7 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinBinaryDepe
         libraryData.setGroup(coordinates.group)
         libraryData.artifactId = coordinates.module
         libraryData.version = coordinates.version
+        libraryData.internalName = coordinates.displayString
         createChild(ProjectKeys.LIBRARY_DEPENDENCY, LibraryDependencyData(this.data, libraryData, libraryLevel))
     }
 

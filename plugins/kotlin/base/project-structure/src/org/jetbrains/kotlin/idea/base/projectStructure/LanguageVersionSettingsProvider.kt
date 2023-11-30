@@ -165,8 +165,21 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         val arguments = facetSettings.mergedCompilerArguments
 
         val analysisFlags = merge(
+           /*
+            Set default for 'useIR':
+            For common source sets, the common compiler arguments will not configure the 'useIR' flag
+            However, there is at least one FE checker 'SuspendInFunInterfaceChecker' which uses this flag.
+
+            Since IR is default and 'not-IR' is not supported anymore, it is 'safe' to set this flag to 'true' by default
+            in the IDE for common source sets
+
+            Note, 'arguments?.configureAnalysisFlags' will potentially overwrite the flag (see K2JvmCompilerArguments)
+            So for leaf SourceSets or compilations this flag will be configured by taking the actual compiler arguments
+            into account.
+            */
+            mapOf(JvmAnalysisFlags.useIR to true),
             arguments?.configureAnalysisFlags(MessageCollector.NONE, languageVersion),
-            getIdeSpecificAnalysisFlags()
+            getIdeSpecificAnalysisFlags(),
         )
 
         val languageFeatures = merge(
@@ -177,7 +190,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         return LanguageVersionSettingsImpl(languageVersion, apiVersion, analysisFlags, languageFeatures)
     }
 
-    private fun getLanguageApiVersionFromFacet(facetSettings: KotlinFacetSettings): Pair<LanguageVersion, ApiVersion> {
+    private fun getLanguageApiVersionFromFacet(facetSettings: IKotlinFacetSettings): Pair<LanguageVersion, ApiVersion> {
         val languageVersion = facetSettings.languageLevel
         val apiVersion = facetSettings.apiLevel?.let { ApiVersion.createByLanguageVersion(it) }
 
@@ -237,7 +250,7 @@ class LanguageVersionSettingsProvider(private val project: Project) : Disposable
         return CommonFacetSettings(analysisFlags, languageFeatures)
     }
 
-    private fun getMultiPlatformLanguageFeatures(module: Module, facetSettings: KotlinFacetSettings): LanguageFeatureMap {
+    private fun getMultiPlatformLanguageFeatures(module: Module, facetSettings: IKotlinFacetSettings): LanguageFeatureMap {
         if (facetSettings.targetPlatform.isCommon() || ModuleRootManager.getInstance(module).dependencies.any { it.platform.isCommon() }) {
             return Collections.singletonMap(LanguageFeature.MultiPlatformProjects, LanguageFeature.State.ENABLED)
         }

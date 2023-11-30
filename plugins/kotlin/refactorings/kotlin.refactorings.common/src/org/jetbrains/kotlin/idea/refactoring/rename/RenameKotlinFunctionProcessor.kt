@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsKotlinAware
@@ -72,9 +73,8 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         val declaration = element.unwrapped as? KtNamedFunction ?: return
         checkConflictsAndReplaceUsageInfos(element, allRenames, result)
         result += SmartList<UsageInfo>().also { collisions ->
-            renameRefactoringSupport.checkRedeclarations(declaration, newName, collisions)
-            renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-            renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+          checkRedeclarationConflicts(declaration, newName, collisions)
+          renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
         }
     }
 
@@ -122,7 +122,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
         val canRename = try {
             PsiElementRenameHandler.canRename(element.project, editor, substitutedJavaElement)
-        } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
+        } catch (_: CommonRefactoringUtil.RefactoringErrorHintException) {
             false
         }
 
@@ -130,6 +130,8 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
     }
 
     override fun substituteElementToRename(element: PsiElement, editor: Editor, renameCallback: Pass<in PsiElement>) {
+        if (!PsiElementRenameHandler.canRename(element.getProject(), editor, element)) return
+
         fun preprocessAndPass(substitutedJavaElement: PsiElement) {
             val elementToProcess = if (substitutedJavaElement is KtLightMethod && element is KtDeclaration) {
                 substitutedJavaElement.kotlinOrigin as? KtNamedFunction
@@ -158,7 +160,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
         when {
             deepestSuperMethods.isEmpty() -> preprocessAndPass(element)
-            wrappedMethod != null && (wrappedMethod.isConstructor || element !is KtNamedFunction) -> {
+            wrappedMethod != null && (wrappedMethod.isConstructor || deepestSuperMethods.size == 1 || element !is KtNamedFunction) -> {
                 javaMethodProcessorInstance.substituteElementToRename(wrappedMethod, editor, Pass.create(::preprocessAndPass))
             }
             else -> {
@@ -229,19 +231,6 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             }
         }
         renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
-
-        val file = element.containingFile as? KtFile ?: return
-
-        if (file.declarations.singleOrNull() == element) {
-            file.virtualFile?.let { virtualFile ->
-                val nameWithoutExtensions = virtualFile.nameWithoutExtension
-                if (nameWithoutExtensions == originalName) {
-                    val newFileName = newName + "." + virtualFile.extension
-                    allRenames[file] = newFileName
-                    forElement(file).prepareRenaming(file, newFileName, allRenames)
-                }
-            }
-        }
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {

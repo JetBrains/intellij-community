@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.ex.temp;
 
 import com.intellij.openapi.util.Key;
@@ -76,8 +76,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     return (FSDir)fsItem;
   }
 
-  @NotNull
-  private FSItem convertAndCheck(@NotNull VirtualFile file) {
+  private @NotNull FSItem convertAndCheck(@NotNull VirtualFile file) {
     FSItem fsItem = convert(file);
     if (fsItem == null) {
       String message = "Does not exist: " + file.getPath();
@@ -138,8 +137,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     clearFsItemCache(file);
   }
 
-  @NotNull
-  private FSDir convertAndCheckParent(@NotNull VirtualFile file) {
+  private @NotNull FSDir convertAndCheckParent(@NotNull VirtualFile file) {
     return (FSDir)convertAndCheck(file.getParent());
   }
 
@@ -265,7 +263,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     }
   }
 
-  private final static class FSDir extends FSItem {
+  private static final class FSDir extends FSItem {
     private final Map<String, FSItem> myChildren = new LinkedHashMap<>();
 
     @Override
@@ -295,7 +293,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     }
   }
 
-  private final static class FSFile extends FSItem {
+  private static final class FSFile extends FSItem {
     private byte[] myContent = ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
@@ -308,7 +306,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     clearFsItemCache(file);
   }
 
-  private void clearFsItemCache(VirtualFile file) {
+  private static void clearFsItemCache(VirtualFile file) {
     registerFSItem(file, null);
   }
 

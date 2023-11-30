@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.ui
 
 import com.intellij.collaboration.async.DisposingMainScope
 import com.intellij.collaboration.auth.ui.AccountsPanelFactory
+import com.intellij.collaboration.auth.ui.AccountsPanelFactory.Companion.addWarningForMemoryOnlyPasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
@@ -16,16 +17,17 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefault
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsDetailsProvider
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsListModel
 import org.jetbrains.plugins.github.authentication.ui.GHAccountsPanelActionsController
-import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.util.GithubSettings
 import org.jetbrains.plugins.github.util.GithubUtil
 
-internal class GithubSettingsConfigurable internal constructor(private val project: Project)
-  : BoundConfigurable(GithubUtil.SERVICE_DISPLAY_NAME, "settings.github") {
+internal class GithubSettingsConfigurable internal constructor(
+  private val project: Project
+) : BoundConfigurable(GithubUtil.SERVICE_DISPLAY_NAME, "settings.github") {
   override fun createPanel(): DialogPanel {
     val defaultAccountHolder = project.service<GithubProjectDefaultAccountHolder>()
     val accountManager = service<GHAccountManager>()
-    val settings = GithubSettings.getInstance()
+    val ghSettings = GithubSettings.getInstance()
 
     val scope = DisposingMainScope(disposable!!) + ModalityState.any().asContextElement()
     val accountsModel = GHAccountsListModel()
@@ -41,16 +43,23 @@ internal class GithubSettingsConfigurable internal constructor(private val proje
       }.resizableRow()
 
       row {
-        checkBox(GithubBundle.message("settings.clone.ssh"))
-          .bindSelected(settings::isCloneGitUsingSsh, settings::setCloneGitUsingSsh)
+        checkBox(message("settings.clone.ssh"))
+          .bindSelected(ghSettings::isCloneGitUsingSsh, ghSettings::setCloneGitUsingSsh)
       }
-      row(GithubBundle.message("settings.timeout")) {
+      row(message("settings.timeout")) {
         intTextField(range = 0..60)
           .columns(2)
-          .bindIntText({ settings.connectionTimeout / 1000 }, { settings.connectionTimeout = it * 1000 })
+          .bindIntText({ ghSettings.connectionTimeout / 1000 }, { ghSettings.connectionTimeout = it * 1000 })
           .gap(RightGap.SMALL)
         @Suppress("DialogTitleCapitalization")
-        label(GithubBundle.message("settings.timeout.seconds"))
+        label(message("settings.timeout.seconds"))
+          .gap(RightGap.COLUMNS)
+
+        addWarningForMemoryOnlyPasswordSafe(
+          scope,
+          service<GHAccountManager>().canPersistCredentials,
+          ::panel
+        )
       }
     }
   }

@@ -25,6 +25,7 @@ fragment mergeRequest on MergeRequest {
     headSha
   }
 
+  approvalsRequired # Not available in community
   conflicts
   headPipeline {
     ...pipeline
@@ -33,6 +34,9 @@ fragment mergeRequest on MergeRequest {
   mergeable
   state
   draft
+
+  shouldBeRebased
+  rebaseInProgress
 
   targetProject {
     ...project
@@ -70,7 +74,7 @@ fragment mergeRequest on MergeRequest {
     }
 
     nodes {
-      ...user
+      ...userReviewer
     }
   }
 

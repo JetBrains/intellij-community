@@ -3,6 +3,8 @@ package com.intellij.util.indexing;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.util.indexing.dependencies.IndexingDependenciesFingerprint;
 import org.jetbrains.annotations.NotNull;
 
 final class FileBasedIndexPluginListener implements DynamicPluginListener {
@@ -34,9 +36,12 @@ final class FileBasedIndexPluginListener implements DynamicPluginListener {
 
   private void beforePluginSetChanged() {
     mySwitcher.turnOff();
+    ApplicationManager.getApplication().getService(IndexingDependenciesFingerprint.class).resetCache();
   }
 
   private void afterPluginSetChanged() {
+    // we don't use dedicated listener for IndexingDependenciesFingerprint, because order is important: first invalidate, then scan.
+    ApplicationManager.getApplication().getService(IndexingDependenciesFingerprint.class).resetCache();
     mySwitcher.turnOn(null);
   }
 }

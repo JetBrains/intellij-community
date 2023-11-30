@@ -61,6 +61,7 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -275,9 +276,6 @@ internal class BackgroundLoadingBarController(
         runCatching { syncMutex.unlock() }
     }
 }
-
-@Deprecated("", ReplaceWith("com.intellij.openapi.application.writeAction(action)"))
-suspend fun <R> writeAction(action: () -> R): R = com.intellij.openapi.application.writeAction { action() }
 
 internal fun AsyncModuleTransformer.asCoroutine() = object : ModuleTransformer {
     override suspend fun transformModules(project: Project, nativeModules: List<Module>): List<PackageSearchModule> =

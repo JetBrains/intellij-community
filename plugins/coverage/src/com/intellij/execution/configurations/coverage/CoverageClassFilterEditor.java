@@ -50,7 +50,7 @@ class CoverageClassFilterEditor extends ClassFilterEditor {
       if (!packages.isEmpty()) {
         for (final PsiPackage aPackage : packages) {
           final String fqName = aPackage.getQualifiedName();
-          final String pattern = fqName.length() > 0 ? fqName + ".*" : "*";
+          final String pattern = fqName.isEmpty() ? "*" : fqName + ".*";
           myTableModel.addRow(createFilter(pattern));
         }
         int row = myTableModel.getRowCount() - 1;

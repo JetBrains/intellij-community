@@ -25,12 +25,14 @@ public final class PsiClassUtil {
     }
     if (aClass.hasModifierProperty(PsiModifier.PRIVATE)) return false;
     if (mustNotBeAbstract && aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-    return aClass.getContainingClass() == null || aClass.hasModifierProperty(PsiModifier.STATIC);
+    return aClass.getContainingClass() == null ||
+           aClass.hasModifierProperty(PsiModifier.STATIC) ||
+           aClass.hasModifierProperty(PsiModifier.ABSTRACT);
   }
 
   @NotNull
   public static Comparator<PsiClass> createScopeComparator(@NotNull GlobalSearchScope scope) {
-    return Comparator.comparing(c -> PsiUtilCore.getVirtualFile(c), 
+    return Comparator.comparing(c -> PsiUtilCore.getVirtualFile(c),
                                 Comparator.nullsFirst((file1, file2) -> scope.compare(file2, file1)));
   }
 }

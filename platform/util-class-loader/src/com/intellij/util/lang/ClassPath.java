@@ -182,6 +182,8 @@ public final class ClassPath {
     try {
       int i;
       if (useCache) {
+        boolean allUrlsWereProcessedBeforeAccessingCache = allUrlsWereProcessed;
+        int lastLoaderProcessedBeforeAccessingCache = lastLoaderProcessed.get();
         Loader[] loaders = cache.getClassLoadersByPackageNameHash(packageNameHash);
         if (loaders != null) {
           for (Loader loader : loaders) {
@@ -192,7 +194,7 @@ public final class ClassPath {
           }
         }
 
-        if (allUrlsWereProcessed) {
+        if (allUrlsWereProcessedBeforeAccessingCache) {
           if (isNewClassLoadingEnabled) {
             i = 0;
           }
@@ -201,7 +203,7 @@ public final class ClassPath {
           }
         }
         else {
-          i = lastLoaderProcessed.get();
+          i = lastLoaderProcessedBeforeAccessingCache;
         }
       }
       else {
@@ -250,6 +252,8 @@ public final class ClassPath {
     try {
       int i;
       if (useCache) {
+        boolean allUrlsWereProcessedBeforeAccessingCache = allUrlsWereProcessed;
+        i = lastLoaderProcessed.get();
         Loader[] loaders = cache.getLoadersByName(resourceName);
         if (loaders != null) {
           for (Loader loader : loaders) {
@@ -263,11 +267,9 @@ public final class ClassPath {
           }
         }
 
-        if (allUrlsWereProcessed) {
+        if (allUrlsWereProcessedBeforeAccessingCache) {
           return null;
         }
-
-        i = lastLoaderProcessed.get();
       }
       else {
         i = 0;

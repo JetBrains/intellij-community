@@ -14,6 +14,7 @@
   <vendor>JetBrains</vendor>
 
   <content>
+    <module name="intellij.groovy.git"/>
     <module name="intellij.groovy/ant"/>
     <module name="intellij.groovy/byte-code-viewer"/>
   </content>
@@ -406,6 +407,7 @@
     <refactoring.changeSignatureUsageProcessor
       implementation="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProcessor" id="groovyProcessor"
       order="before javaProcessor"/>
+    <changeSignature.usageProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.refactoring.changeSignature.GrChangeSignatureUsageProvider"/>
     <safeDelete.importSearcher implementation="org.jetbrains.plugins.groovy.refactoring.safeDelete.GroovyImportSearcher"/>
     <refactoring.safeDelete.JavaSafeDeleteDelegate
       implementationClass="org.jetbrains.plugins.groovy.refactoring.safeDelete.JavaSafeDeleteDelegateForGroovy" language="Groovy"/>
@@ -510,6 +512,7 @@
     <lang.formatter language="Groovy" implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="Groovy"
                                        implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyWhiteSpaceFormattingStrategy"/>
+    <inspection.basicVisitor class="org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor"/>
 
     <focusModeProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GrFocusModeProvider" />
     <postFormatProcessor implementation="org.jetbrains.plugins.groovy.formatter.GroovyBracePostFormatProcessor"/>
@@ -705,9 +708,6 @@
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyStubElementTypes" externalIdPrefix="gr."/>
     <stubElementTypeHolder class="org.jetbrains.plugins.groovy.lang.parser.GroovyEmptyStubElementTypes" externalIdPrefix="Groovy"/>
     <!--Stubs index-->
-    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameIndex"/>
-    <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameIndex"/>
-
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullClassNameStringIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFullScriptNameStringIndex"/>
     <stubIndex implementation="org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrFieldNameIndex"/>
@@ -1340,8 +1340,7 @@
   </extensions>
 
   <actions>
-    <group id="Groovy.CheckResources" class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Group"
-           popup="true">
+    <group id="Groovy.CheckResources" popup="true">
       <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Make" id="Groovy.CheckResources.Make"/>
       <action class="org.jetbrains.plugins.groovy.compiler.CheckResourcesAction$Rebuild" id="Groovy.CheckResources.Rebuild"/>
       <add-to-group group-id="BuildMenu"/>

@@ -36,7 +36,7 @@ class IntentionActionAsAction(intention: IntentionAction)
     e.presentation.isEnabled = findIntention()?.isAvailable(project, editor, file) == true
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private fun findIntention(): IntentionAction? = IntentionShortcutManager.getInstance().findIntention(actionId)
 }

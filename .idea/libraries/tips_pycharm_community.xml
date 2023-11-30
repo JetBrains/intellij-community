@@ -1,8 +1,14 @@
 <component name="libraryTable">
   <library name="tips-pycharm-community" type="repository">
-    <properties maven-id="com.jetbrains.intellij.documentation:tips-pycharm-community:223.22" />
+    <properties maven-id="com.jetbrains.intellij.documentation:tips-pycharm-community:232.101">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-pycharm-community/232.101/tips-pycharm-community-232.101.jar">
+          <sha256sum>9d6ba2bb12f36e6f39ae685956140a542c547387bac26c655246485543902a58</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-pycharm-community/223.22/tips-pycharm-community-223.22.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/intellij/documentation/tips-pycharm-community/232.101/tips-pycharm-community-232.101.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

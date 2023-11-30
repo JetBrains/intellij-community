@@ -1,8 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
-import com.intellij.AppTopics;
-import com.intellij.ProjectTopics;
 import com.intellij.application.Topics;
 import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.impl.ProjectUtilCore;
@@ -51,7 +49,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class PsiVFSListener implements BulkFileListener {
   private static final Logger LOG = Logger.getInstance(PsiVFSListener.class);
 
@@ -87,7 +85,6 @@ public final class PsiVFSListener implements BulkFileListener {
         }, project);
       }
 
-      connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener(project));
       connection.subscribe(AdditionalLibraryRootsListener.TOPIC, new MyAdditionalLibraryRootListener(project));
       connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
         @Override
@@ -96,7 +93,7 @@ public final class PsiVFSListener implements BulkFileListener {
           ((FileManagerImpl)psiManager.getFileManager()).processFileTypesChanged(e.getRemovedFileType() != null);
         }
       });
-      connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new MyFileDocumentManagerListener(project));
+      connection.subscribe(FileDocumentManagerListener.TOPIC, new MyFileDocumentManagerListener(project));
 
       connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
         @Override
@@ -596,24 +593,26 @@ public final class PsiVFSListener implements BulkFileListener {
       name, fileTypeByFileName, "", vFile.getModificationStamp(), true, false);
   }
 
-  private static final class MyModuleRootListener implements ModuleRootListener {
+  public static final class MyModuleRootListener implements ModuleRootListener {
     private int depthCounter; // accessed from within write action only
-    private final PsiManagerImpl psiManager;
-    private final FileManagerImpl fileManager;
+    private final Project myListenerProject;
 
-    private MyModuleRootListener(@NotNull Project project) {
-      psiManager = (PsiManagerImpl)PsiManager.getInstance(project);
-      fileManager = (FileManagerImpl)psiManager.getFileManager();
+    public MyModuleRootListener(@NotNull Project project) {
+      myListenerProject = project;
     }
 
     @Override
     public void beforeRootsChange(@NotNull ModuleRootEvent event) {
+      if (LOG.isTraceEnabled()) LOG.trace("beforeRootsChanged call");
       if (event.isCausedByFileTypesChange()) return;
+      if (LOG.isTraceEnabled()) LOG.trace("Event is not caused by file types change");
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
           depthCounter++;
+          if (LOG.isTraceEnabled()) LOG.trace("depthCounter increased " + depthCounter);
           if (depthCounter > 1) return;
 
+          PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(myListenerProject);
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(psiManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
           psiManager.beforePropertyChange(treeEvent);
@@ -623,13 +622,18 @@ public final class PsiVFSListener implements BulkFileListener {
 
     @Override
     public void rootsChanged(@NotNull ModuleRootEvent event) {
+      if (LOG.isTraceEnabled()) LOG.trace("rootsChanged call");
+      PsiManagerImpl psiManager = (PsiManagerImpl)PsiManager.getInstance(myListenerProject);
+      FileManagerImpl fileManager = (FileManagerImpl)psiManager.getFileManager();
       fileManager.dispatchPendingEvents();
 
       if (event.isCausedByFileTypesChange()) return;
+      if (LOG.isTraceEnabled()) LOG.trace("Event is not caused by file types change");
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
           depthCounter--;
-          assert depthCounter >= 0 : depthCounter;
+          if (LOG.isTraceEnabled()) LOG.trace("depthCounter decreased " + depthCounter);
+          assert depthCounter >= 0 : "unbalanced `beforeRootsChange`/`rootsChanged`: " + depthCounter;
           if (depthCounter > 0) return;
 
           DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);
@@ -642,7 +646,7 @@ public final class PsiVFSListener implements BulkFileListener {
     }
   }
 
-  private static class MyAdditionalLibraryRootListener implements AdditionalLibraryRootsListener {
+  private static final class MyAdditionalLibraryRootListener implements AdditionalLibraryRootsListener {
     private final PsiManagerImpl psiManager;
     private final FileManagerImpl fileManager;
 

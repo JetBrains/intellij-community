@@ -20,11 +20,11 @@ class CommitsHistory(private val commitsPerRemote: Map<String, Set<String>>) {
     return commitsPerRemote[remote] ?: emptyList()
   }
 
-  fun plus(other: CommitsHistory): CommitsHistory {
+  operator fun plus(other: CommitsHistory): CommitsHistory {
     return CommitsHistory(union(other.commitsPerRemote))
   }
 
-  fun minus(other: CommitsHistory): CommitsHistory {
+  operator fun minus(other: CommitsHistory): CommitsHistory {
     return CommitsHistory(subtract(other.commitsPerRemote))
   }
 

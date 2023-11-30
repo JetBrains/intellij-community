@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.openapi.Disposable;
@@ -77,7 +77,7 @@ public interface JBTabs extends DropAreaAware {
   @Nullable
   TabInfo findInfo(Component component);
 
-  int getIndexOf(@Nullable final TabInfo tabInfo);
+  int getIndexOf(final @Nullable TabInfo tabInfo);
 
   void requestFocus();
 
@@ -96,9 +96,8 @@ public interface JBTabs extends DropAreaAware {
   Component getTabLabel(TabInfo tabInfo);
 
   @Override
-  @NotNull
-  default Rectangle getDropArea() {
-    Rectangle r = new Rectangle(getComponent().getBounds());
+  default @NotNull Rectangle getDropArea() {
+    Rectangle r = new Rectangle(new Point(0, 0), getComponent().getSize());
     if (getTabCount() > 0) {
       @SuppressWarnings("UseDPIAwareInsets")
       Insets insets = JBUI.insets(0);

@@ -6,3 +6,4 @@ fun test(i: Int) {
             else -> { s -> false }
         }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveSingleLambdaParameterFix

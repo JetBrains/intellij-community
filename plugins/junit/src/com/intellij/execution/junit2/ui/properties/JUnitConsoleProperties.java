@@ -78,6 +78,6 @@ public class JUnitConsoleProperties extends JavaAwareTestConsoleProperties<JUnit
   @Override
   public boolean isUndefined() {
     final String mode = getConfiguration().getRepeatMode();
-    return RepeatCount.UNLIMITED.equals(mode) || RepeatCount.UNTIL_FAILURE.equals(mode);
+    return RepeatCount.UNLIMITED.equals(mode) || RepeatCount.UNTIL_FAILURE.equals(mode) || RepeatCount.UNTIL_SUCCESS.equals(mode);
   }
 }

@@ -175,7 +175,7 @@ public final class JpsLibraryImpl<P extends JpsElement> extends JpsNamedComposit
             collectArchives(child, recursively, result);
           }
         }
-        // todo [nik] get list of extensions mapped to Archive file type from IDE settings
+        // todo get list of extensions mapped to Archive file type from IDE settings
         else if (AR_EXTENSIONS.contains(extension)) {
           result.add(JpsPathUtil.getLibraryRootUrl(child));
         }

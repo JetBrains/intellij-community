@@ -5,7 +5,7 @@ package org.jetbrains.intellij.build.impl.compilation
 
 import com.github.luben.zstd.Zstd
 import com.github.luben.zstd.ZstdDirectBufferCompressingStreamNoFinalizer
-import com.intellij.platform.diagnostic.telemetry.impl.use
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span

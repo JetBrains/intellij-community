@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.compiled.ClassFileDecompilers;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
@@ -21,14 +22,17 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
   public static final int STUB_VERSION = 27;
 
   @Override
+  public @NotNull VirtualFileFilter getFileFilter() {
+    return VirtualFileFilter.ALL; // any file of file type that this builder is registered for
+  }
+
+  @Override
   public boolean acceptsFile(@NotNull VirtualFile file) {
     return true;
   }
 
   @Override
   public @NotNull Stream<Full> getAllSubBuilders() {
-    // currently, `getExtensionList` is a more safe than `extensions` because incompatible extension is filtered out (if extension class loaded from different classloader)
-    // even more - getAllSubBuilders is called quite often, no need to use iterator here
     return ClassFileDecompilers.getInstance().EP_NAME.getExtensionList().stream().filter(d -> d instanceof Full).map(d -> (Full)d);
   }
 
@@ -54,8 +58,12 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder.CompositeBina
         return decompiler.getStubBuilder().buildFileStub(fileContent);
       }
       catch (ClsFormatException e) {
-        if (LOG.isDebugEnabled()) LOG.debug(file.getPath(), e);
-        else LOG.info(file.getPath() + ": " + e.getMessage());
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(file.getPath(), e);
+        }
+        else {
+          LOG.info(file.getPath() + ": " + e.getMessage());
+        }
       }
       return null;
     });

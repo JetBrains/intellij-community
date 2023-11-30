@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
@@ -44,13 +44,12 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   private final List<ChooseByNameContributor> myContributors;
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, ChooseByNameContributor @NotNull [] contributors) {
-    this(project, Arrays.asList(contributors));
+    this(project, List.of(contributors));
   }
 
   protected ContributorsBasedGotoByModel(@NotNull Project project, @NotNull List<ChooseByNameContributor> contributors) {
     myProject = project;
     myContributors = contributors;
-    assert !contributors.contains(null);
   }
 
   @Override
@@ -90,7 +89,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         catch (ProcessCanceledException | IndexNotReadyException ex) {
           // index corruption detected, ignore
         }
-        catch (Exception ex) {
+        catch (Throwable ex) {
           LOG.error(ex);
         }
         return true;
@@ -240,7 +239,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     catch (ProcessCanceledException ex) {
       // index corruption detected, ignore
     }
-    catch (Exception ex) {
+    catch (Throwable ex) {
       LOG.error(ex);
     }
     return true;

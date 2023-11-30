@@ -12,15 +12,15 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.div
+import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
+import kotlin.io.path.isRegularFile
 
 private val LOG = logger<RuntimeChooserJreValidator>()
 
@@ -43,8 +43,8 @@ object RuntimeChooserJreValidator {
     return item.jdkMajorVersion >= minJdkFeatureVersion && item.os == JdkPredicate.currentOS && item.arch == JdkPredicate.currentArch
   }
 
-  fun isSupportedSdkItem(sdk: Sdk) = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
-  fun isSupportedSdkItem(sdk: SdkPopupBuilder.SuggestedSdk) = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
+  fun isSupportedSdkItem(sdk: Sdk): Boolean = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
+  fun isSupportedSdkItem(sdk: SdkPopupBuilder.SuggestedSdk): Boolean = isSupportedSdkItem({ sdk.versionString }, { sdk.homePath })
 
   private inline fun isSupportedSdkItem(versionString: () -> String?, homePath: () -> String?): Boolean = runCatching {
     val version = versionString() ?: return false
@@ -93,7 +93,7 @@ object RuntimeChooserJreValidator {
       else -> homeDir / "bin" / "java"
     }
 
-    if (!binJava.isFile() || (SystemInfo.isUnix && !binJava.isExecutable())) {
+    if (!binJava.isRegularFile() || (SystemInfo.isUnix && !binJava.isExecutable())) {
       if (!hideLogs) LOG.warn("Failed to scan JDK for boot runtime: ${homeDir}. Failed to find bin/java executable at $binJava")
       return callback.onError(LangBundle.message("dialog.message.choose.ide.runtime.set.cannot.start.error", homeDir))
     }

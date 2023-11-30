@@ -37,10 +37,6 @@ public class CoverageNotifications implements CoverageSuiteListener, Disposable 
   }
 
   @Override
-  public void afterSuiteChosen() {
-  }
-
-  @Override
   public void dispose() {
   }
 }

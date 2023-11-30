@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.idea.Bombed;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,29 +12,11 @@ import org.junit.runner.RunWith;
 import java.awt.*;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Calendar;
-import java.util.Date;
 
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class TestFrameworkUtil {
   public static final boolean SKIP_HEADLESS = GraphicsEnvironment.isHeadless();
   public static final boolean SKIP_SLOW = Boolean.getBoolean("skip.slow.tests.locally");
-
-  private static Date raidDate(Bombed bombed) {
-    final Calendar instance = Calendar.getInstance();
-    instance.set(Calendar.YEAR, bombed.year());
-    instance.set(Calendar.MONTH, bombed.month());
-    instance.set(Calendar.DAY_OF_MONTH, bombed.day());
-    instance.set(Calendar.HOUR_OF_DAY, bombed.time());
-    instance.set(Calendar.MINUTE, 0);
-
-    return instance.getTime();
-  }
-
-  public static boolean bombExplodes(@NotNull Bombed bombedAnnotation) {
-    Date now = new Date();
-    return now.after(raidDate(bombedAnnotation));
-  }
 
   public static boolean canRunTest(@NotNull Class<?> testCaseClass) {
     if (!SKIP_SLOW && !SKIP_HEADLESS) {

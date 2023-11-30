@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -25,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,14 +19,26 @@ import java.awt.*;
 import java.util.Map;
 import java.util.Set;
 
-public class FileNode extends PackageDependenciesNode implements Comparable<FileNode>{
+public final class FileNode extends PackageDependenciesNode implements Comparable<FileNode>{
   private final VirtualFile myVFile;
   private final boolean myMarked;
+  private Icon myIcon;
 
   public FileNode(VirtualFile file, Project project, boolean marked) {
     super(project);
     myVFile = file;
     myMarked = marked;
+  }
+
+  @Override
+  public void update() {
+    super.update();
+    myIcon = doGetIcon();
+  }
+
+  @NotNull
+  private Icon doGetIcon() {
+    return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
   }
 
   @Override
@@ -67,7 +66,7 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
 
   @Override
   public Icon getIcon() {
-    return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
+    return myIcon;
   }
 
   @Override

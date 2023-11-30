@@ -17,3 +17,6 @@ class Test : a.b.c.Y<Int>(), X, Z {
         <caret>super.foo()
     }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifySuperTypeFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.SpecifySuperTypeFixFactory$applicator$1

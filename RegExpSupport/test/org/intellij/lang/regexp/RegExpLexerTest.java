@@ -3,6 +3,7 @@ package org.intellij.lang.regexp;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.EnumSet;
@@ -860,12 +861,12 @@ public class RegExpLexerTest extends LexerTestCase {
   }
 
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return null;
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     if (new File(getHomePath(), "community/RegExpSupport").isDirectory()) {
       return "/community/RegExpSupport/testData/lexer";
     }

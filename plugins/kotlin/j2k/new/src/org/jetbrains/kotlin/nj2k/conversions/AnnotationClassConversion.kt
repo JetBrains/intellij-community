@@ -58,8 +58,8 @@ class AnnotationClassConversion(context: NewJ2kConverterContext) : RecursiveAppl
             } else initializer,
             annotationList = ::annotationList.detached().also { it.annotations.forEach { ann -> ann.useSiteTarget = PROPERTY_GETTER } },
         ).also { parameter ->
-            parameter.trailingComments += trailingComments
-            parameter.leadingComments += leadingComments
+            parameter.commentsBefore += commentsBefore
+            parameter.commentsAfter += commentsAfter
         }
     }
 }

@@ -1,9 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope2
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.text.NameUtilCore
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -15,9 +13,9 @@ import org.apache.maven.model.Exclusion
 import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.DirSource
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
-import org.jetbrains.intellij.build.tasks.DirSource
-import org.jetbrains.intellij.build.tasks.buildJar
+import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
@@ -35,7 +33,7 @@ import java.util.function.BiConsumer
  * Generates Maven artifacts for IDE and plugin modules. Artifacts aren't generated for modules which depend on non-repository libraries.
  *
  * @see [org.jetbrains.intellij.build.ProductProperties.mavenArtifacts]
- * @see [org.jetbrains.intellij.build.BuildOptions.MAVEN_ARTIFACTS_STEP]
+ * @see [org.jetbrains.intellij.build.BuildOptions.Companion.MAVEN_ARTIFACTS_STEP]
  */
 open class MavenArtifactsBuilder(protected val context: BuildContext, private val skipNothing: Boolean = false) {
   companion object {
@@ -81,7 +79,6 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
       return result
     }
 
-    @Suppress("SpellCheckingInspection")
     fun isOptionalDependency(library: JpsLibrary?): Boolean {
       //todo: this is a temporary workaround until these libraries are published to Maven repository;
       // it's unlikely that code which depend on these libraries will be used when running tests so skipping these dependencies shouldn't cause real problems.
@@ -126,7 +123,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
     spanBuilder("layout maven artifacts")
       .setAttribute(AttributeKey.stringArrayKey("modules"), modulesToPublish.entries.map { entry ->
         "  [${entry.value.joinToString(separator = ",") { it.name }}] -> ${entry.key.coordinates}"
-      }).useWithScope2 {
+      }).useWithScope {
         layoutMavenArtifacts(modulesToPublish, context.paths.artifactDir.resolve(outputDir), context)
       }
   }
@@ -146,7 +143,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
                                         nonMavenizableModules: MutableSet<JpsModule>,
                                         computationInProgress: MutableSet<JpsModule>): MavenArtifactData? {
     if (results.containsKey(module)) {
-      return results.get(module)
+      return results[module]
     }
     if (nonMavenizableModules.contains(module)) {
       return null
@@ -172,7 +169,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext, private va
     for ((dependency, scope) in scopedDependencies(module)) {
       if (dependency is JpsModuleDependency) {
         val depModule = dependency.module
-        if (shouldSkipModule(depModule!!.name, true)) {
+        if (depModule == null || shouldSkipModule(depModule.name, true)) {
           continue
         }
 
@@ -343,7 +340,7 @@ private fun splitByCamelHumpsMergingNumbers(s: String): List<String> {
  * the second component of module names which describes a common group rather than a specific framework
  * and therefore should be excluded from artifactId
  */
-private val COMMON_GROUP_NAMES: Set<String> = java.util.Set.of("platform", "vcs", "tools", "clouds")
+private val COMMON_GROUP_NAMES: Set<String> = setOf("platform", "vcs", "tools", "clouds")
 
 private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData, List<JpsModule>>,
                                          outputDir: Path,

@@ -1,3 +1,4 @@
+// IGNORE_K2
 import java.util.concurrent.locks.Lock
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.withLock

@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.DataWriter
 import com.intellij.configurationStore.StateMap
 import com.intellij.configurationStore.XmlElementStorage
 import com.intellij.configurationStore.toBufferExposingByteArray
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.util.JDOMUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
@@ -36,7 +37,8 @@ class XmlElementStorageTest {
     assertThat(storage.savedElement!!.getChild("component").getChild("foo")).isNull()
   }
 
-  private class MyXmlElementStorage(private val element: Element) : XmlElementStorage("", "root") {
+  private class MyXmlElementStorage(private val element: Element)
+    : XmlElementStorage(fileSpec = "", rootElementName = "root", roamingType = RoamingType.DEFAULT) {
     var savedElement: Element? = null
 
     override fun loadLocalData() = element

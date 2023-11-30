@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.troubleshooting;
 
 import com.intellij.openapi.project.Project;
@@ -8,16 +8,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
-public class DisplayTroubleInfoCollector implements GeneralTroubleInfoCollector {
-  @NotNull
+public final class DisplayTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return "Displays";
   }
 
-  @NotNull
   @Override
-  public String collectInfo(@NotNull Project project) {
+  public @NotNull String collectInfo(@NotNull Project project) {
     StringBuilder output = new StringBuilder();
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     for (int i = 0; i < devices.length; i++) {

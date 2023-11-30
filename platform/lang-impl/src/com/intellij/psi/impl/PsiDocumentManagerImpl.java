@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
@@ -31,8 +30,8 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.InjectionUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,21 +45,20 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   public PsiDocumentManagerImpl(@NotNull Project project) {
     super(project);
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(this, this);
-    ((EditorEventMulticasterImpl)EditorFactory.getInstance().getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), this);
-    MessageBusConnection connection = project.getMessageBus().connect(this);
-    connection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    editorFactory.getEventMulticaster().addDocumentListener(this, this);
+    ((EditorEventMulticasterImpl)editorFactory.getEventMulticaster()).addPrioritizedDocumentListener(new PriorityEventCollector(), this);
+    project.getMessageBus().connect(this).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
-      public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
+      public void fileContentLoaded(final @NotNull VirtualFile virtualFile, @NotNull Document document) {
         PsiFile psiFile = ReadAction.compute(() -> myProject.isDisposed() || !virtualFile.isValid() ? null : getCachedPsiFile(virtualFile));
         fireDocumentCreated(document, psiFile);
       }
     });
   }
 
-  @Nullable
   @Override
-  public PsiFile getPsiFile(@NotNull Document document) {
+  public @Nullable PsiFile getPsiFile(@NotNull Document document) {
     final PsiFile psiFile = super.getPsiFile(document);
     if (myUnitTestMode) {
       VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
@@ -122,7 +120,7 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
   }
 
   @Override
-  protected void beforeDocumentChangeOnUnlockedDocument(@NotNull final FileViewProvider viewProvider) {
+  protected void beforeDocumentChangeOnUnlockedDocument(final @NotNull FileViewProvider viewProvider) {
     PostprocessReformattingAspect.getInstance(myProject).assertDocumentChangeIsAllowed(viewProvider);
     super.beforeDocumentChangeOnUnlockedDocument(viewProvider);
   }
@@ -152,11 +150,20 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
 
   @Override
   public void doPostponedOperationsAndUnblockDocument(@NotNull Document doc) {
-    if (doc instanceof DocumentWindow) {
-      doc = ((DocumentWindow)doc).getDelegate();
-    }
     PostprocessReformattingAspect component = PostprocessReformattingAspect.getInstance(myProject);
-    FileViewProvider viewProvider = getCachedViewProvider(doc);
+    FileViewProvider viewProvider;
+    if (doc instanceof DocumentWindow) {
+      Document topDoc = ((DocumentWindow)doc).getDelegate();
+      FileViewProvider topViewProvider = getCachedViewProvider(topDoc);
+      if (topViewProvider != null && InjectionUtils.shouldFormatOnlyInjectedCode(topViewProvider)) {
+        viewProvider = getCachedViewProvider(doc);
+      } else {
+        viewProvider = topViewProvider;
+      }
+    } else {
+      viewProvider = getCachedViewProvider(doc);
+    }
+
     if (viewProvider != null && component != null) {
       component.doPostponedFormatting(viewProvider);
     }
@@ -192,9 +199,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     return result;
   }
 
-  @NonNls
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return super.toString() + " for the project " + myProject + ".";
   }
 
@@ -203,9 +209,8 @@ public final class PsiDocumentManagerImpl extends PsiDocumentManagerBase {
     FileContentUtil.reparseFiles(myProject, files, includeOpenFiles);
   }
 
-  @NotNull
   @Override
-  protected DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+  protected @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
     return InjectedLanguageManager.getInstance(myProject).freezeWindow(document);
   }
 

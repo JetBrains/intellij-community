@@ -8,15 +8,19 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereSymbolFeaturesProvider.Fields.PARENT_STAT_IS_MOST_POPULAR_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereSymbolFeaturesProvider.Fields.PARENT_STAT_IS_MOST_RECENT_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereSymbolFeaturesProvider.Fields.PARENT_STAT_RECENCY_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereSymbolFeaturesProvider.Fields.PARENT_STAT_USE_COUNT_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereStatisticianService
 
 internal class SearchEverywhereSymbolFeaturesProvider
   : SearchEverywhereElementFeaturesProvider(SymbolSearchEverywhereContributor::class.java) {
-  companion object {
-    private val PARENT_STAT_USE_COUNT_DATA_KEY = EventFields.Int("parentStatUseCount")
-    private val PARENT_STAT_IS_MOST_POPULAR_DATA_KEY = EventFields.Boolean("parentStatIsMostPopular")
-    private val PARENT_STAT_RECENCY_DATA_KEY = EventFields.Int("parentStatRecency")
-    private val PARENT_STAT_IS_MOST_RECENT_DATA_KEY = EventFields.Boolean("parentStatIsMostRecent")
+  object Fields {
+    val PARENT_STAT_USE_COUNT_DATA_KEY = EventFields.Int("parentStatUseCount")
+    val PARENT_STAT_IS_MOST_POPULAR_DATA_KEY = EventFields.Boolean("parentStatIsMostPopular")
+    val PARENT_STAT_RECENCY_DATA_KEY = EventFields.Int("parentStatRecency")
+    val PARENT_STAT_IS_MOST_RECENT_DATA_KEY = EventFields.Boolean("parentStatIsMostRecent")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

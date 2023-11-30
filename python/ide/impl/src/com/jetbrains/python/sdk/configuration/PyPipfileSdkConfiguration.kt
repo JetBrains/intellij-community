@@ -21,14 +21,16 @@ import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyCharmCommunityCustomizationBundle
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.InputData
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.PipEnvResult
-import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Companion.Source
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.InputData
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.PipEnvResult
+import com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector.Source
 import com.jetbrains.python.sdk.pipenv.*
 import java.awt.BorderLayout
 import java.awt.Insets
+import java.nio.file.Path
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.isExecutable
 
 class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
 
@@ -50,8 +52,8 @@ class PyPipfileSdkConfiguration : PyProjectSdkConfigurationExtension {
   private fun askForEnvData(module: Module, source: Source): PyAddNewPipEnvFromFilePanel.Data? {
     val pipEnvExecutable = getPipEnvExecutable()?.absolutePath
 
-    if (source == Source.INSPECTION && validatePipEnvExecutable(pipEnvExecutable) == null) {
-      return PyAddNewPipEnvFromFilePanel.Data(pipEnvExecutable!!)
+    if (source == Source.INSPECTION && pipEnvExecutable?.let { Path.of(it).isExecutable() } == true) {
+      return PyAddNewPipEnvFromFilePanel.Data(pipEnvExecutable)
     }
 
     var permitted = false

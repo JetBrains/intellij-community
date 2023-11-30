@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.autodetect;
 
 import com.intellij.application.options.CodeStyle;
@@ -23,7 +23,7 @@ import java.util.List;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
-public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
+public final class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   private final VirtualFile myFile;
   private final Project myProject;
   private final Document myDocument;
@@ -40,8 +40,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   }
 
   @Override
-  @Nullable
-  public IndentOptionsAdjuster getIndentOptionsAdjuster() {
+  public @Nullable IndentOptionsAdjuster getIndentOptionsAdjuster() {
     try {
       List<LineIndentInfo> linesInfo = calcLineIndentInfo(myProgressIndicator);
       if (linesInfo != null) {
@@ -53,8 +52,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
   }
 
   @Override
-  @NotNull
-  public IndentOptions getIndentOptions() {
+  public @NotNull IndentOptions getIndentOptions() {
     IndentOptions indentOptions =
       (IndentOptions)CodeStyle.getSettings(myProject, myFile).getIndentOptions(myFile.getFileType()).clone();
 
@@ -66,8 +64,7 @@ public class IndentOptionsDetectorImpl implements IndentOptionsDetector {
     return indentOptions;
   }
 
-  @Nullable
-  private List<LineIndentInfo> calcLineIndentInfo(@Nullable ProgressIndicator indicator) {
+  private @Nullable List<LineIndentInfo> calcLineIndentInfo(@Nullable ProgressIndicator indicator) {
     if (myDocument.getLineCount() < 3 || isFileBigToDetect()) {
       return null;
     }

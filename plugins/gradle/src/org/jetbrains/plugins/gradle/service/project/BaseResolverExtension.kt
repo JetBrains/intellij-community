@@ -44,6 +44,7 @@ internal class BaseResolverExtension : GradleProjectResolverExtension {
                                    ideProject: DataNode<ProjectData>): Collection<TaskData> = emptyList()
 
   override fun getExtraProjectModelClasses(): Set<Class<*>> = emptySet()
+  override fun getExtraBuildModelClasses(): Set<Class<*>> = emptySet()
   override fun getToolingExtensionsClasses(): Set<Class<*>> {
     return linkedSetOf(
       ExternalSystemSourceType::class.java, // external-system-rt.jar

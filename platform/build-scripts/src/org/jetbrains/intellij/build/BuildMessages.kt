@@ -26,6 +26,8 @@ interface BuildMessages: System.Logger {
 
   fun buildStatus(message: String)
 
+  fun changeBuildStatusToSuccess(message: String)
+
   fun setParameter(parameterName: String, value: String)
 
   fun block(blockName: String, task: Callable<Unit>)
@@ -33,4 +35,8 @@ interface BuildMessages: System.Logger {
   fun artifactBuilt(relativeArtifactPath: String)
 
   fun reportStatisticValue(key: String, value: String)
+
+  fun reportBuildProblem(description: String, identity: String? = null)
+
+  fun cancelBuild(reason: String)
 }

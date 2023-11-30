@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui
 
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.ui.NewUiValue
 import com.intellij.ui.paint.withTxAndClipAligned
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.AvatarUtils.generateColoredAvatar
 import com.intellij.util.ui.ImageUtil.applyQualityRenderingHints
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.font.TextAttribute
 import java.awt.geom.Area
@@ -13,19 +16,25 @@ import java.awt.image.BufferedImage
 import kotlin.math.abs
 
 
-class AvatarIcon(private val targetSize: Int,
-                 private val arcRatio: Double,
-                 private val gradientSeed: String,
-                 private val avatarName: String,
-                 private val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
+class AvatarIcon(val targetSize: Int,
+                 val arcRatio: Double,
+                 val gradientSeed: String,
+                 val avatarName: String,
+                 val palette: ColorPalette = AvatarPalette) : JBCachingScalableIcon<AvatarIcon>() {
   private var cachedImage: BufferedImage? = null
-  private var cachedImageScale: Double? = null
+  private var cachedImageSysScale: Float? = null
+  private var cachedImagePixScale: Float? = null
+  private var cachedImageColor: Color? = null
 
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
     g as Graphics2D
     val iconSize = getIconSize()
-    val scale = g.transform.scaleX
-    if (scale != cachedImageScale) {
+    val sysScale = JBUIScale.sysScale(g)
+    val pixScale = JBUI.pixScale(g.deviceConfiguration)
+    val imageColor = palette.gradient(gradientSeed).first
+    if (sysScale != cachedImageSysScale
+        || pixScale != cachedImagePixScale
+        || imageColor != cachedImageColor) {
       cachedImage = null
     }
 
@@ -38,7 +47,9 @@ class AvatarIcon(private val targetSize: Int,
                                           name = avatarName,
                                           palette = palette)
       this.cachedImage = cachedImage
-      cachedImageScale = scale
+      cachedImageSysScale = sysScale
+      cachedImagePixScale = pixScale
+      cachedImageColor = palette.gradient(gradientSeed).first
     }
 
     withTxAndClipAligned(g, x, y, cachedImage.width, cachedImage.height) { gg ->
@@ -76,7 +87,7 @@ object AvatarUtils {
                                      palette: ColorPalette = AvatarPalette): BufferedImage {
     val (color1, color2) = palette.gradient(gradientSeed)
 
-    val shortName = Avatars.initials(name)
+    val shortName = initials(name)
     val image = ImageUtil.createImage(gc, size, size, BufferedImage.TYPE_INT_ARGB)
     val g2 = image.createGraphics()
     applyQualityRenderingHints(g2)
@@ -98,7 +109,7 @@ object AvatarUtils {
   }
 
   private fun getFont(size: Int): Font {
-    return if (Registry.`is`("ide.experimental.ui")) {
+    return if (NewUiValue.isEnabled()) {
       val fontSize = 13 * size / 20
       getNewUiFont(fontSize)
     }
@@ -115,30 +126,52 @@ object AvatarUtils {
 
     return JBFont.create(Font.getFont(attributes)).deriveFont(size.toFloat())
   }
-}
 
-internal object Avatars {
   // "John Smith" -> "JS"
+  // "John-Smith-Harris" -> "JH"
+  // "MyProject" -> "MP"
+  // "My-Project" -> "MP"
+  @TestOnly
+  @Internal
   fun initials(text: String): String {
-    val words = text
+    val filtered = text
       .filter { !it.isHighSurrogate() && !it.isLowSurrogate() }
       .trim()
-      .split(' ', ',', '`', '\'', '\"').filter { it.isNotBlank() }
-      .let {
-        if (it.size > 2) listOf(it.first(), it.last()) else it
-      }
-      .take(2)
-    if (words.size == 1) {
-      return generateFromCamelCase(words.first())
+
+    val camelCaseInitials = generateFromCamelCase(text)
+    if (camelCaseInitials.length ==  2) return camelCaseInitials
+
+    val words = (filtered.splitAtLeast2NonEmpty(' ')
+                 ?: filtered.splitAtLeast2NonEmpty(',')
+                 ?: filtered.splitAtLeast2NonEmpty('-')
+                 ?: filtered.splitAtLeast2NonEmpty('_')
+                 ?: filtered.splitAtLeast2NonEmpty('.')
+                 ?: filtered.splitAtLeast2NonEmpty('`', '\'', '\"'))
+        ?.let { listOf(it.first(), it.last()) }
+
+    if (words == null) {
+      return camelCaseInitials
     }
     return words.map { it.first() }
         .joinToString("").uppercase()
   }
 
+  private fun String.splitAtLeast2NonEmpty(vararg delimiters: Char) = split(*delimiters).map { string ->
+    string.filter { it.isLetterOrDigit() }
+  }.filter {
+    it.isNotEmpty()
+  }.takeIf {
+    it.size >= 2
+  }
+
   private fun generateFromCamelCase(text: String): String {
-    return text.filterIndexed { index, c -> index == 0 || c.isUpperCase() }
-      .take(2)
-      .uppercase()
+    return text.dropWhile {
+      !it.isLetter()
+    }.takeWhile {
+      it.isLetterOrDigit()
+    }.filterIndexed { index, c ->
+      index == 0 || c.isUpperCase()
+    }.take(2).uppercase()
   }
 
   fun initials(firstName: String, lastName: String): String {
@@ -156,10 +189,11 @@ interface ColorPalette {
   }
   val gradients: Array<Pair<Color, Color>>
 
-  fun gradient(seed: String? = null) = select(gradients, seed)
+  fun gradient(seed: String? = null): Pair<Color, Color> = select(gradients, seed)
 }
 
-private object AvatarPalette : ColorPalette {
+@Internal
+object AvatarPalette : ColorPalette {
   override val gradients: Array<Pair<Color, Color>>
     get() {
       return arrayOf(

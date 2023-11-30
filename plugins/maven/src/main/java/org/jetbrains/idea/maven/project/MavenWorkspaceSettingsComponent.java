@@ -1,35 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.utils.MavenWslUtil;
 
-import java.io.File;
 
 @State(name = "MavenImportPreferences", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@SuppressWarnings("LightServiceMigrationCode")
 // must be not a light service,
 // because SystemFileProcessor uses ComponentManagerEx.getServiceByClassName API to get instance of this service
-public final class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspaceSettings> {
-  private MavenWorkspaceSettings mySettings;
+public final class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspacePersistedSettings> {
+  private MavenWorkspacePersistedSettings mySettings;
 
   private final Project myProject;
 
   public MavenWorkspaceSettingsComponent(@NotNull Project project) {
     myProject = project;
-    mySettings = new MavenWorkspaceSettings();
+    mySettings = new MavenWorkspacePersistedSettings(new MavenWorkspaceSettings());
     mySettings.getGeneralSettings().setProject(project);
-    applyDefaults(mySettings);
-
+    applyDefaults(mySettings.getRealSettings());
   }
 
   public static MavenWorkspaceSettingsComponent getInstance(@NotNull Project project) {
@@ -38,7 +33,7 @@ public final class MavenWorkspaceSettingsComponent implements PersistentStateCom
 
   @Override
   @NotNull
-  public MavenWorkspaceSettings getState() {
+  public MavenWorkspacePersistedSettings getState() {
     MavenExplicitProfiles profiles = MavenProjectsManager.getInstance(myProject).getExplicitProfiles();
     mySettings.setEnabledProfiles(profiles.getEnabledProfiles());
     mySettings.setDisabledProfiles(profiles.getDisabledProfiles());
@@ -46,32 +41,23 @@ public final class MavenWorkspaceSettingsComponent implements PersistentStateCom
   }
 
   @Override
-  public void loadState(@NotNull MavenWorkspaceSettings state) {
+  public void loadState(@NotNull MavenWorkspacePersistedSettings state) {
     mySettings = state;
-    applyDefaults(mySettings);
-    migrateSettings(mySettings);
+    applyDefaults(mySettings.getRealSettings());
+    migrateSettings(mySettings.getRealSettings());
   }
 
   public MavenWorkspaceSettings getSettings() {
-    return mySettings;
+    return mySettings.getRealSettings();
   }
 
   private void applyDefaults(MavenWorkspaceSettings settings) {
     settings.getGeneralSettings().setProject(myProject);
-    if (StringUtil.isEmptyOrSpaces(settings.getGeneralSettings().getMavenHome())) {
-      String home = MavenWslUtil.resolveWslAware(myProject,
-                                              () -> MavenServerManager.BUNDLED_MAVEN_3,
-                                              wsl -> {
-                                                File file = MavenWslUtil.resolveMavenHomeDirectory(wsl, null);
-                                                return file == null ? null : file.getAbsolutePath();
-                                              });
-      settings.getGeneralSettings().setMavenHome(home);
-    }
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings("removal")
   private void migrateSettings(MavenWorkspaceSettings settings) {
-    MavenImportingSettings importingSettings = settings.importingSettings;
+    MavenImportingSettings importingSettings = settings.getImportingSettings();
     if (importingSettings.isImportAutomatically()) {
       importingSettings.setImportAutomatically(false);
       ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);

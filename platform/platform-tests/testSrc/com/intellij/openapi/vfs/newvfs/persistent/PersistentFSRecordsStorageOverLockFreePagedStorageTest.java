@@ -3,8 +3,9 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 
 import com.intellij.util.io.PageCacheUtils;
-import com.intellij.util.io.PagedFileStorageLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -34,7 +35,7 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   }
 
   public static final int MAX_RECORDS_TO_INSERT = 1 << 22;
-  private PagedFileStorageLockFree pagedStorage;
+  private PagedFileStorageWithRWLockedPageContent pagedStorage;
 
 
 
@@ -45,8 +46,8 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
   @BeforeClass
   public static void beforeClass() throws Exception {
     assumeTrue(
-      "LockFree FilePageCache must be enabled: see PageCacheUtils.LOCK_FREE_VFS_ENABLED",
-      PageCacheUtils.LOCK_FREE_VFS_ENABLED
+      "LockFree FilePageCache must be enabled: see PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED",
+      PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED
     );
   }
 
@@ -60,11 +61,12 @@ public class PersistentFSRecordsStorageOverLockFreePagedStorageTest
       pageSize = file.getPagedFileStorage().getPageSize();
       nativeBytesOrder = file.isNativeBytesOrder();
     }
-    pagedStorage = new PagedFileStorageLockFree(
+    pagedStorage = new PagedFileStorageWithRWLockedPageContent(
       storagePath,
       storageContext,
       pageSize,
-      nativeBytesOrder
+      nativeBytesOrder,
+      PageContentLockingStrategy.LOCK_PER_PAGE
     );
     return new PersistentFSRecordsOverLockFreePagedStorage(pagedStorage);
   }

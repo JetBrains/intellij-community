@@ -8,8 +8,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.NewUiValue;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,7 +53,7 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
 
   @Override
   public Icon getIcon(@IconFlags int flags) {
-    return isNewUi() ? EmptyIcon.ICON_0 : AllIcons.Actions.RealIntentionBulb;
+    return NewUiValue.isEnabled() ? EmptyIcon.ICON_0 : AllIcons.Actions.RealIntentionBulb;
   }
 
   @Override
@@ -61,12 +61,5 @@ public final class EmptyIntentionAction extends AbstractEmptyIntentionAction imp
                                                        @NotNull Editor editor,
                                                        @NotNull PsiFile file) {
     return new IntentionPreviewInfo.Html(AnalysisBundle.message("empty.inspection.action.description", myName));
-  }
-
-  // We cannot use here ExperimentalUI.isNewUI() because of module dependencies.
-  // Please, modify this code synchronously with ExperimentalUI.isNewUI()
-  private static boolean isNewUi() {
-    // CWM-7348 thin client does not support new UI
-    return (EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui"));
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.ide.PowerSaveMode
@@ -24,8 +24,8 @@ abstract class HeavyAwareListener(private val project: Project,
                                   private val parent: Disposable) {
 
   @Volatile
-  var isHeavy = HeavyProcessLatch.INSTANCE.isRunning || PowerSaveMode.isEnabled()
-    private set
+  private var _isHeavy = HeavyProcessLatch.INSTANCE.isRunning || PowerSaveMode.isEnabled()
+  protected open val isHeavy get() = _isHeavy
 
   fun start() {
     @OptIn(DelicateCoroutinesApi::class)
@@ -35,7 +35,7 @@ abstract class HeavyAwareListener(private val project: Project,
           values.fold(false, Boolean::or)
         }.distinctUntilChanged()
         heavyFlow.collect { heavyValue ->
-          isHeavy = heavyValue
+          _isHeavy = heavyValue
           if (heavyValue) heavyActivityStarted() else heavyActivityEnded()
         }
       }

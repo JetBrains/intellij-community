@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -8,17 +9,15 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.EntityStorage;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaSourceRootPropertiesEntity;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
@@ -42,7 +41,7 @@ public class PackagePrefixIndex {
           map = myMap;
         }
         if (map != null) {
-          for (EntityChange<JavaSourceRootPropertiesEntity> change : SequencesKt.asIterable(event.getChanges(JavaSourceRootPropertiesEntity.class))) {
+          for (EntityChange<JavaSourceRootPropertiesEntity> change : event.getChanges(JavaSourceRootPropertiesEntity.class)) {
             JavaSourceRootPropertiesEntity oldEntity = change.getOldEntity();
             if (oldEntity != null) {
               updateMap(oldEntity, event.getStorageBefore(), (prefix, module) -> map.remove(prefix, module));
@@ -55,7 +54,9 @@ public class PackagePrefixIndex {
         }
       }
       
-      private void updateMap(@NotNull JavaSourceRootPropertiesEntity entity, @NotNull EntityStorage storageAfter, @NotNull BiConsumer<? super String, ? super Module> updater) {
+      private static void updateMap(@NotNull JavaSourceRootPropertiesEntity entity,
+                                    @NotNull EntityStorage storageAfter,
+                                    @NotNull BiConsumer<? super String, ? super Module> updater) {
         String prefix = entity.getPackagePrefix();
         if (StringUtil.isNotEmpty(prefix)) {
           Module module = ModuleEntityUtils.findModule(entity.getSourceRoot().getContentRoot().getModule(), storageAfter);

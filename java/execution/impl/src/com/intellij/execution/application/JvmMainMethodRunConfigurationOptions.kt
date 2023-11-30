@@ -6,6 +6,7 @@ import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.JvmConfigurationOptions
 import com.intellij.execution.ShortenCommandLine
 import com.intellij.util.xmlb.annotations.OptionTag
+import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.annotations.XMap
 
 open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
@@ -18,12 +19,18 @@ open class JvmMainMethodRunConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("INCLUDE_PROVIDED_SCOPE")
   open var isIncludeProvidedScope by property(false)
 
+  @get:OptionTag("UNNAMED_CLASS_CONFIGURATION")
+  open var isUnnamedClassConfiguration by property(false)
+
   @get:OptionTag("PASS_PARENT_ENVS")
   var isPassParentEnv by property(true)
 
   @Property(description = "Environment variables")
   @get:XMap(propertyElementName = "envs", entryTagName = "env", keyAttributeName = "name")
   var env by linkedMap<String, String>()
+
+  @get:XCollection
+  var envFilePaths by list<String>()
 
   // see ConfigurationWithCommandLineShortener - "null if option was not selected explicitly, legacy user-local options to be used"
   // so, we cannot use NONE as default value

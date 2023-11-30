@@ -5,11 +5,12 @@ package com.intellij.execution.ui.layout.actions;
 import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class CloseViewsActionBase extends BaseViewAction {
+public abstract class CloseViewsActionBase extends BaseViewAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
   protected void update(AnActionEvent e, ViewContext context, Content[] content) {

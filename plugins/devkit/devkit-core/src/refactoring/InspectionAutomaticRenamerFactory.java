@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.refactoring;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -34,7 +34,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory {
+final class InspectionAutomaticRenamerFactory implements AutomaticRenamerFactory {
   private static final @NonNls String PROPERTY_RENAME_DESCRIPTION_AND_SHORT_NAME = "rename.inspection.description.and.short.name";
   private static final @NonNls String INSPECTION_CLASS_SUFFIX = "Inspection";
 

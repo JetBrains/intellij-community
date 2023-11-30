@@ -1,5 +1,6 @@
 {
   "type": "AUTO_DETECT",
   "mainFile": "test.kt",
-  "newName": "Baz"
+  "newName": "Baz",
+  "enabledInK2": "true"
 }

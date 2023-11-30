@@ -69,19 +69,20 @@ fun collectPythonPath(project: Project,
                       shouldAddSourceRoots: Boolean,
                       isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> {
   val sdk = PythonSdkUtil.findSdkByPath(sdkHome)
-  return collectPythonPath(
-    Context(project, sdk, pathMapper),
-    module,
-    sdkHome,
-    shouldAddContentRoots,
-    shouldAddSourceRoots,
-    isDebug
-  )
+  return collectPythonPath(project, module, sdk, pathMapper, shouldAddContentRoots, shouldAddSourceRoots, isDebug)
 }
+
+fun collectPythonPath(project: Project,
+                      module: Module?,
+                      sdk: Sdk?,
+                      pathMapper: PyRemotePathMapper?,
+                      shouldAddContentRoots: Boolean,
+                      shouldAddSourceRoots: Boolean,
+                      isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> =
+  collectPythonPath(Context(project, sdk, pathMapper), module, shouldAddContentRoots, shouldAddSourceRoots, isDebug)
 
 private fun collectPythonPath(context: Context,
                               module: Module?,
-                              sdkHome: String?,
                               shouldAddContentRoots: Boolean,
                               shouldAddSourceRoots: Boolean,
                               isDebug: Boolean): Collection<TargetEnvironmentFunction<String>> {
@@ -91,7 +92,7 @@ private fun collectPythonPath(context: Context,
                       shouldAddContentRoots,
                       shouldAddSourceRoots)
   )
-  if (isDebug && PythonSdkFlavor.getFlavor(sdkHome) is JythonSdkFlavor) {
+  if (isDebug && context.sdk?.let { PythonSdkFlavor.getFlavor(it) } is JythonSdkFlavor) {
     //that fixes Jython problem changing sys.argv on execfile, see PY-8164
     for (helpersResource in listOf("pycharm", "pydev")) {
       val helperPath = PythonHelpersLocator.getHelperPath(helpersResource)
@@ -160,7 +161,7 @@ private fun addToPythonPath(context: Context,
       addIfNeeded(context, realFile, pathList)
     }
   }
-  else {
+  else if (file.isDirectory()) {
     addIfNeeded(context, file, pathList)
   }
 }

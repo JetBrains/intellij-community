@@ -7,13 +7,11 @@ import com.intellij.ui.GroupHeaderSeparator
 import com.intellij.util.ui.JBUI.CurrentTheme.ActionsList
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-@ApiStatus.Internal
 class GroupedRenderer<T>(
   private val baseRenderer: ListCellRenderer<T>,
   private val hasSeparatorAbove: (value: T, index: Int) -> Boolean = { _, _ -> false },
@@ -56,11 +54,11 @@ class GroupedRenderer<T>(
   }
 
   companion object {
-    fun createDefaultSeparator(text: @NlsContexts.Separator String? = null): GroupHeaderSeparator {
+    fun createDefaultSeparator(text: @NlsContexts.Separator String? = null, paintLine: Boolean = false): GroupHeaderSeparator {
       val labelInsets = if (ExperimentalUI.isNewUI()) Popup.separatorLabelInsets() else ActionsList.cellPadding()
       return GroupHeaderSeparator(labelInsets).apply {
-        text?.let { t->
-          setHideLine(true)
+        text?.let { t ->
+          setHideLine(!paintLine)
           caption = t
         }
       }

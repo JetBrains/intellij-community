@@ -152,8 +152,21 @@ public class JavaExecutionStack extends XExecutionStack {
 
   @NotNull
   public List<XStackFrame> createStackFrames(@NotNull StackFrameProxyImpl stackFrameProxy) {
-    StackFrameDescriptorImpl descriptor = new StackFrameDescriptorImpl(stackFrameProxy, myTracker);
+    return createFrames(new StackFrameDescriptorImpl(stackFrameProxy, myTracker));
+  }
 
+  @NotNull
+  private CompletableFuture<List<XStackFrame>> createStackFramesAsync(@NotNull StackFrameProxyImpl stackFrameProxy) {
+    if (!Registry.is("debugger.async.frames")) {
+      return CompletableFuture.completedFuture(createStackFrames(stackFrameProxy));
+    }
+
+    return StackFrameDescriptorImpl.createAsync(stackFrameProxy, myTracker)
+      .thenApply(this::createFrames);
+  }
+
+  @NotNull
+  private List<XStackFrame> createFrames(StackFrameDescriptorImpl descriptor) {
     XStackFrame topFrame = ContainerUtil.getFirstItem(myTopFrames);
     if (descriptor.getUiIndex() == 1 && topFrame instanceof JavaStackFrame) {
       Method method = descriptor.getMethod();
@@ -168,31 +181,6 @@ public class JavaExecutionStack extends XExecutionStack {
     }
 
     return Collections.singletonList(new JavaStackFrame(descriptor, true));
-  }
-
-  @NotNull
-  private CompletableFuture<List<XStackFrame>> createStackFramesAsync(@NotNull StackFrameProxyImpl stackFrameProxy) {
-    if (!Registry.is("debugger.async.frames")) {
-      return CompletableFuture.completedFuture(createStackFrames(stackFrameProxy));
-    }
-
-    return StackFrameDescriptorImpl.createAsync(stackFrameProxy, myTracker)
-      .thenApply(descriptor -> {
-        XStackFrame topFrame = ContainerUtil.getFirstItem(myTopFrames);
-        if (descriptor.getUiIndex() == 1 && topFrame instanceof JavaStackFrame) {
-          Method method = descriptor.getMethod();
-          if (method != null) {
-            ((JavaStackFrame)topFrame).getDescriptor().putUserData(BreakpointIntentionAction.CALLER_KEY, DebuggerUtilsEx.methodKey(method));
-          }
-        }
-
-        List<XStackFrame> customFrames = myDebugProcess.getPositionManager().createStackFrames(descriptor);
-        if (!customFrames.isEmpty()) {
-          return customFrames;
-        }
-
-        return Collections.singletonList(new JavaStackFrame(descriptor, true));
-      });
   }
 
   @Nullable

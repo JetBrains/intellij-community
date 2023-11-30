@@ -30,14 +30,14 @@ enum class BookmarkType(val mnemonic: Char) {
 
   DEFAULT(0.toChar());
 
-  val icon by lazy { createIcon(IconSize.REGULAR) }
-  val gutterIcon by lazy { createIcon(IconSize.GUTTER) }
+  val icon: Icon by lazy { createIcon(IconSize.REGULAR) }
+  val gutterIcon: Icon by lazy { createIcon(IconSize.GUTTER) }
 
   private fun createIcon(size: IconSize): Icon = BookmarkIcon(mnemonic, size)
 
   companion object {
     @JvmStatic
-    fun get(mnemonic: Char) = values().firstOrNull { it.mnemonic == mnemonic } ?: DEFAULT
+    fun get(mnemonic: Char): BookmarkType = values().firstOrNull { it.mnemonic == mnemonic } ?: DEFAULT
   }
 }
 

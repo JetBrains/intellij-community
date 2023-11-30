@@ -10,16 +10,16 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorSplitterState
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorProviderManagerImpl
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
-import com.intellij.util.childScope
 import com.intellij.util.io.write
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path
@@ -91,7 +91,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     val map = ExpandMacroToPathMap()
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, testDataPath)
     map.substitute(rootElement, true, true)
-    runBlockingModal(project, "") {
+    runWithModalProgressBlocking(project, "") {
       manager!!.mainSplitters.restoreEditors(EditorSplitterState(rootElement))
     }
   }

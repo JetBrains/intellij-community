@@ -8,6 +8,8 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OpenMode
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutText
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable.ICON_FLAG_READ_STATUS
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.NaturalComparator
@@ -24,6 +26,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil.applySpeedSearchHighlighting
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
@@ -43,7 +46,7 @@ interface SwitcherListItem {
   val separatorAbove: Boolean get() = false
 
   fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode)
-  fun close(switcher: Switcher.SwitcherPanel) = Unit
+  fun close(switcher: Switcher.SwitcherPanel): Unit = Unit
 
   fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean)
   fun prepareExtraRenderer(component: SimpleColoredComponent, selected: Boolean) {
@@ -58,7 +61,7 @@ interface SwitcherListItem {
 
 
 internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : SwitcherListItem {
-  override val separatorAbove = true
+  override val separatorAbove: Boolean = true
   override val mainText: String
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> message("recent.locations.changed.locations")
@@ -90,9 +93,9 @@ internal class SwitcherToolWindow(val window: ToolWindow, shortcut: Boolean) : S
   private val actionId = ActivateToolWindowAction.getActionIdForToolWindow(window.id)
   override var mnemonic: String? = null
 
-  override val mainText = window.stripeTitle
-  override val statusText = message("recent.files.accessible.show.tool.window", mainText)
-  override val shortcutText = if (shortcut) shortcutText(actionId) else null
+  override val mainText: @NlsContexts.TabTitle String = window.stripeTitle
+  override val statusText: @Nls String = message("recent.files.accessible.show.tool.window", mainText)
+  override val shortcutText: @NlsSafe String? = if (shortcut) shortcutText(actionId) else null
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
     val manager = ToolWindowManager.getInstance(switcher.project) as? ToolWindowManagerImpl
@@ -128,13 +131,12 @@ class SwitcherVirtualFile(
   var backgroundColor: Color? = null
   var foregroundTextColor: Color? = null
 
-  val isProblemFile
+  val isProblemFile: Boolean
     get() = WolfTheProblemSolver.getInstance(project)?.isProblemFile(file) == true
 
   override var mainText: String = ""
 
-  override val statusText: String
-    get() = getLocationRelativeToUserHome((file.parent ?: file).presentableUrl)
+  override var statusText: String = ""
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
   }

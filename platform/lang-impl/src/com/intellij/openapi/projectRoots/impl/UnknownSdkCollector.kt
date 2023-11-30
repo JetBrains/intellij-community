@@ -68,7 +68,7 @@ data class UnknownSdkSnapshot(
     return this.sdkState == other.sdkState
   }
 
-  override fun hashCode() = Objects.hash(totallyUnknownSdks.size, resolvableSdks.size, sdkState)
+  override fun hashCode(): Int = Objects.hash(totallyUnknownSdks.size, resolvableSdks.size, sdkState)
 }
 
 private data class MissingSdkInfo(

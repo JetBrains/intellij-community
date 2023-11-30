@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
 import com.intellij.application.options.CodeStyle
@@ -27,6 +27,7 @@ import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.FileContentUtilCore
+import org.jetbrains.java.decompiler.main.CancellationManager
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
@@ -38,79 +39,66 @@ import java.util.concurrent.Callable
 import java.util.concurrent.Future
 import java.util.jar.Manifest
 
+const val IDEA_DECOMPILER_BANNER: String = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by FernFlower decompiler)\n//\n\n"
+
 class IdeaDecompiler : ClassFileDecompilers.Light() {
-  companion object {
-    const val BANNER: String = "//\n// Source code recreated from a .class file by IntelliJ IDEA\n// (powered by FernFlower decompiler)\n//\n\n"
-
-    private const val LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted"
-
-    private const val POSTPONE_EXIT_CODE = DialogWrapper.CANCEL_EXIT_CODE
-    private const val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
-
-    private val TASK_KEY: Key<Future<CharSequence>> = Key.create("java.decompiler.optimistic.task")
-
-    private fun getOptions(): Map<String, Any> {
-      val options = CodeStyle.getDefaultSettings().getIndentOptions(JavaFileType.INSTANCE)
-      val indent = StringUtil.repeat(" ", options.INDENT_SIZE)
-      return mapOf(
-        IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR to "0",
-        IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES to "1",
-        IFernflowerPreferences.REMOVE_SYNTHETIC to "1",
-        IFernflowerPreferences.REMOVE_BRIDGE to "1",
-        IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
-        IFernflowerPreferences.BANNER to BANNER,
-        IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
-        IFernflowerPreferences.INDENT_STRING to indent,
-        IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
-        IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
-        IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0")
-    }
-
-    private fun canWork(): Boolean =
-      ApplicationManager.getApplication().isUnitTestMode || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)
-  }
-
-  class LegalBurden : FileEditorManagerListener.Before {
-    private var myShowNotice = !canWork()
+  internal class LegalBurden : FileEditorManagerListener.Before {
+    private var showNotice: Boolean? = null
 
     override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
-      if (myShowNotice && file.fileType === JavaClassFileType.INSTANCE) {
-        val decompiler = ClassFileDecompilers.getInstance().find(file, ClassFileDecompilers.Light::class.java)
-        if (decompiler is IdeaDecompiler) {
-          TASK_KEY.set(file, ApplicationManager.getApplication().executeOnPooledThread(Callable { decompiler.decompile(file) }))
+      showNotice?.let {
+        if (!it) {
+          return
+        }
+      }
 
-          val title = IdeaDecompilerBundle.message("legal.notice.title", StringUtil.last(file.path, 40, true))
-          val message = IdeaDecompilerBundle.message("legal.notice.text")
-          val result = LegalNoticeDialog.build(title, message)
-            .withCancelText(IdeaDecompilerBundle.message("legal.notice.action.postpone"))
-            .withCustomAction(IdeaDecompilerBundle.message("legal.notice.action.reject"), DECLINE_EXIT_CODE)
-            .show()
-          when (result) {
-            DialogWrapper.OK_EXIT_CODE -> {
-              myShowNotice = false
-              PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, true)
-              ApplicationManager.getApplication().invokeLater { FileContentUtilCore.reparseFiles(file) }
-            }
+      // fileType is cached per file, it is a cheap call, so, check before PropertiesComponent
+      if (file.fileType !== JavaClassFileType.INSTANCE) {
+        return
+      }
 
-            DECLINE_EXIT_CODE -> {
-              myShowNotice = false
-              TASK_KEY.set(file, null)
+      if (PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)) {
+        showNotice = false
+        return
+      }
 
-              val id = PluginId.getId("org.jetbrains.java.decompiler")
-              PluginManagerCore.disablePlugin(id)
+      val decompiler = ClassFileDecompilers.getInstance().find(file, ClassFileDecompilers.Light::class.java)
+      if (decompiler !is IdeaDecompiler) {
+        return
+      }
 
-              val plugin = PluginManagerCore.getPlugin(id)
-              if (plugin is IdeaPluginDescriptorImpl && DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) {
-                ApplicationManager.getApplication().invokeLater {
-                  DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
-                }
-              }
-            }
+      TASK_KEY.set(file, ApplicationManager.getApplication().executeOnPooledThread(Callable { decompiler.decompile(file) }))
 
-            POSTPONE_EXIT_CODE -> {
-              TASK_KEY.set(file, null)
+      val title = IdeaDecompilerBundle.message("legal.notice.title", StringUtil.last(file.path, 40, true))
+      val message = IdeaDecompilerBundle.message("legal.notice.text")
+      val result = LegalNoticeDialog.build(title, message)
+        .withCancelText(IdeaDecompilerBundle.message("legal.notice.action.postpone"))
+        .withCustomAction(IdeaDecompilerBundle.message("legal.notice.action.reject"), DECLINE_EXIT_CODE)
+        .show()
+      when (result) {
+        DialogWrapper.OK_EXIT_CODE -> {
+          showNotice = false
+          PropertiesComponent.getInstance().setValue(LEGAL_NOTICE_KEY, true)
+          ApplicationManager.getApplication().invokeLater { FileContentUtilCore.reparseFiles(file) }
+        }
+
+        DECLINE_EXIT_CODE -> {
+          showNotice = false
+          TASK_KEY.set(file, null)
+
+          val id = PluginId.getId("org.jetbrains.java.decompiler")
+          PluginManagerCore.disablePlugin(id)
+
+          val plugin = PluginManagerCore.getPlugin(id)
+          if (plugin is IdeaPluginDescriptorImpl && DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) {
+            ApplicationManager.getApplication().invokeLater {
+              DynamicPlugins.unloadPlugin(plugin, DynamicPlugins.UnloadPluginOptions(save = false))
             }
           }
+        }
+
+        POSTPONE_EXIT_CODE -> {
+          TASK_KEY.set(file, null)
         }
       }
     }
@@ -121,9 +109,20 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   override fun accepts(file: VirtualFile): Boolean = true
 
-  override fun getText(file: VirtualFile): CharSequence =
-    if (canWork()) TASK_KEY.pop(file)?.get() ?: decompile(file)
-    else ClsFileImpl.decompile(file)
+  override fun getText(file: VirtualFile): CharSequence {
+    if (ApplicationManager.getApplication().isUnitTestMode || PropertiesComponent.getInstance().isValueSet(LEGAL_NOTICE_KEY)) {
+      val previous = TASK_KEY.pop(file)?.get()
+      if (previous != null) {
+        return previous
+      }
+      else {
+        return decompile(file)
+      }
+    }
+    else {
+      return ClsFileImpl.decompile(file)
+    }
+  }
 
   private fun decompile(file: VirtualFile): CharSequence {
     val indicator = ProgressManager.getInstance().progressIndicator
@@ -145,16 +144,28 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
       val provider = MyBytecodeProvider(files)
       val saver = MyResultSaver()
-      val decompiler = BaseDecompiler(provider, saver, options, myLogger.value)
-      files.forEach { decompiler.addSource(File(it.path)) }
-      decompiler.decompileContext()
 
-      val mapping = saver.myMapping
+      val maxSecProcessingMethod = options[IFernflowerPreferences.MAX_PROCESSING_METHOD]?.toString()?.toIntOrNull() ?: 0
+      val decompiler = BaseDecompiler(provider, saver, options, myLogger.value,
+                                      IdeaCancellationManager(maxSecProcessingMethod))
+      files.forEach { decompiler.addSource(File(it.path)) }
+      try {
+        decompiler.decompileContext()
+      }
+      catch (e: CancellationManager.CanceledException) {
+        val cause = e.cause
+        if (cause != null) {
+          throw cause
+        }
+        throw e
+      }
+
+      val mapping = saver.mapping
       if (mapping != null) {
         file.putUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY, LineNumbersMapping.ArrayBasedMapping(mapping))
       }
 
-      return saver.myResult
+      return saver.result
     }
     catch (e: ProcessCanceledException) {
       throw e
@@ -179,29 +190,29 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
   }
 
   private class MyResultSaver : IResultSaver {
-    var myResult = ""
-    var myMapping: IntArray? = null
+    var result = ""
+    var mapping: IntArray? = null
 
     override fun saveClassFile(path: String, qualifiedName: String, entryName: String, content: String, mapping: IntArray?) {
-      if (myResult.isEmpty()) {
-        myResult = content
-        myMapping = mapping
+      if (result.isEmpty()) {
+        result = content
+        this.mapping = mapping
       }
     }
 
-    override fun saveFolder(path: String) { }
+    override fun saveFolder(path: String) {}
 
-    override fun copyFile(source: String, path: String, entryName: String) { }
+    override fun copyFile(source: String, path: String, entryName: String) {}
 
-    override fun createArchive(path: String, archiveName: String, manifest: Manifest) { }
+    override fun createArchive(path: String, archiveName: String, manifest: Manifest) {}
 
-    override fun saveDirEntry(path: String, archiveName: String, entryName: String) { }
+    override fun saveDirEntry(path: String, archiveName: String, entryName: String) {}
 
-    override fun copyEntry(source: String, path: String, archiveName: String, entry: String) { }
+    override fun copyEntry(source: String, path: String, archiveName: String, entry: String) {}
 
-    override fun saveClassEntry(path: String, archiveName: String, qualifiedName: String, entryName: String, content: String) { }
+    override fun saveClassEntry(path: String, archiveName: String, qualifiedName: String, entryName: String, content: String) {}
 
-    override fun closeArchive(path: String, archiveName: String) { }
+    override fun closeArchive(path: String, archiveName: String) {}
   }
 
   private fun <T> Key<T>.pop(holder: UserDataHolder): T? {
@@ -209,4 +220,31 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
     if (value != null) set(holder, null)
     return value
   }
+}
+
+private const val LEGAL_NOTICE_KEY = "decompiler.legal.notice.accepted"
+
+private const val POSTPONE_EXIT_CODE = DialogWrapper.CANCEL_EXIT_CODE
+private const val DECLINE_EXIT_CODE = DialogWrapper.NEXT_USER_EXIT_CODE
+
+private val TASK_KEY: Key<Future<CharSequence>> = Key.create("java.decompiler.optimistic.task")
+
+private fun getOptions(): Map<String, Any> {
+  val options = CodeStyle.getDefaultSettings().getIndentOptions(JavaFileType.INSTANCE)
+  val indent = " ".repeat(options.INDENT_SIZE)
+  return mapOf(
+    IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR to "0",
+    IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES to "1",
+    IFernflowerPreferences.REMOVE_SYNTHETIC to "1",
+    IFernflowerPreferences.REMOVE_BRIDGE to "1",
+    IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
+    IFernflowerPreferences.BANNER to IDEA_DECOMPILER_BANNER,
+    IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
+    IFernflowerPreferences.INDENT_STRING to indent,
+    IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
+    IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
+    IFernflowerPreferences.CONVERT_PATTERN_SWITCH to "1",
+    IFernflowerPreferences.CONVERT_RECORD_PATTERN to "1",
+    //IFernflowerPreferences.UNIT_TEST_MODE to if (ApplicationManager.getApplication().isUnitTestMode) "1" else "0"
+  )
 }

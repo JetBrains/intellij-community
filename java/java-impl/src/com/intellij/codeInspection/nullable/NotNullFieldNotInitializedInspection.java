@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.Nullability;
@@ -13,10 +13,11 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +36,10 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox(IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit")),
-      checkbox(IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.setup")));
+      checkbox(IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"))
+        .description(HtmlChunk.raw(JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit.description"))),
+      checkbox(IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME, JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"))
+        .description(HtmlChunk.raw(JavaBundle.message("inspection.notnull.field.not.initialized.option.setup.description"))));
   }
 
   @NotNull
@@ -69,21 +72,23 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
 
         List<LocalQuickFix> fixes = new ArrayList<>();
         if (implicitWrite) {
-          fixes.add(new SetInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
-                                               IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME,
-                                               JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"), true));
+          fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+            NotNullFieldNotInitializedInspection.this,
+            IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME,
+            JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"), true)));
         }
         if (writtenInSetup) {
-          fixes.add(new SetInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
-                                               IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME,
-                                               JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"), true));
+          fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+            NotNullFieldNotInitializedInspection.this,
+            IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME,
+            JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"), true)));
         }
         if (ownAnnotation) {
           fixes.add(QuickFixFactory.getInstance().createDeleteFix(annotation, JavaBundle.message("quickfix.text.remove.not.null.annotation")));
         }
         if (isOnTheFly) {
-          fixes.add(new InitializeFinalFieldInConstructorFix(field));
-          fixes.add(new AddVariableInitializerFix(field));
+          fixes.add(LocalQuickFix.from(new InitializeFinalFieldInConstructorFix(field)));
+          fixes.add(LocalQuickFix.from(new AddVariableInitializerFix(field)));
         }
 
         reportProblem(holder, anchor, message, fixes);

@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
-import com.intellij.model.ModelBranchUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ContentIterator;
@@ -131,7 +130,6 @@ public class VfsUtilCore {
    */
   public static @Nullable @NlsSafe String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
     if (!file.getFileSystem().equals(ancestor.getFileSystem())) {
-      ModelBranchUtil.checkSameBranch(file, ancestor);
       return null;
     }
 
@@ -174,7 +172,6 @@ public class VfsUtilCore {
    */
   public static @Nullable String findRelativePath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     if (!src.getFileSystem().equals(dst.getFileSystem())) {
-      ModelBranchUtil.checkSameBranch(src, dst);
       return null;
     }
 
@@ -252,8 +249,17 @@ public class VfsUtilCore {
     return inputStreamSkippingBOM(stream, file);
   }
 
-  public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream, @SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) throws IOException {
-    return CharsetToolkit.inputStreamSkippingBOM(stream);
+  public static @NotNull InputStream inputStreamSkippingBOM(@NotNull InputStream stream, @NotNull VirtualFile file) throws IOException {
+    if (!stream.markSupported()) {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      stream = new BufferedInputStream(stream);
+    }
+    byte[] bom = CharsetToolkit.detectBOMFromStream(stream);
+    if (bom != null && file.getBOM() == null) {
+      // this method was called before com.intellij.openapi.fileEditor.impl.LoadTextUtil.detectCharsetAndSetBOM
+      file.setBOM(bom);
+    }
+    return stream;
   }
 
   public static @NotNull OutputStream outputStreamAddingBOM(@NotNull OutputStream stream, @NotNull VirtualFile file) throws IOException {
@@ -341,8 +347,7 @@ public class VfsUtilCore {
     }
   }
 
-  @NotNull
-  public static <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
+  public static @NotNull <E extends Exception> VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                                                   @NotNull VirtualFileVisitor<?> visitor,
                                                                                                   @NotNull Class<E> eClass) throws E {
     try {
@@ -379,20 +384,59 @@ public class VfsUtilCore {
     }
   }
 
+  /**
+   * @return a text loaded from the {@code file}. {@code file} encoding is taken into account. Line separators stays intact.
+   * @see com.intellij.openapi.fileEditor.impl.LoadTextUtil#loadText(VirtualFile)
+   */
   public static @NotNull String loadText(@NotNull VirtualFile file) throws IOException {
     return loadText(file, (int)file.getLength());
   }
 
+  /**
+   * @return first {@code length} characters of a text loaded from the {@code file}. {@code file} encoding is taken into account.
+   * Line separators stays intact.
+   * @see com.intellij.openapi.fileEditor.impl.LoadTextUtil#loadText(VirtualFile, int)
+   */
   public static @NotNull String loadText(@NotNull VirtualFile file, int length) throws IOException {
     try (InputStreamReader reader = new InputStreamReader(file.getInputStream(), file.getCharset())) {
       return new String(FileUtilRt.loadText(reader, length));
     }
   }
 
+  /**
+   * @return at most {@code FileUtilRt.LARGE_FILE_PREVIEW_SIZE} bytes from the file contents, including {@link VirtualFile#getBOM()}.
+   * Use it when you have reasons to believe the {@code file} can be very big, for instance, when it's some big log file to be loaded into editor.
+   * Otherwise, when you are sure the file cannot be very big (for instance, when it's a source file obtained from the corresponding {@link com.intellij.psi.PsiFile}),
+   * please prefer {@link VirtualFile#contentsToByteArray()} as more efficient.
+   */
   public static byte @NotNull [] loadBytes(@NotNull VirtualFile file) throws IOException {
     return FileUtilRt.isTooLarge(file.getLength()) ?
-           FileUtil.loadFirstAndClose(file.getInputStream(), FileUtilRt.LARGE_FILE_PREVIEW_SIZE) :
+           loadNBytes(file, FileUtilRt.LARGE_FILE_PREVIEW_SIZE) :
            file.contentsToByteArray();
+  }
+
+  /**
+   * @return at most {@code maxLength} bytes from the file contents, including {@link VirtualFile#getBOM()}.
+   * Use it when you have reasons to believe the {@code file} can be very big, for instance, when it's some big log file to be loaded into editor.
+   * Otherwise, when you are sure the file cannot be very big (for instance, when it's a source file obtained from the corresponding {@link com.intellij.psi.PsiFile}),
+   * please prefer {@link VirtualFile#contentsToByteArray()} as more efficient.
+   */
+  public static byte @NotNull [] loadNBytes(@NotNull VirtualFile virtualFile, int maxLength) throws IOException {
+    try (InputStream stream = virtualFile.getInputStream()) {
+      byte[] buffer = new byte[Math.min(maxLength, (int)virtualFile.getLength())];
+      byte[] bom = virtualFile.getBOM();
+      int o = 0;
+      if (bom != null) {
+        System.arraycopy(bom, 0, buffer, 0, bom.length);
+        o = bom.length;
+      }
+      int n;
+      int nread = o;
+      while ((n = stream.read(buffer, nread, buffer.length - nread)) > 0) {
+        nread += n;
+      }
+      return nread == buffer.length ? buffer : Arrays.copyOf(buffer, nread);
+    }
   }
 
   public static VirtualFile @NotNull [] toVirtualFileArray(@NotNull Collection<? extends VirtualFile> files) {
@@ -861,12 +905,10 @@ public class VfsUtilCore {
   private static final NotNullLazyValue<VirtualFileSetFactory> VIRTUAL_FILE_SET_FACTORY =
     NotNullLazyValue.lazy(VirtualFileSetFactory::getInstance);
 
-  @NotNull
-  public static VirtualFileSet createCompactVirtualFileSet() {
+  public static @NotNull VirtualFileSet createCompactVirtualFileSet() {
     return VIRTUAL_FILE_SET_FACTORY.getValue().createCompactVirtualFileSet();
   }
-  @NotNull
-  public static VirtualFileSet createCompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
+  public static @NotNull VirtualFileSet createCompactVirtualFileSet(@NotNull Collection<? extends VirtualFile> files) {
     return VIRTUAL_FILE_SET_FACTORY.getValue().createCompactVirtualFileSet(files);
   }
 }

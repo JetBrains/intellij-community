@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
@@ -33,8 +32,6 @@ import com.jetbrains.python.inspections.quickfix.AddIgnoredIdentifierQuickFix;
 import com.jetbrains.python.inspections.quickfix.GenerateBinaryStubsFix;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.packaging.PyRequirement;
-import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -96,10 +93,9 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
           final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
           if (module != null && sdk != null && PyPackageUtil.packageManagementEnabled(sdk, false, true)) {
             return StreamEx
-              .of(packageName)
-              .append(PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, Collections.emptyList()))
+              .of(packageName, PyPsiPackageUtil.PACKAGES_TOPLEVEL.getOrDefault(packageName, ""))
               .filter(PyPIPackageUtil.INSTANCE::isInPyPI)
-              .map(pkg -> getInstallPackageAction(pkg, module, sdk));
+              .map(pkg -> new PyPackageRequirementsInspection.InstallPackageQuickFix(pkg));
           }
         }
       }
@@ -128,12 +124,6 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
       return Collections.emptyList();
     }
 
-    private static LocalQuickFix getInstallPackageAction(String packageName, Module module, Sdk sdk) {
-      final List<PyRequirement> requirements = Collections.singletonList(PyRequirementsKt.pyRequirement(packageName));
-      final String name = PyBundle.message("python.unresolved.reference.inspection.install.package", packageName);
-      return new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements);
-    }
-
     @Override
     protected Iterable<LocalQuickFix> getAutoImportFixes(PyElement node, PsiReference reference, PsiElement element) {
       // look in other imported modules for this whole name
@@ -159,20 +149,15 @@ public class PyUnresolvedReferencesInspection extends PyUnresolvedReferencesInsp
         }
       }
       else {
-        final String refName = (node instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)node).getReferencedName() : node.getText();
-        if (refName == null) return result;
-        final QualifiedName qname = QualifiedName.fromDottedString(refName);
-        final List<String> components = qname.getComponents();
-        if (!components.isEmpty()) {
-          final String packageName = components.get(0);
-          final Module module = ModuleUtilCore.findModuleForPsiElement(node);
-          if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName) && PythonSdkUtil.findPythonSdk(module) != null) {
-            result.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageName, packageName, node));
+        String referencedName = node instanceof PyReferenceExpression refExpr && !refExpr.isQualified() ? refExpr.getReferencedName() : null;
+        if (referencedName != null && PythonSdkUtil.findPythonSdk(node) != null) {
+          if (PyPIPackageUtil.INSTANCE.isInPyPI(referencedName)) {
+            result.add(new PyPackageRequirementsInspection.InstallAndImportPackageQuickFix(referencedName, null));
           }
           else {
-            final String packageAlias = PyPackageAliasesProvider.commonImportAliases.get(packageName);
-            if (packageAlias != null && PyPIPackageUtil.INSTANCE.isInPyPI(packageName) && PythonSdkUtil.findPythonSdk(module) != null) {
-              result.add(new PyPackageRequirementsInspection.InstallAndImportQuickFix(packageAlias, packageName, node));
+            String realPackageName = PyPackageAliasesProvider.commonImportAliases.get(referencedName);
+            if (realPackageName != null && PyPIPackageUtil.INSTANCE.isInPyPI(realPackageName)) {
+              result.add(new PyPackageRequirementsInspection.InstallAndImportPackageQuickFix(realPackageName, referencedName));
             }
           }
         }

@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.util.Processor
 import com.intellij.util.SmartList
 import com.intellij.util.asSafely
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -128,6 +129,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
   }
 
   private fun handleRefreshedDocument() {
+    ThreadingAssertions.softAssertReadAccess()
     val factories = NotebookCellInlayController.Factory.EP_NAME.extensionList
     for (interval in notebookCellLines.intervals) {
       for (factory in factories) {
@@ -198,6 +200,7 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
   }
 
   private fun updateConsequentInlays(interestingRange: IntRange) {
+    ThreadingAssertions.softAssertReadAccess()
     editor.notebookCellEditorScrollingPositionKeeper?.saveSelectedCellPosition()
     val matchingIntervals = notebookCellLines.getMatchingCells(interestingRange)
     val fullInterestingRange =
@@ -362,8 +365,8 @@ class NotebookCellInlayManager private constructor(val editor: EditorImpl) {
     try {
       return factory.compute(editor, controllers, intervalIterator)
     }
-    catch (ex: Exception) {
-      thisLogger().error("NotebookCellInlayController.Factory shouldn't throw exceptions", ex)
+    catch (t: Throwable) {
+      thisLogger().error("${factory.javaClass.name} shouldn't throw exceptions at NotebookCellInlayController.Factory.compute(...)", t)
       return null
     }
   }

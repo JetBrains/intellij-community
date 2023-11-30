@@ -1,12 +1,10 @@
 <html>
 <body>
-Reports compile-time constant expressions and suggests replacing them with their
-  actual values. For example, you will be prompted to replace "2 + 2" with "4".
-
+Reports constant expressions, whose value can be evaluated statically, 
+  and suggests replacing them with their actual values.
+  For example, you will be prompted to replace <code>2 + 2</code> with <code>4</code>,
+  or <code>Math.sqrt(9.0)</code> with <code>3.0</code>.
 <!-- tooltip end -->
-<p>
-  Use the <b>Don't report when the expression contains references to defined constants</b> option to ignore the expressions which contain references to non-literal operands,
-  such as fields, and variables.
 <p><small>New in 2018.1</small></p>
 </body>
 </html>

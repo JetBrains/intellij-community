@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui
 
+import com.intellij.execution.actions.CreateAction
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.RunContentBuilder
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
@@ -113,6 +114,7 @@ open class XDebugSessionTabNewUI(
     }
     // Constrains are required as a workaround that puts these actions into the end anyway
     more.add(gear, Constraints(Anchor.BEFORE, ""))
+    more.add(CreateAction(), Constraints(Anchor.BEFORE, ""))
     toolbar.add(more, Constraints(Anchor.BEFORE, ""))
   }
 

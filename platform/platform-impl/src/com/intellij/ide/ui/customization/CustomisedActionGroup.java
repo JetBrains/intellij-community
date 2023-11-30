@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.*;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class CustomisedActionGroup extends ActionGroupWrapper {
+public final class CustomisedActionGroup extends ActionGroupWrapper {
   private AnAction[] myChildren;
   private final CustomActionsSchema mySchema;
   private final String myDefaultGroupName;
@@ -35,21 +35,22 @@ public class CustomisedActionGroup extends ActionGroupWrapper {
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
     ActionGroup delegate = getDelegate();
     int currentSchemaStamp = CustomActionsSchema.getInstance().getModificationStamp();
-    int currentGroupStamp = delegate instanceof DefaultActionGroup ? ((DefaultActionGroup)delegate).getModificationStamp() : -1;
+    int currentGroupStamp = !ActionUpdaterInterceptor.Companion.treatDefaultActionGroupAsDynamic() &&
+                            delegate instanceof DefaultActionGroup group ? group.getModificationStamp() : -1;
     if (mySchemeModificationStamp < currentSchemaStamp ||
         myGroupModificationStamp < currentGroupStamp ||
+        currentGroupStamp < 0 ||
         ArrayUtil.isEmpty(myChildren) ||
-        delegate instanceof DynamicActionGroup ||
-        !(delegate instanceof DefaultActionGroup)) {
-      myChildren = CustomizationUtil.getReordableChildren(delegate, mySchema, myDefaultGroupName, myRootGroupName, e);
+        delegate instanceof DynamicActionGroup) {
+      myChildren = CustomizationUtil.getReordableChildren(
+        delegate, super.getChildren(e), mySchema, myDefaultGroupName, myRootGroupName);
       mySchemeModificationStamp = currentSchemaStamp;
       myGroupModificationStamp = currentGroupStamp;
     }
     return myChildren;
   }
 
-  @Nullable
-  public AnAction getFirstAction() {
+  public @Nullable AnAction getFirstAction() {
     AnAction[] children = getChildren(null);
     return children.length > 0 ? children[0] : null;
   }

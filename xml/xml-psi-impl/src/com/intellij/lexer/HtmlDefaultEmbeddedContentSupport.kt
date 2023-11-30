@@ -18,10 +18,12 @@ class HtmlDefaultEmbeddedContentSupport : HtmlEmbeddedContentSupport {
 
 }
 
-class HtmlRawTextTagContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
+open class HtmlRawTextTagContentProvider(lexer: BaseHtmlLexer) : HtmlTagEmbeddedContentProvider(lexer) {
   override fun isInterestedInTag(tagName: CharSequence): Boolean =
-    namesEqual(tagName, HtmlUtil.TITLE_TAG_NAME)
-    || namesEqual(tagName, HtmlUtil.TEXTAREA_TAG_NAME)
+    (namesEqual(tagName, HtmlUtil.TITLE_TAG_NAME)
+     || namesEqual(tagName, HtmlUtil.TEXTAREA_TAG_NAME))
+    && !lexer.isPossiblyCustomTagName(tagName)
+
 
   override fun isInterestedInAttribute(attributeName: CharSequence): Boolean = false
   override fun createEmbedmentInfo(): HtmlEmbedmentInfo = HtmlEmbeddedContentProvider.RAW_TEXT_FORMATTABLE_EMBEDMENT

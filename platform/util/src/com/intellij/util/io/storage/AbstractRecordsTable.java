@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.storage;
 
-import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.io.CorruptedException;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.StorageLockContext;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -10,10 +10,8 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.text.MessageFormat;
 
 /**
  * Table of indirect addressing, logically contains tuples (id, address, size, capacity), do
@@ -24,7 +22,7 @@ import java.text.MessageFormat;
  * <br>
  * Thread safety is unclear: some methods are protected against concurrent access, some are not.
  */
-public abstract class AbstractRecordsTable implements Closeable, Forceable {
+public abstract class AbstractRecordsTable implements IRecordsTable {
   private static final Logger LOG = Logger.getInstance(AbstractRecordsTable.class);
 
   private static final int HEADER_MAGIC_OFFSET = 0;
@@ -51,17 +49,17 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
     myStorage = new PagedFileStorage(storageFilePath, context, getPageSize(), areDataAlignedToPage(), false);
     myStorage.lockWrite();
     try {
-      if (myStorage.length() == 0) {
-        myStorage.put(0, new byte[getHeaderSize()], 0, getHeaderSize());
-        markDirty();
-      }
-      else {
-        if (myStorage.getInt(HEADER_MAGIC_OFFSET) != getSafelyClosedMagic()) {
+    if (myStorage.length() == 0) {
+      myStorage.put(0, new byte[getHeaderSize()], 0, getHeaderSize());
+      markDirty();
+    }
+    else {
+      if (myStorage.getInt(HEADER_MAGIC_OFFSET) != getSafelyClosedMagic()) {
           myStorage.close();
           throw new IOException("Records table for '" + storageFilePath + "' haven't been closed correctly. Rebuild required.");
         }
+        }
       }
-    }
     finally {
       myStorage.unlockWrite();
     }
@@ -89,6 +87,7 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
 
   protected abstract byte[] getZeros();
 
+  @Override
   public int createNewRecord() throws IOException {
     markDirty();
     ensureFreeRecordsScanned();
@@ -117,15 +116,18 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
     }
   }
 
+  @Override
   public int getRecordsCount() throws IOException {
     int recordsLength = (int)myStorage.length() - getHeaderSize();
     if ((recordsLength % getRecordSize()) != 0) {
-      throw new IOException(MessageFormat.format("Corrupted records: storageLength={0} recordsLength={1} recordSize={2}",
-                                                 myStorage.length() + " " + myStorage, recordsLength, getRecordSize()));
+      throw new CorruptedException(
+        "Corrupted records: storageLength="+myStorage.length()+" recordsLength="+recordsLength+" recordSize="+getRecordSize()
+      );
     }
     return recordsLength / getRecordSize();
   }
 
+  @Override
   public RecordIdIterator createRecordIdIterator() throws IOException {
     return new RecordIdIterator() {
       private final int count = getRecordsCount();
@@ -150,6 +152,7 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
     };
   }
 
+  @Override
   @TestOnly
   public int getLiveRecordsCount() throws IOException {
     ensureFreeRecordsScanned();
@@ -176,28 +179,34 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
     myStorage.put(getOffset(record, 0), getZeros(), 0, getRecordSize());
   }
 
+  @Override
   public long getAddress(int record) throws IOException {
     return myStorage.getLong(getOffset(record, ADDRESS_OFFSET));
   }
 
+  @Override
   public void setAddress(int record, long address) throws IOException {
     markDirty();
     myStorage.putLong(getOffset(record, ADDRESS_OFFSET), address);
   }
 
+  @Override
   public int getSize(int record) throws IOException {
     return myStorage.getInt(getOffset(record, SIZE_OFFSET));
   }
 
+  @Override
   public void setSize(int record, int size) throws IOException {
     markDirty();
     myStorage.putInt(getOffset(record, SIZE_OFFSET), size);
   }
 
+  @Override
   public int getCapacity(int record) throws IOException {
     return myStorage.getInt(getOffset(record, CAPACITY_OFFSET));
   }
 
+  @Override
   public void setCapacity(int record, int capacity) throws IOException {
     markDirty();
     myStorage.putInt(getOffset(record, CAPACITY_OFFSET), capacity);
@@ -216,6 +225,7 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
     return offset;
   }
 
+  @Override
   public void deleteRecord(final int record) throws IOException {
     markDirty();
     ensureFreeRecordsScanned();
@@ -224,10 +234,12 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
     myFreeRecordsList.add(record);
   }
 
+  @Override
   public int getVersion() throws IOException {
     return myStorage.getInt(HEADER_VERSION_OFFSET);
   }
 
+  @Override
   public void setVersion(final int expectedVersion) throws IOException {
     markDirty();
     myStorage.putInt(HEADER_VERSION_OFFSET, expectedVersion);
@@ -250,6 +262,7 @@ public abstract class AbstractRecordsTable implements Closeable, Forceable {
     return myIsDirty || myStorage.isDirty();
   }
 
+  @Override
   public void markDirty() throws IOException {
     if (!myIsDirty) {
       myIsDirty = true;

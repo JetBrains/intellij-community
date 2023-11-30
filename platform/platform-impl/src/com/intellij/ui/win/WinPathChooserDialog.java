@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.win;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.jdkEx.JdkEx;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
@@ -30,7 +29,7 @@ import java.lang.ref.WeakReference;
 import java.util.List;
 
 
-public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialog {
+public final class WinPathChooserDialog implements PathChooserDialog, FileChooserDialog {
 
   private FileDialog myFileDialog;
   private final FileChooserDescriptor myFileChooserDescriptor;
@@ -90,7 +89,7 @@ public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialo
         directoryName = toSelect.getCanonicalPath();
       } else {
         directoryName = toSelect.getParent().getCanonicalPath();
-        fileName = toSelect.getPath();
+        fileName = toSelect.getName();
       }
       myFileDialog.setDirectory(directoryName);
       myFileDialog.setFile(fileName);
@@ -157,8 +156,7 @@ public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialo
     }
   }
 
-  @NotNull
-  private static FileDialog createFileDialogWithoutOwner(String title, int load) {
+  private static @NotNull FileDialog createFileDialogWithoutOwner(String title, int load) {
     // This is bad. But sometimes we do not have any windows at all.
     // On the other hand, it is a bit strange to show a file dialog without an owner
     // Therefore we should minimize usage of this case.

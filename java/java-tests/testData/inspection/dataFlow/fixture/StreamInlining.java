@@ -318,4 +318,10 @@ public class StreamInlining {
     list.stream().forEach(l -> count[0]++);
     System.out.println(count[0]);
   }
+  
+  void testFromArray(String[] data) {
+    if (data.length != 0) return;
+    long result = <warning descr="Result of 'Arrays.asList(data).stream().count()' is always '0'">Arrays.asList(data).stream().count()</warning>;
+    if (<warning descr="Condition 'result == 0' is always 'true'">result == 0</warning>) {}
+  }
 }

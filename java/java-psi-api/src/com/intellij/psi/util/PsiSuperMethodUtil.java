@@ -117,7 +117,7 @@ public final class PsiSuperMethodUtil {
     }
 
     final FileIndexFacade index = FileIndexFacade.getInstance(file.getProject());
-    if (!index.isInSource(vFile) && !index.isInLibrarySource(vFile) && !index.isInLibraryClasses(vFile)) {
+    if (!index.isInSource(vFile) && !index.isInLibrary(vFile)) {
       return psiClass;
     }
 

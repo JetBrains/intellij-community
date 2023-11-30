@@ -4,6 +4,8 @@ package org.jetbrains.plugins.gradle.service.project.data
 import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
@@ -20,6 +22,8 @@ import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId
@@ -123,25 +127,33 @@ fun lookForLocations(project: Project, lib: Library, libData: LibraryData): Pair
 fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<AnnotationsLocation>>,
                                project: Project, onResolveCompleted: () -> Unit = {}){
   val locationsToSkip = mutableSetOf<AnnotationsLocation>()
+  val storage = project.workspaceModel.currentSnapshot
+  val diff = MutableEntityStorage.from(storage)
   if (providedAnnotations.isNotEmpty()) {
     val total = providedAnnotations.map { it.value.size }.sum().toDouble()
     runBackgroundableTask(GradleBundle.message("gradle.tasks.annotations.title")) { indicator ->
       try {
-        indicator.isIndeterminate = false
         val resolvers = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
         var index = 0
         providedAnnotations.forEach { (lib, locations) ->
           indicator.text = GradleBundle.message("gradle.tasks.annotations.looking.for", lib.name)
           locations.forEach locations@ { location ->
             if (locationsToSkip.contains(location)) return@locations
-            if (!resolvers.fold(false) { acc, res -> acc || res.resolve(project, lib, location) } ) {
+            if (!resolvers.fold(false) { acc, res -> acc || res.resolve(project, lib, location, diff) } ) {
                locationsToSkip.add(location)
             }
             index++
+            indicator.isIndeterminate = false
             indicator.fraction = index / total
           }
         }
-      } finally {
+        if (diff.hasChanges()) {
+          runInEdt {
+            runWriteAction { project.workspaceModel.updateProjectModel("Applying resolved annotations") { it.addDiff(diff) } }
+          }
+        }
+      }
+      finally {
         onResolveCompleted()
       }
     }

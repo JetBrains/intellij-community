@@ -101,15 +101,15 @@ interface NewProjectWizardStep {
 
   companion object {
 
-    const val GIT_PROPERTY_NAME = "NewProjectWizard.gitState"
+    const val GIT_PROPERTY_NAME: String = "NewProjectWizard.gitState"
 
-    const val ADD_SAMPLE_CODE_PROPERTY_NAME = "NewProjectWizard.addSampleCodeState"
+    const val ADD_SAMPLE_CODE_PROPERTY_NAME: String = "NewProjectWizard.addSampleCodeState"
 
-    const val GROUP_ID_PROPERTY_NAME = "NewProjectWizard.groupIdState"
+    const val GROUP_ID_PROPERTY_NAME: String = "NewProjectWizard.groupIdState"
 
-    const val GENERATE_ONBOARDING_TIPS_NAME = "NewProjectWizard.generateOnboardingTips"
+    const val GENERATE_ONBOARDING_TIPS_NAME: String = "NewProjectWizard.generateOnboardingTips"
 
-    val MODIFIABLE_MODULE_MODEL_KEY = Key.create<ModifiableModuleModel>("MODIFIABLE_MODULE_MODEL_KEY")
+    val MODIFIABLE_MODULE_MODEL_KEY: Key<ModifiableModuleModel> = Key.create("MODIFIABLE_MODULE_MODEL_KEY")
 
   }
 }

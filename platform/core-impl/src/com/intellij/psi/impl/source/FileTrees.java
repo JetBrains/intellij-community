@@ -148,7 +148,7 @@ final class FileTrees {
   }
 
   static FileTrees noStub(@Nullable FileElement ast, @NotNull PsiFileImpl file) {
-    return new FileTrees(file, null, () -> ast, null);
+    return new FileTrees(file, null, ast == null ? null : () -> ast, null);
   }
 
   /**

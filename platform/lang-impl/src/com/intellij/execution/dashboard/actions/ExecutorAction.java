@@ -16,6 +16,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -73,6 +74,7 @@ public abstract class ExecutorAction extends DumbAwareAction {
       presentation.putClientProperty(RUNNABLE_LEAVES_KEY, runnableLeaves);
     }
     presentation.setEnabled(!runnableLeaves.isEmpty());
+    presentation.setVisible(targetNodes.isNotEmpty());
   }
 
   private boolean canRun(@NotNull RunDashboardRunConfigurationNode node) {
@@ -144,15 +146,17 @@ public abstract class ExecutorAction extends DumbAwareAction {
     if (runnableLeaves == null) return;
 
     for (RunDashboardRunConfigurationNode node : runnableLeaves) {
-      run(node.getConfigurationSettings(), null, node.getDescriptor());
+      run(node.getConfigurationSettings(), node.getDescriptor(), e.getDataContext());
     }
   }
 
-  private void run(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor) {
-    runSubProcess(settings, target, descriptor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, null));
+  private void run(RunnerAndConfigurationSettings settings, RunContentDescriptor descriptor, @NotNull DataContext context) {
+    runSubProcess(settings, null, descriptor, RunToolbarProcessData.prepareBaseSettingCustomization(settings, environment -> {
+      environment.setDataContext(context);
+    }));
   }
 
-  private void runSubProcess(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor, @Nullable Consumer<? super ExecutionEnvironment> envCustomization) {
+  private void runSubProcess(RunnerAndConfigurationSettings settings, ExecutionTarget target, RunContentDescriptor descriptor, @Nullable Consumer<ExecutionEnvironment> envCustomization) {
     RunConfiguration configuration = settings.getConfiguration();
     Project project = configuration.getProject();
     RunManager runManager = RunManager.getInstance(project);

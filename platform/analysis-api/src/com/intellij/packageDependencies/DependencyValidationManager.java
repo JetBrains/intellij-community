@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies;
 
 import com.intellij.openapi.project.Project;
@@ -11,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public abstract class DependencyValidationManager extends NamedScopesHolder {
-  @NotNull
-  public static DependencyValidationManager getInstance(@NotNull Project project) {
+  public static @NotNull DependencyValidationManager getInstance(@NotNull Project project) {
     return project.getService(DependencyValidationManager.class);
   }
 
@@ -22,8 +21,7 @@ public abstract class DependencyValidationManager extends NamedScopesHolder {
 
   public abstract boolean hasRules();
 
-  @Nullable
-  public abstract DependencyRule getViolatorDependencyRule(@NotNull PsiFile from, @NotNull PsiFile to);
+  public abstract @Nullable DependencyRule getViolatorDependencyRule(@NotNull PsiFile from, @NotNull PsiFile to);
 
   public abstract DependencyRule @NotNull [] getViolatorDependencyRules(@NotNull PsiFile from, @NotNull PsiFile to);
 
@@ -39,6 +37,5 @@ public abstract class DependencyValidationManager extends NamedScopesHolder {
 
   public abstract void setSkipImportStatements(boolean skip);
 
-  @NotNull
-  public abstract Map<String, PackageSet> getUnnamedScopes();
+  public abstract @NotNull Map<String, PackageSet> getUnnamedScopes();
 }

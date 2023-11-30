@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.COMPONENT_SCOPE_KEY
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ClientProperty
-import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import java.util.*
@@ -59,10 +59,11 @@ object ComponentListPanelFactory {
   fun <T : Any> createVertical(parentCs: CoroutineScope,
                                items: Flow<List<T>>,
                                itemKeyExtractor: ((T) -> Any),
+                               panelInitializer: JPanel.() -> Unit = {},
                                gap: Int = 0,
                                componentFactory: (CoroutineScope, T) -> JComponent): JPanel {
     val cs = parentCs.childScope(Dispatchers.Main)
-    val panel = VerticalListPanel(gap)
+    val panel = VerticalListPanel(gap).apply(panelInitializer)
     val keyList = LinkedList<Any>()
 
     suspend fun addComponent(idx: Int, key: Any, item: T) {
@@ -99,8 +100,15 @@ object ComponentListPanelFactory {
     }
 
     cs.launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+      var firstCollect = true
       items.collect { items ->
-        var revalidate = false
+        var revalidate = firstCollect
+        if (firstCollect) {
+          withContext(Dispatchers.Main.immediate) {
+            panel.removeAll()
+          }
+          firstCollect = false
+        }
         // remove missing
         val itemsByKey = items.associateBy(itemKeyExtractor)
         // remove missing

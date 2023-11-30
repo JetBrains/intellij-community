@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 @State(name = "Encoding", storages = @Storage("encodings.xml"))
 public final class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element>, Disposable {
   private static final @NonNls String PROJECT_URL = "PROJECT";
-  private final Project myProject;
+  private final @NotNull Project myProject;
   private final EncodingManagerImpl myIdeEncodingManager;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
@@ -176,15 +176,17 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   public @Nullable Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
     if (virtualFile != null) {
       for (FileEncodingProvider encodingProvider : FileEncodingProvider.EP_NAME.getIterable()) {
-        Charset encoding = encodingProvider.getEncoding(virtualFile);
+        Charset encoding = encodingProvider.getEncoding(virtualFile, myProject);
         if (encoding != null) return encoding;
       }
     }
-    VirtualFile parent = virtualFile;
-    while (parent != null) {
-      Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));
-      if (charset != null || !useParentDefaults) return charset;
-      parent = parent.getParent();
+    if (!myMapping.isEmpty()) {
+      VirtualFile parent = virtualFile;
+      while (parent != null) {
+        Charset charset = myMapping.get(new LightFilePointer(parent.getUrl()));
+        if (charset != null || !useParentDefaults) return charset;
+        parent = parent.getParent();
+      }
     }
 
     return getDefaultCharset();
@@ -229,7 +231,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
   private static void reload(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull FileDocumentManagerImpl documentManager) {
     ApplicationManager.getApplication().runWriteAction(() -> {
       try (AccessToken ignored = ProjectLocator.withPreferredProject(virtualFile, project)) {
-        documentManager.contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
+        documentManager.contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0));
       }
     });
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.google.gson.Gson;
@@ -14,9 +14,9 @@ import java.util.List;
 import java.util.Map;
 
 public final class LicensingFacade {
+  public String platformProductCode;
   public String licensedTo;
-  @NlsSafe
-  public String licenseeEmail;
+  public @NlsSafe String licenseeEmail;
   public List<String> restrictions;
   public boolean isEvaluation;
   public Date expirationDate;
@@ -24,28 +24,24 @@ public final class LicensingFacade {
   public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
   public String metadata;
+  public boolean ai_enabled;
   public static volatile boolean isUnusedSignalled;
 
-  public volatile static LicensingFacade INSTANCE;
+  public static volatile LicensingFacade INSTANCE;
 
-  @Nullable
-  public static LicensingFacade getInstance() {
+  public static @Nullable LicensingFacade getInstance() {
     return INSTANCE;
   }
 
-  @Nullable
-  public String getLicensedToMessage() {
+  public @Nullable String getLicensedToMessage() {
     return licensedTo;
   }
 
-  @NlsSafe
-  @Nullable
-  public String getLicenseeEmail() {
+  public @NlsSafe @Nullable String getLicenseeEmail() {
     return licenseeEmail;
   }
 
-  @NotNull
-  public List<String> getLicenseRestrictionsMessages() {
+  public @NotNull List<String> getLicenseRestrictionsMessages() {
     final List<String> result = restrictions;
     return result != null? result : Collections.emptyList();
   }
@@ -67,8 +63,7 @@ public final class LicensingFacade {
   /**
    * @return the first day when the IDE license becomes invalid
    */
-  @Nullable
-  public Date getLicenseExpirationDate() {
+  public @Nullable Date getLicenseExpirationDate() {
     return expirationDate;
   }
 
@@ -78,8 +73,7 @@ public final class LicensingFacade {
    * Normally the is the last day when the license is still valid.
    * null value is returned if expiration date is not applicable for the product, or the licence has net been obtained
    */
-  @Nullable
-  public Date getExpirationDate(String productCode) {
+  public @Nullable Date getExpirationDate(String productCode) {
     final Map<String, Date> result = expirationDates;
     return result != null? result.get(productCode) : null;
   }
@@ -105,8 +99,7 @@ public final class LicensingFacade {
    * @see <a href="https://plugins.jetbrains.com/docs/marketplace/add-marketplace-license-verification-calls-to-the-plugin-code.html">JetBrains Marketplace online documentation</a> for more information
    *  </pre>
    */
-  @Nullable
-  public String getConfirmationStamp(String productCode) {
+  public @Nullable String getConfirmationStamp(String productCode) {
     final Map<String, String> result = confirmationStamps;
     return result != null? result.get(productCode) : null;
   }
@@ -119,8 +112,7 @@ public final class LicensingFacade {
     return createGson().toJson(this);
   }
 
-  @Nullable
-  public static LicensingFacade fromJson(String json) {
+  public static @Nullable LicensingFacade fromJson(String json) {
     try {
       return createGson().fromJson(json, LicensingFacade.class);
     }

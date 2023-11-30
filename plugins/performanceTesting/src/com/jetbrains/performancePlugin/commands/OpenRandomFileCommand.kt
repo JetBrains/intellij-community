@@ -11,11 +11,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.future.asDeferred
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.NonNls
-import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 import javax.swing.Icon
+import kotlin.time.Duration.Companion.minutes
 
 class OpenRandomFileCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
 
@@ -43,35 +45,24 @@ class OpenRandomFileCommand(text: String, line: Int) : PlaybackCommandCoroutineA
       cache.put(fileExtension, allFiles)
     }
     val file = allFiles.random()
-    OpenFileCommand("${OpenFileCommand.PREFIX} ${file.path}", -1).execute(context).onError {
-      throw IllegalStateException("fail to open file $file", it)
-    }.blockingGet(1, TimeUnit.MINUTES)
-  }
-
-  private fun limitedFiles(files: Collection<VirtualFile>,
-                           percentOfFiles: Int,
-                           maxFilesPerPart: Int,
-                           minFileSize: Int): Collection<VirtualFile> {
-    val sortedBySize = files.filter { Files.size(it.toNioPath()) > minFileSize }.map {
-      it to Files.size(it.toNioPath())
-    }.sortedByDescending { it.second }
-    val numberOfFiles = minOf((sortedBySize.size * percentOfFiles) / 100, maxFilesPerPart)
-
-    val topFiles = sortedBySize.take(numberOfFiles).map { it.first }
-    val midFiles = sortedBySize.take(sortedBySize.size / 2 + numberOfFiles / 2).takeLast(numberOfFiles).map { it.first }
-    val lastFiles = sortedBySize.takeLast(numberOfFiles).map { it.first }
-
-    return LinkedHashSet(topFiles + midFiles + lastFiles)
+    withTimeout(1.minutes) {
+      OpenFileCommand("${OpenFileCommand.PREFIX} ${file.path}", -1).execute(context).exceptionally {
+        throw IllegalStateException("fail to open file $file", it)
+      }
+        .asDeferred()
+        .join()
+    }
   }
 
 }
 
-fun fileTypeOf(extension: String): FileType {
+internal fun fileTypeOf(extension: String): FileType {
   return object : FileType {
     override fun getName(): String {
       return when (extension) {
         "kt" -> "Kotlin"
         "java" -> "JAVA"
+        "scala" -> "Scala"
         else -> {
           "default"
         }

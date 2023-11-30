@@ -9,15 +9,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
-import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
+import org.jetbrains.kotlin.idea.core.util.AbstractFileGistService
 import org.jetbrains.kotlin.idea.core.util.readObject
 import org.jetbrains.kotlin.idea.core.util.writeObject
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper.FromCompilationConfiguration
-import java.io.DataInputStream
-import java.io.DataOutputStream
+import java.io.DataInput
+import java.io.DataOutput
 import java.io.Serializable
 import kotlin.io.path.exists
 import kotlin.io.path.pathString
@@ -105,19 +105,23 @@ internal class ScriptConfigurationSnapshotForFS(
     val configuration: ScriptCompilationConfiguration?
 ) : Serializable
 
-@Service
-internal class ScriptConfigurationSnapshotFile : AbstractFileAttributePropertyService<ScriptConfigurationSnapshotForFS>(
+@Service(Service.Level.PROJECT)
+internal class ScriptConfigurationSnapshotFile : AbstractFileGistService<ScriptConfigurationSnapshotForFS>(
     name = "kotlin-script-dependencies",
     version = 5,
-    read = DataInputStream::readObject,
-    write = DataOutputStream::writeObject
+    read = DataInput::readObject,
+    write = DataOutput::writeObject
 ) {
     companion object {
+        private const val UNSUPPORTED_FILE_EXT = ".gradle.kts"
+
         operator fun get(project: Project, file: VirtualFile): ScriptConfigurationSnapshotForFS? {
+            if (file.path.endsWith(UNSUPPORTED_FILE_EXT)) return null
             return project.service<ScriptConfigurationSnapshotFile>()[file]
         }
 
         operator fun set(project: Project, file: VirtualFile, newValue: ScriptConfigurationSnapshotForFS?) {
+            if (file.path.endsWith(UNSUPPORTED_FILE_EXT)) return
             project.service<ScriptConfigurationSnapshotFile>()[file] = newValue
         }
     }

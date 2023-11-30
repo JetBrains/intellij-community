@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -83,7 +85,7 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
     };
   }
 
-  private static class DeleteBlockMarkerCommentFix implements LocalQuickFix {
+  private static class DeleteBlockMarkerCommentFix extends PsiUpdateModCommandQuickFix {
     @NotNull
     @Override
     public String getFamilyName() {
@@ -91,8 +93,8 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-      descriptor.getPsiElement().delete();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      element.delete();
     }
   }
 }

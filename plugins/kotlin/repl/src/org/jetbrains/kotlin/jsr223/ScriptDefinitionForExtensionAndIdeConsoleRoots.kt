@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.jsr223
 
 import com.intellij.ide.extensionResources.ExtensionsRootType
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.script.IdeConsoleRootType
 import com.intellij.openapi.application.PathManager
@@ -14,7 +13,6 @@ import kotlin.io.path.nameWithoutExtension
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.jvm.dependenciesFromClassContext
-import kotlin.script.experimental.jvm.dependenciesFromClassloader
 import kotlin.script.experimental.jvm.jvm
 import kotlin.script.templates.standard.ScriptTemplateWithBindings
 
@@ -59,9 +57,10 @@ private object ScriptCompilationConfigurationForExtensionAndIdeConsoleRoots : Sc
                 kotlincLibraryName,
                 wholeClasspath = true
             )
-            PluginManagerCore.getPlugins().forEach {
-                dependenciesFromClassloader(classLoader = it.classLoader, wholeClasspath = true)
-            }
+            // todo commented out until we figure out why it is needed and how to implement it safely
+            //PluginManagerCore.plugins.forEach {
+            //    dependenciesFromClassloader(classLoader = it.classLoader, wholeClasspath = true)
+            //}
         }
         ide {
             acceptedLocations(ScriptAcceptedLocation.Everywhere)

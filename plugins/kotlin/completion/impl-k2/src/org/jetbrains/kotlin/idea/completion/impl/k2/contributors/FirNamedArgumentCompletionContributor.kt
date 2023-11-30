@@ -12,12 +12,13 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
+import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.parameterInfo.collectCallCandidates
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -25,13 +26,19 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompletionContext, priority: Int) :
-    FirCompletionContributorBase<FirNameReferencePositionContext>(basicContext, priority) {
+    FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(basicContext, priority) {
 
-    override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext, weighingContext: WeighingContext) {
+    context(KtAnalysisSession)
+    override fun complete(
+        positionContext: KotlinExpressionNameReferencePositionContext,
+        weighingContext: WeighingContext,
+        sessionParameters: FirCompletionSessionParameters,
+    ) {
         if (positionContext.explicitReceiver != null) return
 
         val valueArgument = findValueArgument(positionContext.nameExpression) ?: return
         val valueArgumentList = valueArgument.parent as? KtValueArgumentList ?: return
+        val currentArgumentIndex = valueArgumentList.arguments.indexOf(valueArgument)
         val callElement = valueArgumentList.parent as? KtCallElement ?: return
 
         if (valueArgument.getArgumentName() != null) return
@@ -41,7 +48,6 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
             .filter { it.partiallyAppliedSymbol.symbol.hasStableParameterNames }
 
         val namedArgumentInfos = buildList {
-            val currentArgumentIndex = valueArgumentList.arguments.indexOf(valueArgument)
             val (candidatesWithTypeMismatches, candidatesWithNoTypeMismatches) = candidates.partition {
                 CallParameterInfoProvider.hasTypeMismatchBeforeCurrent(callElement, it.argumentMapping, currentArgumentIndex)
             }
@@ -53,15 +59,18 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
             }
         }
 
-        for ((name, types) in namedArgumentInfos) {
+        for ((name, indexedTypes) in namedArgumentInfos) {
             val elements = buildList {
                 with(lookupElementFactory) {
-                    add(createNamedArgumentLookupElement(name, types))
-                    if (types.any { it.isBoolean }) {
+                    add(createNamedArgumentLookupElement(name, indexedTypes.map { it.value }))
+
+                    // suggest default values only for types from parameters with matching positions to not clutter completion
+                    val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }.map { it.value }
+                    if (typesAtCurrentPosition.any { it.isBoolean }) {
                         add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value))
                         add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value))
                     }
-                    if (types.any { it.isMarkedNullable }) {
+                    if (typesAtCurrentPosition.any { it.isMarkedNullable }) {
                         add(createNamedArgumentWithValueLookupElement(name, KtTokens.NULL_KEYWORD.value))
                     }
                 }
@@ -73,35 +82,37 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
     }
 
     /**
-     * @property types types of all parameter candidates that match [name]
+     * @property indexedTypes types of all parameter candidates that match [name] with indexes of their positions in signatures
      */
     private data class NamedArgumentInfo(
         val name: Name,
-        val types: List<KtType>
+        val indexedTypes: List<IndexedValue<KtType>>
     )
 
-    private fun KtAnalysisSession.collectNamedArgumentInfos(
+    context(KtAnalysisSession)
+    private fun collectNamedArgumentInfos(
         callElement: KtCallElement,
         candidates: List<KtFunctionCall<*>>,
         currentArgumentIndex: Int
     ): List<NamedArgumentInfo> {
         val argumentsBeforeCurrent = callElement.valueArgumentList?.arguments?.take(currentArgumentIndex) ?: return emptyList()
 
-        val nameToTypes = mutableMapOf<Name, MutableSet<KtType>>()
+        val nameToTypes = mutableMapOf<Name, MutableSet<IndexedValue<KtType>>>()
         for (candidate in candidates) {
-            val parameterCandidates = collectNotUsedParameterCandidates(callElement, candidate, argumentsBeforeCurrent)
-            parameterCandidates.forEach { parameter ->
-                nameToTypes.getOrPut(parameter.name) { HashSet() }.add(parameter.symbol.returnType)
+            val indexedParameterCandidates = collectNotUsedIndexedParameterCandidates(callElement, candidate, argumentsBeforeCurrent)
+            indexedParameterCandidates.forEach { (index, parameter) ->
+                nameToTypes.getOrPut(parameter.name) { HashSet() }.add(IndexedValue(index, parameter.symbol.returnType))
             }
         }
         return nameToTypes.map { (name, types) -> NamedArgumentInfo(name, types.toList()) }
     }
 
-    private fun KtAnalysisSession.collectNotUsedParameterCandidates(
+    context(KtAnalysisSession)
+    private fun collectNotUsedIndexedParameterCandidates(
         callElement: KtCallElement,
         candidate: KtFunctionCall<*>,
         argumentsBeforeCurrent: List<KtValueArgument>
-    ): List<KtVariableLikeSignature<KtValueParameterSymbol>> {
+    ): List<IndexedValue<KtVariableLikeSignature<KtValueParameterSymbol>>> {
         val signature = candidate.partiallyAppliedSymbol.signature
         val argumentMapping = candidate.argumentMapping
 
@@ -109,6 +120,6 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
         if (argumentsBeforeCurrent.any { it.getArgumentExpression() !in argumentToParameterIndex }) return emptyList()
 
         val alreadyPassedParameters = argumentsBeforeCurrent.mapNotNull { argumentMapping[it.getArgumentExpression()] }.toSet()
-        return signature.valueParameters.filterNot { it in alreadyPassedParameters }
+        return signature.valueParameters.withIndex().filterNot { (_, parameter) -> parameter in alreadyPassedParameters }
     }
 }

@@ -7,7 +7,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Holds environment variables configuration:
@@ -44,8 +47,7 @@ public final class EnvironmentVariablesData {
     return myEnvs;
   }
 
-  @Nullable
-  public String getEnvironmentFile() {
+  public @Nullable String getEnvironmentFile() {
     return myEnvironmentFile;
   }
 

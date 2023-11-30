@@ -284,7 +284,7 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return myElements;
   }
 
-  private static class RerunSafeDelete implements Runnable {
+  private static final class RerunSafeDelete implements Runnable {
     final SmartPsiElementPointer<?>[] myPointers;
     private final Project myProject;
     private final UsageView myUsageView;

@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.Range;
 import com.intellij.util.ThreeState;
@@ -139,14 +140,16 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       return Collections.emptyList();
     }
 
-    do {
-      final PsiElement parent = element.getParent();
-      if (parent == null || (parent.getTextOffset() < lineRange.getStartOffset())) {
-        break;
-      }
-      element = parent;
+    final PsiElement initial = element;
+    element = getTopmostParentAfterOffset(element, lineRange.getStartOffset());
+
+    final PsiElement statementParent = PsiTreeUtil.getParentOfType(initial, PsiStatement.class, false);
+    if (statementParent != null
+        && (body == null || body.getTextRange().contains(statementParent.getTextRange()))
+        // take only wider statements
+        && statementParent.getTextRange().contains(element.getTextRange())) {
+      element = statementParent;
     }
-    while (true);
 
     final List<SmartStepTarget> targets = new ArrayList<>();
 
@@ -165,6 +168,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       @Override
       public void visitAnonymousClass(@NotNull PsiAnonymousClass aClass) {
+        if (!matchLine(aClass)) return;
         PsiExpressionList argumentList = aClass.getArgumentList();
         if (argumentList != null) {
           argumentList.accept(this);
@@ -180,6 +184,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         myInsideLambda = true;
         super.visitLambdaExpression(expression);
         myInsideLambda = inLambda;
+        if (!matchLine(expression)) return;
         targets.add(0, new LambdaSmartStepTarget(expression,
                                                  getCurrentParamName(),
                                                  expression.getBody(),
@@ -191,7 +196,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       @Override
       public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
         PsiElement element = expression.resolve();
-        if (element instanceof PsiMethod) {
+        if (matchLine(expression) && element instanceof PsiMethod) {
           PsiElement navMethod = element.getNavigationElement();
           if (navMethod instanceof PsiMethod) {
             targets.add(0, new MethodSmartStepTarget(((PsiMethod)navMethod), null, expression, true, null));
@@ -267,12 +272,16 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       boolean checkTextRange(@NotNull PsiElement expression, boolean expand) {
         TextRange range = expression.getTextRange();
         if (lineRange.intersects(range)) {
-          if (expand) {
+          if (expand && matchLine(expression)) {
             textRange.set(textRange.get().union(range));
           }
           return true;
         }
         return false;
+      }
+
+      boolean matchLine(@NotNull PsiElement elem) {
+        return lineRange.getStartOffset() <= elem.getTextRange().getStartOffset();
       }
 
       @Override
@@ -286,10 +295,11 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           final PsiExpression[] expressions = expressionList.getExpressions();
           final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           for (int idx = 0; idx < expressions.length; idx++) {
+            final PsiExpression argExpression = expressions[idx];
+            if (!matchLine(argExpression)) continue;
             final String paramName =
               (idx < parameters.length && !parameters[idx].isVarArgs()) ? parameters[idx].getName() : "arg" + (idx + 1);
             myParamNameStack.push(methodName + ": " + paramName + ".");
-            final PsiExpression argExpression = expressions[idx];
             try {
               argExpression.accept(this);
             }
@@ -321,15 +331,16 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           myContextStack.push(psiMethod);
         }
         try {
-          if (psiMethod != null) {
+          PsiElement callExpression = expression instanceof PsiMethodCallExpression callExpr
+                                      ? callExpr.getMethodExpression().getReferenceNameElement()
+                                      : expression instanceof PsiNewExpression newExpr
+                                        ? newExpr.getClassOrAnonymousClassReference()
+                                        : expression;
+          if (psiMethod != null && (callExpression == null || matchLine(callExpression))) {
             MethodSmartStepTarget target = new MethodSmartStepTarget(
               psiMethod,
               null,
-              expression instanceof PsiMethodCallExpression callExpr
-                ? callExpr.getMethodExpression().getReferenceNameElement()
-                : expression instanceof PsiNewExpression newExpr
-                  ? newExpr.getClassOrAnonymousClassReference()
-                  : expression,
+              callExpression,
               myInsideLambda || (expression instanceof PsiNewExpression newExpr && newExpr.getAnonymousClass() != null),
               null
             );
@@ -537,6 +548,20 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     }
 
     return targets;
+  }
+
+  /**
+   * Find the topmost parent element whose range starts after the target offset.
+   */
+  private static PsiElement getTopmostParentAfterOffset(PsiElement element, int offset) {
+    if (element == null) return null;
+    while (true) {
+      final PsiElement parent = element.getParent();
+      if (parent == null || (parent.getTextRange().getStartOffset() < offset)) {
+        return element;
+      }
+      element = parent;
+    }
   }
 
   private static boolean isImmediateMethodCall(SmartStepTarget target) {

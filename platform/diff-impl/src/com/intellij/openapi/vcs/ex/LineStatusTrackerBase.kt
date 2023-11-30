@@ -20,6 +20,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.*
 
@@ -34,7 +36,6 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   protected val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
   protected val documentTracker: DocumentTracker
-  protected abstract val renderer: LineStatusMarkerRenderer
 
   final override var isReleased: Boolean = false
     private set
@@ -43,6 +44,8 @@ abstract class LineStatusTrackerBase<R : Range>(
     private set
 
   protected val blocks: List<Block> get() = documentTracker.blocks
+
+  protected val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
 
   init {
     documentTracker = DocumentTracker(vcsDocument, document, LOCK)
@@ -72,7 +75,7 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   @RequiresEdt
   protected open fun setBaseRevisionContent(vcsContent: CharSequence, beforeUnfreeze: (() -> Unit)?) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (isReleased) return
 
     documentTracker.doFrozen(Side.LEFT) {
@@ -91,7 +94,7 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   @RequiresEdt
   fun dropBaseRevision() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     if (isReleased || !isInitialized) return
 
     isInitialized = false
@@ -212,7 +215,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   protected fun updateHighlighters() {
-    renderer.scheduleUpdate()
+    listeners.multicaster.onRangesChanged()
   }
 
 
@@ -239,22 +242,24 @@ abstract class LineStatusTrackerBase<R : Range>(
   override fun rollbackChanges(range: Range) {
     val newRange = blockOperations.findBlock(range)
     if (newRange != null) {
-      runBulkRollback { it == newRange }
+      runBulkRollback { if (it == newRange) RangeExclusionState.Included else RangeExclusionState.Excluded }
     }
   }
 
   @RequiresEdt
   override fun rollbackChanges(lines: BitSet) {
-    runBulkRollback { it.isSelectedByLine(lines) }
+    runBulkRollback { if (it.isSelectedByLine(lines)) RangeExclusionState.Included else RangeExclusionState.Excluded }
   }
 
   @RequiresEdt
-  protected fun runBulkRollback(condition: (Block) -> Boolean) {
+  protected fun runBulkRollback(condition: (Block) -> RangeExclusionState) {
     if (!isValid()) return
 
     updateDocument(Side.RIGHT, DiffBundle.message("rollback.change.command.name")) {
-      documentTracker.partiallyApplyBlocks(Side.RIGHT, condition) { block, shift ->
-        fireLinesUnchanged(block.start + shift, block.start + shift + (block.vcsEnd - block.vcsStart))
+      documentTracker.partiallyApplyBlocks(Side.RIGHT, condition) { appliedRange, shift ->
+        val start = appliedRange.start2 + shift
+        val length = appliedRange.end1 - appliedRange.start1
+        fireLinesUnchanged(start, start + length)
       }
     }
   }
@@ -265,6 +270,15 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
   }
 
+  override fun addListener(listener: LineStatusTrackerListener) {
+    listeners.addListener(listener)
+  }
+
+  override fun removeListener(listener: LineStatusTrackerListener) {
+    listeners.removeListener(listener)
+  }
+
+  protected abstract val Block.ourData: DocumentTracker.BlockData
 
   companion object {
     @JvmStatic

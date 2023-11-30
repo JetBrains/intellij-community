@@ -125,10 +125,14 @@ public abstract class UsefulTestCase extends TestCase {
   private @Nullable List<Path> myPathsToKeep;
   private @Nullable Path myTempDir;
 
-  private static final CodeInsightSettings defaultSettings = new CodeInsightSettings();
+  private static CodeInsightSettings defaultSettings = new CodeInsightSettings();
 
   static {
     initializeTestEnvironment();
+  }
+
+  protected void setDefaultCodeInsightSettings(@NotNull CodeInsightSettings settings) {
+    defaultSettings = settings;
   }
 
   /**
@@ -292,7 +296,7 @@ public abstract class UsefulTestCase extends TestCase {
       () -> {
         if (isIconRequired()) {
           IconManager.Companion.deactivate();
-          IconLoader.clearCacheInTests();
+          IconLoader.INSTANCE.clearCacheInTests();
         }
       },
       () -> disposeRootDisposable(),
@@ -680,13 +684,22 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, T @NotNull ... expected) {
-    assertContainsElements(collection, Arrays.asList(expected));
+    assertContainsElements("", collection, expected);
+  }
+
+  @SafeVarargs
+  public static <T> void assertContainsElements(@NotNull String message, @NotNull Collection<? extends T> collection, T @NotNull ... expected) {
+    assertContainsElements(message, collection, Arrays.asList(expected));
   }
 
   public static <T> void assertContainsElements(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
+    assertContainsElements("", collection, expected);
+  }
+
+  public static <T> void assertContainsElements(@NotNull String message, @NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> expected) {
     List<T> copy = new ArrayList<>(collection);
     copy.retainAll(expected);
-    assertSameElements(toString(collection), copy, expected);
+    assertSameElements(messageForCollection(message, collection), copy, expected);
   }
 
   public static @NotNull String toString(Object @NotNull [] collection, @NotNull String separator) {
@@ -695,13 +708,27 @@ public abstract class UsefulTestCase extends TestCase {
 
   @SafeVarargs
   public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, T @NotNull ... notExpected) {
-    assertDoesntContain(collection, Arrays.asList(notExpected));
+    assertDoesntContain("", collection, notExpected);
   }
 
   public static <T> void assertDoesntContain(@NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
+    assertDoesntContain("", collection, notExpected);
+  }
+
+  @SafeVarargs
+  public static <T> void assertDoesntContain(@NotNull String message, @NotNull Collection<? extends T> collection, T @NotNull ... notExpected) {
+    assertDoesntContain(message, collection, Arrays.asList(notExpected));
+  }
+
+  public static <T> void assertDoesntContain(@NotNull String message, @NotNull Collection<? extends T> collection, @NotNull Collection<? extends T> notExpected) {
     List<T> expected = new ArrayList<>(collection);
     expected.removeAll(notExpected);
-    assertSameElements(collection, expected);
+    assertSameElements(messageForCollection(message, collection), collection, expected);
+  }
+
+  @NotNull
+  private static <T> String messageForCollection(@NotNull String message, @NotNull Collection<? extends T> collection) {
+    return (message.isBlank() ? "" : message + "\n") + toString(collection);
   }
 
   public static @NotNull String toString(@NotNull Collection<?> collection, @NotNull String separator) {
@@ -883,6 +910,10 @@ public abstract class UsefulTestCase extends TestCase {
 
   public static @NotNull String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
+  }
+
+  public final @NotNull String getQualifiedTestMethodName() {
+    return String.format("%s.%s", this.getClass().getName(), getName());
   }
 
   protected @NotNull String getTestDirectoryName() {

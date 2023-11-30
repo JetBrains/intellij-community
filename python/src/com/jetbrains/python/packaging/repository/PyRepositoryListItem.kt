@@ -87,7 +87,7 @@ class PyRepositoryListItem(val repository: PyPackageRepository) : NamedConfigura
           .bindText(urlProperty)
       }
       row(message("python.packaging.repository.form.authorization")) {
-        segmentedButton(PyPackageRepositoryAuthenticationType.values().toList(), PyPackageRepositoryAuthenticationType::text)
+        segmentedButton(PyPackageRepositoryAuthenticationType.values().toList()) { text = it.text }
           .bind(authorizationTypeProperty)
       }
       val row1 = row(message("python.packaging.repository.form.login")) {

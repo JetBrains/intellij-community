@@ -52,6 +52,7 @@ class MemoryDiskConflictResolver {
       LOG.info("  oldFileStamp:" + oldFileStamp);
       if (myConflicts.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.info("  document content:" + document.getText());
           myConflictAppeared = new Throwable();
         }
         ApplicationManager.getApplication().invokeLater(() -> processConflicts());

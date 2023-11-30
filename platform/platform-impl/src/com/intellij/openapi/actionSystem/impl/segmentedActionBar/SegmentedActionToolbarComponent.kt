@@ -21,17 +21,17 @@ open class SegmentedActionToolbarComponent(place: String,
                                            group: ActionGroup,
                                            private val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
-    internal const val CONTROL_BAR_PROPERTY = "CONTROL_BAR_PROPERTY"
-    internal const val CONTROL_BAR_FIRST = "CONTROL_BAR_PROPERTY_FIRST"
-    internal const val CONTROL_BAR_LAST = "CONTROL_BAR_PROPERTY_LAST"
-    internal const val CONTROL_BAR_MIDDLE = "CONTROL_BAR_PROPERTY_MIDDLE"
-    internal const val CONTROL_BAR_SINGLE = "CONTROL_BAR_PROPERTY_SINGLE"
+    internal const val CONTROL_BAR_PROPERTY: String = "CONTROL_BAR_PROPERTY"
+    internal const val CONTROL_BAR_FIRST: String = "CONTROL_BAR_PROPERTY_FIRST"
+    internal const val CONTROL_BAR_LAST: String = "CONTROL_BAR_PROPERTY_LAST"
+    internal const val CONTROL_BAR_MIDDLE: String = "CONTROL_BAR_PROPERTY_MIDDLE"
+    internal const val CONTROL_BAR_SINGLE: String = "CONTROL_BAR_PROPERTY_SINGLE"
 
-    const val RUN_TOOLBAR_COMPONENT_ACTION = "RUN_TOOLBAR_COMPONENT_ACTION"
+    const val RUN_TOOLBAR_COMPONENT_ACTION: String = "RUN_TOOLBAR_COMPONENT_ACTION"
 
     private val LOG = Logger.getInstance(SegmentedActionToolbarComponent::class.java)
 
-    val segmentedButtonLook = object : ActionButtonLook() {
+    val segmentedButtonLook: ActionButtonLook = object : ActionButtonLook() {
       override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
       }
 
@@ -159,7 +159,7 @@ open class SegmentedActionToolbarComponent(place: String,
     component.putClientProperty(CONTROL_BAR_PROPERTY, property)
   }
 
-  protected open fun logNeeded() = false
+  protected open fun logNeeded(): Boolean = false
 
   protected fun forceUpdate() {
     if (logNeeded()) LOG.info("RunToolbar MAIN SLOT forceUpdate")

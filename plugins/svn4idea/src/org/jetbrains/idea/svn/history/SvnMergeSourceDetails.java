@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ModalityState;
@@ -58,7 +58,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
   }
 
   public static void showMe(final Project project, final SvnFileRevision revision, final VirtualFile file) {
-    if (ModalityState.NON_MODAL.equals(ModalityState.current())) {
+    if (ModalityState.nonModal().equals(ModalityState.current())) {
     ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
     final ContentManager contentManager = toolWindow.getContentManager();
 
@@ -132,7 +132,7 @@ public final class SvnMergeSourceDetails extends MasterDetailsComponent {
       append(", " + formatPrettyDateTime(revision.getRevisionDate()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
-    private @Nls @NotNull String getTruncatedSuffix() {
+    private static @Nls @NotNull String getTruncatedSuffix() {
       return "(" + ELLIPSIS + ")";
     }
   }

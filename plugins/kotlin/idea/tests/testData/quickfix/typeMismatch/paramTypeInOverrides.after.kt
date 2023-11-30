@@ -13,3 +13,4 @@ class C : B() {
 fun test(b: B) {
     b.foo("")
 }
+/* IGNORE_K2 */

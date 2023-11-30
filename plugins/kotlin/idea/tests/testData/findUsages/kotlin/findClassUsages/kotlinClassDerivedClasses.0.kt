@@ -10,6 +10,8 @@ open class <caret>A: X {
 
 }
 
+typealias TA = A
+
 interface Y : X {
 
 }

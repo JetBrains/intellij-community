@@ -8,6 +8,8 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
@@ -74,9 +76,8 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
           int count = getAssignedComponentsCount(components, parameters, statements);
           if (count < statements.length) {
             for (int i = statements.length - count; i < statements.length; i++) {
-              holder.registerProblem(statements[i],
-                                     JavaBundle.message("inspection.redundant.record.constructor.statement.message"),
-                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new DeleteElementFix(statements[i]));
+              holder.problem(statements[i], JavaBundle.message("inspection.redundant.record.constructor.statement.message"))
+                .fix(new DeleteElementFix(statements[i])).register();
             }
             return;
           }
@@ -153,7 +154,7 @@ public class RedundantRecordConstructorInspection extends AbstractBaseJavaLocalI
     public abstract void simplify(@NotNull PsiMethod ctor);
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiMethod ctor = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
       if (ctor != null) {
         simplify(ctor);

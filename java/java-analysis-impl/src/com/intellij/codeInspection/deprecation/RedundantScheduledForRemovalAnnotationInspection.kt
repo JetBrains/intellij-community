@@ -1,9 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.RemoveAnnotationQuickFix
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.lang.jvm.annotation.JvmAnnotationConstantValue
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
@@ -44,9 +48,9 @@ class RedundantScheduledForRemovalAnnotationInspection : LocalInspectionTool() {
     }
   }
 
-  class ReplaceAnnotationByForRemovalAttributeFix : LocalQuickFix {
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-      val forRemovalAnnotation = descriptor.psiElement as? PsiAnnotation ?: return
+  class ReplaceAnnotationByForRemovalAttributeFix : PsiUpdateModCommandQuickFix() {
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+      val forRemovalAnnotation = element as? PsiAnnotation ?: return
       val deprecatedAnnotation = forRemovalAnnotation.owner?.findAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) ?: return
       val javaFile = forRemovalAnnotation.containingFile as? PsiJavaFile
       forRemovalAnnotation.delete()

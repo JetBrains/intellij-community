@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.indentation;
 
 import com.intellij.lang.ASTNode;
@@ -13,21 +13,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class IndentationParser implements PsiParser {
-  @NotNull
-  private final IElementType myEolTokenType;
-  @NotNull
-  private final IElementType myIndentTokenType;
-  @NotNull
-  private final IElementType myBlockElementType;
-  @NotNull
-  private final IElementType myDocumentType;
+  private final @NotNull IElementType myEolTokenType;
+  private final @NotNull IElementType myIndentTokenType;
+  private final @NotNull IElementType myBlockElementType;
+  private final @NotNull IElementType myDocumentType;
   private final List<? extends IElementType> myContainerTypes;
 
   public IndentationParser(
     @NotNull IElementType documentType,
-    @NotNull final IElementType blockElementType,
-    @NotNull final IElementType eolTokenType,
-    @NotNull final IElementType indentTokenType,
+    final @NotNull IElementType blockElementType,
+    final @NotNull IElementType eolTokenType,
+    final @NotNull IElementType indentTokenType,
     final List<? extends IElementType> containerTypes)
   {
     myDocumentType = documentType;
@@ -39,16 +35,15 @@ public abstract class IndentationParser implements PsiParser {
 
   public IndentationParser(
     @NotNull IElementType documentType,
-    @NotNull final IElementType blockElementType,
-    @NotNull final IElementType eolTokenType,
-    @NotNull final IElementType indentTokenType)
+    final @NotNull IElementType blockElementType,
+    final @NotNull IElementType eolTokenType,
+    final @NotNull IElementType indentTokenType)
   {
     this(documentType, blockElementType, eolTokenType, indentTokenType, null);
   }
 
   @Override
-  @NotNull
-  public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
+  public final @NotNull ASTNode parse(final IElementType root, final PsiBuilder builder) {
     final PsiBuilder.Marker fileMarker = builder.mark();
     final ArrayList<PsiBuilder.Marker> containerMarkers = new ArrayList<>();
     if (myContainerTypes != null) {
@@ -167,7 +162,7 @@ public abstract class IndentationParser implements PsiParser {
     builder.advanceLexer();
   }
 
-  private void passEOLsAndIndents(@NotNull final PsiBuilder builder) {
+  private void passEOLsAndIndents(final @NotNull PsiBuilder builder) {
     IElementType tokenType = builder.getTokenType();
     while (tokenType == myEolTokenType || tokenType == myIndentTokenType) {
       builder.advanceLexer();
@@ -177,10 +172,8 @@ public abstract class IndentationParser implements PsiParser {
 
   private static final class BlockInfo {
     private final int myIndent;
-    @NotNull
-    private final PsiBuilder.Marker myMarker;
-    @Nullable
-    private final IElementType myStartTokenType;
+    private final @NotNull PsiBuilder.Marker myMarker;
+    private final @Nullable IElementType myStartTokenType;
 
     private BlockInfo(final int indent, final @NotNull PsiBuilder.Marker marker, final @Nullable IElementType type) {
       myIndent = indent;
@@ -192,13 +185,11 @@ public abstract class IndentationParser implements PsiParser {
       return myIndent;
     }
 
-    @NotNull
-    public PsiBuilder.Marker getMarker() {
+    public @NotNull PsiBuilder.Marker getMarker() {
       return myMarker;
     }
 
-    @Nullable
-    public IElementType getStartTokenType() {
+    public @Nullable IElementType getStartTokenType() {
       return myStartTokenType;
     }
   }

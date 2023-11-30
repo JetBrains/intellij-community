@@ -1,5 +1,5 @@
 class UsedClassTypeParameter<T>(t: T) {
-    {
+    init {
         println(t)
     }
 }
@@ -33,6 +33,7 @@ class UsedClassTypeParameter4<T: AnotherClass> {
 }
 
 fun main(args: Array<String>) {
+    println(args)
     UsedClassTypeParameter("")
     UsedClassTypeParameter2<Int>().test()
     foo3(UsedClassTypeParameter3<Int>())

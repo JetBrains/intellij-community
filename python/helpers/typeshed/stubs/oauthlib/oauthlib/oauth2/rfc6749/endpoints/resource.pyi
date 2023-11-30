@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 from .base import BaseEndpoint as BaseEndpoint
@@ -13,6 +14,11 @@ class ResourceEndpoint(BaseEndpoint):
     @property
     def tokens(self): ...
     def verify_request(
-        self, uri, http_method: str = ..., body: Any | None = ..., headers: Any | None = ..., scopes: Any | None = ...
+        self,
+        uri,
+        http_method: str = "GET",
+        body: Incomplete | None = None,
+        headers: Incomplete | None = None,
+        scopes: Incomplete | None = None,
     ): ...
     def find_token_type(self, request): ...

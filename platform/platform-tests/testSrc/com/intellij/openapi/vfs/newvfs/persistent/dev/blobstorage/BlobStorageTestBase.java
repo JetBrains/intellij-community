@@ -13,10 +13,12 @@ import org.junit.rules.TemporaryFolder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.IntSupplier;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage.NULL_ID;
+import static com.intellij.util.io.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
@@ -113,7 +115,7 @@ public abstract class BlobStorageTestBase<S> {
 
   @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged() throws Exception {
-    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS, 2000);
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -132,7 +134,7 @@ public abstract class BlobStorageTestBase<S> {
 
   @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged_EvenAfterStorageReopened() throws Exception {
-    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS, 2000);
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -154,7 +156,7 @@ public abstract class BlobStorageTestBase<S> {
 
   @Test
   public void manyRecordsWritten_ReWrittenWithSmallerSize_CouldAllBeReadBackUnchanged() throws Exception {
-    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS, 2000);
 
     //write initial records
     for (int i = 0; i < recordsToWrite.length; i++) {
@@ -197,7 +199,7 @@ public abstract class BlobStorageTestBase<S> {
 
   @Test
   public void manyRecordsWritten_AndReWrittenWithLargerSize_AndCouldAllBeReadBackUnchanged() throws Exception {
-    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS, 2000);
 
     //write initial records
     for (int i = 0; i < recordsToWrite.length; i++) {
@@ -224,8 +226,8 @@ public abstract class BlobStorageTestBase<S> {
   }
 
   @Test
-  public void manyRecordsWritten_AndReWrittenWithLargerSize_AndCouldAllBeReadBackUnchanged_EventAfterStorageReopened() throws Exception {
-    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
+  public void manyRecordsWritten_AndReWrittenWithLargerSize_AndCouldAllBeReadBackUnchanged_EvenAfterStorageReopened() throws Exception {
+    final StorageRecord[] recordsToWrite = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS, 2000);
 
     //write initial records
     for (int i = 0; i < recordsToWrite.length; i++) {
@@ -260,20 +262,31 @@ public abstract class BlobStorageTestBase<S> {
   //TODO RC: test space reclamation (not implemented yet): add/delete records multiple time, check storage.size is not
   //         growing infinitely
 
-  protected static StorageRecord[] generateRecords(final int count) {
+  protected static StorageRecord[] generateRecords(int count,
+                                                   int maxSize) {
+    final ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    //exponential distribution with avg=30, cut off [0, maxSize]:
+    IntSupplier payloadSizeGenerator = () -> (int)Math.max(Math.min(rnd.nextExponential() * 30, maxSize), 0);
+    return generateRecords(count, payloadSizeGenerator);
+  }
+
+  protected static StorageRecord[] generateRecords(int count,
+                                                   @NotNull IntSupplier payloadSizeGenerator) {
     final ThreadLocalRandom rnd = ThreadLocalRandom.current();
     return Stream.generate(() -> {
-        final int payloadSize = (int)Math.max(Math.min(rnd.nextExponential() * 30, 2000), 0);
+        final int payloadSize = payloadSizeGenerator.getAsInt();
         return BlobStorageTestBase.randomString(rnd, payloadSize);
       })
       .limit(count)
       .map(StorageRecord::new)
       .toArray(StorageRecord[]::new);
   }
+  
+  
 
   @NotNull
-  public static String randomString(final ThreadLocalRandom rnd,
-                                       final int size) {
+  public static String randomString(final Random rnd,
+                                    final int size) {
     final char[] chars = new char[size];
     for (int i = 0; i < chars.length; i++) {
       chars[i] = Character.forDigit(rnd.nextInt(0, 36), 36);
@@ -315,15 +328,14 @@ public abstract class BlobStorageTestBase<S> {
       return test.readRecord(storage, recordId);
     }
 
-    @NotNull
-    public static StorageRecord recordWithRandomPayload(final int payloadSize) {
+    public static @NotNull StorageRecord recordWithRandomPayload(final int payloadSize) {
       return new StorageRecord(randomString(ThreadLocalRandom.current(), payloadSize));
     }
 
 
-    public static <S> StorageRecord readFromStorage(final BlobStorageTestBase<S> test,
-                                                    final S storage,
-                                                    final int recordId) throws Exception {
+    public static <S> @NotNull StorageRecord readFromStorage(final BlobStorageTestBase<S> test,
+                                                             final S storage,
+                                                             final int recordId) throws Exception {
       return new StorageRecord(recordId, "").readFromStorage(test, storage);
     }
 

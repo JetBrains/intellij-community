@@ -4,19 +4,37 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.timemachine
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.mapCases
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.DefinedState
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.bind
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.fmap
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.get
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.getOrNull
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.mapCases
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.DefinedState
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Companion.notDeleted
+import com.intellij.util.io.SimpleStringPersistentEnumerator
 
 interface VfsSnapshot {
   val point: () -> OperationLogStorage.Iterator
 
+  fun getNameByNameId(nameId: Int): DefinedState<String>
+  fun getAttributeValueEnumerator(): SimpleStringPersistentEnumerator
+  fun getContent(contentRecordId: Int): DefinedState<ByteArray>
+
   fun getFileById(fileId: Int): VirtualFileSnapshot
 
+  /**
+   * @return [State.NotAvailable] if recovery is not possible at all, [State.Ready] if an attempt to recover children ids was made,
+   * but be cautious that the result may be incomplete in any case: some children ids may get lost if log was truncated from the start.
+   * Keep in mind that a file is considered a child here if its record has its parentId field set to our fileId, so it will be
+   * considered a child even if the record is marked as deleted.
+   * @see [notDeleted]
+   */
+  fun getChildrenIdsOf(fileId: Int): DefinedState<RecoveredChildrenIds>
+
   interface VirtualFileSnapshot {
+    val vfsSnapshot: VfsSnapshot
     val fileId: Int
 
     val nameId: Property<Int>
@@ -25,29 +43,46 @@ interface VfsSnapshot {
     val timestamp: Property<Long>
     val flags: Property<@PersistentFS.Attributes Int>
     val contentRecordId: Property<Int>
+    /**
+     * Use this property only if you know for sure you need it. Consider using [readAttribute] instead.
+     * @see com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils.recoverFromPoint
+     */
     val attributesRecordId: Property<Int>
 
-    val name: Property<String>
-    val parent: Property<VirtualFileSnapshot?>
-
-    fun getContent(): DefinedState<ByteArray>
-    fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?>
-
-    /**
-     * @return [State.NotAvailable] if recovery is not possible at all, [State.Ready] if an attempt to recover children ids was made,
-     * but be cautious that the result may be incomplete in any case: some children ids may get lost if log was truncated from the start.
-     */
-    fun getRecoverableChildrenIds(): DefinedState<RecoveredChildrenIds>
-
-    interface RecoveredChildrenIds: List<Int> {
-      /**
-       * `false` in case there is no evidence that the list contains all children ids (some ids may get lost, but it cannot contain ids
-       * which are not actually children).
-       */
-      val isComplete: Boolean
+    fun getName(): DefinedState<String> = nameId.observeState().bind {
+      vfsSnapshot.getNameByNameId(it)
     }
 
-    abstract class Property<T> {
+    fun getParent(): DefinedState<VirtualFileSnapshot?> = parentId.observeState().fmap {
+      if (it == 0) null else vfsSnapshot.getFileById(it)
+    }
+
+    fun getContent(): DefinedState<ByteArray> = contentRecordId.observeState().bind {
+      if (it == 0) return@bind State.notEnoughInformation("VFS didn't cache content of file $fileId")
+      vfsSnapshot.getContent(it)
+    }
+
+    fun readAttribute(fileAttribute: FileAttribute): DefinedState<AttributeInputStream?>
+
+    companion object {
+      val VirtualFileSnapshot.isDeleted: DefinedState<Boolean> get() =
+        flags.observeState().fmap { PersistentFSRecordAccessor.hasDeletedFlag(it) }
+
+      fun <T: VirtualFileSnapshot> Collection<T>.notDeleted(keepIfNotAvailable: Boolean = false) =
+        filter { it.isDeleted.mapCases({ keepIfNotAvailable }) { !it } }
+    }
+
+    interface Property<out T> {
+      fun observeState(): DefinedState<T>
+
+      companion object {
+        fun <T> Property<T>.get(): T = observeState().get()
+        fun <T> Property<T>.getOrNull(): T? = observeState().getOrNull()
+      }
+    }
+
+    abstract class LazyProperty<out T>: Property<T> {
+      @Volatile
       var state: State = State.UnknownYet
         protected set
 
@@ -56,7 +91,7 @@ interface VfsSnapshot {
       override fun toString(): String = observeState().toString()
 
       @Suppress("UNCHECKED_CAST")
-      fun observeState(): DefinedState<T> =
+      override fun observeState(): DefinedState<T> =
         when (val s = state) {
           is DefinedState<*> -> s as DefinedState<T>
           is State.UnknownYet -> synchronized(this) {
@@ -69,81 +104,22 @@ interface VfsSnapshot {
           }
         }
 
-      inline fun <R> observe(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R): R =
+      inline fun <R> observe(onNotAvailable: (cause: NotAvailableException) -> R, onReady: (value: T) -> R): R =
         observeState().mapCases(onNotAvailable, onReady)
+    }
+  }
 
-      fun get(): T = observe(onNotAvailable = { throw IllegalStateException("property expected to be Ready", it.cause) }) { it }
-      fun getOrNull(): T? = observe(onNotAvailable = { null }) { it }
+  interface RecoveredChildrenIds: List<Int> {
+    /**
+     * `false` in case there is no evidence that the list contains all children ids (some ids may get lost, but it cannot contain ids
+     * which are not actually children).
+     */
+    val isComplete: Boolean
 
-      companion object {
-        fun <T, R> Property<T>.fmap(f: (T) -> R): Property<R> = DependentPropertyFmap(this, f)
-        fun <T, R> Property<T>.bind(f: (T) -> DefinedState<R>): Property<R> = DependentPropertyBind(this, f)
+    companion object {
+      private class RecoveredChildrenIdsImpl(val ids: List<Int>, override val isComplete: Boolean) : RecoveredChildrenIds, List<Int> by ids
 
-        private class DependentPropertyFmap<T, R>(private val original: Property<T>,
-                                                  private val transformValue: (T) -> R) : Property<R>() {
-          override fun compute(): DefinedState<R> {
-            return original.observeState().fmap(transformValue)
-          }
-        }
-
-        private class DependentPropertyBind<T, R>(private val original: Property<T>,
-                                                  private val transformValue: (T) -> DefinedState<R>) : Property<R>() {
-          override fun compute(): DefinedState<R> {
-            return original.observeState().bind(transformValue)
-          }
-        }
-      }
-
-      sealed interface State {
-        object UnknownYet : State
-
-        sealed interface DefinedState<out T> : State
-
-        /**
-         * Use [NotEnoughInformationCause] to designate a situation when there is not enough data to succeed the recovery
-         * (though the process went normal). Throw [VfsRecoveryException] if an exception occurs during the recovery process and it is
-         * considered not normal.
-         */
-        class NotAvailable(
-          val cause: NotEnoughInformationCause = UnspecifiedNotAvailableException
-        ) : DefinedState<Nothing> {
-          override fun toString(): String = "N/A ($cause)"
-        }
-
-        class Ready<T>(val value: T) : DefinedState<T> {
-          override fun toString(): String = value.toString()
-        }
-
-        companion object {
-          inline fun <T, R> DefinedState<T>.mapCases(onNotAvailable: (cause: Throwable) -> R, onReady: (value: T) -> R) = when (this) {
-            is Ready<T> -> onReady(value)
-            is NotAvailable -> onNotAvailable(cause)
-          }
-
-          inline fun <T, R> DefinedState<T>.fmap(f: (T) -> R): DefinedState<R> = when (this) {
-            is NotAvailable -> this
-            is Ready<T> -> Ready(f(value))
-          }
-
-          inline fun <T, R> DefinedState<T>.bind(f: (T) -> DefinedState<R>): DefinedState<R> = when (this) {
-            is NotAvailable -> this
-            is Ready<T> -> f(value)
-          }
-
-          inline fun <T> DefinedState<T>?.orIfNotAvailable(other: () -> DefinedState<T>): DefinedState<T> = when (this) {
-            is Ready -> this
-            is NotAvailable -> other()
-            null -> other()
-          }
-
-          sealed class GenericNotAvailableException(message: String? = null, cause: Throwable? = null) : Exception(message, cause)
-          open class NotEnoughInformationCause(message: String, cause: NotEnoughInformationCause? = null) : GenericNotAvailableException(message, cause) {
-            override fun toString(): String = localizedMessage
-          }
-          object UnspecifiedNotAvailableException : NotEnoughInformationCause("property value is not available") // TODO delete and fix usages
-          open class VfsRecoveryException(message: String? = null, cause: Throwable? = null) : GenericNotAvailableException(message, cause)
-        }
-      }
+      fun of(ids: List<Int>, isComplete: Boolean): RecoveredChildrenIds = RecoveredChildrenIdsImpl(ids, isComplete)
     }
   }
 }

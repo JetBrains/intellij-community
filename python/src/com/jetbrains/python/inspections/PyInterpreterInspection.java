@@ -29,17 +29,17 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonIdeLanguageCustomization;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -51,7 +51,6 @@ import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration;
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension;
 import com.jetbrains.python.ui.PyUiUtil;
 import kotlin.Pair;
-import kotlin.sequences.SequencesKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -334,7 +333,7 @@ public final class PyInterpreterInspection extends PyInspection {
        */
       @Override
       public void beforeChanged(@NotNull VersionedStorageChange event) {
-        for (EntityChange<ModuleEntity> change : SequencesKt.asIterable(event.getChanges(ModuleEntity.class))) {
+        for (EntityChange<ModuleEntity> change : event.getChanges(ModuleEntity.class)) {
           ModuleEntity entity = change.getOldEntity();
           if (entity != null) {
             var module = ModuleEntityUtils.findModule(entity, event.getStorageBefore());

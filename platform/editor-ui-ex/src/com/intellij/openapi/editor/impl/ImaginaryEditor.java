@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.MathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
   private final ImaginaryCaretModel myCaretModel;
   private final ImaginarySelectionModel mySelectionModel;
   private final Project myProject;
-  @NotNull private final Document myDocument;
+  private final @NotNull Document myDocument;
   private static final Logger LOG = Logger.getInstance(ImaginaryEditor.class);
 
   public ImaginaryEditor(@NotNull Project project, @NotNull Document document) {
@@ -44,21 +45,18 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     mySelectionModel = new ImaginarySelectionModel(this);
   }
 
-  @NotNull
   @Override
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
-  @NotNull
   @Override
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return myCaretModel;
   }
 
-  @NotNull
   @Override
-  public SelectionModel getSelectionModel() {
+  public @NotNull SelectionModel getSelectionModel() {
     return mySelectionModel;
   }
 
@@ -72,15 +70,13 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public JComponent getContentComponent() {
+  public @NotNull JComponent getContentComponent() {
     throw notImplemented();
   }
 
@@ -94,39 +90,33 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public MarkupModel getMarkupModel() {
+  public @NotNull MarkupModel getMarkupModel() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public FoldingModel getFoldingModel() {
+  public @NotNull FoldingModel getFoldingModel() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public ScrollingModel getScrollingModel() {
+  public @NotNull ScrollingModel getScrollingModel() {
     return new ImaginaryScrollingModel(this);
   }
 
-  @NotNull
   @Override
-  public SoftWrapModel getSoftWrapModel() {
+  public @NotNull SoftWrapModel getSoftWrapModel() {
     return new EmptySoftWrapModel();
   }
 
-  @NotNull
   @Override
-  public EditorSettings getSettings() {
+  public @NotNull EditorSettings getSettings() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public EditorColorsScheme getColorsScheme() {
+  public @NotNull EditorColorsScheme getColorsScheme() {
     throw notImplemented();
   }
 
@@ -135,9 +125,8 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public Point logicalPositionToXY(@NotNull LogicalPosition pos) {
+  public @NotNull Point logicalPositionToXY(@NotNull LogicalPosition pos) {
     throw notImplemented();
   }
 
@@ -146,63 +135,56 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
+  public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public Point visualPositionToXY(@NotNull VisualPosition visible) {
+  public @NotNull Point visualPositionToXY(@NotNull VisualPosition visible) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+  public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
+  public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public LogicalPosition offsetToLogicalPosition(int offset) {
-    throw notImplemented();
+  public @NotNull LogicalPosition offsetToLogicalPosition(int offset) {
+    int clamped = MathUtil.clamp(offset, 0, myDocument.getTextLength());
+    int line = myDocument.getLineNumber(clamped);
+    int col = clamped - myDocument.getLineStartOffset(line);
+    return new LogicalPosition(line, col);
   }
 
-  @NotNull
   @Override
-  public VisualPosition offsetToVisualPosition(int offset) {
+  public @NotNull VisualPosition offsetToVisualPosition(int offset) {
     return logicalToVisualPosition(offsetToLogicalPosition(offset));
   }
 
-  @NotNull
   @Override
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
+  public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
     return offsetToVisualPosition(offset);
   }
 
-  @NotNull
   @Override
-  public LogicalPosition xyToLogicalPosition(@NotNull Point p) {
+  public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public VisualPosition xyToVisualPosition(@NotNull Point p) {
+  public @NotNull VisualPosition xyToVisualPosition(@NotNull Point p) {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+  public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     throw notImplemented();
   }
 
@@ -231,9 +213,8 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     return false;
   }
 
-  @Nullable
   @Override
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
@@ -252,15 +233,13 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public EditorGutter getGutter() {
+  public @NotNull EditorGutter getGutter() {
     throw notImplemented();
   }
 
-  @Nullable
   @Override
-  public EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
+  public @Nullable EditorMouseEventArea getMouseEventArea(@NotNull MouseEvent e) {
     throw notImplemented();
   }
 
@@ -274,27 +253,23 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
     throw notImplemented();
   }
 
-  @Nullable
   @Override
-  public JComponent getHeaderComponent() {
+  public @Nullable JComponent getHeaderComponent() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public IndentsModel getIndentsModel() {
+  public @NotNull IndentsModel getIndentsModel() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public InlayModel getInlayModel() {
+  public @NotNull InlayModel getInlayModel() {
     throw notImplemented();
   }
 
-  @NotNull
   @Override
-  public EditorKind getEditorKind() {
+  public @NotNull EditorKind getEditorKind() {
     return EditorKind.UNTYPED;
   }
 }

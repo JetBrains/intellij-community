@@ -594,7 +594,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
                                      BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer) {
     Collection<PsiAnnotation> annotations =
       ReadAction.compute(
-        () -> JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(annotationFqn), project, GlobalSearchScope.allScope(project)));
+        () -> JavaAnnotationIndex.getInstance().getAnnotations(StringUtil.getShortName(annotationFqn), project, GlobalSearchScope.allScope(project)));
     annotations.forEach(annotation -> ReadAction.run(() -> {
       if (!annotation.isValid()) return;
       PsiElement parent = annotation.getContext();

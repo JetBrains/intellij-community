@@ -5,18 +5,19 @@ package org.jetbrains.uast.kotlin
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.uast.UBlockExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.getContainingUClass
+import org.jetbrains.uast.*
 
 @ApiStatus.Internal
 open class KotlinUBlockExpression(
     override val sourcePsi: KtBlockExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UBlockExpression, KotlinUElementWithType {
-    override val expressions by lz {
-        sourcePsi.statements.map { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it, this) }
-    }
+    private val expressionsPart = UastLazyPart<List<UExpression>>()
+
+    override val expressions: List<UExpression>
+        get() = expressionsPart.getOrBuild {
+            sourcePsi.statements.map { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(it, this) }
+        }
 
     override fun convertParent(): UElement? {
         val directParent = super.convertParent()

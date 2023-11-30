@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.util.Function;
@@ -43,17 +43,15 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     super.appendData(normalizePath(keyPath), normalizePaths(boundPaths));
   }
 
-  @Nullable
   @Override
-  public Collection<String> getState(@NotNull String keyPath) throws IOException {
+  public @Nullable Collection<String> getState(@NotNull String keyPath) throws IOException {
     Collection<String> collection = super.getState(normalizePath(keyPath));
     return collection != null ? ContainerUtil.map(collection, toFull()) : null;
   }
 
-  @NotNull
-  public Iterator<String> getStateIterator(@NotNull String keyPath) throws IOException {
+  public @NotNull Iterator<String> getStateIterator(@NotNull String keyPath) throws IOException {
     Collection<String> collection = super.getState(normalizePath(keyPath));
-    return collection == null? Collections.emptyIterator() : Iterators.map(collection.iterator(), toFull());
+    return collection == null ? Collections.emptyIterator() : Iterators.map(collection.iterator(), myRelativizer::toFull);
   }
 
   @Override
@@ -68,7 +66,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
 
   @Override
   public Iterator<String> getKeysIterator() throws IOException {
-    return Iterators.map(super.getKeysIterator(), toFull());
+    return Iterators.map(super.getKeysIterator(), myRelativizer::toFull);
   }
 
   public void removeData(@NotNull String keyPath, @NotNull String boundPath) throws IOException {
@@ -88,7 +86,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     }
   }
 
-  private static class PathCollectionExternalizer implements DataExternalizer<Collection<String>> {
+  private static final class PathCollectionExternalizer implements DataExternalizer<Collection<String>> {
     @Override
     public void save(@NotNull DataOutput out, Collection<String> value) throws IOException {
       for (String str : value) {
@@ -108,8 +106,7 @@ public final class OneToManyPathsMapping extends AbstractStateStorage<String, Co
     }
   }
 
-  @NotNull
-  private Function<String, String> toFull() {
+  private @NotNull Function<String, String> toFull() {
     return s -> myRelativizer.toFull(s);
   }
 

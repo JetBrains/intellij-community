@@ -18,7 +18,7 @@ internal abstract class CreateFieldActionBase(
   override val request: CreateFieldRequest
 ) : CreateMemberAction(target, request), JvmGroupIntentionAction {
 
-  override fun getRenderData() = JvmActionGroup.RenderData { request.fieldName }
+  override fun getRenderData(): JvmActionGroup.RenderData = JvmActionGroup.RenderData { request.fieldName }
 
   private fun fieldRenderer(project: Project) = JavaFieldRenderer(project, isConstant(), target, request)
 
@@ -35,7 +35,7 @@ internal abstract class CreateFieldActionBase(
     return IntentionPreviewInfo.DIFF
   }
 
-  internal open fun isConstant() = false
+  internal open fun isConstant(): Boolean = false
 
   override fun getFamilyName(): String = message("create.field.from.usage.family")
 }

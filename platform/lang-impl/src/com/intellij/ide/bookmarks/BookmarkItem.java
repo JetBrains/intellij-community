@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -23,7 +23,7 @@ import java.awt.*;
 /**
  * @author zajac
  */
-public class BookmarkItem extends ItemWrapper implements Comparable<BookmarkItem>{
+public final class BookmarkItem extends ItemWrapper implements Comparable<BookmarkItem>{
   private final Bookmark myBookmark;
 
   public BookmarkItem(Bookmark bookmark) {

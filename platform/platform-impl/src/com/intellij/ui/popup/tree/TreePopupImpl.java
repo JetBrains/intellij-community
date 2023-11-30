@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.tree;
 
 import com.intellij.icons.AllIcons;
@@ -204,7 +204,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     return (TreePopupStep<Object>)myStep;
   }
 
-  private class MyMouseMotionListener extends MouseMotionAdapter {
+  private final class MyMouseMotionListener extends MouseMotionAdapter {
     private Point myLastMouseLocation;
 
     /**
@@ -248,7 +248,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     return myWizardTree.getClosestPathForLocation(e.getPoint().x, e.getPoint().y);
   }
 
-  private class MyMouseListener extends MouseAdapter {
+  private final class MyMouseListener extends MouseAdapter {
 
     @Override
     public void mousePressed(MouseEvent e) {
@@ -339,7 +339,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     myChild.show(getContent(), point.x - STEP_X_PADDING, point.y, true);
   }
 
-  private class MyRenderer extends NodeRenderer {
+  private final class MyRenderer extends NodeRenderer {
 
     @Override
     public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
@@ -351,8 +351,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     }
 
     @Override
-    @NotNull
-    public Dimension getPreferredSize() {
+    public @NotNull Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
       if (ExperimentalUI.isNewUI()) {
         size.height = JBUI.CurrentTheme.Tree.rowHeight();
@@ -374,7 +373,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     return object;
   }
 
-  private class MyTree extends SimpleTree {
+  private final class MyTree extends SimpleTree {
     @Override
     public void processKeyEvent(KeyEvent e) {
       e.setSource(this);

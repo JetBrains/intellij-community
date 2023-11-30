@@ -465,6 +465,16 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/firstOrNull.kt");
             }
 
+            @TestMetadata("flatMapIndexedTo.kt")
+            public void testFlatMapIndexedTo() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/flatMapIndexedTo.kt");
+            }
+
+            @TestMetadata("flatMapTo.kt")
+            public void testFlatMapTo() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/flatMapTo.kt");
+            }
+
             @TestMetadata("fold.kt")
             public void testFold() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/fold.kt");
@@ -705,6 +715,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toList.kt");
             }
 
+            @TestMetadata("toList2.kt")
+            public void testToList2() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toList2.kt");
+            }
+
             @TestMetadata("toMutableList.kt")
             public void testToMutableList() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toMutableList.kt");
@@ -718,6 +733,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             @TestMetadata("toSet.kt")
             public void testToSet() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toSet.kt");
+            }
+
+            @TestMetadata("toSet2.kt")
+            public void testToSet2() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toSet2.kt");
             }
 
             @TestMetadata("toSortedSet.kt")
@@ -758,6 +778,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/endsWithGroupingBy.kt");
             }
 
+            @TestMetadata("flatMap.kt")
+            public void testFlatMap() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/flatMap.kt");
+            }
+
             @TestMetadata("flatten.kt")
             public void testFlatten() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/flatten.kt");
@@ -766,6 +791,26 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             @TestMetadata("flatten2.kt")
             public void testFlatten2() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/flatten2.kt");
+            }
+
+            @TestMetadata("groupBy.kt")
+            public void testGroupBy() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/groupBy.kt");
+            }
+
+            @TestMetadata("groupBy2.kt")
+            public void testGroupBy2() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/groupBy2.kt");
+            }
+
+            @TestMetadata("groupBy3.kt")
+            public void testGroupBy3() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/groupBy3.kt");
+            }
+
+            @TestMetadata("groupBy4.kt")
+            public void testGroupBy4() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/groupBy4.kt");
             }
 
             @TestMetadata("implicitReceiver.kt")
@@ -989,6 +1034,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
     public static class IntroduceWhenSubject extends AbstractFe10BindingLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ifElseBranches.kt")
+        public void testIfElseBranches() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/ifElseBranches.kt");
         }
 
         @TestMetadata("lineBreaksAndComments.kt")
@@ -1241,9 +1291,24 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/Comments2.kt");
         }
 
-        @TestMetadata("ComplexExpression.kt")
-        public void testComplexExpression() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexExpression.kt");
+        @TestMetadata("ComplexElvis.kt")
+        public void testComplexElvis() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexElvis.kt");
+        }
+
+        @TestMetadata("ComplexIf.kt")
+        public void testComplexIf() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexIf.kt");
+        }
+
+        @TestMetadata("ComplexMultiline.kt")
+        public void testComplexMultiline() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexMultiline.kt");
+        }
+
+        @TestMetadata("ComplexMultiline2.kt")
+        public void testComplexMultiline2() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexMultiline2.kt");
         }
 
         @TestMetadata("Continue.kt")
@@ -1264,21 +1329,6 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @TestMetadata("IfNotNull.kt")
         public void testIfNotNull() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/IfNotNull.kt");
-        }
-
-        @TestMetadata("ifStatementPriority.kt")
-        public void testIfStatementPriority() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/ifStatementPriority.kt");
-        }
-
-        @TestMetadata("InitializerWithElvis.kt")
-        public void testInitializerWithElvis() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/InitializerWithElvis.kt");
-        }
-
-        @TestMetadata("InitializerWithElvis2.kt")
-        public void testInitializerWithElvis2() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/InitializerWithElvis2.kt");
         }
 
         @TestMetadata("IsSameType.kt")
@@ -1309,11 +1359,6 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
         @TestMetadata("LongName2.kt")
         public void testLongName2() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/LongName2.kt");
-        }
-
-        @TestMetadata("MultiLineInitializer.kt")
-        public void testMultiLineInitializer() throws Exception {
-            runTest("../idea/tests/testData/inspectionsLocal/foldInitializerAndIfToElvis/MultiLineInitializer.kt");
         }
 
         @TestMetadata("MultiStatementBlock.kt")
@@ -1533,9 +1578,24 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/coroutineContext.kt");
         }
 
+        @TestMetadata("invokeOperator.kt")
+        public void testInvokeOperator() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/invokeOperator.kt");
+        }
+
         @TestMetadata("invokingByQualified.kt")
         public void testInvokingByQualified() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
+        }
+
+        @TestMetadata("lambdaCall.kt")
+        public void testLambdaCall() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/lambdaCall.kt");
+        }
+
+        @TestMetadata("nullableFunctionType.kt")
+        public void testNullableFunctionType() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/nullableFunctionType.kt");
         }
 
         @TestMetadata("override.kt")

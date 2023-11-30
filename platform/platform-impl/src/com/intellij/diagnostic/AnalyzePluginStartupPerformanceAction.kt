@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -57,7 +57,7 @@ private class PluginStartupCostDialog(private val project: Project) : DialogWrap
     val pluginCostMap = StartUpPerformanceService.getInstance().getPluginCostMap()
     val tableData = pluginCostMap.mapNotNull { (pluginId, costMap) ->
       if (!ApplicationManager.getApplication().isInternal &&
-          (ApplicationInfoEx.getInstanceEx()).isEssentialPlugin(pluginId)) {
+          (ApplicationInfo.getInstance()).isEssentialPlugin(pluginId)) {
         return@mapNotNull null
       }
 

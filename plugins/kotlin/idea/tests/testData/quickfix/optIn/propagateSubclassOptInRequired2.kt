@@ -1,7 +1,5 @@
 // "Propagate 'SubclassOptInRequired(A::class)' opt-in requirement to 'SomeImplementation'" "true"
-// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@B' or '@OptIn(B::class)'
-// WITH_STDLIB
 
 @RequiresOptIn
 annotation class A
@@ -16,3 +14,5 @@ interface LibraryA
 interface LibraryB
 
 interface SomeImplementation : LibraryA<caret>, LibraryB
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$PropagateOptInAnnotationFix

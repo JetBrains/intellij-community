@@ -6,29 +6,39 @@ import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.PriorityAction
-import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
 import com.intellij.codeInspection.SuppressableProblemGroup
 import com.intellij.codeInspection.ex.QuickFixWrapper
+import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.rt.execution.junit.FileComparisonFailure
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.*
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
 import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
+import org.jetbrains.kotlin.idea.statistic.FilterableTestStatisticsEventLoggerProvider
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
 import org.junit.ComparisonFailure
 import java.io.File
+import java.nio.file.Paths
 
 abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), QuickFixTest {
     companion object {
@@ -56,20 +66,111 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         }
     }
 
+    private var statisticDisposable: Disposable? = null
+    protected var statisticsEventLoggerProvider: FilterableTestStatisticsEventLoggerProvider? = null
+    private var actionHint: ActionHint? = null
+
+    override fun setUp() {
+        super.setUp()
+        val newDisposable = Disposer.newDisposable(testRootDisposable, "statisticTestDisposable")
+        statisticDisposable = newDisposable
+
+        val loggerProvider = FilterableTestStatisticsEventLoggerProvider("FUS") { it == "called" }
+        statisticsEventLoggerProvider = loggerProvider
+        StatisticsEventLoggerProvider.EP_NAME.point.registerExtension(
+            loggerProvider,
+            LoadingOrder.FIRST,
+            newDisposable
+        )
+    }
+
+    override fun tearDown() {
+        runAll(
+            {
+                actionHint = null
+                statisticDisposable?.let(Disposer::dispose)
+                statisticDisposable = null
+            },
+            { super.tearDown() },
+        )
+    }
+
+    protected open val disableTestDirective: String
+        get() = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+
+    override fun runInDispatchThread(): Boolean = false
+
     protected open fun doTest(beforeFileName: String) {
-        val beforeFileText = FileUtil.loadFile(File(beforeFileName))
+        val beforeFile = File(beforeFileName)
+        val beforeFileText = FileUtil.loadFile(beforeFile)
         InTextDirectivesUtils.checkIfMuted(beforeFileText)
         withCustomCompilerOptions(beforeFileText, project, module) {
-            val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
-            try {
-                myFixture.enableInspections(*inspections)
+            loadScriptConfiguration()
 
-                doKotlinQuickFixTest(beforeFileName)
-                checkForUnexpectedErrors()
-                PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
-            } finally {
-                myFixture.disableInspections(*inspections)
+            IgnoreTests.runTestIfNotDisabledByFileDirective(Paths.get(beforeFileName), disableTestDirective) {
+                val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
+
+                try {
+                    myFixture.enableInspections(*inspections)
+
+                    doKotlinQuickFixTest(beforeFileName)
+                    runInEdtAndWait { checkForUnexpectedErrors() }
+                } finally {
+                    myFixture.disableInspections(*inspections)
+                }
             }
+
+            // if `disableTestDirective` is present in the file and `runTestIfNotDisabledByFileDirective` doesn't throw an exception
+            // (meaning that the test indeed doesn't pass), don't run other checks
+            if (beforeFileText.lines().none { it.startsWith(disableTestDirective) }) {
+                runInEdtAndWait {
+                    checkFusEvents(beforeFile, beforeFileText)
+                    PsiTestUtil.checkPsiStructureWithCommit(file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
+                }
+            }
+        }
+    }
+
+    private fun checkFusEvents(file: File, fileText: String) {
+        val calledEventIds = statisticsEventLoggerProvider!!.getLoggedEvents()
+            .map { it.event }
+            .filter {
+                it.id == "called"
+            }
+            .map {
+                it.data["id"]
+            }
+        val applyQuickFix = applyQuickFix()
+        if (actionHint?.shouldPresent() == false || !applyQuickFix) {
+            assertTrue("no `called` event should happen: $calledEventIds", calledEventIds.isEmpty())
+            return
+        }
+        val calledId = calledEventIds.singleOrNull() as? String ?: error("single `called` event is expected: $calledEventIds")
+
+        val fusDirectiveName = if (isFirPlugin) {
+            "FUS_K2_QUICKFIX_NAME"
+        } else {
+            "FUS_QUICKFIX_NAME"
+        }
+
+        val quickFixName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $fusDirectiveName:")
+        if (quickFixName.isNullOrEmpty()) {
+            val expected = """
+                |$fileText
+                |// $fusDirectiveName: $calledId
+            """.trimMargin()
+            throw FileComparisonFailure(
+                "expected to find quickfix `called` id", fileText, expected, file.toString()
+            )
+        }
+
+        if (calledId != quickFixName) {
+            throw FileComparisonFailure(
+                "expected to find quickfix `called` id",
+                fileText,
+                fileText.replace("// $fusDirectiveName: $quickFixName", "// $fusDirectiveName: $calledId"),
+                file.toString()
+            )
         }
     }
 
@@ -93,6 +194,11 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     }
 
+    private fun loadScriptConfiguration() {
+        val file = myFixture.configureByFile(fileName())
+        ScriptConfigurationManager.getInstance(project).getConfiguration(file as KtFile)
+    }
+
     private fun getPathAccordingToPackage(name: String, text: String): String {
         val packagePath = text.lines().let { list -> list.find { it.trim().startsWith("package") } }
             ?.removePrefix("package")
@@ -102,132 +208,150 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     private fun doKotlinQuickFixTest(beforeFileName: String) {
         val testFile = File(beforeFileName)
-        CommandProcessor.getInstance().executeCommand(project, {
-            var fileText = ""
-            var expectedErrorMessage: String? = ""
-            var fixtureClasses = emptyList<String>()
-            try {
-                fileText = FileUtil.loadFile(testFile, CharsetToolkit.UTF8)
-                TestCase.assertTrue("\"<caret>\" is missing in file \"${testFile.path}\"", fileText.contains("<caret>"))
 
-                fixtureClasses = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $FIXTURE_CLASS_DIRECTIVE: ")
+        var fileText = ""
+        var expectedErrorMessage: String? = ""
+        var fixtureClasses = emptyList<String>()
+        try {
+            fileText = FileUtil.loadFile(testFile, CharsetToolkit.UTF8)
+            TestCase.assertTrue("\"<caret>\" is missing in file \"${testFile.path}\"", fileText.contains("<caret>"))
+
+            fixtureClasses = InTextDirectivesUtils.findListWithPrefixes(fileText, "// $FIXTURE_CLASS_DIRECTIVE: ")
+            runInEdtAndWait {
                 for (fixtureClass in fixtureClasses) {
                     TestFixtureExtension.loadFixture(fixtureClass, module)
                 }
+            }
 
-                expectedErrorMessage = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $SHOULD_FAIL_WITH_DIRECTIVE: ")
-                val contents = StringUtil.convertLineSeparators(fileText)
-                var fileName = testFile.canonicalFile.name
-                val putIntoPackageFolder =
-                    InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $FORCE_PACKAGE_FOLDER_DIRECTIVE") != null
-                if (putIntoPackageFolder) {
-                    fileName = getPathAccordingToPackage(fileName, contents)
-                    myFixture.addFileToProject(fileName, contents)
-                    myFixture.configureByFile(fileName)
-                } else {
-                    myFixture.configureByText(fileName, contents)
+            expectedErrorMessage = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $SHOULD_FAIL_WITH_DIRECTIVE: ")
+            val contents = StringUtil.convertLineSeparators(fileText)
+            var fileName = testFile.canonicalFile.name
+            val putIntoPackageFolder =
+                InTextDirectivesUtils.findStringWithPrefixes(fileText, "// $FORCE_PACKAGE_FOLDER_DIRECTIVE") != null
+            if (putIntoPackageFolder) {
+                fileName = getPathAccordingToPackage(fileName, contents)
+                myFixture.addFileToProject(fileName, contents)
+                myFixture.configureByFile(fileName)
+            } else {
+                myFixture.configureByText(fileName, contents)
+            }
+
+            runInEdtAndWait { checkForUnexpectedActions() }
+
+            configExtra(fileText)
+
+            val hint = ActionHint.parse(myFixture.file, contents.replace("\${file}", fileName, ignoreCase = true))
+            actionHint = hint
+            val intention = runInEdtAndGet { findActionWithText(hint.expectedText) }
+            if (hint.shouldPresent()) {
+                if (intention == null) {
+                    fail(
+                        "Action with text '" + hint.expectedText + "' not found\nAvailable actions:\n" +
+                                myFixture.availableIntentions.joinToString(separator = "\n") { "// \"${it.text}\" \"true\"" })
+                    return
                 }
 
-                checkForUnexpectedActions()
-
-                configExtra(fileText)
-
-                applyAction(contents, fileName)
-
-                val compilerArgumentsAfter = InTextDirectivesUtils.findStringWithPrefixes(fileText, "COMPILER_ARGUMENTS_AFTER: ")
-                if (compilerArgumentsAfter != null) {
-                    val facetSettings = KotlinFacet.get(module)!!.configuration.settings
-                    val compilerSettings = facetSettings.compilerSettings
-                    TestCase.assertEquals(compilerArgumentsAfter, compilerSettings?.additionalArguments)
+                runReadAction {
+                    if (intention.isAvailable(project, myFixture.editor, file)) {
+                        IntentionManagerSettings.getInstance().isShowLightBulb(intention)
+                    }
                 }
 
-                UsefulTestCase.assertEmpty(expectedErrorMessage)
-            } catch (e: FileComparisonFailure) {
+                runInEdtAndWait {
+                    CommandProcessor.getInstance().executeCommand(project, {
+                        applyAction(contents, hint, intention, fileName)
+                    }, "", "")
+                }
+            } else {
+                assertNull("Action with text ${hint.expectedText} is present, but should not", intention)
+            }
+
+            val compilerArgumentsAfter = InTextDirectivesUtils.findStringWithPrefixes(fileText, "COMPILER_ARGUMENTS_AFTER: ")
+            if (compilerArgumentsAfter != null) {
+                val facetSettings = KotlinFacet.get(module)!!.configuration.settings
+                val compilerSettings = facetSettings.compilerSettings
+                TestCase.assertEquals(compilerArgumentsAfter, compilerSettings?.additionalArguments)
+            }
+
+            UsefulTestCase.assertEmpty(expectedErrorMessage)
+        } catch (e: FileComparisonFailure) {
+            throw e
+        } catch (e: AssertionError) {
+            throw e
+        } catch (e: Throwable) {
+            if (expectedErrorMessage == null) {
                 throw e
-            } catch (e: AssertionError) {
-                throw e
-            } catch (e: Throwable) {
-                if (expectedErrorMessage == null) {
-                    throw e
-                } else {
-                    Assert.assertEquals("Wrong exception message", expectedErrorMessage, e.message)
-                }
-            } finally {
+            } else {
+                Assert.assertEquals("Wrong exception message", expectedErrorMessage, e.message)
+            }
+        } finally {
+            runInEdtAndWait {
                 for (fixtureClass in fixtureClasses) {
                     TestFixtureExtension.unloadFixture(fixtureClass)
                 }
                 ConfigLibraryUtil.unconfigureLibrariesByDirective(myFixture.module, fileText)
             }
-        }, "", "")
+        }
+
     }
 
-    private fun applyAction(contents: String, fileName: String) {
-        val actionHint = ActionHint.parse(myFixture.file, contents.replace("\${file}", fileName, ignoreCase = true))
-        val intention = findActionWithText(actionHint.expectedText)
-        if (actionHint.shouldPresent()) {
-            if (intention == null) {
-                fail(
-                    "Action with text '" + actionHint.expectedText + "' not found\nAvailable actions:\n" +
-                            myFixture.availableIntentions.joinToString(separator = "\n") { "// \"${it.text}\" \"true\"" })
-                return
-            }
-
-            val unwrappedIntention = unwrapIntention(intention)
-            if (shouldCheckIntentionActionType) {
+    private fun applyAction(contents: String, hint: ActionHint, intention: IntentionAction, fileName: String) {
+        val unwrappedIntention = unwrapIntention(intention)
+        if (shouldCheckIntentionActionType) {
+            if (intention.asModCommandAction() == null) {
                 assertInstanceOf(unwrappedIntention, QuickFixActionBase::class.java)
             }
-            val priorityName = InTextDirectivesUtils.findStringWithPrefixes(contents, "// $PRIORITY_DIRECTIVE: ")
-            if (priorityName != null) {
-                val expectedPriority = enumValueOf<PriorityAction.Priority>(priorityName)
-                val actualPriority = (unwrappedIntention as? PriorityAction)?.priority
-                assertTrue(
-                    "Expected action priority: $expectedPriority\nActual priority: $actualPriority",
-                    expectedPriority == actualPriority
-                )
-            }
-
-            val writeActionResolveHandler: () -> Unit = {
-                val intentionClassName = unwrappedIntention.javaClass.name
-                if (!quickFixesAllowedToResolveInWriteAction.isWriteActionAllowed(intentionClassName)) {
-                    throw ResolveInDispatchThreadException("Resolve is not allowed under the write action for `$intentionClassName`!")
-                }
-            }
-
-            val applyQuickFix = (InTextDirectivesUtils.findStringWithPrefixes(myFixture.file.text, "// $APPLY_QUICKFIX_DIRECTIVE: ")
-                ?: "true").toBoolean()
-            val stubComparisonFailure: ComparisonFailure?
-            if (applyQuickFix) {
-                stubComparisonFailure = try {
-                    forceCheckForResolveInDispatchThreadInTests(writeActionResolveHandler) {
-                        myFixture.launchAction(intention)
-                    }
-                    null
-                } catch (comparisonFailure: ComparisonFailure) {
-                    comparisonFailure
-                }
-
-                UIUtil.dispatchAllInvocationEvents()
-                UIUtil.dispatchAllInvocationEvents()
-
-                if (!shouldBeAvailableAfterExecution()) {
-                    var action = findActionWithText(actionHint.expectedText)
-                    action = if (action == null) null else IntentionActionDelegate.unwrap(action)
-                    assertNull(
-                        "Action '${actionHint.expectedText}' (${action?.javaClass}) is still available after its invocation in test " + fileName,
-                        action
-                    )
-                }
-            } else {
-                stubComparisonFailure = null
-            }
-
-            myFixture.checkResultByFile(getAfterFileName(fileName))
-
-            stubComparisonFailure?.let { throw it }
-        } else {
-            assertNull("Action with text ${actionHint.expectedText} is present, but should not", intention)
         }
+        val priorityName = InTextDirectivesUtils.findStringWithPrefixes(contents, "// $PRIORITY_DIRECTIVE: ")
+        if (priorityName != null) {
+            val expectedPriority = enumValueOf<PriorityAction.Priority>(priorityName)
+            val actualPriority = (unwrappedIntention as? PriorityAction)?.priority
+            assertTrue(
+                "Expected action priority: $expectedPriority\nActual priority: $actualPriority",
+                expectedPriority == actualPriority
+            )
+        }
+
+        val writeActionResolveHandler: () -> Unit = {
+            val intentionClassName = unwrappedIntention.javaClass.name
+            if (!quickFixesAllowedToResolveInWriteAction.isWriteActionAllowed(intentionClassName)) {
+                throw ResolveInDispatchThreadException("Resolve is not allowed under the write action for `$intentionClassName`!")
+            }
+        }
+
+        val applyQuickFix = applyQuickFix()
+        val stubComparisonFailure: ComparisonFailure?
+        if (applyQuickFix) {
+            val element = PsiUtilBase.getElementAtCaret(editor)
+            stubComparisonFailure = try {
+                forceCheckForResolveInDispatchThreadInTests(writeActionResolveHandler) {
+                    myFixture.launchAction(intention)
+                }
+                null
+            } catch (comparisonFailure: ComparisonFailure) {
+                comparisonFailure
+            }
+
+            UIUtil.dispatchAllInvocationEvents()
+            UIUtil.dispatchAllInvocationEvents()
+
+            if (!shouldBeAvailableAfterExecution()) {
+                var action = findActionWithText(hint.expectedText)
+                action = if (action == null) null else IntentionActionDelegate.unwrap(action)
+                if (action != null && !Comparing.equal(element, PsiUtilBase.getElementAtCaret(editor))) {
+                    fail("Action '${hint.expectedText}' (${action.javaClass}) is still available after its invocation in test " + fileName)
+                }
+            }
+        } else {
+            stubComparisonFailure = null
+        }
+
+        myFixture.checkResultByFile(getAfterFileName(fileName))
+
+        stubComparisonFailure?.let { throw it }
     }
+
+    private fun applyQuickFix() = InTextDirectivesUtils.getPrefixedBoolean(myFixture.file.text, "$APPLY_QUICKFIX_DIRECTIVE:") != false
 
     protected open fun getAfterFileName(beforeFileName: String): String {
         return File(beforeFileName).name + ".after"
@@ -249,8 +373,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         }
 
         myFixture.doHighlighting()
-        val intentions = ShowIntentionActionsHandler.calcIntentions(project, editor, file)
-        val cachedIntentions = CachedIntentions.create(project, file, editor, intentions)
+        val cachedIntentions = ShowIntentionActionsHandler.calcCachedIntentions(project, editor, file)
         cachedIntentions.wrapAndUpdateGutters()
         val actions = cachedIntentions.allActions.map { it.action }.toMutableList()
 
@@ -258,7 +381,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         if (actionHint.expectedText.startsWith(prefix)) {
             val className = actionHint.expectedText.substring(prefix.length)
             val aClass = Class.forName(className)
-            assert(IntentionAction::class.java.isAssignableFrom(aClass)) { "$className should be inheritor of IntentionAction" }
+            assert(IntentionAction::class.java.isAssignableFrom(aClass) || ModCommandAction::class.java.isAssignableFrom(aClass)) {
+                "$className should be inheritor of IntentionAction or ModCommandAction"
+            }
 
             val validActions = HashSet(InTextDirectivesUtils.findLinesWithPrefixesRemoved(text, DirectiveBasedActionUtils.ACTION_DIRECTIVE))
 

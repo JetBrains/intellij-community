@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.base.util.createComponentActionLabel
 import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
+import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.idea.versions.getLibraryRootsWithIncompatibleAbi
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -40,7 +41,7 @@ import javax.swing.JComponent
 // Code is partially copied from com.intellij.codeInsight.daemon.impl.SetupSDKNotificationProvider
 class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-        if (!Registry.`is`("unknown.sdk.show.editor.actions")) {
+        if (!Registry.`is`("kotlin.not.configured.show.notification")) {
             return null
         }
 
@@ -50,6 +51,11 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
         val psiFile = PsiManager.getInstance(project).findFile(file) as? KtFile ?: return null
         if (psiFile.language !== KotlinLanguage.INSTANCE) {
+            return null
+        }
+
+        // No notification while auto-configuration is checking/running
+        if (!KotlinProjectConfigurationService.getInstance(project).shouldShowNotConfiguredDialog()) {
             return null
         }
 
@@ -96,6 +102,8 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
 
         private fun createKotlinNotConfiguredPanel(module: Module, configurators: List<KotlinProjectConfigurator>): Function<in FileEditor, out JComponent?> =
             Function { fileEditor: FileEditor ->
+                KotlinJ2KOnboardingFUSCollector.logShowConfigureKtPanel(module.project)
+
                 EditorNotificationPanel(fileEditor, EditorNotificationPanel.Status.Warning).apply {
                 text = KotlinProjectConfigurationBundle.message("kotlin.not.configured")
                 if (configurators.isNotEmpty()) {
@@ -108,6 +116,7 @@ class KotlinSetupEnvironmentNotificationProvider : EditorNotificationProvider {
                             val configuratorsPopup = createConfiguratorsPopup(project, configurators)
                             configuratorsPopup.showUnderneathOf(label)
                         }
+                        KotlinJ2KOnboardingFUSCollector.logClickConfigureKtNotification(project)
                     }
 
                     createComponentActionLabel(KotlinProjectConfigurationBundle.message("action.text.ignore")) {

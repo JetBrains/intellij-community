@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnitMixedFrameworkInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTestBase() {
   fun `test no highlighting`() {
@@ -139,15 +139,15 @@ class KotlinJUnitMixedFrameworkInspectionTest : JUnitMixedFrameworkInspectionTes
     """.trimIndent(), """
       import org.junit.jupiter.api.Test
       
-      public class MyTest {
+      class MyTest {
         @Test
-        public fun testFoo() { }
+        fun testFoo() { }
         
         @org.junit.jupiter.api.Test
-        public fun testBar() { }
+        fun testBar() { }
         
         @org.junit.jupiter.api.Test
-        public fun testFooBar() { }
+        fun testFooBar() { }
       }
     """.trimIndent(), fileName = "MyTest", hint = "Migrate to JUnit 5")
   }

@@ -2,14 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
 
-@Internal
-fun interface SettingsChangeListener : EventListener {
-
-  fun settingChanged(event: SyncSettingsEvent)
-
-}
 
 @Internal
 sealed class SyncSettingsEvent {
@@ -24,7 +17,8 @@ sealed class SyncSettingsEvent {
   sealed class ExclusiveEvent : SyncSettingsEvent()
 
   class IdeChange(snapshot: SettingsSnapshot) : EventWithSnapshot(snapshot)
-  class CloudChange(snapshot: SettingsSnapshot, val serverVersionId: String?) : EventWithSnapshot(snapshot)
+  class CloudChange(snapshot: SettingsSnapshot, val serverVersionId: String?, val syncSettings: SettingsSyncState? = null)
+    : EventWithSnapshot(snapshot)
   object MustPushRequest : StandardEvent()
   object LogCurrentSettings : StandardEvent()
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.RecentProjectListActionProvider;
@@ -29,7 +29,7 @@ import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.Re
 /**
  * @see RecentProjectsGroup
  */
-class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
+final class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
   LightEditRecentFileActionGroup() {
     super(ApplicationBundle.messagePointer("light.edit.action.recentFile.text"), true);
   }
@@ -53,8 +53,7 @@ class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, A
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  @NotNull
-  private static List<VirtualFile> getRecentFiles(@NotNull Project project) {
+  private static @NotNull List<VirtualFile> getRecentFiles(@NotNull Project project) {
     List<VirtualFile> historyFiles = EditorHistoryManager.getInstance(project).getFileList();
     LinkedHashSet<VirtualFile> result = new LinkedHashSet<>(historyFiles);
     Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()).forEach(result::remove);

@@ -2,7 +2,10 @@
 package org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.gradle
 
 
+import com.intellij.ide.starters.local.StandardAssetsProvider
+import com.intellij.ide.starters.local.generator.AssetsProcessor
 import kotlinx.collections.immutable.toPersistentList
+import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.*
 import org.jetbrains.kotlin.tools.projectWizard.core.entity.PipelineTask
@@ -32,7 +35,6 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
         override val pluginPath = "buildSystem.gradle"
 
         val gradleProperties by listProperty(
-
             "kotlin.code.style" to "official"
         )
 
@@ -86,6 +88,10 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
 
         private val isGradle = checker { buildSystemType.isGradle }
 
+        private val isGradleWrapper = checker {
+            buildSystemType.isGradle && gradleHome.settingValue == ""
+        }
+
         val gradleVersion by valueSetting(
             "<GRADLE_VERSION>",
             GenerationPhase.PROJECT_GENERATION,
@@ -94,9 +100,16 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
             defaultValue = value(Versions.GRADLE)
         }
 
+        val gradleHome by stringSetting(
+            "<GRADLE_HOME>",
+            GenerationPhase.PROJECT_GENERATION,
+        ) {
+            defaultValue = value("")
+        }
+
         val initGradleWrapperTask by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runBefore(TemplatesPlugin.renderFileTemplates)
-            isAvailable = isGradle
+            isAvailable = isGradleWrapper
             withAction {
                 TemplatesPlugin.addFileTemplate.execute(
                     FileTemplate(
@@ -109,6 +122,13 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
                             "version" to gradleVersion.settingValue
                         )
                     )
+                ).andThen(
+                    // This is here temporarily until the Kotlin Multiplatform wizard has been removed
+                    compute {
+                        val assets = StandardAssetsProvider().getGradlewAssets() + StandardAssetsProvider().getGradleIgnoreAssets()
+                        AssetsProcessor.getInstance().generateSources(projectPath, assets, emptyMap())
+                        Unit
+                    }
                 )
             }
         }
@@ -151,7 +171,6 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
             }
         }
 
-
         val createSettingsFileTask by pipelineTask(GenerationPhase.PROJECT_GENERATION) {
             runAfter(KotlinPlugin.createModules)
             runAfter(KotlinPlugin.createPluginRepositories)
@@ -161,13 +180,42 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
 
                 val repositories = getPluginRepositoriesWithDefaultOnes().map { PluginManagementRepositoryIR(RepositoryIR(it)) }
 
+                val plugins = mutableListOf<BuildSystemPluginIR>()
+
+                val minGradleFoojayVersion =
+                    GradleVersion.version(Versions.GRADLE_PLUGINS.MIN_GRADLE_FOOJAY_VERSION.text)
+                val currentGradleVersion = GradleVersion.version(gradleVersion.settingValue.text)
+                val foojayCanBeAdded = currentGradleVersion >= minGradleFoojayVersion
+
+                if (foojayCanBeAdded) { // Check if foojay needs to be added
+                    var foojayNeedsToBeAdded = false
+                    val buildFiles = buildFiles.propertyValue
+
+                    val platformTypes = buildFiles.flatMap { it.irs }
+                        .filterIsInstance<KotlinBuildSystemPluginIR>()
+                        .map { it.type }.toSet()
+
+                    if (platformTypes.contains(KotlinBuildSystemPluginIR.Type.jvm)) {
+                        foojayNeedsToBeAdded = true
+                    } else if (platformTypes.contains(KotlinBuildSystemPluginIR.Type.multiplatform)) {
+                        foojayNeedsToBeAdded = buildFiles.flatMap { it.modules.modules }
+                            .flatMap { it.sourcesets }
+                            .any { it is MultiplatformSourcesetIR && it.targetName == "jvm" }
+                    }
+
+                    if (foojayNeedsToBeAdded) {
+                        plugins.add(FoojayPluginIR(Versions.GRADLE_PLUGINS.FOOJAY_VERSION))
+                    }
+                }
+
                 val settingsGradleIR = SettingsGradleFileIR(
                     StructurePlugin.name.settingValue,
                     allModulesPaths.map { path -> path.joinToString(separator = "") { ":$it" } },
                     buildPersistenceList {
                         +repositories
                         +settingsGradleFileIRs.propertyValue
-                    }
+                    },
+                    plugins
                 )
                 val buildFileText = createBuildFile().printBuildFile { settingsGradleIR.render(this) }
                 service<FileSystemWizardService>().createFile(
@@ -181,6 +229,7 @@ abstract class GradlePlugin(context: Context) : BuildSystemPlugin(context) {
     override val settings: List<PluginSetting<*, *>> = super.settings +
             listOf(
                 gradleVersion,
+                gradleHome
             )
 
     override val pipelineTasks: List<PipelineTask> = super.pipelineTasks +
@@ -206,10 +255,12 @@ val Reader.settingsGradleBuildFileData
                 { GradlePrinter(GradlePrinter.GradleDsl.KOTLIN) },
                 "settings.gradle.kts"
             )
+
         BuildSystemType.GradleGroovyDsl ->
             BuildFileData(
                 { GradlePrinter(GradlePrinter.GradleDsl.GROOVY) },
                 "settings.gradle"
             )
+
         else -> null
     }

@@ -4,8 +4,12 @@ package org.jetbrains.idea.devkit.kotlin.inspections
 import org.jetbrains.idea.devkit.inspections.ErrorMessageProvider
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle
 
-class LightServiceMustNotBeOpenErrorMessageProvider : ErrorMessageProvider {
+internal class LightServiceMustNotBeOpenErrorMessageProvider : ErrorMessageProvider {
   override fun provideErrorMessage(): String {
     return DevKitKotlinBundle.message("inspection.light.service.must.not.be.open.message")
+  }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return true
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -131,7 +131,7 @@ public final class GraphicsUtil {
   }
 
   public static Object createAATextInfo(@NotNull Object hint) {
-    return AATextInfo.create(hint, UIUtil.getLcdContrastValue());
+    return AATextInfo.create(hint, StartupUiUtil.getLcdContrastValue());
   }
 
   public static boolean isRemoteEnvironment() {

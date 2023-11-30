@@ -16,9 +16,6 @@ import javax.swing.DefaultComboBoxModel
 abstract class RuntimeChooserItem
 
 object RuntimeChooserSelectRuntimeItem: RuntimeChooserItem()
-object RuntimeChooserAdvancedSectionSeparator : RuntimeChooserItem()
-object RuntimeChooserCustomSelectedSectionSeparator : RuntimeChooserItem()
-object RuntimeChooserAdvancedJbrSelectedSectionSeparator : RuntimeChooserItem()
 
 internal fun <Y> GraphProperty<Y>.getAndSubscribe(lifetime: Disposable, action: (Y) -> Unit) {
   action(get())
@@ -28,10 +25,11 @@ internal fun <Y> GraphProperty<Y>.getAndSubscribe(lifetime: Disposable, action: 
 class RuntimeChooserModel {
   private val graph = PropertyGraph()
 
-  val currentRuntime = graph.property<RuntimeChooserCurrentItem?>(null)
+  val currentRuntime: GraphProperty<RuntimeChooserCurrentItem?> = graph.property(null)
 
-  private var downloadableJbs: List<JdkItem> = listOf()
-  private val customJdks = mutableListOf<RuntimeChooserCustomItem>()
+  var downloadableJbs: List<JdkItem> = listOf()
+  val customJdks = mutableListOf<RuntimeChooserCustomItem>()
+  val advancedDownloadItems = mutableListOf<RuntimeChooserDownloadableItem>()
 
   private val myMainComboModel = DefaultComboBoxModel<RuntimeChooserItem>()
 
@@ -66,24 +64,23 @@ class RuntimeChooserModel {
       .filter { it.isDefaultItem }
       .map { RuntimeChooserDownloadableItem(it) }
 
-    val advancedDownloadItems = downloadableJbs
-      .filterNot { it.isDefaultItem }
-      .map { RuntimeChooserDownloadableItem(it) }
+    advancedDownloadItems.clear()
+    advancedDownloadItems.addAll(
+      downloadableJbs
+        .filterNot { it.isDefaultItem }
+        .map { RuntimeChooserDownloadableItem(it) }
+    )
 
     newList += defaultDownloadableSdks
 
     if (RuntimeChooserCustom.isActionAvailable) {
       if (customJdks.isNotEmpty()) {
-        newList += RuntimeChooserCustomSelectedSectionSeparator
         newList += customJdks
-      } else {
-        newList += RuntimeChooserAdvancedSectionSeparator
       }
       newList += RuntimeChooserAddCustomItem
     }
 
     if (advancedDownloadItems.isNotEmpty()) {
-      newList += RuntimeChooserAdvancedJbrSelectedSectionSeparator
       newList += advancedDownloadItems
     }
 

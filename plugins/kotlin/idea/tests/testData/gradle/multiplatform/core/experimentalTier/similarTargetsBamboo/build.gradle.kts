@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.plugin.KotlinHierarchyTemplate
+
 repositories {
     { { kts_kotlin_plugin_repositories } }
 }
@@ -35,7 +37,7 @@ kotlin {
         attributes.attribute(attr, "v2")
     }
 
-    targetHierarchy.default {
+    applyHierarchyTemplate(KotlinHierarchyTemplate.default) {
         common {
             group("sharedJs") {
                 withJs()

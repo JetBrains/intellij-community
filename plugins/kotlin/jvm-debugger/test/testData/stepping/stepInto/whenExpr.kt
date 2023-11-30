@@ -60,5 +60,3 @@ fun main(args: Array<String>) {
 }
 
 // STEP_INTO: 22
-// IGNORE_FOR_K2_CODE
-// Remove ignore after KT-56982 fix

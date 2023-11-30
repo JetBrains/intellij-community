@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-scripting-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:1.9.20-dev-2616" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-common:2.0.0-dev-9013">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.0.0-dev-9013/kotlin-scripting-common-2.0.0-dev-9013.jar">
+          <sha256sum>00adf79414750a2ef6a73503481415082e906bd2a968cfd5d7e12723713e666a</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.9.20-dev-2616/kotlin-scripting-common-1.9.20-dev-2616.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.0.0-dev-9013/kotlin-scripting-common-2.0.0-dev-9013.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.9.20-dev-2616/kotlin-scripting-common-1.9.20-dev-2616-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/2.0.0-dev-9013/kotlin-scripting-common-2.0.0-dev-9013-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.analysis;
 
@@ -53,8 +53,7 @@ public class AnalysisScope {
   @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, PACKAGE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
   public @interface Type { }
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull Project myProject;
   protected List<Module> myModules;
   protected Module myModule;
   protected PsiElement myElement;
@@ -176,15 +175,13 @@ public class AnalysisScope {
     return !myIncludeTestSource && ReadAction.compute(() -> TestSourcesFilter.isTestSources(virtualFile, myProject));
   }
 
-  @NotNull
-  private FileIndex getFileIndex() {
+  private @NotNull FileIndex getFileIndex() {
     return myModule == null ?
            ProjectRootManager.getInstance(myProject).getFileIndex() :
            ModuleRootManager.getInstance(myModule).getFileIndex();
   }
 
-  @NotNull
-  private static String displayProjectRelativePath(@NotNull PsiFileSystemItem item) {
+  private static @NotNull String displayProjectRelativePath(@NotNull PsiFileSystemItem item) {
     VirtualFile virtualFile = item.getVirtualFile();
     LOG.assertTrue(virtualFile != null, item);
     return ProjectUtilCore.displayUrlRelativeToProject(virtualFile, virtualFile.getPresentableUrl(), item.getProject(), true, false);
@@ -210,8 +207,7 @@ public class AnalysisScope {
     return getFileSet().contains(file);
   }
 
-  @NotNull
-  protected VirtualFileSet createFilesSet() {
+  protected @NotNull VirtualFileSet createFilesSet() {
     VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet();
     switch (myType) {
       case FILE -> {
@@ -228,9 +224,8 @@ public class AnalysisScope {
         ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
         for (VirtualFile vFile : myVFiles) {
           VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor<Void>() {
-            @NotNull
             @Override
-            public Result visitFileEx(@NotNull VirtualFile file) {
+            public @NotNull Result visitFileEx(@NotNull VirtualFile file) {
               boolean ignored = ReadAction.compute(() -> fileIndex.isExcluded(file));
               if (!ignored && !file.isDirectory()) {
                 fileSet.add(file);
@@ -277,11 +272,11 @@ public class AnalysisScope {
   }
 
   public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
-    if (myFilesSet != null) {
-      return myFilesSet.process(processor);
-    }
     if (myType == VIRTUAL_FILES) {
       return getFileSet().process(file -> isFilteredOut(file) || processor.process(file));
+    }
+    if (myFilesSet != null) {
+      return myFilesSet.process(processor);
     }
     FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {
@@ -328,8 +323,7 @@ public class AnalysisScope {
     return projectFileIndex.iterateContent(createScopeIterator(processor, null));
   }
 
-  @NotNull
-  private VirtualFileSet getFileSet() {
+  private @NotNull VirtualFileSet getFileSet() {
     VirtualFileSet fileSet = myFilesSet;
     if (fileSet == null) {
       myFilesSet = fileSet = createFilesSet();
@@ -337,12 +331,11 @@ public class AnalysisScope {
     return fileSet;
   }
 
-  @NotNull
-  private ContentIterator createScopeIterator(@NotNull Processor<? super VirtualFile> processor, @Nullable SearchScope searchScope) {
+  private @NotNull ContentIterator createScopeIterator(@NotNull Processor<? super VirtualFile> processor, @Nullable SearchScope searchScope) {
     return fileOrDir -> {
       boolean isInScope = ReadAction.compute(() -> {
-        if (isFilteredOut(fileOrDir)) return false;
         if (searchScope != null && !searchScope.contains(fileOrDir)) return false;
+        if (isFilteredOut(fileOrDir)) return false;
         return !GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(fileOrDir, myProject);
       });
       return !isInScope || processor.process(fileOrDir);
@@ -449,8 +442,7 @@ public class AnalysisScope {
     return myType;
   }
 
-  @NotNull
-  public @Nls String getDisplayName() {
+  public @NotNull @Nls String getDisplayName() {
     return switch (myType) {
       case CUSTOM -> myScope.getDisplayName();
       case MODULE -> AnalysisBundle.message("scope.option.module", pathToName(myModule.getModuleFilePath()));
@@ -466,8 +458,7 @@ public class AnalysisScope {
     };
   }
 
-  @NotNull
-  public @Nls String getShortenName(){
+  public @NotNull @Nls String getShortenName(){
     return switch (myType) {
       case CUSTOM -> myScope.getDisplayName();
       case MODULE -> AnalysisBundle.message("scope.option.module", myModule.getName());
@@ -489,34 +480,28 @@ public class AnalysisScope {
     };
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @Nullable
-  public Module getModule() {
+  public @Nullable Module getModule() {
     return myModule;
   }
 
-  @NotNull
-  public List<Module> getModules() {
+  public @NotNull List<Module> getModules() {
     return myModules == null ? Collections.emptyList() : Collections.unmodifiableList(myModules);
   }
 
-  @Nullable
-  public PsiElement getElement() {
+  public @Nullable PsiElement getElement() {
     return myElement;
   }
 
-  @NotNull
-  public Set<VirtualFile> getFiles() {
+  public @NotNull Set<VirtualFile> getFiles() {
     //noinspection unchecked
     return myVFiles == null ? Collections.emptySet() : (Set<VirtualFile>)myVFiles;
   }
 
-  @NotNull
-  private String getRelativePath() {
+  private @NotNull String getRelativePath() {
     String relativePath = displayProjectRelativePath((PsiFileSystemItem)myElement);
     if (relativePath.length() > 100) {
       return ((PsiFileSystemItem)myElement).getName();
@@ -524,8 +509,7 @@ public class AnalysisScope {
     return relativePath;
   }
 
-  @NotNull
-  private static String pathToName(@NotNull String path) {
+  private static @NotNull String pathToName(@NotNull String path) {
     File file = new File(path);
     return FileUtilRt.getNameWithoutExtension(file.getName());
   }
@@ -564,8 +548,7 @@ public class AnalysisScope {
     return true;
   }
 
-  @NotNull
-  public AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
+  public @NotNull AnalysisScope getNarrowedComplementaryScope(@NotNull Project defaultProject) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(defaultProject).getFileIndex();
     HashSet<Module> modules = new HashSet<>();
     if (myType == FILE || myType == DIRECTORY) {
@@ -581,8 +564,7 @@ public class AnalysisScope {
     return collectScopes(defaultProject, modules);
   }
 
-  @NotNull
-  protected static AnalysisScope collectScopes(@NotNull Project defaultProject, @NotNull Set<? extends Module> modules) {
+  protected static @NotNull AnalysisScope collectScopes(@NotNull Project defaultProject, @NotNull Set<? extends Module> modules) {
     if (modules.isEmpty()) {
       return new AnalysisScope(defaultProject);
     }
@@ -596,8 +578,7 @@ public class AnalysisScope {
     return new AnalysisScope(modulesToAnalyze.toArray(Module.EMPTY_ARRAY));
   }
 
-  @NotNull
-  private static Set<Module> getExportBackwardDependencies(@NotNull Module fromModule, Module @NotNull [] allModules) {
+  private static @NotNull Set<Module> getExportBackwardDependencies(@NotNull Module fromModule, Module @NotNull [] allModules) {
     Set<Module> result = new HashSet<>();
     for (Module module : allModules) {
       ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -612,8 +593,7 @@ public class AnalysisScope {
     return result;
   }
 
-  @NotNull
-  private static Set<Module> getDirectBackwardDependencies(@NotNull Module module, Module @NotNull [] allModules) {
+  private static @NotNull Set<Module> getDirectBackwardDependencies(@NotNull Module module, Module @NotNull [] allModules) {
     Set<Module> result = new HashSet<>();
     for (Module dependency : allModules) {
       if (ArrayUtil.find(ModuleRootManager.getInstance(dependency).getDependencies(), module) > -1) {
@@ -623,8 +603,7 @@ public class AnalysisScope {
     return result;
   }
 
-  @NotNull
-  protected static HashSet<Module> getAllInterestingModules(@NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
+  protected static @NotNull HashSet<Module> getAllInterestingModules(@NotNull ProjectFileIndex fileIndex, @NotNull VirtualFile vFile) {
     HashSet<Module> modules = new HashSet<>();
     if (fileIndex.isInLibrary(vFile)) {
       for (OrderEntry orderEntry : fileIndex.getOrderEntriesForFile(vFile)) {
@@ -637,8 +616,7 @@ public class AnalysisScope {
     return modules;
   }
 
-  @NotNull
-  public SearchScope toSearchScope() {
+  public @NotNull SearchScope toSearchScope() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return switch (myType) {
       case CUSTOM -> myScope;

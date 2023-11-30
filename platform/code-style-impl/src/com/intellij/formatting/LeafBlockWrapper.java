@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.formatting;
 
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.PrimitiveIterator;
 import java.util.stream.IntStream;
 
-public class LeafBlockWrapper extends AbstractBlockWrapper {
+public final class LeafBlockWrapper extends AbstractBlockWrapper {
   private static final int CONTAIN_LINE_FEEDS = 4;
   private static final int READ_ONLY = 8;
   private static final int LEAF = 16;
@@ -93,7 +93,7 @@ public class LeafBlockWrapper extends AbstractBlockWrapper {
     myFlags = flagsValue;
   }
 
-  public final boolean containsLineFeeds() {
+  public boolean containsLineFeeds() {
     return (myFlags & CONTAIN_LINE_FEEDS) != 0;
   }
 
@@ -183,11 +183,11 @@ public class LeafBlockWrapper extends AbstractBlockWrapper {
     return myParent.getChildOffset(this, options, this.getStartOffset());
   }
 
-  public void setSpaceProperty(@Nullable final SpacingImpl currentSpaceProperty) {
+  public void setSpaceProperty(final @Nullable SpacingImpl currentSpaceProperty) {
     mySpaceProperty = currentSpaceProperty;
   }
 
-  public final boolean isLeaf() {
+  public boolean isLeaf() {
     return (myFlags & LEAF) != 0;
   }
 

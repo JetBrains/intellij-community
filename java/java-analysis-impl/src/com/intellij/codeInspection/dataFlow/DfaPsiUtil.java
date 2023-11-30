@@ -110,16 +110,19 @@ public final class DfaPsiUtil {
       }
     }
 
+    if (owner instanceof PsiParameter parameter) {
+      Nullability nullability = inferParameterNullability(parameter);
+      if (nullability != Nullability.UNKNOWN) {
+        return nullability;
+      }
+    }
+
     Nullability fromType = getTypeNullability(resultType);
     if (fromType != Nullability.UNKNOWN) {
       if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
         return Nullability.UNKNOWN;
       }
       return fromType;
-    }
-
-    if (owner instanceof PsiParameter parameter) {
-      return inferParameterNullability(parameter);
     }
 
     if (owner instanceof PsiMethod method && method.getParameterList().isEmpty()) {
@@ -614,9 +617,8 @@ public final class DfaPsiUtil {
     }
     PsiClass psiClass = classType.resolve();
     if (psiClass == null) return classType;
-    PsiType expressionType = expression.getType();
-    if (!(expressionType instanceof PsiClassType)) return classType;
-    PsiClassType result = GenericsUtil.getExpectedGenericType(expression, psiClass, (PsiClassType)expressionType);
+    if (!(expression.getType() instanceof PsiClassType expressionType)) return classType;
+    PsiClassType result = GenericsUtil.getExpectedGenericType(expression, psiClass, expressionType);
     if (result.isRaw()) {
       PsiClass aClass = result.resolve();
       if (aClass != null) {

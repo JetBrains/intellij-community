@@ -4,18 +4,10 @@ import java.io.InputStream
  * This is a sample class used in IDE Feature Trainer
  * for illustration properties
  */
-class BufferedReader {
-    private var inputStream: InputStream
-    private var maxBufferSize = 1024
-
-    constructor(inputStream: InputStream) {
-        this.inputStream = inputStream
-    }
-
-    constructor(inputStream: InputStream, maxBufferSize: Int) {
-        this.inputStream = inputStream
-        this.maxBufferSize = maxBufferSize
-    }
+class BufferedReader(
+    private var inputStream: InputStream,
+    private var maxBufferSize: Int = 1024
+) {
 
     /**
      * @return one byte from input stream

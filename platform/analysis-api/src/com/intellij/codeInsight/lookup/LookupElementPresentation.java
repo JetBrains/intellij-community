@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.TextRange;
@@ -26,10 +26,10 @@ public class LookupElementPresentation {
   private boolean myItemTextBold;
   private boolean myItemTextUnderlined;
   private boolean myItemTextItalic;
-  @Nullable private List<DecoratedTextRange> myItemNameDecorations;
-  @Nullable private List<DecoratedTextRange> myItemTailDecorations;
+  private @Nullable List<DecoratedTextRange> myItemNameDecorations;
+  private @Nullable List<DecoratedTextRange> myItemTailDecorations;
   private boolean myTypeGrayed;
-  @Nullable private List<TextFragment> myTail;
+  private @Nullable List<TextFragment> myTail;
   private volatile boolean myFrozen;
 
   public void setIcon(@Nullable Icon icon) {
@@ -141,24 +141,20 @@ public class LookupElementPresentation {
     return true;
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return myIcon;
   }
 
-  @Nullable
-  public Icon getTypeIcon() {
+  public @Nullable Icon getTypeIcon() {
     return myTypeIcon;
   }
 
-  @Nullable
-  public String getItemText() {
+  public @Nullable String getItemText() {
     return myItemText;
   }
 
   @ApiStatus.Internal
-  @NotNull
-  public List<DecoratedTextRange> getItemNameDecorations() {
+  public @NotNull List<DecoratedTextRange> getItemNameDecorations() {
     return myItemNameDecorations == null ? Collections.emptyList() : Collections.unmodifiableList(myItemNameDecorations);
   }
 
@@ -166,24 +162,20 @@ public class LookupElementPresentation {
    * @return decorators for tail
    */
   @ApiStatus.Internal
-  @NotNull
-  public List<DecoratedTextRange> getItemTailDecorations() {
+  public @NotNull List<DecoratedTextRange> getItemTailDecorations() {
     return myItemTailDecorations == null ? Collections.emptyList() : Collections.unmodifiableList(myItemTailDecorations);
   }
 
-  @NotNull
-  public List<TextFragment> getTailFragments() {
+  public @NotNull List<TextFragment> getTailFragments() {
     return myTail == null ? Collections.emptyList() : Collections.unmodifiableList(myTail);
   }
 
-  @Nullable
-  public String getTailText() {
+  public @Nullable String getTailText() {
     if (myTail == null) return null;
     return StringUtil.join(myTail, fragment -> fragment.text, "");
   }
 
-  @Nullable
-  public String getTypeText() {
+  public @Nullable String getTypeText() {
     return myTypeText;
   }
 
@@ -208,7 +200,7 @@ public class LookupElementPresentation {
     myItemTextUnderlined = itemTextUnderlined;
   }
 
-  @NotNull public Color getItemTextForeground() {
+  public @NotNull Color getItemTextForeground() {
     return myItemTextForeground;
   }
 
@@ -290,7 +282,7 @@ public class LookupElementPresentation {
     public final String text;
     private final boolean myGrayed;
     private final boolean myItalic;
-    @Nullable private final Color myFgColor;
+    private final @Nullable Color myFgColor;
 
     private TextFragment(String text, boolean grayed, boolean italic, @Nullable Color fgColor) {
       this.text = text;
@@ -317,8 +309,7 @@ public class LookupElementPresentation {
       return myItalic;
     }
 
-    @Nullable
-    public Color getForegroundColor() {
+    public @Nullable Color getForegroundColor() {
       return myFgColor;
     }
 

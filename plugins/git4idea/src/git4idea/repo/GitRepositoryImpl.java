@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.RepositoryImpl;
@@ -11,7 +11,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsScopeKt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.vcs.log.Hash;
 import git4idea.GitDisposable;
 import git4idea.GitLocalBranch;
 import git4idea.GitUtil;
@@ -19,33 +20,33 @@ import git4idea.GitVcs;
 import git4idea.branch.GitBranchesCollection;
 import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.status.GitStagingAreaHolder;
+import git4idea.telemetry.GitTelemetrySpan;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
 import static com.intellij.util.ObjectUtils.notNull;
+import static git4idea.repo.GitRecentCheckoutBranches.collectRecentCheckoutBranches;
 
 public final class GitRepositoryImpl extends RepositoryImpl implements GitRepository {
   private static final Logger LOG = Logger.getInstance(GitRepositoryImpl.class);
 
-  @NotNull private final GitVcs myVcs;
-  @NotNull private final GitRepositoryReader myReader;
-  @NotNull private final VirtualFile myGitDir;
-  @NotNull private final GitRepositoryFiles myRepositoryFiles;
+  private final @NotNull GitVcs myVcs;
+  private final @NotNull GitRepositoryReader myReader;
+  private final @NotNull VirtualFile myGitDir;
+  private final @NotNull GitRepositoryFiles myRepositoryFiles;
 
-  @NotNull private final GitUntrackedFilesHolder myUntrackedFilesHolder;
-  @NotNull private final GitStagingAreaHolder myStagingAreaHolder;
-  @NotNull private final GitRepositoryIgnoredFilesHolder myIgnoredRepositoryFilesHolder;
+  private final @NotNull GitUntrackedFilesHolder myUntrackedFilesHolder;
+  private final @NotNull GitStagingAreaHolder myStagingAreaHolder;
+  private final @NotNull GitRepositoryIgnoredFilesHolder myIgnoredRepositoryFilesHolder;
 
-  @NotNull private volatile GitRepoInfo myInfo;
+  private volatile @NotNull GitRepoInfo myInfo;
+  private volatile @NotNull List<GitLocalBranch> myRecentCheckoutBranches = Collections.emptyList();
 
   /**
    * @param rootDir Root of the repository (parent directory of '.git' file/directory).
@@ -73,9 +74,8 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   /**
    * @deprecated Use {@link GitRepositoryManager#getRepositoryForRoot} to obtain an instance of a Git repository.
    */
-  @NotNull
   @Deprecated(forRemoval = true)
-  public static GitRepository getInstance(@NotNull VirtualFile root,
+  public static @NotNull GitRepository getInstance(@NotNull VirtualFile root,
                                           @NotNull Project project,
                                           boolean listenToRepoChanges) {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
@@ -87,8 +87,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
    */
   @Deprecated
   @ApiStatus.Internal
-  @NotNull
-  public static GitRepository createInstance(@NotNull VirtualFile root,
+  public static @NotNull GitRepository createInstance(@NotNull VirtualFile root,
                                              @NotNull Project project,
                                              @NotNull Disposable parentDisposable,
                                              boolean listenToRepoChanges) {
@@ -100,8 +99,7 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
    * Use {@link GitRepositoryManager#getRepositoryForRoot(VirtualFile)} if you need to obtain an instance
    */
   @ApiStatus.Internal
-  @NotNull
-  public static GitRepository createInstance(@NotNull VirtualFile root,
+  public static @NotNull GitRepository createInstance(@NotNull VirtualFile root,
                                              @NotNull Project project,
                                              @NotNull Disposable parentDisposable) {
     VirtualFile gitDir = Objects.requireNonNull(GitUtil.findGitDir(root));
@@ -109,11 +107,10 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   }
 
   @ApiStatus.Internal
-  @NotNull
-  static GitRepository createInstance(@NotNull VirtualFile root,
-                                      @NotNull VirtualFile gitDir,
-                                      @NotNull Project project,
-                                      @NotNull Disposable parentDisposable) {
+  static @NotNull GitRepository createInstance(@NotNull VirtualFile root,
+                                               @NotNull VirtualFile gitDir,
+                                               @NotNull Project project,
+                                               @NotNull Disposable parentDisposable) {
     ProgressManager.checkCanceled();
     GitRepositoryImpl repository = new GitRepositoryImpl(root, gitDir, project, parentDisposable);
     repository.setupUpdater();
@@ -127,76 +124,64 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
   }
 
   @Deprecated
-  @NotNull
   @Override
-  public VirtualFile getGitDir() {
+  public @NotNull VirtualFile getGitDir() {
     return myGitDir;
   }
 
-  @NotNull
   @Override
-  public GitRepositoryFiles getRepositoryFiles() {
+  public @NotNull GitRepositoryFiles getRepositoryFiles() {
     return myRepositoryFiles;
   }
 
   @Override
-  @NotNull
-  public GitStagingAreaHolder getStagingAreaHolder() {
+  public @NotNull GitStagingAreaHolder getStagingAreaHolder() {
     return myStagingAreaHolder;
   }
 
   @Override
-  @NotNull
-  public GitUntrackedFilesHolder getUntrackedFilesHolder() {
+  public @NotNull GitUntrackedFilesHolder getUntrackedFilesHolder() {
     return myUntrackedFilesHolder;
   }
 
   @Override
-  @NotNull
-  public GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
+  public @NotNull GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
     return myIgnoredRepositoryFilesHolder;
   }
 
   @Override
-  @NotNull
-  public GitRepoInfo getInfo() {
+  public @NotNull GitRepoInfo getInfo() {
     return myInfo;
   }
 
   @Override
-  @Nullable
-  public GitLocalBranch getCurrentBranch() {
+  public @Nullable GitLocalBranch getCurrentBranch() {
     return myInfo.getCurrentBranch();
   }
 
-  @Nullable
   @Override
-  public String getCurrentRevision() {
+  public @Nullable String getCurrentRevision() {
     return myInfo.getCurrentRevision();
   }
 
-  @NotNull
   @Override
-  public State getState() {
+  public @NotNull State getState() {
     return myInfo.getState();
   }
 
-  @Nullable
   @Override
-  public String getCurrentBranchName() {
+  public @Nullable String getCurrentBranchName() {
     GitLocalBranch currentBranch = getCurrentBranch();
     return currentBranch == null ? null : currentBranch.getName();
   }
 
-  @NotNull
   @Override
-  public GitVcs getVcs() {
+  public @NotNull GitVcs getVcs() {
     return myVcs;
   }
 
-  @NotNull
   @Override
-  public Collection<GitSubmoduleInfo> getSubmodules() {
+  public @NotNull Collection<GitSubmoduleInfo> getSubmodules() {
     return myInfo.getSubmodules();
   }
 
@@ -204,27 +189,23 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
    * @return local and remote branches in this repository.
    */
   @Override
-  @NotNull
-  public GitBranchesCollection getBranches() {
+  public @NotNull GitBranchesCollection getBranches() {
     GitRepoInfo info = myInfo;
-    return new GitBranchesCollection(info.getLocalBranchesWithHashes(), info.getRemoteBranchesWithHashes());
+    return new GitBranchesCollection(info.getLocalBranchesWithHashes(), info.getRemoteBranchesWithHashes(), myRecentCheckoutBranches);
   }
 
   @Override
-  @NotNull
-  public Collection<GitRemote> getRemotes() {
+  public @NotNull Collection<GitRemote> getRemotes() {
     return myInfo.getRemotes();
   }
 
   @Override
-  @NotNull
-  public Collection<GitBranchTrackInfo> getBranchTrackInfos() {
+  public @NotNull Collection<GitBranchTrackInfo> getBranchTrackInfos() {
     return myInfo.getBranchTrackInfos();
   }
 
-  @Nullable
   @Override
-  public GitBranchTrackInfo getBranchTrackInfo(@NotNull String localBranchName) {
+  public @Nullable GitBranchTrackInfo getBranchTrackInfo(@NotNull String localBranchName) {
     return myInfo.getBranchTrackInfosMap().get(localBranchName);
   }
 
@@ -246,9 +227,9 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
     notifyIfRepoChanged(this, previousInfo, myInfo);
   }
 
-  @NotNull
-  private GitRepoInfo readRepoInfo() {
-    return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScopeKt.VcsScope), "reading Git repo info", span -> {
+  private @NotNull GitRepoInfo readRepoInfo() {
+    return computeWithSpan(TelemetryManager.getInstance().getTracer(VcsScopeKt.VcsScope),
+                           GitTelemetrySpan.Repository.ReadGitRepositoryInfo.getName(), span -> {
       span.setAttribute("repository", getShortRepositoryName(this));
 
       File configFile = myRepositoryFiles.getConfigFile();
@@ -262,15 +243,16 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
         config.parseTrackInfos(state.getLocalBranches().keySet(), state.getRemoteBranches().keySet());
       GitHooksInfo hooksInfo = myReader.readHooksInfo();
       Collection<GitSubmoduleInfo> submodules = new GitModulesFileReader().read(getSubmoduleFile());
+      Map<GitLocalBranch, Hash> localBranches = new HashMap<>(state.getLocalBranches());
+      myRecentCheckoutBranches = collectRecentCheckoutBranches(this, branch -> localBranches.containsKey(branch));
       return new GitRepoInfo(state.getCurrentBranch(), state.getCurrentRevision(), state.getState(), new LinkedHashSet<>(remotes),
-                             new HashMap<>(state.getLocalBranches()), new HashMap<>(state.getRemoteBranches()),
+                             localBranches, new HashMap<>(state.getRemoteBranches()),
                              new LinkedHashSet<>(trackInfos),
                              submodules, hooksInfo, isShallow);
     });
   }
 
-  @NotNull
-  private File getSubmoduleFile() {
+  private @NotNull File getSubmoduleFile() {
     return new File(VfsUtilCore.virtualToIoFile(getRoot()), ".gitmodules");
   }
 
@@ -283,9 +265,8 @@ public final class GitRepositoryImpl extends RepositoryImpl implements GitReposi
     }
   }
 
-  @NotNull
   @Override
-  public String toLogString() {
+  public @NotNull String toLogString() {
     return "GitRepository " + getRoot() + " : " + myInfo;
   }
 }

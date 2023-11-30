@@ -12,12 +12,14 @@ import org.jetbrains.kotlin.idea.base.util.getKotlinAwareDestinationSourceRoots
 abstract class KotlinDestinationFolderComboBox : DestinationFolderComboBox() {
     protected open fun sourceRootsInTargetDirOnly(): Boolean = false
 
-    override fun getSourceRoots(project: Project, initialTargetDirectory: PsiDirectory): List<VirtualFile> {
+    override fun getSourceRoots(project: Project, initialTargetDirectory: PsiDirectory?): List<VirtualFile> {
         if (sourceRootsInTargetDirOnly()) {
-            val module = ModuleUtilCore.findModuleForFile(initialTargetDirectory.virtualFile, project)
-            if (module != null) {
-                val moduleSourceRoots = module.collectKotlinAwareDestinationSourceRoots()
-                return moduleSourceRoots.filter { root -> targetDirIsInRoot(initialTargetDirectory, root) }
+            if (initialTargetDirectory != null) {
+                val module = ModuleUtilCore.findModuleForFile(initialTargetDirectory.virtualFile, project)
+                if (module != null) {
+                    val moduleSourceRoots = module.collectKotlinAwareDestinationSourceRoots()
+                    return moduleSourceRoots.filter { root -> targetDirIsInRoot(initialTargetDirectory, root) }
+                }
             }
         }
         return project.getKotlinAwareDestinationSourceRoots()

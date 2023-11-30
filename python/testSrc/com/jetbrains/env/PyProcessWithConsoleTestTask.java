@@ -40,6 +40,8 @@ import org.junit.Assert;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
+import static com.jetbrains.env.PyEnvTestCase.escapeTestMessage;
+
 /**
  * <h1>Task that knows how to execute some process with console.</h1>
  * <p>
@@ -132,7 +134,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     processStartedSemaphore.acquire();
     final StringBuilder stdOut = new StringBuilder();
     final StringBuilder stdErr = new StringBuilder();
-    final StringBuilder stdAll = new StringBuilder();
+    final var stdAll = new StringBuffer();
     final Ref<Boolean> failed = new Ref<>(false);
     final Ref<ProcessHandler> processHandlerRef = new Ref<>();
 
@@ -192,21 +194,19 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
       LOG.warn("Time out waiting for test finish");
       handler.destroyProcess(); // To prevent process leak
       handler.waitFor();
-      Thread.sleep(1000); // Give time to listening threads to process process death
       throw new AssertionError(String.format("Timeout waiting for process to finish. Current output is %s", stdAll));
     }
 
-    Thread.sleep(1000); // Give time to listening threads to finish
     final Integer code = handler.getExitCode();
     assert code != null : "Process finished, but no exit code exists";
 
     XDebuggerTestUtil.waitForSwing();
     try {
       runner.assertExitCodeIsCorrect(code);
-      checkTestResults(runner, stdOut.toString(), stdErr.toString(), stdAll.toString(), code);
+      checkTestResults(runner, escapeTestMessage(stdOut.toString()), escapeTestMessage(stdErr.toString()), escapeTestMessage(stdAll.toString()), code);
     }
     catch (Throwable e) {
-      throw new RuntimeException(stdAll.toString(), e);
+      throw new RuntimeException(escapeTestMessage(stdAll.toString()), e);
     }
   }
 

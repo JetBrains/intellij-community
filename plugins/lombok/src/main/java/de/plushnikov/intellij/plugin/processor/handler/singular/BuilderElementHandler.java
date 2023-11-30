@@ -1,9 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.handler.singular;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.thirdparty.CapitalizationStrategy;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -12,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface BuilderElementHandler {
 
@@ -43,8 +41,8 @@ public interface BuilderElementHandler {
     return LombokUtils.buildAccessorName(info.getSetterPrefix(), info.getFieldName(), info.getCapitalizationStrategy());
   }
 
-  Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info);
+  Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info, Map<String, List<List<PsiType>>> alreadyExistedMethods);
 
-  List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation,
-                                     CapitalizationStrategy capitalizationStrategy);
+  List<String> getBuilderMethodNames(@NotNull String fieldName, @NotNull String prefix,
+                                     @Nullable PsiAnnotation singularAnnotation, CapitalizationStrategy capitalizationStrategy);
 }

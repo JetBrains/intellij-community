@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.settings.language.createEditor
 import com.intellij.internal.inspector.PropertyBean
@@ -38,7 +39,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 
-val CASE_KEY = Key.create<ImmediateConfigurable.Case>("inlay.case.key")
+val CASE_KEY: Key<ImmediateConfigurable.Case> = Key.create("inlay.case.key")
 
 class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
@@ -49,7 +50,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
   companion object {
     @kotlin.jvm.JvmField
-    val PREVIEW_KEY = Key.create<Any>("inlay.preview.key")
+    val PREVIEW_KEY: Key<Any> = Key.create("inlay.preview.key")
 
     fun getFileTypeForPreview(model: InlayProviderSettingsModel): LanguageFileType {
       return model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
@@ -137,8 +138,8 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   @Nls
   private fun getName(node: DefaultMutableTreeNode?, parent: DefaultMutableTreeNode?): String {
     when (val item = node?.userObject) {
-      is InlayGroupSettingProvider -> return item.group.toString()
-      is InlayGroup -> return item.toString() //NON-NLS
+      is InlayGroupSettingProvider -> return item.group.title()
+      is InlayGroup -> return item.title()
       is Language -> return item.displayName
       is InlayProviderSettingsModel -> return if (parent?.userObject is InlayGroup) item.language.displayName else item.name
       is ImmediateConfigurable.Case -> return item.name
@@ -373,7 +374,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   fun apply() {
     apply(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
-    InlayHintsPassFactory.restartDaemonUpdatingHints(project)
+    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
   }
 
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {

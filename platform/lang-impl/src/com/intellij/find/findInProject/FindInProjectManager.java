@@ -1,5 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findInProject;
 
 import com.intellij.find.FindManager;
@@ -58,7 +57,7 @@ public class FindInProjectManager {
   }
 
   protected void initModel(@NotNull FindModel findModel, @NotNull DataContext dataContext) {
-    FindInProjectUtil.setDirectoryName(findModel, dataContext);
+    FindInProjectUtil.setScope(myProject, findModel, dataContext);
 
     String text = PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext);
     if (text != null) {
@@ -81,8 +80,7 @@ public class FindInProjectManager {
     findManager.getFindInProjectModel().copyFrom(findModel);
     FindModel findModelCopy = findModel.clone();
     UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
-    FindUsagesProcessPresentation processPresentation =
-      FindInProjectUtil.setupProcessPresentation(myProject, presentation);
+    FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(presentation);
     ConfigurableUsageTarget usageTarget = new FindInProjectUtil.StringUsageTarget(myProject, findModel);
 
     ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().addToHistory(usageTarget);

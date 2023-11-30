@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.TimerListener;
@@ -14,10 +14,13 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 /**
@@ -27,12 +30,21 @@ public abstract class ToolbarUpdater implements Activatable {
   private final JComponent myComponent;
 
   private final KeymapManagerListener myKeymapManagerListener = new MyKeymapManagerListener();
-  private final TimerListener myTimerListener = new MyTimerListener();
+  private final TimerListener myTimerListener;
 
   private boolean myListenersArmed;
+  private boolean myInUpdate;
 
   public ToolbarUpdater(@NotNull JComponent component) {
+    this(component, null);
+  }
+
+  /**
+   * @param internalDescription used for debugging
+   */
+  public ToolbarUpdater(@NotNull JComponent component, @Nullable @NonNls String internalDescription) {
     myComponent = component;
+    myTimerListener = new MyTimerListener(this, internalDescription);
     UiNotifyConnector.installOn(component, this);
   }
 
@@ -62,6 +74,7 @@ public abstract class ToolbarUpdater implements Activatable {
   }
 
   public void updateActions(boolean now, boolean forced, boolean includeInvisible) {
+    if (myInUpdate) return;
     Runnable updateRunnable = new MyUpdateRunnable(this, forced, includeInvisible);
     Application application = ApplicationManager.getApplication();
     if (now || application.isUnitTestMode() && application.isDispatchThread()) {
@@ -93,16 +106,29 @@ public abstract class ToolbarUpdater implements Activatable {
     }
   }
 
-  private final class MyTimerListener implements TimerListener {
+  private static final class MyTimerListener implements TimerListener {
+    private final Reference<ToolbarUpdater> myReference;
+    @SuppressWarnings({"unused", "FieldCanBeLocal"}) private final @Nullable @NonNls String myDescription; // input for curiosity
+
+    private MyTimerListener(@NotNull ToolbarUpdater updater,
+                            @Nullable @NonNls String internalDescription) {
+      myReference = new WeakReference<>(updater);
+      myDescription = internalDescription;
+    }
 
     @Override
     public ModalityState getModalityState() {
-      return ModalityState.stateForComponent(myComponent);
+      ToolbarUpdater updater = myReference.get();
+      if (updater == null) return null;
+      return ModalityState.stateForComponent(updater.myComponent);
     }
 
     @Override
     public void run() {
-      if (!myComponent.isShowing()) {
+      ToolbarUpdater updater = myReference.get();
+      if (updater == null) return;
+
+      if (!updater.myComponent.isShowing()) {
         return;
       }
 
@@ -115,19 +141,18 @@ public abstract class ToolbarUpdater implements Activatable {
 
       // don't update toolbar if there is currently active modal dialog
       Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window instanceof Dialog && ((Dialog)window).isModal() && !SwingUtilities.isDescendingFrom(myComponent, window)) {
+      if (window instanceof Dialog && ((Dialog)window).isModal() && !SwingUtilities.isDescendingFrom(updater.myComponent, window)) {
         return;
       }
 
-      updateActions(false, false, false);
+      updater.updateActions(false, false, false);
     }
   }
 
   private static final class MyUpdateRunnable implements Runnable {
     private final boolean myForced;
 
-    @NotNull
-    private final WeakReference<ToolbarUpdater> myUpdaterRef;
+    private final @NotNull WeakReference<ToolbarUpdater> myUpdaterRef;
     private final boolean myIncludeInvisible;
     private final int myHash;
 
@@ -148,8 +173,13 @@ public abstract class ToolbarUpdater implements Activatable {
           !UIUtil.isShowing(component) && (!component.isDisplayable() || !myIncludeInvisible)) {
         return;
       }
-
-      updater.updateActionsImpl(myForced);
+      try {
+        updater.myInUpdate = true;
+        updater.updateActionsImpl(myForced);
+      }
+      finally {
+        updater.myInUpdate = false;
+      }
     }
 
     @Override

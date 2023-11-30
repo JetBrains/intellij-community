@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -85,7 +84,7 @@ private class PySdkStatusBar(project: Project, scope: CoroutineScope) : EditorBa
   override fun isEnabledForFile(file: VirtualFile?): Boolean = true
 
   override fun registerCustomListeners(connection: MessageBusConnection) {
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+    connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) = update()
     })
   }

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -35,7 +36,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * Utilities to register fixes for mismatching type
  */
 final class AdaptExpressionTypeFixUtil {
-  private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
 
   private AdaptExpressionTypeFixUtil() { }
 
@@ -80,10 +80,10 @@ final class AdaptExpressionTypeFixUtil {
     if (parameterType instanceof PsiClassType &&
         ((PsiClassType)parameterType).rawType().equalsToText(CommonClassNames.JAVA_LANG_CLASS) &&
         typeParameter == getSoleTypeParameter(parameterType)) {
-      if (expectedTypeValue instanceof PsiClassType && JavaGenericsUtil.isReifiableType(expectedTypeValue)) {
+      if (expectedTypeValue instanceof PsiClassType classType && JavaGenericsUtil.isReifiableType(expectedTypeValue)) {
         ReplaceExpressionAction fix = new ReplaceExpressionAction(
-          arg, ((PsiClassType)expectedTypeValue).rawType().getCanonicalText() + ".class",
-          ((PsiClassType)expectedTypeValue).rawType().getPresentableText() + ".class");
+          arg, classType.rawType().getCanonicalText() + ".class",
+          classType.rawType().getPresentableText() + ".class");
         info.registerFix(fix, null, null, null, null);
       }
     }
@@ -230,13 +230,13 @@ final class AdaptExpressionTypeFixUtil {
     if (!mentionsTypeArgument) {
       IntentionAction action3 = new WrapWithAdapterMethodCallFix(expectedType, expression, role);
       info.registerFix(action3, null, null, null, null);
-      IntentionAction action2 = QUICK_FIX_FACTORY.createWrapWithOptionalFix(expectedType, expression);
+      IntentionAction action2 = QuickFixFactory.getInstance().createWrapWithOptionalFix(expectedType, expression);
       info.registerFix(action2, null, null, null, null);
-      IntentionAction action1 = new WrapExpressionFix(expectedType, expression, role);
+      var action1 = new WrapExpressionFix(expectedType, expression, role);
       info.registerFix(action1, null, null, null, null);
       PsiType castToType = suggestCastTo(expectedType, actualType);
       if (castToType != null) {
-        IntentionAction action = new AddTypeCastFix(castToType, expression, role);
+        ModCommandAction action = new AddTypeCastFix(castToType, expression, role);
         info.registerFix(action, null, null, null, null);
       }
     }
@@ -244,7 +244,7 @@ final class AdaptExpressionTypeFixUtil {
       PsiType erasedValueType = TypeConversionUtil.erasure(actualType);
       if (erasedValueType != null &&
           TypeConversionUtil.isAssignable(((PsiArrayType)expectedType).getComponentType(), erasedValueType)) {
-        IntentionAction action = QUICK_FIX_FACTORY.createSurroundWithArrayFix(null, expression);
+        IntentionAction action = QuickFixFactory.getInstance().createSurroundWithArrayFix(null, expression);
         info.registerFix(action, null, null, null, null);
       }
     }

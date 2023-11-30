@@ -23,7 +23,7 @@ class GradleCompatibilityTest : BasePlatformTestCase() {
             "Kotlin/Gradle compatibility matrix should contain current Kotlin version",
             compatibility.contains(ideKotlinVersion)
         )
-        val allGradleVersions = GradleJvmSupportMatrix.getInstance().getAllSupportedGradleVersions()
+        val allGradleVersions = GradleJvmSupportMatrix.getAllSupportedGradleVersionsByIdea()
 
         TestCase.assertTrue(
             "Kotlin/Gradle compatibility matrix should support current Kotlin version",

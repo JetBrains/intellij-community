@@ -1,15 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.analysis.MemberModel;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,26 +20,26 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class MoveMemberIntoClassFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class MoveMemberIntoClassFix extends PsiUpdateModCommandAction<PsiErrorElement> {
 
-  public MoveMemberIntoClassFix(@Nullable PsiErrorElement errorElement) {
+  public MoveMemberIntoClassFix(@NotNull PsiErrorElement errorElement) {
     super(errorElement);
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    Pair<TextRange, PsiMember> rangeAndMember = createMember(file);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiErrorElement element, @NotNull ModPsiUpdater updater) {
+    PsiFile file = element.getContainingFile();
+    MemberInfo rangeAndMember = createMember(file, element);
     if (rangeAndMember == null) return;
     Document document = file.getViewProvider().getDocument();
-    TextRange memberRange = rangeAndMember.getFirst();
-    PsiMember member = rangeAndMember.getSecond();
+    TextRange memberRange = rangeAndMember.range();
+    PsiMember member = rangeAndMember.member();
     PsiClass psiClass = getPsiClass(file, member);
     if (psiClass == null) return;
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    if (psiClass.getContainingFile() != file) {
+      psiClass = (PsiClass)file.add(psiClass);
+    }
+    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(context.project());
     documentManager.doPostponedOperationsAndUnblockDocument(document);
     SmartPsiElementPointer<PsiClass> classPtr = SmartPointerManager.createPointer(psiClass);
     document.deleteString(memberRange.getStartOffset(), memberRange.getEndOffset());
@@ -61,12 +60,7 @@ public class MoveMemberIntoClassFix extends LocalQuickFixAndIntentionActionOnPsi
     PsiClass psiClass = ContainerUtil.find(javaFile.getClasses(), c -> className.equals(c.getName()));
     if (psiClass != null) return psiClass;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
-    return (PsiClass)file.add(createClass(factory, className, member));
-  }
-
-  @Override
-  public @NotNull String getText() {
-    return getFamilyName();
+    return createClass(factory, className, member);
   }
 
   @Override
@@ -86,25 +80,25 @@ public class MoveMemberIntoClassFix extends LocalQuickFixAndIntentionActionOnPsi
     }
     return factory.createInterface(className);
   }
+  
+  record MemberInfo(@NotNull TextRange range, @NotNull PsiMember member) {}
 
-  private @Nullable Pair<@NotNull TextRange, @NotNull PsiMember> createMember(@NotNull PsiFile file) {
-    PsiErrorElement errorElement = ObjectUtils.tryCast(getStartElement(), PsiErrorElement.class);
-    if (errorElement == null) return null;
+  private static @Nullable MemberInfo createMember(@NotNull PsiFile file, @NotNull PsiErrorElement errorElement) {
     MemberModel model = MemberModel.create(errorElement);
     if (model == null) return null;
     TextRange memberRange = model.textRange();
     String memberText = memberRange.substring(file.getText());
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(file.getProject());
     MemberModel.MemberType memberType = model.memberType();
-    return Pair.create(memberRange, memberType.create(factory, memberText, file));
+    return new MemberInfo(memberRange, memberType.create(factory, memberText, file));
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    Pair<TextRange, PsiMember> member = createMember(file);
-    if (member == null || !(member.getSecond() instanceof PsiNamedElement)) return IntentionPreviewInfo.EMPTY;
-    PsiClass psiClass = getPsiClass(file, member.getSecond());
+  protected @NotNull IntentionPreviewInfo generatePreview(ActionContext context, PsiErrorElement element) {
+    MemberInfo info = createMember(context.file(), element);
+    if (info == null || !(info.member() instanceof PsiNamedElement member)) return IntentionPreviewInfo.EMPTY;
+    PsiClass psiClass = getPsiClass(context.file(), info.member());
     if (psiClass == null) return IntentionPreviewInfo.EMPTY;
-    return IntentionPreviewInfo.movePsi((PsiNamedElement)member.getSecond(), psiClass);
+    return IntentionPreviewInfo.movePsi(member, psiClass);
   }
 }

@@ -94,7 +94,7 @@ public final class UrlUtil {
       }
       return paths;
     }
-    catch (RuntimeException e) {
+    catch (IOException | RuntimeException e) {
       throw e;
     }
     catch (Exception e) {

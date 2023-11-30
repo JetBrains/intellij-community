@@ -18,7 +18,7 @@ import java.util.List;
 public final class BalloonLayoutData {
   public String groupId;
   public String id;
-  @Nullable public String displayId;
+  public @Nullable String displayId;
   public MergeInfo mergeData;
 
   public boolean showFullContent;
@@ -53,28 +53,24 @@ public final class BalloonLayoutData {
 
   public Type collapseType = Type.Timeline;
 
-  @NotNull
-  public static BalloonLayoutData createEmpty() {
+  public static @NotNull BalloonLayoutData createEmpty() {
     BalloonLayoutData layoutData = new BalloonLayoutData();
     layoutData.groupId = "";
     layoutData.showSettingButton = false;
     return layoutData;
   }
 
-  @NotNull
-  public static Ref<BalloonLayoutData> fullContent() {
+  public static @NotNull Ref<BalloonLayoutData> fullContent() {
     BalloonLayoutData layoutData = createEmpty();
     layoutData.showFullContent = true;
     return new Ref<>(layoutData);
   }
 
-  @NotNull
-  public MergeInfo merge() {
+  public @NotNull MergeInfo merge() {
     return new MergeInfo(mergeData, new ID(id, displayId));
   }
 
-  @NotNull
-  public List<String> getMergeIds() {
+  public @NotNull List<String> getMergeIds() {
     List<ID> linkIds = mergeData.linkIds;
     List<String> ids = new ArrayList<>(linkIds.size());
     for (ID linkId : linkIds) {
@@ -84,9 +80,9 @@ public final class BalloonLayoutData {
     return ids;
   }
 
-  public static class ID {
-    @NotNull final String notificationId;
-    @Nullable final String notificationDisplayId;
+  public static final class ID {
+    final @NotNull String notificationId;
+    final @Nullable String notificationDisplayId;
 
     public ID(@NotNull String notificationId, @Nullable String notificationDisplayId) {
       this.notificationId = notificationId;
@@ -94,7 +90,7 @@ public final class BalloonLayoutData {
     }
   }
 
-  public static class MergeInfo {
+  public static final class MergeInfo {
     public List<ID> linkIds;
     public int count;
 

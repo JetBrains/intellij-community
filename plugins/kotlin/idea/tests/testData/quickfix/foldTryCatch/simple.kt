@@ -9,3 +9,4 @@ fun foo() {
         <caret>x = 2
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.LiftAssignmentOutOfTryFix

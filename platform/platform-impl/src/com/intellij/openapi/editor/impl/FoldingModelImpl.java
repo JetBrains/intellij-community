@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IntPair;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -46,6 +48,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private static final Key<Boolean> DO_NOT_NOTIFY = Key.create("do.not.notify.on.region.disposal");
 
   static final Key<Boolean> HIDE_GUTTER_RENDERER_FOR_COLLAPSED = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED");
+
+  public static final Key<Boolean> ZOMBIE_REGION_KEY = Key.create("zombie fold region");
 
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -69,6 +73,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
 
   final Set<CustomFoldRegionImpl> myAffectedCustomRegions = new HashSet<>();
+
+  private final AtomicBoolean isZombieRaised = new AtomicBoolean();
 
   FoldingModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -197,7 +203,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   private static void assertIsDispatchThreadForEditor() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
   }
   private static void assertReadAccess() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -381,7 +387,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   void removeRegionFromTree(@NotNull FoldRegionImpl region) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (!myEditor.getFoldingModel().isInBatchFoldingOperation()) {
       LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
     }
@@ -801,6 +807,11 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
     return myExpansionCounter.get();
   }
 
+  @ApiStatus.Internal
+  public AtomicBoolean getIsZombieRaised() {
+    return isZombieRaised;
+  }
+
   @TestOnly
   void validateState() {
     Document document = myEditor.getDocument();
@@ -956,7 +967,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
       }
     }
 
-    private class FRNode extends RangeMarkerTree.RMNode<FoldRegionImpl> {
+    private final class FRNode extends RangeMarkerTree.RMNode<FoldRegionImpl> {
       static final byte CUSTOM_FLAG = STICK_TO_RIGHT_FLAG<<1;
 
       private FRNode(@NotNull RangeMarkerTree<FoldRegionImpl> rangeMarkerTree, @NotNull FoldRegionImpl key, int start, int end) {

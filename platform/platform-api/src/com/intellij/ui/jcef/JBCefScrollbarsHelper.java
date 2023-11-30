@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,9 +45,7 @@ public final class JBCefScrollbarsHelper {
   }
 
   public static @NotNull String buildScrollbarsStyle() {
-    var backgroundColor = getCssColor(ScrollBarPainter.BACKGROUND);
-    var trackColor = getCssColor(ScrollBarPainter.TRACK_OPAQUE_BACKGROUND);
-    var trackHoveredColor = getCssColor(ScrollBarPainter.TRACK_OPAQUE_HOVERED_BACKGROUND);
+    final String transparent = "rgba(0, 0, 0, 0)";
 
     var thumbColor = getCssColor(ScrollBarPainter.THUMB_OPAQUE_BACKGROUND);
     var thumbHoveredColor = getCssColor(ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND);
@@ -64,7 +63,7 @@ public final class JBCefScrollbarsHelper {
     }
 
     int trackSizePx = getTrackSizePx();
-    int thumbPaddingPx = getThumbPuddingPx();
+    int thumbPaddingPx = getThumbPaddingPx();
     int thumbRadiusPx = getThumbRadiusPx();
 
     return
@@ -76,21 +75,21 @@ public final class JBCefScrollbarsHelper {
             height: %dpx;
             background-color: %s;
           }
-          """, trackSizePx, trackSizePx, backgroundColor) +
+          """, trackSizePx, trackSizePx, transparent) +
       String.format(
         Locale.ROOT,
         """
           ::-webkit-scrollbar-track {
             background-color: %s;
           }
-          """, trackColor) +
+          """, transparent) +
       String.format(
         Locale.ROOT,
         """
           ::-webkit-scrollbar-track:hover {
             background-color: %s;
           }
-          """, trackHoveredColor) +
+          """, transparent) +
       String.format(
         Locale.ROOT,
         """
@@ -104,7 +103,7 @@ public final class JBCefScrollbarsHelper {
             outline: 1px solid %s;
             outline-offset: -%dpx;
           }
-          """, thumbColor, thumbRadiusPx, thumbPaddingPx, trackColor, thumbBorderColor, thumbPaddingPx) +
+          """, thumbColor, thumbRadiusPx, thumbPaddingPx, transparent, thumbBorderColor, thumbPaddingPx) +
       String.format(
         Locale.ROOT,
         """
@@ -118,14 +117,14 @@ public final class JBCefScrollbarsHelper {
             outline: 1px solid %s;
             outline-offset: -%dpx;
           }
-          """, thumbHoveredColor, thumbRadiusPx, thumbPaddingPx, trackColor, thumbBorderHoveredColor, thumbPaddingPx) +
+          """, thumbHoveredColor, thumbRadiusPx, thumbPaddingPx, transparent, thumbBorderHoveredColor, thumbPaddingPx) +
       String.format(
         Locale.ROOT,
         """
           ::-webkit-scrollbar-corner {
             background-color: %s;
           }
-          """, backgroundColor) +
+          """, transparent) +
       """
         ::-webkit-scrollbar-button {
           display:none;
@@ -154,13 +153,13 @@ public final class JBCefScrollbarsHelper {
 
     final int thumbBorderWidthPx = 1;
     int trackSizePx = getTrackSizePx();
-    int thumbPaddingPx = getThumbPuddingPx();
+    int thumbPaddingPx = getThumbPaddingPx();
     int thumbRadiusPx = getThumbRadiusPx();
+    int thumbSizePercent = 100;
 
     return ".os-scrollbar {\n" +
            "  --os-size: " + trackSizePx + "px;\n" +
-           "  --os-padding-perpendicular: " + thumbPaddingPx + "px;\n" +
-           "  --os-padding-axis: " + thumbPaddingPx + "px;\n" +
+           "  --os-padding-perpendicular: " + (thumbPaddingPx + thumbBorderWidthPx) + "px;\n" +
            "  --os-handle-border-radius: " + thumbRadiusPx + "px;\n" +
            "  --os-track-border-radius: 0;" +
 
@@ -171,6 +170,9 @@ public final class JBCefScrollbarsHelper {
            "  --os-handle-bg: " + thumbColor + ";\n" +
            "  --os-handle-bg-active: " + thumbColor + ";\n" +
            "  --os-handle-bg-hover: " + thumbHoveredColor + ";\n" +
+           "  --os-handle-perpendicular-size: " + thumbSizePercent + "%;\n" +
+           "  --os-handle-perpendicular-size-hover: " + thumbSizePercent + "%;\n" +
+           "  --os-handle-perpendicular-size-active: " + thumbSizePercent + "%;\n" +
            "}\n" +
            ".os-scrollbar-handle {" +
            "  outline: " + thumbBorderWidthPx + "px solid " + thumbBorderColor + ";\n" +
@@ -188,7 +190,7 @@ public final class JBCefScrollbarsHelper {
     return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 14 : 10) * UISettingsUtils.getInstance().getCurrentIdeScale());
   }
 
-  private static int getThumbPuddingPx() {
+  private static int getThumbPaddingPx() {
     return (int)(JBCefApp.normalizeScaledSize(SystemInfo.isMac ? 3 : 1) * UISettingsUtils.getInstance().getCurrentIdeScale());
   }
 
@@ -198,6 +200,10 @@ public final class JBCefScrollbarsHelper {
 
 
   private static @Nullable Integer getScrollbarAlpha(ColorKey colorKey) {
+    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred() || !UISettings.getInstance().getUseContrastScrollbars()) {
+      return null;
+    }
+
     final var contrastElementsKeys = List.of(
       ScrollBarPainter.THUMB_OPAQUE_FOREGROUND,
       ScrollBarPainter.THUMB_OPAQUE_BACKGROUND,
@@ -209,7 +215,9 @@ public final class JBCefScrollbarsHelper {
       ScrollBarPainter.THUMB_HOVERED_BACKGROUND
     );
 
-    if (!UISettings.getShadowInstance().getUseContrastScrollbars() || !contrastElementsKeys.contains(colorKey)) return null;
+    if (!contrastElementsKeys.contains(colorKey)) {
+      return null;
+    }
 
     int lightAlpha = SystemInfo.isMac ? 120 : 160;
     int darkAlpha = SystemInfo.isMac ? 255 : 180;
@@ -226,7 +234,7 @@ public final class JBCefScrollbarsHelper {
     Color color = ObjectUtils.notNull(colorsScheme.getColor(key), key.getDefaultColor());
     double alpha = ObjectUtils.notNull(getScrollbarAlpha(key), color.getAlpha()) / 255.0;
 
-    return String.format(Locale.ROOT, "rgba(%d, %d, %d, %f)", color.getRed(), color.getBlue(), color.getBlue(), alpha);
+    return String.format(Locale.ROOT, "rgba(%d, %d, %d, %f)", color.getRed(), color.getGreen(), color.getBlue(), alpha);
   }
 
   private static @NotNull String readResource(@NotNull String path) {

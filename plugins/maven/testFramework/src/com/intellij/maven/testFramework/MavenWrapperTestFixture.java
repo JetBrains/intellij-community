@@ -7,8 +7,9 @@ import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import org.apache.maven.wrapper.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.project.BundledMaven3;
+import org.jetbrains.idea.maven.project.MavenInSpecificPath;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
-import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
 import java.net.SocketException;
@@ -100,10 +101,11 @@ public class MavenWrapperTestFixture {
   }
 
   public void setUp() throws Exception {
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(getMavenHome().getAbsolutePath());
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings()
+      .setMavenHomeNoFire(new MavenInSpecificPath(getMavenHome().getAbsolutePath()));
   }
 
   public void tearDown() throws Exception {
-    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+    MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().getGeneralSettings().setMavenHomeNoFire(BundledMaven3.INSTANCE);
   }
 }

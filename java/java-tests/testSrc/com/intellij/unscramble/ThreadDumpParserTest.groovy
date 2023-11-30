@@ -376,11 +376,11 @@ Thread 7381: (state = BLOCKED)
     PlatformTestUtil.startPerformanceTest('parsing spaces', 100, {
       def threads = ThreadDumpParser.parse(spaces)
       assert threads.empty
-    }).assertTiming()
+    }).assertTimingAsSubtest()
+    
     PlatformTestUtil.startPerformanceTest('parsing letters', 100, {
       def threads = ThreadDumpParser.parse(letters)
       assert threads.empty
-    }).assertTiming()
+    }).assertTimingAsSubtest()
   }
-
 }

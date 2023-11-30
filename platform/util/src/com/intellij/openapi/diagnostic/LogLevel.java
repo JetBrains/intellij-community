@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diagnostic;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.logging.Level;
 
 public enum LogLevel {
@@ -24,5 +26,13 @@ public enum LogLevel {
 
   public String getLevelName() {
     return myLevel.getName();
+  }
+
+  public @NotNull String getPrettyLevelName() {
+    return getPrettyLevelName(myLevel);
+  }
+
+  static @NotNull String getPrettyLevelName(@NotNull Level level) {
+    return level == Level.WARNING ? "WARN" : level.getName();
   }
 }

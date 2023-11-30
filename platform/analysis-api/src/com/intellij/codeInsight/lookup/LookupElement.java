@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
@@ -36,8 +36,7 @@ public abstract class LookupElement extends UserDataHolderBase {
   /**
    * @return the string which will be inserted into the editor when this lookup element is chosen
    */
-  @NotNull
-  public abstract String getLookupString();
+  public abstract @NotNull String getLookupString();
 
   /**
    * @return a set of strings which will be matched against the prefix typed by the user.
@@ -53,8 +52,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * @return some object that this lookup element represents, often a {@link PsiElement} or another kind of symbol.
    * This is mostly used by extensions analyzing the lookup elements, e.g. for sorting purposes.
    */
-  @NotNull
-  public Object getObject() {
+  public @NotNull Object getObject() {
     return this;
   }
 
@@ -62,8 +60,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * @return a PSI element associated with this lookup element. It's used for navigation, showing quick documentation and sorting by proximity to the current location.
    * The default implementation tries to extract PSI element from {@link #getObject()} result.
    */
-  @Nullable
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     Object o = getObject();
     if (o instanceof PsiElement) {
       return (PsiElement)o;
@@ -151,8 +148,7 @@ public abstract class LookupElement extends UserDataHolderBase {
   }
 
   /** Prefer to use {@link #as(Class)} */
-  @Nullable
-  public <T> T as(@NotNull ClassConditionKey<T> conditionKey) {
+  public @Nullable <T> T as(@NotNull ClassConditionKey<T> conditionKey) {
     //noinspection unchecked
     return conditionKey.isInstance(this) ? (T)this : null;
   }
@@ -161,8 +157,7 @@ public abstract class LookupElement extends UserDataHolderBase {
    * Return the first element of the given class in a {@link LookupElementDecorator} wrapper chain.
    * If this object is not a decorator, return it if it's instance of the given class, otherwise null.
    */
-  @Nullable
-  public <T> T as(@NotNull Class<T> clazz) {
+  public @Nullable <T> T as(@NotNull Class<T> clazz) {
     //noinspection unchecked
     return clazz.isInstance(this) ? (T) this : null;
   }

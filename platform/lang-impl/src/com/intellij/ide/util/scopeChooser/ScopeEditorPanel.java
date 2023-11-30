@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.icons.AllIcons;
@@ -32,6 +32,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -91,6 +92,8 @@ public final class ScopeEditorPanel implements Disposable {
   private final MyAction myExcludeRec = new MyAction("button.exclude.recursively", this::excludeSelected);
 
   interface SettingsChangedListener {
+
+    @Topic.ProjectLevel
     Topic<SettingsChangedListener> TOPIC = new Topic<>(SettingsChangedListener.class, Topic.BroadcastDirection.TO_CHILDREN);
     void settingsChanged();
   }
@@ -109,7 +112,7 @@ public final class ScopeEditorPanel implements Disposable {
     myTreeToolbar.setLayout(new BorderLayout());
     myTreeToolbar.add(createTreeToolbar(), BorderLayout.WEST);
 
-    myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree, myProject);
+    myTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myPackageTree);
 
     myTreeMarker = new Marker() {
       @Override
@@ -448,7 +451,7 @@ public final class ScopeEditorPanel implements Disposable {
   }
   
   private void rebuild(final boolean updateText, @Nullable final Runnable runnable, final boolean requestFocus, final int delayMillis) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myRebuildRequired = false;
     cancelCurrentProgress();
     PanelProgressIndicator progress = createProgressIndicator(requestFocus);
@@ -508,7 +511,7 @@ public final class ScopeEditorPanel implements Disposable {
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillExpand(TreeExpansionEvent event) {
-        ((PackageDependenciesNode)event.getPath().getLastPathComponent()).sortChildren();
+        ((PackageDependenciesNode)event.getPath().getLastPathComponent()).updateAndSortChildren();
       }
 
       @Override
@@ -536,7 +539,7 @@ public final class ScopeEditorPanel implements Disposable {
         try {
           myTreeExpansionMonitor.freeze();
           final TreeModel model = PatternDialectProvider.getInstance(DependencyUISettings.getInstance().SCOPE_TYPE).createTreeModel(myProject, myTreeMarker);
-          ((PackageDependenciesNode)model.getRoot()).sortChildren();
+          ((PackageDependenciesNode)model.getRoot()).updateAndSortChildren();
           if (myErrorMessage == null) {
             String message = IdeBundle.message("label.scope.contains.files", model.getMarkedFileCount(), model.getTotalFileCount());
             myMatchingCountLabel.setText(message);
@@ -570,7 +573,7 @@ public final class ScopeEditorPanel implements Disposable {
   }
 
   public void cancelCurrentProgress(){
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myUpdateAlarm.cancel(false);
     if (myCurrentProgress != null) {
       myCurrentProgress.cancel();
@@ -616,7 +619,7 @@ public final class ScopeEditorPanel implements Disposable {
     FileTreeModelBuilder.clearCaches(myProject);
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     private static final Color WHOLE_INCLUDED = new JBColor(new Color(10, 119, 0), new Color(0xA5C25C));
     private static final Color PARTIAL_INCLUDED = new JBColor(new Color(0, 50, 160), DarculaColors.BLUE);
 
@@ -708,7 +711,7 @@ public final class ScopeEditorPanel implements Disposable {
     }
   }
 
-  protected class MyPanelProgressIndicator extends PanelProgressIndicator {
+  protected final class MyPanelProgressIndicator extends PanelProgressIndicator {
     private final boolean myRequestFocus;
 
     public MyPanelProgressIndicator(final boolean requestFocus) {

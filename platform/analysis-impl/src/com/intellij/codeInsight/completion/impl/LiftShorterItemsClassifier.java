@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -77,9 +77,8 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull ProcessingContext context) {
+  public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull ProcessingContext context) {
     return liftShorterElements(source, null, context);
   }
 
@@ -94,9 +93,8 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
     return new LiftingIterable(srcSet, context, source, lifted);
   }
 
-  @NotNull
   @Override
-  public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
+  public @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
     Set<LookupElement> lifted = new ReferenceOpenHashSet<>();
     Iterable<LookupElement> iterable = liftShorterElements(ContainerUtil.newArrayList(items), lifted, context);
     return ContainerUtil.map(iterable, element -> new Pair<>(element, lifted.contains(element)));
@@ -178,8 +176,7 @@ public final class LiftShorterItemsClassifier extends Classifier<LookupElement> 
           return singleton.iterator();
         }
 
-        @Nullable
-        private List<LookupElement> addShorterElements(@Nullable Collection<LookupElement> from) {
+        private @Nullable List<LookupElement> addShorterElements(@Nullable Collection<LookupElement> from) {
           List<LookupElement> toLift = null;
           if (from == null) {
             return null;

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.timeline
 
-import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.util.bindChildIn
@@ -32,6 +31,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.PathUtil
+import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
@@ -39,6 +39,7 @@ import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -51,10 +52,12 @@ import javax.swing.JPanel
 
 object TimelineDiffComponentFactory {
 
-  fun createDiffComponent(project: Project, editorFactory: EditorFactory,
-                          patchHunk: PatchHunk,
-                          anchor: DiffLineLocation,
-                          anchorStart: DiffLineLocation?): JComponent {
+  fun createDiffComponentIn(cs: CoroutineScope,
+                            project: Project,
+                            editorFactory: EditorFactory,
+                            patchHunk: PatchHunk,
+                            anchor: DiffLineLocation,
+                            anchorStart: DiffLineLocation?): JComponent {
     val truncatedHunk = truncateHunk(patchHunk, anchor, anchorStart)
 
     val anchorLineIndex = PatchHunkUtil.findHunkLineIndex(truncatedHunk, anchor)
@@ -69,64 +72,54 @@ object TimelineDiffComponentFactory {
       LineRange(anchorLineIndex, anchorLineIndex + 1)
     }
 
-    return createDiffComponent(project, editorFactory, truncatedHunk, anchorRange)
+    return createDiffComponentIn(cs, project, editorFactory, truncatedHunk, anchorRange)
   }
 
-  fun createDiffComponent(project: Project,
-                          editorFactory: EditorFactory,
-                          patchHunk: PatchHunk,
-                          anchorLineRange: LineRange?): JComponent {
+  fun createDiffComponentIn(cs: CoroutineScope,
+                            project: Project,
+                            editorFactory: EditorFactory,
+                            patchHunk: PatchHunk,
+                            anchorLineRange: LineRange?): JComponent {
     if (patchHunk.lines.any { it.type != PatchLine.Type.CONTEXT }) {
       val appliedSplitHunks = GenericPatchApplier.SplitHunk.read(patchHunk).map {
         AppliedTextPatch.AppliedSplitPatchHunk(it, -1, -1, AppliedTextPatch.HunkStatus.NOT_APPLIED)
       }
 
-      val builder = PatchChangeBuilder()
-      builder.exec(appliedSplitHunks)
+      val state = PatchChangeBuilder().buildFromApplied(appliedSplitHunks)
 
-      val patchContent = builder.patchContent.removeSuffix("\n")
+      val patchContent = state.patchContent.removeSuffix("\n")
 
-      return createDiffComponent(project, editorFactory, patchContent) { editor ->
-        editor.gutter.apply {
-          setLineNumberConverter(LineNumberConverterAdapter(builder.lineConvertor1.createConvertor()),
-                                 LineNumberConverterAdapter(builder.lineConvertor2.createConvertor()))
+      return createDiffEditorIn(cs, project, editorFactory, patchContent).apply {
+        gutter.setLineNumberConverter(LineNumberConverterAdapter(state.lineConvertor1.createConvertor()),
+                                      LineNumberConverterAdapter(state.lineConvertor2.createConvertor()))
+
+
+        state.hunks.forEach { hunk ->
+          DiffDrawUtil.createUnifiedChunkHighlighters(this, hunk.patchDeletionRange, hunk.patchInsertionRange, null)
         }
-
-        builder.hunks.forEach { hunk ->
-          DiffDrawUtil.createUnifiedChunkHighlighters(editor,
-                                                      hunk.patchDeletionRange,
-                                                      hunk.patchInsertionRange,
-                                                      null)
-        }
-        anchorLineRange?.let { highlightAnchor(editor, it) }
-      }
+        anchorLineRange?.let { highlightAnchor(it) }
+      }.component
     }
     else {
       val patchContent = patchHunk.text.removeSuffix("\n")
 
-      return createDiffComponent(project, editorFactory, patchContent) { editor ->
-        editor.gutter.apply {
-          setLineNumberConverter(
-            LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineBefore },
-            LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineAfter }
-          )
-        }
-        anchorLineRange?.let { highlightAnchor(editor, it) }
-      }
+      return createDiffEditorIn(cs, project, editorFactory, patchContent).apply {
+        gutter.setLineNumberConverter(LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineBefore },
+                                      LineNumberConverter.Increasing { _, line -> line + patchHunk.startLineAfter })
+        anchorLineRange?.let { highlightAnchor(it) }
+      }.component
     }
   }
 
-  private fun highlightAnchor(editor: EditorEx, lineRange: LineRange) {
-    DiffDrawUtil.createHighlighter(editor, lineRange.start, lineRange.end, AnchorLine, false)
+  private fun Editor.highlightAnchor(lineRange: LineRange) {
+    DiffDrawUtil.createHighlighter(this, lineRange.start, lineRange.end, AnchorLine, false)
   }
 
   object AnchorLine : TextDiffType {
     override fun getName() = "Comment Anchor Line"
 
-    override fun getColor(editor: Editor?): Color = JBColor.namedColor(
-      "Review.Timeline.Thread.Diff.AnchorLine",
-      JBColor(0xFBF1D1, 0x544B2D)
-    )
+    override fun getColor(editor: Editor?): Color = JBColor.namedColor("Review.Timeline.Thread.Diff.AnchorLine",
+                                                                       JBColor(0xFBF1D1, 0x544B2D))
 
     override fun getIgnoredColor(editor: Editor?) = getColor(editor)
     override fun getMarkerColor(editor: Editor?) = getColor(editor)
@@ -156,18 +149,12 @@ object TimelineDiffComponentFactory {
     return PatchHunkUtil.truncateHunkAfter(hunk, endIdx)
   }
 
-  fun createDiffComponent(project: Project, editorFactory: EditorFactory,
-                          text: CharSequence, modifyEditor: (EditorEx) -> Unit): JComponent =
-    EditorHandlerPanel.create(editorFactory) { factory ->
-      val editor = createSimpleDiffEditor(project, factory, text)
-      modifyEditor(editor)
-      editor
-    }
-
-  private fun createSimpleDiffEditor(project: Project, editorFactory: EditorFactory, text: CharSequence): EditorEx {
-    return (editorFactory.createViewer(editorFactory.createDocument(text), project, EditorKind.DIFF) as EditorEx).apply {
+  fun createDiffEditorIn(cs: CoroutineScope, project: Project, editorFactory: EditorFactory, text: CharSequence): Editor {
+    val document = editorFactory.createDocument(text)
+    val editor = (editorFactory.createViewer(document, project, EditorKind.DIFF) as EditorEx).apply {
       gutterComponentEx.setPaintBackground(false)
 
+      setRendererMode(true)
       setHorizontalScrollbarVisible(true)
       setVerticalScrollbarVisible(false)
       setCaretEnabled(false)
@@ -177,6 +164,7 @@ object TimelineDiffComponentFactory {
       setBorder(JBUI.Borders.empty())
 
       settings.apply {
+        isShowIntentionBulb = false
         isCaretRowShown = false
         additionalLinesCount = 0
         additionalColumnsCount = 0
@@ -190,6 +178,10 @@ object TimelineDiffComponentFactory {
         lineCursorWidth = 1
       }
     }
+    cs.awaitCancellationAndInvoke {
+      editorFactory.releaseEditor(editor)
+    }
+    return editor
   }
 
   fun createDiffWithHeader(cs: CoroutineScope,
@@ -225,13 +217,14 @@ object TimelineDiffComponentFactory {
 
     return RoundedPanel(ListLayout.vertical(0), 8).apply {
       add(cs.createFileNameComponent(filePath, expandCollapseButton, fileNameClickListener))
-      CollaborationToolsUIUtil.overrideUIDependentProperty(this) {
-        background = EditorColorsManager.getInstance().globalScheme.defaultBackground
+      background = JBColor.lazy {
+        val scheme = EditorColorsManager.getInstance().globalScheme
+        scheme.defaultBackground
       }
 
-      bindChildIn(cs, collapseVm.collapsed) { collapsed ->
+      bindChildIn(cs, collapseVm.collapsed.distinctUntilChanged()) { collapsed ->
         if (collapsed) return@bindChildIn null
-        diffComponentFactory(cs).apply {
+        diffComponentFactory().apply {
           border = IdeBorderFactory.createBorder(SideBorder.TOP)
         }
       }

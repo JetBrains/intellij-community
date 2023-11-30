@@ -5,3 +5,4 @@ fun foo(x: String?) {
 }
 
 fun bar(s: String) = s.hashCode()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SurroundWithNullCheckFix

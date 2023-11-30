@@ -3,3 +3,4 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces
 sealed class Sealed
 <caret>class SealedImpl : Sealed()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention

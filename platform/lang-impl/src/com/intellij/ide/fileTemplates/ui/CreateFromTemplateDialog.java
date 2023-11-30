@@ -53,14 +53,16 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     myTemplate = template;
     setTitle(IdeBundle.message("title.new.from.template", template.getName()));
 
-    myDefaultProperties = defaultProperties == null ? FileTemplateManager.getInstance(project).getDefaultProperties() : defaultProperties;
+    myDefaultProperties = FileTemplateManager.getInstance(project).getDefaultProperties();
     FileTemplateUtil.fillDefaultProperties(myDefaultProperties, directory);
+    if (defaultProperties != null) {
+      myDefaultProperties.putAll(defaultProperties);
+    }
     boolean mustEnterName = FileTemplateUtil.findHandler(template).isNameRequired();
     if (attributesDefaults != null && attributesDefaults.isFixedName()) {
       myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, attributesDefaults.getDefaultFileName());
       mustEnterName = false;
-    }
-    if (!template.getFileName().isEmpty()) {
+    } else if (!template.getFileName().isEmpty()) {
       String fileName = FileTemplateUtil.mergeTemplate(myDefaultProperties, template.getFileName(), false);
       try {
         String[] strings = FileTemplateUtil.calculateAttributes(fileName, myDefaultProperties, false, project);
@@ -129,7 +131,18 @@ public class CreateFromTemplateDialog extends DialogWrapper {
       for (FileTemplate child : myTemplate.getChildren()) {
         createFile(child.getFileName(), child, properties);
       }
-      String mainFileName = StringUtil.isEmpty(myTemplate.getFileName()) ? fileName : myTemplate.getFileName();
+
+      String mainFileName;
+      String templateFileName = myTemplate.getFileName();
+      String propertiesFileName = properties.getProperty(FileTemplate.ATTRIBUTE_FILE_NAME);
+      if (!StringUtil.isEmpty(templateFileName)) {
+        mainFileName = templateFileName;
+      } else if (!StringUtil.isEmpty(propertiesFileName)) {
+        mainFileName = propertiesFileName;
+      } else {
+        mainFileName = fileName;
+      }
+
       myCreatedElement = createFile(mainFileName, myTemplate, properties);
     }
     catch (Exception e) {

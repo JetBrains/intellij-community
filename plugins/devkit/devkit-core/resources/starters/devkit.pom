@@ -7,13 +7,13 @@
   <properties>
     <java.version>17</java.version>
     <kotlin.target>17</kotlin.target>
-    <gradle.version>8.1.1</gradle.version>
-    <kotlin.version>1.8.21</kotlin.version>
-    <gradle.intellij.version>1.13.3</gradle.intellij.version>
+    <gradle.version>8.5</gradle.version>
+    <kotlin.version>1.9.21</kotlin.version>
+    <gradle.intellij.version>1.16.0</gradle.intellij.version>
 
-    <intellij.version>2022.2.5</intellij.version>
-    <intellij.since.build>222</intellij.since.build>
-    <intellij.until.build>232.*</intellij.until.build>
+    <intellij.version>2023.1.5</intellij.version>
+    <intellij.since.build>231</intellij.since.build>
+    <intellij.until.build>241.*</intellij.until.build>
   </properties>
 
   <dependencyManagement>

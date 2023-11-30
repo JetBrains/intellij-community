@@ -41,8 +41,7 @@ public class HgUpdateDialog {
     myContentPanel = createCenterPanel();
   }
 
-  @NotNull
-  public JComponent getContentPanel() {
+  public @NotNull JComponent getContentPanel() {
     return myContentPanel;
   }
 
@@ -64,8 +63,7 @@ public class HgUpdateDialog {
     updateConfiguration.setShouldCommitAfterMerge(myCommitAfterMergeCheckBox.isSelected());
   }
 
-  @NotNull
-  public JComponent createCenterPanel() {
+  public @NotNull JComponent createCenterPanel() {
     String panelConstraints = "flowy, ins 0 0 0 10, fill";
     MigLayout migLayout = new MigLayout(panelConstraints);
     JPanel contentPane = new JPanel(migLayout);

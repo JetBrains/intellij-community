@@ -3,7 +3,7 @@ package com.intellij.ide.environment.impl
 
 import com.intellij.ide.environment.EnvironmentKey
 
-class EnvironmentConfiguration(private val map: Map<EnvironmentKey, String>) {
+class EnvironmentConfiguration(val map: Map<EnvironmentKey, String>) {
   companion object {
     val EMPTY : EnvironmentConfiguration = EnvironmentConfiguration(emptyMap())
   }

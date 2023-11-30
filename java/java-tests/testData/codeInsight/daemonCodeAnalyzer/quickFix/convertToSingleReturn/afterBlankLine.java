@@ -4,7 +4,8 @@ class Test {
         String result = null;
         try {
             Integer.parseInt(s);
-        } catch (NumberFormatException ex) {
+        }
+        catch (NumberFormatException ex) {
             result = "Cannot parse number";
         }
         if (result == null) {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +13,7 @@ import java.util.Arrays;
 /**
  * A sequence of bytes backed by byte array (or sub-array).
  */
-public class ByteArraySequence implements ByteSequence {
+public final class ByteArraySequence implements ByteSequence {
   public static final ByteArraySequence EMPTY = new ByteArraySequence(ArrayUtil.EMPTY_BYTE_ARRAY);
   private final byte[] myBytes;
   private final int myOffset;
@@ -113,6 +114,11 @@ public class ByteArraySequence implements ByteSequence {
   }
 
   public static @NotNull ByteArraySequence create(byte @NotNull [] bytes) {
-    return bytes.length == 0 ? ByteArraySequence.EMPTY : new ByteArraySequence(bytes);
+    return bytes.length == 0 ? EMPTY : new ByteArraySequence(bytes);
+  }
+
+  @Override
+  public String toString() {
+    return IOUtil.toHexString(toBytes());
   }
 }

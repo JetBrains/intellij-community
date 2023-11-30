@@ -8,3 +8,4 @@ class A {
 fun test(){
     A()::foo<caret>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

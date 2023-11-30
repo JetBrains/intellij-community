@@ -9,10 +9,11 @@ import com.intellij.openapi.actionSystem.IdeActions.ACTION_EXPAND_ALL
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TREE_EXPANDER
 import com.intellij.openapi.actionSystem.PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER
 import com.intellij.openapi.actionSystem.ex.ActionUtil.copyFrom
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.ui.ExperimentalUI
 
-class ExpandAllAction : DumbAwareAction {
+class ExpandAllAction : DumbAwareAction, ActionRemoteBehaviorSpecification.Frontend {
   private val getTreeExpander: (AnActionEvent) -> TreeExpander?
 
   constructor() : super() {

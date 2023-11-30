@@ -31,7 +31,7 @@ internal class ExpirableExecutorImpl private constructor(constraints: Array<Cont
                          expirationSet: Set<Expiration>): ExpirableExecutorImpl =
     ExpirableExecutorImpl(constraints, cancellationConditions, expirationSet, executor)
 
-  override fun dispatchLaterUnconstrained(runnable: Runnable) =
+  override fun dispatchLaterUnconstrained(runnable: Runnable): Unit =
     executor.execute(runnable)
 }
 

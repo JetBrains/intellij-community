@@ -67,7 +67,7 @@ public final class Disposer {
 
   /**
    * @return new {@link Disposable} instance which tracks its own invalidation.
-   * Please be aware of increased memory consumption due to storing extra flag for tracking invalidation.
+   * Please be aware of increased memory consumption due to storing an extra flag for tracking invalidation.
    */
   @Contract(pure = true, value = "->new")
   public static @NotNull CheckedDisposable newCheckedDisposable() {
@@ -162,7 +162,7 @@ public final class Disposer {
   }
 
   /**
-   * Registers child disposable under parent unless the parent has already been disposed
+   * Registers child disposable under a parent unless the parent has already been disposed
    * @return whether the registration succeeded
    */
   public static boolean tryRegister(@NotNull Disposable parent, @NotNull Disposable child) {
@@ -201,7 +201,7 @@ public final class Disposer {
   /**
    * @return true if {@code disposable} is disposed or being disposed (i.e., its {@link Disposable#dispose()} method is executing).
    * @deprecated This method relies on relatively short-living diagnostic information which is cleared (to free up memory) on certain events,
-   * for example on dynamic plugin unload or major GC run.<br/>
+   * for example, on dynamic plugin unload or major GC run.<br/>
    * Thus, it's not wise to rely on this method in your production-grade code.<br/>
    * Instead, please
    * <li>Avoid using this method by registering your disposable in the parent disposable hierarchy with {@link #register(Disposable, Disposable)}</li> or, failing that,
@@ -221,16 +221,6 @@ public final class Disposer {
   @Deprecated
   public static boolean isDisposed(@NotNull Disposable disposable) {
     return ourTree.isDisposed(disposable);
-  }
-
-  /**
-   * @deprecated use {@link #isDisposed(Disposable)} instead
-   */
-  @Deprecated
-  public static boolean isDisposing(@NotNull Disposable disposable) {
-    String message = "this method is deprecated and going to be removed soon. Please use isDisposed() instead";
-    Logger.getInstance(Disposer.class).error(message);
-    return isDisposed(disposable);
   }
 
   /**
@@ -261,6 +251,8 @@ public final class Disposer {
   }
 
   @ApiStatus.Internal
+  @VisibleForTesting
+  @SuppressWarnings("ClassEscapesDefinedScope")
   public static @NotNull ObjectTree getTree() {
     return ourTree;
   }

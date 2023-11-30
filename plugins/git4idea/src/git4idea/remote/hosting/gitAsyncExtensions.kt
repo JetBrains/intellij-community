@@ -4,10 +4,8 @@ package git4idea.remote.hosting
 import com.intellij.collaboration.api.ServerPath
 import com.intellij.dvcs.repo.VcsRepositoryManager
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.io.URLUtil
 import git4idea.remote.GitRemoteUrlCoordinates
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
@@ -16,8 +14,17 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.*
-import org.jetbrains.annotations.ApiStatus
-import java.net.URI
+
+fun GitRepository.changesSignalFlow(): Flow<Unit> = channelFlow {
+  project.messageBus
+    .connect(this)
+    .subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
+      if (it == this@changesSignalFlow) {
+        trySend(Unit)
+      }
+    })
+  awaitClose()
+}
 
 fun gitRemotesFlow(project: Project): Flow<Set<GitRemoteUrlCoordinates>> =
   callbackFlow {

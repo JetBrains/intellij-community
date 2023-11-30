@@ -5,16 +5,10 @@ package org.jetbrains.kotlin.idea.core
 import com.intellij.facet.FacetManager
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.PlatformModuleInfo
-
-@Deprecated("Use 'org.jetbrains.kotlin.idea.base.util.isAndroidModule' instead")
-fun Module.isAndroidModule(modelsProvider: IdeModifiableModelsProvider? = null): Boolean {
-    val facetModel = modelsProvider?.getModifiableFacetModel(this) ?: FacetManager.getInstance(this)
-    val facets = facetModel.allFacets
-    return facets.any { it.javaClass.simpleName == "AndroidFacet" }
-}
 
 @Deprecated("Use 'org.jetbrains.kotlin.idea.base.projectStructure.unwrapModuleSourceInfo()' instead")
 @Suppress("unused", "DEPRECATION", "DeprecatedCallableAddReplaceWith")

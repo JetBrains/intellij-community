@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class LibraryTypeServiceImpl extends LibraryTypeService {
+public final class LibraryTypeServiceImpl extends LibraryTypeService {
   private static final String DEFAULT_LIBRARY_NAME = "Unnamed";
 
   @Override

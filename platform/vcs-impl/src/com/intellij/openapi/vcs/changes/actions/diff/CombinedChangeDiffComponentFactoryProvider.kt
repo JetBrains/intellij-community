@@ -24,7 +24,7 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
 
       override fun getChanges(): ListSelection<out PresentableChange> {
         val changes =
-          if (model is CombinedDiffPreviewModel) model.iterateAllChanges().toList()
+          if (model is CombinedDiffPreviewModel) (model as CombinedDiffPreviewModel).iterateAllChanges().toList()
           else model.requests.values.filterIsInstance<PresentableChange>()
 
         val selected = viewer?.getCurrentBlockId() as? CombinedPathBlockId
@@ -39,7 +39,7 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
 
       override fun canNavigate(): Boolean {
         if (model is CombinedDiffPreviewModel) {
-          val allChanges = toListIfNotMany(model.iterateAllChanges(), true)
+          val allChanges = toListIfNotMany((model as CombinedDiffPreviewModel).iterateAllChanges(), true)
           return allChanges == null || allChanges.size > 1
         }
 
@@ -48,10 +48,11 @@ class CombinedChangeDiffComponentFactoryProvider : CombinedDiffComponentFactoryP
 
       override fun onSelected(change: PresentableChange) {
         if (model is CombinedDiffPreviewModel && change is Wrapper) {
-          model.selected = change
+          (model as CombinedDiffPreviewModel).selected = change
         }
         else {
-          viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true)
+          viewer?.selectDiffBlock(CombinedPathBlockId(change.filePath, change.fileStatus, change.tag), true,
+                                  CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK)
         }
       }
     }

@@ -1,19 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.projectRoots.AdditionalDataConfigurable
+import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SdkModel
+import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.lang.JavaVersion
+import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.junit.Assert
@@ -34,6 +43,8 @@ class JdkAutoTest : JavaCodeInsightFixtureTestCase() {
       val sdk = registerMockJdk(javaVersion)
       javaVersion.feature to sdk
     }.toMap()
+
+    registerSdkType(AnotherJavaSdkType(), testRootDisposable)
   }
 
   @Test
@@ -169,4 +180,42 @@ class JdkAutoTest : JavaCodeInsightFixtureTestCase() {
     override fun getSdkVersionStringPredicate() = mySdkVersionPredicate ?: super.getSdkVersionStringPredicate()
     override fun getSdkHomePredicate(): Predicate<String>?  = mySdkHomePredicate ?: super.getSdkHomePredicate()
   }
+
+  private fun registerSdkType(anotherJavaSdkType: AnotherJavaSdkType, disposable: Disposable) {
+    SdkType.EP_NAME.point.registerExtension(anotherJavaSdkType, disposable)
+  }
+
+  private class AnotherJavaSdkType : SdkType("AnotherJavaSdk"), JavaSdkType {
+    override fun suggestHomePath(): String? = null
+
+    override fun isValidSdkHome(path: String): Boolean = false
+
+    override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = ""
+
+    override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
+
+    override fun getPresentableName(): String = "AnotherJavaSdk"
+
+    override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {
+      additional.setAttribute("data", (additionalData as MockSdkAdditionalData).data)
+    }
+
+    override fun loadAdditionalData(additional: Element): SdkAdditionalData {
+      return MockSdkAdditionalData(additional.getAttributeValue("data") ?: "")
+    }
+
+    override fun getBinPath(sdk: Sdk): String {
+      TODO("Not yet implemented")
+    }
+
+    override fun getToolsPath(sdk: Sdk): String {
+      TODO("Not yet implemented")
+    }
+
+    override fun getVMExecutablePath(sdk: Sdk): String {
+      TODO("Not yet implemented")
+    }
+  }
+
+  private class MockSdkAdditionalData(var data: String) : SdkAdditionalData
 }

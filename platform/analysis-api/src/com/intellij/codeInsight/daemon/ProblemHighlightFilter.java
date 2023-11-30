@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -24,11 +24,11 @@ public abstract class ProblemHighlightFilter {
     return shouldHighlight(psiFile);
   }
 
-  public static boolean shouldHighlightFile(@NotNull final PsiFile psiFile) {
+  public static boolean shouldHighlightFile(final @NotNull PsiFile psiFile) {
     return shouldProcess(psiFile, true);
   }
 
-  public static boolean shouldProcessFileInBatch(@NotNull final PsiFile psiFile) {
+  public static boolean shouldProcessFileInBatch(final @NotNull PsiFile psiFile) {
     return shouldProcess(psiFile, false);
   }
 

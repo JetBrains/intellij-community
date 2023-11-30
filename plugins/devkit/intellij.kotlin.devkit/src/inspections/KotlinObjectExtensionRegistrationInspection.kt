@@ -9,6 +9,7 @@ import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.GenericDomValue
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase
@@ -48,6 +49,7 @@ internal class KotlinObjectExtensionRegistrationInspection : DevKitPluginXmlInsp
   }
 }
 
+@VisibleForTesting
 class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -66,6 +68,7 @@ class KotlinObjectRegisteredAsExtensionInspection : LocalInspectionTool() {
 
 private fun Extension.isAllowed(): Boolean {
   return allowedObjectRules.any { it.test(this) }
+         || this.extensionPoint?.effectiveQualifiedName == "com.intellij.statistics.counterUsagesCollector"
 }
 
 private val allowedObjectRules = listOf(

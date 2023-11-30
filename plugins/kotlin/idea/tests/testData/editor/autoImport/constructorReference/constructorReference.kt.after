@@ -1,0 +1,9 @@
+package main
+
+import pkg.A
+
+fun test() {
+    val p = ::A
+}
+
+// IGNORE_K2

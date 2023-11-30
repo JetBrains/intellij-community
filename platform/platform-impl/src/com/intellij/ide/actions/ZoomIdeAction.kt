@@ -10,13 +10,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.UIBundle
 
-abstract class ZoomIdeAction : AnAction(), DumbAware {
+abstract class ZoomIdeAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   protected val settingsUtils: UISettingsUtils = UISettingsUtils.getInstance()
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   protected fun fireUISettingsChanged() {
     IdeScaleIndicatorManager.indicateIfChanged {
@@ -65,7 +66,7 @@ internal class ResetIdeScaleAction : ZoomIdeAction() {
   }
 }
 
-private class SwitchIdeScaleAction : AnAction(), DumbAware {
+private class SwitchIdeScaleAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

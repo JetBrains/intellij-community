@@ -15,14 +15,13 @@
  */
 package com.intellij.java.slicer;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public abstract class SliceTestCase extends DaemonAnalyzerTestCase {
+public abstract class SliceTestCase extends LightJavaCodeInsightFixtureTestCase {
   @Override
-  protected Sdk getTestProjectJdk() {
-    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_7_ANNOTATED;
   }
 }

@@ -3,6 +3,7 @@ package com.intellij.openapi.application
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.diagnostic.VMOptions
+import com.intellij.ide.SpecialConfigFiles
 import com.intellij.ide.plugins.PluginBuilder
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
@@ -29,6 +29,9 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Predicate
+import kotlin.io.path.isDirectory
+import kotlin.io.path.readLines
+import kotlin.io.path.writeLines
 
 class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
   private val LOG = logger<ConfigImportHelperTest>()
@@ -139,16 +142,17 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldConfigDir = createConfigDir("2021.2")
     val newConfigDir = createConfigDir("2021.3")
 
-    val jdkFile = oldConfigDir.resolve("${ApplicationNamesInfo.getInstance().scriptName}.jdk")
-    val otherFile = oldConfigDir.resolve("other.xml")
-    Files.write(jdkFile, listOf("..."))
-    Files.write(otherFile, listOf("..."))
+    val jdkFile = Files.writeString(oldConfigDir.resolve("${ApplicationNamesInfo.getInstance().scriptName}.jdk"), "...")
+    val migrationOptionFile = Files.writeString(CustomConfigMigrationOption.getCustomConfigMarkerFilePath(oldConfigDir), "")
+    val lockFile = Files.writeString(oldConfigDir.resolve(SpecialConfigFiles.LOCK_FILE), "...")
+    val otherFile = Files.writeString(oldConfigDir.resolve("other.xml"), "...")
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
 
     assertThat(newConfigDir.resolve(jdkFile.fileName)).doesNotExist()
+    assertThat(newConfigDir.resolve(migrationOptionFile.fileName)).doesNotExist()
+    assertThat(newConfigDir.resolve(lockFile.fileName)).doesNotExist()
     assertThat(newConfigDir.resolve(otherFile.fileName)).hasSameBinaryContentAs(otherFile)
   }
 
@@ -162,10 +166,8 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       subdir.resolve("file2.txt")
     ).forEach { Files.write(it, listOf("...")) }
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     options.importSettings = object : ConfigImportSettings {
-      override fun importFinished(newConfigPath: Path, pathSelectorOfOtherIde: String?) {}
       override fun shouldSkipPath(path: Path) = path.endsWith("file1.txt")
     }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
@@ -183,8 +185,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir).isDirectoryContaining { it.fileName.toString() == "my-plugin.jar" }
   }
@@ -200,8 +201,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
     Registry.get("marketplace.certificate.signature.check").setValue(false, testRootDisposable) // skip verifying plugin certificates
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
 
@@ -230,8 +230,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
 
@@ -255,8 +254,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     options.bundledPluginPath = oldBundledPluginsDir
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir).doesNotExist()
@@ -272,8 +270,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     options.brokenPluginVersions = mapOf(PluginId.getId(builder.id) to setOf("1.0"))
 
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
@@ -301,8 +298,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.fileName.toString() == "my-plugin-1.1.jar" }
@@ -331,8 +327,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.downloadService = object : MarketplacePluginDownloadService() {
 
@@ -366,8 +361,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
     val newPluginsDir = newConfigDir.resolve("plugins")
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.fileName.toString() == tempBuilder.id && it.isDirectory() }
@@ -383,8 +377,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newPluginsDir = Files.createDirectories(newConfigDir.resolve("plugins"))
     val newPluginZip = Files.createFile(newPluginsDir.resolve("new-plugin.zip"))
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
 
     assertThat(newPluginsDir)
@@ -399,8 +392,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     Files.write(oldConfigDir.resolve(VMOptions.getFileName()), outlaws)
     val newConfigDir = localTempDir.newDirectory("newConfig").toPath()
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
 
     assertThat(newConfigDir.resolve(VMOptions.getFileName())).hasContent("-XX:MaxJavaStackTraceDepth=10000")
@@ -422,8 +414,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     Files.write(oldConfigDir.resolve(VMOptions.getFileName()), userOptions + commonOptions)
     val newConfigDir = createConfigDir("2021.3")
 
-    val options = ConfigImportHelper.ConfigImportOptions(LOG)
-    options.headless = true
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
 
     assertThat(newConfigDir.resolve(VMOptions.getFileName())).hasContent("-Xms512m\n-Xmx2g\n-XX:+UseZGC")
@@ -528,5 +519,39 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val current = createConfigDir(product = "Rider", version = "2022.1")
     val result = ConfigImportHelper.findConfigDirectories(current)
     assertThat(result.paths).isEmpty()
+  }
+
+  @Test fun `non-versioned directories are excluded_Rider`() {
+    createConfigDir(product = "RiderFlow", version = "", modern = true)
+    createConfigDir(product = "RiderRemoteDebugger", version = "", modern = true)
+    val current = createConfigDir(product = "Rider", version = "2023.2")
+    val result = ConfigImportHelper.findConfigDirectories(current)
+    assertThat(result.paths).isEmpty()
+  }
+
+  @Test fun `non-versioned directories are excluded_CLion`() {
+    createConfigDir(product = ".clion-vcpkg", version = "", modern = false) // was created at the user dir by older versions
+    createConfigDir(product = "CLionNova", version = "2023.2", modern = true) // "CLion" + RADLER_SUFFIX = "CLionNova"
+    val current = createConfigDir(product = "CLion", version = "2023.2")
+    val result = ConfigImportHelper.findConfigDirectories(current)
+    assertThat(result.paths).isEmpty()
+  }
+
+  @Suppress("SpellCheckingInspection")
+  @Test fun `merging VM options`() {
+    val oldConfigDir = createConfigDir(version = "2023.1")
+    val oldVmOptionsFile = oldConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx4g", "-Dsome.prop=old.val"))
+    val newConfigDir = createConfigDir(version = "2023.2")
+    val newVmOptionsFile = newConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx2048m", "-Dsome.prop=new.val"))
+    val options = ConfigImportHelper.ConfigImportOptions(LOG).apply { headless = true; mergeVmOptions = true }
+
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx4g", "-Dsome.prop=new.val")
+
+    oldVmOptionsFile.writeLines(listOf("-Xmx1g"))
+    newVmOptionsFile.writeLines(listOf("-Xmx2048m", "-Dunique.prop=some.val"))
+
+    ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
+    assertThat(newVmOptionsFile.readLines()).containsExactly("-Xmx2048m", "-Dunique.prop=some.val")
   }
 }

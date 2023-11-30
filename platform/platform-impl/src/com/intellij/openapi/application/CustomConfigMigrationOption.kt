@@ -1,14 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.io.delete
-import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.io.write
+import com.intellij.openapi.util.io.NioFiles
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.exists
 
 private val log = logger<CustomConfigMigrationOption>()
 
@@ -27,12 +25,13 @@ private val log = logger<CustomConfigMigrationOption>()
  */
 sealed class CustomConfigMigrationOption {
   @JvmOverloads
-  fun writeConfigMarkerFile(configDir: Path = PathManager.getConfigDir()) {
+  fun writeConfigMarkerFile(configDir: Path = PathManager.getOriginalConfigDir()) {
     val markerFile = getCustomConfigMarkerFilePath(configDir)
-    if (markerFile.exists()) {
+    if (Files.exists(markerFile)) {
       log.error("Marker file $markerFile shouldn't exist")
     }
-    markerFile.write(getStringPresentation())
+    NioFiles.createDirectories(markerFile.parent)
+    Files.writeString(markerFile, getStringPresentation(), Charsets.UTF_8)
   }
 
   abstract fun getStringPresentation(): String
@@ -41,37 +40,42 @@ sealed class CustomConfigMigrationOption {
 
   object StartWithCleanConfig : CustomConfigMigrationOption() {
     override fun getStringPresentation(): String = ""
-
     override fun toString(): String = "Start with clean config"
   }
 
   class MigrateFromCustomPlace(val location: Path) : CustomConfigMigrationOption() {
-    override fun getStringPresentation(): String = IMPORT_PREFIX + location.systemIndependentPath
+    override fun getStringPresentation(): String = IMPORT_PREFIX + location.toString().replace(File.separatorChar, '/')
   }
 
   class SetProperties(val properties: List<String>) : CustomConfigMigrationOption() {
     override fun getStringPresentation(): String = PROPERTIES_PREFIX + properties.joinToString(separator = " ")
   }
 
+  object MergeConfigs : CustomConfigMigrationOption() {
+    override fun getStringPresentation(): String = MERGE_CONFIGS_COMMAND
+  }
+
   companion object {
     private const val IMPORT_PREFIX = "import "
     private const val PROPERTIES_PREFIX = "properties "
+    private const val MERGE_CONFIGS_COMMAND = "merge-configs"
 
     @JvmStatic
     fun readCustomConfigMigrationOptionAndRemoveMarkerFile(configDir: Path): CustomConfigMigrationOption? {
       val markerFile = getCustomConfigMarkerFilePath(configDir)
-      if (!markerFile.exists()) return null
+      if (!Files.exists(markerFile)) return null
 
       try {
         val lines = Files.readAllLines(markerFile)
         if (lines.isEmpty()) return StartWithCleanConfig
+
         val line = lines.first()
         when {
           line.isEmpty() -> return StartWithCleanConfig
 
           line.startsWith(IMPORT_PREFIX) -> {
             val path = markerFile.fileSystem.getPath(line.removePrefix(IMPORT_PREFIX))
-            if (!path.exists()) {
+            if (!Files.exists(path)) {
               log.warn("$markerFile points to non-existent config: [$lines]")
               return null
             }
@@ -82,6 +86,8 @@ sealed class CustomConfigMigrationOption {
             val properties = line.removePrefix(PROPERTIES_PREFIX).split(' ')
             return SetProperties(properties)
           }
+
+          line == MERGE_CONFIGS_COMMAND -> return MergeConfigs
 
           else -> {
             log.error("Invalid format of $markerFile: $lines")
@@ -100,7 +106,7 @@ sealed class CustomConfigMigrationOption {
 
     private fun removeMarkerFile(markerFile: Path) {
       try {
-        markerFile.delete()
+        Files.delete(markerFile)
       }
       catch (e: Exception) {
         log.warn("Couldn't delete the custom config migration file $markerFile", e)
@@ -108,8 +114,6 @@ sealed class CustomConfigMigrationOption {
     }
 
     @VisibleForTesting
-    fun getCustomConfigMarkerFilePath(configDir: Path): Path {
-      return configDir.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)
-    }
+    fun getCustomConfigMarkerFilePath(configDir: Path): Path = configDir.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)
   }
 }

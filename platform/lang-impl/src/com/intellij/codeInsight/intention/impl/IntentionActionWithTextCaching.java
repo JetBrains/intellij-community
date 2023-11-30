@@ -16,11 +16,12 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-public class IntentionActionWithTextCaching
+public final class IntentionActionWithTextCaching
   implements Comparable<IntentionActionWithTextCaching>, PossiblyDumbAware, ShortcutProvider, IntentionActionDelegate {
   private static final Logger LOG = Logger.getInstance(IntentionActionWithTextCaching.class);
   private final List<IntentionAction> myOptionIntentions = new ArrayList<>();
@@ -41,17 +42,29 @@ public class IntentionActionWithTextCaching
   private final IntentionAction myAction;
   private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
+  @Nullable
+  private final String myToolId;
+  private final TextRange myProblemRange;
+
+  public IntentionActionWithTextCaching(@NotNull IntentionAction action) {
+    this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, null, (actWithText, act) -> {
+    });
+  }
 
   IntentionActionWithTextCaching(@NotNull IntentionAction action,
                                  @NlsContexts.PopupTitle String displayName,
                                  @Nullable Icon icon,
+                                 @Nullable String toolId,
+                                 TextRange problemRange,
                                  @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+    myToolId = toolId;
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
     LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
+    myProblemRange = problemRange;
   }
 
   public @NotNull @IntentionName String getText() {
@@ -115,7 +128,7 @@ public class IntentionActionWithTextCaching
     return Comparing.compare(getText(), other.getText());
   }
 
-  Icon getIcon() {
+  public Icon getIcon() {
     return myIcon;
   }
 
@@ -166,6 +179,23 @@ public class IntentionActionWithTextCaching
     return getActionClass(this) == getActionClass(other) && this.getText().equals(other.getText());
   }
 
+  @Nullable
+  public String getToolId() {
+    return myToolId;
+  }
+
+  public int getProblemOffset() {
+    return myProblemRange == null ? -1 : myProblemRange.getStartOffset();
+  }
+
+  /**
+   * @return <code>null</code> if the action belong to the problem at the caret offset
+   */
+  @Nullable
+  public TextRange getProblemRange() {
+    return myProblemRange;
+  }
+
   private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
     return IntentionActionDelegate.unwrap(o1.getAction()).getClass();
   }
@@ -176,8 +206,8 @@ public class IntentionActionWithTextCaching
   }
 
   // IntentionAction which wraps the original action and then marks it as executed to hide it from the popup to avoid invoking it twice accidentally
-  private class MyIntentionAction implements IntentionAction, CustomizableIntentionActionDelegate, Comparable<MyIntentionAction>,
-                                             ShortcutProvider, PossiblyDumbAware {
+  private final class MyIntentionAction implements IntentionAction, CustomizableIntentionActionDelegate, Comparable<MyIntentionAction>,
+                                                   ShortcutProvider, PossiblyDumbAware {
     private final IntentionAction myAction;
     private final @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> myMarkInvoked;
 
@@ -214,7 +244,7 @@ public class IntentionActionWithTextCaching
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      SlowOperations.allowSlowOperations(() -> myAction.invoke(project, editor, file));
+      myAction.invoke(project, editor, file);
       myMarkInvoked.accept(IntentionActionWithTextCaching.this, myAction);
     }
 

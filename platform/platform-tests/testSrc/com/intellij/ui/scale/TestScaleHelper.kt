@@ -6,14 +6,13 @@ package com.intellij.ui.scale
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JreHiDpiUtil
-import com.intellij.ui.icons.loadPng
+import com.intellij.ui.icons.loadRasterImage
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.setSystemScaleFactor
 import com.intellij.ui.scale.JBUIScale.setUserScaleFactor
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.svg.renderSvg
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.inputStream
 import org.junit.AfterClass
 import org.junit.Assume
 import org.junit.BeforeClass
@@ -26,6 +25,7 @@ import java.io.IOException
 import java.nio.file.Path
 import javax.imageio.ImageIO
 import javax.swing.JComponent
+import kotlin.io.path.inputStream
 import kotlin.math.ceil
 
 object TestScaleHelper {
@@ -151,7 +151,7 @@ object TestScaleHelper {
         return renderSvg(inputStream = inputStream, scale = scale, path = path)
       }
       else {
-        return loadPng(stream = inputStream)
+        return loadRasterImage(stream = inputStream)
       }
     }
   }
@@ -179,4 +179,3 @@ private class MyGraphicsConfiguration(scale: Double) : GraphicsConfiguration() {
 
   override fun getBounds(): Rectangle = Rectangle()
 }
-

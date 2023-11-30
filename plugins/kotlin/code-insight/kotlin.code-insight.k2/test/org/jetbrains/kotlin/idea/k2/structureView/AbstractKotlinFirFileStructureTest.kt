@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.k2.codeinsight.structureView.KotlinFirInheritedMembersNodeProvider
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinFileStructureTest
 import org.jetbrains.kotlin.idea.test.runAll
+import java.io.File
 
 abstract class AbstractKotlinFirFileStructureTest : AbstractKotlinFileStructureTest() {
     override fun isFirPlugin(): Boolean {
@@ -22,5 +23,13 @@ abstract class AbstractKotlinFirFileStructureTest : AbstractKotlinFileStructureT
           ThrowableRunnable { project.invalidateCaches() },
           ThrowableRunnable { super.tearDown() }
         )
+    }
+
+    override fun getFileName(ext: String): String {
+        val firSpecificName = getTestName(false) + ".fir" + ( if (ext.isEmpty()) "" else ".$ext")
+        if (File(testDataDirectory, firSpecificName).exists()) {
+            return firSpecificName
+        }
+        return super.getFileName(ext)
     }
 }

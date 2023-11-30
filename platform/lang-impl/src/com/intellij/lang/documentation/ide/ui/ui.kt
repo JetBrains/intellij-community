@@ -14,10 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.documentation.LinkData
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -30,7 +27,7 @@ import javax.swing.JScrollPane
 internal const val DEFAULT_UI_RESPONSE_TIMEOUT: Long = 300
 
 @JvmField
-internal val FORCED_WIDTH = Key.create<Int>("WidthBasedLayout.width")
+internal val FORCED_WIDTH: Key<Int> = Key.create("WidthBasedLayout.width")
 
 internal typealias UISnapshot = () -> Unit
 
@@ -38,10 +35,9 @@ internal fun toolbarComponent(actions: ActionGroup, contextComponent: JComponent
   val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true).also {
     it.setSecondaryActionsIcon(AllIcons.Actions.More, true)
     it.setTargetComponent(contextComponent)
+    it.setReservePlaceAutoPopupIcon(false)
   }
-  return toolbar.component.also {
-    it.border = IdeBorderFactory.createBorder(UIUtil.getTooltipSeparatorColor(), SideBorder.BOTTOM)
-  }
+  return toolbar.component
 }
 
 internal fun actionButton(actions: ActionGroup, contextComponent: JComponent): JComponent {
@@ -56,7 +52,7 @@ internal fun actionButton(actions: ActionGroup, contextComponent: JComponent): J
   return button
 }
 
-internal fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, corner: JComponent): JComponent {
+fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, corner: JComponent): JComponent {
   val defaultLayout = scrollPane.layout
   scrollPane.layout = CornerAwareScrollPaneLayout(corner)
   Disposer.register(parent) {

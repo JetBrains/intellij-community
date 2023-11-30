@@ -22,7 +22,7 @@ import kotlin.test.assertNotNull
 @TestMetadata("testData/decompiler/lightClassesOrder")
 @RunWith(JUnit38ClassRunner::class)
 class LightClassesClasspathSortingTest07 : KotlinLightCodeInsightFixtureTestCase() {
-    private val mockLibraryFacility = MockLibraryFacility(File(testDataPath, getTestName(true)))
+    private val mockLibraryFacility = MockLibraryFacility(File(testDataDirectory, getTestName(true)))
 
     fun testExplicitClass() {
         doTest("test1.A")
@@ -46,11 +46,8 @@ class LightClassesClasspathSortingTest07 : KotlinLightCodeInsightFixtureTestCase
 
     private fun doTest(fqName: String) {
         // Same classes are in sources and in compiled Kotlin library. Test that light classes from sources have a priority.
-
         val dirName = getTestName(true)
-
-        val testDirRoot = File(testDataPath)
-        val filePaths = File(testDirRoot, dirName).listFiles().orEmpty().map { it.toRelativeString(testDirRoot) }.toTypedArray()
+        val filePaths = File(testDataDirectory, dirName).listFiles().orEmpty().map { it.toRelativeString(testDataDirectory) }.toTypedArray()
         myFixture.configureByFiles(*filePaths)
 
         checkLightClassBeforeDecompiled(fqName)

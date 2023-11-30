@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -42,28 +42,25 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     return null;
   }
 
-  @NotNull
-  public static <T> JComponent wrap(@NotNull JList<? extends T> list,
-                                    @NotNull JScrollPane scrollPane,
-                                    @Nullable Function<? super T, String> namer) {
+  public static @NotNull <T> JComponent wrap(@NotNull JList<? extends T> list,
+                                             @NotNull JScrollPane scrollPane,
+                                             @Nullable Function<? super T, String> namer) {
     return wrap(list, scrollPane, namer, false);
   }
 
-  @NotNull
-  public static <T> JComponent wrap(@NotNull JList<? extends T> list,
-                                    @NotNull JScrollPane scrollPane,
-                                    @Nullable Function<? super T, String> namer,
-                                    boolean highlightAllOccurrences) {
+  public static @NotNull <T> JComponent wrap(@NotNull JList<? extends T> list,
+                                             @NotNull JScrollPane scrollPane,
+                                             @Nullable Function<? super T, String> namer,
+                                             boolean highlightAllOccurrences) {
     return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences, false, false);
   }
 
-  @NotNull
-  public static <T> JComponent wrap(@NotNull JList<? extends T> list,
-                                    @NotNull JScrollPane scrollPane,
-                                    @Nullable Function<? super T, String> namer,
-                                    boolean highlightAllOccurrences,
-                                    boolean searchFieldAlwaysVisible,
-                                    boolean searchFieldWithoutBorder) {
+  public static @NotNull <T> JComponent wrap(@NotNull JList<? extends T> list,
+                                             @NotNull JScrollPane scrollPane,
+                                             @Nullable Function<? super T, String> namer,
+                                             boolean highlightAllOccurrences,
+                                             boolean searchFieldAlwaysVisible,
+                                             boolean searchFieldWithoutBorder) {
     return new ListWithFilter<>(list, scrollPane, namer, highlightAllOccurrences, searchFieldAlwaysVisible, searchFieldWithoutBorder);
   }
 
@@ -88,10 +85,13 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     mySearchField.getTextEditor().setFocusable(false);
     mySearchField.setVisible(mySearchAlwaysVisible);
 
+    Color background = list.getBackground();
     if (mySearchFieldWithoutBorder) {
       mySearchField.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
       mySearchField.getTextEditor().setBorder(JBUI.Borders.empty());
-      UIUtil.setBackgroundRecursively(mySearchField, list.getBackground());
+      if (background != null) {
+        UIUtil.setBackgroundRecursively(mySearchField, background);
+      }
     }
 
 
@@ -119,7 +119,7 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
       }
     });
 
-    setBackground(list.getBackground());
+    setBackground(background);
     //setFocusable(true);
   }
 
@@ -171,11 +171,11 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
       onSpeedSearchPatternChanged();
       mySearchField.setText(getFilter());
       if (!mySearchAlwaysVisible) {
-        if (isHoldingFilter() && !searchFieldShown) {
+        if (shouldBeActive() && !searchFieldShown) {
           mySearchField.setVisible(true);
           searchFieldShown = true;
         }
-        else if (!isHoldingFilter() && searchFieldShown) {
+        else if (!shouldBeActive() && searchFieldShown) {
           mySearchField.setVisible(false);
           searchFieldShown = false;
         }
@@ -197,6 +197,21 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
       }
       ListWithFilter.this.revalidate();
     }
+
+    @Override
+    public boolean isSupported() {
+      return true;
+    }
+
+    @Override
+    public @NotNull JComponent getTextField() {
+      return mySearchField;
+    }
+
+    @Override
+    protected void doActivate() {
+      update();
+    }
   }
 
   private void onSpeedSearchPatternChanged() {
@@ -205,11 +220,11 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     if (myModel.getSize() > 0) {
       int fullMatchIndex = mySpeedSearch.isHoldingFilter() ? myModel.getClosestMatchIndex() : myModel.getElementIndex(prevSelection);
       if (fullMatchIndex != -1) {
-        myList.setSelectedIndex(fullMatchIndex);
+        ScrollingUtil.selectItem(myList, fullMatchIndex);
       }
 
       if (myModel.getSize() <= myList.getSelectedIndex() || !myModel.contains(myList.getSelectedValue())) {
-        myList.setSelectedIndex(0);
+        ScrollingUtil.selectItem(myList, 0);
       }
     }
     else {
@@ -218,13 +233,11 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     }
   }
 
-  @NotNull
-  public JList<T> getList() {
+  public @NotNull JList<T> getList() {
     return myList;
   }
 
-  @NotNull
-  public JScrollPane getScrollPane() {
+  public @NotNull JScrollPane getScrollPane() {
     return myScrollPane;
   }
 

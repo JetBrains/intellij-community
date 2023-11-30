@@ -20,7 +20,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.Clock;
 
-public class CurrentRevision extends Revision {
+public final class CurrentRevision extends Revision {
   private final RootEntry myRoot;
   private final String myPath;
 

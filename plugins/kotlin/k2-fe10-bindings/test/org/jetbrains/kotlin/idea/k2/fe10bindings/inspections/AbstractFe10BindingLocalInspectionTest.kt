@@ -20,6 +20,11 @@ abstract class AbstractFe10BindingLocalInspectionTest : AbstractLocalInspectionT
 
     override fun checkForUnexpectedErrors(fileText: String) {}
 
+    override fun setUp() {
+        super.setUp()
+        project.registerLifetimeTokenFactoryForFe10Binding(myFixture.testRootDisposable)
+    }
+
     override fun tearDown() {
         runAll(
             ThrowableRunnable { project.invalidateCaches() },
@@ -29,7 +34,7 @@ abstract class AbstractFe10BindingLocalInspectionTest : AbstractLocalInspectionT
 
     override fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10_BINDING_BY_FIR, "after") {
-            super.doTestFor(mainFile, inspection, fileText)
+            doTestForInternal(mainFile, inspection, fileText)
         }
     }
 }

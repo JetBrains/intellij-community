@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupImpl
@@ -14,7 +13,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import kotlin.math.max
 
-class CommandHistoryPresenter(private val project: Project, private val editor: Editor) {
+class CommandHistoryPresenter(private val project: Project,
+                              private val editor: Editor,
+                              private val commandExecutor: TerminalCommandExecutor) {
   private var initialCommand: String? = null
 
   fun showCommandHistory(history: List<String>) {
@@ -48,12 +49,15 @@ class CommandHistoryPresenter(private val project: Project, private val editor: 
       }
 
       override fun beforeItemSelected(event: LookupEvent): Boolean {
-        // prevent item inserting, because it was already inserted in a result of 'currentItemChanged'
+        // prevent item inserting because it was already inserted in a result of 'currentItemChanged'
         return false
       }
 
       override fun itemSelected(event: LookupEvent) {
         initialCommand = null
+        if (event.completionChar == '\n') {
+          commandExecutor.startCommandExecution(editor.document.text)
+        }
       }
 
       override fun lookupCanceled(event: LookupEvent) {
@@ -61,17 +65,10 @@ class CommandHistoryPresenter(private val project: Project, private val editor: 
       }
     })
 
-    val showBottomPanel = editor.getUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI)
-    try {
-      editor.putUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI, false)
-      if (lookup.showLookup()) {
-        lookup.ensureSelectionVisible(false)
-      }
-      else thisLogger().error("Failed to show command history")
+    if (lookup.showLookup()) {
+      lookup.ensureSelectionVisible(false)
     }
-    finally {
-      editor.putUserData(AutoPopupController.SHOW_BOTTOM_PANEL_IN_LOOKUP_UI, showBottomPanel)
-    }
+    else thisLogger().error("Failed to show command history")
   }
 
   /**
@@ -93,13 +90,8 @@ class CommandHistoryPresenter(private val project: Project, private val editor: 
 
   private class CommandHistoryLookupArranger : LookupArranger() {
     override fun arrangeItems(lookup: Lookup, onExplicitAction: Boolean): Pair<List<LookupElement>, Int> {
-      val result = mutableListOf<LookupElement>()
-      matchingItems.forEach { item ->
-        if (result.lastOrNull()?.lookupString != item.lookupString) {
-          result.add(item)
-        }
-      }
-      val selectedIndex = if (!lookup.isSelectionTouched && onExplicitAction) result.lastIndex else result.indexOf(lookup.currentItem)
+      val result = matchingItems.reversed()
+      val selectedIndex = if (!lookup.isSelectionTouched && onExplicitAction) 0 else result.indexOf(lookup.currentItem)
       return Pair.create(result, max(selectedIndex, 0))
     }
 

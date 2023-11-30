@@ -98,10 +98,10 @@ private fun KtQuickFixesListBuilder.registerQuickFixForDiagnosticFactory(
 
 private inline fun <reified DIAGNOSTIC : KtDiagnosticWithPsi<*>> createApplicatorForFactory(
     factory: AbstractKtDiagnosticFactory,
-    crossinline createQuickFixes: KtAnalysisSession.(DIAGNOSTIC) -> List<IntentionAction>
+    crossinline createQuickFixes:  context(KtAnalysisSession)(DIAGNOSTIC) -> List<IntentionAction>
 ) = diagnosticFixFactoryFromIntentionActions(DIAGNOSTIC::class) { diagnostic ->
     if (diagnostic.factoryName == factory.name) {
-        createQuickFixes(diagnostic)
+        createQuickFixes(analysisSession, diagnostic)
     } else {
         emptyList()
     }

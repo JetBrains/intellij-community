@@ -10,3 +10,5 @@ fun String.newFun(x: X){}
 fun foo(x: X) {
     "a".newFun(x)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

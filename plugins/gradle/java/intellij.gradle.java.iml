@@ -8,6 +8,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.gradle.common" exported="" />
     <orderEntry type="module" module-name="intellij.java.coverage" />
@@ -23,7 +24,7 @@
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
-    <orderEntry type="library" name="Ant" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Ant" level="project" />
     <orderEntry type="library" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
@@ -44,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
   </component>
 </module>

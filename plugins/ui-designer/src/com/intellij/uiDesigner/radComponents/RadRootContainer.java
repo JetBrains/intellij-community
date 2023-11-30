@@ -33,7 +33,7 @@ public final class RadRootContainer extends RadContainer implements IRootContain
   private final List<LwInspectionSuppression> myInspectionSuppressions = new ArrayList<>();
 
   public RadRootContainer(final ModuleProvider module, final String id) {
-    super(module, JPanel.class, id);
+    super(module, RootPanel.class, id);
     getDelegee().setBackground(new JBColor(Color.WHITE, UIUtil.getListBackground()));
   }
 
@@ -272,6 +272,25 @@ public final class RadRootContainer extends RadContainer implements IRootContain
           Objects.equals(existing.getComponentId(), suppression.getComponentId())) {
         myInspectionSuppressions.remove(existing);
         break;
+      }
+    }
+  }
+
+  public static class RootPanel extends JPanel {
+    // public constructor for reflection
+    public RootPanel() {
+    }
+
+    @Override
+    public void doLayout() {
+      super.doLayout();
+      int count = getComponentCount();
+      for (int i = 0; i < count; i++) {
+        Component component = getComponent(i);
+        Rectangle bounds = component.getBounds();
+        if (bounds.x < 0 || bounds.y < 0) {
+          component.setBounds(bounds.x < 0 ? 20 : bounds.x, bounds.y < 0 ? 20 : bounds.y, bounds.width, bounds.height);
+        }
       }
     }
   }

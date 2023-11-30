@@ -34,7 +34,14 @@ fun EditorEx.addComponentInlay(
       priority,
       offset,
     )
-  )!!
+  )
+  if (inlay == null) {
+    if (isDisposed) {
+      throw IllegalStateException("Editor is disposed")
+    }
+    throw IllegalStateException(
+      "Component is null for $component, $isRelatedToPrecedingText, $showAbove, $showWhenFolded, $priority, $offset")
+  }
 
   updateUiOnParentResizeImpl(component.parent as JComponent, WeakReference(component))
   component.revalidate()

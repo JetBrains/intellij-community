@@ -1,7 +1,9 @@
 fun test(p: Penguin) {
-    // For some reason, 'SealedClassInheritorsProviderIdeImpl' works incorrectly here
     when (p) {
-        is Penguin -> TODO()
+        Penguin.Aptenodytes.Emperor -> TODO()
+        Penguin.Aptenodytes.King -> TODO()
+        is Penguin.Other -> TODO()
+        Penguin.Pygoscelis.Gentoo -> TODO()
     }
 }
 

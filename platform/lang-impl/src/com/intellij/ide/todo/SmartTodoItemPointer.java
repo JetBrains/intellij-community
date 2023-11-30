@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public final class SmartTodoItemPointer {
 
@@ -50,7 +51,7 @@ public final class SmartTodoItemPointer {
     if (!(myTodoItem.getFile().equals(pointer.myTodoItem.getFile())&&
           myRangeMarker.getStartOffset()==pointer.myRangeMarker.getStartOffset()&&
           myRangeMarker.getEndOffset()==pointer.myRangeMarker.getEndOffset()&&
-          myTodoItem.getPattern().equals(pointer.myTodoItem.getPattern()) &&
+          Objects.equals(myTodoItem.getPattern(), pointer.myTodoItem.getPattern()) &&
           myAdditionalRangeMarkers.size() == pointer.myAdditionalRangeMarkers.size())) {
       return false;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -10,7 +10,6 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.incorrectFormatting.IncorrectFormattingInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.ProfileChangeAdapter;
@@ -22,7 +21,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightIdeaTestCase;
-import com.intellij.util.SmartList;
 import com.siyeh.ig.junit.TestClassNamingConvention;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.FieldNamingConventionInspection;
@@ -36,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -67,8 +64,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     }
   }
 
-  @NotNull
-  private static BaseInspectionProfileManager getApplicationProfileManager() {
+  private static @NotNull BaseInspectionProfileManager getApplicationProfileManager() {
     return (BaseInspectionProfileManager)InspectionProfileManager.getInstance();
   }
 
@@ -80,8 +76,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertThat(profile.writeScheme()).isEqualTo(element);
   }
 
-  @NotNull
-  private static InspectionProfileImpl createEmptyProfile() throws IOException, JDOMException {
+  private static @NotNull InspectionProfileImpl createEmptyProfile() throws IOException, JDOMException {
     InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
     final Element element = readFromXml(profile, "<profile version=\"1.0\">\n" +
                                                  "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
@@ -90,23 +85,21 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return profile;
   }
 
-  @NotNull
-  private static Element readFromXml(InspectionProfileImpl profile, @Language("XML") String serialized) throws IOException, JDOMException {
+  private static @NotNull Element readFromXml(InspectionProfileImpl profile, @Language("XML") String serialized) throws IOException, JDOMException {
     final Element root = JDOMUtil.load(serialized);
     profile.readExternal(root);
     profile.getModifiableModel().commit();
     return root;
   }
 
-  @NotNull
-  private InspectionProfileImpl importProfile(Element toImportElement) {
+  private @NotNull InspectionProfileImpl importProfile(Element toImportElement) {
     InspectionProfileImpl profile =
       InspectionProfileSchemesPanel.importInspectionProfile(toImportElement, getApplicationProfileManager(), getProject());
     return Objects.requireNonNull(profile);
   }
 
   private static InspectionProfileImpl createProfile() {
-    return createProfile(InspectionProfileKt.getBASE_PROFILE());
+    return createProfile(InspectionProfileImpl.BASE_PROFILE.get());
   }
 
   private static InspectionProfileImpl createProfile(@NotNull InspectionProfileImpl base) {
@@ -203,11 +196,11 @@ public class InspectionProfileTest extends LightIdeaTestCase {
         <option name="myName" value="default" />
         <inspection_tool class="Convert2Lambda" enabled="false" level="WARNING" enabled_by_default="false"/>
       </profile>""";
-    InspectionProfileImpl profile = createProfile();
+    var profile = createProfile();
     readFromXml(profile, content);
-    InspectionToolWrapper tool = profile.getInspectionTool("Convert2Lambda", getProject());
+    var tool = profile.getInspectionTool("Convert2Lambda", getProject());
     assertNotNull(tool);
-    TextAttributesKey editorAttributes = profile.getEditorAttributes("Convert2Lambda", null);
+    var editorAttributes = profile.getEditorAttributes("Convert2Lambda", null);
     assertNotNull(editorAttributes);
     assertEquals("NOT_USED_ELEMENT_ATTRIBUTES", editorAttributes.getExternalName());
     assertThat(profile.writeScheme()).isEqualTo(JDOMUtil.load(content));
@@ -605,7 +598,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     }
 
   public void testMergeMethodNamingConventions() throws Exception {
-    InspectionProfileImpl profile = createEmptyProfile();
+    var profile = createEmptyProfile();
 
     @Language("XML") String customSettingsText = """
       <profile version="1.0">
@@ -628,28 +621,28 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     readFromXml(profile, customSettingsText);
     assertEquals(customSettingsText, serialize(profile));
 
-    InspectionToolWrapper wrapper = profile.getInspectionTool("NewMethodNamingConvention", getProject());
+    var wrapper = profile.getInspectionTool("NewMethodNamingConvention", getProject());
     assertNotNull(wrapper);
-    NewMethodNamingConventionInspection tool = (NewMethodNamingConventionInspection)wrapper.getTool();
+    var tool = (NewMethodNamingConventionInspection)wrapper.getTool();
     assertEquals("i_[a-z][A-Za-z\\d]*", tool.getNamingConventionBean("InstanceMethodNamingConvention").m_regex);
     assertEquals("n_[a-z][A-Za-z\\d]*", tool.getNamingConventionBean("NativeMethodNamingConvention").m_regex);
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("NewMethodNamingConvention"), null));
     assertFalse(tool.isConventionEnabled("JUnit4MethodNamingConvention"));
     assertFalse(tool.isConventionEnabled("JUnit3MethodNamingConvention"));
 
-    Element toImportElement = profile.writeScheme();
+    var toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile = importProfile(toImportElement);
 
     //check merged
     profile = createProfile(new InspectionProfileImpl("foo"));
-    Element mergedElement = readFromXml(profile, customSettingsText);
+    var mergedElement = readFromXml(profile, customSettingsText);
     assertThat(profile.writeScheme()).isEqualTo(mergedElement);
 
     assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
   }
 
   public void testMergeFieldNamingConventions() throws Exception {
-    InspectionProfileImpl profile = createEmptyProfile();
+    var profile = createEmptyProfile();
 
     @Language("XML") String customSettingsText = """
       <profile version="1.0">
@@ -671,20 +664,20 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     readFromXml(profile, customSettingsText);
     assertEquals(customSettingsText, serialize(profile));
 
-    InspectionToolWrapper wrapper = profile.getInspectionTool("FieldNamingConvention", getProject());
+    var wrapper = profile.getInspectionTool("FieldNamingConvention", getProject());
     assertNotNull(wrapper);
-    FieldNamingConventionInspection tool = (FieldNamingConventionInspection)wrapper.getTool();
+    var tool = (FieldNamingConventionInspection)wrapper.getTool();
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("FieldNamingConvention"), null));
     assertTrue(tool.isConventionEnabled("StaticVariableNamingConvention"));
     assertTrue(tool.isConventionEnabled("ConstantNamingConvention"));
     assertTrue(tool.isConventionEnabled("ConstantWithMutableFieldTypeNamingConvention"));
 
-    Element toImportElement = profile.writeScheme();
+    var toImportElement = profile.writeScheme();
     final InspectionProfileImpl importedProfile = importProfile(toImportElement);
 
     //check merged
     profile = createProfile(new InspectionProfileImpl("foo"));
-    Element mergedElement = readFromXml(profile, customSettingsText);
+    var mergedElement = readFromXml(profile, customSettingsText);
     assertThat(profile.writeScheme()).isEqualTo(mergedElement);
 
     assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
@@ -783,7 +776,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
                          "</profile>");
     checkMergedNoChanges("<profile version=\"1.0\">\n" +
                          "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                         "  <inspection_tool class=\"JUnitMalformedDeclaration\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"false\" />\n" +
+                         "  <inspection_tool class=\"JUnitMalformedDeclaration\" enabled=\"true\" level=\"ERROR\" enabled_by_default=\"false\" />\n" +
                          "</profile>");
   }
 
@@ -842,13 +835,13 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testMergedReformatInspection() throws Exception {
-    InspectionProfileImpl profile = checkMergedNoChanges("<profile version=\"1.0\">\n" +
-                                                         "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
-                                                         "  <inspection_tool class=\"Reformat\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
-                                                         "</profile>");
-    InspectionToolWrapper toolWrapper = profile.getInspectionTool("IncorrectFormatting", getProject()); //call to initialize inspections
+    var profile = checkMergedNoChanges("<profile version=\"1.0\">\n" +
+                                       "  <option name=\"myName\" value=\"" + PROFILE + "\" />\n" +
+                                       "  <inspection_tool class=\"Reformat\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" />\n" +
+                                       "</profile>");
+    var toolWrapper = profile.getInspectionTool("IncorrectFormatting", getProject()); //call to initialize inspections
     assertTrue(profile.isToolEnabled(HighlightDisplayKey.find("IncorrectFormatting"), null));
-    IncorrectFormattingInspection tool = (IncorrectFormattingInspection)toolWrapper.getTool();
+    var tool = (IncorrectFormattingInspection)toolWrapper.getTool();
     assertTrue("Should be enabled for kotlin only", tool.kotlinOnly);
   }
   
@@ -1068,14 +1061,14 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), (InspectionProfileImpl)null);
     assertEquals(0, countInitializedTools(profile));
     List<InspectionToolWrapper<?, ?>> toolWrappers = profile.getInspectionTools(null);
-    assertTrue(toolWrappers.size() > 0);
+    assertFalse(toolWrappers.isEmpty());
     InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(new DataFlowInspection().getShortName(), getProject());
     assertNotNull(toolWrapper);
     String id = toolWrapper.getShortName();
     profile.setToolEnabled(id, !profile.isToolEnabled(HighlightDisplayKey.findById(id)));
     assertThat(countInitializedTools(profile)).isEqualTo(0);
     profile.writeScheme();
-    List<InspectionToolWrapper<?, ?>> initializedTools = getInitializedTools(profile);
+    var initializedTools = getInitializedTools(profile);
     assertEmpty(initializedTools.stream().map(InspectionToolWrapper::getShortName).collect(Collectors.joining(", ")), initializedTools);
   }
 
@@ -1097,33 +1090,18 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     return getInitializedTools(foo).size();
   }
 
-  @NotNull
-  public static List<InspectionToolWrapper<?, ?>> getInitializedTools(@NotNull InspectionProfileImpl foo) {
-    List<InspectionToolWrapper<?, ?>> initialized = null;
-    List<ScopeToolState> tools = foo.getAllTools();
-    for (ScopeToolState tool : tools) {
-      InspectionToolWrapper toolWrapper = tool.getTool();
-      if (toolWrapper.isInitialized()) {
-        if (initialized == null) {
-          initialized = new SmartList<>();
-        }
-        initialized.add(toolWrapper);
-      }
-    }
-    return initialized == null ? Collections.emptyList() : initialized;
+  public static @NotNull List<? extends InspectionToolWrapper<?, ?>> getInitializedTools(@NotNull InspectionProfileImpl foo) {
+    return foo.getAllTools().stream().map(ScopeToolState::getTool).filter(InspectionToolWrapper::isInitialized).toList();
   }
 
-  private static LocalInspectionToolWrapper createTool(String s, boolean enabled) {
-    LocalInspectionEP foo = new LocalInspectionEP();
-    foo.shortName = s;
-    foo.displayName = s;
-    foo.groupDisplayName = s;
-    foo.level = "ERROR";
-    foo.enabledByDefault = enabled;
-    foo.implementationClass = TestTool.class.getName();
-    return new LocalInspectionToolWrapper(foo);
+  private static LocalInspectionToolWrapper createTool(String name, boolean enabled) {
+    LocalInspectionEP ep = new LocalInspectionEP();
+    ep.shortName = ep.displayName = ep.groupDisplayName = name;
+    ep.level = "ERROR";
+    ep.enabledByDefault = enabled;
+    ep.implementationClass = TestTool.class.getName();
+    return new LocalInspectionToolWrapper(ep);
   }
 
-  public static class TestTool extends LocalInspectionTool {
-  }
+  public static final class TestTool extends LocalInspectionTool { }
 }

@@ -7,6 +7,7 @@ package org.jetbrains.plugins.gradle.util
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager
@@ -111,7 +112,7 @@ fun getGradleTaskExecutionOperation(
   return operation
 }
 
-private fun isResolveTask(id: ExternalSystemTaskId): Boolean {
+fun isResolveTask(id: ExternalSystemTaskId): Boolean {
   if (id.type == ExternalSystemTaskType.RESOLVE_PROJECT) {
     val task = ApplicationManager.getApplication()
       .getService(ExternalSystemProcessingManager::class.java)
@@ -166,6 +167,19 @@ fun whenExternalSystemTaskOutputAdded(
   val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
     override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
       action(id, text, stdOut)
+    }
+  }
+  ExternalSystemProgressNotificationManager.getInstance()
+    .addNotificationListener(listener, parentDisposable)
+}
+
+fun whenExternalSystemEventReceived(
+  parentDisposable: Disposable,
+  action: (ExternalSystemTaskNotificationEvent) -> Unit
+) {
+  val listener = object : ExternalSystemTaskNotificationListenerAdapter() {
+    override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
+      action(event)
     }
   }
   ExternalSystemProgressNotificationManager.getInstance()

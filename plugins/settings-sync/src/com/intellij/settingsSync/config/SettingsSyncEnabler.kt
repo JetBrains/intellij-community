@@ -1,9 +1,11 @@
 package com.intellij.settingsSync.config
 
+import com.intellij.configurationStore.saveSettings
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.settingsSync.*
-import com.intellij.settingsSync.SettingsSynchronizer.Companion.checkCrossIdeSyncStatusOnServer
 import com.intellij.util.EventDispatcher
 import java.util.*
 
@@ -21,7 +23,6 @@ internal class SettingsSyncEnabler {
       private lateinit var updateResult: UpdateResult
 
       override fun run(indicator: ProgressIndicator) {
-        checkCrossIdeSyncStatusOnServer(communicator)
         updateResult = communicator.receiveUpdates()
       }
 
@@ -36,7 +37,7 @@ internal class SettingsSyncEnabler {
   }
 
 
-  fun getSettingsFromServer() {
+  fun getSettingsFromServer(syncSettings: SettingsSyncState? = null) {
     eventDispatcher.multicaster.updateFromServerStarted()
     val settingsSyncControls = SettingsSyncMain.getInstance().controls
     object : Task.Modal(null, SettingsSyncBundle.message("enable.sync.get.from.server.progress"), false) {
@@ -46,7 +47,10 @@ internal class SettingsSyncEnabler {
         val result = settingsSyncControls.remoteCommunicator.receiveUpdates()
         updateResult = result
         if (result is UpdateResult.Success) {
-          val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId)
+          val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId, syncSettings)
+          runBlockingCancellable {
+            saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
+          }
           settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.TakeFromServer(cloudEvent))
         }
       }
@@ -60,7 +64,7 @@ internal class SettingsSyncEnabler {
 
   fun pushSettingsToServer() {
     val settingsSyncControls = SettingsSyncMain.getInstance().controls
-    object: Task.Modal(null, SettingsSyncBundle.message("enable.sync.push.to.server.progress"), false) {
+    object : Task.Modal(null, SettingsSyncBundle.message("enable.sync.push.to.server.progress"), false) {
       override fun run(indicator: ProgressIndicator) {
         // todo initialization must be modal but pushing to server can be made later
         settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)

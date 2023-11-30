@@ -43,7 +43,7 @@ public class ConvertFieldToThreadLocalIntention extends BaseElementAtCaretIntent
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     if (!(element instanceof PsiIdentifier)) return false;
     PsiElement parent = element.getParent();
     if (!(parent instanceof PsiField field)) return false;
@@ -57,7 +57,7 @@ public class ConvertFieldToThreadLocalIntention extends BaseElementAtCaretIntent
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiField psiField = PsiTreeUtil.getParentOfType(element, PsiField.class);
     LOG.assertTrue(psiField != null);
 

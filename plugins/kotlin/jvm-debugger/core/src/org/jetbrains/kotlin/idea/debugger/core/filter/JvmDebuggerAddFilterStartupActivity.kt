@@ -8,12 +8,14 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.ui.classFilter.ClassFilter
 
 private const val KOTLIN_STDLIB_FILTER = "kotlin.*"
+private const val KOTLINX_FILTER = "kotlinx.*"
 private const val COMPOSE_RUNTIME_FILTER = "androidx.compose.runtime.*"
 
 private class JvmDebuggerAddFilterStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
         val settings = DebuggerSettings.getInstance() ?: return
         settings.addSteppingFilterIfNeeded(KOTLIN_STDLIB_FILTER)
+        settings.addSteppingFilterIfNeeded(KOTLINX_FILTER)
         settings.addSteppingFilterIfNeeded(COMPOSE_RUNTIME_FILTER)
     }
 }

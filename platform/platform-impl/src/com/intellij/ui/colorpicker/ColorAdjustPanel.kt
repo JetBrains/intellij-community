@@ -60,13 +60,13 @@ internal class ColorAdjustPanel(private val model: ColorPickerModel,
   }
 
   @VisibleForTesting
-  val colorIndicator = ColorIndicator().apply {
+  val colorIndicator: ColorIndicator = ColorIndicator().apply {
     border = COLOR_INDICATOR_BORDER
     preferredSize = COLOR_INDICATOR_SIZE
   }
 
   @VisibleForTesting
-  val hueSlider = HueSliderComponent().apply {
+  val hueSlider: HueSliderComponent = HueSliderComponent().apply {
     border = HUE_SLIDER_BORDER
     background = PICKER_BACKGROUND_COLOR
 
@@ -84,7 +84,7 @@ internal class ColorAdjustPanel(private val model: ColorPickerModel,
   }
 
   @VisibleForTesting
-  val alphaSlider = AlphaSliderComponent().apply {
+  val alphaSlider: AlphaSliderComponent = AlphaSliderComponent().apply {
     border = ALPHA_SLIDER_BORDER
     background = PICKER_BACKGROUND_COLOR
 

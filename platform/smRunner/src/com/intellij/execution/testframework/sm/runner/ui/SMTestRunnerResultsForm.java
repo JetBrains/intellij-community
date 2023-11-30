@@ -51,7 +51,6 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
@@ -176,7 +175,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
       if (ScrollToTestSourceAction.isScrollEnabled(this)) {
         ReadAction
           .nonBlocking(() -> TestsUIUtil.getOpenFileDescriptor(testProxy, this))
-          .finishOnUiThread(ModalityState.NON_MODAL, descriptor -> {
+          .finishOnUiThread(ModalityState.nonModal(), descriptor -> {
             if (descriptor != null) {
               OpenSourceUtil.navigate(false, descriptor);
             }
@@ -464,7 +463,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public boolean hasTestSuites() {
-    return getRoot().getChildren().size() > 0;
+    return !getRoot().getChildren().isEmpty();
   }
 
   @Override
@@ -778,9 +777,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   AnAction[] getAdditionalToolbarActions() { return myToolbarPanel.additionalActionsToMerge; }
 
-  void hideToolbar() {
+
+  @Override
+  protected void hideToolbar() {
+    super.hideToolbar();
     myToolbarPanel.setVisible(false);
-    myLeftPane.setBorder(JBUI.Borders.empty());
   }
 
   private static class MySaveHistoryTask extends Task.Backgroundable {
@@ -835,17 +836,35 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         String url = proxy.getLocationUrl();
         if (url != null && proxy.getLocator() != null) {
           String configurationName = myConfiguration != null ? myConfiguration.getName() : null;
-          DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
-            Project project = getProject();
-            TestStackTraceParser info = getStackTraceParser(proxy, url, project);
-            TestStateStorage storage = TestStateStorage.getInstance(project);
-            storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
-                                                                configurationName == null ? 0 : configurationName.hashCode(),
-                                                                info.getFailedLine(), info.getFailedMethodName(),
-                                                                info.getErrorMessage(), info.getTopLocationLine()));
-          });
+          boolean isConfigurationDumbAware = myConfiguration != null && myConfiguration.getType().isDumbAware();
+          boolean isSMTestLocatorDumbAware = DumbService.isDumbAware(proxy.getLocator());
+          if (isConfigurationDumbAware && isSMTestLocatorDumbAware) {
+            ApplicationManager.getApplication().runReadAction(() -> {
+              writeTestState(proxy, url, configurationName);
+            });
+          }
+          else {
+            if (isConfigurationDumbAware /*&& !isSMTestLocatorDumbAware*/) {
+              LOG.warn("Configuration " + myConfiguration.getType() +
+                       " is dumb aware, but it's test locator " + proxy.getLocator() + " is not. " +
+                       "It leads to an hanging update task on finishing a test case in dumb mode.");
+            }
+            DumbService.getInstance(getProject()).runReadActionInSmartMode(() -> {
+              writeTestState(proxy, url, configurationName);
+            });
+          }
         }
       }
+    }
+
+    private void writeTestState(@NotNull SMTestProxy proxy, @NotNull String url, @Nullable String configurationName) {
+      Project project = getProject();
+      TestStackTraceParser info = getStackTraceParser(proxy, url, project);
+      TestStateStorage storage = TestStateStorage.getInstance(project);
+      storage.writeState(url, new TestStateStorage.Record(proxy.getMagnitude(), new Date(),
+                                                          configurationName == null ? 0 : configurationName.hashCode(),
+                                                          info.getFailedLine(), info.getFailedMethodName(),
+                                                          info.getErrorMessage(), info.getTopLocationLine()));
     }
 
     private TestStackTraceParser getStackTraceParser(@NotNull SMTestProxy proxy, @NotNull String url, @NotNull Project project) {

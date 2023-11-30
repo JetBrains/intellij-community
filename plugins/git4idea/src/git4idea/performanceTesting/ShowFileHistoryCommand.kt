@@ -16,7 +16,6 @@ import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import com.intellij.vcs.log.visible.VisiblePack
 import com.jetbrains.performancePlugin.PerformanceTestSpan
-import com.jetbrains.performancePlugin.commands.AddFileCommand
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
@@ -26,13 +25,6 @@ class ShowFileHistoryCommand(text: String, line: Int) : AbstractCommand(text, li
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
     val focusedComponent = IdeFocusManager.findInstance().focusOwner
-    if(focusedComponent==null) {
-      LOG.info("Focused element is null")
-    }
-    else {
-      LOG.info("Focused element ${focusedComponent.javaClass.name}")
-    }
-
     val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
     val selectedFiles = VcsContextUtil.selectedFilePaths(dataContext)
     val historyProvider: VcsLogFileHistoryProvider = context.project.getService(VcsLogFileHistoryProvider::class.java)
@@ -55,13 +47,12 @@ class ShowFileHistoryCommand(text: String, line: Int) : AbstractCommand(text, li
           scope.close()
           actionCallback.setDone()
         }
-        else {
-          if (firstPackSpan.isRecording) {
+        else if (firstPackSpan.isRecording) {
             firstPackSpan.end()
           }
-        }
       }
     }
+
     return actionCallback.toPromise()
   }
 
@@ -69,7 +60,6 @@ class ShowFileHistoryCommand(text: String, line: Int) : AbstractCommand(text, li
     const val MAIN_SPAN_NAME = "showFileHistory"
     const val FIRST_PACK_SPAN_NAME = "showFirstPack"
     const val PREFIX = "${CMD_PREFIX}showFileHistory"
-    private val LOG = Logger.getInstance(AddFileCommand::class.java)
   }
 
 }

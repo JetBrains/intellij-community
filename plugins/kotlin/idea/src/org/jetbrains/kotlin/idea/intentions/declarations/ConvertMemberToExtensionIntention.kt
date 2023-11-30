@@ -19,10 +19,10 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.isFunInterface
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.getReturnTypeReference
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -32,8 +32,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addIfNotNull
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 private val LOG = Logger.getInstance(ConvertMemberToExtensionIntention::class.java)
 
@@ -43,7 +43,8 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
 ), LowPriorityAction {
     private fun isApplicable(element: KtCallableDeclaration): Boolean {
         val classBody = element.parent as? KtClassBody ?: return false
-        if (classBody.parent !is KtClass) return false
+        val parentClass = classBody.parent as? KtClass ?: return false
+        if (parentClass.isFunInterface() && !element.hasBody()) return false
         if (element.receiverTypeReference != null) return false
         if (element.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return false
         when (element) {
@@ -332,7 +333,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         return copied.text
     }
 
-    companion object {
+    object Holder {
         fun convert(element: KtCallableDeclaration): KtCallableDeclaration =
             ConvertMemberToExtensionIntention().createExtensionCallableAndPrepareBodyToSelect(element).first
     }

@@ -14,12 +14,16 @@ abstract class BuildMessageLogger {
 
 open class LogMessage(val kind: Kind, val text: String) {
   enum class Kind {
-    ERROR, WARNING, DEBUG, INFO, PROGRESS, BLOCK_STARTED, BLOCK_FINISHED, ARTIFACT_BUILT, COMPILATION_ERRORS, STATISTICS, BUILD_STATUS, SET_PARAMETER
+    ERROR, WARNING, DEBUG, INFO, PROGRESS, BLOCK_STARTED, BLOCK_FINISHED, ARTIFACT_BUILT, COMPILATION_ERRORS, STATISTICS, BUILD_STATUS, SET_PARAMETER,
+    BUILD_PROBLEM, BUILD_STATUS_CHANGED_TO_SUCCESSFUL,
+    BUILD_CANCEL,
   }
 }
 
 internal class CompilationErrorsLogMessage(@JvmField val compilerName: String, @JvmField val errorMessages: List<String>)
   : LogMessage(Kind.COMPILATION_ERRORS, "$compilerName compilation errors")
+
+internal class BuildProblemLogMessage(description: String, val identity: String?) : LogMessage(Kind.BUILD_PROBLEM, description)
 
 internal class ConsoleBuildMessageLogger : BuildMessageLoggerBase() {
   companion object {

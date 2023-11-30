@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
@@ -683,11 +683,13 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
-    val available = myFixture.availableIntentions
-      .map { IntentionActionDelegate.unwrap(it)::class.java }
-      .filter { it.name.startsWith("com.intellij.codeInsight.") }
+    val availableIntentions = myFixture.availableIntentions
+    val available = availableIntentions
+      .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
+      .filter { it.name.startsWith("com.intellij.codeInsight.") &&
+                !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))}
       .map { it.simpleName }
-    assertThat(available).containsExactlyInAnyOrder(*fixes)
+    assertThat(available).describedAs(availableIntentions.toString()).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>
 }

@@ -2,7 +2,6 @@
 package com.intellij.refactoring.move.moveMembers;
 
 import com.intellij.ide.util.EditorHelper;
-import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -30,7 +29,6 @@ import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
-import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,11 +164,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   @Override
-  protected boolean canPerformRefactoringInBranch() {
-    return true;
-  }
-
-  @Override
   protected void performRefactoring(final UsageInfo @NotNull [] usages) {
     PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(myOptions.getTargetClassName(),
                                                                           GlobalSearchScope.projectScope(myProject));
@@ -179,29 +172,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     Map<PsiMember, SmartPsiElementPointer<PsiMember>> movedMembers =
       performMove(targetClass, myMembersToMove, ContainerUtil.map(usages, MoveMembersUsageInfo.class::cast));
     afterAllMovements(movedMembers);
-  }
-
-  @Override
-  protected void performRefactoringInBranch(UsageInfo @NotNull [] originalUsages, ModelBranch branch) {
-    PsiClass targetClass = JavaPsiFacade.getInstance(myProject).findClass(myOptions.getTargetClassName(),
-                                                                          GlobalSearchScope.projectScope(myProject));
-    if (targetClass == null) return;
-
-    PsiClass targetCopy = branch.obtainPsiCopy(targetClass);
-    Set<PsiMember> membersToMove = new LinkedHashSet<>(ContainerUtil.map(myMembersToMove, branch::obtainPsiCopy));
-    List<MoveMembersUsageInfo> usages = ContainerUtil.map(originalUsages, u -> (MoveMembersUsageInfo)((MoveMembersUsageInfo)u).obtainBranchCopy(branch));
-
-    Map<PsiMember, SmartPsiElementPointer<PsiMember>> movedMembers = performMove(targetCopy, membersToMove, usages);
-
-    branch.runAfterMerge(() -> {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-      afterAllMovements(EntryStream.of(movedMembers).mapValues(p -> {
-        PsiMember member = p.getElement();
-        PsiMember original = member == null ? null : branch.findOriginalPsi(member);
-        return original == null ? null : SmartPointerManager.createPointer(original);
-      }).toMap());
-    });
   }
 
   private Map<PsiMember, SmartPsiElementPointer<PsiMember>> performMove(PsiClass targetClass,

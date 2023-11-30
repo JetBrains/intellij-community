@@ -6,13 +6,11 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.completion.impl.RealPrefixMatchingWeigher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
-import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.ElementPattern
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
-import org.jetbrains.kotlin.idea.completion.handlers.WithExpressionPrefixInsertHandler
-import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
+import org.jetbrains.kotlin.idea.completion.implCommon.handlers.HandleCompletionCharLookupElementDecorator
 import org.jetbrains.kotlin.idea.core.completion.DescriptorBasedDeclarationLookupObject
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -36,8 +34,7 @@ class LookupElementsCollector(
 
     private val elements = ArrayList<LookupElement>()
 
-    private val resultSet = resultSet.withPrefixMatcher(prefixMatcher).withRelevanceSorter(sorter)
-
+    val resultSet = resultSet.withPrefixMatcher(prefixMatcher).withRelevanceSorter(sorter)
     private val postProcessors = ArrayList<(LookupElement) -> LookupElement>()
     private val processedCallables = HashSet<CallableDescriptor>()
 
@@ -110,7 +107,10 @@ class LookupElementsCollector(
             return
         }
 
-        val decorated = JustTypingLookupElementDecorator(element, completionParameters)
+        val decorated = element
+            .let { HandleCompletionCharLookupElementDecorator(it, completionParameters) }
+            .let { InsertExplicitTypeArgumentsLookupElementDecorator(it) }
+
 
         var result: LookupElement = decorated
         for (postProcessor in postProcessors) {
@@ -139,30 +139,11 @@ class LookupElementsCollector(
     }
 }
 
-private class JustTypingLookupElementDecorator(element: LookupElement, private val completionParameters: CompletionParameters) :
-    LookupElementDecorator<LookupElement>(element) {
-    // used to avoid insertion of spaces before/after ',', '=' on just typing
-    private fun isJustTyping(context: InsertionContext, element: LookupElement): Boolean {
-        if (!completionParameters.isAutoPopup) return false
-        val insertedText = context.document.getText(TextRange(context.startOffset, context.tailOffset))
-        return insertedText == element.getUserDataDeep(KotlinCompletionCharFilter.JUST_TYPING_PREFIX)
-    }
-
+private class InsertExplicitTypeArgumentsLookupElementDecorator(
+    element: LookupElement,
+): LookupElementDecorator<LookupElement>(element) {
     override fun getDecoratorInsertHandler(): InsertHandler<LookupElementDecorator<LookupElement>> = InsertHandler { context, decorator ->
         delegate.handleInsert(context)
-
-        if (context.shouldAddCompletionChar() && !isJustTyping(context, this)) {
-            when (context.completionChar) {
-                ',' -> WithTailInsertHandler.COMMA.postHandleInsert(context, delegate)
-
-                '=' -> WithTailInsertHandler.EQ.postHandleInsert(context, delegate)
-
-                '!' -> {
-                    WithExpressionPrefixInsertHandler("!").postHandleInsert(context)
-                    context.setAddCompletionChar(false)
-                }
-            }
-        }
 
         val (typeArgs, exprOffset) = argList ?: return@InsertHandler
         val beforeCaret = context.file.findElementAt(exprOffset) ?: return@InsertHandler

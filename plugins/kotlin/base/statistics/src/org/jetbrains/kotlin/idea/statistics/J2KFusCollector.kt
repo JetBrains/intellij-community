@@ -7,44 +7,42 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 
-class J2KFusCollector : CounterUsagesCollector() {
+object J2KFusCollector : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = GROUP
 
-    companion object {
-        private val GROUP = EventLogGroup("kotlin.ide.j2k", 2)
+    private val GROUP = EventLogGroup("kotlin.ide.j2k", 2)
 
-        private val sourceType = EventFields.String("source_type", ConversionType.values().map { it.text })
-        private val isNewJ2K = EventFields.Boolean("is_new_j2k")
-        private val conversionTime = EventFields.Long("conversion_time")
-        private val linesCount = EventFields.Int("lines_count")
-        private val filesCount = EventFields.Int("files_count")
-        private val pluginInfo = EventFields.PluginInfo
+    private val sourceType = EventFields.String("source_type", ConversionType.values().map { it.text })
+    private val isNewJ2K = EventFields.Boolean("is_new_j2k")
+    private val conversionTime = EventFields.Long("conversion_time")
+    private val linesCount = EventFields.Int("lines_count")
+    private val filesCount = EventFields.Int("files_count")
+    private val pluginInfo = EventFields.PluginInfo
 
-        private val event = GROUP.registerVarargEvent(
-            "Conversion",
-            sourceType,
-            isNewJ2K,
-            conversionTime,
-            linesCount,
-            filesCount,
-            pluginInfo,
-        )
+    private val event = GROUP.registerVarargEvent(
+        "Conversion",
+        sourceType,
+        isNewJ2K,
+        conversionTime,
+        linesCount,
+        filesCount,
+        pluginInfo,
+    )
 
-        fun log(
-            type: ConversionType,
-            isNewJ2k: Boolean,
-            conversionTime: Long,
-            linesCount: Int,
-            filesCount: Int
-        ) = event.log(
-          this.sourceType.with(type.text),
-          this.isNewJ2K.with(isNewJ2k),
-          this.conversionTime.with(conversionTime),
-          this.linesCount.with(linesCount),
-          this.filesCount.with(filesCount),
-          this.pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id)),
-        )
-    }
+    fun log(
+        type: ConversionType,
+        isNewJ2k: Boolean,
+        conversionTime: Long,
+        linesCount: Int,
+        filesCount: Int
+    ) = event.log(
+        this.sourceType.with(type.text),
+        this.isNewJ2K.with(isNewJ2k),
+        this.conversionTime.with(conversionTime),
+        this.linesCount.with(linesCount),
+        this.filesCount.with(filesCount),
+        this.pluginInfo.with(getPluginInfoById(KotlinIdePlugin.id)),
+    )
 }
 
 enum class ConversionType(val text: String) {

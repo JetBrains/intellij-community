@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,8 +27,8 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFsConnectionListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
@@ -107,7 +108,8 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
     @Override
     public void beforeConnectionClosed() {
-      final var service = ApplicationManager.getApplication().getServiceIfCreated(VirtualFilePointerManager.class);
+      Application app = ApplicationManager.getApplication();
+      VirtualFilePointerManager service = app == null ? null : app.getServiceIfCreated(VirtualFilePointerManager.class);
       if (service != null) {
         ((VirtualFilePointerManagerImpl)service).switchToUrlBasedPointers();
       }
@@ -150,7 +152,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   synchronized @NotNull Collection<? extends VirtualFilePointer> getPointersUnder(@NotNull VirtualFileSystemEntry parent, @NotNull String childName) {
     assert !StringUtil.isEmptyOrSpaces(childName);
     @NotNull MultiMap<VirtualFilePointerListener, VirtualFilePointerImpl> nodes = MultiMap.create();
-    addRelevantPointers(null, parent, toNameId(childName), nodes, new ArrayList<>(), true, parent.getFileSystem(), new VFileDeleteEvent(this, parent, false));
+    addRelevantPointers(null, parent, toNameId(childName), nodes, new ArrayList<>(), true, parent.getFileSystem(), new VFileDeleteEvent(this, parent));
     return nodes.values();
   }
 
@@ -546,7 +548,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
                                  long prepareElapsedMs) {
   }
 
-  static class NodeToUpdate {
+  static final class NodeToUpdate {
     private final FilePartNode parent;
     final FilePartNode node;
     VFileEvent myEvent;
@@ -694,7 +696,7 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
   }
 
   private static int toNameId(@NotNull String name) {
-    return FileNameCache.storeName(name);
+    return FSRecords.getInstance().getNameId(name);
   }
 
   synchronized void assertConsistency() {

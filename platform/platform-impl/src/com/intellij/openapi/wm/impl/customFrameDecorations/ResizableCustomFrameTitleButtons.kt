@@ -1,17 +1,16 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
 import javax.swing.Action
-import javax.swing.JButton
 
 internal class ResizableCustomFrameTitleButtons(closeAction: Action,
                                                 private val myRestoreAction: Action,
                                                 private val myIconifyAction: Action,
                                                 private val myMaximizeAction: Action
 ) : CustomFrameTitleButtons(closeAction) {
-  companion object{
+  companion object {
     private val restoreIcon = AllIcons.Windows.Restore
     private val restoreInactiveIcon = AllIcons.Windows.RestoreInactive
 
@@ -21,16 +20,19 @@ internal class ResizableCustomFrameTitleButtons(closeAction: Action,
     private val minimizeIcon = AllIcons.Windows.Minimize
     private val minimizeInactiveIcon = AllIcons.Windows.MinimizeInactive
 
-    fun create(myCloseAction: Action, myRestoreAction: Action, myIconifyAction: Action, myMaximizeAction: Action) : ResizableCustomFrameTitleButtons {
+    fun create(myCloseAction: Action,
+               myRestoreAction: Action,
+               myIconifyAction: Action,
+               myMaximizeAction: Action): ResizableCustomFrameTitleButtons {
       val darculaTitleButtons = ResizableCustomFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
     }
   }
 
-  val restoreButton: JButton = createButton("Restore", myRestoreAction)
-  val maximizeButton: JButton = createButton("Maximize", myMaximizeAction)
-  val minimizeButton: JButton = createButton("Iconify", myIconifyAction)
+  private val restoreButton = createButton("Restore", myRestoreAction)
+  private val maximizeButton = createButton("Maximize", myMaximizeAction)
+  private val minimizeButton = createButton("Iconify", myIconifyAction)
 
   override fun fillButtonPane() {
     super.fillButtonPane()
@@ -48,10 +50,8 @@ internal class ResizableCustomFrameTitleButtons(closeAction: Action,
 
   override fun updateStyles() {
     super.updateStyles()
-    StyleManager.applyStyle(restoreButton, getStyle(if(isSelected) restoreIcon else restoreInactiveIcon, restoreIcon))
-    StyleManager.applyStyle(maximizeButton, getStyle(if(isSelected) maximizeIcon else maximizeInactiveIcon, maximizeIcon))
-    StyleManager.applyStyle(minimizeButton, getStyle(if(isSelected) minimizeIcon else minimizeInactiveIcon, minimizeIcon))
+    StyleManager.applyStyle(restoreButton, getStyle(if (isSelected) restoreIcon else restoreInactiveIcon, restoreIcon))
+    StyleManager.applyStyle(maximizeButton, getStyle(if (isSelected) maximizeIcon else maximizeInactiveIcon, maximizeIcon))
+    StyleManager.applyStyle(minimizeButton, getStyle(if (isSelected) minimizeIcon else minimizeInactiveIcon, minimizeIcon))
   }
-
-
 }

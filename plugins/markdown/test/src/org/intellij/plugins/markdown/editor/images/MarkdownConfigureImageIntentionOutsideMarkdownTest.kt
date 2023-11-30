@@ -2,15 +2,15 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
+import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 
 class MarkdownConfigureImageIntentionOutsideMarkdownTest: BasePlatformTestCase() {
   fun `test intention not available in html files`() = doTest()
 
   private fun doTest() {
     myFixture.configureByFile(getTestFileName())
-    val intentions = myFixture.filterAvailableIntentions(MarkdownBundle.message("markdown.configure.image.text"))
+    val intentions = myFixture.filterAvailableIntentions(MarkdownImagesBundle.message("markdown.configure.image.text"))
     assertEmpty(intentions)
   }
 

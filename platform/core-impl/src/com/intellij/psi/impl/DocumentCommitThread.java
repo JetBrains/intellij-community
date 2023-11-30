@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -101,8 +101,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   }
 
   // returns finish commit Runnable (to be invoked later in EDT) or null on failure
-  @NotNull
-  private Runnable commitUnderProgress(@NotNull CommitTask task, boolean synchronously, @NotNull PsiDocumentManagerBase documentManager) {
+  private @NotNull Runnable commitUnderProgress(@NotNull CommitTask task, boolean synchronously, @NotNull PsiDocumentManagerBase documentManager) {
     Document document = task.document;
     Project project = task.project;
     List<BooleanRunnable> finishProcessors = new SmartList<>();
@@ -152,9 +151,8 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     };
   }
 
-  @NotNull
-  private static BooleanRunnable handleCommitWithoutPsi(@NotNull CommitTask task,
-                                                        @NotNull PsiDocumentManagerBase documentManager) {
+  private static @NotNull BooleanRunnable handleCommitWithoutPsi(@NotNull CommitTask task,
+                                                                 @NotNull PsiDocumentManagerBase documentManager) {
     return () -> {
       if (!task.isStillValid() || documentManager.getCachedViewProvider(task.document) != null) {
         return false;
@@ -189,13 +187,13 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   }
 
   private static class CommitTask {
-    @NotNull private final Document document;
-    @NotNull final Project project;
+    private final @NotNull Document document;
+    final @NotNull Project project;
     private final int modificationSequence; // store initial document modification sequence here to check if it changed later before commit in EDT
     private volatile @NotNull FileViewProvider cachedViewProvider; // to retain viewProvider to avoid surprising getCachedProvider() == null half-way through commit
 
-    @NotNull final Object reason;
-    @NotNull final ModalityState myCreationModality;
+    final @NotNull Object reason;
+    final @NotNull ModalityState myCreationModality;
     private final CharSequence myLastCommittedText;
 
     CommitTask(@NotNull Project project,
@@ -213,9 +211,8 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
       this.cachedViewProvider = cachedViewProvider;
     }
 
-    @NonNls
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       String reasonInfo = " task reason: " + StringUtil.first(String.valueOf(reason), 180, true) +
                           (isStillValid() ? "" : "; changed: old seq=" + modificationSequence + ", new seq=" + ((DocumentEx)document).getModificationSequence());
       String contextInfo = " modality: " + myCreationModality;
@@ -245,8 +242,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   }
 
   // returns runnable to execute under the write action in AWT to finish the commit
-  @NotNull
-  private static BooleanRunnable doCommit(@NotNull CommitTask task,
+  private static @NotNull BooleanRunnable doCommit(@NotNull CommitTask task,
                                           @NotNull PsiFile file,
                                           @NotNull FileASTNode oldFileNode,
                                           @NotNull ProperTextRange changedPsiRange,

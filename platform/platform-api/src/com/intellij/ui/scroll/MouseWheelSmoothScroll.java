@@ -1,7 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scroll;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsStateKt;
 import com.intellij.util.animation.Animation;
 import com.intellij.util.animation.JBAnimator;
 import org.jetbrains.annotations.ApiStatus;
@@ -216,12 +218,13 @@ public final class MouseWheelSmoothScroll {
 
       @Override
       public double getDuration() {
-        return UISettings.getShadowInstance().getAnimatedScrollingDuration();
+        return LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred()
+               ? UISettings.getShadowInstance().getAnimatedScrollingDuration()
+               : UISettingsStateKt.getDefaultAnimatedScrollingDuration();
       }
 
-      @NotNull
       @Override
-      public Easing getEasing() {
+      public @NotNull Easing getEasing() {
         int points = UISettings.getShadowInstance().getAnimatedScrollingCurvePoints();
         if (points != curvePoints || ourEasing == null) {
           double x1 = (points >> 24 & 0xFF) / 200.0;

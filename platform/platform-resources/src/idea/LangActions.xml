@@ -388,6 +388,8 @@
       <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
     </group>
 
+    <action id="ShowHoverInfo" class="com.intellij.openapi.editor.actions.ShowHoverInfoAction"/>
+
     <action id="ShowGutterIconsSettings" class="com.intellij.application.options.editor.GutterIconsConfigurable$ShowSettingsAction">
       <add-to-group group-id="EditorGutterPopupMenu.Appearance" anchor="last"/>
       <add-to-group group-id="DocCommentGutterIconContextMenu"/>
@@ -484,7 +486,7 @@
     </group>
 
     <!-- Code -->
-    <group id="Floating.CodeToolbar" popup="false">
+    <group id="Floating.CodeToolbar" popup="false" searchable="false">
       <group id="Floating.CodeToolbar.Extract" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"
              searchable="false" />
       <group id="Floating.CodeToolbar.Surround" popup="true" class="com.intellij.ui.codeFloatingToolbar.DropdownActionGroup"
@@ -497,11 +499,20 @@
         <!--suppress PluginXmlCapitalization -->
         <action id="Floating.CodeToolbar.SurroundWithIf" class="com.intellij.codeInsight.generation.actions.SurroundWithActionBase" />
       </group>
-      <group id="Floating.CodeToolbar.Configure" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup" searchable="false">
-        <action id="Floating.CodeToolbar.Customize" class="com.intellij.ui.codeFloatingToolbar.CustomizeCodeFloatingToolbarAction" />
-        <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
-      </group>
     </group>
+    <action id="CodeFloatingToolbar.GotoNextMenu" class="com.intellij.ui.codeFloatingToolbar.GotoNextFloatingToolbarMenu" />
+    <action id="CodeFloatingToolbar.GotoPrevMenu" class="com.intellij.ui.codeFloatingToolbar.GotoPreviousFloatingToolbarMenu" />
+    <action id="Floating.CodeToolbar.Disable" class="com.intellij.ui.codeFloatingToolbar.DisableCodeFloatingToolbarAction" />
+
+    <group id="InlineCompletion" popup="true">
+      <action id="CallInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.CallInlineCompletionAction"/>
+      <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
+        <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
+      </action>
+      <separator/>
+      <group id="InlineCompletion.Settings" popup="true" internal="true"/>
+    </group>
+
     <group id="CodeMenu" popup="true">
       <reference ref="OverrideMethods"/>
       <reference ref="ImplementMethods"/>
@@ -518,6 +529,8 @@
         <separator/>
         <action id="HippieCompletion" class="com.intellij.codeInsight.completion.actions.HippieCompletionAction"/>
         <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
+        <separator/>
+        <reference ref="InsertInlineCompletionAction"/>
       </group>
 
       <group id="InspectCodeInCodeMenuGroup">
@@ -606,7 +619,7 @@
       </group>
 
       <group id="CodeFormatGroup">
-        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction">
+        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction" icon="AllIcons.Actions.ReformatCode">
           <add-to-group group-id="Floating.CodeToolbar" anchor="after" relative-to-action="CommentByLineComment" />
           <synonym key="action.ReformatCode.synonym1"/>
         </action>
@@ -796,7 +809,6 @@
     </group>
 
     <group id="ProjectViewPopupMenuModifyGroup">
-      <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
       <reference ref="$Delete"/>
@@ -1310,14 +1322,19 @@
     </group>
 
     <group id="XDebugger.Settings" icon="AllIcons.General.GearPlain" popup="true">
-      <reference ref="CreateRunConfiguration"/>
-      <separator/>
       <action id="XDebugger.PreviewTab" class="com.intellij.xdebugger.impl.actions.OpenFilesInPreviewTabAction"/>
       <action id="XDebugger.Inline" class="com.intellij.xdebugger.impl.actions.UseInlineDebuggerAction"/>
       <separator/>
       <reference ref="XDebugger.ToggleSortValues"/>
       <separator/>
       <action id="XDebugger.UnmuteOnStop" class="com.intellij.xdebugger.impl.actions.UnmuteOnStopAction" />
+    </group>
+
+    <group id="XDebugger.Code.Toolbar" class="com.intellij.xdebugger.impl.actions.DebuggerCodeToolbarGroup">
+      <separator/>
+      <reference ref="EvaluateExpression"/>
+      <reference ref="Debugger.AddToWatch"/>
+      <add-to-group group-id="Floating.CodeToolbar" relative-to-action="ReformatCode" anchor="after"/>
     </group>
 
     <group id="RunnerLayoutActions">
@@ -1481,9 +1498,17 @@
 
     <group id="RunDashboardContentToolbar">
       <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass"/>
+      <action id="RunDashboard.Run" class="com.intellij.execution.dashboard.actions.RunAction" icon="AllIcons.Actions.Execute" use-shortcut-of="RunClass">
+        <add-to-group anchor="first" group-id="RunTab.TopToolbar"/>
+        <add-to-group anchor="first" group-id="RunTab.TopToolbar.Old"/>
+        <add-to-group anchor="first" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+      </action>
       <!--suppress PluginXmlValidity -->
-      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass"/>
+      <action id="RunDashboard.Debug" class="com.intellij.execution.dashboard.actions.DebugAction" icon="AllIcons.Actions.StartDebugger" use-shortcut-of="DebugClass">
+        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar"/>
+        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="RunTab.TopToolbar.Old"/>
+        <add-to-group anchor="after" relative-to-action="RunDashboard.Run" group-id="XDebugger.ToolWindow.TopToolbar3"/>
+      </action>
       <action id="RunDashboard.Stop" class="com.intellij.execution.dashboard.actions.StopAction" icon="AllIcons.Actions.Suspend"
               use-shortcut-of="Stop"/>
     </group>
@@ -1515,9 +1540,9 @@
              class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       <group id="ServiceView.OpenInNewTabGroup" popup="true" icon="AllIcons.Actions.OpenNewTab"
              class="com.intellij.execution.services.OpenInNewTabActionGroup">
-      <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
-      <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
-      <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
+        <action id="ServiceView.OpenInNewTab" class="com.intellij.execution.services.OpenInNewTabAction"/>
+        <action id="ServiceView.OpenEachInNewTab" class="com.intellij.execution.services.OpenEachInNewTabAction"/>
+        <action id="ServiceView.SplitByType" class="com.intellij.execution.services.SplitByTypeAction"/>
       </group>
       <separator/>
       <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
@@ -1534,13 +1559,16 @@
       <reference id="ServiceView.OpenInNewTab"/>
       <reference id="ServiceView.OpenEachInNewTab"/>
       <reference id="ServiceView.SplitByType"/>
+      <action id="ServiceView.OpenInToolWindow" class="com.intellij.execution.services.OpenInToolWindowAction"/>
       <separator/>
       <reference id="$Delete"/>
       <separator/>
       <reference id="EditSource"/>
       <action id="ServiceView.JumpToServices" class="com.intellij.execution.services.JumpToServicesAction" use-shortcut-of="ShowNavBar"/>
     </group>
+    <action id="ServiceView.SelectActiveService" class="com.intellij.execution.services.SelectActiveServiceAction"/>
     <action id="ServiceView.ShowServices" class="com.intellij.execution.services.ShowServicesAction" icon="AllIcons.Actions.ShowAsTree"/>
+    <action id="ServiceView.ConfigureServices" class="com.intellij.execution.services.ConfigureServicesAction" icon="AllIcons.General.GearPlain"/>
     <group id="RunDashboard.GroupBy" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
       <action id="RunDashboard.GroupByType" class="com.intellij.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
       <action id="RunDashboard.GroupByStatus" class="com.intellij.execution.dashboard.actions.GroupByConfigurationStatusAction"/>
@@ -1673,6 +1701,7 @@
 
     <group id="RunToolbarMainActionGroup">
       <action class="com.intellij.execution.ui.RedesignedRunConfigurationSelector" id="RedesignedRunConfigurationSelector"/>
+      <group id="compositeResumeGroup" searchable="false" popup="false"/>
       <group id="RunToolbarTopLevelExecutorActionGroup" class="com.intellij.execution.ui.RunToolbarTopLevelExecutorActionGroup" />
       <reference ref="Stop"/>
       <action id="MoreRunToolbarActions" class="com.intellij.execution.ui.MoreRunToolbarActions" />
@@ -1698,8 +1727,6 @@
       <add-to-group group-id="ActivateToolWindowActions"/>
     </action>
 
-    <action class="com.intellij.internal.DumpRunDebugActionStateAction" internal="true" text="Dump State of Run/Debug Combobox"/>
-
     <action id="SwitchFileBasedIndexStorageAction"
             class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"/>
 
@@ -1708,6 +1735,11 @@
 
     <action id="ForceIndexRescanning" internal="true" class="com.intellij.util.indexing.ForceIndexRescanningAction" icon="AllIcons.Actions.Refresh"/>
     <action id="ForceIndexRebuild" internal="true" class="com.intellij.util.indexing.ForceIndexRebuildAction" icon="AllIcons.Actions.Refresh"/>
+
+    <action id="ToggleFileBasedIndexes" internal="true" class="com.intellij.util.indexing.internal.ToggleFileBasedIndexesAction"/>
+    <action id="PauseScanningAndIndexing" internal="true" class="com.intellij.util.indexing.internal.PauseScanningAndIndexingAction"/>
+
+    <action class="com.intellij.internal.ClearFileTemplateNameInternalAction" internal="true"/>
 
     <group id="Internal.Dump" internal="true" popup="true">
       <action id="DumpExtensions" internal="true" class="com.intellij.internal.DumpExtensionsAction"/>
@@ -1724,7 +1756,7 @@
     <group id="Internal.VFS" popup="true" internal="true">
       <action id="VirtualFileInfo" internal="true" class="com.intellij.openapi.vfs.impl.local.VirtualFileInfoAction"/>
       <separator/>
-      <action id="CheckVfsSanity" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckSanityAction"/>
+      <action id="CheckVfsSanityInMenu" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>
       <action id="MarkVfsCorrupted" internal="true" class="com.intellij.openapi.vfs.newvfs.persistent.MarkVfsCorruptedAction"/>
       <action id="LoadAllContent" internal="true" class="com.intellij.internal.LoadAllContentsAction"/>
       <action id="LoadAllVFSContent" internal="true" class="com.intellij.internal.LoadAllVfsStoredContentsAction"/>
@@ -1739,8 +1771,7 @@
     </group>
     <action internal="true" id="ShowUsageFeatures" class ="com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction"/>
 
-    <action id="InsertInlineCompletionAction" class="com.intellij.codeInsight.inline.completion.InsertInlineCompletionAction">
-      <keyboard-shortcut first-keystroke="TAB" keymap="$default"/>
-    </action>
+    <!-- copy of CheckVfsSanityInMenu: !internal so could be invoked via 'search everywhere' -->
+    <action id="CheckVfsSanity" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>
   </actions>
 </idea-plugin>

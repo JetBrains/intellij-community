@@ -8,7 +8,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.util.text.DateFormatUtil
+import kotlin.random.Random
+import kotlin.time.Duration.Companion.days
 
 @Service
 internal class TipOrderUtil {
@@ -27,11 +28,10 @@ internal class TipOrderUtil {
     }
 
     FeatureUsageTracker.getInstance()  // instantiate just to load statistics of feature usage
-    val tipsUsageManager = TipsUsageManager.getInstance()
     val allFeatures = registry.featureIds.map { registry.getFeatureDescriptor(it) }
-    val tipInfoList = tips.shuffled().map { tip ->
+    val random = Random(TipsUsageManager.getInstance().tipsOrderSeed)
+    val tipInfoList = tips.shuffled(random).map { tip ->
       val features = allFeatures.filter { it.tipId == tip.id }
-      val lastTimeShown = tipsUsageManager.getLastTimeShown(tip.id)
       if (features.isNotEmpty()) {
         val isApplicable = if (project == null) {
           true
@@ -49,9 +49,9 @@ internal class TipOrderUtil {
           unusedFeatures.maxOf(FeatureDescriptor::getUtilityScore)
         }
         else features.maxOf(FeatureDescriptor::getUtilityScore)
-        TipInfo(tip, true, isApplicable, unusedScore, utilityScore, lastTimeShown)
+        TipInfo(tip, true, isApplicable, unusedScore, utilityScore)
       }
-      else TipInfo(tip, false, true, 0.0, 3, lastTimeShown)
+      else TipInfo(tip, false, true, 0.0, 3)
     }
 
     val sortedTips = tipInfoList.sortedWith(getComparator()).map { it.tip }
@@ -65,28 +65,33 @@ internal class TipOrderUtil {
       .thenComparingDouble { info -> info.unusedScore }
       .then(compareBy { info -> info.isApplicable })
       .thenComparingInt { info -> info.utilityScore }.reversed()
-      .thenComparingLong { info -> info.lastTimeShown }
   }
 
   private fun adjustFirstTip(tips: List<TipAndTrickBean>): List<TipAndTrickBean> {
+    if (tips.isEmpty()) {
+      return emptyList()
+    }
     val tipsUsageManager = TipsUsageManager.getInstance()
-    if (tipsUsageManager.wereTipsShownToday()) {
-      return tipsUsageManager.makeLastShownTipFirst(tips)
+    return if (tipsUsageManager.wereTipsShownToday()) {
+      val lastShownTipId = tips.maxByOrNull { tipsUsageManager.getLastTimeShown(it.id) }?.id ?: tips[0]
+      val lastShownTipIndex = tips.indexOfFirst { it.id == lastShownTipId }
+      cycleShift(tips, lastShownTipIndex)
     }
     else {
-      val index = tips.indexOfFirst { tip ->
-        System.currentTimeMillis() - tipsUsageManager.getLastTimeShown(tip.id) > MIN_SUCCESSIVE_SHOW_INTERVAL_DAYS * DateFormatUtil.DAY
+      val indexToShowFirst = tips.indexOfFirst { tip ->
+        System.currentTimeMillis() - tipsUsageManager.getLastTimeProposed(tip.id) > MIN_SUCCESSIVE_SHOW_INTERVAL_MS
       }
-      if (index <= 0) {
-        return tips
-      }
-      else {
-        val mutableTips = tips.toMutableList()
-        val newFirstTip = mutableTips.removeAt(index)
-        mutableTips.add(0, newFirstTip)
-        return mutableTips
-      }
+      if (indexToShowFirst <= 0) tips else cycleShift(tips, indexToShowFirst)
     }
+  }
+
+  /** Move [0; value) elements to the end of the list, so this list will start from element with index [value]
+   *  Can be implemented in place, without allocation of the new list, but is not required here.
+   */
+  private fun cycleShift(tips: List<TipAndTrickBean>, value: Int): List<TipAndTrickBean> {
+    val before = tips.subList(0, value)
+    val after = tips.subList(value, tips.size)
+    return after + before
   }
 
   private data class TipInfo(
@@ -94,17 +99,16 @@ internal class TipOrderUtil {
     val featureFound: Boolean,
     val isApplicable: Boolean,
     val unusedScore: Double,
-    val utilityScore: Int,
-    val lastTimeShown: Long
+    val utilityScore: Int
   )
 
   companion object {
     const val SHUFFLE_ALGORITHM = "shuffle"
     const val SORTING_ALGORITHM = "usage_and_applicability"
-    private const val SORTING_ALGORITHM_VERSION = "1"
+    private const val SORTING_ALGORITHM_VERSION = "2"
 
-    // Minimum time between showing the same tip at the first place
-    private const val MIN_SUCCESSIVE_SHOW_INTERVAL_DAYS = 14
+    // Minimum time between showing the same tip in the first place
+    private val MIN_SUCCESSIVE_SHOW_INTERVAL_MS = 14.days.inWholeMilliseconds
 
     @JvmStatic
     fun getInstance(): TipOrderUtil = service()

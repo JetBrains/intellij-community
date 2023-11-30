@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -28,14 +14,18 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.psi.codeInsight.XmlAutoPopupEnabler;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlAutoPopupHandler extends TypedHandlerDelegate {
-  @NotNull
   @Override
-  public Result checkAutoPopup(final char charTyped, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public @NotNull Result checkAutoPopup(final char charTyped,
+                                        final @NotNull Project project,
+                                        final @NotNull Editor editor,
+                                        final @NotNull PsiFile file) {
     final boolean isXmlLikeFile = XmlGtTypedHandler.fileContainsXmlLanguage(file);
     boolean spaceInTag = isXmlLikeFile && charTyped == ' ';
 
@@ -58,7 +48,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  public static void autoPopupXmlLookup(final Project project, final Editor editor){
+  public static void autoPopupXmlLookup(final Project project, final Editor editor) {
     AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
       int offset = editor.getCaretModel().getOffset();
 
@@ -98,7 +88,8 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
         text.equals(" ") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
         text.endsWith("${") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
         text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
-        text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
+        text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
+        ContainerUtil.exists(XmlAutoPopupEnabler.EP_NAME.getExtensionList(), p -> p.shouldShowPopup(file, offset))) {
       return true;
     }
 
@@ -126,6 +117,4 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
     }
     return result.booleanValue();
   }
-
-
 }

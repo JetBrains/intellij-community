@@ -6,13 +6,15 @@ import com.intellij.find.SearchSession;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ToggleSelectionOnlyAction extends ToggleAction implements ContextAwareShortcutProvider, DumbAware, LightEditCompatible {
+public final class ToggleSelectionOnlyAction extends ToggleAction implements ContextAwareShortcutProvider, DumbAware, LightEditCompatible,
+                                                                             ActionRemoteBehaviorSpecification.Frontend {
   public ToggleSelectionOnlyAction() {
     super(FindBundle.message("find.selection.only"), null, AllIcons.Actions.InSelection);
   }

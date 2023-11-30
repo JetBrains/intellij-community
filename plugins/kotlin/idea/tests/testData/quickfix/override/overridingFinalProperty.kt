@@ -6,4 +6,6 @@ open class A {
 class B : A() {
     override<caret> var x = 24;
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeOverriddenMemberOpenFix

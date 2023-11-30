@@ -38,7 +38,7 @@ import java.util.*;
  * Coverage engine provide coverage support for different languages or coverage runner classes.
  * E.g. engine for JVM languages, Ruby, Python
  * <p/>
- * Each coverage engine may work with several coverage runner. E.g. Java coverage engine supports IDEA/EMMA/Cobertura,
+ * Each coverage engine may work with several coverage runners. E.g. Java coverage engine supports IDEA/Jacoco,
  * Ruby engine works with RCov
  *
  * @author Roman.Chernyatchik
@@ -59,6 +59,14 @@ public abstract class CoverageEngine {
   /**
    * @return tests, which covered specified line. Names should be compatible with {@link CoverageEngine#findTestsByNames(String[], Project)}
    */
+  public Set<String> getTestsForLine(Project project, CoverageSuitesBundle bundle, String classFQName, int lineNumber) {
+    return Collections.emptySet();
+  }
+
+  /**
+   * @deprecated Use {@link #getTestsForLine(Project, CoverageSuitesBundle, String, int)} instead
+   */
+  @Deprecated(forRemoval = true)
   public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
     return Collections.emptySet();
   }
@@ -66,6 +74,14 @@ public abstract class CoverageEngine {
   /**
    * @return true, if test data was collected
    */
+  public boolean wasTestDataCollected(Project project, CoverageSuitesBundle bundle) {
+    return false;
+  }
+
+  /**
+   * @deprecated Use {@link #wasTestDataCollected(Project, CoverageSuitesBundle)} instead
+   */
+  @Deprecated(forRemoval = true)
   public boolean wasTestDataCollected(Project project) {
     return false;
   }
@@ -101,7 +117,7 @@ public abstract class CoverageEngine {
    * @param lastCoverageTimeStamp    timestamp
    * @param suiteToMerge             Suite to merge this coverage data with
    * @param coverageByTestEnabled    Collect coverage for test option
-   * @param tracingEnabled           Tracing option
+   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
    * @param trackTestFolders         Track test folders option
    * @return Suite
    */
@@ -113,10 +129,10 @@ public abstract class CoverageEngine {
                                            final long lastCoverageTimeStamp,
                                            @Nullable final String suiteToMerge,
                                            final boolean coverageByTestEnabled,
-                                           final boolean tracingEnabled,
+                                           final boolean branchCoverage,
                                            final boolean trackTestFolders) {
     return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
-                               coverageByTestEnabled, tracingEnabled, trackTestFolders, null);
+                               coverageByTestEnabled, branchCoverage, trackTestFolders, null);
   }
 
   /**
@@ -129,7 +145,7 @@ public abstract class CoverageEngine {
    * @param lastCoverageTimeStamp    timestamp
    * @param suiteToMerge             Suite to merge this coverage data with
    * @param coverageByTestEnabled    Collect coverage for test option
-   * @param tracingEnabled           Tracing option
+   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
    * @param trackTestFolders         Track test folders option
    * @return Suite
    */
@@ -141,7 +157,7 @@ public abstract class CoverageEngine {
                                                     final long lastCoverageTimeStamp,
                                                     @Nullable final String suiteToMerge,
                                                     final boolean coverageByTestEnabled,
-                                                    final boolean tracingEnabled,
+                                                    final boolean branchCoverage,
                                                     final boolean trackTestFolders, Project project);
 
   /**

@@ -5,8 +5,9 @@ package com.intellij.ide.gdpr
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.idea.AppExitCodes
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.DialogWrapper
@@ -32,7 +33,8 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
       text = bundle.getString("userAgreement.dialog.exit"),
       action = {
         if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
-          ApplicationManager.getApplication().exit(true, true, false, AppExitCodes.PRIVACY_POLICY_REJECTION)
+          ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.EXIT_CONFIRMED or ApplicationEx.FORCE_EXIT,
+                                                       AppExitCodes.PRIVACY_POLICY_REJECTION)
         }
         else {
           exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)
@@ -115,13 +117,13 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
     val hint = bundle.getString("dataSharing.applyToAll.hint").replace("{0}", ApplicationInfoImpl.getShadowInstance().shortCompanyName)
     HtmlChunk.text(hint).wrapWith("hint").wrapWith("p")
   }
-  val preferencesHint = bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())
-  val preferencesChunk = HtmlChunk.text(preferencesHint).wrapWith("hint").wrapWith("p")
+  val preferenceHint = bundle.getString("dataSharing.revoke.hint").replace("{0}", ShowSettingsUtil.getSettingsMenuName())
+  val preferenceChunk = HtmlChunk.text(preferenceHint).wrapWith("hint").wrapWith("p")
   val title = HtmlChunk.text(bundle.getString("dataSharing.consents.title")).wrapWith("h1")
   return HtmlBuilder()
     .append(title)
     .append(HtmlChunk.p().addRaw(consent.text))
     .append(allProductChunk)
-    .append(preferencesChunk)
+    .append(preferenceChunk)
     .wrapWithHtmlBody()
 }

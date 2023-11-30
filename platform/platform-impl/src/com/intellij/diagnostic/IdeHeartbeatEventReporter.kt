@@ -1,9 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.ide.PowerSaveMode
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
+import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.eventLog.events.EventFields.Int
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.application.ApplicationManager
@@ -13,6 +15,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.io.PowerStatus
 import com.sun.management.OperatingSystemMXBean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -81,7 +84,9 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
         UILatencyLogger.SYSTEM_CPU_LOAD.with(cpuLoadInt),
         UILatencyLogger.SWAP_LOAD.with(swapLoad),
         UILatencyLogger.CPU_TIME.with(TimeUnit.NANOSECONDS.toMillis(thisCpuTime).toInt()),
-        UILatencyLogger.GC_TIME.with(thisGcTime.toInt())
+        UILatencyLogger.GC_TIME.with(thisGcTime.toInt()),
+        UILatencyLogger.POWER_SOURCE.with(PowerStatus.getPowerStatus()),
+        UILatencyLogger.POWER_SAVE_MODE.with(PowerSaveMode.isEnabled())
       )
 
       delay(100.seconds)
@@ -89,32 +94,43 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
   }
 }
 
-internal class UILatencyLogger : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("performance", 66)
-    internal val SYSTEM_CPU_LOAD = Int("system_cpu_load")
-    internal val SWAP_LOAD: IntEventField = Int("swap_load")
-    internal val CPU_TIME: IntEventField = Int("cpu_time_ms")
-    internal val GC_TIME: IntEventField = Int("gc_time_ms")
-    internal val HEARTBEAT: VarargEventId = GROUP.registerVarargEvent(
-      "heartbeat",
-      SYSTEM_CPU_LOAD,
-      SWAP_LOAD,
-      CPU_TIME,
-      GC_TIME)
-    @JvmField
-    val LATENCY: EventId1<Long> = GROUP.registerEvent("ui.latency", EventFields.DurationMs)
-    @JvmField
-    val LAGGING: EventId1<Long> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs)
-    @JvmField
-    val COLD_START: BooleanEventField = Boolean("cold_start")
-    @JvmField
-    val POPUP_LATENCY: VarargEventId = GROUP.registerVarargEvent("popup.latency",
-                                                       EventFields.DurationMs,
-                                                       EventFields.ActionPlace,
-                                                       COLD_START,
-                                                       EventFields.Language)
-  }
+internal object UILatencyLogger : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("performance", 68)
+
+  internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
+  internal val SWAP_LOAD: IntEventField = Int("swap_load")
+  internal val CPU_TIME: IntEventField = Int("cpu_time_ms")
+  internal val GC_TIME: IntEventField = Int("gc_time_ms")
+  internal val POWER_SOURCE: EnumEventField<PowerStatus> = Enum<PowerStatus>("power_source")
+  internal val POWER_SAVE_MODE: BooleanEventField = Boolean("power_save_mode")
+  internal val HEARTBEAT: VarargEventId = GROUP.registerVarargEvent(
+    "heartbeat",
+    SYSTEM_CPU_LOAD,
+    SWAP_LOAD,
+    CPU_TIME,
+    GC_TIME,
+    POWER_SOURCE,
+    POWER_SAVE_MODE
+  )
+
+  @JvmField
+  val LATENCY: EventId1<Long> = GROUP.registerEvent("ui.latency", EventFields.DurationMs)
+
+  @JvmField
+  val LAGGING: EventId1<Long> = GROUP.registerEvent("ui.lagging", EventFields.DurationMs)
+
+  @JvmField
+  val COLD_START: BooleanEventField = Boolean("cold_start")
+
+  @JvmField
+  val ACTION_POPUP_LATENCY: VarargEventId = GROUP.registerVarargEvent("popup.latency",
+                                                                      EventFields.DurationMs,
+                                                                      EventFields.ActionPlace,
+                                                                      COLD_START,
+                                                                      EventFields.Language)
+
+  @JvmField
+  val MAIN_MENU_LATENCY: EventId1<Long> = GROUP.registerEvent("mainmenu.latency", EventFields.DurationMs)
 
   override fun getGroup(): EventLogGroup = GROUP
 }

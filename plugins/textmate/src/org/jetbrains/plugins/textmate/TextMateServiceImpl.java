@@ -14,18 +14,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import com.intellij.util.progress.CancellationUtil;
 import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.plugins.textmate.bundles.*;
 import org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings;
-import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings;
 import org.jetbrains.plugins.textmate.configuration.TextMatePersistentBundle;
+import org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings;
 import org.jetbrains.plugins.textmate.editor.TextMateEditorUtilsKt;
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor;
 import org.jetbrains.plugins.textmate.language.preferences.*;
@@ -33,9 +30,7 @@ import org.jetbrains.plugins.textmate.language.syntax.TextMateSyntaxTable;
 import org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateTextAttributesAdapter;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.SyntaxMatchUtils;
 
-import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
@@ -49,7 +44,6 @@ import static org.jetbrains.plugins.textmate.bundles.BundleReaderKt.readTextMate
 import static org.jetbrains.plugins.textmate.bundles.VSCBundleReaderKt.readVSCBundle;
 
 public final class TextMateServiceImpl extends TextMateService {
-
   public static Path getBundledBundlePath() {
     return PluginPathManager.getPluginHome("textmate").toPath().resolve("lib/bundles").normalize();
   }
@@ -60,10 +54,10 @@ public final class TextMateServiceImpl extends TextMateService {
   private final Lock myRegistrationLock = new ReentrantLock();
 
   private final Map<CharSequence, TextMateTextAttributesAdapter> myCustomHighlightingColors = new HashMap<>();
-  private Map<TextMateFileNameMatcher, CharSequence> myExtensionsMapping = new HashMap<>();
+  private Map<TextMateFileNameMatcher, CharSequence> myExtensionMapping = new HashMap<>();
   private final TextMateSyntaxTable mySyntaxTable = new TextMateSyntaxTable();
-  private final SnippetsRegistryImpl mySnippetsRegistry = new SnippetsRegistryImpl();
-  private final PreferencesRegistryImpl myPreferencesRegistry = new PreferencesRegistryImpl();
+  private final SnippetsRegistryImpl mySnippetRegistry = new SnippetsRegistryImpl();
+  private final PreferencesRegistryImpl myPreferenceRegistry = new PreferencesRegistryImpl();
   private final ShellVariablesRegistryImpl myShellVariablesRegistry = new ShellVariablesRegistryImpl();
   private final Interner<CharSequence> myInterner = Interner.createWeakInterner();
   private final CoroutineScope myScope;
@@ -71,7 +65,7 @@ public final class TextMateServiceImpl extends TextMateService {
   public TextMateServiceImpl(CoroutineScope scope) {
     myScope = scope;
     Application application = ApplicationManager.getApplication();
-    Runnable checkCancelled = application != null && !application.isUnitTestMode() ? ProgressManager::checkCanceled : null;
+    Runnable checkCancelled = application == null || application.isUnitTestMode() ? null : ProgressManager::checkCanceled;
     SyntaxMatchUtils.setCheckCancelledCallback(checkCancelled);
   }
 
@@ -83,7 +77,7 @@ public final class TextMateServiceImpl extends TextMateService {
   private void registerBundles(boolean fireEvents) {
     myRegistrationLock.lock();
     try {
-      Map<TextMateFileNameMatcher, CharSequence> oldExtensionsMapping = new HashMap<>(myExtensionsMapping);
+      Map<TextMateFileNameMatcher, CharSequence> oldExtensionsMapping = new HashMap<>(myExtensionMapping);
       unregisterAllBundles();
 
       TextMateUserBundlesSettings settings = TextMateUserBundlesSettings.getInstance();
@@ -96,45 +90,40 @@ public final class TextMateServiceImpl extends TextMateService {
         TextMateBuiltinBundlesSettings builtinBundlesSettings = TextMateBuiltinBundlesSettings.getInstance();
         if (builtinBundlesSettings != null) {
           Set<String> turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames();
-          List<Path> builtInBundles = discoverBuiltinBundles(builtinBundlesSettings);
-          List<Path> bundlesToEnable = turnedOffBundleNames.isEmpty()
-                                       ? builtInBundles
-                                       : ContainerUtil.filter(builtInBundles, bundlePath -> !turnedOffBundleNames.contains(bundlePath.getFileName().toString()));
+          List<TextMateBundleToLoad> builtInBundles = discoverBuiltinBundles(builtinBundlesSettings);
+          List<TextMateBundleToLoad> bundlesToEnable = turnedOffBundleNames.isEmpty()
+                                                       ? builtInBundles
+                                                       : ContainerUtil.filter(builtInBundles,
+                                                                              bundleToLoad -> !turnedOffBundleNames.contains(bundleToLoad.getName()));
           TextMateBundlesLoader.registerBundlesInParallel(myScope,
                                                           bundlesToEnable,
-                                                          bundlePath -> registerBundle(bundlePath, newExtensionsMapping));
+                                                          bundleToLoad -> registerBundle(Path.of(bundleToLoad.getPath()), newExtensionsMapping));
         }
       }
 
       Map<String, TextMatePersistentBundle> userBundles = settings.getBundles();
       if (!userBundles.isEmpty()) {
-        List<@NotNull Path> paths = ContainerUtil.mapNotNull(userBundles.entrySet(), entry -> {
-          if (!entry.getValue().getEnabled()) return null;
-          try {
-            return Path.of(entry.getKey());
-          }
-          catch (InvalidPathException e) {
-            return null;
-          }
+        List<@NotNull TextMateBundleToLoad> paths = ContainerUtil.mapNotNull(userBundles.entrySet(), entry -> {
+          return entry.getValue().getEnabled() ? new TextMateBundleToLoad(entry.getValue().getName(), entry.getKey()) : null;
         });
-        TextMateBundlesLoader.registerBundlesInParallel(myScope, paths, bundlePath -> {
-          return registerBundle(bundlePath, newExtensionsMapping);
-        }, path -> {
-          String bundleName = path.getFileName().toString();
+        TextMateBundlesLoader.registerBundlesInParallel(myScope, paths, bundleToLoad -> {
+          return registerBundle(Path.of(bundleToLoad.getPath()), newExtensionsMapping);
+        }, bundleToLoad -> {
+          String bundleName = bundleToLoad.getName();
           String errorMessage = TextMateBundle.message("textmate.cant.register.bundle", bundleName);
           new Notification("TextMate Bundles", TextMateBundle.message("textmate.bundle.load.error", bundleName), errorMessage, NotificationType.ERROR)
-            .addAction(NotificationAction.createSimpleExpiring(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName), () -> settings.disableBundle(path.toString())))
+            .addAction(NotificationAction.createSimpleExpiring(TextMateBundle.message("textmate.disable.bundle.notification.action", bundleName), () -> settings.disableBundle(bundleToLoad.getPath())))
             .notify(null);
         });
       }
 
       if (fireEvents && !oldExtensionsMapping.equals(newExtensionsMapping)) {
         fireFileTypesChangedEvent("old mappings = " + oldExtensionsMapping + ", new mappings" + newExtensionsMapping, () -> {
-          myExtensionsMapping = newExtensionsMapping;
+          myExtensionMapping = newExtensionsMapping;
         });
       }
       else {
-        myExtensionsMapping = newExtensionsMapping;
+        myExtensionMapping = newExtensionsMapping;
       }
       mySyntaxTable.compact();
     }
@@ -149,19 +138,23 @@ public final class TextMateServiceImpl extends TextMateService {
         FileTypeManagerImpl fileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
         fileTypeManager.makeFileTypesChange(reason, update);
       });
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.nonModal());
   }
 
-  private static List<Path> discoverBuiltinBundles(@NotNull TextMateBuiltinBundlesSettings builtinBundlesSettings) {
-    List<Path> builtinBundles = builtinBundlesSettings.getBuiltinBundles();
+  @ApiStatus.Internal
+  public static List<TextMateBundleToLoad> discoverBuiltinBundles(@NotNull TextMateBuiltinBundlesSettings builtinBundlesSettings) {
+    List<TextMateBundleToLoad> builtinBundles = builtinBundlesSettings.getBuiltinBundles();
     if (builtinBundles.isEmpty()) {
       Path builtinBundlesPath = getBundledBundlePath();
       try (Stream<Path> files = Files.list(builtinBundlesPath)) {
-        List<Path> bundles = files.filter(file -> !StringUtil.startsWithChar(file.getFileName().toString(), '.')).toList();
+        List<TextMateBundleToLoad> bundles = files
+          .filter(file -> !StringUtil.startsWithChar(file.getFileName().toString(), '.'))
+          .map(file -> new TextMateBundleToLoad(file.getFileName().toString(), file.toString()))
+          .toList();
         builtinBundlesSettings.setBuiltinBundles(bundles);
         return bundles;
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         LOG.warn("Couldn't list builtin textmate bundles at " + builtinBundlesPath, e);
         return Collections.emptyList();
       }
@@ -172,17 +165,16 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   private void unregisterAllBundles() {
-    myExtensionsMapping.clear();
-    myPreferencesRegistry.clear();
+    myExtensionMapping.clear();
+    myPreferenceRegistry.clear();
     myCustomHighlightingColors.clear();
     mySyntaxTable.clear();
-    mySnippetsRegistry.clear();
+    mySnippetRegistry.clear();
     myShellVariablesRegistry.clear();
   }
 
-  @NotNull
   @Override
-  public Map<CharSequence, TextMateTextAttributesAdapter> getCustomHighlightingColors() {
+  public @NotNull Map<CharSequence, TextMateTextAttributesAdapter> getCustomHighlightingColors() {
     ensureInitialized();
     return myCustomHighlightingColors;
   }
@@ -193,29 +185,26 @@ public final class TextMateServiceImpl extends TextMateService {
     return myShellVariablesRegistry;
   }
 
-  @NotNull
   @Override
-  public SnippetsRegistry getSnippetsRegistry() {
+  public @NotNull SnippetsRegistry getSnippetRegistry() {
     ensureInitialized();
-    return mySnippetsRegistry;
-  }
-
-  @NotNull
-  @Override
-  public PreferencesRegistry getPreferencesRegistry() {
-    ensureInitialized();
-    return myPreferencesRegistry;
+    return mySnippetRegistry;
   }
 
   @Override
-  @Nullable
-  public TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName) {
+  public @NotNull PreferencesRegistry getPreferenceRegistry() {
+    ensureInitialized();
+    return myPreferenceRegistry;
+  }
+
+  @Override
+  public @Nullable TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName) {
     if (Strings.isEmpty(fileName)) {
       return null;
     }
 
     ensureInitialized();
-    CharSequence scopeName = myExtensionsMapping.get(new TextMateFileNameMatcher.Name(StringUtil.toLowerCase(fileName.toString())));
+    CharSequence scopeName = myExtensionMapping.get(new TextMateFileNameMatcher.Name(StringUtil.toLowerCase(fileName.toString())));
     if (!Strings.isEmpty(scopeName)) {
       return new TextMateLanguageDescriptor(scopeName, mySyntaxTable.getSyntax(scopeName));
     }
@@ -237,7 +226,7 @@ public final class TextMateServiceImpl extends TextMateService {
     }
 
     ensureInitialized();
-    CharSequence scopeName = myExtensionsMapping.get(new TextMateFileNameMatcher.Extension(StringUtil.toLowerCase(extension.toString())));
+    CharSequence scopeName = myExtensionMapping.get(new TextMateFileNameMatcher.Extension(StringUtil.toLowerCase(extension.toString())));
     return !Strings.isEmpty(scopeName) ? new TextMateLanguageDescriptor(scopeName, mySyntaxTable.getSyntax(scopeName)) : null;
   }
 
@@ -253,10 +242,11 @@ public final class TextMateServiceImpl extends TextMateService {
             return Files.newInputStream(directory.resolve(relativePath));
           }
           catch (NoSuchFileException e) {
+            TextMateService.LOG.warn("Cannot find referenced file `" + relativePath + "` in bundle `" + directory + "`");
             return null;
           }
-          catch (IOException e) {
-            TextMateService.LOG.warn("Cannot find referenced file `" + relativePath + "`", e);
+          catch (Throwable e) {
+            TextMateService.LOG.warn("Cannot read referenced file `" + relativePath + "` in bundle `" + directory + "`", e);
             return null;
           }
         });
@@ -280,10 +270,10 @@ public final class TextMateServiceImpl extends TextMateService {
     }
   }
 
-  private boolean registerBundle(@Nullable Path directory, @NotNull Map<TextMateFileNameMatcher, CharSequence> extensionsMapping) {
+  private boolean registerBundle(@Nullable Path directory, @NotNull Map<TextMateFileNameMatcher, CharSequence> extensionMapping) {
     TextMateBundleReader reader = readBundle(directory);
     if (reader != null) {
-      registerLanguageSupport(reader, extensionsMapping);
+      registerLanguageSupport(reader, extensionMapping);
       registerPreferences(reader);
       registerSnippets(reader);
       return true;
@@ -292,9 +282,13 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   private void registerSnippets(@NotNull TextMateBundleReader reader) {
-    Iterator<TextMateSnippet> snippetsIterator = reader.readSnippets().iterator();
-    while (snippetsIterator.hasNext()) {
-      mySnippetsRegistry.register(snippetsIterator.next());
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // it's used in internal mode only (see org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate.isApplicable),
+      // do not register to save some memory and loading time
+      Iterator<TextMateSnippet> snippetsIterator = reader.readSnippets().iterator();
+      while (snippetsIterator.hasNext()) {
+        mySnippetRegistry.register(snippetsIterator.next());
+      }
     }
   }
 
@@ -303,10 +297,21 @@ public final class TextMateServiceImpl extends TextMateService {
     while (preferencesIterator.hasNext()) {
       TextMatePreferences preferences = preferencesIterator.next();
       CharSequence scopeName = myInterner.intern(preferences.getScopeName());
-      myPreferencesRegistry.addPreferences(new Preferences(scopeName,
-                                                           preferences.getHighlightingPairs(),
-                                                           preferences.getSmartTypingPairs(),
-                                                           preferences.getIndentationRules()));
+      Set<TextMateBracePair> internedHighlightingPairs = ObjectUtils.doIfNotNull(preferences.getHighlightingPairs(), pairs ->
+        ContainerUtil.map2Set(pairs, p -> new TextMateBracePair(myInterner.intern(p.getLeft()), myInterner.intern(p.getRight())))
+      );
+      Set<TextMateAutoClosingPair> internedSmartTypingPairs = ObjectUtils.doIfNotNull(preferences.getSmartTypingPairs(), pairs ->
+        ContainerUtil.map2Set(pairs, p -> new TextMateAutoClosingPair(myInterner.intern(p.getLeft()), myInterner.intern(p.getRight()), p.getNotIn()))
+      );
+      Set<TextMateBracePair> internedSurroundingPairs = ObjectUtils.doIfNotNull(preferences.getSurroundingPairs(), pairs ->
+        ContainerUtil.map2Set(pairs, p -> new TextMateBracePair(myInterner.intern(p.getLeft()), myInterner.intern(p.getRight())))
+      );
+      myPreferenceRegistry.addPreferences(new Preferences(scopeName,
+                                                          internedHighlightingPairs,
+                                                          internedSmartTypingPairs,
+                                                          internedSurroundingPairs,
+                                                          preferences.getAutoCloseBefore(),
+                                                          preferences.getIndentationRules()));
       for (TextMateShellVariable variable : preferences.getVariables()) {
         myShellVariablesRegistry.addVariable(variable);
       }
@@ -318,13 +323,21 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   private void registerLanguageSupport(@NotNull TextMateBundleReader reader,
-                                       @NotNull Map<TextMateFileNameMatcher, CharSequence> extensionsMapping) {
+                                       @NotNull Map<TextMateFileNameMatcher, CharSequence> extensionMapping) {
     Iterator<TextMateGrammar> grammarIterator = reader.readGrammars().iterator();
     while (grammarIterator.hasNext()) {
       TextMateGrammar grammar = grammarIterator.next();
       CharSequence rootScopeName = mySyntaxTable.loadSyntax(grammar.getPlist().getValue(), myInterner);
-      for (TextMateFileNameMatcher fileNameMatcher : grammar.getFileNameMatchers()) {
-        extensionsMapping.put(fileNameMatcher, rootScopeName);
+      if (rootScopeName != null) {
+        for (TextMateFileNameMatcher fileNameMatcher : grammar.getFileNameMatchers()) {
+          if (fileNameMatcher instanceof TextMateFileNameMatcher.Name) {
+            String newName = StringUtil.toLowerCase(((TextMateFileNameMatcher.Name)fileNameMatcher).getFileName());
+            extensionMapping.put(((TextMateFileNameMatcher.Name)fileNameMatcher).copy(newName), rootScopeName);
+          }
+          else {
+            extensionMapping.put(fileNameMatcher, rootScopeName);
+          }
+        }
       }
     }
   }

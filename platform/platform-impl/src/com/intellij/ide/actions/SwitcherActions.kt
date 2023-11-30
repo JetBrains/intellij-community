@@ -8,6 +8,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.util.BitUtil.isSet
@@ -32,7 +33,7 @@ abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
     event.presentation.isVisible = forward == null
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(event: AnActionEvent) {
     val project = event.project ?: return
@@ -82,7 +83,7 @@ internal class SwitcherIterateThroughItemsAction : DumbAwareAction() {
 }
 
 
-internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
+internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   private fun getCheckBox(event: AnActionEvent) =
     Switcher.SWITCHER_KEY.get(event.project)?.cbShowOnlyEditedFiles
 
@@ -94,7 +95,7 @@ internal class SwitcherToggleOnlyEditedFilesAction : DumbAwareToggleAction() {
     return ActionUpdateThread.EDT
   }
 
-  override fun isSelected(event: AnActionEvent) = getCheckBox(event)?.isSelected ?: false
+  override fun isSelected(event: AnActionEvent): Boolean = getCheckBox(event)?.isSelected ?: false
   override fun setSelected(event: AnActionEvent, selected: Boolean) {
     getCheckBox(event)?.isSelected = selected
   }
@@ -150,7 +151,7 @@ internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList
     if (toList.isShowing) toList.requestFocusInWindow()
   }
 
-  override fun focusLost(event: FocusEvent) = Unit
+  override fun focusLost(event: FocusEvent): Unit = Unit
   override fun focusGained(event: FocusEvent) {
     val size = toList.model.size
     if (size > 0) {
@@ -187,7 +188,7 @@ class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<Inpu
   private val wasAltGraphDown = true == event?.isAltGraphDown
   private val wasControlDown = true == event?.isControlDown
   private val wasMetaDown = true == event?.isMetaDown
-  val isEnabled = wasAltDown || wasAltGraphDown || wasControlDown || wasMetaDown
+  val isEnabled: Boolean = wasAltDown || wasAltGraphDown || wasControlDown || wasMetaDown
 
   private val initialModifiers = if (!isEnabled) null
   else StringBuilder().apply {
@@ -197,9 +198,9 @@ class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<Inpu
     if (wasMetaDown) append("meta ")
   }.toString()
 
-  val forbiddenMnemonic = (event as? KeyEvent)?.keyCode?.let { getMnemonic(it) }
+  val forbiddenMnemonic: String? = (event as? KeyEvent)?.keyCode?.let { getMnemonic(it) }
 
-  fun getForbiddenMnemonic(keyStroke: KeyStroke) = when {
+  fun getForbiddenMnemonic(keyStroke: KeyStroke): String? = when {
     isSet(keyStroke.modifiers, InputEvent.ALT_DOWN_MASK) != wasAltDown -> null
     isSet(keyStroke.modifiers, InputEvent.ALT_GRAPH_DOWN_MASK) != wasAltGraphDown -> null
     isSet(keyStroke.modifiers, InputEvent.CTRL_DOWN_MASK) != wasControlDown -> null

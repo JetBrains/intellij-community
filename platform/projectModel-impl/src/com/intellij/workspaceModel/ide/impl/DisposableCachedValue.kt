@@ -2,20 +2,20 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.assertWriteAccessAllowed
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.impl.DummyVersionedEntityStorage
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.DummyVersionedEntityStorage
+import com.intellij.util.concurrency.ThreadingAssertions
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.system.measureTimeMillis
 
@@ -90,7 +90,7 @@ class CachedValuesDisposer(project: Project) : Disposable {
   init {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
-        assertWriteAccessAllowed()
+        ThreadingAssertions.assertWriteAccess()
         disposeValuesInQueue()
       }
     })

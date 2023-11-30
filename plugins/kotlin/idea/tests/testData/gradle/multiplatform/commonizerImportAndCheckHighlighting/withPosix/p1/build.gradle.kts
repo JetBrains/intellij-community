@@ -24,8 +24,7 @@ kotlin {
     macosX64("macos")
     ios()
 
-    mingwX64("windowsX64")
-    mingwX86("windowsX86")
+    mingwX64("windows")
 
     val commonMain by sourceSets.getting
     val concurrentMain by sourceSets.creating
@@ -39,9 +38,7 @@ kotlin {
     val appleMain by sourceSets.creating
     val macosMain by sourceSets.getting
     val iosMain by sourceSets.getting
-    val windowsMain by sourceSets.creating
-    val windowsX64Main by sourceSets.getting
-    val windowsX86Main by sourceSets.getting
+    val windowsMain by sourceSets.getting
 
     commonMain {
         -jsMain
@@ -58,10 +55,7 @@ kotlin {
                         -linuxX64Main
                     }
                 }
-                -windowsMain {
-                    -windowsX64Main
-                    -windowsX86Main
-                }
+                -windowsMain
             }
         }
     }

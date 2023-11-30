@@ -116,56 +116,6 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     }
   }
 
-  private Path resolveSomeSingleJar() throws Exception {
-    myRepositoryManager.resolveDependency(
-      "org.jetbrains", "annotations", "20.1.0",
-      false, Collections.emptyList()
-    );
-    try (var stream = Files.walk(localRepository.toPath())) {
-      var resolvedJars = stream.filter(file -> file.getFileName().toString().endsWith(".jar")).collect(Collectors.toList());
-      assertSize(1, resolvedJars);
-      var resolvedJar = resolvedJars.get(0);
-      try (var zip = new ZipFile(resolvedJar.toFile())) {
-        assert zip.size() > 0;
-      }
-      return resolvedJar;
-    }
-  }
-
-  public void testResolutionForEmptyJar() throws Exception {
-    var resolvedJar = resolveSomeSingleJar();
-    Files.delete(resolvedJar);
-    Files.createFile(resolvedJar);
-    assert Files.size(resolvedJar) == 0;
-    resolveSomeSingleJar();
-  }
-
-  public void testResolutionForSymbolicLinkToEmptyJar() throws Exception {
-    var resolvedJar = resolveSomeSingleJar();
-    Files.delete(resolvedJar);
-    var brokenTarget = Files.createTempFile("empty", ".jar");
-    assert Files.size(brokenTarget) == 0;
-    Files.createSymbolicLink(resolvedJar, brokenTarget);
-    resolveSomeSingleJar();
-  }
-
-  public void testResolutionForMalformedJar() throws Exception {
-    var resolvedJar = resolveSomeSingleJar();
-    Files.delete(resolvedJar);
-    Files.createFile(resolvedJar);
-    Files.writeString(resolvedJar, "malformed jar content");
-    resolveSomeSingleJar();
-  }
-
-  public void testResolutionForSymbolicLinkToMalformedJar() throws Exception {
-    var resolvedJar = resolveSomeSingleJar();
-    Files.delete(resolvedJar);
-    var brokenTarget = Files.createTempFile("malformed", ".jar");
-    Files.writeString(brokenTarget, "malformed jar content");
-    Files.createSymbolicLink(resolvedJar, brokenTarget);
-    resolveSomeSingleJar();
-  }
-
   private static void assertCoordinates(Artifact artifact, String groupId, String artifactId, String version) {
     assertEquals(groupId, artifact.getGroupId());
     assertEquals(artifactId, artifact.getArtifactId());

@@ -1,6 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
@@ -13,7 +13,6 @@ import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.diagnostic.dump.IndexContentDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
 import com.intellij.util.indexing.diagnostic.dump.paths.hasPresentablePathMatching
-import com.intellij.util.io.readText
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import com.jetbrains.performancePlugin.utils.errors.ErrorCollector
@@ -22,12 +21,13 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.toPromise
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.readText
 
 
 class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
     const val PREFIX = CMD_PREFIX + "compareProjectFiles"
-    private val LOG = Logger.getInstance(CompareProjectFiles::class.java)
+    private val LOG = logger<CompareProjectFiles>()
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -191,8 +191,12 @@ class CompareProjectFiles(text: String, line: Int) : AbstractCommand(text, line)
     val input = text.substring(PREFIX.length).trim()
 
     val index = input.split(" ")
-    val expectedDirectory = Paths.get(index[0])
-    val actualDirectory = Paths.get(index[1])
+    val property  = System.getProperty("dump.project.files.directory")
+    val expectedDirectory = if(property != null) Paths.get(property) else {
+      actionCallback.reject("dump.project.files.directory property must be specified")
+      return actionCallback.toPromise()
+    }
+    val actualDirectory = Paths.get(index[0])
 
     val failureDiagnosticDirectory = getFailureDiagnosticDirectory()
 

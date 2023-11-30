@@ -157,8 +157,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return this;
   }
 
@@ -168,14 +167,12 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
@@ -209,8 +206,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     PsiManager manager = getManager();
     if (manager == null) {
       throw new PsiInvalidElementAccessException(this);
@@ -279,8 +275,7 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     return null;
   }
 
-  @NotNull
-  protected <T> T notNullChild(T child) {
+  protected @NotNull <T> T notNullChild(T child) {
     if (child == null) {
       LOG.error(getText() + "\n parent=" + getParent().getText());
     }
@@ -295,16 +290,14 @@ public abstract class PsiElementBase extends ElementBase implements NavigatableP
     return result.toArray(ArrayUtil.newArray(aClass, result.size()));
   }
 
-  @Nullable
-  protected <T> T findChildByClass(Class<T> aClass) {
+  protected @Nullable <T> T findChildByClass(Class<T> aClass) {
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (aClass.isInstance(cur)) return (T)cur;
     }
     return null;
   }
 
-  @NotNull
-  protected <T> T findNotNullChildByClass(Class<T> aClass) {
+  protected @NotNull <T> T findNotNullChildByClass(Class<T> aClass) {
     return notNullChild(findChildByClass(aClass));
   }
 

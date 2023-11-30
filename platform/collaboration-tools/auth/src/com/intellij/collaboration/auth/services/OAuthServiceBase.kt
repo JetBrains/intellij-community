@@ -28,6 +28,7 @@ abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
 
   private fun Map<String, List<String>>.getAuthorizationCode(): String? = this["code"]?.firstOrNull()
 
+  @Deprecated("Use handleOAuthServerCallback instead", replaceWith = ReplaceWith("handleOAuthServerCallback"))
   override fun handleServerCallback(path: String, parameters: Map<String, List<String>>): Boolean {
     val request = currentRequest.get() ?: return false
 
@@ -46,6 +47,12 @@ abstract class OAuthServiceBase<T : Credentials> : OAuthService<T> {
     request.processCode(code)
     val result = request.result
     return result.isDone && !result.isCancelled && !result.isCompletedExceptionally
+  }
+
+  override fun handleOAuthServerCallback(path: String, parameters: Map<String, List<String>>): OAuthService.OAuthResult<T>? {
+    val request = currentRequest.get()?.request ?: return null
+    val isAccepted = handleServerCallback(path, parameters)
+    return OAuthService.OAuthResult(request, isAccepted)
   }
 
   protected open fun startAuthorization(request: OAuthRequest<T>) {

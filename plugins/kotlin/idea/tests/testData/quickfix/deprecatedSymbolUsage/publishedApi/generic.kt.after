@@ -19,3 +19,4 @@ open class ABase<T> {
     @PublishedApi
     internal fun `access$test`(p: T) = test(p)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceProtectedToPublishedApiCallFix

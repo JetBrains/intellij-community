@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.excludedFiles;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -26,7 +26,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.util.*;
 
-public class ExcludedFilesList extends JBList<FileSetDescriptor> {
+public final class ExcludedFilesList extends JBList<FileSetDescriptor> {
 
   private final ToolbarDecorator myFileListDecorator;
   private DefaultListModel<FileSetDescriptor> myModel;

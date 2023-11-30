@@ -16,7 +16,7 @@ interface ObservableBooleanProperty : ObservableProperty<Boolean> {
    * @param parentDisposable is used to early subscription from property set events.
    */
   fun afterSet(parentDisposable: Disposable?, listener: () -> Unit)
-  fun afterSet(listener: () -> Unit) = afterSet(null, listener)
+  fun afterSet(listener: () -> Unit): Unit = afterSet(null, listener)
 
   /**
    * Subscribes on reset event.
@@ -24,5 +24,5 @@ interface ObservableBooleanProperty : ObservableProperty<Boolean> {
    * @param parentDisposable is used to early subscription from property reset events.
    */
   fun afterReset(parentDisposable: Disposable?, listener: () -> Unit)
-  fun afterReset(listener: () -> Unit) = afterReset(null, listener)
+  fun afterReset(listener: () -> Unit): Unit = afterReset(null, listener)
 }

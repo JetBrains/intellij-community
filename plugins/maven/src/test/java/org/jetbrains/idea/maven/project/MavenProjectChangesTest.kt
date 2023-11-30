@@ -3,11 +3,12 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenProjectChangesTest : UsefulTestCase() {
   @Test
-  fun `test basics`() {
+  fun `test basics`() = runBlocking {
     TestCase.assertTrue(MavenProjectChanges.ALL.hasChanges())
     TestCase.assertTrue(MavenProjectChanges.ALL.hasDependencyChanges())
     TestCase.assertTrue(MavenProjectChanges.ALL.hasPackagingChanges())
@@ -22,23 +23,20 @@ class MavenProjectChangesTest : UsefulTestCase() {
   }
 
   @Test
-  fun `test builder`() {
+  fun `test builder`() = runBlocking {
     val builder = MavenProjectChangesBuilder()
     assertFalse(builder.hasChanges())
 
     builder.setHasSourceChanges(true)
     TestCase.assertTrue(builder.hasChanges())
     TestCase.assertTrue(builder.hasSourceChanges())
-    TestCase.assertTrue(builder.sources)
 
     builder.setAllChanges(false)
     TestCase.assertFalse(builder.hasChanges())
     TestCase.assertFalse(builder.hasSourceChanges())
-    TestCase.assertFalse(builder.sources)
 
     builder.setAllChanges(true)
     TestCase.assertTrue(builder.hasChanges())
     TestCase.assertTrue(builder.hasSourceChanges())
-    TestCase.assertTrue(builder.sources)
   }
 }

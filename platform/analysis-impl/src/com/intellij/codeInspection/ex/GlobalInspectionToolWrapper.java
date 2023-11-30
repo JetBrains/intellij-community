@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
@@ -29,9 +29,8 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     super(other);
   }
 
-  @NotNull
   @Override
-  public GlobalInspectionToolWrapper createCopy() {
+  public @NotNull GlobalInspectionToolWrapper createCopy() {
     return new GlobalInspectionToolWrapper(this);
   }
 
@@ -67,23 +66,20 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     return getTool().worksInBatchModeOnly();
   }
 
-  @Nullable
-  public LocalInspectionToolWrapper getSharedLocalInspectionToolWrapper() {
+  public @Nullable LocalInspectionToolWrapper getSharedLocalInspectionToolWrapper() {
     final LocalInspectionTool sharedTool = getTool().getSharedLocalInspectionTool();
     if (sharedTool == null) {
       LOG.assertTrue(!isCleanupTool(), "Global cleanup tool MUST have shared local tool. The tool short name: " + getShortName());
       return null;
     }
     return new LocalInspectionToolWrapper(sharedTool){
-      @NotNull
       @Override
-      public String getDisplayName() {
+      public @NotNull String getDisplayName() {
         return GlobalInspectionToolWrapper.this.getDisplayName();
       }
 
-      @Nullable
       @Override
-      public String getLanguage() {
+      public @Nullable String getLanguage() {
         return GlobalInspectionToolWrapper.this.getLanguage(); // inherit "language=" xml tag from the global inspection EP
       }
     };

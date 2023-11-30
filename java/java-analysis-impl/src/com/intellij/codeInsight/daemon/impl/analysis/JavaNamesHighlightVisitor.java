@@ -1,13 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
-import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
@@ -17,12 +18,16 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// java "decorative" highlighting:
-// - color names, like "reassigned variables"/fields/statics etc.
-// - soft keywords
-// NO COMPILATION ERRORS
-// for other highlighting errors see HighlightVisitorImpl
-class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor {
+import java.util.function.Supplier;
+
+/**
+ * java "decorative" highlighting:
+ * - color names, like "reassigned variables"/fields/statics etc.
+ * - soft keywords
+ * NO COMPILATION ERRORS
+ * for other highlighting errors see {@link HighlightVisitorImpl}
+ */
+class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor, DumbAware {
   private HighlightInfoHolder myHolder;
   private PsiFile myFile;
   private LanguageLevel myLanguageLevel;
@@ -69,9 +74,9 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
 
   @Override
   public void visitDocTagValue(@NotNull PsiDocTagValue value) {
-    PsiReference reference = value.getReference();
+    PsiReference reference = computeIfSmartMode(value.getProject(), () -> value.getReference());
     if (reference != null) {
-      PsiElement element = reference.resolve();
+      PsiElement element = computeIfSmartMode(value.getProject(), () -> reference.resolve());
       TextAttributesScheme colorsScheme = myHolder.getColorsScheme();
       if (element instanceof PsiMethod) {
         PsiElement nameElement = ((PsiDocMethodOrFieldRef)value).getNameElement();
@@ -113,7 +118,10 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
 
   @Override
   public void visitImportStaticReferenceElement(@NotNull PsiImportStaticReferenceElement ref) {
-    JavaResolveResult[] results = ref.multiResolve(false);
+    JavaResolveResult[] results = computeIfSmartMode(ref.getProject(), () -> ref.multiResolve(false));
+    if (results == null) {
+      results = JavaResolveResult.EMPTY_ARRAY;
+    }
 
     PsiElement referenceNameElement = ref.getReferenceNameElement();
     if (!myHolder.hasErrorResults()) {
@@ -150,7 +158,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   public void visitKeyword(@NotNull PsiKeyword keyword) {
     if (shouldHighlightSoftKeywords &&
         (JavaLexer.isSoftKeyword(keyword.getNode().getChars(), myLanguageLevel) || JavaTokenType.NON_SEALED_KEYWORD == keyword.getTokenType())) {
-      myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create());
+      myHolder.add(HighlightNamesUtil.highlightKeyword(keyword));
     }
   }
 
@@ -176,7 +184,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
                !PsiTreeUtil.isAncestor(containingClass, variable, false)) {
           if (containingClass instanceof PsiLambdaExpression ||
               !PsiTreeUtil.isAncestor(((PsiAnonymousClass)containingClass).getArgumentList(), ref, false)) {
-            myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.IMPLICIT_ANONYMOUS_CLASS_PARAMETER).range(ref).create());
+            myHolder.add(HighlightNamesUtil.highlightImplicitAnonymousClassParameter(ref));
             break;
           }
           containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, PsiLambdaExpression.class);
@@ -231,7 +239,7 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
   public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
     PsiIdentifier nameId = pair.getNameIdentifier();
     if (nameId != null) {
-      myHolder.add(HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId).create());
+      myHolder.add(HighlightNamesUtil.highlightAnnotationAttributeName(nameId));
     }
   }
 
@@ -240,8 +248,8 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
     JavaResolveResult result;
     JavaResolveResult[] results;
     try {
-      results = expression.multiResolve(true);
-      result = results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
+      results = computeIfSmartMode(expression.getProject(), () -> expression.multiResolve(true));
+      result = results != null && results.length == 1 ? results[0] : JavaResolveResult.EMPTY;
     }
     catch (IndexNotReadyException e) {
       return;
@@ -256,5 +264,10 @@ class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightV
         }
       }
     }
+  }
+
+  private <T> T computeIfSmartMode(@NotNull Project project, Supplier<T> operation) {
+    if (DumbService.isDumb(project)) return null;
+    return operation.get();
   }
 }

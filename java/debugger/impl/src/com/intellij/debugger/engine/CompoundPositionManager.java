@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.MultiRequestPositionManager;
@@ -175,18 +175,15 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
 
   @NotNull
   public List<XStackFrame> createStackFrames(@NotNull StackFrameDescriptorImpl descriptor) {
-    Location location = descriptor.getLocation();
     return iterate(positionManager -> {
-      if (positionManager instanceof PositionManagerWithMultipleStackFrames && location != null) {
-        List<XStackFrame> stackFrames = ((PositionManagerWithMultipleStackFrames)positionManager).createStackFrames(
-          descriptor.getFrameProxy(), (DebugProcessImpl)descriptor.getDebugProcess(), location
-        );
+      if (positionManager instanceof PositionManagerWithMultipleStackFrames positionManagerWithMultipleStackFrames) {
+        List<XStackFrame> stackFrames = positionManagerWithMultipleStackFrames.createStackFrames(descriptor);
         if (stackFrames != null) {
           return stackFrames;
         }
       }
-      else if (positionManager instanceof PositionManagerEx) {
-        XStackFrame xStackFrame = ((PositionManagerEx)positionManager).createStackFrame(descriptor);
+      else if (positionManager instanceof PositionManagerEx positionManagerEx) {
+        XStackFrame xStackFrame = positionManagerEx.createStackFrame(descriptor);
         if (xStackFrame != null) {
           return Collections.singletonList(xStackFrame);
         }

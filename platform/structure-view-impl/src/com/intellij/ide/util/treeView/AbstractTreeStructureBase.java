@@ -74,7 +74,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
 
   @Override
   public Object getParentElement(@NotNull Object element) {
-    if (element instanceof AbstractTreeNode){
+    if (element instanceof AbstractTreeNode) {
       return ((AbstractTreeNode<?>)element).getParent();
     }
     return null;
@@ -94,7 +94,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       List<DataProvider> bgtProviders = ContainerUtil.mapNotNull(providers, o -> (DataProvider)o.getData(selectedNodes, dataId));
-      return bgtProviders.isEmpty() ? null : CompositeDataProvider.compose(bgtProviders);
+      return CompositeDataProvider.compose(bgtProviders);
     }
     for (TreeStructureProvider treeStructureProvider : providers) {
       Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);

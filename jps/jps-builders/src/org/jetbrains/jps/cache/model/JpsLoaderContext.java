@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.model;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,8 +32,7 @@ public final class JpsLoaderContext {
     this.totalExpectedDownloads = totalExpectedDownloads;
   }
 
-  @NotNull
-  public String getCommitId() {
+  public @NotNull String getCommitId() {
     return commitId;
   }
 
@@ -44,13 +44,11 @@ public final class JpsLoaderContext {
     return nettyClient;
   }
 
-  @NotNull
-  public Map<String, Map<String, BuildTargetState>> getCommitSourcesState() {
+  public @NotNull Map<String, Map<String, BuildTargetState>> getCommitSourcesState() {
     return commitSourcesState;
   }
 
-  @Nullable
-  public Map<String, Map<String, BuildTargetState>> getCurrentSourcesState() {
+  public @Nullable Map<String, Map<String, BuildTargetState>> getCurrentSourcesState() {
     return currentSourcesState;
   }
 

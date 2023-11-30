@@ -94,6 +94,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   @Override
   public JComponent createComponent() {
     myTableModel = new MyTableModel();
+    myTableModel.addFromAnnotations(myProject);
 
     JBTable table = new JBTable(myTableModel);
     table.setColumnSelectionAllowed(false);
@@ -259,7 +260,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
           }
           catch (Exception ex) {
             final String msg = ex.getLocalizedMessage();
-            Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+            Messages.showErrorDialog(e.getProject(), msg != null && !msg.isEmpty() ? msg : ex.toString(),
                                      JavaDebuggerBundle.message("export.failed"));
           }
         }
@@ -296,7 +297,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
         }
         catch (Exception ex) {
           final String msg = ex.getLocalizedMessage();
-          Messages.showErrorDialog(e.getProject(), msg != null && msg.length() > 0 ? msg : ex.toString(),
+          Messages.showErrorDialog(e.getProject(), msg != null && !msg.isEmpty() ? msg : ex.toString(),
                                    JavaDebuggerBundle.message("export.failed"));
         }
       }
@@ -351,13 +352,12 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
 
     private MyTableModel() {
       myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
-      scanPoints();
     }
 
-    private void scanPoints() {
+    private void addFromAnnotations(@NotNull Project project) {
       if (Registry.is("debugger.capture.points.annotations")) {
         List<CapturePoint> capturePointsFromAnnotations = new ArrayList<>();
-        processCaptureAnnotations(null, (capture, e, annotation) -> {
+        processCaptureAnnotations(project, (capture, e, annotation) -> {
           if (e instanceof PsiMethod) {
             addCapturePointIfNeeded(e, (PsiMethod)e, "this", capture, capturePointsFromAnnotations);
           }
@@ -539,7 +539,7 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
     myCaptureVariables.setSelected(DebuggerSettings.getInstance().CAPTURE_VARIABLES);
     myDebuggerAgent.setSelected(DebuggerSettings.getInstance().INSTRUMENTING_AGENT);
     myTableModel.myCapturePoints = DebuggerSettings.getInstance().cloneCapturePoints();
-    myTableModel.scanPoints();
+    myTableModel.addFromAnnotations(myProject);
     myTableModel.fireTableDataChanged();
   }
 

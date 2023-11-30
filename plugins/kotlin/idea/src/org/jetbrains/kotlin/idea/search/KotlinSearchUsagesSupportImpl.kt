@@ -78,8 +78,8 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
             processor
         )
 
-    override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> =
-        org.jetbrains.kotlin.idea.search.declarationsSearch.findDeepestSuperMethodsNoWrapping(method)
+    override fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement> =
+        org.jetbrains.kotlin.idea.search.declarationsSearch.findSuperMethodsNoWrapping(method, deepest)
 
     override fun isOverridable(declaration: KtDeclaration): Boolean =
         declaration.isOverridable()

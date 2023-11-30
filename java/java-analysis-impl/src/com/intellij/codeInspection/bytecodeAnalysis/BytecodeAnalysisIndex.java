@@ -5,6 +5,7 @@ import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -22,6 +23,7 @@ import java.util.*;
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
+  private static final boolean IS_ENABLED = SystemProperties.getBooleanProperty("bytecodeAnalysis.index.enabled", true);
   static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
 
   @NotNull
@@ -86,7 +88,9 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE);
+    return IS_ENABLED
+           ? new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE)
+           : new DefaultFileTypeSpecificInputFilter();
   }
 
   @Override

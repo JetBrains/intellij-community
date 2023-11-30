@@ -4,7 +4,7 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.ComponentUtil
 import javax.swing.JComponent
 
 object ToolbarUtils {
@@ -21,7 +21,7 @@ object ToolbarUtils {
         val firstTime = forced && !hasVisibleActions()
         super.actionsUpdated(forced, newVisibleActions)
         if (firstTime) {
-          UIUtil.markAsShowing(this, false)
+          ComponentUtil.markAsShowing(this, false)
           onUpdated.invoke(this)
         }
       }
@@ -29,7 +29,7 @@ object ToolbarUtils {
     toolbar.targetComponent = targetComponent
     toolbar.putClientProperty(ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
     toolbar.setReservePlaceAutoPopupIcon(false)
-    UIUtil.markAsShowing(toolbar, true)
+    ComponentUtil.markAsShowing(toolbar, true)
     toolbar.updateActionsImmediately(true)
     return toolbar
   }

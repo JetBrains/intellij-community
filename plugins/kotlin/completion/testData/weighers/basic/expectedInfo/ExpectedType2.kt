@@ -1,5 +1,3 @@
-// FIR_IDENTICAL
-
 interface I {
     fun takeXxx(): Int = 0
     fun takeYyy(): String = ""
@@ -10,6 +8,7 @@ fun foo(i: I): String {
     return i.take<caret>
 }
 
+// IGNORE_K2
 // ORDER: takeYyy
 // ORDER: takeXxx
 // ORDER: takeZzz

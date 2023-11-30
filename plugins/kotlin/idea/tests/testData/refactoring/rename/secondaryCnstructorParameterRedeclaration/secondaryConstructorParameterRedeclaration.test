@@ -3,5 +3,6 @@
   "mainFile": "test.kt",
   "newName": "cpb",
   "withRuntime": "true",
-  "hint": "Parameter 'cpb' is already declared in constructor 'A'"
+  "hint": "Parameter 'cpb' is already declared in constructor 'A'",
+  "enabledInK2": "true"
 }

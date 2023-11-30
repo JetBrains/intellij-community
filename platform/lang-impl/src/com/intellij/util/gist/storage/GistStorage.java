@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.DataInput;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 
@@ -22,19 +23,30 @@ import java.util.NoSuchElementException;
  * file attributes use outside the core platform code. This service is designed to be used instead
  * of VFS file attributes, from 'middle level' code.
  * <p>
- * Versioning: {@link Gist} has a 'version' -- think of it as a version of a _binary format_ used.
- * Also, specific gist's data _value_ could be assigned a 'stamp' -- think of it as a _value_ 'version'.
- * I.e. you store value with specific .stamp, and read value expected .stamp given -- and if the expected
- * stamp is not the same as was really stored along with the value -- then you get 'no value' back.
- * (If you don't need to track value stamps -- you could just always use stamp=0)
+ * <dl>
+ *   <dt>Performance:</dt>
+ *   <dd>Every call to {@link Gist#getProjectData(Project, VirtualFile, int)} and {@link Gist#getGlobalData(VirtualFile, int)} likely
+ *   means <b>disk access</b> and {@link DataExternalizer#read(DataInput)} call. I.e. {@link GistStorage} doesn't
+ *   cache gists values in memory. If you access gists frequently -- you should take care of proper caching.</dd>
+ *   <dt>Locking:</dt>
+ *   <dd>{@link GistStorage} and {@link Gist} themselves do not require any locking, nor read-write action.
+ *  But externalizer <i>could</i> require locking, and it is up to the caller to ensure apt locks are acquired.</dd>
+ *   <dt>Versioning:</dt>
+ *   <dd>{@link Gist} has a 'version' -- think of it as a <i>version of a binary format</i> used.
+ *   Also, gist's data <i>value</i> could be assigned a 'stamp' -- think of it as a version of current <i>value</i>.
+ *   I.e. you store value with specific .stamp, and read value expected .stamp given -- and if the expected
+ *   stamp is not the same as was really stored along with the value -- then you get 'no value' back.
+ *   (If you don't need to track value stamps -- you could just always use stamp=0)</dd>
+ *   <dt>Persistence:</dt>
+ *   <dd>It is <i>not guaranteed</i> that stored values always could be read back: underlying storage (VFS) could be
+ *   rebuild from 0 due to corruption, or implementation changes, and all stored values is lost in such cases.
+ *   Client code must be always ready to re-create Gist value if absent. </dd>
+ * </dl>
  * <p>
  * ({@link GistStorage} is initially created for storing {@link VirtualFileGist}, hence some API peculiarities,
  * and hence it is marked as @Internal)
  * <p>
- * Locking: {@link GistStorage} and {@link Gist} themselves do not require any locking, nor read-write action.
- * But externalizer could require locking, and it is up to the caller to ensure apt locks are acquired.
- * <p>
- * If you're about to use {@link GistStorage} service to _cache_ some file-associated computation -- please,
+ * If you're about to use {@link GistStorage} service to persist some file-associated computation -- please,
  * consider {@link VirtualFileGist} first: likely {@link VirtualFileGist} fits better, and it is more
  * high-level API.
  *

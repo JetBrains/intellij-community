@@ -5,11 +5,12 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.CommonQuickFixBundle
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.fix.RemoveAnnotationQuickFix
-import com.intellij.codeInspection.fix.RenameQuickFix
+import com.intellij.jvm.analysis.quickFix.RemoveAnnotationQuickFix
+import com.intellij.jvm.analysis.quickFix.RenameQuickFix
 import com.intellij.lang.jvm.DefaultJvmElementVisitor
 import com.intellij.lang.jvm.JvmAnnotation
 import com.intellij.lang.jvm.JvmElementVisitor
@@ -55,7 +56,7 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
     if (AnnotationUtil.isAnnotated(containingClass, TestUtils.RUN_WITH, AnnotationUtil.CHECK_HIERARCHY)) return true
     val preferedTestFramework = getPreferedTestFramework(containingClass) ?: return true
     when (preferedTestFramework) {
-      JUnitVersion.V3 -> {
+      JUnitVersion.V_3_X -> {
         prefixAnnotationHighlight(method, ORG_JUNIT_TEST, "test", true)
         prefixAnnotationHighlight(method, ORG_JUNIT_IGNORE, "_")
         annotationHighlight(method, *junit4RemoveAnnotations, version = preferedTestFramework) { ann ->
@@ -67,10 +68,10 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
           listOf(RemoveAnnotationQuickFix(ann))
         }
       }
-      JUnitVersion.V4 -> {
+      JUnitVersion.V_4_X -> {
         annotationHighlight(method, *junit5Annotations, version = preferedTestFramework) { _ -> emptyList() } // TODO quickfix
       }
-      JUnitVersion.V5 -> {
+      JUnitVersion.V_5_X -> {
         annotationHighlight(method, *junit4Annotations, version = preferedTestFramework) { _ -> listOf(JUnit5ConverterQuickFix()) }
       }
     }
@@ -79,7 +80,7 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
 
   private fun prefixAnnotationHighlight(method: JvmMethod, annFqn: String, prefix: String, capitalize: Boolean = false) {
     method.getAnnotation(annFqn)?.let { annotation ->
-      sink.highlight(junitMessage(annotation, JUnitVersion.V3), RemoveAnnotationAndPrefixQuickFix(annotation, prefix, capitalize))
+      sink.highlight(junitMessage(annotation, JUnitVersion.V_3_X), RemoveAnnotationAndPrefixQuickFix(annotation, prefix, capitalize))
     }
   }
 
@@ -91,14 +92,10 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
 
   private fun junitMessage(annotation: JvmAnnotation, version: JUnitVersion) = JvmAnalysisBundle.message(
     "jvm.inspections.junit.mixed.annotations.junit.descriptor",
-    annotation.qualifiedName?.substringAfterLast("."), version.intRepresentation
+    annotation.qualifiedName?.substringAfterLast("."), version.asString
   )
 
   private companion object {
-    enum class JUnitVersion(val intRepresentation: Int) {
-      V3(3), V4(4), V5(5);
-    }
-
     val junit4RemoveAnnotations = arrayOf(
       ORG_JUNIT_BEFORE, ORG_JUNIT_AFTER,
       ORG_JUNIT_BEFORE_CLASS, ORG_JUNIT_AFTER_CLASS
@@ -128,11 +125,11 @@ private class JUnitMixedAnnotationVisitor(private val sink: JvmLocalInspection.H
           if (parentFramework != null) return parentFramework
         }
       }
-      if (InheritanceUtil.isInheritor(clazz, JUNIT_FRAMEWORK_TEST_CASE)) return JUnitVersion.V3
+      if (InheritanceUtil.isInheritor(clazz, JUNIT_FRAMEWORK_TEST_CASE)) return JUnitVersion.V_3_X
       val junit4Methods = clazz.methods.filter { method -> junit4Annotations.any { fqn -> method.hasAnnotation(fqn) } }
       val junit5Methods = clazz.methods.filter { method -> junit5Annotations.any { fqn -> method.hasAnnotation(fqn) } }
-      if (junit4Methods.size > junit5Methods.size) return JUnitVersion.V4
-      if (junit5Methods.isNotEmpty()) return JUnitVersion.V5
+      if (junit4Methods.size > junit5Methods.size) return JUnitVersion.V_4_X
+      if (junit5Methods.isNotEmpty()) return JUnitVersion.V_5_X
       return null
     }
   }
@@ -145,8 +142,8 @@ private class RemoveAnnotationAndPrefixQuickFix(
 ) : LocalQuickFix {
   val annotationPointer = SmartPointerManager.createPointer(annotation as PsiAnnotation)
 
-  override fun getFamilyName(): String = JvmAnalysisBundle.message(
-    "jvm.inspections.remove.annotation.quickfix.text",
+  override fun getFamilyName(): String = CommonQuickFixBundle.message(
+    "fix.remove.annotation.text",
     annotationPointer.element.asSafely<JvmAnnotation>()?.qualifiedName?.substringAfterLast(".")
   )
 

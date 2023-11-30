@@ -42,6 +42,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -256,7 +257,7 @@ public final class ManifestFileUtil {
 
   @Nullable
   public static VirtualFile createManifestFile(final @NotNull VirtualFile directory, final @NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     try {
       return WriteAction.compute(() -> {
         VirtualFile dir = directory;

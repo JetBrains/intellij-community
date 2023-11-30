@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.ex.Tools;
@@ -23,7 +23,7 @@ public interface InspectResultsConsumer {
   static void runConsumers(@NotNull Map<String, ? extends Tools> tools,
                            @NotNull List<? extends File> inspectionsResults,
                            @NotNull Project project) {
-    for (InspectResultsConsumer extension : EP_NAME.getExtensions()) {
+    for (InspectResultsConsumer extension : EP_NAME.getExtensionList()) {
       extension.consume(tools, inspectionsResults, project);
     }
   }

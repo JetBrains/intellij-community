@@ -54,7 +54,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
           node.textRange,
           null,
           "...",
-          node.textLength > 10,
+          settings.state.collapseLinks && node.textLength > 10,
           emptySet()
         )
         descriptors.add(descriptor)

@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.UnstableApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.UnstableApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() {
   fun `test kotlin unstable api usages`() {

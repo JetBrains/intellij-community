@@ -35,15 +35,7 @@ import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.ComponentActionWrapper
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.FilterOptions
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.InstalledDependenciesUsages
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ProjectDataProvider
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchResultUiState
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.get
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.toUiPackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.*
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
@@ -52,39 +44,10 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
-import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
-import com.jetbrains.packagesearch.intellij.plugin.util.KotlinPluginStatus
-import com.jetbrains.packagesearch.intellij.plugin.util.PowerSaveModeState
-import com.jetbrains.packagesearch.intellij.plugin.util.combineLatest
-import com.jetbrains.packagesearch.intellij.plugin.util.hasKotlinModules
-import com.jetbrains.packagesearch.intellij.plugin.util.kotlinPluginStatusFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
-import com.jetbrains.packagesearch.intellij.plugin.util.loadingContainer
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
-import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.modifyPackages
-import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
-import com.jetbrains.packagesearch.intellij.plugin.util.onEach
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
-import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
-import com.jetbrains.packagesearch.intellij.plugin.util.timer
+import com.jetbrains.packagesearch.intellij.plugin.util.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNot
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
@@ -92,13 +55,7 @@ import org.jetbrains.idea.packagesearch.SortMetric
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
-import javax.swing.BorderFactory
-import javax.swing.Box
-import javax.swing.BoxLayout
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JScrollPane
-import javax.swing.JViewport
+import javax.swing.*
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeSource
@@ -151,7 +108,7 @@ internal class PackagesListPanel(
         }
 
     private val sortByComboBoxLabel = JLabel().apply {
-        text = "Sort by:"
+        text = PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.sort.by")
         border = emptyBorder(left = 6, right = 2)
     }
 

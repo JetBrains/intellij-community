@@ -1,4 +1,7 @@
-version = "1.15.*"
+version = "1.16.*"
+upstream_repository = "https://foss.heptapod.net/pypy/cffi"
+requires = ["types-setuptools"]
 
 [tool.stubtest]
-ignore_missing_stub = false
+# linux and darwin are mostly equivalent, except for a single `RTLD_DEEPBIND` variable
+platforms = ["linux", "win32"]

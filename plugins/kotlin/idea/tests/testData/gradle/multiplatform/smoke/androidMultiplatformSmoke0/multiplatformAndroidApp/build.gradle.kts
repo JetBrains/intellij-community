@@ -5,6 +5,7 @@ plugins {
 
 android {
     compileSdk = {{compile_sdk_version}}
+    namespace = "org.jetbrains.kotlin.smoke.multiplatformAndroidApp"
     defaultConfig {
         minSdk = 30
     }

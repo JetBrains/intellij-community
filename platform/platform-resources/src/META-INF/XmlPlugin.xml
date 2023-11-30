@@ -28,6 +28,7 @@
     <extensionPoint name="xml.schemaProvider" interface="com.intellij.xml.XmlSchemaProvider" dynamic="true"/>
     <extensionPoint name="xml.xmlExtension" interface="com.intellij.xml.XmlExtension" dynamic="true"/>
     <extensionPoint name="xml.xmlTypedHandlersAdditionalSupport" interface="com.intellij.openapi.editor.XmlTypedHandlersAdditionalSupport" dynamic="true"/>
+    <extensionPoint name="xml.xmlCustomTagHighlightingStrategy" interface="com.intellij.openapi.editor.XmlCustomTagHighlightingStrategy" dynamic="true"/>
     <extensionPoint name="xml.namespaceHelper" interface="com.intellij.xml.XmlNamespaceHelper" dynamic="true"/>
     <extensionPoint name="xml.tagNameProvider" interface="com.intellij.xml.XmlTagNameProvider" dynamic="true"/>
     <extensionPoint name="xml.fileNSInfoProvider" interface="com.intellij.psi.xml.XmlFileNSInfoProvider" dynamic="true"/>
@@ -101,6 +102,10 @@
 
     <extensionPoint name="xml.xmlAttributeRenameProvider"
                     interface="com.intellij.codeInspection.htmlInspections.XmlAttributeRenameProvider"
+                    dynamic="true"/>
+
+    <extensionPoint name="xml.autoPopupEnabler"
+                    interface="com.intellij.xml.psi.codeInsight.XmlAutoPopupEnabler"
                     dynamic="true"/>
   </extensionPoints>
 
@@ -374,6 +379,8 @@
     <lang.smartEnterProcessor language="XHTML" implementationClass="com.intellij.codeInsight.completion.XmlSmartEnterProcessor"/>
 
     <iconProvider implementation="com.intellij.xml.util.XmlIconProvider"/>
+
+    <inspection.basicVisitor class="com.intellij.psi.XmlElementVisitor"/>
 
     <localInspection language="XML" shortName="CheckTagEmptyBody" enabledByDefault="true" level="WARNING"
                      bundle="messages.XmlBundle" key="xml.inspections.check.tag.empty.body"
@@ -674,6 +681,11 @@
     <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttribute"
                                  hostLanguage="HtmlCompatible"
                                  implementationClass="com.intellij.html.webSymbols.attributes.WebSymbolInAttributeNameRefProvider"
+                                 referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
+                                 targetClass="com.intellij.webSymbols.WebSymbol"/>
+    <psi.symbolReferenceProvider hostElementClass="com.intellij.psi.xml.XmlAttributeValue"
+                                 hostLanguage="HtmlCompatible"
+                                 implementationClass="com.intellij.html.webSymbols.attributeValues.WebSymbolHtmlAttributeValueReferenceProvider"
                                  referenceClass="com.intellij.webSymbols.references.WebSymbolReference"
                                  targetClass="com.intellij.webSymbols.WebSymbol"/>
     <vetoRenameCondition implementation="com.intellij.html.webSymbols.HtmlWebSymbolRenameHandlerVeto"/>

@@ -14,6 +14,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
+
+  private boolean isAlwaysExpand;
+
   public ClassSmartPointerNode(@NotNull Project project, @NotNull PsiClass value, @NotNull ViewSettings viewSettings) {
     super(project, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(value), viewSettings);
   }
@@ -61,6 +64,7 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
     if (aClass != null) {
       data.setPresentableText(aClass.getName());
     }
+    isAlwaysExpand = getParentValue() instanceof PsiFile;
   }
 
   public boolean isTopLevel() {
@@ -79,6 +83,6 @@ public class ClassSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiEleme
 
   @Override
   public boolean isAlwaysExpand() {
-    return getParentValue() instanceof PsiFile;
+    return isAlwaysExpand;
   }
 }

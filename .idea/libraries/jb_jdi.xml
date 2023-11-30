@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="jb-jdi" type="repository">
-    <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:2.25" />
+    <properties maven-id="org.jetbrains.intellij.deps:jb-jdi:2.26">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.26/jb-jdi-2.26.jar">
+          <sha256sum>b924a7f4bae430ca1a07fdb33cd96660033833d99b55bc987080b3babe0a7f13</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.25/jb-jdi-2.25.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.26/jb-jdi-2.26.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.25/jb-jdi-2.25-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/jb-jdi/2.26/jb-jdi-2.26-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

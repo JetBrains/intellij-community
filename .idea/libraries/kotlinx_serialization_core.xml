@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-serialization-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.5.1" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.6.0/kotlinx-serialization-core-jvm-1.6.0.jar">
+          <sha256sum>ec35128c4fb9044e99bbcf07f05ef2543bfa6d42030d7aadabaeacffb16e72c5</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.5.1/kotlinx-serialization-core-jvm-1.5.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.6.0/kotlinx-serialization-core-jvm-1.6.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.5.1/kotlinx-serialization-core-jvm-1.5.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-core-jvm/1.6.0/kotlinx-serialization-core-jvm-1.6.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

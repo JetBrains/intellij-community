@@ -62,7 +62,7 @@ class DummyMavenServerConnector(project: @NotNull Project,
 }
 
 class DummyMavenServer(val project: Project) : MavenServer {
-  private lateinit var watchdog: IdeaWatchdog;
+  private lateinit var watchdog: IdeaWatchdog
   override fun setWatchdog(watchdog: IdeaWatchdog) {
     this.watchdog = watchdog
   }
@@ -75,7 +75,7 @@ class DummyMavenServer(val project: Project) : MavenServer {
     return DummyIndexer()
   }
 
-  override fun interpolateAndAlignModel(model: MavenModel, basedir: File?, token: MavenToken?): MavenModel {
+  override fun interpolateAndAlignModel(model: MavenModel, basedir: File?, pomDir: File?, token: MavenToken?): MavenModel {
     return model
   }
 
@@ -86,7 +86,7 @@ class DummyMavenServer(val project: Project) : MavenServer {
   override fun applyProfiles(model: MavenModel,
                              basedir: File?,
                              explicitProfiles: MavenExplicitProfiles?,
-                             alwaysOnProfiles: Collection<String>?,
+                             alwaysOnProfiles: HashSet<String>?,
                              token: MavenToken?): ProfileApplicationResult {
     return ProfileApplicationResult(model, MavenExplicitProfiles.NONE)
   }
@@ -102,6 +102,10 @@ class DummyMavenServer(val project: Project) : MavenServer {
   override fun ping(token: MavenToken?): Boolean {
     return true
   }
+
+  override fun getDebugStatus(clean: Boolean): MavenServerStatus {
+    throw RuntimeException("not supported")
+  }
 }
 
 class DummyIndexer : MavenServerIndexer {
@@ -113,25 +117,28 @@ class DummyIndexer : MavenServerIndexer {
     return 0
   }
 
-  override fun updateIndex(id: MavenIndexId, indicator: MavenServerProgressIndicator?, token: MavenToken?) {
+  override fun updateIndex(id: MavenIndexId,
+                           indicator: MavenServerProgressIndicator?,
+                           multithreaded: Boolean,
+                           token: MavenToken?) {
   }
 
-  override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): List<IndexedMavenId>? = null
+  override fun processArtifacts(indexId: MavenIndexId, startFrom: Int, token: MavenToken?): ArrayList<IndexedMavenId>? = null
 
-  override fun addArtifacts(indexId: MavenIndexId, artifactFiles: MutableCollection<File>, token: MavenToken): MutableList<AddArtifactResponse> {
-    val responses = mutableListOf<AddArtifactResponse>();
+  override fun addArtifacts(indexId: MavenIndexId, artifactFiles: ArrayList<File>, token: MavenToken): ArrayList<AddArtifactResponse> {
+    val responses = ArrayList<AddArtifactResponse>()
     for (artifactFile in artifactFiles) {
       responses.add(AddArtifactResponse(artifactFile, IndexedMavenId(null, null, null, null, null)))
     }
     return responses
   }
 
-  override fun search(indexId: MavenIndexId, query: String, maxResult: Int, token: MavenToken?): Set<MavenArtifactInfo> {
-    return emptySet()
+  override fun search(indexId: MavenIndexId, query: String, maxResult: Int, token: MavenToken?): HashSet<MavenArtifactInfo> {
+    return HashSet()
   }
 
-  override fun getInternalArchetypes(token: MavenToken?): Collection<MavenArchetype> {
-    return emptySet()
+  override fun getInternalArchetypes(token: MavenToken?): HashSet<MavenArchetype> {
+    return HashSet()
   }
 
   override fun release(token: MavenToken?) {

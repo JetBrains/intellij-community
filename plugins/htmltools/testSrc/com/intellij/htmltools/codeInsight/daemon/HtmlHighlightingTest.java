@@ -855,18 +855,12 @@ public class HtmlHighlightingTest extends BasePlatformTestCase {
 
   public void testCustomTagHighlighting() {
     HtmlUnknownTagInspection inspection = new HtmlUnknownTagInspection();
-    String before = inspection.getAdditionalEntries();
-    inspection.updateAdditionalEntries("custom-tag,custom2-tag");
-    try {
-      myFixture.enableInspections(inspection);
+    inspection.updateAdditionalEntries("custom-tag,custom2-TAG", getTestRootDisposable());
+    myFixture.enableInspections(inspection);
 
-      HighlightTestInfo info = myFixture.testFile(getTestName(false) + ".html");
-      info.checkSymbolNames();
-      info.test();
-    }
-    finally {
-      inspection.updateAdditionalEntries(before);
-    }
+    HighlightTestInfo info = myFixture.testFile(getTestName(false) + ".html");
+    info.checkSymbolNames();
+    info.test();
   }
 
   private void doTestWebLinks(boolean startTestingLocalServer) throws Exception {
@@ -894,7 +888,7 @@ public class HtmlHighlightingTest extends BasePlatformTestCase {
   private void doTestHtml5QuickFixShouldBeFirst() {
     myFixture.configureByFile(getTestName(false) + ".html");
     myFixture.doHighlighting();
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(myFixture.getEditor(), myFixture.getFile(), false);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(myFixture.getEditor(), myFixture.getFile());
     assertFalse(intentions.isEmpty());
     CachedIntentions actions = CachedIntentions.createAndUpdateActions(getProject(), myFixture.getFile(), myFixture.getEditor(), intentions);
     assertNotEmpty(actions.getAllActions());

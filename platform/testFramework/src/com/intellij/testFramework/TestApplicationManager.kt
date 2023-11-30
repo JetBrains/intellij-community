@@ -225,6 +225,7 @@ class TestApplicationManager private constructor() {
         ?.cancelAllAndWait(10, TimeUnit.SECONDS)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(
       message = "moved to dump.kt",
       replaceWith = ReplaceWith("com.intellij.testFramework.common.publishHeapDump(fileNamePrefix)")
@@ -243,7 +244,7 @@ class TestApplicationManager private constructor() {
     dataManager.setTestDataProvider(provider, parentDisposable!!)
   }
 
-  fun getData(dataId: String) = dataManager.dataContext.getData(dataId)
+  fun getData(dataId: String): Any? = dataManager.dataContext.getData(dataId)
 
   fun dispose() {
     disposeTestApplication()

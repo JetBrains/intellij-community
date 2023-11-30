@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ignore.actions
 
 import com.intellij.openapi.actionSystem.*
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle.message
+import com.intellij.openapi.vcs.VcsBundle.messagePointer
 import com.intellij.openapi.vcs.VcsRoot
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
@@ -22,9 +23,9 @@ import org.jetbrains.annotations.Nls
 
 open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
   ActionGroup(
-    message("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename),
-    message("vcs.add.to.ignore.file.action.group.description", ignoreFileType.ignoreLanguage.filename),
-    ignoreFileType.icon
+    messagePointer("vcs.add.to.ignore.file.action.group.text", ignoreFileType.ignoreLanguage.filename),
+    messagePointer("vcs.add.to.ignore.file.action.group.description", ignoreFileType.ignoreLanguage.filename),
+    { ignoreFileType.icon }
   ), DumbAware {
 
   private var actions: Collection<AnAction> = emptyList()
@@ -69,7 +70,7 @@ open class IgnoreFileActionGroup(private val ignoreFileType: IgnoreFileType) :
 
     presentation.isPopupGroup = actions.size > 1
     presentation.isPerformGroup = actions.size == 1
-    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup);
+    e.presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, e.presentation.isPerformGroup)
     presentation.isVisible = actions.isNotEmpty()
   }
 

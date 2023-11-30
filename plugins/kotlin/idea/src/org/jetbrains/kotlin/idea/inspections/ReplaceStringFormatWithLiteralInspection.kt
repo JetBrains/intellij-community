@@ -7,10 +7,11 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
@@ -22,7 +23,8 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.*
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+private val placeHolder: Regex by lazy { "%".toRegex() }
+private val stringPlaceHolder: Regex by lazy { "%s".toRegex() }
 
 class ReplaceStringFormatWithLiteralInspection : AbstractKotlinInspection() {
 
@@ -60,11 +62,6 @@ class ReplaceStringFormatWithLiteralInspection : AbstractKotlinInspection() {
         })
     }
 
-    private companion object {
-        private val placeHolder: Regex by lazy { "%".toRegex() }
-        private val stringPlaceHolder: Regex by lazy { "%s".toRegex() }
-    }
-
     private class ReplaceWithStringLiteralFix : LocalQuickFix {
         override fun getFamilyName() = KotlinBundle.message("replace.with.string.literal.fix.family.name")
 
@@ -75,10 +72,10 @@ class ReplaceStringFormatWithLiteralInspection : AbstractKotlinInspection() {
 
             val args = callExpression.valueArguments.mapNotNull { it.getArgumentExpression() }
             val format = args[0].text.removePrefix("\"").removeSuffix("\"")
-            val replaceArgs = args.asSequence().drop(1).mapTo(LinkedList()) { ConvertToStringTemplateIntention.buildText(it, true) }
+            val replaceArgs = args.asSequence().drop(1).mapTo(LinkedList()) { ConvertToStringTemplateIntention.Holder.buildText(it, true) }
             val stringLiteral = stringPlaceHolder.replace(format) { replaceArgs.pop() }
             (qualifiedExpression ?: callExpression)
-                .let { it.replaced(KtPsiFactory(project).createStringTemplate(stringLiteral)) }
+                .replaced(KtPsiFactory(project).createStringTemplate(stringLiteral))
                 .entries
                 .forEach {
                     val blockEntry = (it as? KtBlockStringTemplateEntry)

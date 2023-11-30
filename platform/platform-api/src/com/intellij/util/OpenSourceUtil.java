@@ -3,7 +3,6 @@ package com.intellij.util;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
@@ -23,14 +22,6 @@ public final class OpenSourceUtil {
       return;
     }
     navigate(requestFocus, false, CommonDataKeys.NAVIGATABLE_ARRAY.getData(context));
-  }
-
-  /**
-   * @deprecated use {@link #openSourcesFrom(DataContext, boolean)} instead
-   */
-  @Deprecated
-  public static void openSourcesFrom(@NotNull DataProvider context, boolean requestFocus) {
-    openSourcesFrom((DataContext)context::getData, requestFocus);
   }
 
   /**

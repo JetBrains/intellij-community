@@ -9,6 +9,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.execution.ParametersListUtil
+import java.util.Set.*
 
 internal object TerminalCommandUsageStatistics {
 
@@ -16,9 +17,10 @@ internal object TerminalCommandUsageStatistics {
   private val whitespacesCommand = TerminalCommandEventData("<whitespaces>", null)
   private val relativePathCommand = TerminalCommandEventData("<relative path>", null)
   private val absolutePathCommand = TerminalCommandEventData("<absolute path>", null)
-  private val knownCommandToSubCommandsMap: Map<String, List<String>> = buildKnownCommandToSubCommandMap()
+  private val knownCommandToSubCommandsMap: Map<String, Set<String>> = buildKnownCommandToSubCommandMap()
 
-  internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command)
+  internal val commandExecutableField = EventFields.String("command", listOf(relativePathCommand.command, absolutePathCommand.command,
+                                                                             emptyCommand.command, whitespacesCommand.command)
                                                                      + knownCommandToSubCommandsMap.keys)
   internal val subCommandField = EventFields.String("subCommand", knownCommandToSubCommandsMap.values.flatten())
 
@@ -56,21 +58,21 @@ internal object TerminalCommandUsageStatistics {
     val executable: String = (userCommand.getOrNull(0) ?: return null).let {
       if (SystemInfo.isWindows) it.removeSuffix(".exe") else it
     }
-    val knownSubCommands: List<String> = knownCommandToSubCommandsMap[executable] ?: return null
+    val knownSubCommands: Set<String> = knownCommandToSubCommandsMap[executable] ?: return null
     val subCommand = userCommand.getOrNull(1)?.let {
       if (knownSubCommands.contains(it)) it else null
     }
     return TerminalCommandEventData(executable, subCommand)
   }
 
-  private fun buildKnownCommandToSubCommandMap(): Map<String, List<String>> {
+  private fun buildKnownCommandToSubCommandMap(): Map<String, Set<String>> {
     val commandLines = AllowedItemsResourceWeakRefStorage(TerminalCommandUsageStatistics.javaClass, "known-commands.txt").items
     val result: Map<String, List<String?>> = commandLines.asSequence().mapNotNull {
       val command = ParametersListUtil.parse(it)
       val executable = command.getOrNull(0)
       if (executable != null) executable to command.getOrNull(1) else null
     }.groupBy({ it.first }, { it.second })
-    return result.map { it.key to it.value.filterNotNull().toList() }.associateTo(HashMap(result.size)) { it }
+    return result.map { it.key to copyOf(it.value.filterNotNull()) }.associateTo(HashMap(result.size)) { it }
   }
 
   private class TerminalCommandEventData(val command: String, val subCommand: String?)

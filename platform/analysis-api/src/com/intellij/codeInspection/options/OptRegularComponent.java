@@ -11,8 +11,7 @@ public sealed interface OptRegularComponent extends OptComponent
           OptSettingLink, OptString, OptStringList, OptTabSet, OptTable {
 
   @Override
-  @NotNull
-  default OptRegularComponent prefix(@NotNull String bindPrefix) {
+  default @NotNull OptRegularComponent prefix(@NotNull String bindPrefix) {
     return this;
   }
 }

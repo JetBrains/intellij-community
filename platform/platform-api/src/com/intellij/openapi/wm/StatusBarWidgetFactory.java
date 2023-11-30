@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -20,10 +20,8 @@ public interface StatusBarWidgetFactory {
   ExtensionPointName<StatusBarWidgetFactory> EP_NAME = new ExtensionPointName<>("com.intellij.statusBarWidgetFactory");
 
   /**
-   * @return Widget identifier. Used to store visibility settings.
-   *
-   * Must match extension id.
-   */
+   * @return Widget identifier, must match extension {@code id} in {@code plugin.xml}. Used to store visibility settings.
+   **/
   @NotNull @NonNls String getId();
 
   /**

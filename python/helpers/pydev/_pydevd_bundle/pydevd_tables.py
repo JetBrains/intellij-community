@@ -5,13 +5,11 @@ from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 
-MAX_COLS = None
-MAX_COLWIDTH = 200
-
 
 class TableCommandType:
     DF_INFO = "DF_INFO"
     SLICE = "SLICE"
+    DESCRIBE = "DF_DESCRIBE"
 
 
 def is_error_on_eval(val):
@@ -41,12 +39,21 @@ def exec_table_command(init_command, command_type, start_index, end_index, f_glo
         res.append(NEXT_VALUE_SEPARATOR)
         res.append(table_provider.get_shape(table))
         res.append(NEXT_VALUE_SEPARATOR)
-        res.append(table_provider.get_head(table, MAX_COLS))
+        res.append(table_provider.get_head(table))
         res.append(NEXT_VALUE_SEPARATOR)
         res.append(table_provider.get_column_types(table))
 
+    elif command_type == TableCommandType.DESCRIBE:
+        res.append(table_provider.get_column_descriptions(table))
+        res.append(NEXT_VALUE_SEPARATOR)
+        res.append(table_provider.get_value_counts(table))
+        res.append(NEXT_VALUE_SEPARATOR)
+        res.append(table_provider.get_value_occurrences_count(table))
+        res.append(NEXT_VALUE_SEPARATOR)
+
+
     elif command_type == TableCommandType.SLICE:
-        res.append(table_provider.get_data(table, MAX_COLS, MAX_COLWIDTH, start_index, end_index))
+        res.append(table_provider.get_data(table, start_index, end_index))
 
     return True, ''.join(res)
 

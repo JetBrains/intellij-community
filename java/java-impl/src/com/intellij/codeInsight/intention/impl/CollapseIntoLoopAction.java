@@ -1,21 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.MoreCollectors;
@@ -29,32 +28,25 @@ import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class CollapseIntoLoopAction implements IntentionAction {
+public class CollapseIntoLoopAction implements ModCommandAction {
   @Override
-  public @IntentionName @NotNull String getText() {
+  public @NotNull @IntentionFamilyName String getFamilyName() {
     return JavaBundle.message("intention.name.collapse.into.loop");
   }
 
   @Override
-  public @NotNull @IntentionFamilyName String getFamilyName() {
-    return getText();
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
+    return LoopModel.from(context) != null ? Presentation.of(getFamilyName()) : null;
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return LoopModel.from(editor, file) != null;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    LoopModel model = LoopModel.from(editor, file);
-    if (model == null) return;
-    model.generate();
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    return ModCommand.psiUpdate(context.file(), f -> {
+      LoopModel model = LoopModel.from(context.withFile(f));
+      if (model == null) return;
+      model.generate();
+    });
   }
 
   private static final class LoopModel {
@@ -157,9 +149,9 @@ public class CollapseIntoLoopAction implements IntentionAction {
       return "for(" + initial + ";" + condition + ";" + increment + ")";
     }
 
-    private static @NotNull List<PsiStatement> extractStatements(PsiFile file, SelectionModel model) {
-      int startOffset = model.getSelectionStart();
-      int endOffset = model.getSelectionEnd();
+    private static @NotNull List<PsiStatement> extractStatements(PsiFile file, TextRange range) {
+      int startOffset = range.getStartOffset();
+      int endOffset = range.getEndOffset();
       PsiElement[] elements = CodeInsightUtil.findStatementsInRange(file, startOffset, endOffset);
       return StreamEx.of(elements)
         .map(e -> tryCast(e, PsiStatement.class))
@@ -175,17 +167,18 @@ public class CollapseIntoLoopAction implements IntentionAction {
                               st -> PsiTreeUtil.getNextSiblingOfType(st, PsiStatement.class)).toList();
     }
 
-    static @Nullable LoopModel from(Editor editor, PsiFile file) {
+    static @Nullable LoopModel from(@NotNull ActionContext context) {
+      PsiFile file = context.file();
       if (!(file instanceof PsiJavaFile) || !PsiUtil.isLanguageLevel5OrHigher(file)) return null;
-      SelectionModel selectionModel = editor.getSelectionModel();
+      TextRange range = context.selection();
       boolean mayTrimTail;
       List<PsiStatement> statements;
-      if (selectionModel.hasSelection()) {
+      if (!range.isEmpty()) {
         mayTrimTail = false;
-        statements = extractStatements(file, selectionModel);
+        statements = extractStatements(file, range);
       } else {
         mayTrimTail = true;
-        statements = extractStatements(file, editor.getCaretModel().getOffset());
+        statements = extractStatements(file, context.offset());
       }
       int size = statements.size();
       if (size <= 1 || size > (mayTrimTail ? 100 : 1000)) return null;
@@ -258,7 +251,7 @@ public class CollapseIntoLoopAction implements IntentionAction {
           usedVariables = VariableAccessUtils.collectUsedVariables(curIterationExpression);
         }
         if (!usedVariables.isEmpty() &&
-            statements.subList(0, count).stream().anyMatch(st -> VariableAccessUtils.isAnyVariableAssigned(usedVariables, st))) {
+            ContainerUtil.exists(statements.subList(0, count), st -> VariableAccessUtils.isAnyVariableAssigned(usedVariables, st))) {
           return false;
         }
       }

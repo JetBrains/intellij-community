@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
 import com.intellij.ide.IdeBundle
@@ -11,6 +11,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
@@ -23,7 +24,6 @@ import com.intellij.openapi.ui.shortenTextWithEllipsis
 import com.intellij.openapi.ui.validation.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.ui.UIBundle
@@ -34,11 +34,11 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent), NewProjectWizardBaseData {
-  override val nameProperty = propertyGraph.lazyProperty(::suggestName)
-  override val pathProperty = propertyGraph.lazyProperty { suggestLocation().toCanonicalPath() }
+  override val nameProperty: GraphProperty<String> = propertyGraph.lazyProperty(::suggestName)
+  override val pathProperty: GraphProperty<String> = propertyGraph.lazyProperty { suggestLocation().toCanonicalPath() }
 
-  override var name by nameProperty
-  override var path by pathProperty
+  override var name: String by nameProperty
+  override var path: String by pathProperty
 
   internal var bottomGap: Boolean = true
 
@@ -141,7 +141,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
 
       onApply {
         context.projectName = name
-        context.setProjectFileDirectory(path.toNioPath().resolve(name), false)
+        context.setProjectFileDirectory(Path.of(path).resolve(name), false)
       }
     }
   }

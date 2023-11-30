@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -26,13 +26,15 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LookupTypedHandler extends TypedActionHandlerBase {
+public final class LookupTypedHandler extends TypedActionHandlerBase {
+  public static final Key<Character> CANCELLATION_CHAR = Key.create("CANCELLATION_CHAR");
   private static final Logger LOG = Logger.getInstance(LookupTypedHandler.class);
 
   public LookupTypedHandler(@Nullable TypedActionHandler originalHandler) {
@@ -138,7 +140,8 @@ public class LookupTypedHandler extends TypedActionHandlerBase {
       }
     }
 
-    lookup.hide();
+    lookup.putUserData(CANCELLATION_CHAR, charTyped);
+    lookup.hideLookup(false);
     TypedHandler.autoPopupCompletion(editor, charTyped, project, file);
     return false;
   }

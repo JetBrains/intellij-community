@@ -1,0 +1,8 @@
+{
+  "type": "AUTO_DETECT",
+  "mainFile": "test.kt",
+  "newName": "Bar",
+  "forceInlineRename": "false",
+  "hint": "Rename is not applicable to backing field reference",
+  "enabledInK2": "true"
+}

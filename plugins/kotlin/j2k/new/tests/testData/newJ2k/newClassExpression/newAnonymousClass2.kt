@@ -1,4 +1,5 @@
 internal abstract class A
+
 internal class C {
     fun foo() {
         val a: A = object : A() {

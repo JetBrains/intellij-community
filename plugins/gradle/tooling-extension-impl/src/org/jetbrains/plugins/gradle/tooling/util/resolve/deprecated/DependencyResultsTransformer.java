@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCachedFinder;
 import groovy.lang.MetaMethod;
 import groovy.lang.MetaProperty;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
@@ -22,14 +23,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.io.File;
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall;
-import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.findArtifactSources;
+import static com.intellij.gradle.toolingExtension.util.GradleReflectionUtil.reflectiveCall;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.toComponentIdentifier;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver.*;
 
@@ -43,8 +43,9 @@ public class DependencyResultsTransformer {
   private static final boolean is46rBetter = is31orBetter && GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) >= 0;
 
 
-  private final Project myProject;
-  private final SourceSetCachedFinder mySourceSetFinder;
+  private final @NotNull ModelBuilderContext myContext;
+  private final @NotNull Project myProject;
+
   private final Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap;
   private final Map<ComponentIdentifier, ComponentArtifactsResult> componentResultsMap;
   private final Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies;
@@ -54,14 +55,16 @@ public class DependencyResultsTransformer {
   private final Set<DependencyResult> handledDependencyResults = new HashSet<>();
   private final Set<ComponentResultKey> myVisitedComponentResults = new HashSet<>();
 
-  public DependencyResultsTransformer(@NotNull final Project project,
-                               @NotNull final SourceSetCachedFinder sourceSetFinder,
-                               @NotNull final Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap,
-                               @NotNull final Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap,
-                               @NotNull final Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies,
-                               @Nullable final String scope) {
+  public DependencyResultsTransformer(
+    @NotNull ModelBuilderContext context,
+    @NotNull Project project,
+    @NotNull Multimap<ModuleVersionIdentifier, ResolvedArtifact> artifactMap,
+    @NotNull Map<ComponentIdentifier, ComponentArtifactsResult> auxiliaryArtifactsMap,
+    @NotNull Multimap<ModuleComponentIdentifier, ProjectDependency> configurationProjectDependencies,
+    @Nullable String scope
+  ) {
+    myContext = context;
     myProject = project;
-    mySourceSetFinder = sourceSetFinder;
 
     this.artifactMap = artifactMap;
     componentResultsMap = auxiliaryArtifactsMap;
@@ -268,7 +271,8 @@ public class DependencyResultsTransformer {
             files.add(resolvedArtifact.getFile());
           }
           dDep.setProjectDependencyArtifacts(files);
-          dDep.setProjectDependencyArtifactsSources(findArtifactSources(files, mySourceSetFinder));
+          GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
+          dDep.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(files));
           resolvedDepsFiles.addAll(dDep.getProjectDependencyArtifacts());
         }
         else {
@@ -412,7 +416,8 @@ public class DependencyResultsTransformer {
     dependency.setConfigurationName(it.getName());
     Set<File> artifactsFiles = new LinkedHashSet<>(it.getAllArtifacts().getFiles().getFiles());
     dependency.setProjectDependencyArtifacts(artifactsFiles);
-    dependency.setProjectDependencyArtifactsSources(findArtifactSources(artifactsFiles, mySourceSetFinder));
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
+    dependency.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(artifactsFiles));
 
     if (it.getArtifacts().size() == 1) {
       PublishArtifact publishArtifact = it.getAllArtifacts().iterator().next();

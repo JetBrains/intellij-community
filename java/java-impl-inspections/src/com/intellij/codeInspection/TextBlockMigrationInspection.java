@@ -3,8 +3,9 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -20,9 +21,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectionTool {
@@ -45,13 +45,11 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         if (!ExpressionUtils.hasStringType(expression)) return;
         int nNewLines = 0;
         TextRange firstNewLineTextRange = null;
-        boolean hasEscapedQuotes = false;
         for (PsiExpression operand : expression.getOperands()) {
           PsiLiteralExpression literal = getLiteralExpression(operand);
           if (literal == null) return;
           if (nNewLines > 1) continue;
           String text = literal.getText();
-          hasEscapedQuotes |= (getQuoteIndex(text) != -1);
           int newLineIdx = getNewLineIndex(text, 0);
           if (newLineIdx == -1) continue;
           if (firstNewLineTextRange == null) {
@@ -65,14 +63,13 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
         }
         boolean hasComments = ContainerUtil.exists(expression.getChildren(), child -> child instanceof PsiComment);
         boolean reportWarning = nNewLines > 1 && !hasComments;
-        boolean reportInfo = isOnTheFly && (hasEscapedQuotes || hasComments);
         if (reportWarning) {
           boolean quickFixOnly = isOnTheFly && InspectionProjectProfileManager.isInformationLevel(getShortName(), expression);
           holder.registerProblem(expression, quickFixOnly ? null : firstNewLineTextRange,
                                  JavaBundle.message("inspection.text.block.migration.concatenation.message"),
                                  new ReplaceWithTextBlockFix());
         }
-        else if (reportInfo) {
+        else if (isOnTheFly) {
           holder.registerProblem(expression,
                                  JavaBundle.message("inspection.text.block.migration.string.message"),
                                  ProblemHighlightType.INFORMATION, new ReplaceWithTextBlockFix());
@@ -112,7 +109,7 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiExpression expression = PsiUtil.skipParenthesizedExprDown(tryCast(element, PsiExpression.class));
       if (expression == null) return;
       Document document = expression.getContainingFile().getViewProvider().getDocument();
@@ -151,14 +148,28 @@ public class TextBlockMigrationInspection extends AbstractBaseJavaLocalInspectio
 
     private static String @Nullable [] getContentLines(PsiExpression @NotNull [] operands) {
       String[] lines = new String[operands.length];
+      PsiLiteralExpression previous = null;
       for (int i = 0; i < operands.length; i++) {
         PsiLiteralExpression literal = getLiteralExpression(operands[i]);
         if (literal == null) return null;
         String line = getLiteralText(literal);
         if (line == null) return null;
+        if (previous != null && !onSameLine(previous, literal) && !lines[i - 1].endsWith("\\n")) {
+          lines[i - 1] += "\\\n";
+        }
+        previous = literal;
         lines[i] = line;
       }
       return lines;
+    }
+
+    private static boolean onSameLine(@NotNull PsiElement e1, @NotNull PsiElement e2) {
+      PsiFile containingFile = e1.getContainingFile();
+      if (containingFile != e2.getContainingFile()) {
+        throw new IllegalArgumentException();
+      }
+      Document document = containingFile.getViewProvider().getDocument();
+      return document != null && document.getLineNumber(e1.getTextOffset()) == document.getLineNumber(e2.getTextOffset());
     }
 
     @Nullable

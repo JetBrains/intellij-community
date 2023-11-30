@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.isInlineOnly
+import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.isFromJava
@@ -55,17 +56,21 @@ class SmartStepTargetVisitor(
     }
 
     override fun visitLambdaExpression(lambdaExpression: KtLambdaExpression) {
-        recordFunction(lambdaExpression.functionLiteral)
+        if (checkLineRangeFits(lambdaExpression.getLineRange())) {
+            recordFunction(lambdaExpression.functionLiteral)
+        }
     }
 
     override fun visitNamedFunction(function: KtNamedFunction) {
-        if (!recordFunction(function)) {
+        if (checkLineRangeFits(function.getLineRange()) && !recordFunction(function)) {
             super.visitNamedFunction(function)
         }
     }
 
     override fun visitCallableReferenceExpression(expression: KtCallableReferenceExpression) {
-        recordCallableReference(expression)
+        if (checkLineRangeFits(expression.getLineRange())) {
+            recordCallableReference(expression)
+        }
         super.visitCallableReferenceExpression(expression)
     }
 
@@ -264,32 +269,40 @@ class SmartStepTargetVisitor(
 
     override fun visitArrayAccessExpression(expression: KtArrayAccessExpression) {
         super.visitArrayAccessExpression(expression)
-        recordFunctionCall(expression)
+        if (checkLineRangeFits(expression.getLineRange())) {
+            recordFunctionCall(expression)
+        }
     }
 
     override fun visitUnaryExpression(expression: KtUnaryExpression) {
         super.visitUnaryExpression(expression)
-        recordFunctionCall(expression.operationReference)
+        if (checkLineRangeFits(expression.getLineRange())) {
+            recordFunctionCall(expression.operationReference)
+        }
     }
 
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
         super.visitBinaryExpression(expression)
-        recordFunctionCall(expression.operationReference)
+        if (checkLineRangeFits(expression.getLineRange())) {
+            recordFunctionCall(expression.operationReference)
+        }
     }
 
     override fun visitCallExpression(expression: KtCallExpression) {
         val calleeExpression = expression.calleeExpression
-        if (calleeExpression != null) {
+        if (calleeExpression != null && checkLineRangeFits(expression.getLineRange())) {
             recordFunctionCall(calleeExpression)
         }
         super.visitCallExpression(expression)
     }
 
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
-        val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
-        val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
-        val propertyDescriptor = resolvedCall.resultingDescriptor as? PropertyDescriptor ?: return
-        recordProperty(expression, propertyDescriptor, bindingContext)
+        if (checkLineRangeFits(expression.getLineRange())) {
+            val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
+            val resolvedCall = expression.getResolvedCall(bindingContext) ?: return
+            val propertyDescriptor = resolvedCall.resultingDescriptor as? PropertyDescriptor ?: return
+            recordProperty(expression, propertyDescriptor, bindingContext)
+        }
         super.visitSimpleNameExpression(expression)
     }
 
@@ -350,6 +363,9 @@ class SmartStepTargetVisitor(
     private fun isIntrinsic(descriptor: CallableMemberDescriptor): Boolean {
         return intrinsicMethods.getIntrinsic(descriptor) != null
     }
+
+    private fun checkLineRangeFits(lineRange: IntRange?): Boolean =
+        lineRange != null && lines.isWithin(lineRange.first) && lines.isWithin(lineRange.last)
 }
 
 private fun PropertyAccessorDescriptor.getJvmMethodName(): String =

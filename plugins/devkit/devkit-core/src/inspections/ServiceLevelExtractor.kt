@@ -11,14 +11,18 @@ private val EP_NAME: ExtensionPointName<ServiceLevelExtractor> = ExtensionPointN
 
 internal object ServiceLevelExtractors : LanguageExtension<ServiceLevelExtractor>(EP_NAME.name)
 
-interface ServiceLevelExtractor {
+interface ServiceLevelExtractor : JvmProvider {
   fun extractLevels(attributeValue: JvmAnnotationArrayValue): Collection<Service.Level>
 }
 
-private class ServiceLevelExtractorForJava : ServiceLevelExtractor {
+internal class ServiceLevelExtractorForJVM : ServiceLevelExtractor {
   override fun extractLevels(attributeValue: JvmAnnotationArrayValue): Collection<Service.Level> {
     return attributeValue.values
       .filterIsInstance<JvmAnnotationEnumFieldValue>()
       .flatMap { getLevels(it) }
+  }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return false
   }
 }

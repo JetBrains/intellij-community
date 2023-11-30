@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
@@ -57,12 +56,14 @@ import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -372,7 +373,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
 
   @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myIterationState = IterationState.NONE;
 
     force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
@@ -441,9 +442,6 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   protected void setWindowTitle(@NotNull @NlsContexts.DialogTitle String title) {
   }
 
-  protected void onAfterNavigate() {
-  }
-
   @RequiresEdt
   protected void onDispose() {
   }
@@ -456,9 +454,13 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     myContext.putUserData(key, value);
   }
 
+  protected @Nullable Object getData(@NotNull @NonNls String dataId) {
+    return null;
+  }
+
   protected @NotNull List<AnAction> getNavigationActions() {
     List<AnAction> actions = List.of(
-      new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(),
+      new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new OpenInEditorAction(),
       Separator.getInstance(),
       new MyPrevChangeAction(), new MyNextChangeAction());
 
@@ -589,7 +591,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
     if (SystemInfo.isMac) { // collect touchbar actions
       myTouchbarActionGroup.removeAll();
       myTouchbarActionGroup.addAll(
-        new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(), Separator.getInstance(),
+        new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new OpenInEditorAction(), Separator.getInstance(),
         new MyPrevChangeAction(), new MyNextChangeAction()
       );
       if (SHOW_VIEWER_ACTIONS_IN_TOUCHBAR && viewerActions != null) {
@@ -609,12 +611,12 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   protected void buildToolbar(@Nullable List<? extends AnAction> viewerActions) {
     collectToolbarActions(viewerActions);
 
-    ((ActionToolbarImpl)myToolbar).clearPresentationCache();
+    ((ActionToolbarImpl)myToolbar).reset(); // do not leak previous DiffViewer via caches
     myToolbar.updateActionsImmediately();
     recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
 
     if (myIsNewToolbar) {
-      ((ActionToolbarImpl)myRightToolbar).clearPresentationCache();
+      ((ActionToolbarImpl)myRightToolbar).reset();
       myRightToolbar.updateActionsImmediately();
       recursiveRegisterShortcutSet(myRightToolbarGroup, myMainPanel, null);
     }
@@ -1225,20 +1227,14 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
   // Helpers
   //
 
-  protected class MyOpenInEditorAction extends OpenInEditorAction {
-
-    public MyOpenInEditorAction() {
-    }
-
-    @Override
-    protected void onAfterEditorOpened() {
-      onAfterNavigate();
-    }
-  }
-
-  private class MyPanel extends JBPanelWithEmptyText implements DataProvider {
+  @ApiStatus.Internal
+  public class MyPanel extends JBPanelWithEmptyText implements DataProvider {
     MyPanel() {
       super(new BorderLayout());
+    }
+
+    public @NotNull DiffRequestProcessor getProcessor() {
+      return DiffRequestProcessor.this;
     }
 
     @Override
@@ -1258,10 +1254,7 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         if (data != null) return data;
       }
 
-      if (OpenInEditorAction.KEY.is(dataId)) {
-        return new MyOpenInEditorAction();
-      }
-      else if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
+      if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
         return myActiveRequest;
       }
       else if (ACTIVE_DIFF_TOOL.is(dataId)) {
@@ -1296,7 +1289,8 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         data = contextProvider.getData(dataId);
         if (data != null) return data;
       }
-      return null;
+
+      return DiffRequestProcessor.this.getData(dataId);
     }
   }
 
@@ -1656,6 +1650,16 @@ public abstract class DiffRequestProcessor implements CheckedDisposable {
         return myViewer;
       }
       return null;
+    }
+  }
+
+  /**
+   * @deprecated use {@link OpenInEditorAction}
+   */
+  @SuppressWarnings("InnerClassMayBeStatic") // left non-static for plugin compatibility
+  @Deprecated
+  protected class MyOpenInEditorAction extends OpenInEditorAction {
+    public MyOpenInEditorAction() {
     }
   }
 }

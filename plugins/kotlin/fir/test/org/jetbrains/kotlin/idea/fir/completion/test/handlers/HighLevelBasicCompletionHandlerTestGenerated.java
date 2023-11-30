@@ -156,6 +156,72 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/contextReceivers")
+        public static class ContextReceivers extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("WithoutDeclaration.kt")
+            public void testWithoutDeclaration() throws Exception {
+                runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclaration.kt");
+            }
+
+            @TestMetadata("WithoutDeclarationNestedClass.kt")
+            public void testWithoutDeclarationNestedClass() throws Exception {
+                runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationNestedClass.kt");
+            }
+
+            @TestMetadata("WithoutDeclarationNestedClass2.kt")
+            public void testWithoutDeclarationNestedClass2() throws Exception {
+                runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationNestedClass2.kt");
+            }
+
+            @TestMetadata("WithoutDeclarationTypeArgument.kt")
+            public void testWithoutDeclarationTypeArgument() throws Exception {
+                runTest("../completion/testData/handlers/basic/contextReceivers/WithoutDeclarationTypeArgument.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/defaultImports")
+        public static class DefaultImports extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("DoNotInsertCallableFqNameWhenParametersDiffer.kt")
+            public void testDoNotInsertCallableFqNameWhenParametersDiffer() throws Exception {
+                runTest("../completion/testData/handlers/basic/defaultImports/DoNotInsertCallableFqNameWhenParametersDiffer.kt");
+            }
+
+            @TestMetadata("InsertCallableFqNameWhenNameClash.kt")
+            public void testInsertCallableFqNameWhenNameClash() throws Exception {
+                runTest("../completion/testData/handlers/basic/defaultImports/InsertCallableFqNameWhenNameClash.kt");
+            }
+
+            @TestMetadata("InsertClassFqNameWhenNameClash.kt")
+            public void testInsertClassFqNameWhenNameClash() throws Exception {
+                runTest("../completion/testData/handlers/basic/defaultImports/InsertClassFqNameWhenNameClash.kt");
+            }
+
+            @TestMetadata("InsertFullyQualifiedClassName.kt")
+            public void testInsertFullyQualifiedClassName() throws Exception {
+                runTest("../completion/testData/handlers/basic/defaultImports/InsertFullyQualifiedClassName.kt");
+            }
+
+            @TestMetadata("InsertShortClassName.kt")
+            public void testInsertShortClassName() throws Exception {
+                runTest("../completion/testData/handlers/basic/defaultImports/InsertShortClassName.kt");
+            }
+
+            @TestMetadata("StringFakeConstructor.kt")
+            public void testStringFakeConstructor() throws Exception {
+                runTest("../completion/testData/handlers/basic/defaultImports/StringFakeConstructor.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/testData/handlers/basic/exclChar")
         public static class ExclChar extends AbstractHighLevelBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -437,6 +503,44 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("Type.kt")
             public void testType() throws Exception {
                 runTest("../completion/testData/handlers/basic/importAliases/Type.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/kdoc")
+        public static class Kdoc extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ClassFqName.kt")
+            public void testClassFqName() throws Exception {
+                runTest("../completion/testData/handlers/basic/kdoc/ClassFqName.kt");
+            }
+
+            @TestMetadata("ClassNotImported.kt")
+            public void testClassNotImported() throws Exception {
+                runTest("../completion/testData/handlers/basic/kdoc/ClassNotImported.kt");
+            }
+
+            @TestMetadata("ClassShortName.kt")
+            public void testClassShortName() throws Exception {
+                runTest("../completion/testData/handlers/basic/kdoc/ClassShortName.kt");
+            }
+
+            @TestMetadata("FunctionFqName.kt")
+            public void testFunctionFqName() throws Exception {
+                runTest("../completion/testData/handlers/basic/kdoc/FunctionFqName.kt");
+            }
+
+            @TestMetadata("FunctionNotImported.kt")
+            public void testFunctionNotImported() throws Exception {
+                runTest("../completion/testData/handlers/basic/kdoc/FunctionNotImported.kt");
+            }
+
+            @TestMetadata("FunctionShortName.kt")
+            public void testFunctionShortName() throws Exception {
+                runTest("../completion/testData/handlers/basic/kdoc/FunctionShortName.kt");
             }
         }
 
@@ -786,6 +890,29 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/superEntry")
+        public static class SuperEntry extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("SuperTypeArg.kt")
+            public void testSuperTypeArg() throws Exception {
+                runTest("../completion/testData/handlers/basic/superEntry/SuperTypeArg.kt");
+            }
+
+            @TestMetadata("SuperTypeArgWithCall.kt")
+            public void testSuperTypeArgWithCall() throws Exception {
+                runTest("../completion/testData/handlers/basic/superEntry/SuperTypeArgWithCall.kt");
+            }
+
+            @TestMetadata("SuperTypeArgWithCall2.kt")
+            public void testSuperTypeArgWithCall2() throws Exception {
+                runTest("../completion/testData/handlers/basic/superEntry/SuperTypeArgWithCall2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../completion/testData/handlers/basic/topLevelDeclarations")
         public static class TopLevelDeclarations extends AbstractHighLevelBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -1031,6 +1158,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("AbstractClassParenthesis.kt")
+            public void testAbstractClassParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/AbstractClassParenthesis.kt");
+            }
+
             @TestMetadata("AddLabelToReturn.kt")
             public void testAddLabelToReturn() throws Exception {
                 runTest("../completion/testData/handlers/basic/AddLabelToReturn.kt");
@@ -1056,6 +1188,26 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/AmbiguousSuperMethodWithArgument.kt");
             }
 
+            @TestMetadata("AnonymousFunctionAnnotation.kt")
+            public void testAnonymousFunctionAnnotation() throws Exception {
+                runTest("../completion/testData/handlers/basic/AnonymousFunctionAnnotation.kt");
+            }
+
+            @TestMetadata("AnonymousFunctionReturnType.kt")
+            public void testAnonymousFunctionReturnType() throws Exception {
+                runTest("../completion/testData/handlers/basic/AnonymousFunctionReturnType.kt");
+            }
+
+            @TestMetadata("BeforeCallee.kt")
+            public void testBeforeCallee() throws Exception {
+                runTest("../completion/testData/handlers/basic/BeforeCallee.kt");
+            }
+
+            @TestMetadata("BeforeParameterType.kt")
+            public void testBeforeParameterType() throws Exception {
+                runTest("../completion/testData/handlers/basic/BeforeParameterType.kt");
+            }
+
             @TestMetadata("ClassKeywordBeforeName.kt")
             public void testClassKeywordBeforeName() throws Exception {
                 runTest("../completion/testData/handlers/basic/ClassKeywordBeforeName.kt");
@@ -1079,6 +1231,26 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("ClassNameWithPackageConflict.kt")
             public void testClassNameWithPackageConflict() throws Exception {
                 runTest("../completion/testData/handlers/basic/ClassNameWithPackageConflict.kt");
+            }
+
+            @TestMetadata("ClassParenthesis.kt")
+            public void testClassParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/ClassParenthesis.kt");
+            }
+
+            @TestMetadata("ClassParenthesisInSuper.kt")
+            public void testClassParenthesisInSuper() throws Exception {
+                runTest("../completion/testData/handlers/basic/ClassParenthesisInSuper.kt");
+            }
+
+            @TestMetadata("ClassParenthesisWithGenerics.kt")
+            public void testClassParenthesisWithGenerics() throws Exception {
+                runTest("../completion/testData/handlers/basic/ClassParenthesisWithGenerics.kt");
+            }
+
+            @TestMetadata("ClassParenthesisWithParam.kt")
+            public void testClassParenthesisWithParam() throws Exception {
+                runTest("../completion/testData/handlers/basic/ClassParenthesisWithParam.kt");
             }
 
             @TestMetadata("ClassWithClassObject.kt")
@@ -1156,6 +1328,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/InterfaceNameBeforeRunBug.kt");
             }
 
+            @TestMetadata("InterfaceParenthesis.kt")
+            public void testInterfaceParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/InterfaceParenthesis.kt");
+            }
+
             @TestMetadata("JavaClassName.kt")
             public void testJavaClassName() throws Exception {
                 runTest("../completion/testData/handlers/basic/JavaClassName.kt");
@@ -1179,6 +1356,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("JavaClassNameWithKotlinNestedClassConflict.kt")
             public void testJavaClassNameWithKotlinNestedClassConflict() throws Exception {
                 runTest("../completion/testData/handlers/basic/JavaClassNameWithKotlinNestedClassConflict.kt");
+            }
+
+            @TestMetadata("JavaClassParenthesis.kt")
+            public void testJavaClassParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/JavaClassParenthesis.kt");
             }
 
             @TestMetadata("JavaSAM.kt")
@@ -1231,6 +1413,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/NestedClassNameWithPackageLevelConflict.kt");
             }
 
+            @TestMetadata("NestedClassParenthesis.kt")
+            public void testNestedClassParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/NestedClassParenthesis.kt");
+            }
+
             @TestMetadata("NestedTypeArg.kt")
             public void testNestedTypeArg() throws Exception {
                 runTest("../completion/testData/handlers/basic/NestedTypeArg.kt");
@@ -1271,6 +1458,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/NonExtensionMember.kt");
             }
 
+            @TestMetadata("ObjectParenthesis.kt")
+            public void testObjectParenthesis() throws Exception {
+                runTest("../completion/testData/handlers/basic/ObjectParenthesis.kt");
+            }
+
             @TestMetadata("PreferClassToConstructor.kt")
             public void testPreferClassToConstructor() throws Exception {
                 runTest("../completion/testData/handlers/basic/PreferClassToConstructor.kt");
@@ -1301,6 +1493,16 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
                 runTest("../completion/testData/handlers/basic/SecondTypeArg.kt");
             }
 
+            @TestMetadata("SecondTypeArg2.kt")
+            public void testSecondTypeArg2() throws Exception {
+                runTest("../completion/testData/handlers/basic/SecondTypeArg2.kt");
+            }
+
+            @TestMetadata("SecondTypeArg3.kt")
+            public void testSecondTypeArg3() throws Exception {
+                runTest("../completion/testData/handlers/basic/SecondTypeArg3.kt");
+            }
+
             @TestMetadata("SpaceAfterParenthesisBug.kt")
             public void testSpaceAfterParenthesisBug() throws Exception {
                 runTest("../completion/testData/handlers/basic/SpaceAfterParenthesisBug.kt");
@@ -1309,11 +1511,6 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("StaticFunctionFromJavaWithConflict.kt")
             public void testStaticFunctionFromJavaWithConflict() throws Exception {
                 runTest("../completion/testData/handlers/basic/StaticFunctionFromJavaWithConflict.kt");
-            }
-
-            @TestMetadata("StringFakeConstructor.kt")
-            public void testStringFakeConstructor() throws Exception {
-                runTest("../completion/testData/handlers/basic/StringFakeConstructor.kt");
             }
 
             @TestMetadata("SuperMethod.kt")
@@ -1329,11 +1526,6 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("SuperMethodWithDifferentParameterNames.kt")
             public void testSuperMethodWithDifferentParameterNames() throws Exception {
                 runTest("../completion/testData/handlers/basic/SuperMethodWithDifferentParameterNames.kt");
-            }
-
-            @TestMetadata("SuperTypeArg.kt")
-            public void testSuperTypeArg() throws Exception {
-                runTest("../completion/testData/handlers/basic/SuperTypeArg.kt");
             }
 
             @TestMetadata("SyntheticExtension.kt")
@@ -1374,6 +1566,11 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("TypeParameter.kt")
             public void testTypeParameter() throws Exception {
                 runTest("../completion/testData/handlers/basic/TypeParameter.kt");
+            }
+
+            @TestMetadata("VarargBeforeNoArg.kt")
+            public void testVarargBeforeNoArg() throws Exception {
+                runTest("../completion/testData/handlers/basic/VarargBeforeNoArg.kt");
             }
         }
 
@@ -1420,6 +1617,34 @@ public abstract class HighLevelBasicCompletionHandlerTestGenerated extends Abstr
             @TestMetadata("TypeInsertionOnLateinit.kt")
             public void testTypeInsertionOnLateinit() throws Exception {
                 runTest("../completion/testData/handlers/basic/variableNameAndType/TypeInsertionOnLateinit.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../completion/testData/handlers/basic/withTab")
+        public static class WithTab extends AbstractHighLevelBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("InsideBracketsClassifier.kt")
+            public void testInsideBracketsClassifier() throws Exception {
+                runTest("../completion/testData/handlers/basic/withTab/InsideBracketsClassifier.kt");
+            }
+
+            @TestMetadata("InsideBracketsFunction.kt")
+            public void testInsideBracketsFunction() throws Exception {
+                runTest("../completion/testData/handlers/basic/withTab/InsideBracketsFunction.kt");
+            }
+
+            @TestMetadata("InsideBracketsFunction2.kt")
+            public void testInsideBracketsFunction2() throws Exception {
+                runTest("../completion/testData/handlers/basic/withTab/InsideBracketsFunction2.kt");
+            }
+
+            @TestMetadata("InsideBracketsVariable.kt")
+            public void testInsideBracketsVariable() throws Exception {
+                runTest("../completion/testData/handlers/basic/withTab/InsideBracketsVariable.kt");
             }
         }
     }

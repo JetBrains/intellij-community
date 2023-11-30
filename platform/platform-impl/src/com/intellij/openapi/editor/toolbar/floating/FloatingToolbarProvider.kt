@@ -24,7 +24,7 @@ interface FloatingToolbarProvider {
   fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {}
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<FloatingToolbarProvider>("com.intellij.editorFloatingToolbarProvider")
+    val EP_NAME: ExtensionPointName<FloatingToolbarProvider> = ExtensionPointName.create("com.intellij.editorFloatingToolbarProvider")
 
     inline fun <reified T : FloatingToolbarProvider> getProvider(): T {
       return EP_NAME.findExtensionOrFail(T::class.java)

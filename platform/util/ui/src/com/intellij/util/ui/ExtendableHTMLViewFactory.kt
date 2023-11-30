@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.html.HiDpiScalingImageView
+import com.intellij.util.ui.html.InlineViewEx
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -17,10 +18,8 @@ import javax.swing.Icon
 import javax.swing.SizeRequirements
 import javax.swing.text.*
 import javax.swing.text.Position.Bias
-import javax.swing.text.html.HTML
-import javax.swing.text.html.HTMLEditorKit
+import javax.swing.text.html.*
 import javax.swing.text.html.HTMLEditorKit.HTMLFactory
-import javax.swing.text.html.ImageView
 import javax.swing.text.html.ParagraphView
 import kotlin.math.max
 
@@ -47,15 +46,16 @@ class ExtendableHTMLViewFactory internal constructor(
 
   companion object {
     @JvmField
-    val DEFAULT_EXTENSIONS = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES)
+    val DEFAULT_EXTENSIONS: List<Extension> = listOf(Extensions.ICONS, Extensions.BASE64_IMAGES, Extensions.HIDPI_IMAGES,
+                                                     Extensions.INLINE_VIEW_EX)
 
     @JvmField
-    val DEFAULT = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
+    val DEFAULT: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS)
 
     private val DEFAULT_EXTENSIONS_WORD_WRAP = DEFAULT_EXTENSIONS + Extensions.WORD_WRAP
 
     @JvmField
-    val DEFAULT_WORD_WRAP = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS_WORD_WRAP)
+    val DEFAULT_WORD_WRAP: ExtendableHTMLViewFactory = ExtendableHTMLViewFactory(DEFAULT_EXTENSIONS_WORD_WRAP)
   }
 
   @FunctionalInterface
@@ -111,6 +111,12 @@ class ExtendableHTMLViewFactory internal constructor(
      */
     @JvmField
     val WORD_WRAP: Extension = WordWrapExtension()
+
+    /**
+     * Supports rendering of inline elements, like <span>, with paddings and margins
+     */
+    @JvmField
+    val INLINE_VIEW_EX: Extension = InlineViewExExtension()
 
     /**
      * Renders images with proper scaling according to sysScale
@@ -342,6 +348,26 @@ class ExtendableHTMLViewFactory internal constructor(
             alignment = 0.5f
           }
       }
+    }
+  }
+
+  private class InlineViewExExtension: Extension {
+    override fun invoke(element: Element, view: View): View? {
+      if (view.javaClass != InlineView::class.java) return null
+      val attrs = view.attributes
+      if (attrs.getAttribute(CSS.Attribute.PADDING) != null
+          || attrs.getAttribute(CSS.Attribute.PADDING_BOTTOM) != null
+          || attrs.getAttribute(CSS.Attribute.PADDING_LEFT) != null
+          || attrs.getAttribute(CSS.Attribute.PADDING_TOP) != null
+          || attrs.getAttribute(CSS.Attribute.PADDING_RIGHT) != null
+          || attrs.getAttribute(CSS.Attribute.MARGIN) != null
+          || attrs.getAttribute(CSS.Attribute.MARGIN_BOTTOM) != null
+          || attrs.getAttribute(CSS.Attribute.MARGIN_LEFT) != null
+          || attrs.getAttribute(CSS.Attribute.MARGIN_TOP) != null
+          || attrs.getAttribute(CSS.Attribute.MARGIN_RIGHT) != null) {
+        return InlineViewEx(element)
+      }
+      return null
     }
   }
 }

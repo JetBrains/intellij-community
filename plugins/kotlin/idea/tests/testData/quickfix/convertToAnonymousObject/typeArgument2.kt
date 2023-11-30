@@ -4,3 +4,4 @@ interface B<X, Y, Z> {
 }
 
 val b = <caret>B { a: Int, b: Long -> "" }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertToAnonymousObjectFix

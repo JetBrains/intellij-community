@@ -67,9 +67,7 @@ class GradleSubprojectSymbol(
 
     other as GradleSubprojectSymbol
 
-    if (qualifiedNameParts != other.qualifiedNameParts) return false
-
-    return true
+    return qualifiedNameParts == other.qualifiedNameParts
   }
 
   override fun hashCode(): Int {

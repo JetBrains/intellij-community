@@ -6,6 +6,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -108,44 +110,45 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
 
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (problemsProcessor.getDescriptions(refEntity) == null) return;
-        refEntity.accept(new RefJavaVisitor() {
-          @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-            if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
-                !(refMethod instanceof RefImplicitConstructor)) {
-              globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
-                ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                problemsProcessor.ignoreElement(refMethod);
-                return false;
-              });
-            }
-          }
+      @Override
+      public void visitMethod(@NotNull final RefMethod refMethod) {
+        if (problemsProcessor.getDescriptions(refMethod) == null) return;
+        if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
+            !(refMethod instanceof RefImplicitConstructor)) {
+          globalContext.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+            ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+            problemsProcessor.ignoreElement(refMethod);
+            return false;
+          });
+        }
+      }
 
-          @Override public void visitClass(@NotNull final RefClass refClass) {
-            if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
-              globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
-                ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                problemsProcessor.ignoreElement(refClass);
-                return false;
-              });
-            }
-          }
+      @Override
+      public void visitClass(@NotNull final RefClass refClass) {
+        if (problemsProcessor.getDescriptions(refClass) == null) return;
+        if (!refClass.isAnonymous() && !PsiModifier.PRIVATE.equals(refClass.getAccessModifier())) {
+          globalContext.enqueueDerivedClassesProcessor(refClass, inheritor -> {
+            ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+            problemsProcessor.ignoreElement(refClass);
+            return false;
+          });
+        }
+      }
 
-          @Override public void visitField(@NotNull final RefField refField) {
-            if (PsiModifier.PRIVATE.equals(refField.getAccessModifier())) return;
-            globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
-              @Override
-              public boolean process(PsiReference psiReference) {
-                PsiElement expression = psiReference.getElement();
-                if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
-                  ((RefFieldImpl)refField).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
-                  problemsProcessor.ignoreElement(refField);
-                  return false;
-                }
-                return true;
-              }
-            });
+      @Override
+      public void visitField(@NotNull final RefField refField) {
+        if (problemsProcessor.getDescriptions(refField) == null) return;
+        if (PsiModifier.PRIVATE.equals(refField.getAccessModifier())) return;
+        globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
+          @Override
+          public boolean process(PsiReference psiReference) {
+            PsiElement expression = psiReference.getElement();
+            if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
+              ((RefFieldImpl)refField).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
+              problemsProcessor.ignoreElement(refField);
+              return false;
+            }
+            return true;
           }
         });
       }
@@ -173,8 +176,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     return SHORT_NAME;
   }
 
-  private static class AcceptSuggested implements LocalQuickFix {
-    @SafeFieldForPreview
+  private static class AcceptSuggested extends PsiUpdateModCommandQuickFix {
     private final RefManager myManager;
 
     AcceptSuggested(final RefManager manager) {
@@ -188,8 +190,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiModifierListOwner psiElement = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
       if (psiElement != null) {
         RefJavaElement refElement = (RefJavaElement)(myManager != null ? myManager.getReference(psiElement) : null);

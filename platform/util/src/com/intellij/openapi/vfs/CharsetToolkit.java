@@ -101,91 +101,99 @@ public final class CharsetToolkit {
       //noinspection IOResourceOpenedButNotSafelyClosed
       stream = new BufferedInputStream(stream);
     }
+    detectBOMFromStream(stream);
+    return stream;
+  }
+
+  public static byte @Nullable [] detectBOMFromStream(@NotNull InputStream stream) throws IOException {
+    assert stream.markSupported();
 
     stream.mark(4);
     boolean mustReset = true;
     try {
       int ret = stream.read();
       if (ret == -1) {
-        return stream; // no bom
+        return null; // no bom
       }
       byte b0 = (byte)ret;
-      if (b0 != EF && b0 != FF && b0 != FE && b0 != 0) return stream; // no bom
+      if (b0 != EF && b0 != FF && b0 != FE && b0 != 0) return null; // no bom
 
       ret = stream.read();
       if (ret == -1) {
-        return stream; // no bom
+        return null; // no bom
       }
       byte b1 = (byte)ret;
       if (b0 == FF && b1 == FE) {
         stream.mark(2);
         ret = stream.read();
         if (ret == -1) {
-          return stream;  // utf-16 LE
+          return UTF16LE_BOM;  // utf-16 LE
         }
         byte b2 = (byte)ret;
         if (b2 != 0) {
-          return stream; // utf-16 LE
+          return UTF16LE_BOM; // utf-16 LE
         }
         ret = stream.read();
         if (ret == -1) {
-          return stream;
+          return UTF16LE_BOM;
         }
         byte b3 = (byte)ret;
         if (b3 != 0) {
-          return stream; // utf-16 LE
+          return UTF16LE_BOM; // utf-16 LE
         }
 
         // utf-32 LE
         mustReset = false;
-        return stream;
+        return UTF32LE_BOM;
       }
       if (b0 == FE && b1 == FF) {
         mustReset = false;
-        return stream; // utf-16 BE
+        return UTF16BE_BOM; // utf-16 BE
       }
       if (b0 == EF && b1 == BB) {
         ret = stream.read();
         if (ret == -1) {
-          return stream; // no bom
+          return null; // no bom
         }
         byte b2 = (byte)ret;
         if (b2 == BF) {
           mustReset = false;
-          return stream; // utf-8 bom
+          return UTF8_BOM; // utf-8 bom
         }
 
         // no bom
-        return stream;
+        return null;
       }
 
       if (b0 == 0 && b1 == 0) {
         ret = stream.read();
         if (ret == -1) {
-          return stream;  // no bom
+          return null;  // no bom
         }
         byte b2 = (byte)ret;
         if (b2 != FE) {
-          return stream; // no bom
+          return null; // no bom
         }
         ret = stream.read();
         if (ret == -1) {
-          return stream;  // no bom
+          return null;  // no bom
         }
         byte b3 = (byte)ret;
         if (b3 != FF) {
-          return stream; // no bom
+          return null; // no bom
         }
 
         mustReset = false;
-        return stream; // UTF-32 BE
+        return UTF32BE_BOM; // UTF-32 BE
       }
 
       // no bom
-      return stream;
+      return null;
     }
     finally {
-      if (mustReset) stream.reset();
+      if (mustReset) {
+        stream.reset();
+      }
     }
   }
 

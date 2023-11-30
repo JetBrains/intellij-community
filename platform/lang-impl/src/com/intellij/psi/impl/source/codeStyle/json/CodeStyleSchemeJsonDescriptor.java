@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle.json;
 
 import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
@@ -15,12 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CodeStyleSchemeJsonDescriptor {
+public final class CodeStyleSchemeJsonDescriptor {
 
-  public final static String VERSION = "1.0";
+  public static final String VERSION = "1.0";
 
-  private transient final CodeStyleScheme myScheme;
-  private transient final List<String> myLangDomainIds;
+  private final transient CodeStyleScheme myScheme;
+  private final transient List<String> myLangDomainIds;
 
   public final String schemeName;
   @SuppressWarnings("FieldMayBeStatic")
@@ -65,5 +65,5 @@ public class CodeStyleSchemeJsonDescriptor {
     return DisplayPriority.OTHER_SETTINGS;
   }
 
-  static class PropertyListHolder extends ArrayList<AbstractCodeStylePropertyMapper> {}
+  static final class PropertyListHolder extends ArrayList<AbstractCodeStylePropertyMapper> {}
 }

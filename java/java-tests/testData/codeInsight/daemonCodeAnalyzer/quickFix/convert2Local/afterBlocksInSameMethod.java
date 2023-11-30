@@ -7,7 +7,7 @@ class ITest {
 
         //my comment to keep in code
         ArrayList<String> mayBeLocal = new ArrayList<String>();
-      if (x == 5) {
+        if (x == 5) {
       mayBeLocal.add("jjj");
     }
 

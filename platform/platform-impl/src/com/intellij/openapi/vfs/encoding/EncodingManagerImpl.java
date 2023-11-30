@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -6,8 +6,8 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @State(name = "Encoding", storages = @Storage("encoding.xml"), category = SettingsCategory.CODE)
-public class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
+public final class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
   private static final Logger LOG = Logger.getInstance(EncodingManagerImpl.class);
 
   static final class State {
@@ -55,8 +55,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     private @NotNull EncodingReference myDefaultConsoleEncoding = EncodingReference.DEFAULT;
 
     @Attribute("default_encoding")
-    @NotNull
-    public String getDefaultCharsetName() {
+    public @NotNull String getDefaultCharsetName() {
       return myDefaultEncoding.getCharset() == null ? "" : myDefaultEncoding.getCharset().name();
     }
 
@@ -119,9 +118,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     return project != null && !project.isDisposed() && FileEditorManager.getInstance(project).isFileOpen(virtualFile);
   }
 
-  @NonNls public static final String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
+  public static final @NonNls String PROP_CACHED_ENCODING_CHANGED = "cachedEncoding";
 
-  private void handleDocument(@NotNull final Document document) {
+  private void handleDocument(final @NotNull Document document) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
     if (virtualFile == null) return;
     Project project = guessProject(virtualFile);
@@ -142,8 +141,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
   }
 
-  @Nullable("returns null if charset set cannot be determined from content")
-  static Charset computeCharsetFromContent(@NotNull final VirtualFile virtualFile) {
+  static @Nullable("returns null if charset set cannot be determined from content") Charset computeCharsetFromContent(final @NotNull VirtualFile virtualFile) {
     final Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
     if (document == null) {
       return null;
@@ -188,7 +186,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   private static final class DocumentEncodingDetectRequest implements Runnable {
     private final Reference<Document> ref;
-    @NotNull private final AtomicBoolean myDisposed;
+    private final @NotNull AtomicBoolean myDisposed;
 
     private DocumentEncodingDetectRequest(@NotNull Document document, @NotNull AtomicBoolean disposed) {
       ref = new WeakReference<>(document);
@@ -205,14 +203,12 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
-  @Nullable
-  public Charset getCachedCharsetFromContent(@NotNull Document document) {
+  public @Nullable Charset getCachedCharsetFromContent(@NotNull Document document) {
     return document.getUserData(CACHED_CHARSET_FROM_CONTENT);
   }
 
   @Override
-  @NotNull
-  public State getState() {
+  public @NotNull State getState() {
     return myState;
   }
 
@@ -222,8 +218,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
-  @NotNull
-  public Collection<Charset> getFavorites() {
+  public @NotNull Collection<Charset> getFavorites() {
     Collection<Charset> result = new HashSet<>();
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
@@ -234,8 +229,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
-  @Nullable
-  public Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
+  public @Nullable Charset getEncoding(@Nullable VirtualFile virtualFile, boolean useParentDefaults) {
     Project project = guessProject(virtualFile);
     if (project == null) return null;
     EncodingProjectManager encodingManager = EncodingProjectManager.getInstance(project);
@@ -262,8 +256,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     }
   }
 
-  @Nullable
-  private static Project guessProject(@Nullable VirtualFile virtualFile) {
+  private static @Nullable Project guessProject(@Nullable VirtualFile virtualFile) {
     Project project = virtualFile == null ? null : ProjectLocator.getInstance().guessProjectForFile(virtualFile);
     if (project != null) {
       return project;
@@ -289,7 +282,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
-  public boolean isNative2Ascii(@NotNull final VirtualFile virtualFile) {
+  public boolean isNative2Ascii(final @NotNull VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
     return project != null && EncodingProjectManager.getInstance(project).isNative2Ascii(virtualFile);
   }
@@ -308,14 +301,12 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
-  @NotNull
-  public Charset getDefaultCharset() {
+  public @NotNull Charset getDefaultCharset() {
     return myState.myDefaultEncoding.dereference();
   }
 
   @Override
-  @NotNull
-  public String getDefaultCharsetName() {
+  public @NotNull String getDefaultCharsetName() {
     return myState.getDefaultCharsetName();
   }
 
@@ -325,15 +316,14 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   }
 
   @Override
-  @Nullable
-  public Charset getDefaultCharsetForPropertiesFiles(@Nullable final VirtualFile virtualFile) {
+  public @Nullable Charset getDefaultCharsetForPropertiesFiles(final @Nullable VirtualFile virtualFile) {
     Project project = guessProject(virtualFile);
     if (project == null) return null;
     return EncodingProjectManager.getInstance(project).getDefaultCharsetForPropertiesFiles(virtualFile);
   }
 
   @Override
-  public void setDefaultCharsetForPropertiesFiles(@Nullable final VirtualFile virtualFile, final Charset charset) {
+  public void setDefaultCharsetForPropertiesFiles(final @Nullable VirtualFile virtualFile, final Charset charset) {
     Project project = guessProject(virtualFile);
     if (project == null) return;
     EncodingProjectManager.getInstance(project).setDefaultCharsetForPropertiesFiles(virtualFile, charset);

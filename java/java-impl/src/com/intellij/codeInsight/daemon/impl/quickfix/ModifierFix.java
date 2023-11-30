@@ -1,22 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.java.JavaBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.PsiElementProcessorAdapter;
@@ -24,45 +13,54 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ThreeState;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement implements IntentionActionWithFixAllOption {
+public class ModifierFix extends PsiBasedModCommandAction<PsiModifierListOwner> {
   private static final Logger LOG = Logger.getInstance(ModifierFix.class);
 
   @PsiModifier.ModifierConstant private final String myModifier;
   private final boolean myShouldHave;
   private final boolean myShowContainingClass;
-  private volatile @IntentionName String myName;
-  private final boolean myStartInWriteAction;
+  private final @NotNull ThreeState myProcessHierarchy;
+  private final @IntentionName String myName;
 
   public ModifierFix(@NotNull PsiModifierList modifierList,
                      @PsiModifier.ModifierConstant @NotNull String modifier,
                      boolean shouldHave,
                      boolean showContainingClass) {
-    super(ObjectUtils.tryCast(modifierList.getParent(), PsiModifierListOwner.class));
+    super((PsiModifierListOwner)modifierList.getParent());
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
     myName = format(null, modifierList, myShowContainingClass);
-    myStartInWriteAction = !(modifierList.getParent() instanceof PsiMethod) || AccessModifier.fromPsiModifier(modifier) == null;
+    myProcessHierarchy = ThreeState.UNSURE;
   }
 
   public ModifierFix(@NotNull PsiModifierListOwner owner,
                      @PsiModifier.ModifierConstant @NotNull String modifier,
                      boolean shouldHave,
                      boolean showContainingClass) {
+    this(owner, modifier, shouldHave, showContainingClass, ThreeState.UNSURE);
+  }
+
+  public ModifierFix(@NotNull PsiModifierListOwner owner,
+                     @PsiModifier.ModifierConstant @NotNull String modifier,
+                     boolean shouldHave,
+                     boolean showContainingClass, @NotNull ThreeState processHierarchy) {
     super(owner);
     myModifier = modifier;
     myShouldHave = shouldHave;
     myShowContainingClass = showContainingClass;
+    myProcessHierarchy = processHierarchy;
     PsiVariable variable = owner instanceof PsiVariable ? (PsiVariable)owner : null;
     myName = format(variable, owner.getModifierList(), myShowContainingClass);
-    myStartInWriteAction = !(owner instanceof PsiMethod) || AccessModifier.fromPsiModifier(modifier) == null;
   }
 
   private @IntentionName @NotNull String format(PsiVariable variable, PsiModifierList modifierList, boolean showContainingClass) {
@@ -95,20 +93,16 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
     }
 
     String modifierText = VisibilityUtil.toPresentableText(myModifier);
+    if (!myShouldHave && modifierList != null) {
+      int count = 0;
+      for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child.getText().equals(myModifier)) count++;
+      }
+      if (count > 1) {
+        return QuickFixBundle.message("remove.one.modifier.fix", modifierText);
+      }
+    }
     return QuickFixBundle.message(myShouldHave ? "add.modifier.fix" : "remove.modifier.fix", name, modifierText);
-  }
-
-  @NotNull
-  @Override
-  public String getText() {
-    return myName;
-  }
-
-  @Override
-  public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
-    return action instanceof ModifierFix modifierFix &&
-           modifierFix.myModifier.equals(myModifier) &&
-           modifierFix.myShouldHave == myShouldHave;
   }
 
   @NotNull
@@ -119,40 +113,32 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @Nullable Editor editor,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    final PsiModifierList modifierList = ((PsiModifierListOwner)startElement).getModifierList();
-    if (modifierList == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiModifierListOwner element) {
+    final PsiModifierList modifierList = element.getModifierList();
+    if (modifierList == null) return null;
     PsiFile containingFile = modifierList.getContainingFile();
-    if (containingFile == null) return false;
-    if (containingFile.getVirtualFile() == null) return false;
-    PsiVariable variable = ObjectUtils.tryCast(startElement, PsiVariable.class);
-    boolean isAvailable = BaseIntentionAction.canModify(modifierList) &&
-                          modifierList.hasExplicitModifier(myModifier) != myShouldHave &&
-                          !(variable instanceof SyntheticElement) &&
-                          (variable == null || variable.isValid());
+    if (containingFile == null) return null;
+    if (containingFile.getVirtualFile() == null) return null;
+    PsiVariable variable = ObjectUtils.tryCast(element, PsiVariable.class);
+    boolean isAvailable = modifierList.hasExplicitModifier(myModifier) != myShouldHave && !(variable instanceof SyntheticElement);
+    if (!isAvailable) return null;
 
-    if (isAvailable && myShowContainingClass && editor != null) {
-      PsiElement elementUnderCaret = file.findElementAt(editor.getCaretModel().getOffset());
-      if (elementUnderCaret != null) {
-        if (PsiTreeUtil.isAncestor(startElement, elementUnderCaret, false)) {
-          myName = format(variable, modifierList, false);
-        }
+    String name = myName;
+    if (myShowContainingClass) {
+      PsiElement elementUnderCaret = context.findLeaf();
+      if (elementUnderCaret != null && PsiTreeUtil.isAncestor(element, elementUnderCaret, false)) {
+        name = format(variable, modifierList, false);
       }
     }
 
-    return isAvailable;
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    return isAvailable(project, file, null, startElement, endElement);
+    return switch (myProcessHierarchy) {
+      case YES -> Presentation.of(QuickFixBundle.message("fix.update.modifier.change.inheritors"));
+      case NO -> Presentation.of(QuickFixBundle.message("fix.update.modifier.change.this"));
+      case UNSURE -> Presentation.of(name).withFixAllOption(this,
+                                                            action -> action instanceof ModifierFix modifierFix &&
+                                                                      modifierFix.myModifier.equals(myModifier) &&
+                                                                      modifierFix.myShouldHave == myShouldHave);
+    };
   }
 
   private void changeModifierList (@NotNull PsiModifierList modifierList) {
@@ -171,36 +157,13 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
   }
 
   @Override
-  public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    PsiModifierListOwner owner = PsiTreeUtil.findSameElementInCopy((PsiModifierListOwner)getStartElement(), file);
-    updateModifier(owner);
-    return IntentionPreviewInfo.DIFF;
-  }
-
-  @Override
-  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return getStartElement().getContainingFile();
-  }
-
-  @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    PsiModifierListOwner owner = (PsiModifierListOwner)startElement;
-    if (myStartInWriteAction) {
-      updateModifier(owner);
-      return;
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiModifierListOwner owner) {
+    boolean shouldSearch = myProcessHierarchy != ThreeState.NO &&
+                           owner instanceof PsiMethod && AccessModifier.fromPsiModifier(myModifier) != null;
+    if (!shouldSearch) {
+      return ModCommand.psiUpdate(owner, this::updateModifier);
     }
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(startElement)) return;
-    PsiModifierList modifierList = owner.getModifierList();
-    assert modifierList != null;
-    updateAccessInHierarchy(project, modifierList, owner);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      updateModifier(owner);
-      UndoUtil.markPsiFileForUndo(modifierList.getContainingFile());
-    });
+    return updateAccessInHierarchy((PsiMethod)owner);
   }
 
   protected void updateModifier(PsiModifierListOwner owner) {
@@ -244,48 +207,39 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
     }
   }
 
-  private void updateAccessInHierarchy(@NotNull Project project, PsiModifierList modifierList, PsiElement owner) {
-    if (owner instanceof PsiMethod method) {
-      PsiModifierList copy = (PsiModifierList)modifierList.copy();
-      changeModifierList(copy);
-      final int accessLevel = PsiUtil.getAccessLevel(copy);
-      if (accessLevel != PsiUtil.getAccessLevel(modifierList)) {
-        final List<PsiModifierList> modifierLists = new ArrayList<>();
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          ReadAction.run(() -> {
-            OverridingMethodsSearch.search(method, method.getResolveScope(), true).forEach(
-              new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
-                @Override
-                public boolean execute(@NotNull PsiMethod inheritor) {
-                  PsiModifierList list = inheritor.getModifierList();
-                  if (BaseIntentionAction.canModify(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
-                    modifierLists.add(list);
-                  }
-                  return true;
-                }
-              }));
-          });
-        }, JavaBundle.message("psi.search.overriding.progress"), true, project);
-        if (!modifierLists.isEmpty() && Messages.showYesNoDialog(project,
-                                                                 QuickFixBundle.message("change.inheritors.visibility.warning.text"),
-                                                                 QuickFixBundle.message("change.inheritors.visibility.warning.title"),
-                                                                 Messages.getQuestionIcon()) == Messages.YES) {
-          ApplicationManager.getApplication().runWriteAction(() -> {
-            if (!FileModificationService.getInstance().preparePsiElementsForWrite(modifierLists)) {
-              return;
-            }
-
-            for (final PsiModifierList modifierList1 : modifierLists) {
-              changeModifierList(modifierList1);
-            }
-          });
+  private @NotNull ModCommand updateAccessInHierarchy(@NotNull PsiMethod method) {
+    PsiModifierList modifierList = method.getModifierList();
+    assert modifierList != null;
+    PsiModifierList copy = (PsiModifierList)modifierList.copy();
+    changeModifierList(copy);
+    final int accessLevel = PsiUtil.getAccessLevel(copy);
+    if (accessLevel == PsiUtil.getAccessLevel(modifierList)) return ModCommand.nop();
+    final List<PsiModifierList> modifierLists = new ArrayList<>();
+    OverridingMethodsSearch.search(method, method.getResolveScope(), true).forEach(
+      new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
+        @Override
+        public boolean execute(@NotNull PsiMethod inheritor) {
+          PsiModifierList list = inheritor.getModifierList();
+          if (BaseIntentionAction.canModify(inheritor) && PsiUtil.getAccessLevel(list) < accessLevel) {
+            modifierLists.add(list);
+          }
+          return true;
         }
-      }
+      }));
+    if (modifierLists.isEmpty()) {
+      return ModCommand.psiUpdate(method, this::updateModifier);
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return myStartInWriteAction;
+    if (myProcessHierarchy == ThreeState.YES) {
+      return ModCommand.psiUpdate(method, (writableMethod, updater) -> {
+        for (PsiModifierList list : ContainerUtil.map(modifierLists, updater::getWritable)) {
+          changeModifierList(list);
+        }
+        updateModifier(writableMethod);
+      });
+    } else {
+      return ModCommand.chooseAction(getFamilyName(),
+                                     new ModifierFix(method, myModifier, myShouldHave, myShowContainingClass, ThreeState.YES),
+                                     new ModifierFix(method, myModifier, myShouldHave, myShowContainingClass, ThreeState.NO));
+    }
   }
 }

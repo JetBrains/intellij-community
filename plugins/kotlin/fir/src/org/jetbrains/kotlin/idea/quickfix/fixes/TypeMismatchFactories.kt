@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.idea.quickfix.AddExclExclCallFix
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object TypeMismatchFactories {
@@ -26,7 +27,8 @@ object TypeMismatchFactories {
     }
 
     val initializerTypeMismatch = diagnosticFixFactory(KtFirDiagnostic.InitializerTypeMismatch::class) { diagnostic ->
-        diagnostic.psi.initializer?.let { getFixesForTypeMismatch(it, diagnostic.expectedType, diagnostic.actualType) } ?: emptyList()
+        (diagnostic.psi as? KtProperty)?.initializer?.let { getFixesForTypeMismatch(it, diagnostic.expectedType, diagnostic.actualType) }
+            ?: emptyList()
     }
 
     val smartcastImpossibleFactory = diagnosticFixFactory(KtFirDiagnostic.SmartcastImpossible::class) { diagnostic ->
@@ -35,7 +37,8 @@ object TypeMismatchFactories {
         getFixesForTypeMismatch(psi, expectedType = diagnostic.desiredType, actualType = actualType)
     }
 
-    private fun KtAnalysisSession.getFixesForTypeMismatch(
+    context(KtAnalysisSession)
+    private fun getFixesForTypeMismatch(
         psi: PsiElement,
         expectedType: KtType,
         actualType: KtType

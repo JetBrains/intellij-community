@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -14,30 +14,38 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.dnd.*
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.HideableAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
 import com.intellij.openapi.components.*
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.GroupedElementsRenderer
 import com.intellij.ui.components.JBList
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.KeepingPopupOpenAction
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
 import com.intellij.ui.popup.list.ListPopupModel
+import com.intellij.util.messages.Topic
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.Attribute
@@ -46,11 +54,12 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.Component
+import java.awt.Point
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
-import javax.swing.*
+import javax.swing.JList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.math.max
@@ -59,6 +68,9 @@ private const val RUN: String = DefaultRunExecutor.EXECUTOR_ID
 private const val DEBUG: String = ToolWindowId.DEBUG
 
 private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
+
+@ApiStatus.Internal
+val RUN_CONFIGURATION_KEY = DataKey.create<RunnerAndConfigurationSettings>("sub.popup.parent.action")
 
 internal fun createRunConfigurationsActionGroup(project: Project, e: AnActionEvent): ActionGroup {
   val actions = DefaultActionGroup()
@@ -142,6 +154,14 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
 
   init {
     list.setExpandableItemsEnabled(false)
+    (step as ActionPopupStep).setSubStepContextAdjuster { context, action ->
+      if (action is SelectConfigAction) {
+        CustomizedDataContext.create(context) { dataId ->
+          if (RUN_CONFIGURATION_KEY.`is`(dataId)) action.configuration else null
+        }
+      }
+      else context
+    }
     if (pinnedSize != 0) {
       val dndManager = DnDManager.getInstance()
       dndManager.registerSource(MyDnDSource(), list, this)
@@ -170,6 +190,18 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
   }
 
   private data class DraggedIndex(val from: Int)
+
+  private fun<E> offsetFromElementTopForDnD(list: JList<E>, dropTargetIndex: Int): Int {
+    if (dropTargetIndex == pinnedSize) {
+      return 0
+    }
+    val elementAt = list.model.getElementAt(dropTargetIndex)
+    val c: Component = list.cellRenderer.getListCellRendererComponent(list, elementAt, dropTargetIndex, false, false)
+    return if (c is GroupedElementsRenderer.MyComponent && StringUtil.isNotEmpty(c.separator.caption)) {
+      c.separator.preferredSize.height
+    }
+    else 0
+  }
 
   private inner class MyDnDTarget : DnDTarget {
     override fun update(aEvent: DnDEvent): Boolean {
@@ -214,19 +246,16 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup, dataC
     override fun startDragging(action: DnDAction, dragOrigin: Point): DnDDragStartBean? {
       val index: Int = list.locationToIndex(dragOrigin)
       if (index < 0) return null
+      list.setOffsetFromElementTopForDnD { offsetFromElementTopForDnD(list, it) }
       return DnDDragStartBean(DraggedIndex(index))
     }
   }
 }
 
-private interface HideableAction {
-  val shouldBeShown: (holdingFilter: Boolean) -> Boolean
-}
-
 private class HideableDefaultActionGroup(@NlsSafe name: String, override val shouldBeShown: (holdingFilter: Boolean) -> Boolean)
   : DefaultActionGroup({ name }, true), DumbAware, HideableAction
 
-private class AllRunConfigurationsToggle(@NlsActions.ActionText text: String) : ToggleAction(text), KeepingPopupOpenAction, DumbAware {
+class AllRunConfigurationsToggle(@NlsActions.ActionText text: String) : ToggleAction(text), KeepingPopupOpenAction, DumbAware {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 
@@ -257,18 +286,31 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
                                               pinned: List<RunnerAndConfigurationSettings>,
                                               shouldBeShown: (Boolean) -> Boolean = { true }
 ): SelectRunConfigurationWithInlineActions {
+
+/*  val e = event.withDataContext(CustomizedDataContext.create(event.dataContext) { dataId ->
+    if (RUN_CONFIGURATION_KEY.`is`(dataId)) conf else null
+  })*/
+
   val activeExecutor = getActiveExecutor(project, conf)
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
-  val inlineActions = if (showRerunAndStopButtons)
-    listOf(
+  val inlineActions = ArrayList<AnAction>()
+  if (showRerunAndStopButtons) {
+    if(RunWidgetResumeManager.getInstance(project).isSecondVersionAvailable()) {
+      InlineResumeCreator.getInstance(project).getInlineResumeCreator(conf, false)?.let {
+        inlineActions.add(it)
+      }
+    }
+
+    inlineActions.addAll(listOf(
       ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
       StopConfigurationInlineAction(activeExecutor, conf)
-    )
-  else
-    listOf(
+    ))
+  } else {
+    inlineActions.addAll(listOf(
       ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
       ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
-    )
+    ))
+  }
 
   val result = SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
   if (showRerunAndStopButtons) {
@@ -279,7 +321,7 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
   val wasPinned = pinned.contains(conf)
   val text = if (wasPinned) ExecutionBundle.message("run.toolbar.widget.dropdown.unpin.action.text")
   else ExecutionBundle.message("run.toolbar.widget.dropdown.pin.action.text")
-  result.addAction(object : AnAction(text) {
+  result.addAction(object : ActionRemotePermissionRequirements.ActionWithWriteAccess(text) {
     override fun actionPerformed(e: AnActionEvent) {
       RunConfigurationStartHistory.getInstance(project).togglePin(conf)
     }
@@ -400,7 +442,8 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
     stopCount.toString()
   }
 
-private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings) : AnAction() {
+private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
+  : AnAction(), ActionRemotePermissionRequirements.RunAccess {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
@@ -528,6 +571,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
       }
     }.toMutableSet()
     _state = State(_state.history, newPinned, _state.allConfigurationsExpanded)
+    project.messageBus.syncPublisher(TOPIC).togglePin(setting)
   }
 
   fun reorderItems(from: Int, where: Int) {
@@ -541,6 +585,7 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     _state = State(_state.history.take(max(5, _state.pinned.size + recentLimit*2)).toMutableList().apply {
       add(0, Element(setting.uniqueID))
     }.toMutableSet(), _state.pinned, _state.allConfigurationsExpanded)
+    project.messageBus.syncPublisher(TOPIC).register(setting)
   }
 
   private var _state = State()
@@ -551,14 +596,26 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     _state = state
   }
 
+  fun reloadState() {
+    _state = State(_state.history, _state.pinned, _state.allConfigurationsExpanded)
+  }
+
+  interface Listener {
+    fun togglePin(setting: RunnerAndConfigurationSettings) {}
+    fun register(setting: RunnerAndConfigurationSettings) {}
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): RunConfigurationStartHistory = project.service()
+
+    @Topic.ProjectLevel
+    val TOPIC = Topic("RunConfigurationStartHistory events", Listener::class.java)
   }
 }
 
 private class ExecutionReasonableHistoryManager : ProjectActivity {
-  override suspend fun execute(project: Project) {
+  override suspend fun execute(project: Project) : Unit = blockingContext {
     project.messageBus.connect(project).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {
         onAnyChange(executorId, env, RunState.SCHEDULED)
@@ -583,8 +640,8 @@ private class ExecutionReasonableHistoryManager : ProjectActivity {
       private fun onAnyChange(executorId: String, env: ExecutionEnvironment, reason: RunState) {
         getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
           RunStatusHistory.getInstance(env.project).changeState(conf, executorId, reason)
-          ActivityTracker.getInstance().inc() // Not sure is it needed at all
         }
+        ActivityTracker.getInstance().inc() // needed to update run toolbar
       }
     })
   }

@@ -10,6 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.TypeConversionUtil.isAssignable
 import com.intellij.psi.util.TypeConversionUtil.isNullType
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -17,16 +18,20 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 private const val NOT_UELEMENT = -2
 private const val NOT_PSI_ELEMENT = -1
 
-private val ALLOWED_REDEFINITION = setOf(
+private val ALLOWED_REDEFINITION = setOf<String?>(
   UClass::class.java.name,
   UMethod::class.java.name,
   UVariable::class.java.name,
   UClassInitializer::class.java.name
 )
 
+@VisibleForTesting
 class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
   override fun checkMethod(method: UMethod, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
+    // do not analyze nested methods to avoid warning duplicates
+    if (method.getParentOfType<UMethod>() != null) return null
+
     val sourcePsiElement = method.sourcePsiElement ?: return null
     val uElementType = psiClassType(UElement::class.java.name, sourcePsiElement.resolveScope) ?: return null
     val psiElementType = psiClassType(PsiElement::class.java.name, sourcePsiElement.resolveScope) ?: return null
@@ -71,10 +76,18 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
       val psiMethod = node.resolve() ?: return
       val containingClass = psiMethod.containingClass ?: return
       if (containingClass.qualifiedName in ALLOWED_REDEFINITION) return
-      if (!isPsiElementClass(containingClass) && psiMethod.findSuperMethods().none { isPsiElementClass(it.containingClass) }) return
-      if (psiMethod.findSuperMethods().any { it.containingClass?.qualifiedName in ALLOWED_REDEFINITION }) return
-      node.sourcePsiElement?.let {
-        reportedElements.add(it)
+      if ((isPsiElementClass(containingClass) || psiMethod.findSuperMethods().any { isPsiElementClass(it.containingClass) }) &&
+          psiMethod.findSuperMethods().none { it.containingClass?.qualifiedName in ALLOWED_REDEFINITION }) {
+        node.sourcePsiElement?.let {
+          reportedElements.add(it)
+        }
+        return
+      }
+      val uMethod = node.resolveToUElementOfType<UMethod>() ?: return
+      if (UElementAsPsiCheckProviders.allForLanguage(node.lang).any { it.isPsiElementReceiver(uMethod) }) {
+        node.receiver?.sourcePsi?.let {
+          reportedElements.add(it)
+        }
       }
     }
 
@@ -122,7 +135,8 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
 
     private fun isPsiElementClass(cls: PsiClass?): Boolean {
       if (cls == null) return false
-      return getDimIfPsiElementType(PsiType.getTypeByName(cls.qualifiedName!!, cls.project, cls.resolveScope)) != NOT_PSI_ELEMENT
+      val qualifiedName = cls.qualifiedName ?: return false
+      return getDimIfPsiElementType(PsiType.getTypeByName(qualifiedName, cls.project, cls.resolveScope)) != NOT_PSI_ELEMENT
     }
 
     private fun getDimIfUElementType(type: PsiType?): Int {
@@ -131,7 +145,9 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
     }
   }
 
-  private fun psiClassType(fqn: String, searchScope: GlobalSearchScope): PsiClassType? =
-    PsiType.getTypeByName(fqn, searchScope.project!!, searchScope).takeIf { it.resolve() != null }
+  private fun psiClassType(fqn: String, searchScope: GlobalSearchScope): PsiClassType? {
+    val project = searchScope.project ?: return null
+    return PsiType.getTypeByName(fqn, project, searchScope).takeIf { it.resolve() != null }
+  }
 
 }

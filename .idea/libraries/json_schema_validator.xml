@@ -1,6 +1,12 @@
 <component name="libraryTable">
   <library name="json-schema-validator" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.networknt:json-schema-validator:1.0.72" />
+    <properties include-transitive-deps="false" maven-id="com.networknt:json-schema-validator:1.0.72">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.0.72/json-schema-validator-1.0.72.jar">
+          <sha256sum>260647c459cc7de269b2a8f576e5693e434df888fd4801e92365fe18b9992cbc</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/networknt/json-schema-validator/1.0.72/json-schema-validator-1.0.72.jar!/" />
     </CLASSES>

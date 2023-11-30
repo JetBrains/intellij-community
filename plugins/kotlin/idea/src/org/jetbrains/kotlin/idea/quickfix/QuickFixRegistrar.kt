@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createTypeParameter.Cr
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateLocalVariableActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByNamedArgumentActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createVariable.CreateParameterByRefActionFactory
+import org.jetbrains.kotlin.idea.quickfix.expectactual.ActualAnnotationsNotMatchExpectFixFactory
 import org.jetbrains.kotlin.idea.quickfix.expectactual.AddActualFix
 import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateExpectedFix
 import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateMissedActualsFix
@@ -65,15 +66,30 @@ class QuickFixRegistrar : QuickFixContributor {
         ABSTRACT_PROPERTY_WITH_GETTER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
         ABSTRACT_PROPERTY_WITH_SETTER.registerFactory(RemoveModifierFixBase.removeAbstractModifier, RemovePartsFromPropertyFix)
 
-        PROPERTY_INITIALIZER_IN_INTERFACE.registerFactory(RemovePartsFromPropertyFix, ConvertPropertyInitializerToGetterIntention)
+        PROPERTY_INITIALIZER_IN_INTERFACE.registerFactory(RemovePartsFromPropertyFix, ConvertPropertyInitializerToGetterIntention.Factory)
 
         MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(addAbstractModifierFactory)
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT_WARNING.registerFactory(addAbstractModifierFactory)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT.registerFactory(addAbstractModifierFactory)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING.registerFactory(addAbstractModifierFactory)
         ABSTRACT_MEMBER_NOT_IMPLEMENTED.registerFactory(addAbstractModifierFactory)
         ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED.registerFactory(addAbstractModifierFactory)
         ABSTRACT_CLASS_MEMBER_NOT_IMPLEMENTED_WARNING.registerFactory(addAbstractModifierFactory)
 
-        MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(InitializePropertyQuickFixFactory)
         MUST_BE_INITIALIZED.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_WARNING.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_BE_FINAL.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_BE_FINAL_WARNING.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_BE_ABSTRACT_WARNING.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT.registerFactory(InitializePropertyQuickFixFactory)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING.registerFactory(InitializePropertyQuickFixFactory)
+
+        val addFinalToProperty = AddModifierFixFE10.createFactory(FINAL_KEYWORD, KtProperty::class.java)
+        MUST_BE_INITIALIZED_OR_BE_FINAL.registerFactory(addFinalToProperty)
+        MUST_BE_INITIALIZED_OR_BE_FINAL_WARNING.registerFactory(addFinalToProperty)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT.registerFactory(addFinalToProperty)
+        MUST_BE_INITIALIZED_OR_FINAL_OR_ABSTRACT_WARNING.registerFactory(addFinalToProperty)
 
         val addAbstractToClassFactory = AddModifierFixFE10.createFactory(ABSTRACT_KEYWORD, KtClassOrObject::class.java)
         ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS.registerFactory(RemoveModifierFixBase.removeAbstractModifier, addAbstractToClassFactory)
@@ -126,10 +142,7 @@ class QuickFixRegistrar : QuickFixContributor {
         GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
         SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
         PRIVATE_SETTER_FOR_ABSTRACT_PROPERTY.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier)
-        PRIVATE_SETTER_FOR_OPEN_PROPERTY.registerFactory(
-            AddModifierFixFE10.createFactory(FINAL_KEYWORD, KtProperty::class.java),
-            RemoveModifierFixBase.removeNonRedundantModifier
-        )
+        PRIVATE_SETTER_FOR_OPEN_PROPERTY.registerFactory(addFinalToProperty, RemoveModifierFixBase.removeNonRedundantModifier)
         REDUNDANT_MODIFIER_IN_GETTER.registerFactory(RemoveModifierFixBase.removeRedundantModifier)
         WRONG_MODIFIER_TARGET.registerFactory(RemoveModifierFixBase.removeNonRedundantModifier, ChangeVariableMutabilityFix.CONST_VAL_FACTORY)
         DEPRECATED_MODIFIER.registerFactory(ReplaceModifierFix)
@@ -371,7 +384,7 @@ class QuickFixRegistrar : QuickFixContributor {
         RETURN_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(ChangeSuperTypeListEntryTypeArgumentFix)
         PROPERTY_TYPE_MISMATCH_ON_OVERRIDE.registerFactory(ChangeSuperTypeListEntryTypeArgumentFix)
 
-        EXTENSION_FUNCTION_IN_EXTERNAL_DECLARATION.registerFactory(ConvertFunctionTypeReceiverToParameterIntention)
+        EXTENSION_FUNCTION_IN_EXTERNAL_DECLARATION.registerFactory(ConvertFunctionTypeReceiverToParameterIntention.Factory)
         TOO_MANY_ARGUMENTS.registerFactory(ChangeFunctionSignatureFix)
         NO_VALUE_FOR_PARAMETER.registerFactory(ChangeFunctionSignatureFix)
 
@@ -614,6 +627,8 @@ class QuickFixRegistrar : QuickFixContributor {
 
         ACTUAL_MISSING.registerFactory(AddModifierFixFE10.createFactory(ACTUAL_KEYWORD))
 
+        ACTUAL_ANNOTATIONS_NOT_MATCH_EXPECT.registerFactory(ActualAnnotationsNotMatchExpectFixFactory)
+
         CAST_NEVER_SUCCEEDS.registerFactory(ReplacePrimitiveCastWithNumberConversionFix)
 
         WRONG_EXTERNAL_DECLARATION.registerFactory(MigrateExternalExtensionFix)
@@ -661,13 +676,18 @@ class QuickFixRegistrar : QuickFixContributor {
         JAVA_MODULE_DOES_NOT_DEPEND_ON_MODULE.registerFactory(KotlinAddRequiredModuleFix)
 
         OPT_IN_USAGE.registerFactory(OptInFixesFactory)
+        OPT_IN_USAGE.registerFactory(OptInFileLevelFixesFactory)
         OPT_IN_USAGE_ERROR.registerFactory(OptInFixesFactory)
+        OPT_IN_USAGE_ERROR.registerFactory(OptInFileLevelFixesFactory)
         OPT_IN_OVERRIDE.registerFactory(OptInFixesFactory)
+        OPT_IN_OVERRIDE.registerFactory(OptInFileLevelFixesFactory)
         OPT_IN_OVERRIDE_ERROR.registerFactory(OptInFixesFactory)
+        OPT_IN_OVERRIDE_ERROR.registerFactory(OptInFileLevelFixesFactory)
         OPT_IN_IS_NOT_ENABLED.registerFactory(MakeModuleOptInFix)
         OPT_IN_MARKER_ON_WRONG_TARGET.registerFactory(OptInAnnotationWrongTargetFixesFactory)
-        OPT_IN_MARKER_WITH_WRONG_TARGET.registerFactory(RemoveWrongOptInAnnotationTargetFactory)
-        OPT_IN_MARKER_WITH_WRONG_RETENTION.registerFactory(RemoveWrongOptInAnnotationRetentionFactory)
+        OPT_IN_MARKER_ON_WRONG_TARGET.registerFactory(RemoveAnnotationFix)
+        OPT_IN_MARKER_WITH_WRONG_TARGET.registerFactory(RemoveWrongOptInAnnotationTargetFix)
+        OPT_IN_MARKER_WITH_WRONG_RETENTION.registerFactory(RemoveAnnotationFix.RemoveForbiddenOptInRetention)
         OPT_IN_MARKER_ON_OVERRIDE.registerFactory(RemoveAnnotationFix)
         OPT_IN_MARKER_ON_OVERRIDE_WARNING.registerFactory(RemoveAnnotationFix)
         OPT_IN_WITHOUT_ARGUMENTS.registerFactory(RemoveAnnotationFix)
@@ -675,7 +695,7 @@ class QuickFixRegistrar : QuickFixContributor {
         TYPE_VARIANCE_CONFLICT.registerFactory(RemoveTypeVarianceFix, AddAnnotationFix.TypeVarianceConflictFactory)
 
         CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT.registerFactory(
-            MoveMemberToCompanionObjectIntention,
+            MoveMemberToCompanionObjectIntention.Factory,
             RemoveModifierFixBase.removeNonRedundantModifier
         )
 
@@ -779,5 +799,7 @@ class QuickFixRegistrar : QuickFixContributor {
         WRONG_EXTENSION_FUNCTION_TYPE_WARNING.registerFactory(RemoveAnnotationFix.ExtensionFunctionType)
 
         NON_DATA_CLASS_JVM_RECORD.registerFactory(AddModifierFixFE10.createFactory(DATA_KEYWORD))
+
+        RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY.registerFactory(ConvertToBlockBodyFixFactory)
     }
 }

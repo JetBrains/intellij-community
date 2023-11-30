@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -76,7 +78,7 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
     };
   }
 
-  private static class AddToArrayFix implements LocalQuickFix {
+  private static class AddToArrayFix extends PsiUpdateModCommandQuickFix {
     private final String myClassName;
 
     AddToArrayFix(String className) {myClassName = className;}
@@ -89,8 +91,8 @@ public class IterableUsedAsVarargInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiExpression expression = tryCast(descriptor.getStartElement(), PsiExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiExpression expression = tryCast(element, PsiExpression.class);
       if (expression == null) return;
       if (!InheritanceUtil.isInheritor(expression.getType(), CommonClassNames.JAVA_UTIL_COLLECTION)) return;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

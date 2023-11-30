@@ -274,6 +274,9 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
   @Override
   public @NotNull SearchScope getUseScope() {
+    if (isUnnamed()) {
+      return LocalSearchScope.EMPTY;
+    }
     PsiElement declarationScope = getDeclarationScope();
     return new LocalSearchScope(declarationScope);
   }

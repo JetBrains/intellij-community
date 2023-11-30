@@ -2,14 +2,16 @@
 
 package org.jetbrains.kotlin.idea.caches.resolve
 
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.kotlin.asJava.LightClassGenerationSupport
-import org.jetbrains.kotlin.asJava.classes.*
+import org.jetbrains.kotlin.asJava.classes.KtUltraLightSupport
+import org.jetbrains.kotlin.asJava.classes.cleanFromAnonymousTypes
+import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.asJava.classes.tryGetPredefinedName
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.JvmCodegenUtil
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
@@ -57,7 +59,7 @@ class IDELightClassGenerationSupport : LightClassGenerationSupport() {
                 val map = ConcurrentFactoryMap.createMap<String, Boolean> { s ->
                     s in importAliases || KotlinTypeAliasShortNameIndex.get(s, project, file.resolveScope).isNotEmpty()
                 }
-                CachedValueProvider.Result.create<ConcurrentMap<String, Boolean>>(map, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+                Result.create<ConcurrentMap<String, Boolean>>(map, OuterModelsModificationTrackerManager.getTracker(project))
             }
         }
 

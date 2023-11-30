@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -9,27 +9,26 @@ import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InjectedCaret implements Caret {
+public final class InjectedCaret implements Caret {
   private final EditorWindow myEditorWindow;
   final Caret myDelegate;
 
-  InjectedCaret(EditorWindow window, Caret delegate) {
+  InjectedCaret(@NotNull EditorWindow window, @NotNull Caret delegate) {
     myEditorWindow = window;
     myDelegate = delegate;
   }
 
-  @NotNull
   @Override
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditorWindow;
   }
 
-  @NotNull
   @Override
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return myEditorWindow.getCaretModel();
   }
 
+  @NotNull
   public Caret getDelegate() {
     return myDelegate;
   }
@@ -72,16 +71,14 @@ public class InjectedCaret implements Caret {
     return myDelegate.isUpToDate();
   }
 
-  @NotNull
   @Override
-  public LogicalPosition getLogicalPosition() {
+  public @NotNull LogicalPosition getLogicalPosition() {
     LogicalPosition hostPos = myDelegate.getLogicalPosition();
     return myEditorWindow.hostToInjected(hostPos);
   }
 
-  @NotNull
   @Override
-  public VisualPosition getVisualPosition() {
+  public @NotNull VisualPosition getVisualPosition() {
     LogicalPosition logicalPosition = getLogicalPosition();
     return myEditorWindow.logicalToVisualPosition(logicalPosition);
   }
@@ -106,9 +103,8 @@ public class InjectedCaret implements Caret {
     return myEditorWindow.getDocument().hostToInjected(myDelegate.getSelectionStart());
   }
 
-  @NotNull
   @Override
-  public VisualPosition getSelectionStartPosition() {
+  public @NotNull VisualPosition getSelectionStartPosition() {
     return myDelegate.getSelectionStartPosition();
   }
 
@@ -117,15 +113,13 @@ public class InjectedCaret implements Caret {
     return myEditorWindow.getDocument().hostToInjected(myDelegate.getSelectionEnd());
   }
 
-  @NotNull
   @Override
-  public VisualPosition getSelectionEndPosition() {
+  public @NotNull VisualPosition getSelectionEndPosition() {
     return myDelegate.getSelectionEndPosition();
   }
 
-  @Nullable
   @Override
-  public String getSelectedText() {
+  public @Nullable String getSelectedText() {
     return myDelegate.getSelectedText();
   }
 
@@ -134,9 +128,8 @@ public class InjectedCaret implements Caret {
     return myEditorWindow.getDocument().hostToInjected(myDelegate.getLeadSelectionOffset());
   }
 
-  @NotNull
   @Override
-  public VisualPosition getLeadSelectionPosition() {
+  public @NotNull VisualPosition getLeadSelectionPosition() {
     return myDelegate.getLeadSelectionPosition();
   }
 
@@ -196,9 +189,8 @@ public class InjectedCaret implements Caret {
     myDelegate.selectWordAtCaret(honorCamelWordsSettings);
   }
 
-  @Nullable
   @Override
-  public Caret clone(boolean above) {
+  public @Nullable Caret clone(boolean above) {
     Caret clone = myDelegate.clone(above);
     return clone == null ? null : new InjectedCaret(myEditorWindow, clone);
   }
@@ -209,9 +201,8 @@ public class InjectedCaret implements Caret {
     myDelegate.dispose();
   }
 
-  @NotNull
   @Override
-  public <T> T putUserDataIfAbsent(@NotNull Key<T> key, @NotNull T value) {
+  public @NotNull <T> T putUserDataIfAbsent(@NotNull Key<T> key, @NotNull T value) {
     return myDelegate.putUserDataIfAbsent(key, value);
   }
 
@@ -220,9 +211,8 @@ public class InjectedCaret implements Caret {
     return myDelegate.replace(key, oldValue, newValue);
   }
 
-  @Nullable
   @Override
-  public <T> T getUserData(@NotNull Key<T> key) {
+  public @Nullable <T> T getUserData(@NotNull Key<T> key) {
     return myDelegate.getUserData(key);
   }
 
@@ -241,9 +231,8 @@ public class InjectedCaret implements Caret {
     return myDelegate.isAtBidiRunBoundary();
   }
 
-  @NotNull
   @Override
-  public CaretVisualAttributes getVisualAttributes() {
+  public @NotNull CaretVisualAttributes getVisualAttributes() {
     return myDelegate.getVisualAttributes();
   }
 

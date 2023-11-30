@@ -33,7 +33,7 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
         val sourceElement = method.sourceElement ?: return true
         val file = sourceElement.containingFile ?: return true
         val levelType = getLevelType(annotation, sourceElement.language)
-        if (!levelType.isProject() && isProjectParamCtor(method)) {
+        if (!levelType.isProject() && isProjectLevelExclusiveCtor(method)) {
           val elementToReport = (annotation as? PsiAnnotation)?.nameReferenceElement ?: return true
           registerProblemProjectLevelRequired(annotation, elementToReport, file)
         }
@@ -51,18 +51,29 @@ internal class MismatchedLightServiceLevelAndCtorInspection : DevKitJvmInspectio
         return clazz.methods.filter { it.isConstructor }.any { isAppLevelServiceCtor(it) }
       }
 
-      private fun isAppLevelServiceCtor(method: JvmMethod): Boolean {
-        assert(method.isConstructor)
-        return method.parameters.isEmpty() || method.hasSingleParamOfType(CoroutineScope::class.java)
+      /**
+       * Check if the given [constructor] is suitable for an application-level service.
+       */
+      private fun isAppLevelServiceCtor(constructor: JvmMethod): Boolean {
+        assert(constructor.isConstructor)
+        return !constructor.hasParameters() || (constructor.parameters.singleOrNull()?.hasType(CoroutineScope::class.java) ?: false)
       }
 
-      private fun isProjectParamCtor(method: JvmMethod): Boolean {
-        assert(method.isConstructor)
-        return method.hasSingleParamOfType(Project::class.java)
+      /**
+       * Checks if the given [constructor] requires that the light service class be specified as `@Service(Service.Level.PROJECT)`.
+       */
+      private fun isProjectLevelExclusiveCtor(constructor: JvmMethod): Boolean {
+        assert(constructor.isConstructor)
+        val parameters = constructor.parameters
+        return when (parameters.size) {
+          1 -> parameters[0].hasType(Project::class.java)
+          2 -> parameters[0].hasType(Project::class.java) && parameters[1].hasType(CoroutineScope::class.java)
+          else -> false
+        }
       }
 
-      private fun JvmMethod.hasSingleParamOfType(clazz: Class<*>): Boolean {
-        return (this.parameters.singleOrNull()?.type as? PsiType)?.canonicalText == clazz.canonicalName
+      private fun JvmParameter.hasType(clazz: Class<*>): Boolean {
+        return (this.type as? PsiType)?.canonicalText == clazz.canonicalName
       }
 
       private fun registerProblemProjectLevelRequired(annotation: JvmAnnotation,

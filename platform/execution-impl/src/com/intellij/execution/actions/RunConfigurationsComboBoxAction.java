@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -46,11 +46,11 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import static com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements.ActionWithWriteAccess;
+
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final String BUTTON_MODE = "ButtonMode";
 
-  public static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
-  public static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   public static boolean hasRunCurrentFileItem(@NotNull Project project) {
@@ -138,7 +138,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         }
       }
       else {
-        name = StringUtil.shortenTextWithEllipsis(settings.getName(), RedesignedRunWidgetKt.CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH, 8, true);
+        name = StringUtil.shortenTextWithEllipsis(
+          settings.getName(),
+          RedesignedRunWidgetKt.CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH,
+          RedesignedRunWidgetKt.CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH,
+          true);
       }
       presentation.setText(name, false);
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -200,9 +204,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return true;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull final Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     ComboBoxButton button = new RunConfigurationsComboBoxButton(presentation);
     if (isNoWrapping(place)) return button;
 
@@ -224,8 +227,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
-  @NotNull
-  protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+  protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
     if (project == null) {
@@ -303,11 +305,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS);
   }
 
-  protected AnAction createFinalAction(@NotNull final RunnerAndConfigurationSettings configuration, @NotNull final Project project) {
+  protected AnAction createFinalAction(final @NotNull RunnerAndConfigurationSettings configuration, final @NotNull Project project) {
     return new SelectConfigAction(configuration, project, executor -> true);
   }
 
-  public class RunConfigurationsComboBoxButton extends ComboBoxButton {
+  public final class RunConfigurationsComboBoxButton extends ComboBoxButton {
 
     public RunConfigurationsComboBoxButton(@NotNull Presentation presentation) {
       super(presentation);
@@ -356,7 +358,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project != null) {
         RunnerAndConfigurationSettings settings = chooseTempSettings(project);
@@ -368,7 +370,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project == null) {
@@ -396,8 +398,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       presentation.setEnabledAndVisible(false);
     }
 
-    @Nullable
-    private static RunnerAndConfigurationSettings chooseTempSettings(@NotNull Project project) {
+    private static @Nullable RunnerAndConfigurationSettings chooseTempSettings(@NotNull Project project) {
       RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();
       if (selectedConfiguration != null && selectedConfiguration.isTemporary()) {
         return selectedConfiguration;
@@ -407,7 +408,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
 
-  private static void addExecutorActions(@NotNull DefaultActionGroup group,
+  public static void addExecutorActions(@NotNull DefaultActionGroup group,
                                          @NotNull Function<? super Executor, ? extends ExecutorRegistryImpl.ExecutorAction> actionCreator,
                                          @NotNull Function<? super Executor, Boolean> executorFilter) {
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensionList()) {
@@ -472,6 +473,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   private static final class SelectTargetAction extends AnAction {
     private final Project myProject;
     private final ExecutionTarget myTarget;
+
+    private static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
+    private static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
 
     SelectTargetAction(final Project project, final ExecutionTarget target, boolean selected) {
       myProject = project;
@@ -551,13 +555,18 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                          myExecutorFilter);
       addSeparator(ExperimentalUI.isNewUI() ? ExecutionBundle.message("choose.run.popup.separator") : null);
 
-      Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
-      addAction(new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
+      if (!ExperimentalUI.isNewUI()) {
+        Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
+        addAction(new ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
+      }
+      else {
+        addAction(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
+      }
 
       if (myConfiguration.isTemporary()) {
         String actionName = ExecutionBundle.message("choose.run.popup.save");
         String description = ExecutionBundle.message("choose.run.popup.save.description");
-        addAction(new AnAction(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.MenuSaveall : null) {
+        addAction(new ActionWithWriteAccess(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.MenuSaveall : null) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             RunManager.getInstance(myProject).makeStable(myConfiguration);
@@ -567,7 +576,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
       String actionName = ExecutionBundle.message("choose.run.popup.delete");
       String description = ExecutionBundle.message("choose.run.popup.delete.description");
-      addAction(new AnAction(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.Cancel : null) {
+      addAction(new ActionWithWriteAccess(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.Cancel : null) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           ChooseRunConfigurationPopup.deleteConfiguration(myProject, myConfiguration, null);
@@ -576,13 +585,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       RunManager.getInstance(myProject).setSelectedConfiguration(myConfiguration);
       updatePresentation(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation(), e.getPlace());
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       updateIcon(e.getPresentation());
     }

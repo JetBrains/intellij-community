@@ -24,7 +24,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
@@ -48,10 +47,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.psi.search.scope.packageSet.PackageSetFactory;
 import com.intellij.psi.search.scope.packageSet.ParsingException;
-import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.testFramework.MapDataContext;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
@@ -71,10 +67,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author MYakovlev
- */
 @ExcludeFromTestDiscovery
 public class FindManagerTest extends DaemonAnalyzerTestCase {
   private FindManager myFindManager;
@@ -94,16 +88,12 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindInDirectoryCorrectlyFindVirtualFileForJars() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-    VirtualFile[] files = getTestProjectJdk().getRootProvider().getFiles(OrderRootType.CLASSES);
-    VirtualFile rtJar = null;
-    for(VirtualFile file:files) {
-      if (file.getPath().contains("rt.jar")) {
-        rtJar = JarFileSystem.getInstance().getLocalVirtualFileFor(file);
-        break;
-      }
-    }
-
+    VirtualFile rtJar = Stream.of(getTestProjectJdk().getRootProvider().getFiles(OrderRootType.CLASSES))
+      .filter(file -> file.getPath().contains("rt.jar"))
+      .map(file -> JarFileSystem.getInstance().getLocalByEntry(file))
+      .findFirst().orElse(null);
     assertNotNull(rtJar);
+
     findModel.setProjectScope(false);
     findModel.setDirectoryName(rtJar.getPath());
     assertNotNull(FindInProjectUtil.getDirectory(findModel));
@@ -903,13 +893,9 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     createFile("a.java", "foo bar foo true");
     FindModel findModel = FindManagerTestUtils.configureFindModel("true");
     findModel.setWholeWordsOnly(true);
-    DumbServiceImpl.getInstance(getProject()).setDumb(true);
-    try {
+    DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
       assertSize(1, findInProject(findModel));
-    }
-    finally {
-      DumbServiceImpl.getInstance(getProject()).setDumb(false);
-    }
+    });
   }
 
   public void testNoFilesFromAdditionalIndexedRootsWithCustomExclusionScope() throws ParsingException {

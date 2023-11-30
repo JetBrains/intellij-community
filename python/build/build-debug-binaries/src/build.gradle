@@ -1,8 +1,5 @@
 import org.apache.tools.ant.taskdefs.condition.Os
 
-import java.nio.file.Paths
-import java.util.regex.Pattern
-
 plugins {
   id "com.jetbrains.python.envs" version "0.0.31"
 }
@@ -16,13 +13,13 @@ boolean isMac = Os.isFamily(Os.FAMILY_MAC)
 
 envs {
   String python27version = "2.7.18"
-  String python36version = "3.6.15"
+  String python36version = (isWindows) ? "3.6.8" : "3.6.15" // 3.6.8 is broken on modern libc and clang, but latest version for Windows
   String python37version = "3.7.9"
   String python38version = "3.8.10"
   String python39version = "3.9.13"
   String python310version = "3.10.8"
-  String python311version = "3.11.0"
-  String python312version = "3.12.0a7"
+  String python311version = "3.11.6"
+  String python312version = "3.12.0"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir
@@ -54,7 +51,7 @@ envs {
   virtualenv "py311_64", "python311_64", ["cython"]
 
   python "python312_64", python312version, "64"
-  virtualenv "py312_64", "python312_64", ["cython"]
+  virtualenv "py312_64", "python312_64", ["cython", "setuptools"]
 
   if (isWindows) {
     python "python27_32", python27version, "32"
@@ -79,7 +76,7 @@ envs {
     virtualenv "py311_32", "python311_32", ["cython"]
 
     python "python312_32", python312version, "32"
-    virtualenv "py312_32", "python312_32", ["cython"]
+    virtualenv "py312_32", "python312_32", ["cython", "setuptools"]
   }
 }
 

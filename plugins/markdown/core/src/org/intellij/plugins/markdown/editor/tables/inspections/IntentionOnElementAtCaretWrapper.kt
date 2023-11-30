@@ -15,7 +15,7 @@ internal open class IntentionOnElementAtCaretWrapper(intention: BaseElementAtCar
     val element = descriptor.psiElement ?: return
     val file = element.containingFile ?: return
     val fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file.virtualFile)
-    val editor = (fileEditor as? TextEditor)?.editor
+    val editor = (fileEditor as? TextEditor)?.editor ?: return
     val action = action as BaseElementAtCaretIntentionAction
     action.invoke(project, editor, element)
   }

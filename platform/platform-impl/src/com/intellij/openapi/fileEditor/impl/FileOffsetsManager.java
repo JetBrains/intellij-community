@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,11 +35,11 @@ public final class FileOffsetsManager {
 
   private final Map<VirtualFile, LineOffsets> myLineOffsetsMap = new HashMap<>();
 
-  private static class LineOffsets {
-    private final long myFileModificationStamp;
-    private final int[] myOriginalLineOffsets;
-    private final int[] myConvertedLineOffsets;
-    private final boolean myLineOffsetsAreTheSame;
+  public static final class LineOffsets {
+    public final long myFileModificationStamp;
+    public final int[] myOriginalLineOffsets;
+    public final int[] myConvertedLineOffsets;
+    public final boolean myLineOffsetsAreTheSame;
 
     LineOffsets(final long modificationStamp, final int @NotNull [] originalLineOffsets, final int @NotNull [] convertedLineOffsets) {
       assert convertedLineOffsets.length > 0 && originalLineOffsets.length == convertedLineOffsets.length
@@ -75,7 +75,7 @@ public final class FileOffsetsManager {
     return getCorrespondingOffset(offsets.myConvertedLineOffsets, offsets.myOriginalLineOffsets, convertedOffset);
   }
 
-  private static int getCorrespondingOffset(int[] offsets1, int[] offsets2, int offset1) {
+  public static int getCorrespondingOffset(int[] offsets1, int[] offsets2, int offset1) {
     int line = Arrays.binarySearch(offsets1, offset1);
     if (line < 0) line = -line - 2;
     try {
@@ -131,8 +131,12 @@ public final class FileOffsetsManager {
     return loadLineOffsets(charBuffer, modificationStamp);
   }
 
-  // similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.convertLineSeparatorsToSlashN()
-  private static @NotNull LineOffsets loadLineOffsets(final @NotNull CharBuffer buffer, final long modificationStamp) {
+  /**
+   * Similar to com.intellij.openapi.fileEditor.impl.LoadTextUtil.convertLineSeparatorsToSlashN()
+   * @param buffer NB This buffer can be modified
+   * @param modificationStamp The timestamp
+   */
+  public static @NotNull LineOffsets loadLineOffsets(final @NotNull CharBuffer buffer, final long modificationStamp) {
     int dst = 0;
     char prev = ' ';
     int crlfCount = 0;

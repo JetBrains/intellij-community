@@ -24,6 +24,7 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -197,7 +198,7 @@ public class OverrideImplement15Test extends LightJavaCodeInsightTestCase {
         OverrideImplementUtil.chooseAndOverrideOrImplementMethods(getProject(), getEditor(), psiClass, toImplement);
       }
     });
-
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile(BASE_DIR + "after" + name + ".java");
   }
 }

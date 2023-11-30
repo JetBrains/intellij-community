@@ -31,8 +31,21 @@ fun TargetEnvironment.getTargetPaths(localPath: String): List<String> {
   )
 }
 
-private fun TargetEnvironment.collectPathMappings(): List<PathMapping> =
-  uploadVolumes.values.map { PathMapping(localPath = it.localRoot.toString(), targetPath = it.targetRoot) }
+private fun TargetEnvironment.collectPathMappings(): List<PathMapping> {
+  val externallySynchronizedPathMappings = if (this is ExternallySynchronized) {
+    synchronizedVolumes.map(TargetEnvironment.SynchronizedVolume::toPathMapping)
+  }
+  else {
+    emptyList()
+  }
+  return externallySynchronizedPathMappings + uploadVolumes.values.map(TargetEnvironment.UploadableVolume::toPathMapping)
+}
+
+private fun TargetEnvironment.SynchronizedVolume.toPathMapping() =
+  PathMapping(localPath = localRootPath.toString(), targetPath = targetPath)
+
+private fun TargetEnvironment.UploadableVolume.toPathMapping() =
+  PathMapping(localPath = localRoot.toString(), targetPath = targetRoot)
 
 @ApiStatus.Internal
 fun findPathVariants(mappings: Iterable<PathMapping>,

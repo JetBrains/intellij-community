@@ -11,12 +11,16 @@ private val EP_NAME: ExtensionPointName<ErrorMessageProvider> =
 
 internal object ExtensionClassShouldBeFinalErrorMessageProviders : LanguageExtension<ErrorMessageProvider>(EP_NAME.name)
 
-interface ErrorMessageProvider {
+interface ErrorMessageProvider : JvmProvider {
   fun provideErrorMessage(): @Nls String
 }
 
-private class ExtensionClassShouldBeFinalErrorMessageProvider : ErrorMessageProvider {
+internal class ExtensionClassShouldBeFinalErrorMessageProvider : ErrorMessageProvider {
   override fun provideErrorMessage(): @Nls String {
     return DevKitBundle.message("inspection.extension.class.should.be.final.text")
+  }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return false
   }
 }

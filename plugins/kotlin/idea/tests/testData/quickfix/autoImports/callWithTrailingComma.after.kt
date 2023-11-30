@@ -18,4 +18,4 @@ class X {
     }
 }
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */

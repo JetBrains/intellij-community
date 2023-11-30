@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl.actions
 
 import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
@@ -31,4 +32,4 @@ class ExpandCollapseToggleAction : EditorAction(object : BaseFoldingHandler() {
   private fun FoldRegion.revertExpanding() {
     this.isExpanded = !this.isExpanded
   }
-})
+}), ActionRemoteBehaviorSpecification.Frontend

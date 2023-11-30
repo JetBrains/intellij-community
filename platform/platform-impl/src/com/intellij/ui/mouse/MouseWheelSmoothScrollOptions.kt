@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
@@ -31,7 +32,7 @@ import java.awt.geom.Path2D
 import java.awt.geom.Point2D
 import java.util.concurrent.TimeUnit
 
-internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
+internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val settings = UISettings.getInstance().state
     val points = settings.animatedScrollingCurvePoints
@@ -189,9 +190,8 @@ internal class MouseWheelSmoothScrollOptionsAction : DumbAwareAction() {
       if (frames.isNotEmpty()) {
         GraphicsUtil.setupAntialiasing(g)
         g.color = UIUtil.getLabelDisabledForeground()
-        val b = bounds
         val text = IdeBundle.message("label.smooth.scrolling.bezier.panel.updates", frames.size)
-        g.drawString(text, width / 16, b.height - 5)
+        g.drawString(text, width / 16, bounds.height - 5)
       }
     }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.java
 
 import com.intellij.psi.*
@@ -25,16 +11,34 @@ class JavaUTryExpression(
   override val sourcePsi: PsiTryStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UTryExpression {
-  override val tryClause: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.tryBlock, this) }
-  override val catchClauses: List<UCatchClause> by lazyPub { sourcePsi.catchSections.map { JavaUCatchClause(it, this) } }
-  override val finallyClause: UBlockExpression? by lazyPub { sourcePsi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
 
-  override val resourceVariables: List<UVariable> by lazyPub {
-    sourcePsi.resourceList
-      ?.filterIsInstance<PsiResourceVariable>()
-      ?.map { JavaUVariable.create(it, this) }
-    ?: emptyList()
-  }
+  private val tryClausePart = UastLazyPart<UExpression>()
+  private val catchClausesPart = UastLazyPart<List<UCatchClause>>()
+  private val finallyClausePart = UastLazyPart<UBlockExpression?>()
+  private val resourceVariablesPart = UastLazyPart<List<UAnnotated>>()
+
+  override val tryClause: UExpression
+    get() = tryClausePart.getOrBuild { JavaConverter.convertOrEmpty(sourcePsi.tryBlock, this) }
+
+  override val catchClauses: List<UCatchClause>
+    get() = catchClausesPart.getOrBuild { sourcePsi.catchSections.map { JavaUCatchClause(it, this) } }
+
+  override val finallyClause: UBlockExpression?
+    get() = finallyClausePart.getOrBuild { sourcePsi.finallyBlock?.let { JavaConverter.convertBlock(it, this) } }
+
+  @Deprecated("This API doesn't support resource expression", replaceWith = ReplaceWith("resources"))
+  override val resourceVariables: List<UVariable> get() = resources.filterIsInstance<UVariable>()
+
+  override val resources: List<UAnnotated>
+    get() = resourceVariablesPart.getOrBuild {
+      sourcePsi.resourceList?.mapNotNull { resourceListElem ->
+        when (resourceListElem) {
+          is PsiResourceVariable -> JavaUVariable.create(resourceListElem, this)
+          is PsiResourceExpression -> JavaConverter.convertOrEmpty(resourceListElem.expression, this)
+          else -> null
+        }
+      } ?: emptyList()
+    }
 
   override val hasResources: Boolean
     get() = sourcePsi.resourceList != null
@@ -51,19 +55,28 @@ class JavaUCatchClause(
   override val sourcePsi: PsiCatchSection,
   givenParent: UElement?
 ) : JavaAbstractUElement(givenParent), UCatchClause {
-  override val body: UExpression by lazyPub { JavaConverter.convertOrEmpty(sourcePsi.catchBlock, this) }
 
-  override val parameters: List<UParameter> by lazyPub {
-    (sourcePsi.parameter?.let { listOf(it) } ?: emptyList()).map { JavaUParameter(it, this) }
-  }
+  private val bodyPart = UastLazyPart<UExpression>()
+  private val parametersPart = UastLazyPart<List<UParameter>>()
+  private val typeReferencesPart = UastLazyPart<List<UTypeReferenceExpression>>()
 
-  override val typeReferences: List<UTypeReferenceExpression> by lazyPub {
-    val typeElement = sourcePsi.parameter?.typeElement ?: return@lazyPub emptyList<UTypeReferenceExpression>()
-    if (typeElement.type is PsiDisjunctionType) {
-      typeElement.children.filterIsInstance<PsiTypeElement>().map { JavaUTypeReferenceExpression(it, this) }
+  override val body: UExpression
+    get() = bodyPart.getOrBuild { JavaConverter.convertOrEmpty(sourcePsi.catchBlock, this) }
+
+  override val parameters: List<UParameter>
+    get() = parametersPart.getOrBuild {
+      (sourcePsi.parameter?.let { listOf(it) } ?: emptyList())
+        .map { JavaUParameter(it, this) }
     }
-    else {
-      listOf(JavaUTypeReferenceExpression(typeElement, this))
+
+  override val typeReferences: List<UTypeReferenceExpression>
+    get() = typeReferencesPart.getOrBuild {
+      val typeElement = sourcePsi.parameter?.typeElement ?: return@getOrBuild emptyList<UTypeReferenceExpression>()
+      if (typeElement.type is PsiDisjunctionType) {
+        typeElement.children.filterIsInstance<PsiTypeElement>().map { JavaUTypeReferenceExpression(it, this) }
+      }
+      else {
+        listOf(JavaUTypeReferenceExpression(typeElement, this))
+      }
     }
-  }
 }

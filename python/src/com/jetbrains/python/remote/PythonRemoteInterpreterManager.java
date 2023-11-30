@@ -15,7 +15,6 @@ import com.intellij.remote.PathMappingProvider;
 import com.intellij.remote.RemoteMappingsManager;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkProperties;
-import com.intellij.util.PathMapper;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.extensions.python.ProgressManagerExtKt;
@@ -37,8 +36,6 @@ import java.util.Collection;
 public abstract class PythonRemoteInterpreterManager {
   public final static ExtensionPointName<PythonRemoteInterpreterManager> EP_NAME =
     ExtensionPointName.create("Pythonid.remoteInterpreterManager");
-
-  public final static Key<PathMapper> PATH_MAPPING_SETTINGS_KEY = Key.create("PATH_MAPPING_SETTINGS_KEY");
 
   public final static Key<PathMappingSettings> ADDITIONAL_MAPPINGS = Key.create("ADDITIONAL_MAPPINGS");
 

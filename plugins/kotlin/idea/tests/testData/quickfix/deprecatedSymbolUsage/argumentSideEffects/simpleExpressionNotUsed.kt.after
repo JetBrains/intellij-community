@@ -14,3 +14,5 @@ fun foo() {
 object O {
     var x = 0
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

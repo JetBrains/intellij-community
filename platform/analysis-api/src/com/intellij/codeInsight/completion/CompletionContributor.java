@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -130,7 +130,7 @@ public abstract class CompletionContributor {
     new MultiMap<>();
 
   public final void extend(@Nullable CompletionType type,
-                           @NotNull final ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
+                           final @NotNull ElementPattern<? extends PsiElement> place, CompletionProvider<CompletionParameters> provider) {
     myMap.putValue(type, new Pair<>(place, provider));
   }
 
@@ -147,7 +147,7 @@ public abstract class CompletionContributor {
    * ensure you call {@link ProgressManager#checkCanceled()} often enough so that the completion process
    * can be cancelled smoothly when the user begins to type in the editor.
    */
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
     for (final Pair<ElementPattern<? extends PsiElement>, CompletionProvider<CompletionParameters>> pair : myMap.get(parameters.getCompletionType())) {
       ProgressManager.checkCanceled();
       final ProcessingContext context = new ProcessingContext();
@@ -180,9 +180,7 @@ public abstract class CompletionContributor {
    * @return text to be shown at the bottom of the lookup list
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String advertise(@NotNull CompletionParameters parameters) {
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String advertise(@NotNull CompletionParameters parameters) {
     return null;
   }
 
@@ -190,16 +188,14 @@ public abstract class CompletionContributor {
    *
    * @return hint text to be shown if no variants are found, typically "No suggestions"
    */
-  @Nullable
-  public @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {
+  public @Nullable @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {
     return null;
   }
 
   /**
    * Called when the completion is finished quickly, lookup hasn't been shown and gives possibility to auto-insert some item (typically - the only one).
    */
-  @Nullable
-  public AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
+  public @Nullable AutoCompletionDecision handleAutoCompletionPossibility(@NotNull AutoCompletionContext context) {
     return null;
   }
 
@@ -225,21 +221,18 @@ public abstract class CompletionContributor {
   public void duringCompletion(@NotNull CompletionInitializationContext context) {
   }
 
-  @NotNull
-  public static List<CompletionContributor> forParameters(@NotNull final CompletionParameters parameters) {
+  public static @NotNull List<CompletionContributor> forParameters(final @NotNull CompletionParameters parameters) {
     return ReadAction.compute(() -> {
       PsiElement position = parameters.getPosition();
       return forLanguageHonorDumbness(PsiUtilCore.getLanguageAtOffset(position.getContainingFile(), parameters.getOffset()), position.getProject());
     });
   }
 
-  @NotNull
-  public static List<CompletionContributor> forLanguage(@NotNull Language language) {
+  public static @NotNull List<CompletionContributor> forLanguage(@NotNull Language language) {
     return INSTANCE.forKey(language);
   }
 
-  @NotNull
-  public static List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project) {
+  public static @NotNull List<CompletionContributor> forLanguageHonorDumbness(@NotNull Language language, @NotNull Project project) {
     return DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
   }
 

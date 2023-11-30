@@ -33,9 +33,8 @@ public interface EditorTabColorProvider {
    * @param file a file you need to highlight.
    * @return tab foreground color for the file.
    */
-  @Nullable
   @ApiStatus.Experimental
-  default ColorKey getEditorTabForegroundColor(@NotNull Project project, @NotNull VirtualFile file) { return null; }
+  default @Nullable ColorKey getEditorTabForegroundColor(@NotNull Project project, @NotNull VirtualFile file) { return null; }
 
   /**
    *
@@ -44,8 +43,7 @@ public interface EditorTabColorProvider {
    * @return background color to highlight file row in trees and lists.
    * @see EditorTabPresentationUtil#getFileBackgroundColor(Project, VirtualFile)
    */
-  @Nullable
-  default Color getProjectViewColor(@NotNull Project project, @NotNull VirtualFile file) {
+  default @Nullable Color getProjectViewColor(@NotNull Project project, @NotNull VirtualFile file) {
     return null;
   }
 }

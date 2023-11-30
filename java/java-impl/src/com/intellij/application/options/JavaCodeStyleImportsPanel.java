@@ -19,17 +19,14 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.table.TableCellEditor;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,12 +50,14 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
   private TableView<InnerClassItem> mydoNotInsertInnerTable;
 
   @Override
-  protected void fillCustomOptions(OptionGroup group) {
+  protected CodeStyleImportsBaseUI createKotlinUI(JComponent packages, JComponent importLayout) {
+    createDoNotImportInnerList();
     myFqnInJavadocOption = new FullyQualifiedNamesInJavadocOptionProvider();
 
-    group.add(createDoNotImportInnerListControl(), true);
-
-    group.add(myFqnInJavadocOption.getPanel());
+    JavaCodeStyleImportsUI result =
+      new JavaCodeStyleImportsUI(packages, importLayout, mydoNotInsertInnerTable, myFqnInJavadocOption.getPanel());
+    result.init();
+    return result;
   }
 
   @Override
@@ -77,7 +76,6 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     for (String name : javaSettings.getDoNotImportInner()) {
       doNotInsertInnerListModel.addRow(new InnerClassItem(name));
     }
-    mydoNotInsertInnerTable.setEnabled(myCbInsertInnerClassImports.getModel().isSelected());
   }
 
   @Override
@@ -93,51 +91,11 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     return settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
 
-  public JPanel createDoNotImportInnerListControl() {
-    final JPanel panel = new JPanel();
-    panel.setLayout(new BorderLayout());
-    panel.setPreferredSize(new Dimension(100, 150));
+  private void createDoNotImportInnerList() {
     doNotInsertInnerListModel = new ListTableModel<>(INNER_CLASS_COLUMNS);
     mydoNotInsertInnerTable = new TableView<>(doNotInsertInnerListModel);
     mydoNotInsertInnerTable.setShowGrid(false);
     mydoNotInsertInnerTable.getEmptyText().setText(JavaBundle.message("do.not.import.inner.classes.no.classes"));
-    myCbInsertInnerClassImports.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        mydoNotInsertInnerTable.setEnabled(myCbInsertInnerClassImports.getModel().isSelected());
-      }
-    });
-    panel.add(
-      ToolbarDecorator.createDecorator(mydoNotInsertInnerTable)
-        .setAddAction(new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            addInnerClass();
-          }
-        }).setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton button) {
-          removeInnerClass();
-        }
-      }).disableUpDownActions().createPanel(), BorderLayout.CENTER);
-
-    return panel;
-  }
-
-  private void addInnerClass() {
-    final ArrayList<InnerClassItem> newItems =
-      new ArrayList<>(doNotInsertInnerListModel.getItems());
-    final InnerClassItem parameter = new InnerClassItem("");
-    newItems.add(parameter);
-    doNotInsertInnerListModel.setItems(newItems);
-
-    int index = newItems.size() - 1;
-    mydoNotInsertInnerTable.getSelectionModel().setSelectionInterval(index, index);
-    mydoNotInsertInnerTable.scrollRectToVisible(mydoNotInsertInnerTable.getCellRect(index, 0, true));
-  }
-
-  private void removeInnerClass() {
-    TableUtil.removeSelectedItems(mydoNotInsertInnerTable);
   }
 
   private List<String> getInnerClassesNames() {
@@ -170,7 +128,7 @@ class JavaCodeStyleImportsPanel extends CodeStyleImportsPanelBase {
     }
   }
 
-  private static class InnerClassItem {
+  static class InnerClassItem {
     private String myName;
 
     InnerClassItem(String name) {

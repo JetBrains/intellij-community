@@ -4,21 +4,23 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.storage.EntityChange;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.util.Function;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.IndexableIteratorPresentation;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Function;
 
 public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCase {
 
@@ -64,7 +66,7 @@ public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCas
         }
       }
       iterators = EntityIndexingServiceImpl.getIterators(getProject(), changes);
-      Collection<IndexableFilesIterator> expectedIterators = expectedIteratorsProducer.fun(createdEntities);
+      Collection<IndexableFilesIterator> expectedIterators = expectedIteratorsProducer.apply(createdEntities);
 
       assertSameIterators(iterators, expectedIterators);
     }
@@ -72,24 +74,29 @@ public abstract class EntityIndexingServiceTestBase extends HeavyPlatformTestCas
       WriteAction.run(() -> remover.consume(createdEntities));
     }
 
-    new UnindexedFilesUpdater(getProject(), iterators, null, getTestName(false)).queue();
+    new UnindexedFilesScanner(getProject(), iterators, null, getTestName(false)).queue();
   }
 
   private static void assertSameIterators(List<IndexableFilesIterator> actualIterators,
                                           Collection<IndexableFilesIterator> expectedIterators) {
     assertEquals(expectedIterators.size(), actualIterators.size());
-    Collection<IndexableSetOrigin> expectedOrigins = collectOrigins(expectedIterators);
-    Collection<IndexableSetOrigin> actualOrigins = collectOrigins(actualIterators);
+    Collection<Pair<IndexableSetOrigin, IndexableIteratorPresentation>> expectedOrigins = collectOriginsAndPresentations(expectedIterators);
+    Collection<Pair<IndexableSetOrigin, IndexableIteratorPresentation>> actualOrigins = collectOriginsAndPresentations(actualIterators);
     assertSameElements(actualOrigins, expectedOrigins);
   }
 
-  private static Collection<IndexableSetOrigin> collectOrigins(Collection<IndexableFilesIterator> iterators) {
+  private static Collection<Pair<IndexableSetOrigin, IndexableIteratorPresentation>> collectOriginsAndPresentations(Collection<IndexableFilesIterator> iterators) {
     Set<IndexableSetOrigin> origins = new HashSet<>();
+    Set<Pair<IndexableSetOrigin, IndexableIteratorPresentation>> result = new HashSet<>();
     for (IndexableFilesIterator iterator : iterators) {
       IndexableSetOrigin origin = iterator.getOrigin();
       assertTrue("Origins should be unique", origins.add(origin));
+      IndexableIteratorPresentation presentation = IndexableIteratorPresentation.create(iterator.getDebugName(),
+                                                                                        iterator.getIndexingProgressText(),
+                                                                                        iterator.getRootsScanningProgressText());
+      result.add(new Pair<>(origin, presentation));
     }
-    return origins;
+    return result;
   }
 
   private static class MyWorkspaceModelChangeListener implements WorkspaceModelChangeListener {

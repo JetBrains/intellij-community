@@ -255,6 +255,25 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
     doFail("foo", "Cannot perform refactoring at a class level");
   }
 
+  // PY-9045
+  public void testIfConditionExpression() {
+    doTest("bar");
+  }
+
+  // PY-9045
+  public void testIfElseConditionExpression() {
+    doTest("bar");
+  }
+
+  // PY-9045
+  public void testConditionOfConditionalExpression() {
+    doTest("bar");
+  }
+
+  public void testSimilarBinaryExpressions() {
+    doTest("bar");
+  }
+
   public void testAsyncDef() {
     doTest("bar");
   }

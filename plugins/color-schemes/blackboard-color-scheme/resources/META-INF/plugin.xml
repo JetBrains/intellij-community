@@ -8,6 +8,6 @@
     Blackboard editor color scheme for all IntelliJ-based IDEs.
   </description>
   <extensions defaultExtensionNs="com.intellij">
-    <bundledColorScheme path="/colorSchemes/blackboard"/>
+    <bundledColorScheme id="Blackboard" path="/colorSchemes/blackboard"/>
   </extensions>
 </idea-plugin>

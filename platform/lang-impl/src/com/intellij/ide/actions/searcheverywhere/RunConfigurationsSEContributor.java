@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.execution.Executor;
@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public class RunConfigurationsSEContributor implements SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> {
+public final class RunConfigurationsSEContributor implements SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> {
 
   private final SearchEverywhereCommandInfo RUN_COMMAND =
     new SearchEverywhereCommandInfo("run", IdeBundle.message("searcheverywhere.runconfigurations.command.run.description"), this);
@@ -273,7 +273,7 @@ public class RunConfigurationsSEContributor implements SearchEverywhereContribut
     return executor;
   }
 
-  public static class Factory implements SearchEverywhereContributorFactory<ChooseRunConfigurationPopup.ItemWrapper> {
+  public static final class Factory implements SearchEverywhereContributorFactory<ChooseRunConfigurationPopup.ItemWrapper> {
     @Override
     public @NotNull SearchEverywhereContributor<ChooseRunConfigurationPopup.ItemWrapper> createContributor(@NotNull AnActionEvent initEvent) {
       Project project = initEvent.getProject();

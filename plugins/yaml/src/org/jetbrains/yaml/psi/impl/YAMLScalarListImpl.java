@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -26,13 +27,12 @@ import static org.jetbrains.yaml.psi.impl.YAMLBlockScalarImplKt.isEol;
  * @see <a href="https://yaml.org/spec/1.2-old/spec.html#id2795688">YAML spec, 8.1.2</a>
  */
 public class YAMLScalarListImpl extends YAMLBlockScalarImpl implements YAMLScalarList, YAMLBlockScalar {
-  public YAMLScalarListImpl(@NotNull final ASTNode node) {
+  public YAMLScalarListImpl(final @NotNull ASTNode node) {
     super(node);
   }
 
-  @NotNull
   @Override
-  protected IElementType getContentType() {
+  protected @NotNull IElementType getContentType() {
     return YAMLTokenTypes.SCALAR_LIST;
   }
 
@@ -40,15 +40,13 @@ public class YAMLScalarListImpl extends YAMLBlockScalarImpl implements YAMLScala
   public @NotNull YamlScalarTextEvaluator<YAMLScalarListImpl> getTextEvaluator() {
     return new YAMLBlockScalarTextEvaluator<>(this) {
 
-      @NotNull
       @Override
-      protected String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
+      protected @NotNull String getRangesJoiner(@NotNull CharSequence text, @NotNull List<TextRange> contentRanges, int indexBefore) {
         return "";
       }
 
-      @NotNull
       @Override
-      public String getTextValue(@Nullable TextRange rangeInHost) {
+      public @NotNull String getTextValue(@Nullable TextRange rangeInHost) {
         String value = super.getTextValue(rangeInHost);
         if (!StringUtil.isEmptyOrSpaces(value) && getChompingIndicator() == ChompingIndicator.KEEP && isEnding(rangeInHost)) {
           value += "\n";

@@ -1,10 +1,6 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.completionExtension"
-            interface="org.jetbrains.kotlin.idea.completion.KotlinCompletionExtension" dynamic="true"/>
-
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.completionInformationProvider"
             interface="org.jetbrains.kotlin.idea.completion.CompletionInformationProvider"
             dynamic="true"/>
@@ -46,7 +42,8 @@
             implementationClass="org.jetbrains.kotlin.idea.completion.confidence.EnableAutopopupInStringTemplate"/>
     <completion.confidence
             language="kotlin"
-            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"/>
+            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"
+            id="kotlinSkipAutopopupInStrings"/>
 
     <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter"/>
     <lookup.actionProvider implementation="org.jetbrains.kotlin.idea.completion.KotlinExcludeFromCompletionLookupActionProvider"/>

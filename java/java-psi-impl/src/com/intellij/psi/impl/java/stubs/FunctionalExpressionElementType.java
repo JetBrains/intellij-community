@@ -22,13 +22,14 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 public abstract class FunctionalExpressionElementType<T extends PsiFunctionalExpression> extends JavaStubElementType<FunctionalExpressionStub<T>,T> {
-  public FunctionalExpressionElementType(String debugName) {
-    super(debugName);
+  public FunctionalExpressionElementType(@NotNull String debugName, @NotNull IElementType parentElementType) {
+    super(debugName, parentElementType);
   }
 
   @Override

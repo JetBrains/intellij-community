@@ -1,7 +1,7 @@
 import java.io.Serializable
 
 class Bar : Serializable {
-    var foobar = 0
+    var foobar: Int = 0
 
     companion object {
         private const val serialVersionUID: Long = 0
@@ -9,7 +9,7 @@ class Bar : Serializable {
 }
 
 class Foo {
-    var foobar = 0
+    var foobar: Int = 0
 
     companion object {
         private const val serialVersionUID: Long = 0

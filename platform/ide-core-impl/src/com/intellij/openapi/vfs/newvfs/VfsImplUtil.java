@@ -27,6 +27,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import static com.intellij.openapi.vfs.newvfs.events.VFileEvent.REFRESH_REQUESTOR;
+
 public final class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance(VfsImplUtil.class);
 
@@ -182,7 +184,7 @@ public final class VfsImplUtil {
 
   public record PathFromRoot(@NotNull NewVirtualFile root, @NotNull String pathFromRoot) {}
   /**
-   * @return (file system root, relative path inside that root) or null if the path is invalid or the root is not found
+   * Returns a (file system root, relative path inside that root) pair, or {@code null} when the path is invalid or the root is not found.
    * For example, {@code extractRootFromPath(LocalFileSystem.getInstance, "C:/temp")} -> ("C:", "/temp")
    * {@code extractRootFromPath(JarFileSystem.getInstance, "/temp/temp.jar!/com/foo/bar")} -> ("/temp/temp.jar!/", "/com/foo/bar")
    */
@@ -231,7 +233,7 @@ public final class VfsImplUtil {
    * </pre></code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
-    VFileContentChangeEvent event = new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true);
+    var event = new VFileContentChangeEvent(REFRESH_REQUESTOR, file, file.getModificationStamp(), -1);
     RefreshQueue.getInstance().processEvents(false, List.of(event));
   }
 
@@ -351,7 +353,7 @@ public final class VfsImplUtil {
     return state;
   }
 
-  private static class InvalidationState {
+  private static final class InvalidationState {
     private Set<Pair<String, ArchiveFileSystem>> myRootsToRefresh;
 
     private void registerPathToRefresh(@NotNull String path, @NotNull ArchiveFileSystem vfs) {
@@ -438,7 +440,7 @@ public final class VfsImplUtil {
         ArchiveFileSystem fileSystem = handlerPair.first;
         NewVirtualFile root = ManagingFS.getInstance().findRoot(fileSystem.composeRootPath(jarPath), fileSystem);
         if (root != null) {
-          VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root, event.isFromRefresh());
+          VFileDeleteEvent jarDeleteEvent = new VFileDeleteEvent(event.getRequestor(), root);
           Runnable runnable = () -> {
             Pair<ArchiveFileSystem, ArchiveHandler> pair = ourHandlerCache.remove(jarPath);
             if (pair != null) {
@@ -461,8 +463,8 @@ public final class VfsImplUtil {
         // for "delete jar://x.jar!/" generate "delete file://x.jar", but
         // for "delete jar://x.jar!/web.xml" generate "changed file://x.jar"
         VFileEvent localJarDeleteEvent = file.getParent() == null ?
-           new VFileDeleteEvent(event.getRequestor(), local, event.isFromRefresh()) :
-           new VFileContentChangeEvent(event.getRequestor(), local, local.getModificationStamp(), local.getModificationStamp(), event.isFromRefresh());
+           new VFileDeleteEvent(event.getRequestor(), local) :
+           new VFileContentChangeEvent(event.getRequestor(), local, local.getModificationStamp(), local.getModificationStamp());
         events.add(localJarDeleteEvent);
       }
     }

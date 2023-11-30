@@ -31,9 +31,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.chooseFile
 import com.intellij.ui.layout.selected
-import com.intellij.util.io.isDirectory
 import com.intellij.util.text.nullize
 import java.io.File
 import java.nio.file.Paths
@@ -41,6 +41,7 @@ import javax.swing.JCheckBox
 import javax.swing.JPanel
 import javax.swing.JRadioButton
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 private val LOG: Logger
   get() = logger<PasswordSafeConfigurable>()
@@ -164,7 +165,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
   // for KeePass not clear - should we append in-memory credentials to existing database or not
   // (and if database doesn't exist, should we append or not), so, wait first user request (prefer to keep implementation simple)
   private fun createAndSaveKeePassDatabaseWithNewOptions(settings: PasswordSafeSettings) {
-    val newDbFile = getNewDbFile() ?: throw ConfigurationException(CredentialStoreBundle.message("settings.password.keepass.database.path.is.empty"))
+    val newDbFile = getNewDbFile() ?: throw ConfigurationException(
+      CredentialStoreBundle.message("settings.password.keepass.database.path.is.empty"))
     if (newDbFile.isDirectory()) {
       // we do not normalize as we do on file choose because if user decoded to type path manually,
       // it should be valid path and better to avoid any magic here
@@ -237,8 +239,8 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
               .gap(RightGap.SMALL)
               .component
 
-            pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer {
-              text = "${it.userId} (${it.keyId})"
+            pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = textListCellRenderer {
+              it?.let { "${it.userId} (${it.keyId})" }
             }).bindItem({ getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
                         { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null })
               .columns(COLUMNS_MEDIUM)

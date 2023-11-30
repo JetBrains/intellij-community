@@ -5,8 +5,10 @@ package org.jetbrains.kotlin.idea.j2k.post.processing.processings
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -14,13 +16,20 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
 import org.jetbrains.kotlin.idea.base.util.or
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.core.setVisibility
-import org.jetbrains.kotlin.idea.j2k.post.processing.*
+import org.jetbrains.kotlin.idea.intentions.addUseSiteTarget
+import org.jetbrains.kotlin.idea.j2k.post.processing.ElementsBasedPostProcessing
+import org.jetbrains.kotlin.idea.j2k.post.processing.JKInMemoryFilesSearcher
+import org.jetbrains.kotlin.idea.j2k.post.processing.PostProcessingOptions
+import org.jetbrains.kotlin.idea.j2k.post.processing.runUndoTransparentActionInEdt
+import org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix.Companion.getExistingAnnotationTargets
 import org.jetbrains.kotlin.idea.refactoring.isAbstract
 import org.jetbrains.kotlin.idea.refactoring.isInterfaceClass
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -31,34 +40,37 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
-import org.jetbrains.kotlin.nj2k.asGetterName
-import org.jetbrains.kotlin.nj2k.asSetterName
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFakeFieldData
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldData
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
-import org.jetbrains.kotlin.nj2k.fqNameWithoutCompanions
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperInterfaces
 import org.jetbrains.kotlin.resolve.sam.getSingleAbstractMethodOrNull
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.getDescriptorsFiltered
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.isError
+import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.isUnit
+import org.jetbrains.kotlin.types.typeUtil.makeNullable
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.decapitalizeAsciiOnly
-import org.jetbrains.kotlin.util.isJavaDescriptor
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.mapToIndex
 
+/**
+ * This processing tries to convert functions that look like getters and setters
+ * into a single property, taking into account various complicated rules
+ * of what makes a legal Kotlin property (for example, regarding inheritance)
+ */
 internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostProcessing() {
     override val options: PostProcessingOptions =
         PostProcessingOptions(
@@ -66,278 +78,31 @@ internal class ConvertGettersAndSettersToPropertyProcessing : ElementsBasedPostP
         )
 
     override fun runProcessing(elements: List<PsiElement>, converterContext: NewJ2kConverterContext) {
-        val ktElements = elements.filterIsInstance<KtElement>()
-        if (ktElements.isEmpty()) return
+        val ktElements = elements.filterIsInstance<KtElement>().ifEmpty { return }
+        val psiFactory = KtPsiFactory(converterContext.project)
+        val searcher = JKInMemoryFilesSearcher.create(ktElements)
         val resolutionFacade = runReadAction {
             KotlinCacheService.getInstance(converterContext.project).getResolutionFacade(ktElements)
         }
-        ConvertGettersAndSettersToPropertyStatefulProcessing(
-            resolutionFacade,
-            ktElements,
-            converterContext.externalCodeProcessor
-        ).runProcessing()
-    }
-}
 
-private class ConvertGettersAndSettersToPropertyStatefulProcessing(
-    private val resolutionFacade: ResolutionFacade,
-    private val elements: List<KtElement>,
-    private val externalCodeUpdater: NewExternalCodeProcessing
-) {
-    private val searcher = JKInMemoryFilesSearcher.create(elements)
+        val collector = PropertiesDataCollector(resolutionFacade, searcher)
+        val filter = PropertiesDataFilter(resolutionFacade, ktElements, searcher, psiFactory)
+        val converter = ClassConverter(converterContext.externalCodeProcessor, searcher, psiFactory)
 
+        val classesWithPropertiesData: List<Pair<KtClassOrObject, List<PropertyData>>> = runReadAction {
+            val classes = ktElements.descendantsOfType<KtClassOrObject>().sortedByInheritance(resolutionFacade)
+            classes.map { klass -> klass to collector.collectPropertiesData(klass) }
+        }.ifEmpty { return }
 
-    fun runProcessing() {
-        val collectingState = CollectingState()
-        val classesWithPropertiesData = runReadAction {
-            elements
-                .descendantsOfType<KtClassOrObject>()
-                .sortedByInheritance()
-                .map { klass ->
-                    klass to klass.collectPropertiesData(collectingState)
-                }
-        }
-        if (classesWithPropertiesData.isEmpty()) return
         runUndoTransparentActionInEdt(inWriteAction = true) {
             for ((klass, propertiesData) in classesWithPropertiesData) {
-                convertClass(klass, propertiesData)
+                val propertiesWithAccessors = filter.filter(klass, propertiesData)
+                converter.convertClass(klass, propertiesWithAccessors)
             }
         }
     }
 
-    private fun KtNamedFunction.hasOverrides(): Boolean =
-        toLightMethods().singleOrNull()?.let { lightMethod ->
-            if (OverridingMethodsSearch.search(lightMethod).findFirst() != null) return@let true
-            if (elements.size == 1) return@let false
-            elements.any { element ->
-                OverridingMethodsSearch.search(lightMethod, LocalSearchScope(element), true).findFirst() != null
-            }
-        } == true
-
-    private fun KtNamedFunction.hasSuperFunction(): Boolean =
-        resolveToDescriptorIfAny(resolutionFacade)?.original?.overriddenDescriptors?.isNotEmpty() == true
-
-    private fun KtNamedFunction.hasInvalidSuperDescriptors(): Boolean =
-        resolveToDescriptorIfAny(resolutionFacade)
-            ?.original
-            ?.overriddenDescriptors
-            ?.any { it.isJavaDescriptor || it is FunctionDescriptor } == true
-
-    private fun KtExpression.statements() =
-        if (this is KtBlockExpression) statements
-        else listOf(this)
-
-    private fun KtNamedFunction.asGetter(): Getter? {
-        val name = name?.asGetterName() ?: return null
-        if (valueParameters.isNotEmpty()) return null
-        if (typeParameters.isNotEmpty()) return null
-        val singleTimeUsedTarget = bodyExpression
-            ?.statements()
-            ?.singleOrNull()
-            ?.safeAs<KtReturnExpression>()
-            ?.returnedExpression
-            ?.unpackedReferenceToProperty()
-            ?.takeIf {
-                it.containingClass() == containingClass() &&
-                        it.type() == (type() ?: return@takeIf false)
-            }
-        return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
-    }
-
-    private fun KtNamedFunction.asSetter(): Setter? {
-        val name = name?.asSetterName() ?: return null
-        if (typeParameters.isNotEmpty()) return null
-        if (valueParameters.size != 1) return null
-        val descriptor = resolveToDescriptorIfAny() ?: return null
-        if (descriptor.returnType?.isUnit() != true) return null
-        val singleTimeUsedTarget = bodyExpression
-            ?.statements()
-            ?.singleOrNull()
-            ?.let { expression ->
-                if (expression is KtBinaryExpression) {
-                    if (expression.operationToken != KtTokens.EQ) return@let null
-                    val right = expression.right as? KtNameReferenceExpression ?: return@let null
-                    if (right.resolve() != valueParameters.single()) return@let null
-                    expression.left?.unpackedReferenceToProperty()
-                } else null
-            }?.takeIf {
-                it.containingClass() == containingClass() &&
-                        it.type() == valueParameters.single().type()
-            }
-        return RealSetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
-    }
-
-    private fun KtDeclaration.asPropertyAccessor(): PropertyInfo? {
-        return when (this) {
-            is KtProperty -> RealProperty(this, name ?: return null)
-            is KtNamedFunction -> asGetter() ?: asSetter()
-            else -> null
-        }
-    }
-
-    private fun KtElement.forAllUsages(action: (KtElement) -> Unit) {
-        usages().forEach { action(it.element as KtElement) }
-    }
-
-    private fun addGetter(
-        getter: Getter,
-        property: KtProperty,
-        factory: KtPsiFactory,
-        isFakeProperty: Boolean
-    ): KtPropertyAccessor {
-        val body =
-            if (isFakeProperty) getter.body
-            else getter.body?.withReplacedExpressionInBody(
-                property,
-                factory.createExpression(KtTokens.FIELD_KEYWORD.value),
-                replaceOnlyWriteUsages = false
-            )
-
-        val ktGetter = factory.createGetter(body, getter.modifiersText)
-        ktGetter.filterModifiers()
-        if (getter is RealGetter) {
-            savePossibleLeadingAndTrailingComments(getter, ktGetter, factory)
-        }
-        property.add(factory.createNewLine(1))
-        return property.add(ktGetter).cast<KtPropertyAccessor>().also {
-            if (getter is RealGetter) {
-                getter.function.forAllUsages { usage ->
-                    val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forAllUsages
-                    val qualifier = callExpression.getQualifiedExpressionForSelector()
-                    if (qualifier != null) {
-                        qualifier.replace(factory.createExpression("${qualifier.receiverExpression.text}.${getter.name}"))
-                    } else {
-                        callExpression.replace(factory.createExpression("this.${getter.name}"))
-                    }
-                }
-            }
-        }
-    }
-
-    private fun KtParameter.rename(newName: String) {
-        val renamer = RenamePsiElementProcessor.forElement(this)
-        val searchScope = project.projectScope() or useScope
-        val findReferences = renamer.findReferences(this, searchScope, false)
-        val usageInfos =
-            findReferences.mapNotNull { reference ->
-                val element = reference.element
-                val isBackingField = element is KtNameReferenceExpression &&
-                        element.text == KtTokens.FIELD_KEYWORD.value
-                        && element.mainReference.resolve() == this
-                        && isAncestor(element)
-                if (isBackingField) return@mapNotNull null
-                renamer.createUsageInfo(this, reference, reference.element)
-            }.toTypedArray()
-        renamer.renameElement(this, newName, usageInfos, null)
-    }
-
-    private fun createSetter(
-        setter: Setter,
-        property: KtProperty,
-        factory: KtPsiFactory,
-        isFakeProperty: Boolean
-    ): KtPropertyAccessor {
-        if (setter is RealSetter) {
-            setter.function.valueParameters.single().rename(setter.parameterName)
-        }
-        val body =
-            if (isFakeProperty) setter.body
-            else setter.body?.withReplacedExpressionInBody(
-                property,
-                factory.createExpression(KtTokens.FIELD_KEYWORD.value),
-                true
-            )
-        val modifiers = setter.modifiersText?.takeIf { it.isNotEmpty() }
-            ?: setter.safeAs<RealSetter>()?.function?.visibilityModifierTypeOrDefault()?.value
-            ?: property.visibilityModifierTypeOrDefault().value
-
-        val ktSetter = factory.createSetter(
-            body,
-            setter.parameterName,
-            modifiers
-        )
-        ktSetter.filterModifiers()
-        val propertyName = property.name
-        if (setter is RealSetter) {
-            savePossibleLeadingAndTrailingComments(setter, ktSetter, factory)
-
-            setter.function.forAllUsages { usage ->
-                val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forAllUsages
-                val qualifier = callExpression.getQualifiedExpressionForSelector()
-                val newValue = callExpression.valueArguments.single()
-                if (qualifier != null) {
-                    qualifier.replace(
-                        factory.createExpression("${qualifier.receiverExpression.text}.$propertyName = ${newValue.text}")
-                    )
-                } else {
-                    callExpression.replace(factory.createExpression("this.$propertyName = ${newValue.text}"))
-                }
-            }
-        }
-        return ktSetter
-    }
-
-    private fun savePossibleLeadingAndTrailingComments(
-        accessor: RealAccessor,
-        ktAccessor: KtPropertyAccessor,
-        factory: KtPsiFactory
-    ) {
-        if (accessor.function.firstChild is PsiComment) {
-            ktAccessor.addBefore(factory.createWhiteSpace(), ktAccessor.firstChild)
-            ktAccessor.addBefore(accessor.function.firstChild, ktAccessor.firstChild)
-        }
-        if (accessor.function.lastChild is PsiComment) {
-            ktAccessor.add(factory.createWhiteSpace())
-            ktAccessor.add(accessor.function.lastChild)
-        }
-    }
-
-    private fun KtPropertyAccessor.filterModifiers() {
-        removeModifier(KtTokens.OVERRIDE_KEYWORD)
-        removeModifier(KtTokens.FINAL_KEYWORD)
-        removeModifier(KtTokens.OPEN_KEYWORD)
-    }
-
-    private fun KtExpression.isReferenceToThis() =
-        when (this) {
-            is KtThisExpression -> instanceReference
-            is KtReferenceExpression -> this
-            is KtQualifiedExpression -> selectorExpression as? KtReferenceExpression
-            else -> null
-        }?.resolve() == getStrictParentOfType<KtClassOrObject>()
-
-    private fun KtElement.usages(scope: PsiElement? = null) =
-        searcher.search(this, scope)
-
-    private fun <T : KtExpression> T.withReplacedExpressionInBody(
-        from: KtElement,
-        to: KtExpression,
-        replaceOnlyWriteUsages: Boolean
-    ): T = also {
-        from.usages(this)
-            .asSequence()
-            .map { it.element }
-            .forEach { reference ->
-                val parent = reference.parent
-                val referenceExpression = when {
-                    parent is KtQualifiedExpression && parent.receiverExpression.isReferenceToThis() ->
-                        parent
-
-                    else -> reference
-                }
-                if (!replaceOnlyWriteUsages
-                    || (referenceExpression.parent as? KtExpression)?.asAssignment()?.left == referenceExpression
-                ) {
-                    referenceExpression.replace(to)
-                }
-            }
-    }
-
-
-    private fun List<KtClassOrObject>.sortedByInheritance(): List<KtClassOrObject> {
-        fun ClassDescriptor.superClassAndSuperInterfaces() =
-            getSuperInterfaces() + listOfNotNull(getSuperClassNotAny())
-
+    private fun List<KtClassOrObject>.sortedByInheritance(resolutionFacade: ResolutionFacade): List<KtClassOrObject> {
         val sorted = mutableListOf<KtClassOrObject>()
         val visited = Array(size) { false }
         val descriptors = map { it.resolveToDescriptorIfAny(resolutionFacade)!! }
@@ -363,89 +128,107 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         }
         return sorted
     }
+}
 
-    private fun causesNameConflictInCurrentDeclarationAndItsParents(name: String, declaration: DeclarationDescriptor?): Boolean =
-        when (declaration) {
-            is ClassDescriptor -> {
-                declaration.unsubstitutedMemberScope.getDescriptorsFiltered(DescriptorKindFilter.VARIABLES) {
-                    it.asString() == name
-                }.isNotEmpty()
-                        || causesNameConflictInCurrentDeclarationAndItsParents(name, declaration.containingDeclaration)
-            }
+/**
+ * Extracts groups of (getter, setter, property) for a class
+ * that are potentially eligible to be converted to a single property
+ */
+private class PropertiesDataCollector(private val resolutionFacade: ResolutionFacade, private val searcher: JKInMemoryFilesSearcher) {
+    private val propertyNameToSuperType: MutableMap<Pair<KtClassOrObject, String>, KotlinType> = mutableMapOf()
 
-            else -> false
+    fun collectPropertiesData(klass: KtClassOrObject): List<PropertyData> {
+        val propertyInfos: List<PropertyInfo> = klass.declarations.mapNotNull { it.asPropertyInfo() }
+        val propertyInfoGroups: Collection<List<PropertyInfo>> =
+            propertyInfos.groupBy { it.name.removePrefix("is").decapitalizeAsciiOnly() }.values
+
+        return propertyInfoGroups.mapNotNull { group -> collectPropertyData(klass, group) }
+    }
+
+    private fun collectPropertyData(klass: KtClassOrObject, propertyInfoGroup: List<PropertyInfo>): PropertyData? {
+        val property = propertyInfoGroup.firstIsInstanceOrNull<RealProperty>()
+        val getter = propertyInfoGroup.firstIsInstanceOrNull<RealGetter>()
+        val setter = propertyInfoGroup.firstIsInstanceOrNull<RealSetter>()?.takeIf { setterCandidate ->
+            if (getter == null) return@takeIf true
+            val getterType = getter.function.type() ?: return@takeIf false
+            val setterType = setterCandidate.function.valueParameters.first().type() ?: return@takeIf false
+            // The inferred nullability of accessors may be different due to semi-random reasons,
+            // so we check types compatibility ignoring nullability. Anyway, the final property type will be nullable if necessary.
+            getterType.isSubtypeOf(setterType.makeNullable())
         }
 
-    private fun calculatePropertyType(getterType: KotlinType?, setterType: KotlinType?): KotlinType? = when {
-        getterType != null && getterType.isMarkedNullable -> getterType
-        setterType != null && setterType.isMarkedNullable -> setterType
-        else -> getterType ?: setterType
+        val accessor = getter ?: setter ?: return null
+        val name = accessor.name
+        val functionDescriptor = accessor.function.resolveToDescriptorIfAny(resolutionFacade) ?: return null
+
+        // Fun interfaces cannot have abstract properties
+        if (klass.isSamDescriptor(functionDescriptor)) return null
+
+        val superDeclarationOwner = functionDescriptor.getSuperDeclarationOwner()
+        val type = propertyNameToSuperType[superDeclarationOwner to name]
+            ?: calculatePropertyType(getter?.function, setter?.function)
+            ?: return null
+        propertyNameToSuperType[klass to name] = type
+
+        return PropertyData(
+            property,
+            getter?.withTargetSet(property),
+            setter?.withTargetSet(property),
+            type
+        )
     }
 
-    private fun calculatePropertyType(getter: KtNamedFunction?, setter: KtNamedFunction?): KotlinType? {
-        val getterType = getter?.resolveToDescriptorIfAny(resolutionFacade)?.returnType
-        val setterType = setter?.resolveToDescriptorIfAny(resolutionFacade)?.valueParameters?.singleOrNull()?.type
-        return calculatePropertyType(getterType, setterType)
+    private fun KtDeclaration.asPropertyInfo(): PropertyInfo? {
+        return when (this) {
+            is KtProperty -> RealProperty(this, name ?: return null)
+            is KtNamedFunction -> asGetter() ?: asSetter()
+            else -> null
+        }
     }
 
-    private inline fun <reified A : RealAccessor> A.withTargetSet(property: RealProperty?): A {
-        if (property == null) return this
-        if (target != null) return this
-        return if (property.property.usages(function).any())
-            updateTarget(property.property) as A
-        else this
+    private fun KtNamedFunction.asGetter(): Getter? {
+        val name = name?.asGetterName() ?: return null
+        if (valueParameters.isNotEmpty()) return null
+        if (typeParameters.isNotEmpty()) return null
+
+        val returnExpression = bodyExpression?.statements()?.singleOrNull() as? KtReturnExpression
+        val property = returnExpression?.returnedExpression?.unpackedReferenceToProperty()
+        val getterType = type()
+        val singleTimeUsedTarget = property?.takeIf {
+            it.containingClass() == containingClass() && getterType != null && it.type() == getterType
+        }
+
+        return RealGetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
     }
 
-    private fun KtClassOrObject.collectPropertiesData(collectingState: CollectingState): List<PropertyData> {
-        return declarations
-            .asSequence()
-            .mapNotNull { it.asPropertyAccessor() }
-            .groupBy { it.name.removePrefix("is").decapitalizeAsciiOnly() }
-            .values
-            .mapNotNull { group ->
-                val realGetter = group.firstIsInstanceOrNull<RealGetter>()
-                val realSetter = group.firstIsInstanceOrNull<RealSetter>()?.takeIf { setter ->
-                    if (realGetter == null) return@takeIf true
-                    val setterType = setter.function.valueParameters.first().type()
-                    val getterType = realGetter.function.type()
-                    if (setterType == null
-                        || getterType == null
-                        || !KotlinTypeChecker.DEFAULT.isSubtypeOf(getterType, setterType)
-                    ) {
-                        if (isInterfaceClass()) return@mapNotNull null
-                        false
-                    } else true
-                }
-                if (realGetter == null && realSetter == null) return@mapNotNull null
-                val realProperty = group.firstIsInstanceOrNull<RealProperty>()
-                val name = realGetter?.name ?: realSetter?.name!!
+    private fun KtNamedFunction.asSetter(): Setter? {
+        val name = name?.asSetterName() ?: return null
+        val parameter = valueParameters.singleOrNull() ?: return null
+        if (typeParameters.isNotEmpty()) return null
+        if (resolveToDescriptorIfAny(resolutionFacade)?.returnType?.isUnit() != true) return null
 
-                val functionDescriptor = (realGetter?.function ?: realSetter?.function)
-                    ?.resolveToDescriptorIfAny(resolutionFacade)
+        val binaryExpression = bodyExpression?.statements()?.singleOrNull() as? KtBinaryExpression
+        val property = binaryExpression?.let { expression ->
+            if (expression.operationToken != EQ) return@let null
+            val right = expression.right as? KtNameReferenceExpression ?: return@let null
+            if (right.resolve() != parameter) return@let null
+            expression.left?.unpackedReferenceToProperty()
+        }
+        val singleTimeUsedTarget = property?.takeIf {
+            it.containingClass() == containingClass() && it.type() == parameter.type()
+        }
 
-                if (functionDescriptor != null && isSamDescriptor(functionDescriptor)) return@mapNotNull null
+        return RealSetter(this, singleTimeUsedTarget, name, singleTimeUsedTarget != null)
+    }
 
-                val superDeclarationOwner = functionDescriptor
-                    ?.overriddenDescriptors
-                    ?.firstOrNull()
-                    ?.findPsi()
-                    ?.safeAs<KtDeclaration>()
-                    ?.containingClassOrObject
+    private fun KtExpression.statements(): List<KtExpression> =
+        if (this is KtBlockExpression) statements else listOf(this)
 
-                val type = collectingState.propertyNameToSuperType[superDeclarationOwner to name]
-                    ?: calculatePropertyType(
-                        realGetter?.function,
-                        realSetter?.function
-                    ) ?: return@mapNotNull null
-                collectingState.propertyNameToSuperType[this to name] = type
-
-                PropertyData(
-                    realProperty,
-                    realGetter?.withTargetSet(realProperty),
-                    realSetter?.withTargetSet(realProperty),
-                    type
-                )
-            }
+    private inline fun <reified A : RealAccessor> A.withTargetSet(property: RealProperty?): A = when {
+        property == null -> this
+        target != null -> this
+        property.property.usages(searcher, scope = function).any() -> updateTarget(property.property) as A
+        else -> this
     }
 
     private fun KtClassOrObject.isSamDescriptor(functionDescriptor: FunctionDescriptor): Boolean {
@@ -453,272 +236,551 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         return getSingleAbstractMethodOrNull(classDescriptor) == functionDescriptor
     }
 
-    private fun List<PropertyData>.filterGettersAndSetters(
-        klass: KtClassOrObject,
-        factory: KtPsiFactory
-    ): List<PropertyWithAccessors> {
+    private fun FunctionDescriptor.getSuperDeclarationOwner(): KtClassOrObject? {
+        val overriddenDeclaration = overriddenDescriptors.firstOrNull()?.findPsi() as? KtDeclaration
+        return overriddenDeclaration?.containingClassOrObject
+    }
+
+    private fun calculatePropertyType(getter: KtNamedFunction?, setter: KtNamedFunction?): KotlinType? {
+        val getterType = getter?.resolveToDescriptorIfAny(resolutionFacade)?.returnType
+        val setterType = setter?.resolveToDescriptorIfAny(resolutionFacade)?.valueParameters?.singleOrNull()?.type
+        return when {
+            getterType != null && getterType.isMarkedNullable -> getterType
+            setterType != null && setterType.isMarkedNullable -> setterType
+            else -> getterType ?: setterType
+        }
+    }
+}
+
+/**
+ * Filters the accessors that are eligible for conversion to property
+ */
+private class PropertiesDataFilter(
+    private val resolutionFacade: ResolutionFacade,
+    private val elements: List<KtElement>,
+    private val searcher: JKInMemoryFilesSearcher,
+    private val psiFactory: KtPsiFactory
+) {
+    fun filter(klass: KtClassOrObject, propertiesData: List<PropertyData>): List<PropertyWithAccessors> {
         val classDescriptor = klass.resolveToDescriptorIfAny(resolutionFacade) ?: return emptyList()
+        val declarationDescriptors = classDescriptor.superClassAndSuperInterfaces().flatMap { superType ->
+            superType.unsubstitutedMemberScope.getDescriptorsFiltered(DescriptorKindFilter.VARIABLES)
+        }
+        val variableNameToDescriptor = declarationDescriptors
+            .asSequence()
+            .filterIsInstance<VariableDescriptor>()
+            .associateBy { it.name.asString() }
 
-        val variablesDescriptorsMap =
-            (listOfNotNull(classDescriptor.getSuperClassNotAny()) + classDescriptor.getSuperInterfaces())
-                .flatMap { superClass ->
-                    superClass
-                        .unsubstitutedMemberScope
-                        .getDescriptorsFiltered(DescriptorKindFilter.VARIABLES)
-                }
-                .asSequence()
-                .filterIsInstance<VariableDescriptor>()
-                .associateBy { it.name.asString() }
+        return propertiesData.mapNotNull { getPropertyWithAccessors(it, klass, classDescriptor, variableNameToDescriptor) }
+    }
 
-        return mapNotNull { (realProperty, realGetter, realSetter, type) ->
-            val name = realGetter?.name ?: realSetter!!.name
-            val typeStringified = type
-                .takeUnless { it.isError }
-                ?.let {
-                    IdeDescriptorRenderers.SOURCE_CODE.renderType(it)
-                } ?: realGetter?.function?.typeReference?.text
-            ?: realSetter?.function?.valueParameters?.firstOrNull()?.typeReference?.text!!
+    private fun getPropertyWithAccessors(
+        propertyData: PropertyData,
+        klass: KtClassOrObject,
+        classDescriptor: ClassDescriptor,
+        variableNameToDescriptor: Map<String, VariableDescriptor>
+    ): PropertyWithAccessors? {
+        val (realProperty, realGetter, realSetter, type) = propertyData
 
-            if (realSetter != null
-                && realGetter != null
-                && klass.isInterfaceClass()
-                && realSetter.function.hasOverrides() != realGetter.function.hasOverrides()
-            ) return@mapNotNull null
+        fun renderType(): String? = type.takeUnless { it.isError }?.let { IdeDescriptorRenderers.SOURCE_CODE.renderType(it) }
+            ?: realGetter?.function?.typeReference?.text
+            ?: realSetter?.function?.valueParameters?.firstOrNull()?.typeReference?.text
 
-            if (realSetter != null
-                && realGetter != null
-                && realSetter.function.hasSuperFunction() != realGetter.function.hasSuperFunction()
-            ) return@mapNotNull null
+        fun getterIsCompatibleWithSetter(): Boolean {
+            if (realGetter == null || realSetter == null) return true
+            if (klass.isInterfaceClass() && realGetter.function.hasOverrides() != realSetter.function.hasOverrides()) return false
+            return true
+        }
 
-            if (realProperty != null
-                && realGetter?.target != null
-                && realGetter.target != realProperty.property
-                && realProperty.property.hasInitializer()
-            ) return@mapNotNull null
+        fun getterUsesDifferentProperty(): Boolean =
+            realProperty != null && realGetter?.target != null && realGetter.target != realProperty.property
 
-            if (realGetter?.function?.hasInvalidSuperDescriptors() == true
-                || realSetter?.function?.hasInvalidSuperDescriptors() == true
-            ) return@mapNotNull null
+        fun accessorsOverrideFunctions(): Boolean =
+            realGetter?.function?.hasSuperFunction() == true || realSetter?.function?.hasSuperFunction() == true
 
-            if (realProperty == null) {
-                if (causesNameConflictInCurrentDeclarationAndItsParents(
-                        name,
-                        classDescriptor.containingDeclaration
-                    )
-                ) return@mapNotNull null
-            }
+        fun propertyIsAccessedBypassingNonPureAccessors(): Boolean {
+            if (realProperty == null) return false
+            if ((realGetter == null || realGetter.isPure) && (realSetter == null || realSetter.isPure)) return false
 
-            if (realProperty != null && (realGetter != null && !realGetter.isPure || realSetter != null && !realSetter.isPure)) {
-                if (!realProperty.property.isPrivate()) return@mapNotNull null
-                val hasUsages =
-                    realProperty.property.hasUsagesOutsideOf(
-                        klass.containingKtFile,
-                        listOfNotNull(realGetter?.function, realSetter?.function)
-                    )
-                if (hasUsages) return@mapNotNull null
-            }
+            if (!realProperty.property.isPrivate()) return true
+            return realProperty.property.hasUsagesOutsideOf(
+                inElement = klass.containingKtFile,
+                outsideElements = listOfNotNull(realGetter?.function, realSetter?.function)
+            )
+        }
 
-            if (realSetter != null && realProperty != null) {
-                val assignFieldOfOtherInstance = realProperty.property.usages().any { usage ->
-                    val element = usage.safeAs<KtSimpleNameReference>()?.element ?: return@any false
-                    if (!element.readWriteAccess(useResolveForReadWrite = true).isWrite) return@any false
-                    val parent = element.parent
-                    parent is KtQualifiedExpression && !parent.receiverExpression.isReferenceToThis()
-                }
-                if (assignFieldOfOtherInstance) return@mapNotNull null
-            }
+        fun propertyIsAccessedOnAnotherInstance(): Boolean {
+            if (realProperty == null) return false
 
-            if (realGetter != null && realProperty != null) {
-                val getFieldOfOtherInstanceInGetter = realProperty.property.usages().any { usage ->
+            if (realGetter != null) {
+                val getFieldOfOtherInstanceInGetter = realProperty.property.usages(searcher).any { usage ->
                     val element = usage.safeAs<KtSimpleNameReference>()?.element ?: return@any false
                     val parent = element.parent
                     parent is KtQualifiedExpression
                             && !parent.receiverExpression.isReferenceToThis()
                             && realGetter.function.isAncestor(element)
                 }
-                if (getFieldOfOtherInstanceInGetter) return@mapNotNull null
+                if (getFieldOfOtherInstanceInGetter) return true
+            }
+            if (realSetter != null) {
+                val assignFieldOfOtherInstance = realProperty.property.usages(searcher).any { usage ->
+                    val element = usage.safeAs<KtSimpleNameReference>()?.element ?: return@any false
+                    if (!element.readWriteAccess(useResolveForReadWrite = true).isWrite) return@any false
+                    val parent = element.parent
+                    parent is KtQualifiedExpression && !parent.receiverExpression.isReferenceToThis()
+                }
+                if (assignFieldOfOtherInstance) return true
             }
 
+            return false
+        }
 
-            val getter = realGetter ?: when {
-                realProperty?.property?.resolveToDescriptorIfAny(resolutionFacade)?.overriddenDescriptors?.any {
-                    it.safeAs<VariableDescriptor>()?.isVar == true
-                } == true -> FakeGetter(name, null, "")
-
-                variablesDescriptorsMap[name]?.let { variable ->
-                    variable.isVar && variable.containingDeclaration != classDescriptor
-                } == true ->
-                    FakeGetter(name, factory.createExpression("super.$name"), "")
-
-                else -> return@mapNotNull null
-            }
-
-            val mergedProperty =
-                if (getter is RealGetter
-                    && getter.target != null
-                    && getter.target!!.name != getter.name
-                    && (realSetter == null || realSetter.target != null)
-                ) {
-                    MergedProperty(name, typeStringified, realSetter != null, getter.target!!)
-                } else null
-
-            val setter = realSetter ?: when {
-                realProperty?.property?.isVar == true ->
-                    FakeSetter(name, null, "")
-
-                realProperty?.property?.resolveToDescriptorIfAny(resolutionFacade)?.overriddenDescriptors?.any {
-                    it.safeAs<VariableDescriptor>()?.isVar == true
-                } == true
-                        || variablesDescriptorsMap[name]?.isVar == true ->
-                    FakeSetter(
-                        name,
-                        factory.createBlock("super.$name = $name"),
-                        ""
-                    )
-
-                realGetter != null
-                        && (realProperty != null
-                        && realProperty.property.visibilityModifierTypeOrDefault() != realGetter.function.visibilityModifierTypeOrDefault()
-                        && realProperty.property.isVar
-                        || mergedProperty != null
-                        && mergedProperty.mergeTo.visibilityModifierTypeOrDefault() != realGetter.function.visibilityModifierTypeOrDefault()
-                        && mergedProperty.mergeTo.isVar
-                        ) ->
-                    FakeSetter(name, null, null)
-
-                else -> null
-            }
-            val isVar = setter != null
-            val property = mergedProperty?.copy(isVar = isVar)
-                ?: realProperty?.copy(isVar = isVar)
-                ?: FakeProperty(name, typeStringified, isVar)
-
-            PropertyWithAccessors(
-                property,
-                getter,
-                setter
+        fun accessorsAreAnnotatedWithFunctionOnlyAnnotations(): Boolean {
+            val descriptorToTargetPairs = listOf(
+                realGetter?.function?.resolveToDescriptorIfAny(resolutionFacade) to "PROPERTY_GETTER",
+                realSetter?.function?.resolveToDescriptorIfAny(resolutionFacade) to "PROPERTY_SETTER",
             )
-        }
-    }
 
-    private fun KtProperty.renameTo(newName: String, factory: KtPsiFactory) {
-        for (usage in usages()) {
-            val element = usage.element
-            val isBackingField = element is KtNameReferenceExpression
-                    && element.text == KtTokens.FIELD_KEYWORD.value
-                    && element.mainReference.resolve() == this
-                    && isAncestor(element)
-            if (isBackingField) continue
-            val replacer =
-                if (element.parent is KtQualifiedExpression) factory.createExpression(newName)
-                else factory.createExpression("this.$newName")
-            element.replace(replacer)
-        }
-        setName(newName)
-    }
+            for ((functionDescriptor, requiredTarget) in descriptorToTargetPairs) {
+                val hasInapplicableAnnotation = functionDescriptor?.annotations?.any { annotationDescriptor ->
+                    val annotationClassDescriptor = annotationDescriptor.annotationClass ?: return@any false
+                    val existingTargets = getExistingAnnotationTargets(annotationClassDescriptor)
+                    existingTargets.contains("FUNCTION") && !existingTargets.contains(requiredTarget)
+                } == true
 
-    private fun convertClass(
-        klass: KtClassOrObject,
-        propertiesData: List<PropertyData>
-    ) {
-        val psiFactory = KtPsiFactory(klass.project)
-        val accessors = propertiesData.filterGettersAndSetters(klass, psiFactory)
-
-        for ((property, getter, setter) in accessors) {
-            val ktProperty = when (property) {
-                is RealProperty -> {
-                    if (property.property.isVar != property.isVar) {
-                        property.property.valOrVarKeyword.replace(
-                            if (property.isVar) psiFactory.createVarKeyword() else psiFactory.createValKeyword()
-                        )
-                    }
-                    property.property
-                }
-
-                is FakeProperty -> psiFactory.createProperty(property.name, property.type, property.isVar).let {
-                    val anchor = getter.safeAs<RealAccessor>()?.function ?: setter.cast<RealAccessor>().function
-                    klass.addDeclarationBefore(it, anchor)
-                }
-
-                is MergedProperty -> {
-                    property.mergeTo
-                }
+                if (hasInapplicableAnnotation) return true
             }
 
-            val propertyInfo = when (property) {
-                is RealProperty -> property.property.let(externalCodeUpdater::getMember)
-                is MergedProperty -> property.mergeTo.let(externalCodeUpdater::getMember)
+            return false
+        }
+
+        fun createFakeGetter(name: String): FakeGetter? = when {
+            // TODO write a test for this branch, may be related to KTIJ-8621, KTIJ-8673
+            realProperty?.property?.resolveToDescriptorIfAny(resolutionFacade)?.overriddenDescriptors?.any {
+                it.safeAs<VariableDescriptor>()?.isVar == true
+            } == true -> FakeGetter(name, body = null, modifiersText = "")
+
+            variableNameToDescriptor[name]?.let { variable ->
+                variable.isVar && variable.containingDeclaration != classDescriptor
+            } == true -> FakeGetter(name, body = psiFactory.createExpression("super.$name"), modifiersText = "")
+
+            else -> null
+        }
+
+        fun createMergedProperty(name: String, renderedType: String): MergedProperty? =
+            if (realGetter?.target != null
+                && realGetter.target.name != realGetter.name
+                && (realSetter == null || realSetter.target != null)
+            ) MergedProperty(name, renderedType, isVar = realSetter != null, realGetter.target) else null
+
+        fun createFakeSetter(name: String, mergedProperty: MergedProperty?): FakeSetter? = when {
+            realProperty?.property?.isVar == true ->
+                FakeSetter(name, body = null, modifiersText = "")
+
+            // Var property cannot be overridden by val
+            realProperty?.property?.resolveToDescriptorIfAny(resolutionFacade)?.overriddenDescriptors?.any {
+                it.safeAs<VariableDescriptor>()?.isVar == true
+            } == true
+                    || variableNameToDescriptor[name]?.isVar == true ->
+                FakeSetter(
+                    name,
+                    body = psiFactory.createBlock("super.$name = $name"),
+                    modifiersText = ""
+                )
+
+            // Need setter with restricted visibility
+            realGetter != null
+                    && (realProperty != null
+                    && realProperty.property.visibilityModifierTypeOrDefault() != realGetter.function.visibilityModifierTypeOrDefault()
+                    && realProperty.property.isVar
+                    || mergedProperty != null
+                    && mergedProperty.mergeTo.visibilityModifierTypeOrDefault() != realGetter.function.visibilityModifierTypeOrDefault()
+                    && mergedProperty.mergeTo.isVar
+                    ) ->
+                FakeSetter(name, body = null, modifiersText = null)
+
+            else -> null
+        }
+
+        if (!getterIsCompatibleWithSetter() ||
+            getterUsesDifferentProperty() ||
+            accessorsOverrideFunctions() ||
+            propertyIsAccessedBypassingNonPureAccessors() ||
+            propertyIsAccessedOnAnotherInstance() ||
+            accessorsAreAnnotatedWithFunctionOnlyAnnotations()
+        ) return null
+
+        val name = realGetter?.name ?: realSetter?.name ?: return null
+        val renderedType = renderType() ?: return null
+
+        // Avoid shadowing outer properties with same name
+        if (realProperty == null && isNameShadowed(name, classDescriptor.containingDeclaration)) return null
+
+        val getter = realGetter ?: createFakeGetter(name) ?: return null
+        val mergedProperty = createMergedProperty(name, renderedType)
+        val setter = realSetter ?: createFakeSetter(name, mergedProperty)
+
+        val isVar = setter != null
+        val property = mergedProperty?.copy(isVar = isVar)
+            ?: realProperty?.copy(isVar = isVar)
+            ?: FakeProperty(name, renderedType, isVar)
+
+        return PropertyWithAccessors(property, getter, setter)
+    }
+
+    private fun KtNamedFunction.hasOverrides(): Boolean {
+        val lightMethod = toLightMethods().singleOrNull() ?: return false
+        if (OverridingMethodsSearch.search(lightMethod).findFirst() != null) return true
+        if (elements.size == 1) return false
+        return elements.any { element ->
+            OverridingMethodsSearch.search(lightMethod, LocalSearchScope(element), true).findFirst() != null
+        }
+    }
+
+    private fun KtNamedFunction.hasSuperFunction(): Boolean =
+        resolveToDescriptorIfAny(resolutionFacade)?.original?.overriddenDescriptors?.isNotEmpty() == true
+
+    private fun isNameShadowed(name: String, parent: DeclarationDescriptor?): Boolean {
+        if (parent !is ClassDescriptor) return false
+        val parentHasSameNameVariable =
+            parent.unsubstitutedMemberScope.getDescriptorsFiltered(DescriptorKindFilter.VARIABLES) { it.asString() == name }.isNotEmpty()
+        return parentHasSameNameVariable || isNameShadowed(name, parent.containingDeclaration)
+    }
+
+    private fun KtElement.hasUsagesOutsideOf(inElement: KtElement, outsideElements: List<KtElement>): Boolean =
+        ReferencesSearch.search(this, LocalSearchScope(inElement)).any { reference ->
+            outsideElements.none { it.isAncestor(reference.element) }
+        }
+}
+
+private val redundantSetterModifiers: Set<KtModifierKeywordToken> = setOf(
+    OVERRIDE_KEYWORD, FINAL_KEYWORD, OPEN_KEYWORD
+)
+
+private val redundantGetterModifiers: Set<KtModifierKeywordToken> = redundantSetterModifiers + setOf(
+    PUBLIC_KEYWORD, INTERNAL_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD
+)
+
+/**
+ * Converts accessors to properties in a single class
+ */
+private class ClassConverter(
+    private val externalCodeUpdater: NewExternalCodeProcessing,
+    private val searcher: JKInMemoryFilesSearcher,
+    private val psiFactory: KtPsiFactory
+) {
+    fun convertClass(klass: KtClassOrObject, propertiesWithAccessors: List<PropertyWithAccessors>) {
+        for (propertyWithAccessors in propertiesWithAccessors) {
+            convert(klass, propertyWithAccessors)
+        }
+    }
+
+    private fun convert(klass: KtClassOrObject, propertyWithAccessors: PropertyWithAccessors) {
+        val (property, getter, setter) = propertyWithAccessors
+
+        // convenience variables
+        val realGetter = getter as? RealGetter
+        val realSetter = setter as? RealSetter
+
+        fun updateExternalProcessingInfo() {
+            fun KtNamedFunction.setPropertyForExternalProcessing(fieldData: JKFieldData) {
+                val physicalMethodData = (externalCodeUpdater.getMember(element = this) as? JKPhysicalMethodData) ?: return
+                physicalMethodData.usedAsAccessorOfProperty = fieldData
+            }
+
+            val jkFieldData = when (property) {
+                is RealProperty -> externalCodeUpdater.getMember(property.property)
+                is MergedProperty -> externalCodeUpdater.getMember(property.mergeTo)
                 is FakeProperty -> JKFakeFieldData(
                     isStatic = klass is KtObjectDeclaration,
                     kotlinElementPointer = null,
                     fqName = klass.fqNameWithoutCompanions.child(Name.identifier(property.name)),
                     name = property.name
                 ).also { externalCodeUpdater.addMember(it) }
-            }?.also { it.name = property.name } as? JKFieldData
+            } as? JKFieldData
 
-            fun KtNamedDeclaration.setPropertyInfo(info: JKFieldData) {
-                externalCodeUpdater.getMember(this)?.safeAs<JKPhysicalMethodData>()?.let {
-                    it.usedAsAccessorOfProperty = info
+            if (jkFieldData != null) {
+                jkFieldData.name = property.name
+                realGetter?.function?.setPropertyForExternalProcessing(jkFieldData)
+                realSetter?.function?.setPropertyForExternalProcessing(jkFieldData)
+            }
+        }
+
+        fun getKtProperty(): KtProperty = when (property) {
+            is RealProperty -> {
+                if (property.property.isVar != property.isVar) {
+                    val newKeyword = if (property.isVar) psiFactory.createVarKeyword() else psiFactory.createValKeyword()
+                    property.property.valOrVarKeyword.replace(newKeyword)
                 }
+                property.property
             }
 
-            if (propertyInfo != null) {
-                getter.safeAs<RealGetter>()?.function?.setPropertyInfo(propertyInfo)
-                setter.safeAs<RealSetter>()?.function?.setPropertyInfo(propertyInfo)
+            is FakeProperty -> {
+                val newProperty = psiFactory.createProperty(property.name, property.type, property.isVar)
+                val anchor = realGetter?.function ?: realSetter?.function
+                klass.addDeclarationBefore(newProperty, anchor)
             }
 
-            val isOpen = getter.safeAs<RealGetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true
-                    || setter.safeAs<RealSetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true
+            is MergedProperty -> property.mergeTo
+        }
 
-            val ktGetter = addGetter(getter, ktProperty, psiFactory, property.isFake)
-            val ktSetter =
-                setter?.let {
-                    createSetter(it, ktProperty, psiFactory, property.isFake)
-                }
-            val getterVisibility = getter.safeAs<RealGetter>()?.function?.visibilityModifierTypeOrDefault()
-            if (getter is RealGetter) {
-                if (getter.function.isAbstract()) {
-                    ktProperty.addModifier(KtTokens.ABSTRACT_KEYWORD)
+        updateExternalProcessingInfo()
+
+        val ktProperty = getKtProperty()
+        val ktGetter = addGetter(getter, ktProperty, property.isFake)
+        val ktSetter = setter?.let { addSetter(it, ktProperty, property.isFake) }
+        val isOpen = realGetter?.function?.hasModifier(OPEN_KEYWORD) == true || realSetter?.function?.hasModifier(OPEN_KEYWORD) == true
+
+        val getterVisibility = realGetter?.function?.visibilityModifierTypeOrDefault()
+        if (getterVisibility != null) {
+            ktProperty.setVisibility(getterVisibility)
+        }
+
+        fun removeRealAccessors() {
+            if (realGetter != null) {
+                if (realGetter.function.isAbstract()) {
+                    ktProperty.addModifier(ABSTRACT_KEYWORD)
                 }
                 if (ktGetter.isRedundantGetter()) {
-                    val commentSaver = CommentSaver(getter.function)
+                    realGetter.function.deleteExplicitLabelComments()
+                    val commentSaver = CommentSaver(realGetter.function)
                     commentSaver.restore(ktProperty)
                 }
-                getter.function.delete()
+                realGetter.function.delete()
             }
-            if (setter is RealSetter) {
+
+            if (realSetter != null) {
                 if (ktSetter?.isRedundantSetter() == true) {
-                    val commentSaver = CommentSaver(setter.function)
+                    realSetter.function.deleteExplicitLabelComments()
+                    val commentSaver = CommentSaver(realSetter.function)
                     commentSaver.restore(ktProperty)
                 }
-                setter.function.delete()
+                realSetter.function.delete()
             }
+        }
 
-            // If getter & setter do not have backing fields we should remove initializer
-            // As we already know that property is not directly used in the code
-            if (getter.target == null && setter?.target == null) {
-                ktProperty.initializer = null
-            }
+        removeRealAccessors()
 
-            val propertyVisibility = ktProperty.visibilityModifierTypeOrDefault()
-            getterVisibility?.let { ktProperty.setVisibility(it) }
-            if (ktSetter != null) {
-                if (setter !is RealSetter) {
-                    ktSetter.setVisibility(propertyVisibility)
+        // If getter & setter do not have backing fields we should remove initializer
+        // As we already know that property is not directly used in the code
+        if (getter.target == null && setter?.target == null) {
+            ktProperty.initializer = null
+        }
+
+        if (property is MergedProperty) {
+            ktProperty.renameTo(property.name)
+        }
+        if (isOpen) {
+            ktProperty.addModifier(OPEN_KEYWORD)
+        }
+
+        moveAccessorAnnotationsToProperty(ktProperty)
+    }
+
+    private fun addGetter(getter: Getter, ktProperty: KtProperty, isFakeProperty: Boolean): KtPropertyAccessor {
+        if (!isFakeProperty) {
+            getter.body?.replacePropertyToFieldKeywordReferences(ktProperty)
+        }
+
+        val ktGetter = psiFactory.createGetter(getter.body, getter.modifiersText)
+        for (modifier in redundantGetterModifiers) {
+            ktGetter.removeModifier(modifier)
+        }
+
+        if (getter is RealGetter) {
+            saveSurroundingComments(getter, ktGetter)
+
+            // update original function references to property references
+            getter.function.forAllUsages { usage ->
+                val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forAllUsages
+                val qualifier = callExpression.getQualifiedExpressionForSelector()
+                if (qualifier != null) {
+                    qualifier.replace(psiFactory.createExpression("${qualifier.receiverExpression.text}.${getter.name}"))
+                } else {
+                    callExpression.replace(psiFactory.createExpression("this.${getter.name}"))
                 }
-                ktProperty.addAfter(ktSetter, ktGetter)
+            }
+        }
+
+        ktProperty.add(psiFactory.createNewLine(1))
+        return ktProperty.add(ktGetter) as KtPropertyAccessor
+    }
+
+    private fun KtExpression.replacePropertyToFieldKeywordReferences(property: KtProperty) {
+        val references = property.usages(searcher, scope = this).map { it.element }.ifEmpty { return }
+        val fieldExpression = psiFactory.createExpression(FIELD_KEYWORD.value)
+
+        for (reference in references) {
+            val parent = reference.parent
+            val referenceExpression = when {
+                parent is KtQualifiedExpression && parent.receiverExpression.isReferenceToThis() -> parent
+                else -> reference
             }
 
-            if (property is MergedProperty) {
-                ktProperty.renameTo(property.name, psiFactory)
+            referenceExpression.replace(fieldExpression)
+        }
+    }
+
+    private fun KtPsiFactory.createGetter(body: KtExpression?, modifiers: String?): KtPropertyAccessor {
+        val propertyText = "val x\n ${modifiers.orEmpty()} get" +
+                when (body) {
+                    is KtBlockExpression -> "() { return 1 }"
+                    null -> ""
+                    else -> "() = 1"
+                } + "\n"
+        val property = createProperty(propertyText)
+        val getter = property.getter!!
+        val bodyExpression = getter.bodyExpression
+
+        bodyExpression?.replace(body!!)
+        return getter
+    }
+
+    private fun saveSurroundingComments(accessor: RealAccessor, ktAccessor: KtPropertyAccessor) {
+        if (accessor.function.firstChild is PsiComment) {
+            ktAccessor.addBefore(psiFactory.createWhiteSpace(), ktAccessor.firstChild)
+            ktAccessor.addBefore(accessor.function.firstChild, ktAccessor.firstChild)
+        }
+        if (accessor.function.lastChild is PsiComment) {
+            ktAccessor.add(psiFactory.createWhiteSpace())
+            ktAccessor.add(accessor.function.lastChild)
+        }
+    }
+
+    private fun KtElement.forAllUsages(action: (KtElement) -> Unit) {
+        usages(searcher).forEach { action(it.element as KtElement) }
+    }
+
+    private fun addSetter(setter: Setter, ktProperty: KtProperty, isFakeProperty: Boolean): KtPropertyAccessor {
+        if (setter is RealSetter) {
+            setter.function.valueParameters.single().rename(setter.parameterName)
+        }
+
+        if (!isFakeProperty) {
+            setter.body?.replacePropertyToFieldKeywordReferences(ktProperty)
+        }
+
+        val modifiers = setter.modifiersText?.takeIf { it.isNotEmpty() }
+            ?: setter.safeAs<RealSetter>()?.function?.visibilityModifierTypeOrDefault()?.value
+            ?: ktProperty.visibilityModifierTypeOrDefault().value
+
+        val ktSetter = psiFactory.createSetter(setter.body, setter.parameterName, modifiers)
+        for (modifier in redundantSetterModifiers) {
+            ktSetter.removeModifier(modifier)
+        }
+
+        if (setter is RealSetter) {
+            saveSurroundingComments(setter, ktSetter)
+            val propertyName = ktProperty.name
+
+            // update original function references to property references
+            setter.function.forAllUsages { usage ->
+                val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forAllUsages
+                val qualifier = callExpression.getQualifiedExpressionForSelector()
+                val newValue = callExpression.valueArguments.single()
+                if (qualifier != null) {
+                    qualifier.replace(
+                        psiFactory.createExpression("${qualifier.receiverExpression.text}.$propertyName = ${newValue.text}")
+                    )
+                } else {
+                    callExpression.replace(psiFactory.createExpression("this.$propertyName = ${newValue.text}"))
+                }
             }
-            if (isOpen) {
-                ktProperty.addModifier(KtTokens.OPEN_KEYWORD)
+        } else {
+            val propertyVisibility = ktProperty.visibilityModifierTypeOrDefault()
+            ktSetter.setVisibility(propertyVisibility)
+        }
+
+        return ktProperty.add(ktSetter) as KtPropertyAccessor
+    }
+
+    private fun KtPsiFactory.createSetter(body: KtExpression?, fieldName: String?, modifiers: String?): KtPropertyAccessor {
+        val modifiersText = modifiers.orEmpty()
+        val propertyText = when (body) {
+            null -> "var x = 1\n  get() = 1\n $modifiersText set"
+            is KtBlockExpression -> "var x get() = 1\n $modifiersText  set($fieldName) {\n field = $fieldName\n }"
+            else -> "var x get() = 1\n $modifiersText set($fieldName) = TODO()"
+        }
+        val property = createProperty(propertyText)
+        val setter = property.setter!!
+        if (body != null) {
+            setter.bodyExpression?.replace(body)
+        }
+
+        return setter
+    }
+
+    // A parameter with a special name (`field`) should be renamed
+    private fun KtParameter.rename(newName: String) {
+        if (name == newName) return
+
+        val renamer = RenamePsiElementProcessor.forElement(this)
+        val searchScope = project.projectScope() or useScope
+        val findReferences = renamer.findReferences(this, searchScope, false)
+        val usageInfos =
+            findReferences.mapNotNull { reference ->
+                val element = reference.element
+                val isBackingField = element is KtNameReferenceExpression &&
+                        element.text == FIELD_KEYWORD.value
+                        && element.mainReference.resolve() == this
+                        && isAncestor(element)
+                if (isBackingField) return@mapNotNull null
+                renamer.createUsageInfo(this, reference, reference.element)
+            }.toTypedArray()
+        renamer.renameElement(this, newName, usageInfos, null)
+    }
+
+    private fun KtProperty.renameTo(newName: String) {
+        for (usage in usages(searcher)) {
+            val element = usage.element
+            val isBackingField = element is KtNameReferenceExpression
+                    && element.text == FIELD_KEYWORD.value
+                    && element.mainReference.resolve() == this
+                    && isAncestor(element)
+            if (isBackingField) continue
+            val replacer =
+                if (element.parent is KtQualifiedExpression) psiFactory.createExpression(newName)
+                else psiFactory.createExpression("this.$newName")
+            element.replace(replacer)
+        }
+        setName(newName)
+    }
+
+    // Don't try to save the now useless explicit label comments,
+    // they may hurt formatting later
+    private fun KtNamedFunction.deleteExplicitLabelComments() {
+        forEachDescendantOfType<PsiComment> { comment ->
+            if (comment.text.asExplicitLabel() != null) comment.delete()
+        }
+    }
+
+    private fun moveAccessorAnnotationsToProperty(property: KtProperty) {
+        for (accessor in property.accessors.sortedBy { it.isGetter }) {
+            for (accessorEntry in accessor.annotationEntries) {
+                val propertyEntry = property.addAnnotationEntry(accessorEntry)
+                val target = if (accessor.isGetter) PROPERTY_GETTER else PROPERTY_SETTER
+                propertyEntry.addUseSiteTarget(target, property.project)
             }
+            accessor.annotationEntries.forEach { it.delete() }
         }
     }
 }
 
+private fun KtElement.usages(searcher: JKInMemoryFilesSearcher, scope: PsiElement? = null): Iterable<PsiReference> =
+    searcher.search(element = this, scope)
+
+private fun ClassDescriptor.superClassAndSuperInterfaces(): List<ClassDescriptor> =
+    getSuperInterfaces() + listOfNotNull(getSuperClassNotAny())
+
+private fun KtExpression.isReferenceToThis(): Boolean {
+    val reference = when (this) {
+        is KtThisExpression -> instanceReference
+        is KtReferenceExpression -> this
+        is KtQualifiedExpression -> selectorExpression as? KtReferenceExpression
+        else -> null
+    }
+    return reference?.resolve() == this.getStrictParentOfType<KtClassOrObject>()
+}
 
 private data class PropertyWithAccessors(
     val property: Property,
@@ -736,6 +798,9 @@ private data class PropertyData(
 private interface PropertyInfo {
     val name: String
 }
+
+private val PropertyInfo.isFake: Boolean
+    get() = this is FakeAccessor
 
 private interface Accessor : PropertyInfo {
     val target: KtProperty?
@@ -755,14 +820,16 @@ private data class RealProperty(
 ) : Property()
 
 private data class FakeProperty(override val name: String, val type: String, override val isVar: Boolean) : Property()
+
 private data class MergedProperty(
     override val name: String,
-    val type: String,
+    val type: String, // TODO unused!
     override val isVar: Boolean,
     val mergeTo: KtProperty
 ) : Property()
 
 private sealed class Getter : Accessor
+
 private sealed class Setter : Accessor {
     abstract val parameterName: String
 }
@@ -822,13 +889,5 @@ private data class FakeSetter(
         get() = name.fixSetterParameterName()
 }
 
-private data class CollectingState(
-    val propertyNameToSuperType: MutableMap<Pair<KtClassOrObject, String>, KotlinType> = mutableMapOf()
-)
-
-private fun String.fixSetterParameterName() =
-    if (this == KtTokens.FIELD_KEYWORD.value) "value"
-    else this
-
-private val PropertyInfo.isFake: Boolean
-    get() = this is FakeAccessor
+private fun String.fixSetterParameterName(): String =
+    if (this == FIELD_KEYWORD.value) "value" else this

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class HtmlRequiredTitleAttributeInspection extends HtmlLocalInspectionTool {
+public final class HtmlRequiredTitleAttributeInspection extends HtmlLocalInspectionTool {
   private static final Set<String>
     ourElementsWithoutTitle = Set.of("frame", "iframe", "dl", "a", "router-link");
   private static final String TITLE = "title";
@@ -40,9 +40,8 @@ public class HtmlRequiredTitleAttributeInspection extends HtmlLocalInspectionToo
       }
       if (holder.isOnTheFly()) {
         fixes.add(new InsertRequiredAttributeFix(tag, TITLE) {
-          @NotNull
           @Override
-          public String getText() {
+          public @NotNull String getText() {
             return HtmlToolsBundle.message("html.intention.insert.attribute", TITLE);
           }
         });
@@ -52,9 +51,8 @@ public class HtmlRequiredTitleAttributeInspection extends HtmlLocalInspectionToo
     }
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HtmlRequiredTitleAttribute";
   }
 }

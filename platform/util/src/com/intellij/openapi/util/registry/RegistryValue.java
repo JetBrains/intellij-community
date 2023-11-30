@@ -9,6 +9,9 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -243,14 +246,12 @@ public class RegistryValue {
   }
 
   public void setValue(String value) {
-    resetCache();
-
     RegistryValueListener globalValueChangeListener = myRegistry.getValueChangeListener();
     globalValueChangeListener.beforeValueChanged(this);
     for (RegistryValueListener each : myListeners) {
       each.beforeValueChanged(this);
     }
-
+    resetCache();
     myRegistry.getUserProperties().put(myKey, value);
     LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
 
@@ -284,7 +285,7 @@ public class RegistryValue {
     Disposer.register(parentDisposable, () -> setValue(prev));
   }
 
-  boolean isChangedSinceAppStart() {
+  public boolean isChangedSinceAppStart() {
     return myChangedSinceStart;
   }
 
@@ -300,6 +301,14 @@ public class RegistryValue {
   public void addListener(@NotNull RegistryValueListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, () -> myListeners.remove(listener));
+  }
+
+  public void addListener(@NotNull RegistryValueListener listener, @NotNull CoroutineScope coroutineScope) {
+    myListeners.add(listener);
+    Objects.requireNonNull(coroutineScope.getCoroutineContext().get(Job.Key)).invokeOnCompletion(__ -> {
+      myListeners.remove(listener);
+      return Unit.INSTANCE;
+    });
   }
 
   @Override

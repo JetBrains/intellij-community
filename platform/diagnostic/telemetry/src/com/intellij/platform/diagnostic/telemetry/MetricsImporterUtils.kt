@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.metrics.data.LongPointData
 import io.opentelemetry.sdk.metrics.internal.data.ImmutableLongPointData
@@ -9,11 +9,8 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.bufferedReader
 
-private val LOG: Logger = Logger.getInstance(MetricsImporterUtils.javaClass)
-
 @ApiStatus.Internal
 object MetricsImporterUtils {
-
   private fun String.isLongNumber(): Boolean {
     return try {
       this.toLong()
@@ -24,13 +21,11 @@ object MetricsImporterUtils {
     }
   }
 
-
   /**
    * Only Long Gauge meters are parsed by now.
    * TODO: to differentiate between different types of meters we need to store MetricDataType in csv as well
    */
-  @JvmStatic
-  fun fromCsvFile(metricsCsvPath: Path): HashMap<String, MutableList<LongPointData>> {
+  private fun fromCsvFile(metricsCsvPath: Path): HashMap<String, MutableList<LongPointData>> {
     val meters = HashMap<String, MutableList<LongPointData>>()
 
     metricsCsvPath.bufferedReader().useLines { lines ->
@@ -52,7 +47,7 @@ object MetricsImporterUtils {
           }
         }
         catch (e: Exception) {
-          LOG.error("Failure during parsing OpenTelemetry metrics from CSV file $metricsCsvPath on line $line")
+          logger<MetricsImporterUtils>().error("Failure during parsing OpenTelemetry metrics from CSV file $metricsCsvPath on line $line")
           throw e
         }
       }
@@ -61,7 +56,6 @@ object MetricsImporterUtils {
     }
   }
 
-  @JvmStatic
   fun fromCsvFile(metricsCsvFiles: Iterable<Path>): HashMap<String, MutableList<LongPointData>> {
     val meters = HashMap<String, MutableList<LongPointData>>()
 

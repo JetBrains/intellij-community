@@ -11,3 +11,4 @@ fun main() {
     new<String>()
     new<Int>()
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageInWholeProjectFix

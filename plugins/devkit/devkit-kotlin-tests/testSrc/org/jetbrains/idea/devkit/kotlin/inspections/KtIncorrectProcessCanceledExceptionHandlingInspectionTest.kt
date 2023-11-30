@@ -25,6 +25,11 @@ class KtIncorrectProcessCanceledExceptionHandlingInspectionTest : IncorrectProce
         @SinceKotlin("1.4")
         actual typealias Throws = kotlin.jvm.Throws
       """)
+    addKotlinFile("SubclassOfProcessCanceledException.kt", """
+        package com.example
+        import com.intellij.openapi.progress.ProcessCanceledException
+        class SubclassOfProcessCanceledException : ProcessCanceledException()
+      """)
   }
 
   private fun addKotlinFile(relativePath: String, @Language("kotlin") fileText: String) {

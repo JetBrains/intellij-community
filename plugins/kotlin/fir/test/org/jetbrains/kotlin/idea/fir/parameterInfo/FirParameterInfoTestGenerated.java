@@ -332,6 +332,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
             runTest("../idea/tests/testData/parameterInfo/functionCall/OtherConstructorFromSecondary.kt");
         }
 
+        @TestMetadata("ParameterHighlighting.kt")
+        public void testParameterHighlighting() throws Exception {
+            runTest("../idea/tests/testData/parameterInfo/functionCall/ParameterHighlighting.kt");
+        }
+
         @TestMetadata("ParameterNameAnnotationConflict.kt")
         public void testParameterNameAnnotationConflict() throws Exception {
             runTest("../idea/tests/testData/parameterInfo/functionCall/ParameterNameAnnotationConflict.kt");

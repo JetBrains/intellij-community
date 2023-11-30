@@ -1,5 +1,6 @@
 {
   "mainFile": "oldPackage/fun.kt",
   "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
-  "targetPackage": "newPackage"
+  "targetPackage": "newPackage",
+  "enabledInK2": "true"
 }

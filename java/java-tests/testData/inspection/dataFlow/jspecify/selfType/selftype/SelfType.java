@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 The jspecify Authors.
+ * Copyright 2020 The JSpecify Authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package selftype;
 
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
 @NullMarked
 public class SelfType<T extends SelfType<T>> {
@@ -33,7 +32,7 @@ class C<E extends C<E>> extends SelfType<E> {}
 // jspecify_nullness_not_enough_information
 class AK extends SelfType<AK> {}
 
-// jspecify_nullness_mismatch
+// test:cannot-convert:AK? to SelfType!<AK!>
 class AKN extends SelfType<@Nullable AK> {}
 
 class BK extends B {}
@@ -42,7 +41,7 @@ class BK extends B {}
 class CK extends C<CK> {}
 
 @NullMarked
-// jspecify_nullness_mismatch
+// test:cannot-convert:CK? to C!<CK!>
 abstract class Super extends C<@Nullable CK> {
   abstract AK ak();
 
@@ -58,21 +57,21 @@ abstract class Super extends C<@Nullable CK> {
 abstract class CKN extends Super {
   public void main() {
     ak().foo(ak());
-    // jspecify_nullness_mismatch
+    // test:cannot-convert:null? to AK!
     ak().foo(null);
 
-    // jspecify_nullness_mismatch
+    // test:cannot-convert:null? to AK!
     akn().foo(null);
 
     bk().foo(bk());
-    // jspecify_nullness_mismatch
+    // test:cannot-convert:null? to B!
     bk().foo(null);
 
     ck().foo(ck());
-    // jspecify_nullness_mismatch
+    // test:cannot-convert:null? to CK!
     ck().foo(null);
 
-    // jspecify_nullness_mismatch
+    // test:cannot-convert:null? to CK!
     ckn().foo(null);
   }
 }

@@ -126,7 +126,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static @NotNull Path getTestLogDir() {
     String property = System.getProperty(PROPERTY_LOG_PATH);
-    return property != null ? Path.of(property) : Path.of(PathManager.getSystemPath(), LOG_DIR);
+    return property == null ? Path.of(PathManager.getSystemPath(), LOG_DIR) : Path.of(property).normalize();
   }
 
   public static void dumpLogToStdout(@NotNull String testStartMarker) {
@@ -257,7 +257,7 @@ public final class TestLoggerFactory implements Logger.Factory {
   }
 
   /** @deprecated use {@link #onTestFinished(boolean, Description)} or {@link #onTestFinished(boolean, String)} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void onTestFinished(boolean success) {
     onTestFinished(success, "unnamed_test");
   }
@@ -395,8 +395,9 @@ public final class TestLoggerFactory implements Logger.Factory {
         super.info(message, t);
       }
 
-      if (actions.contains(LoggedErrorProcessor.Action.STDERR)) {
-        DefaultLogger.dumpExceptionsToStderr(message, t);
+      if (actions.contains(LoggedErrorProcessor.Action.STDERR) && DefaultLogger.shouldDumpExceptionToStderr()) {
+        System.err.println("ERROR: " + message);
+        if (t != null) t.printStackTrace(System.err);
       }
 
       if (actions.contains(LoggedErrorProcessor.Action.RETHROW)) {
@@ -419,24 +420,9 @@ public final class TestLoggerFactory implements Logger.Factory {
     }
 
     @Override
-    public void info(String message) {
-      info(message, null);
-    }
-
-    @Override
     public void info(String message, @Nullable Throwable t) {
       super.info(message, t);
       myFactory.buffer(LogLevel.INFO, myLogger.getName(), message, t);
-    }
-
-    @Override
-    public void debug(String message) {
-      debug(message, (Throwable)null);
-    }
-
-    @Override
-    public void debug(@Nullable Throwable t) {
-      debug(null, t);
     }
 
     @Override
@@ -537,7 +523,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   private static class WithTimeSinceTestStartedJulFormatter extends IdeaLogRecordFormatter {
     WithTimeSinceTestStartedJulFormatter() {
-      super(false);
+      super(true);
     }
 
     @Override

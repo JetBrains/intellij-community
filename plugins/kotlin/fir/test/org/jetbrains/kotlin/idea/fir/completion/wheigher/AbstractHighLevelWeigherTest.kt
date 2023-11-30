@@ -23,7 +23,7 @@ abstract class AbstractHighLevelWeigherTest : AbstractBasicCompletionWeigherTest
     override fun fileName(): String = firFileName(super.fileName(), testDataDirectory)
 
     override fun executeTest(test: () -> Unit) {
-        IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
             test()
         }
     }

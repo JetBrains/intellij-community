@@ -28,7 +28,7 @@ class DataContextDialog(
     init()
   }
 
-  override fun getDimensionServiceKey() = "UiInternal.DataContextDialog"
+  override fun getDimensionServiceKey(): String = "UiInternal.DataContextDialog"
 
   override fun createActions(): Array<Action> {
     return arrayOf(cancelAction)

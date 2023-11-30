@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.SourcePosition
@@ -31,13 +31,11 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle.message
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerLegacyFacade
 import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -46,7 +44,7 @@ interface SourcePositionRefiner {
     fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition
 }
 
-class KotlinFunctionBreakpoint(
+open class KotlinFunctionBreakpoint(
     project: Project,
     breakpoint: XBreakpoint<*>
 ) : MethodBreakpoint(project, breakpoint), SourcePositionRefiner {
@@ -64,7 +62,7 @@ class KotlinFunctionBreakpoint(
     }
 
     override fun refineSourcePosition(sourcePosition: SourcePosition): SourcePosition {
-        val declaration = sourcePosition.elementAt.parentOfType<KtDeclaration>(withSelf = true) ?: return sourcePosition
+        val declaration = sourcePosition.elementAt?.parentOfType<KtDeclaration>(withSelf = true) ?: return sourcePosition
         if (declaration.isExpectDeclaration()) {
             val actualDeclaration = declaration.getActualJvmDeclaration() ?: return sourcePosition
             return SourcePosition.createFromElement(actualDeclaration) ?: sourcePosition

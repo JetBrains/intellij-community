@@ -14,4 +14,5 @@ fun usage(t: T) {
     t.foo()<caret>
 }
 
+// IGNORE_K2
 // ELEMENT: foo

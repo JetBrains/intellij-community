@@ -109,6 +109,7 @@ class CompositeResolverForModuleFactory(
 
             yieldAll(getCommonProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container)) // todo: module context
             yieldAll(getJsProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container))
+            yieldAll(getWasmProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container))
             yieldAll(getJvmProvidersIfAny(container))
             yieldAll(getNativeProvidersIfAny(moduleInfo, container))
             yieldAll(getExtensionsProvidersIfAny(moduleInfo, moduleContext, trace))
@@ -188,7 +189,18 @@ class CompositeResolverForModuleFactory(
     ): List<PackageFragmentProvider> {
         if (moduleInfo !is LibraryModuleInfo || !moduleInfo.platform.isJs()) return emptyList()
 
-        return createPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
+        return createJsPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
+    }
+
+    private fun getWasmProvidersIfAny(
+        moduleInfo: ModuleInfo,
+        moduleContext: ModuleContext,
+        moduleDescriptor: ModuleDescriptorImpl,
+        container: StorageComponentContainer
+    ): List<PackageFragmentProvider> {
+        if (moduleInfo !is LibraryModuleInfo || !moduleInfo.platform.isWasm()) return emptyList()
+
+        return createWasmPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
     }
 
     private fun createContainerForCompositePlatform(
@@ -207,8 +219,11 @@ class CompositeResolverForModuleFactory(
         // Shared by all PlatformConfigurators
         configureDefaultCheckers()
 
+        // In case of a common source set with multiple native targets a composite platform may duplicate platformConfigurator; we use a set
+        // to deduplicate
+        val uniquePlatformConfigurators = analyzerServices.services.mapTo(linkedSetOf()) { it.platformConfigurator as PlatformConfiguratorBase }
         // Specific for each PlatformConfigurator
-        for (configurator in analyzerServices.services.map { it.platformConfigurator as PlatformConfiguratorBase }) {
+        for (configurator in uniquePlatformConfigurators) {
             configurator.configureExtensionsAndCheckers(this)
         }
 

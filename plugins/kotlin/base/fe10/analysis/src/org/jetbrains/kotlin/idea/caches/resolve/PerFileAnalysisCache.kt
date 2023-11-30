@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentInFile
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
+import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.cfg.ControlFlowInformationProviderImpl
 import org.jetbrains.kotlin.container.ComponentProvider
@@ -38,6 +39,7 @@ import org.jetbrains.kotlin.idea.caches.trackers.inBlockModifications
 import org.jetbrains.kotlin.idea.caches.trackers.removeInBlockModifications
 import org.jetbrains.kotlin.idea.compiler.IdeMainFunctionDetectorFactory
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.project.IdeaAbsentDescriptorHandler
 import org.jetbrains.kotlin.idea.project.IdeaModuleStructureOracle
 import org.jetbrains.kotlin.idea.stubindex.resolve.PluginDeclarationProviderFactory
@@ -113,6 +115,12 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         }
 
         return guardLock.guarded {
+
+            // It is necessary to ignore the codeFragment used in the evaluator for compilation
+            // because caching can lead to data consistency bugs (see KTIJ-22496). However, the code fragments that come from the evaluator,
+            // which are not intended for compilation (e.g., for highlighting), should be cached in order to maintain the current performance of the evaluator.
+            if (analyzableParent.isUsedForCompilationInEvaluator()) return@guarded performAnalyze(element, callback)
+
             // step 1: perform incremental analysis IF it is applicable
             getIncrementalAnalysisResult(callback)?.let {
                 return@guarded handleResult(it, callback)
@@ -126,30 +134,36 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
                 return@guarded handleResult(it, callback)
             }
 
-            val localDiagnostics = mutableSetOf<Diagnostic>()
-            val localCallback = if (callback != null) { d: Diagnostic ->
-                localDiagnostics.add(d)
-                callback.callback(d)
-            } else null
-
             // step 3: perform analyze of analyzableParent as nothing has been cached yet
-            val result = try {
-              analyze(analyzableParent, null, localCallback)
-            } catch (e: Throwable) {
-                e.throwAsInvalidModuleException {
-                    ProcessCanceledException(it)
-                }
-                throw e
-            }
+            val result = performAnalyze(analyzableParent, callback)
 
-            // some diagnostics could be not handled with a callback - send out the rest
-            callback?.let { c ->
-                result.bindingContext.diagnostics.filterNot { it in localDiagnostics }.forEach(c::callback)
-            }
             cache[analyzableParent] = result
 
             return@guarded result
         }
+    }
+
+    private fun performAnalyze(element: KtElement, callback: DiagnosticSink.DiagnosticsCallback? = null): AnalysisResult {
+        val localDiagnostics = mutableSetOf<Diagnostic>()
+        val localCallback = if (callback != null) { d: Diagnostic ->
+            localDiagnostics.add(d)
+            callback.callback(d)
+        } else null
+
+        val result = try {
+            analyze(element, null, localCallback)
+        } catch (e: Throwable) {
+            e.throwAsInvalidModuleException {
+                ProcessCanceledException(it)
+            }
+            throw e
+        }
+
+        // some diagnostics could be not handled with a callback - send out the rest
+        callback?.let { c ->
+            result.bindingContext.diagnostics.filterNot { it in localDiagnostics }.forEach(c::callback)
+        }
+        return result
     }
 
     private fun getIncrementalAnalysisResult(callback: DiagnosticSink.DiagnosticsCallback?): AnalysisResult? {
@@ -319,6 +333,9 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         file.clearInBlockModifications()
         fileResult = null
     }
+
+    private fun KtElement.isUsedForCompilationInEvaluator(): Boolean =
+        containingFile is KtCodeFragment && containingFile.getCopyableUserData(CodeFragmentUtils.USED_FOR_COMPILATION_IN_IR_EVALUATOR) ?: false
 }
 
 private fun Throwable.asInvalidModuleException(): InvalidModuleException? {
@@ -415,6 +432,30 @@ private class StackedCompositeBindingContextTrace(
         // to prevent too deep stacked binding context
         fun isIncrementalAnalysisApplicable(): Boolean = this@StackedCompositeBindingContextTrace.depth < 16
 
+        // Predicate to check if the receiver is a PsiElement that was reanalyzed and therefore should
+        // have a result in the reanalysis context. We should not look such elements up in the
+        // parent context when there is no information for it in the current context. Because of mutations
+        // to PsiElements, that could result in incorrect information
+        // (see https://youtrack.jetbrains.com/issue/KTIJ-26856).
+        private fun <K: Any?> K.containedInReanalyzedElement(): Boolean {
+            return when (element) {
+                is KtDeclarationWithBody -> {
+                    // Psi elements within the body of a reanalyzed function should have
+                    // information only in reanalysis context.
+                    val body = element.bodyExpression ?: return false
+                    (this as? PsiElement)?.parentsWithSelf?.contains(body) == true
+                }
+                is KtClassOrObject -> {
+                    // Psi elements within anonymous initializers and secondary constructors should have information
+                    // only in the reanalysis context.
+                    (this as? PsiElement)?.parents(withSelf = false)?.any {
+                        it in element.getAnonymousInitializers() || it in element.secondaryConstructors
+                    } == true
+                }
+                else -> false
+            }
+        }
+
         override fun getDiagnostics(): Diagnostics {
             if (cachedDiagnostics == null) {
                 val mergedDiagnostics = mutableSetOf<Diagnostic>()
@@ -435,9 +476,13 @@ private class StackedCompositeBindingContextTrace(
         }
 
         override fun <K : Any?, V : Any?> get(slice: ReadOnlySlice<K, V>, key: K): V? {
-            return selfGet(slice, key) ?: parentContext.get(slice, key)?.takeIf {
-                (it as? DeclarationDescriptorWithSource)?.source?.getPsi()?.isValid != false
+            selfGet(slice, key)?.let { return it }
+            if (!key.containedInReanalyzedElement()) {
+                return parentContext.get(slice, key)?.takeIf {
+                    (it as? DeclarationDescriptorWithSource)?.source?.getPsi()?.isValid != false
+                }
             }
+            return null
         }
 
         override fun getType(expression: KtExpression): KotlinType? {
@@ -447,7 +492,9 @@ private class StackedCompositeBindingContextTrace(
 
         override fun <K, V> getKeys(slice: WritableSlice<K, V>): Collection<K> {
             val keys = map.getKeys(slice)
-            val fromParent = parentContext.getKeys(slice)
+            val fromParent = parentContext.getKeys(slice).filter {
+                !it.containedInReanalyzedElement()
+            }
             if (keys.isEmpty()) return fromParent
             if (fromParent.isEmpty()) return keys
 
@@ -455,7 +502,11 @@ private class StackedCompositeBindingContextTrace(
         }
 
         override fun <K : Any?, V : Any?> getSliceContents(slice: ReadOnlySlice<K, V>): ImmutableMap<K, V> {
-            return ImmutableMap.copyOf(parentContext.getSliceContents(slice) + map.getSliceContents(slice))
+            val parentSliceContents = parentContext.getSliceContents(slice).filter {
+                !it.key.containedInReanalyzedElement()
+            }
+            val mapSliceContents = map.getSliceContents(slice)
+            return ImmutableMap.copyOf(parentSliceContents + mapSliceContents)
         }
 
         override fun addOwnDataTo(trace: BindingTrace, commitDiagnostics: Boolean) = throw UnsupportedOperationException()

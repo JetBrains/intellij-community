@@ -67,7 +67,7 @@ public final class ReplaceInProjectManager {
     myProject = project;
   }
 
-  static class ReplaceContext {
+  static final class ReplaceContext {
     private final UsageView usageView;
     private final FindModel findModel;
     private Set<Usage> excludedSet;
@@ -122,7 +122,7 @@ public final class ReplaceInProjectManager {
       findModel.setReplaceState(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
-      FindInProjectUtil.setDirectoryName(findModel, dataContext);
+      FindInProjectUtil.setScope(myProject, findModel, dataContext);
       FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
     }
     else {
@@ -155,14 +155,14 @@ public final class ReplaceInProjectManager {
     final FindModel findModelCopy = findModel.clone();
 
     final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
-    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(true, presentation);
     processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
 
     UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
     searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
   }
 
-  private static class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
+  private static final class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
     ReplaceInProjectTarget(@NotNull Project project, @NotNull FindModel findModel) {
       super(project, findModel);
     }

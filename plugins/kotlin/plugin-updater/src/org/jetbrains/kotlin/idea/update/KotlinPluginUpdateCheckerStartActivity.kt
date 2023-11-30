@@ -48,7 +48,7 @@ class KotlinPluginUpdateCheckerStartActivity : ProjectActivity {
 private fun showEapAdvertisementNotification() {
     val compilerVersion = KotlinPluginLayout.ideCompilerVersion
     if (compilerVersion.kotlinVersion != KotlinVersion(major = 1, minor = 7, patch = 20)) return
-    if (compilerVersion.kind != IdeKotlinVersion.Kind.Beta(number = 1)) return
+    if (compilerVersion.kind != IdeKotlinVersion.Kind.Beta(number = 1) && compilerVersion.kind != IdeKotlinVersion.Kind.Beta(number = null)) return
 
     RunOnceUtil.runOnceForApp("kotlin.eap.advertisement.was.shown.once") {
         NotificationGroupManager.getInstance()

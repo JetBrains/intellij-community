@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
@@ -6,8 +6,8 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,8 +46,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   }
 
   @Override
-  @Nullable
-  public CodeInsightSettings clone() {
+  public @Nullable CodeInsightSettings clone() {
     try {
       return (CodeInsightSettings)super.clone();
     }
@@ -114,8 +113,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   private int SMART_BACKSPACE = SmartBackspaceMode.AUTOINDENT.ordinal();
 
   @Transient
-  @NotNull
-  public SmartBackspaceMode getBackspaceMode() {
+  public @NotNull SmartBackspaceMode getBackspaceMode() {
     SmartBackspaceMode[] values = SmartBackspaceMode.values();
     return SMART_BACKSPACE >= 0 && SMART_BACKSPACE < values.length ? values[SMART_BACKSPACE] : SmartBackspaceMode.OFF;
   }

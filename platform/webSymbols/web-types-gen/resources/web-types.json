@@ -335,6 +335,12 @@
         "deprecated-since": {
           "$ref": "#/definitions/deprecated-since"
         },
+        "obsolete": {
+          "$ref": "#/definitions/obsolete"
+        },
+        "obsolete-since": {
+          "$ref": "#/definitions/obsolete-since"
+        },
         "experimental": {
           "$ref": "#/definitions/experimental"
         },
@@ -454,7 +460,7 @@
       "oneOf": [
         {
           "type": "string",
-          "description": "Provide one of special attribute value types:  \"enum\", \"of-match\", or a simple JavaScript type according to the specified type format."
+          "description": "Provide one of special attribute value types:  \"enum\", \"symbol\", \"of-match\", or a simple JavaScript type according to the specified type format."
         },
         {
           "$ref": "#/definitions/type-reference"
@@ -746,7 +752,7 @@
       "type": "string"
     },
     "deprecated": {
-      "description": "Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.",
+      "description": "Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.",
       "type": [
         "boolean",
         "string"
@@ -755,6 +761,18 @@
     },
     "deprecated-since": {
       "description": "Version in which this symbol was first deprecated.",
+      "type": "string"
+    },
+    "obsolete": {
+      "description": "Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.",
+      "type": [
+        "boolean",
+        "string"
+      ],
+      "default": false
+    },
+    "obsolete-since": {
+      "description": "Version in which this symbol was first made obsolete.",
       "type": "string"
     },
     "experimental": {

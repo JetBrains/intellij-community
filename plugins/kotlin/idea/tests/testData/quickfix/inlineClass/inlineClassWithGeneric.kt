@@ -3,3 +3,5 @@
 // WITH_STDLIB
 
 <caret>inline class IC<T>(val i: T)
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InlineClassDeprecatedFix

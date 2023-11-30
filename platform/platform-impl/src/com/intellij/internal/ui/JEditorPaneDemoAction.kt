@@ -29,7 +29,7 @@ internal class JEditorPaneDemoAction : DumbAwareAction("HTML Rendering Playgroun
 
   private val PREFERENCE_KEY = "HTML_RENDERING_PLAYGROUND"
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {

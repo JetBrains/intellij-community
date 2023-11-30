@@ -30,6 +30,8 @@ import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.inputStream
+import kotlin.io.path.readText
 
 /**
  * Functionality without stream provider covered, ICS has own test suite

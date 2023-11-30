@@ -5,14 +5,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class ExceptionUtil extends ExceptionUtilRt {
@@ -166,31 +165,33 @@ public final class ExceptionUtil extends ExceptionUtilRt {
 
   /**
    * Runs _all_ the tasks passed in, collect the exceptions risen, and rethrow them.
+   * <p/>
    * How exceptions are rethrown depends on their type: we try to throw exception of
-   * type E. If it is possible to re-throw the first exception caught as E -> we use
-   * it, otherwise -> we use example as a type-safe carrier.
+   * type E. If the _first_ exception caught is of type E -> we rethrow it, otherwise
+   * -> we use exampleSupplier to generate an exception to throw. All other exceptions
+   * are added to main exception's 'suppressed' list.
+   * <p/>
    * More formally:
-   * If the first exception caught is type-compatible with example exception -> the first
-   * exception is rethrown with the following exceptions, if any, attached as 'suppressed'.
-   * If the first exception caught is not type-compatible with example exception -> the
-   * example exception is thrown, with first and following exceptions attached as 'suppressed'.
+   * If the first exception caught is lof type E -> the first exception is rethrown with
+   * the following exceptions, if any, attached as 'suppressed'.
+   * If the first exception caught is of type E -> the example exception is thrown, with
+   * the first and following exceptions attached as 'suppressed'.
    */
-  @SuppressWarnings("unchecked")
+  @SafeVarargs
   public static <E extends Exception>
-  void runAllAndRethrowAllExceptions(@NotNull E example,
+  void runAllAndRethrowAllExceptions(@NotNull Class<? extends E> exampleClass,
+                                     @NotNull Supplier<E> exampleSupplier,
                                      ThrowableRunnable<? extends Exception> @NotNull ... potentiallyFailingTasks) throws E {
-    E exception = null;
-    for (ThrowableRunnable<? extends Exception> potentiallyFailingTask : potentiallyFailingTasks) {
-      try {
-        potentiallyFailingTask.run();
-      }
-      catch (Throwable e) {
+    Function<List<? extends Throwable>, E> combiner = exceptions -> {
+      E exception = null;
+      for (Throwable e : exceptions) {
         if (exception == null) {
-          if (example.getClass().isAssignableFrom(e.getClass())) {
+          if (exampleClass.isAssignableFrom(e.getClass())) {
+            //noinspection unchecked
             exception = (E)e;
           }
           else {
-            exception = example;
+            exception = exampleSupplier.get();
             exception.addSuppressed(e);
           }
         }
@@ -198,9 +199,33 @@ public final class ExceptionUtil extends ExceptionUtilRt {
           exception.addSuppressed(e);
         }
       }
+      return exception;
+    };
+
+    runAllAndRethrowAllExceptions(combiner, potentiallyFailingTasks);
+  }
+
+
+  @SafeVarargs
+  @ApiStatus.Internal
+  public static <E extends Exception>
+  void runAllAndRethrowAllExceptions(@NotNull Function<List<? extends Throwable>, E> exceptionsCombiner,
+                                     ThrowableRunnable<? extends Exception> @NotNull ... potentiallyFailingTasks) throws E {
+    List<Throwable> exceptions = null;
+    for (ThrowableRunnable<? extends Exception> potentiallyFailingTask : potentiallyFailingTasks) {
+      try {
+        potentiallyFailingTask.run();
+      }
+      catch (Throwable e) {
+        if (exceptions == null) {
+          exceptions = new ArrayList<>();
+        }
+        exceptions.add(e);
+      }
     }
-    if (exception != null) {
-      throw exception;
+
+    if (exceptions != null) {
+      throw exceptionsCombiner.apply(exceptions);
     }
   }
 }

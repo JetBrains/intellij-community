@@ -12,15 +12,15 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.serviceContainer.NonInjectable
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import java.util.concurrent.ConcurrentMap
 
 
 @Service(Service.Level.PROJECT)
-class UsagesCountManager @NonInjectable constructor(project: Project, private val usagesCounter: UsagesCounter): Disposable {
+class UsagesCountManager @NonInjectable constructor(project: Project, private val configuration: UsageCounterConfiguration): Disposable {
 
   @Suppress("unused")
-  constructor(project: Project): this(project, DefaultUsagesCounter())
+  constructor(project: Project): this(project, object : UsageCounterConfiguration {})
 
   companion object {
     @JvmStatic
@@ -29,62 +29,65 @@ class UsagesCountManager @NonInjectable constructor(project: Project, private va
     }
   }
 
-  private val externalUsagesCache: ConcurrentMap<VirtualFile, FileUsagesCache> = ContainerUtil.createConcurrentWeakKeySoftValueMap()
+  private val externalUsagesCache: ConcurrentMap<VirtualFile, FileUsagesCache> = configuration.createCacheMap()
 
   init {
-    val listener = object : PsiTreeAnyChangeAbstractAdapter() {
-      override fun onChange(psiFile: PsiFile?) {
-        val file = psiFile?.virtualFile ?: return
-        val valueToKeep = externalUsagesCache[file]
-        externalUsagesCache.clear()
-        if (valueToKeep != null) {
-          externalUsagesCache[file] = valueToKeep
-        }
+    val listener = psiTreeAnyChangeAbstractAdapter()
+    PsiManager.getInstance(project).addPsiTreeChangeListener(listener, this)
+  }
+
+  private fun psiTreeAnyChangeAbstractAdapter() = object : PsiTreeAnyChangeAbstractAdapter() {
+    override fun onChange(psiFile: PsiFile?) {
+      val file = psiFile?.virtualFile ?: return
+      val valueToKeep = externalUsagesCache[file]
+      externalUsagesCache.clear()
+      if (valueToKeep != null) {
+        externalUsagesCache[file] = valueToKeep
       }
     }
-    PsiManager.getInstance(project).addPsiTreeChangeListener(listener, this)
   }
 
   fun countMemberUsages(file: PsiFile, member: PsiMember): Int {
     val virtualFile = PsiUtilCore.getVirtualFile(file)
     if (virtualFile == null) {
-      return usagesCounter.countUsages(file, findSuperMembers(member), GlobalSearchScope.allScope(file.project))
+      return configuration.countUsages(file, findSuperMembers(member), GlobalSearchScope.allScope(file.project))
     }
-    return externalUsagesCache.getOrPut(virtualFile) { FileUsagesCache() }.countMemberUsagesCached(usagesCounter, file, member)
+    return externalUsagesCache.getOrPut(virtualFile) { FileUsagesCache(configuration) }.countMemberUsagesCached(file, member)
   }
 
   override fun dispose() {
   }
-
-  interface UsagesCounter {
-    fun countUsages(file: PsiFile, members: List<PsiMember>, scope: SearchScope): Int
-  }
-
-  private class DefaultUsagesCounter: UsagesCounter {
-    override fun countUsages(file: PsiFile, members: List<PsiMember>, scope: SearchScope): Int {
-      return JavaTelescope.usagesCount(file, members, scope)
-    }
-  }
 }
 
-private class FileUsagesCache {
-  private val externalUsagesCache: ConcurrentMap<String, Int> = ContainerUtil.createConcurrentWeakKeySoftValueMap()
+private class FileUsagesCache(private val configuration: UsageCounterConfiguration) {
+  private val externalUsagesCache: ConcurrentMap<String, Int> = configuration.createCacheMap()
 
-  fun countMemberUsagesCached(usagesCounter: UsagesCountManager.UsagesCounter, file: PsiFile, member: PsiMember): Int {
+  fun countMemberUsagesCached(file: PsiFile, member: PsiMember): Int {
     val key = QualifiedNameProviderUtil.getQualifiedName(member)
     val superMembers = findSuperMembers(member)
     if (key == null) {
-      return usagesCounter.countUsages(file, superMembers, GlobalSearchScope.allScope(file.project))
+      return configuration.countUsages(file, superMembers, GlobalSearchScope.allScope(file.project))
     }
     //external usages should be counted first to ensure heavy cases are skipped and to avoid freezes in ScopeOptimizer
     //CompilerReferenceServiceBase#getScopeWithCodeReferences method invokes kotlin resolve and can be very slow
     val localScope = GlobalSearchScope.fileScope(file)
     val externalScope = GlobalSearchScope.notScope(localScope)
-    val externalUsages = externalUsagesCache.getOrPut(key) { usagesCounter.countUsages(file, superMembers, externalScope) }
+    val externalUsages = externalUsagesCache.getOrPut(key) { configuration.countUsages(file, superMembers, externalScope) }
     if (externalUsages < 0) return externalUsages
-    val localUsages = usagesCounter.countUsages(file, superMembers, localScope)
+    val localUsages = configuration.countUsages(file, superMembers, localScope)
     if (localUsages < 0) return localUsages
     return externalUsages + localUsages
+  }
+}
+
+interface UsageCounterConfiguration {
+
+  fun <K: Any, V: Any> createCacheMap(): ConcurrentMap<K, V> {
+    return CollectionFactory.createConcurrentWeakKeySoftValueMap()
+  }
+
+  fun countUsages(file: PsiFile, members: List<PsiMember>, scope: SearchScope): Int {
+    return JavaTelescope.usagesCount(file, members, scope)
   }
 }
 

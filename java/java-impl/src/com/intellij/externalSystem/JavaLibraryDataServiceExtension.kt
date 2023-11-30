@@ -14,13 +14,13 @@ class JavaLibraryDataServiceExtension : LibraryDataServiceExtension {
     if (getMavenCoordinates(libraryData) != null) {
       return ImportedLibraryType.IMPORTED_LIBRARY_KIND
     }
-    return null;
+    return null
   }
 
   override fun prepareNewLibrary(libraryData: LibraryData,
                                  libraryModel: Library.ModifiableModel) {
     val properties = (libraryModel as? LibraryEx)?.properties
-    val coords = getMavenCoordinates(libraryData);
+    val coords = getMavenCoordinates(libraryData)
     if (properties is ImportedLibraryProperties && coords != null) {
       (libraryModel as? LibraryEx.ModifiableModelEx)?.properties = ImportedLibraryProperties(coords)
     }

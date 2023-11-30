@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -14,7 +14,10 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.StandardProgressIndicator
+import com.intellij.openapi.progress.jobToIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -39,6 +42,10 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.isGeneratedOrExcluded
 import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler.Companion.processFoundCodeSmells
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.rawProgressReporter
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
@@ -55,7 +62,6 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
-import kotlin.coroutines.coroutineContext
 import kotlin.reflect.KMutableProperty0
 
 class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
@@ -99,27 +105,31 @@ class CodeAnalysisBeforeCheckinHandler(private val project: Project) :
   override fun isEnabled(): Boolean = settings.CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT
 
   override suspend fun runCheck(commitInfo: CommitInfo): CodeAnalysisCommitProblem? {
-    val sink = coroutineContext.progressSink
-    sink?.text(message("progress.text.analyzing.code"))
-
     val isPostCommit = commitInfo.isPostCommitCheck
     val changes = commitInfo.committedChanges
     if (changes.isEmpty()) return null
 
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    lateinit var codeSmells: List<CodeSmellInfo>
-    val text2DetailsSink = sink?.let(::TextToDetailsProgressSink)
-    withContext(Dispatchers.Default) {
-      val changesByFile = groupChangesByFile(changes)
-      // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
-      val progressIndicatorEx = ProgressSinkIndicatorEx(text2DetailsSink, coroutineContext.contextModality() ?: ModalityState.NON_MODAL)
-      jobToIndicator(coroutineContext.job, progressIndicatorEx) {
-        // TODO suspending [findCodeSmells]
-        codeSmells = findCodeSmells(changesByFile, isPostCommit)
+    val codeSmells: List<CodeSmellInfo> = progressStep(endFraction = 1.0, message("progress.text.analyzing.code")) {
+      withContext(Dispatchers.Default) {
+        val changesByFile = groupChangesByFile(changes)
+        withRawProgressReporter {
+          // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
+          val progressIndicatorEx = ProgressSinkIndicatorEx(
+            rawProgressReporter,
+            coroutineContext.contextModality() ?: ModalityState.nonModal()
+          )
+          jobToIndicator(coroutineContext.job, progressIndicatorEx) {
+            // TODO suspending [findCodeSmells]
+            findCodeSmells(changesByFile, isPostCommit)
+          }
+        }
       }
     }
-    if (codeSmells.isEmpty()) return null
+    if (codeSmells.isEmpty()) {
+      return null
+    }
 
     val errors = codeSmells.count { it.severity == HighlightSeverity.ERROR }
     val warnings = codeSmells.size - errors
@@ -323,23 +333,23 @@ private fun getDescription(codeSmells: List<CodeSmellInfo>): String {
 }
 
 private class ProgressSinkIndicatorEx(
-  private val sink: ProgressSink?,
+  private val reporter: RawProgressReporter?,
   private val contextModality: ModalityState,
-) : AbstractProgressIndicatorExBase() {
+) : AbstractProgressIndicatorExBase(), StandardProgressIndicator {
 
   override fun getModalityState(): ModalityState {
     return contextModality
   }
 
   override fun setText(text: String?) {
-    sink?.update(text = text)
+    reporter?.text(text = text)
   }
 
   override fun setText2(text: String?) {
-    sink?.update(details = text)
+    reporter?.details(details = text)
   }
 
   override fun setFraction(fraction: Double) {
-    sink?.update(fraction = fraction)
+    reporter?.fraction(fraction = fraction)
   }
 }

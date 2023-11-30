@@ -1,3 +1,3 @@
 // IS_APPLICABLE: false
-// ERROR: The feature "multi platform projects" is experimental and should be enabled explicitly
+// ERROR: 'expect' and 'actual' declarations can be used only in multiplatform projects. Learn more about Kotlin Multiplatform: https://kotl.in/multiplatform-setup
 expect class A(<caret>a: Int)

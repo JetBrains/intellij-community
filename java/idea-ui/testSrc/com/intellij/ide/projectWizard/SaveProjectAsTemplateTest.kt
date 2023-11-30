@@ -29,7 +29,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -38,6 +38,7 @@ import org.assertj.core.api.Assertions.assertThat
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.createFile
 
 private const val FOO_BAR_JAVA = "foo/Bar.java"
 private val TEST_DATE = Date(0)
@@ -97,7 +98,7 @@ public class Bar {
     assertThat(project.stateStore.storageScheme).isEqualTo(StorageScheme.DIRECTORY_BASED)
     val root = ProjectRootManager.getInstance(project).contentRoots[0]
     val rootFile = root.toNioPath().resolve(FOO_BAR_JAVA)
-    rootFile.createFile()
+    rootFile.createParentDirectories().createFile()
     val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootFile)
     withContext(Dispatchers.EDT) {
       assertThat(file).isNotNull

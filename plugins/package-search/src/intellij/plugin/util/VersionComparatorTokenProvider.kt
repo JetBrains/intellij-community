@@ -17,6 +17,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.util.text.VersionComparatorUtil
+import com.intellij.util.text.VersionComparatorUtil.TokenPrioritizer
 
 /**
  * Used as parameter for the [VersionComparatorUtil.compare] method, to include additional tokens in the comparison.
@@ -29,14 +30,16 @@ import com.intellij.util.text.VersionComparatorUtil
  *
  * @see com.intellij.util.text.VersionComparatorUtil.VersionTokenType
  */
-internal fun versionTokenPriorityProvider(token: String?): Int {
-    val tokenType = VersionComparatorUtil.VersionTokenType.lookup(token)
-    if (tokenType != VersionComparatorUtil.VersionTokenType._WORD) return tokenType.priority
+object VersionTokenPrioritizer : TokenPrioritizer {
+    override fun getPriority(token: String?): Int {
+        val tokenType = VersionComparatorUtil.VersionTokenType.lookup(token)
+        if (tokenType != VersionComparatorUtil.VersionTokenType._WORD) return tokenType.priority
 
-    if (token == null) return VersionComparatorUtil.VersionTokenType._WS.priority
-    val normalizedToken = token.trim().uppercase()
-    return AdditionalTokenTypes.values().find { it.name == normalizedToken }?.priority
-        ?: VersionComparatorUtil.VersionTokenType._WORD.priority
+        if (token == null) return VersionComparatorUtil.VersionTokenType._WS.priority
+        val normalizedToken = token.trim().uppercase()
+        return AdditionalTokenTypes.values().find { it.name == normalizedToken }?.priority
+            ?: VersionComparatorUtil.VersionTokenType._WORD.priority
+    }
 }
 
 private enum class AdditionalTokenTypes(val priority: Int) {

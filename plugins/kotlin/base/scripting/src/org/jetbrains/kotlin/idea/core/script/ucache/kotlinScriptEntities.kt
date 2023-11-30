@@ -5,12 +5,16 @@ import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.BuilderSnapshot
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.applyIf
-import com.intellij.workspaceModel.ide.*
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.getInstance
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.dependencies.ScriptAdditionalIdeaDependenciesProvider
 import java.nio.file.Path
@@ -342,7 +346,7 @@ private fun MutableList<KotlinScriptLibraryEntity>.fillWithIdeSpecificDependenci
 private fun KotlinScriptLibraryEntity.hasSameRootsAs(dependency: KotlinScriptLibraryEntity): Boolean =
     this.roots.containsAll(dependency.roots) && dependency.roots.containsAll(this.roots)
 
-fun VirtualFile.relativeName(project: Project): String =
+internal fun VirtualFile.relativeName(project: Project): String =
     if (ScratchUtil.isScratch(this) || this is LightVirtualFile) presentableName
     else toNioPath().relativeToOrNull(Path.of(project.basePath!!))?.pathString
         ?: presentableName

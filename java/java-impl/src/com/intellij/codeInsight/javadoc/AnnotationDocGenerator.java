@@ -311,9 +311,9 @@ public final class AnnotationDocGenerator {
       .toList();
   }
 
-  private static @Nullable AnnotationDocGenerator forAnnotation(@NotNull PsiElement context,
-                                                                @NotNull Set<String> shownAnnotations,
-                                                                @NotNull PsiAnnotation annotation) {
+  static @Nullable AnnotationDocGenerator forAnnotation(@NotNull PsiElement context,
+                                                        @NotNull Set<String> shownAnnotations,
+                                                        @NotNull PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();
     if (nameReferenceElement == null) return null;
 

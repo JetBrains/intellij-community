@@ -13,26 +13,53 @@ class ScanningStatistics(val fileSetName: String) {
 
   /**
    * Number of files that have been scanned (iterated) by a different iterator than the one used to iterate this [fileSetName].
-   * If multiple "file iterators" would iterate the same file, only one of the iterators actually "scans" the file
+   * If multiple "file iterators" iterate the same file, only one of the iterators actually "scans" the file
    * (and increments [numberOfScannedFiles] in his statistics).
    */
   var numberOfSkippedFiles: Int = 0
 
   var numberOfFilesForIndexing: Int = 0
   var numberOfFilesFullyIndexedByInfrastructureExtension: Int = 0
-  var listOfFilesFullyIndexedByInfrastructureExtension = arrayListOf<String>()
+  var listOfFilesFullyIndexedByInfrastructureExtension: ArrayList<String> = arrayListOf()
 
-  var scanningTime: TimeNano = 0
+  var totalOneThreadTimeWithPauses: TimeNano = 0
   var statusTime: TimeNano = 0
 
   var timeProcessingUpToDateFiles: TimeNano = 0
   var timeUpdatingContentLessIndexes: TimeNano = 0
   var timeIndexingWithoutContentViaInfrastructureExtension: TimeNano = 0
 
-  var providerRoots = emptyList<String>()
-  val scannedFiles = arrayListOf<ScannedFile>()
+  var providerRoots: List<String> = emptyList()
+  val scannedFiles: ArrayList<ScannedFile> = arrayListOf()
+
+  var timeConcurrentVfsIterationAndScanningApplication: TimeNano = 0
+  private var startConcurrentVfsIterationAndScanningApplication: Long = -1
+  var timeConcurrentFilesChecking: TimeNano = 0
+  private var startConcurrentFilesChecking: Long = -1
 
   data class ScannedFile(val portableFilePath: PortableFilePath, val isUpToDate: Boolean, val wasFullyIndexedByInfrastructureExtension: Boolean)
+
+  fun startVfsIterationAndScanningApplication() {
+    startConcurrentVfsIterationAndScanningApplication = System.nanoTime()
+  }
+
+  fun tryFinishVfsIterationAndScanningApplication() {
+    if (startConcurrentVfsIterationAndScanningApplication != -1L) {
+      timeConcurrentVfsIterationAndScanningApplication = System.nanoTime() - startConcurrentVfsIterationAndScanningApplication
+      startConcurrentVfsIterationAndScanningApplication = -1
+    }
+  }
+
+  fun startFileChecking() {
+    startConcurrentFilesChecking = System.nanoTime()
+  }
+
+  fun tryFinishFilesChecking() {
+    if (startConcurrentFilesChecking != -1L) {
+      timeConcurrentFilesChecking = System.nanoTime() - startConcurrentFilesChecking
+      startConcurrentFilesChecking = -1
+    }
+  }
 
   fun addStatus(fileOrDir: VirtualFile, unindexedFileStatus: UnindexedFileStatus, statusTime: Long, project: Project) {
     if (fileOrDir.isDirectory) return
@@ -64,14 +91,6 @@ class ScanningStatistics(val fileSetName: String) {
   }
   catch (e: Exception) {
     PortableFilePath.AbsolutePath(file.url)
-  }
-
-  fun addScanningTime(time: Long) {
-    scanningTime += time
-  }
-
-  fun setNoRootsForRefresh() {
-    providerRoots = listOf("Not collected for refresh")
   }
 
   fun setProviderRoots(provider: IndexableFilesIterator, project: Project) {

@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -24,9 +26,9 @@ public class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiEleme
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
-    if (ifStatement == null || ifStatement.getCondition() == null) return null;
+    if (ifStatement == null) return null;
 
-    final PsiExpression condition = ifStatement.getCondition();
+    final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
     if (!(condition instanceof PsiPolyadicExpression polyadicExpression)) return null;
 
     final PsiType expressionType = polyadicExpression.getType();
@@ -41,7 +43,7 @@ public class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiEleme
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     final PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class);
     if (ifStatement == null) {
       return;
@@ -65,7 +67,7 @@ public class ExtractIfConditionAction extends PsiUpdateModCommandAction<PsiEleme
                                      @NotNull PsiElement element,
                                      CommentTracker tracker) {
 
-    final PsiExpression condition = ifStatement.getCondition();
+    final PsiExpression condition = PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition());
 
     if (!(condition instanceof PsiPolyadicExpression polyadicExpression)) {
       return null;

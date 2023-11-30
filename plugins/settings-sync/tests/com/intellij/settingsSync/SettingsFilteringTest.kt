@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import com.intellij.testFramework.LightPlatformTestCase
 
@@ -20,6 +21,9 @@ class SettingsFilteringTest : LightPlatformTestCase() {
   }
 
   fun `test color scheme sync enabled via UI category` () {
+    if (!isSyncEnabled("colors/my_scheme.icls", RoamingType.DEFAULT)) {
+      EditorColorsManagerImpl() // ensure that color scheme manager is initialized and registered
+    }
     assertTrue(isSyncEnabled("colors/my_scheme.icls", RoamingType.DEFAULT))
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, false)
     try {

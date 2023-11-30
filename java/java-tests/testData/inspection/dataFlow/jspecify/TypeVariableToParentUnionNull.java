@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
-import org.jspecify.nullness.NullnessUnspecified;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullnessUnspecified;
 
 @NullMarked
 class TypeVariableToParentUnionNull<
@@ -41,63 +40,51 @@ class TypeVariableToParentUnionNull<
     NullChildOfParametricT extends @Nullable ParametricT,
     //
     UnusedT> {
-  @Nullable
-  Never1T x0(ChildOfNever1T x) {
+  @Nullable Never1T x0(ChildOfNever1T x) {
     return x;
   }
 
-  @Nullable
-  Never1T x1(UnspecChildOfNever1T x) {
+  @Nullable Never1T x1(UnspecChildOfNever1T x) {
     return x;
   }
 
-  @Nullable
-  Never1T x2(NullChildOfNever1T x) {
+  @Nullable Never1T x2(NullChildOfNever1T x) {
     return x;
   }
 
-  @Nullable
-  Never2T x3(ChildOfNever2T x) {
+  @Nullable Never2T x3(ChildOfNever2T x) {
     return x;
   }
 
-  @Nullable
-  Never2T x4(UnspecChildOfNever2T x) {
+  @Nullable Never2T x4(UnspecChildOfNever2T x) {
     return x;
   }
 
-  @Nullable
-  Never2T x5(NullChildOfNever2T x) {
+  @Nullable Never2T x5(NullChildOfNever2T x) {
     return x;
   }
 
-  @Nullable
-  UnspecT x6(ChildOfUnspecT x) {
+  @Nullable UnspecT x6(ChildOfUnspecT x) {
     return x;
   }
 
-  @Nullable
-  UnspecT x7(UnspecChildOfUnspecT x) {
+  @Nullable UnspecT x7(UnspecChildOfUnspecT x) {
     return x;
   }
 
-  @Nullable
-  UnspecT x8(NullChildOfUnspecT x) {
+  @Nullable UnspecT x8(NullChildOfUnspecT x) {
     return x;
   }
 
-  @Nullable
-  ParametricT x9(ChildOfParametricT x) {
+  @Nullable ParametricT x9(ChildOfParametricT x) {
     return x;
   }
 
-  @Nullable
-  ParametricT x10(UnspecChildOfParametricT x) {
+  @Nullable ParametricT x10(UnspecChildOfParametricT x) {
     return x;
   }
 
-  @Nullable
-  ParametricT x11(NullChildOfParametricT x) {
+  @Nullable ParametricT x11(NullChildOfParametricT x) {
     return x;
   }
 }

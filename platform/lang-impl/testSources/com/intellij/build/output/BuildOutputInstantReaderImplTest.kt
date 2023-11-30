@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
@@ -75,8 +75,8 @@ class BuildOutputInstantReaderImplTest {
                                                     listOf(parser, createParser("[error]", ERROR)), pushBackBufferSize)
 
     val inputData = buildString {
-      appendln("[warning] this is a warning\n".repeat(80))
-      appendln("[error] error1\n")
+      appendLine("[warning] this is a warning\n".repeat(80))
+      appendLine("[error] error1\n")
     }
 
     outputReader.append(inputData).closeAndGetFuture().get()
@@ -185,14 +185,14 @@ class BuildOutputInstantReaderImplTest {
       """.trimIndent()
       val inputData = buildString {
         trashOut.joinTo(this, "\n", postfix = "\n")
-        appendln(errLines)
-        appendln()
-        appendln(infoLines)
-        appendln()
-        appendln(infoLines) /* checks that duplicate messages are not sent */
-        appendln()
+        appendLine(errLines)
+        appendLine()
+        appendLine(infoLines)
+        appendLine()
+        appendLine(infoLines) /* checks that duplicate messages are not sent */
+        appendLine()
         trashOut.joinTo(this, "\n", postfix = "\n")
-        appendln(warnLines)
+        appendLine(warnLines)
       }
       outputReader.append(inputData).closeAndGetFuture().get()
 
@@ -217,7 +217,7 @@ class BuildOutputInstantReaderImplTest {
           val buf = StringBuilder()
           var nextLine: String? = line.dropWhile { !it.isWhitespace() }.trimStart()
           while (!nextLine.isNullOrBlank() && !nextLine.startsWith('[')) {
-            buf.appendln(nextLine)
+            buf.appendLine(nextLine)
             nextLine = reader.readLine()
           }
           messageConsumer.accept(MessageEventImpl(reader.parentEventId, kind, null, buf.toString().dropLast(1), null))

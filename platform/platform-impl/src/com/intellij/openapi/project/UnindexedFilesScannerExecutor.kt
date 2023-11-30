@@ -12,6 +12,11 @@ import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.indexing.IndexingBundle
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicReference
@@ -24,7 +29,11 @@ class UnindexedFilesScannerExecutor(project: Project)
     MergingQueueGuiExecutor<FilesScanningTask>(project, MergingTaskQueue(), TaskQueueListener(),
                                                IndexingBundle.message("progress.indexing.scanning"),
                                                IndexingBundle.message("progress.indexing.scanning.paused")) {
-  private val runningTask = AtomicReference<ProgressIndicator>()
+  private val runningDumbTask = AtomicReference<ProgressIndicator>()
+
+  // note that shouldShowProgressIndicator = false in UnindexedFilesScannerExecutor, so there is no suspender for the progress indicator
+  private val pauseReason = MutableStateFlow<PersistentList<String>>(persistentListOf())
+  fun getPauseReason(): StateFlow<PersistentList<String>> = pauseReason
 
   private class TaskQueueListener : ExecutorStateListener {
     override fun beforeFirstTask(): Boolean = true
@@ -51,7 +60,7 @@ class UnindexedFilesScannerExecutor(project: Project)
 
   private fun startTaskInSmartMode(task: FilesScanningTask) {
     taskQueue.addTask(task)
-    startBackgroundProcess()
+    startBackgroundProcess(onFinish = {})
   }
 
   private fun startTaskInDumbMode(task: FilesScanningTask) {
@@ -60,11 +69,11 @@ class UnindexedFilesScannerExecutor(project: Project)
 
   @VisibleForTesting
   fun wrapAsDumbTask(task: FilesScanningTask): DumbModeTask {
-    return FilesScanningTaskAsDumbModeTaskWrapper(project, task, runningTask)
+    return FilesScanningTaskAsDumbModeTaskWrapper(project, task, runningDumbTask)
   }
 
   private fun cancelRunningScannerTaskInDumbQueue() {
-    val indicator = runningTask.get()
+    val indicator = runningDumbTask.get()
     if (indicator != null) {
       indicator.cancel()
       val suspender = ProgressSuspender.getSuspender(indicator)
@@ -86,12 +95,22 @@ class UnindexedFilesScannerExecutor(project: Project)
     taskQueue.disposePendingTasks()
   }
 
+  override fun shouldShowProgressIndicator(): Boolean = false // will be reported asynchronously via IndexingProgressUIReporter
+
   /**
    * This method does not have "happens before" semantics. It requests GUI suspender to suspend and executes runnable without waiting for
    * all the running tasks to pause.
    */
   fun suspendScanningAndIndexingThenRun(activityName: @ProgressText String, runnable: Runnable) {
-    suspendAndRun(activityName) { DumbService.getInstance(project).suspendIndexingAndRun(activityName, runnable) }
+    suspendAndRun(activityName) { // we only need this call to suspend legacy dumb scanning mode
+      pauseReason.update { it.add(activityName) }
+      try {
+        DumbService.getInstance(project).suspendIndexingAndRun(activityName, runnable)
+      }
+      finally {
+        pauseReason.update { it.remove(activityName) }
+      }
+    }
   }
 
   companion object {
@@ -99,8 +118,6 @@ class UnindexedFilesScannerExecutor(project: Project)
     fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
 
     @JvmStatic
-    fun shouldScanInSmartMode(): Boolean {
-      return !isSynchronousTaskExecution && Registry.`is`("scanning.in.smart.mode", true)
-    }
+    fun shouldScanInSmartMode(): Boolean = !isSynchronousTaskExecution && Registry.`is`("scanning.in.smart.mode", true)
   }
 }

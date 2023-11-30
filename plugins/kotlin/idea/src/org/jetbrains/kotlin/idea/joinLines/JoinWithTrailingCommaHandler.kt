@@ -42,22 +42,20 @@ class JoinWithTrailingCommaHandler : JoinLinesHandlerDelegate {
 
         return TrailingCommaHelper.elementAfterLastElement(commaOwner)?.startOffset ?: (end - 1)
     }
+}
 
-    companion object {
-        private val TOKENS_WITH_SPACES = TokenSet.create(
-            KtTokens.ARROW,
-            KtTokens.RBRACE,
-            KtTokens.LBRACE,
-            KtTokens.COMMA,
-        )
+private val TOKENS_WITH_SPACES = TokenSet.create(
+    KtTokens.ARROW,
+    KtTokens.RBRACE,
+    KtTokens.LBRACE,
+    KtTokens.COMMA,
+)
 
-        private fun deleteOrReplaceWithWhiteSpace(element: PsiElement, type: IElementType?) {
-            if (type !in TOKENS_WITH_SPACES) {
-                element.delete()
-            } else {
-                element.replace(KtPsiFactory(element.project).createWhiteSpace())
-            }
-        }
+private fun deleteOrReplaceWithWhiteSpace(element: PsiElement, type: IElementType?) {
+    if (type !in TOKENS_WITH_SPACES) {
+        element.delete()
+    } else {
+        element.replace(KtPsiFactory(element.project).createWhiteSpace())
     }
 }
 

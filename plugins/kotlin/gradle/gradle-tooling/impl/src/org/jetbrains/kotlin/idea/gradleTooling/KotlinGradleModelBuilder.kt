@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.artifacts.ConfigurationContainer
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.provider.Property
@@ -18,6 +19,7 @@ import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
+import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 import java.io.File
 import java.io.Serializable
 import java.lang.reflect.InvocationTargetException
@@ -148,7 +150,7 @@ class AndroidAwareGradleModelProvider<TModel>(
     }
 }
 
-class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilderService.Ex {
+class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilderService.ParameterizedModelBuilderService {
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
         return ErrorMessageBuilder.create(project, e, "Gradle import errors")
             .withDescription("Unable to build Kotlin project configuration")
@@ -199,19 +201,19 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
     }
 
     override fun buildAll(modelName: String, project: Project): KotlinGradleModelImpl? {
-        return buildAll(project, null)
+        return buildAll(project, builderContext = null, parameter = null)
     }
 
-    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KotlinGradleModelImpl? {
-        return buildAll(project, builderContext)
+    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext, parameter: ModelBuilderService.Parameter?): KotlinGradleModelImpl? {
+        return buildAll(project, builderContext, parameter)
     }
 
-    private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KotlinGradleModelImpl? {
+    private fun buildAll(project: Project, builderContext: ModelBuilderContext?, parameter: ModelBuilderService.Parameter?): KotlinGradleModelImpl? {
         val interner = Interner()
         // When running in Android Studio, Android Studio would request specific source sets only to avoid syncing
         // currently not active build variants. We convert names to the lower case to avoid ambiguity with build variants
         // accidentally named starting with upper case.
-        val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, builderContext?.parameter)
+        val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, parameter?.value)
         if (androidVariantRequest.shouldSkipBuildAllCall()) return null
         val kotlinPluginId = kotlinPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
         val platformPluginId = platformPluginIds.singleOrNull { project.plugins.findPlugin(it) != null }
@@ -243,6 +245,10 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val platform = platformPluginId ?: pluginToPlatform.entries.singleOrNull { project.plugins.findPlugin(it.key) != null }?.value
         val implementedProjects = getImplementedProjects(project)
 
+        if (builderContext != null) {
+            downloadKotlinStdlibSources(project, builderContext)
+        }
+
         return KotlinGradleModelImpl(
             hasKotlinPlugin = kotlinPluginId != null || platformPluginId != null,
             compilerArgumentsBySourceSet = compilerArgumentsBySourceSet,
@@ -254,5 +260,32 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,
         )
+    }
+
+    private fun downloadKotlinStdlibSources(project: Project, context: ModelBuilderContext) {
+        val kotlinStdlib = project.configurations.detachedConfiguration()
+        project.configurations.forEachUsedKotlinLibrary {
+            kotlinStdlib.dependencies.add(it)
+        }
+        project.buildscript.configurations.forEachUsedKotlinLibrary {
+            kotlinStdlib.dependencies.add(it)
+        }
+        if (kotlinStdlib.dependencies.isEmpty()) {
+            return
+        }
+        DependencyResolverImpl(context, project, /*download javadoc*/ false, /*download sources*/ true)
+            .resolveDependencies(kotlinStdlib)
+    }
+
+    private fun Dependency.isPartOfKotlinStdlib() = "org.jetbrains.kotlin" == group || "org.jetbrains.kotlinx" == group
+
+    private fun ConfigurationContainer.forEachUsedKotlinLibrary(dependencyConsumer: (Dependency) -> Unit) {
+        for (configuration in this) {
+            for (dependency in configuration.dependencies) {
+                if (dependency.isPartOfKotlinStdlib()) {
+                    dependencyConsumer.invoke(dependency)
+                }
+            }
+        }
     }
 }

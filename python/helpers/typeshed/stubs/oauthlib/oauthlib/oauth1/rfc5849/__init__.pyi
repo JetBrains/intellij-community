@@ -1,3 +1,4 @@
+from _typeshed import Incomplete
 from typing import Any
 
 log: Any
@@ -37,20 +38,27 @@ class Client:
     def __init__(
         self,
         client_key,
-        client_secret: Any | None = ...,
-        resource_owner_key: Any | None = ...,
-        resource_owner_secret: Any | None = ...,
-        callback_uri: Any | None = ...,
-        signature_method=...,
-        signature_type=...,
-        rsa_key: Any | None = ...,
-        verifier: Any | None = ...,
-        realm: Any | None = ...,
-        encoding: str = ...,
-        decoding: Any | None = ...,
-        nonce: Any | None = ...,
-        timestamp: Any | None = ...,
+        client_secret: Incomplete | None = None,
+        resource_owner_key: Incomplete | None = None,
+        resource_owner_secret: Incomplete | None = None,
+        callback_uri: Incomplete | None = None,
+        signature_method="HMAC-SHA1",
+        signature_type="AUTH_HEADER",
+        rsa_key: Incomplete | None = None,
+        verifier: Incomplete | None = None,
+        realm: Incomplete | None = None,
+        encoding: str = "utf-8",
+        decoding: Incomplete | None = None,
+        nonce: Incomplete | None = None,
+        timestamp: Incomplete | None = None,
     ): ...
     def get_oauth_signature(self, request): ...
     def get_oauth_params(self, request): ...
-    def sign(self, uri, http_method: str = ..., body: Any | None = ..., headers: Any | None = ..., realm: Any | None = ...): ...
+    def sign(
+        self,
+        uri,
+        http_method: str = "GET",
+        body: Incomplete | None = None,
+        headers: Incomplete | None = None,
+        realm: Incomplete | None = None,
+    ): ...

@@ -28,10 +28,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 import java.awt.*;
 
-/**
- * @author Konstantin Bulenkov
- */
-public class UseJBColorInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
+final class UseJBColorInspection extends DevKitUastInspectionBase implements CleanupLocalInspectionTool {
 
   private static final String AWT_COLOR_CLASS_NAME = Color.class.getName();
   private static final String JB_COLOR_CLASS_NAME = JBColor.class.getName();

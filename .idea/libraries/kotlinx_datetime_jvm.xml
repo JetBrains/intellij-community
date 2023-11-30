@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-datetime-jvm" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.4.0" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.4.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.4.1/kotlinx-datetime-jvm-0.4.1.jar">
+          <sha256sum>7ddf52a4d3bbf3138fff1f8c581a3149ca7ff2c4895f33dcdb20c759a3dda050</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.4.0/kotlinx-datetime-jvm-0.4.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.4.1/kotlinx-datetime-jvm-0.4.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.4.0/kotlinx-datetime-jvm-0.4.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.4.1/kotlinx-datetime-jvm-0.4.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

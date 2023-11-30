@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.AppIconScheme;
@@ -47,8 +48,7 @@ public abstract class AppIcon {
 
   private static AppIcon ourIcon;
 
-  @NotNull
-  public static AppIcon getInstance() {
+  public static @NotNull AppIcon getInstance() {
     if (ourIcon == null) {
       if (GraphicsEnvironment.isHeadless() || GraphicsUtil.isRemoteEnvironment()) {
         ourIcon = new EmptyIcon();
@@ -56,8 +56,11 @@ public abstract class AppIcon {
       else if (SystemInfoRt.isMac) {
         ourIcon = new MacAppIcon();
       }
-      else if (SystemInfoRt.isXWindow) {
+      else if (StartupUiUtil.isXToolkit()) {
         ourIcon = new XAppIcon();
+      }
+      else if (StartupUiUtil.isWaylandToolkit()) {
+        ourIcon = new WLAppIcon();
       }
       else if (SystemInfoRt.isWindows && JnaLoader.isLoaded()) {
         ourIcon = new Win7AppIcon();
@@ -105,7 +108,7 @@ public abstract class AppIcon {
   public void requestFocus() {
   }
 
-  private static abstract class BaseIcon extends AppIcon {
+  private abstract static class BaseIcon extends AppIcon {
     private ApplicationActivationListener myAppListener;
     protected Object myCurrentProcessId;
     protected double myLastValue;
@@ -241,10 +244,21 @@ public abstract class AppIcon {
 
     @Override
     public void requestFocus(@Nullable Window window) {
+      EDT.assertIsEdt();
+
       if (window != null) {
         window.toFront();
+
+        try {
+          Desktop.getDesktop().requestForeground(false);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
       }
-      requestFocus();
+      else {
+        requestFocus();
+      }
     }
 
     @Override
@@ -658,15 +672,23 @@ public abstract class AppIcon {
     @Override
     public void requestFocus(@Nullable Window window) {
       if (window != null) {
+        if (window instanceof Frame) {
+          ((Frame)window).setState(Frame.NORMAL);
+        }
         try {
-          // This is required for the focus stealing mechanism to work reliably;
-          // see WinFocusStealer.setFocusStealingEnabled javadoc for details
+          // For SetForegroundWindow WinAPI method to 'steal' focus from other apps more reliably, it shouldn't be called immediately after
+          // other window- or focus-related API methods (e.g. BringWindowToTop, which is invoked by java.awt.Component.requestFocus()).
+          // Required delay is empirically estimated to be around 20 ms.
+          // The hypothesis is that timestamps used for checking foreground lock timeout are determined with a certain inaccuracy, caused by
+          // timer resolution, and functions like BringWindowToTop can be treated as a user input, so SetForegroundWindow call fails to
+          // focus a background window, even with foreground lock timeout is set to 0, if it's preceded by BringWindowToTop call.
+          // See also WinFocusStealer class's javadoc for details.
           Thread.sleep(Registry.intValue("win.request.focus.delay.ms"));
         }
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        UIUtil.toFront(window);
+        Win7TaskBar.setForegroundWindow(window);
       }
     }
 
@@ -700,6 +722,35 @@ public abstract class AppIcon {
     @Override
     public void requestFocus(Window window) {
       if (window != null) X11UiUtil.activate(window);
+    }
+  }
+
+  private static final class WLAppIcon extends BaseIcon {
+    @Override
+    public boolean _setProgress(@Nullable JFrame frame, Object processId, AppIconScheme.Progress scheme, double value, boolean isOk) {
+      return false;
+    }
+
+    @Override
+    public boolean _hideProgress(@Nullable JFrame frame, Object processId) {
+      return false;
+    }
+
+    @Override
+    public void _setTextBadge(@Nullable JFrame frame, String text) {}
+
+    @Override
+    public void _setOkBadge(@Nullable JFrame frame, boolean visible) {}
+
+    @Override
+    public void _requestAttention(@Nullable JFrame frame, boolean critical) {
+      // TODO: perhaps, use
+      // https://wayland.app/protocols/gtk-shell#gtk_surface1:request:request_focus
+    }
+
+    @Override
+    public void requestFocus(Window window) {
+      if (window != null) window.toFront();
     }
   }
 

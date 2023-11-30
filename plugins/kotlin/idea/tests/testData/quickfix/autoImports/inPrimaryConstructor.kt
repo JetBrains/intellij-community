@@ -2,3 +2,5 @@
 // RUNTIME_WITH_FULL_JDK
 
 class LL(val list: <caret>LinkedList<String>)
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.importFix.ImportQuickFix

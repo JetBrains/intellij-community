@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffSelectionModel
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModel
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -18,6 +19,7 @@ interface GHPRDataProvider {
   val viewedStateData: GHPRViewedStateDataProvider
   val timelineLoader: GHListLoader<GHPRTimelineItem>?
   val diffRequestModel: GHPRDiffRequestModel
+  val combinedDiffSelectionModel: GHPRCombinedDiffSelectionModel
 
   @RequiresEdt
   fun acquireTimelineLoader(disposable: Disposable): GHListLoader<GHPRTimelineItem>

@@ -6,7 +6,6 @@ package com.intellij.ui
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.ui.svg.renderSvg
-import com.intellij.util.io.inputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -22,6 +21,7 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import javax.imageio.ImageIO
+import kotlin.io.path.inputStream
 
 internal object IntelliJIconsIconsVerifier {
   @JvmStatic
@@ -479,6 +479,37 @@ class SvgRenderingTest {
 </defs>
 </svg>
 
+""".trimIndent()
+    val image = renderSvg(svg.byteInputStream())
+
+    val goldImage = loadOrSaveGoldSnapshot(image, "shadow")
+    ImageComparator.compareAndAssert(null, image, goldImage, null)
+  }
+  @Test
+  fun topLeftIcon() {
+    assumeTrue(System.getenv("TEAMCITY_VERSION") == null)
+
+    @Language("HTML")
+    val svg = """
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="14" fill="none">
+  <g clip-path="url(#a)" filter="url(#b)">
+    <path fill="#fff" fill-opacity=".01" d="M30 5H10v21h20V5Z"/>
+  </g>
+  <defs>
+    <clipPath id="a">
+      <path fill="#fff" d="M0 0h18v14H0z"/>
+    </clipPath>
+    <filter id="b" width="44" height="45" x="-2" y="-3" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" result="hardAlpha" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"/>
+      <feOffset dy="4"/>
+      <feGaussianBlur stdDeviation="6"/>
+      <feColorMatrix values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.16 0"/>
+      <feBlend in2="BackgroundImageFix" result="effect1_dropShadow_5382_56962"/>
+      <feBlend in="SourceGraphic" in2="effect1_dropShadow_5382_56962" result="shape"/>
+    </filter>
+  </defs>
+</svg>
 """.trimIndent()
     val image = renderSvg(svg.byteInputStream())
 

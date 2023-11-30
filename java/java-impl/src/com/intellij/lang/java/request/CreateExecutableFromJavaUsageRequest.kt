@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getT
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.components.service
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.codeStyle.VariableKind
@@ -23,18 +22,18 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
   private val callPointer: SmartPsiElementPointer<T> = call.createSmartPointer(project)
   internal val call: T get() = callPointer.element ?: error("dead pointer")
 
-  override fun isValid() = callPointer.element != null
+  override fun isValid(): Boolean = callPointer.element != null
 
-  override fun getAnnotations() = emptyList<AnnotationRequest>()
+  override fun getAnnotations(): List<AnnotationRequest> = emptyList()
 
-  override fun getModifiers() = modifiers
+  override fun getModifiers(): Collection<JvmModifier> = modifiers
 
-  override fun getTargetSubstitutor() = PsiJvmSubstitutor(project, getTargetSubstitutor(call))
+  override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(project, getTargetSubstitutor(call))
 
   override fun getExpectedParameters(): List<ExpectedParameter> {
     val argumentList = call.argumentList ?: return emptyList()
     val scope = call.resolveScope
-    val codeStyleManager: JavaCodeStyleManager = project.service()
+    val codeStyleManager = JavaCodeStyleManager.getInstance(project)
     return argumentList.expressions.map { expression ->
       val argType: PsiType? = CommonJavaRefactoringUtil.getTypeByExpression(expression)
       val type = CreateFromUsageUtils.getParameterTypeByArgumentType(argType, psiManager, scope)
@@ -44,5 +43,5 @@ internal abstract class CreateExecutableFromJavaUsageRequest<out T : PsiCall>(
     }
   }
 
-  val context get() = call.parentOfTypes(PsiMethod::class, PsiClass::class)
+  val context: PsiElement? get() = call.parentOfTypes(PsiMethod::class, PsiClass::class)
 }

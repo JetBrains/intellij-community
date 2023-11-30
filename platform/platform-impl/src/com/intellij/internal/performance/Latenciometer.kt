@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.performance
 
 import com.intellij.openapi.editor.Editor
@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import it.unimi.dsi.fastutil.ints.IntArrayList
 
-private class LatencyRecorderImpl : LatencyRecorder {
+internal class LatencyRecorderImpl : LatencyRecorder {
   override fun recordLatencyAwareAction(editor: Editor, actionId: String, timestampMs: Long) {
     (editor as? EditorImpl)?.recordLatencyAwareAction(actionId, timestampMs)
   }
@@ -17,7 +17,7 @@ private class LatencyRecorderImpl : LatencyRecorder {
 class LatencyRecord {
   var totalLatency: Long = 0L
   var maxLatency: Int = 0
-  val samples = IntArrayList()
+  val samples: IntArrayList = IntArrayList()
   private var samplesSorted = false
 
   fun update(latencyInMS: Int) {

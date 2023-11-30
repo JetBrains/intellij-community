@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.exclude.old;
 
 import com.intellij.framework.detection.impl.exclude.ExcludedFileState;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Set;
 
 @State(name = "FacetAutodetectingManager")
-public class OldFacetDetectionExcludesConfiguration implements PersistentStateComponent<DisabledAutodetectionInfo> {
+public final class OldFacetDetectionExcludesConfiguration implements PersistentStateComponent<DisabledAutodetectionInfo> {
   public static final String COMPONENT_NAME = "FacetAutodetectingManager";
 
   private DisabledAutodetectionInfo myDisabledAutodetectionInfo;

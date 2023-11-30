@@ -73,14 +73,14 @@ public final class EditContractIntention extends BaseIntentionAction implements 
 
   private static class ContractData implements OptionContainer {
     @NlsSafe String contract = "";
-    boolean pure = false;
+    boolean impure = true;
     @NlsSafe String mutates = "";
 
     private static @NotNull ContractData fromAnnotation(@Nullable PsiAnnotation existingAnno) {
       ContractData data = new ContractData();
       if (existingAnno != null) {
         data.contract = AnnotationUtil.getStringAttributeValue(existingAnno, "value");
-        data.pure = Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(existingAnno, "pure"));
+        data.impure = !Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(existingAnno, "pure"));
         data.mutates = AnnotationUtil.getStringAttributeValue(existingAnno, "mutates");
       }
       return data;
@@ -91,11 +91,11 @@ public final class EditContractIntention extends BaseIntentionAction implements 
         string("contract", JavaBundle.message("label.contract"),
                StringValidator.of("java.method.contract", string -> getContractErrorMessage(string, method)))
           .description(HtmlChunk.raw(JavaBundle.message("edit.contract.dialog.hint"))),
-        checkbox("pure", JavaBundle.message("edit.contract.dialog.checkbox.pure.method")),
-        string("mutates", JavaBundle.message("label.mutates"),
-               StringValidator.of("java.method.mutates", string -> getMutatesErrorMessage(string, method)))
-          .description(HtmlChunk.raw(JavaBundle.message("edit.contract.dialog.mutates.hint")))
-      );
+        checkbox("impure", JavaBundle.message("edit.contract.dialog.checkbox.impure.method"),
+                 string("mutates", JavaBundle.message("label.mutates"),
+                        StringValidator.of("java.method.mutates", string -> getMutatesErrorMessage(string, method)))
+                   .description(HtmlChunk.raw(JavaBundle.message("edit.contract.dialog.mutates.hint")))
+        ));
     }
   }
 
@@ -113,7 +113,7 @@ public final class EditContractIntention extends BaseIntentionAction implements 
     Project project = method.getProject();
     ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(project);
     manager.deannotate(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
-    PsiAnnotation mockAnno = DefaultInferredAnnotationProvider.createContractAnnotation(project, data.pure, data.contract, data.mutates);
+    PsiAnnotation mockAnno = DefaultInferredAnnotationProvider.createContractAnnotation(project, !data.impure, data.contract, data.mutates);
     if (mockAnno != null) {
       try {
         manager.annotateExternally(method, JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, method.getContainingFile(),

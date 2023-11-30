@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.status;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,8 +37,8 @@ import java.util.*;
 final class GitChangesCollector {
   private static final Logger LOG = Logger.getInstance(GitChangesCollector.class);
 
-  @NotNull private final Project myProject;
-  @NotNull private final VirtualFile myVcsRoot;
+  private final @NotNull Project myProject;
+  private final @NotNull VirtualFile myVcsRoot;
 
   private final VcsRevisionNumber myHead;
   private final Collection<Change> myChanges = new HashSet<>();
@@ -47,8 +47,7 @@ final class GitChangesCollector {
    * Collects the changes from git command line and returns the instance of GitNewChangesCollector from which these changes can be retrieved.
    * This may be lengthy.
    */
-  @NotNull
-  static GitChangesCollector collect(@NotNull Project project,
+  static @NotNull GitChangesCollector collect(@NotNull Project project,
                                      @NotNull GitRepository repository,
                                      @NotNull List<GitFileStatus> changes) throws VcsException {
     VcsRevisionNumber head = getHead(repository);
@@ -224,8 +223,7 @@ final class GitChangesCollector {
     }
   }
 
-  @NotNull
-  static VcsRevisionNumber getHead(@NotNull GitRepository repository) {
+  static @NotNull VcsRevisionNumber getHead(@NotNull GitRepository repository) {
     // we force update the GitRepository, because update is asynchronous, and thus the GitChangeProvider may be asked for changes
     // before the GitRepositoryUpdater has captures the current revision change and has updated the GitRepository.
     repository.update();

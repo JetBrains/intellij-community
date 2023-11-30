@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.patterns;
 
 import com.intellij.util.ProcessingContext;
@@ -25,7 +25,7 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
   public CharPattern javaIdentifierPart() {
     return with(new PatternCondition<Character>("javaIdentifierPart") {
       @Override
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      public boolean accepts(final @NotNull Character character, final ProcessingContext context) {
         return Character.isJavaIdentifierPart(character.charValue());
       }
     });
@@ -34,7 +34,7 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
   public CharPattern javaIdentifierStart() {
     return with(new PatternCondition<Character>("javaIdentifierStart") {
       @Override
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      public boolean accepts(final @NotNull Character character, final ProcessingContext context) {
         return Character.isJavaIdentifierStart(character.charValue());
       }
     });
@@ -43,7 +43,7 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
   public CharPattern whitespace() {
     return with(new PatternCondition<Character>("whitespace") {
       @Override
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      public boolean accepts(final @NotNull Character character, final ProcessingContext context) {
         return Character.isWhitespace(character.charValue());
       }
     });
@@ -52,7 +52,7 @@ public class CharPattern extends ObjectPattern<Character, CharPattern> {
   public CharPattern letterOrDigit() {
     return with(new PatternCondition<Character>("letterOrDigit") {
       @Override
-      public boolean accepts(@NotNull final Character character, final ProcessingContext context) {
+      public boolean accepts(final @NotNull Character character, final ProcessingContext context) {
         return Character.isLetterOrDigit(character.charValue());
       }
     });

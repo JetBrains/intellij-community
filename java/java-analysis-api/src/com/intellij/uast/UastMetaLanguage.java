@@ -4,36 +4,29 @@ package com.intellij.uast;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.MetaLanguage;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.UastLanguagePlugin;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 public final class UastMetaLanguage extends MetaLanguage {
   static final class Holder {
-    private static final Set<Language> myLanguages;
+    private static volatile @Unmodifiable Set<Language> myLanguages = initLanguages();
 
     static {
-      Collection<UastLanguagePlugin> languagePlugins = UastLanguagePlugin.Companion.getInstances();
-      myLanguages = new HashSet<>(languagePlugins.size());
-      initLanguages(languagePlugins);
-
-      UastLanguagePlugin.Companion.getExtensionPointName().addChangeListener(() -> {
-        myLanguages.clear();
-        initLanguages(UastLanguagePlugin.Companion.getInstances());
-      }, null);
+      UastLanguagePlugin.Companion.getExtensionPointName().addChangeListener(() -> myLanguages = initLanguages(), null);
     }
 
-    private static void initLanguages(Collection<UastLanguagePlugin> languagePlugins) {
-      for (UastLanguagePlugin plugin : languagePlugins) {
-        myLanguages.add(plugin.getLanguage());
-      }
+    @NotNull
+    private static @Unmodifiable Set<Language> initLanguages() {
+      return Set.of(ContainerUtil.map2Array(UastLanguagePlugin.Companion.getInstances(), Language.EMPTY_ARRAY, plugin -> plugin.getLanguage()));
     }
 
-    public static Set<Language> getLanguages() {
+    @NotNull
+    static Set<Language> getLanguages() {
       return myLanguages;
     }
   }
@@ -50,7 +43,7 @@ public final class UastMetaLanguage extends MetaLanguage {
   @NotNull
   @Override
   public Collection<Language> getMatchingLanguages() {
-    return Collections.unmodifiableSet(Holder.myLanguages);
+    return Holder.myLanguages;
   }
 
   @Override

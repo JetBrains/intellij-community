@@ -5,12 +5,27 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMixedListInfo
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.searchEverywhereMl.common.SE_TABS
-import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereContributorStatistician
+import com.intellij.searchEverywhereMl.ranking.features.statistician.getContributorStatistics
 
 internal class SearchEverywhereContributorFeaturesProvider {
   companion object {
-    internal val CONTRIBUTOR_INFO_ID = EventFields.String("contributorId", SE_TABS)
+    private val SE_CONTRIBUTORS = listOf(
+      "SearchEverywhereContributor.All", "ClassSearchEverywhereContributor",
+      "FileSearchEverywhereContributor", "RecentFilesSEContributor",
+      "SymbolSearchEverywhereContributor", "ActionSearchEverywhereContributor",
+      "SemanticActionSearchEverywhereContributor",
+      "RunConfigurationsSEContributor", "CommandsContributor",
+      "TopHitSEContributor", "com.intellij.ide.actions.searcheverywhere.CalculatorSEContributor",
+      "TmsSearchEverywhereContributor", "YAMLKeysSearchEverywhereContributor",
+      "UrlSearchEverywhereContributor", "Vcs.Git", "AutocompletionContributor",
+      "TextSearchContributor", "DbSETablesContributor", "third.party"
+    )
+
+    internal val SE_TABS = listOf(
+      "SearchEverywhereContributor.All", "Actions", "Files", "Classes", "Symbols", "Git"
+    )
+
+    internal val CONTRIBUTOR_INFO_ID = EventFields.String("contributorId", SE_CONTRIBUTORS)
     internal val CONTRIBUTOR_PRIORITY = EventFields.Int("contributorPriority")
     internal val CONTRIBUTOR_WEIGHT = EventFields.Int("contributorWeight")
     internal val CONTRIBUTOR_IS_MOST_POPULAR = EventFields.Boolean("contributorIsMostPopular")
@@ -41,7 +56,7 @@ internal class SearchEverywhereContributorFeaturesProvider {
 
   private fun getStatisticianFeatures(contributor: SearchEverywhereContributor<*>): List<EventPair<*>> {
     val contributorId = contributor.searchProviderId
-    val statistics = SearchEverywhereContributorStatistician.getStatistics()
+    val statistics = getContributorStatistics()
 
     val isMostPopular = statistics.contributorUsage.firstOrNull()?.first?.equals(contributorId) ?: return emptyList()
     val popularityIndex = statistics.contributorUsage.indexOfFirst { it.first == contributorId }.takeIf { it >= 0 } ?: return emptyList()

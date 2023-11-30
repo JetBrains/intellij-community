@@ -1,7 +1,8 @@
 // "Convert to sealed class" "true"
+// IGNORE_K2
 
 actual sealed class <caret>E {
-    actual object A : E()
-    actual object B : E()
-    actual object C : E()
+    actual data object A : E()
+    actual data object B : E()
+    actual data object C : E()
 }

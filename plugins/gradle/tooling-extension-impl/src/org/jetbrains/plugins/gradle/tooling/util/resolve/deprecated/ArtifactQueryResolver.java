@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 
 import java.io.File;
 import java.util.*;
@@ -33,25 +33,28 @@ import static org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.Depre
  */
 @Deprecated
 class ArtifactQueryResolver {
+
+  private final ModelBuilderContext myContext;
   private final Configuration myConfiguration;
   private final String myScope;
   private final Project myProject;
   private final boolean myDownloadSources;
   private final boolean myDownloadJavadoc;
-  private final SourceSetCachedFinder mySourceSetFinder;
 
-  ArtifactQueryResolver(@NotNull final Configuration configuration,
-                               @Nullable final String scope,
-                               @NotNull final Project project,
-                               final boolean downloadJavadoc,
-                               final boolean downloadSources,
-                               @NotNull final SourceSetCachedFinder sourceSetFinder) {
+  ArtifactQueryResolver(
+    @NotNull final ModelBuilderContext context,
+    @NotNull final Configuration configuration,
+    @Nullable final String scope,
+    @NotNull final Project project,
+    final boolean downloadJavadoc,
+    final boolean downloadSources
+  ) {
+    myContext = context;
     myConfiguration = configuration;
     myScope = scope;
     myProject = project;
     myDownloadJavadoc = downloadJavadoc;
     myDownloadSources = downloadSources;
-    mySourceSetFinder = sourceSetFinder;
   }
 
   public ExternalDepsResolutionResult resolve() {
@@ -93,12 +96,8 @@ class ArtifactQueryResolver {
       extDependencies.addAll(buildFileCollectionDeps(resolvedArtifacts, configurationProjectDependencies.values()));
     }
 
-    DependencyResultsTransformer dependencyResultsTransformer =
-      new DependencyResultsTransformer(myProject, mySourceSetFinder,
-                                       artifactMap,
-                                       auxiliaryArtifactsMap,
-                                       configurationProjectDependencies,
-                                       myScope);
+    DependencyResultsTransformer dependencyResultsTransformer = new DependencyResultsTransformer(
+      myContext, myProject, artifactMap, auxiliaryArtifactsMap, configurationProjectDependencies, myScope);
 
     ResolutionResult resolutionResult = myConfiguration.getIncoming().getResolutionResult();
     extDependencies.addAll(dependencyResultsTransformer.buildExternalDependencies(resolutionResult.getRoot().getDependencies()));

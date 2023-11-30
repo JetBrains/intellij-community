@@ -114,7 +114,7 @@ class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationPro
         }
 
         createBuildFile {
-            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.lastStable.toString())
+            withPlugin("org.jetbrains.kotlin.multiplatform", KotlinGradlePluginVersions.latestStable.toString())
             withPrefix {
                 code(
                     """

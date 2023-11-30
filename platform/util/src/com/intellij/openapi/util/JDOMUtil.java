@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -733,7 +733,7 @@ public final class JDOMUtil {
     return deepMergeWithAttributes(to, from, Collections.emptyList());
   }
 
-  public static class MergeAttribute {
+  public static final class MergeAttribute {
     public String elementName;
     public String attributeName;
 
@@ -749,7 +749,7 @@ public final class JDOMUtil {
    * With this method you can provide a list of tag+attribute names. If two tags have similar attributes from this lists,
    *   this method will merge them
    */
-  public static @NotNull Element deepMergeWithAttributes(@NotNull Element to, @NotNull Element from, @NotNull List<? extends MergeAttribute> mergeByAttributes) {
+  public static @NotNull Element deepMergeWithAttributes(@NotNull Element to, @NotNull Element from, @NotNull List<MergeAttribute> mergeByAttributes) {
     for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
       Element child = iterator.next();
       iterator.remove();
@@ -782,7 +782,7 @@ public final class JDOMUtil {
   private static boolean areAttributesEqual(@NotNull List<? extends Attribute> l1,
                                             @NotNull List<? extends Attribute> l2,
                                             @NotNull Element base,
-                                            @NotNull List<? extends MergeAttribute> mergeByAttributes) {
+                                            @NotNull List<MergeAttribute> mergeByAttributes) {
     Set<String> attributes = mergeByAttributes.stream()
       .filter(o -> o.elementName.equals(base.getName()))
       .map(o -> o.attributeName)

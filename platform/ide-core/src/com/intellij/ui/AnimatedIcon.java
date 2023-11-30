@@ -3,8 +3,8 @@ package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -18,20 +18,21 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
-import static com.intellij.ui.AnimatedIcon.Default.*;
+import static com.intellij.ui.SpinningProgressIconKt.bigSpinningProgressIcon;
 
 public class AnimatedIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(AnimatedIcon.class);
   /**
-   * This key is used to allow animated icons in lists, tables and trees.
+   * This key is used to allow animated icons in lists, tables, and trees.
    * If the corresponding client property is set to {@code true} the corresponding component
    * will be automatically repainted to update an animated icon painted by the renderer of the component.
-   * Note, that animation may cause a performance problems and should not be used everywhere.
+   * Note that animation may cause performance problems and should not be used everywhere.
    */
   public static final Key<Boolean> ANIMATION_IN_RENDERER_ALLOWED = Key.create("ANIMATION_IN_RENDERER_ALLOWED");
   /**
-   * This key can be used to increase performance of animated icons in lists, tables and trees.
+   * This key can be used to increase the performance of animated icons in lists, tables, and trees.
    * A renderer should provide a {@code Runnable} that repaints only a part of a corresponding component.
    */
   @ApiStatus.Experimental
@@ -45,11 +46,6 @@ public class AnimatedIcon implements Icon {
   }
 
   public static class Default extends AnimatedIcon {
-
-    public Default() {
-      super(DEFAULT_FRAMES);
-    }
-
     private static final Icon[] OLD_ICONS = {
       AllIcons.Process.Step_1,
       AllIcons.Process.Step_2,
@@ -59,6 +55,7 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Step_6,
       AllIcons.Process.Step_7,
       AllIcons.Process.Step_8};
+
     private static final Frame[] DEFAULT_FRAMES = getDefaultFrames();
 
     private static Frame[] getDefaultFrames() {
@@ -72,6 +69,10 @@ public class AnimatedIcon implements Icon {
     public static final List<Icon> ICONS = ContainerUtil.map(getDefaultFrames(), Frame::getIcon);
 
     public static final AnimatedIcon INSTANCE = new Default();
+
+    public Default() {
+      super(DEFAULT_FRAMES);
+    }
   }
 
   public static final class Big extends AnimatedIcon {
@@ -95,11 +96,20 @@ public class AnimatedIcon implements Icon {
       if (Boolean.getBoolean("disable.new.spinning.icon")) {
         return AnimatedIcon.getFrames(DELAY, OLD_BIG_ICONS);
       }
-      return new SpinningProgressIcon.Big().frames;
+      return bigSpinningProgressIcon().frames;
     }
 
     public static final int DELAY = 125;
-    public static final List<Icon> ICONS = ContainerUtil.map(getDefaultBigFrames(), Frame::getIcon);
+    public static final Icon[] ICONS;
+
+    static {
+      AnimatedIcon.Frame[] array = getDefaultBigFrames();
+      Icon[] result = new Icon[array.length];
+      for (int i = 0; i < array.length; i++) {
+        result[i] = array[i].getIcon();
+      }
+      ICONS = result;
+    }
 
     public static final AnimatedIcon INSTANCE = new Big();
   }
@@ -152,7 +162,7 @@ public class AnimatedIcon implements Icon {
     }
 
     public Blinking(int delay, @NotNull Icon icon) {
-      super(delay, icon, IconLoader.getDisabledIcon(icon));
+      super(delay, icon, IconUtilKt.getDisabledIcon(icon, null));
     }
   }
 
@@ -201,8 +211,7 @@ public class AnimatedIcon implements Icon {
     }
   }
 
-
-  Frame[] frames;
+  final Frame[] frames;
   private final Set<Component> requested = Collections.newSetFromMap(new IdentityHashMap<>());
   private long time;
   private int index;
@@ -218,13 +227,9 @@ public class AnimatedIcon implements Icon {
     time = System.currentTimeMillis();
   }
 
-  AnimatedIcon() {
-    frames = createFrames();
+  protected AnimatedIcon(@NotNull Function<AnimatedIcon, Frame[]> frameProducer) {
+    frames = frameProducer.apply(this);
     time = System.currentTimeMillis();
-  }
-
-  protected Frame[] createFrames() {
-    return getFrames(DELAY, ICONS.toArray(new Icon[0]));
   }
 
   private static Frame[] getFrames(int delay, Icon @NotNull ... icons) {
@@ -235,9 +240,8 @@ public class AnimatedIcon implements Icon {
       Icon icon = icons[i];
       assert icon != null : "null icon";
       frames[i] = new Frame() {
-        @NotNull
         @Override
-        public Icon getIcon() {
+        public @NotNull Icon getIcon() {
           return icon;
         }
 
@@ -260,8 +264,7 @@ public class AnimatedIcon implements Icon {
     return frames;
   }
 
-  @NotNull
-  private Icon getUpdatedIcon() {
+  private @NotNull Icon getUpdatedIcon() {
     int index = getCurrentIndex();
     return getFrames()[index].getIcon();
   }
@@ -331,8 +334,7 @@ public class AnimatedIcon implements Icon {
     }
   }
 
-  @Nullable
-  protected Component getRendererOwner(@Nullable Component component) {
+  protected @Nullable Component getRendererOwner(@Nullable Component component) {
     return ClientProperty.isTrue(component, ANIMATION_IN_RENDERER_ALLOWED) ? component : null;
   }
 }

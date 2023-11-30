@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -17,7 +17,6 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Consumer
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_PORBLEM as BUILD_PROBLEM
 
 class BuildMessagesImpl private constructor(private val logger: BuildMessageLogger,
                                             private val debugLogger: DebugLogger) : BuildMessages {
@@ -103,24 +102,39 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     processMessage(LogMessage(LogMessage.Kind.BUILD_STATUS, message))
   }
 
+  override fun changeBuildStatusToSuccess(message: String) {
+    processMessage(LogMessage(LogMessage.Kind.BUILD_STATUS_CHANGED_TO_SUCCESSFUL, message))
+  }
+
   override fun setParameter(parameterName: String, value: String) {
     processMessage(LogMessage(LogMessage.Kind.SET_PARAMETER, "$parameterName=$value"))
   }
 
   override fun block(blockName: String, task: Callable<Unit>) {
-    spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScope {
-      try {
-        processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-        task.call()
+    runBlocking {
+      TraceManager.exportPendingSpans()
+    }
+
+    try {
+      processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
+      spanBuilder(blockName.lowercase(Locale.getDefault())).useWithScopeBlocking {
+        try {
+          task.call()
+        }
+        catch (e: Throwable) {
+          // print all pending spans
+          runBlocking {
+            TraceManager.exportPendingSpans()
+          }
+          throw e
+        }
       }
-      catch (e: Throwable) {
-        // print all pending spans
-        TracerProviderManager.flush()
-        throw e
+    }
+    finally {
+      runBlocking {
+        TraceManager.exportPendingSpans()
       }
-      finally {
-        processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
-      }
+      processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
     }
   }
 
@@ -135,11 +149,19 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
   private fun processMessage(message: LogMessage) {
     logger.processMessage(message)
   }
+
+  override fun reportBuildProblem(description: String, identity: String?) {
+    processMessage(BuildProblemLogMessage(description = description, identity = identity))
+  }
+
+  override fun cancelBuild(reason: String) {
+    logger.processMessage(LogMessage(LogMessage.Kind.BUILD_CANCEL, reason))
+  }
 }
 
 /**
- * Used to print debug-level log message to a file in the build output. It firstly prints messages to a temp file and copies it to the real
- * file after the build process cleans up the output directory.
+ * Used to print a debug-level log message to a file in the build output.
+ * It firstly prints messages to a temp file and copies it to the real file after the build process cleans up the output directory.
  */
 private class DebugLogger {
   private val tempFile: Path = Files.createTempFile("intellij-build", ".log")
@@ -208,11 +230,13 @@ private class PrintWriterBuildMessageLogger(
 @Internal
 fun reportBuildProblem(description: String, identity: String? = null) {
   if (isUnderTeamCity) {
-    val attributes = mutableMapOf("description" to description)
-    if (identity != null) {
-      attributes["identity"] = identity
+    val logger = TeamCityBuildMessageLogger()
+    try {
+      logger.processMessage(BuildProblemLogMessage(description, identity))
     }
-    println(ServiceMessage.asString(BUILD_PROBLEM, attributes))
+    finally {
+      logger.dispose()
+    }
   }
   else {
     error("$identity: $description")

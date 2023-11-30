@@ -4,6 +4,7 @@ package com.intellij.codeInspection.logging
 import com.intellij.psi.util.InheritanceUtil
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.*
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 internal class LoggingUtil {
   companion object {
@@ -51,8 +52,8 @@ internal class LoggingUtil {
 
     private val LEGACY_METHODS_WITH_LEVEL = setOf("log", "l7dlog", "logp", "logrb")
 
-    private val LEVEL_MAP: Map<String, LevelType> = LevelType.values().associateBy { it.name }
-    private val LEGACY_LEVEL_MAP: Map<String, LegacyLevelType> = LegacyLevelType.values().associateBy { it.name }
+    private val LEVEL_MAP: Map<String, LevelType> = LevelType.entries.associateBy { it.name }
+    private val LEGACY_LEVEL_MAP: Map<String, LegacyLevelType> = LegacyLevelType.entries.associateBy { it.name }
 
     private val LEVEL_CLASSES = setOf("org.apache.logging.log4j.Level", "org.slf4j.event.Level")
     private val LEGACY_LEVEL_CLASSES = setOf("org.apache.logging.log4j.Level", "org.apache.log4j.Priority", "java.util.logging.Level")
@@ -129,7 +130,15 @@ internal class LoggingUtil {
     internal fun getGuardedCondition(call: UCallExpression?): UExpression? {
       if (call == null) return null
       val loggerSource = getLoggerQualifier(call) ?: return null
-      val ifExpression = call.getParentOfType<UIfExpression>() ?: return null
+      var ifExpression: UIfExpression? = call.getParentOfType<UIfExpression>() ?: return null
+      while (ifExpression != null) {
+        if (getReferencesForVariable(loggerSource, ifExpression.condition).isEmpty()) {
+          ifExpression = ifExpression.getParentOfType<UIfExpression>() ?: return null
+          continue
+        }
+        break
+      }
+      if (ifExpression == null) return null
       var condition = ifExpression.condition.skipParenthesizedExprDown()
       if (condition is UPrefixExpression) {
         if (condition.operator != UastPrefixOperator.LOGICAL_NOT) return null
@@ -142,6 +151,23 @@ internal class LoggingUtil {
         if (thenExpression == null || !isPsiAncestor(thenExpression, call)) return null
       }
       return getGuardedCondition(condition, loggerSource)
+    }
+
+    private fun getReferencesForVariable(variable: UElement, context: UElement): List<UQualifiedReferenceExpression> {
+      val sourcePsi = variable.sourcePsi ?: return emptyList()
+      val result = mutableListOf<UQualifiedReferenceExpression>()
+      val visitor = object : AbstractUastVisitor() {
+        override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
+          val selector = node.receiver
+          val resolveToUElement = (selector as? UResolvable)?.resolveToUElement() ?: return true
+          if (sourcePsi.isEquivalentTo(resolveToUElement.sourcePsi)) {
+            result.add(node)
+          }
+          return true
+        }
+      }
+      context.accept(visitor)
+      return result
     }
 
     private fun getGuardedCondition(condition: UExpression, loggerSource: UElement): UExpression? {
@@ -201,7 +227,7 @@ internal class LoggingUtil {
           }
         }
         if (resolvedReceiver is UMethod) {
-          if(!resolvedReceiver.uastParameters.isEmpty()) return null
+          if (!resolvedReceiver.uastParameters.isEmpty()) return null
           val methodType = resolvedReceiver.returnType?.canonicalText ?: return null
           if (LOGGER_CLASSES.contains(methodType) || LEGACY_LOGGER_CLASSES.contains(methodType)) {
             return resolvedReceiver
@@ -322,6 +348,32 @@ internal class LoggingUtil {
         }
       }
       return count
+    }
+
+    fun getLoggerCalls(guardedCondition: UExpression): List<UCallExpression> {
+      val sourcePsi = guardedCondition.sourcePsi ?: return emptyList()
+      val qualifier = when (val guarded = sourcePsi.toUElementOfType<UExpression>()) {
+        is UQualifiedReferenceExpression -> {
+          (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+        }
+        is UCallExpression -> {
+          (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+        }
+        else -> {
+          null
+        }
+      }
+      if (qualifier == null) {
+        return emptyList()
+      }
+      val uIfExpression = guardedCondition.getParentOfType<UIfExpression>()
+      if (uIfExpression == null) {
+        return emptyList()
+      }
+      val referencesForVariable = getReferencesForVariable(qualifier, uIfExpression)
+      return referencesForVariable.mapNotNull { it.selector as? UCallExpression }
+        .filter { it.sourcePsi?.containingFile != null }
+        .filter { LOG_MATCHERS.uCallMatches(it) || LEGACY_LOG_MATCHERS.uCallMatches(it) }
     }
 
     enum class LoggerType {

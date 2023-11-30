@@ -133,10 +133,8 @@ public final class FoldingUpdate {
   @Nullable
   static Runnable updateInjectedFoldRegions(@NotNull Editor editor, @NotNull PsiFile file, boolean applyDefaultState) {
     if (file instanceof PsiCompiledElement) return null;
-    Boolean codeFoldingEnabled = editor.getUserData(INJECTED_CODE_FOLDING_ENABLED);
-    if (codeFoldingEnabled != null && !codeFoldingEnabled) {
-      return null;
-    }
+    boolean codeFoldingForInjectedEnabled = editor.getUserData(INJECTED_CODE_FOLDING_ENABLED) != Boolean.FALSE;
+
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     Project project = file.getProject();
@@ -166,7 +164,9 @@ public final class FoldingUpdate {
         injectedFiles.add(injectedFile);
         List<RegionInfo> map = new ArrayList<>();
         lists.add(map);
-        getFoldingsFor(injectedFile, map, false);
+        if (codeFoldingForInjectedEnabled) {
+          getFoldingsFor(injectedFile, map, false);
+        }
       });
     }
 

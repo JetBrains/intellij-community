@@ -83,7 +83,7 @@ interface DocRenderItemManager {
     }
   }
 
-  fun areListenersAttached(editor: Editor) = editor.getUserData(LISTENERS_DISPOSABLE) != null
+  fun areListenersAttached(editor: Editor): Boolean = editor.getUserData(LISTENERS_DISPOSABLE) != null
 
   private class MyVisibleAreaListener(editor: Editor) : VisibleAreaListener {
     private var lastWidth: Int

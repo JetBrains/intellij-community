@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints
 
 import com.intellij.lang.Language
@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
@@ -19,7 +18,8 @@ import kotlin.reflect.KMutableProperty0
 
 
 enum class InlayGroup(val key: String, @Nls val description: String? = null) {
-  CODE_VISION_GROUP_NEW("settings.hints.new.group.code.vision", ApplicationBundle.message("settings.hints.new.group.code.vision.description")),
+  CODE_VISION_GROUP_NEW("settings.hints.new.group.code.vision",
+                        ApplicationBundle.message("settings.hints.new.group.code.vision.description")),
   CODE_VISION_GROUP("settings.hints.group.code.vision", ApplicationBundle.message("settings.hints.new.group.code.vision.description")),
   PARAMETERS_GROUP("settings.hints.group.parameters", ApplicationBundle.message("settings.hints.group.parameters.description")),
   TYPES_GROUP("settings.hints.group.types", ApplicationBundle.message("settings.hints.group.types.description")),
@@ -31,30 +31,33 @@ enum class InlayGroup(val key: String, @Nls val description: String? = null) {
   URL_PATH_GROUP("settings.hints.group.url.path", ApplicationBundle.message("settings.hints.group.url.path.description")),
   OTHER_GROUP("settings.hints.group.other");
 
-  override fun toString(): @Nls String {
+  fun title(): @Nls String {
     return ApplicationBundle.message(key)
-  }}
+  }
+}
 
 /**
  * ATTENTION! Consider using [com.intellij.codeInsight.hints.declarative.InlayHintsProvider] whenever possible!
  * It is order of magnitude faster, much simpler and less error-prone. This class is very likely to be deprecated in the future.
  *
- * Provider of inlay hints for single language. If you need to create hints for multiple languages, please use [InlayHintsProviderFactory].
+ * Provider of inlay hints for a single language. If you need to create hints for multiple languages, use [InlayHintsProviderFactory].
  * Both block and inline hints collection are supported.
- * Block hints draws between lines of code text. Inline ones are placed on the code text line (like parameter hints)
+ * Block hints are drawn between lines of code text. Inline ones are placed on the code text line (like parameter hints).
+ *
+ * To test it, you may use [com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase].
+ *
+ * Mark as [com.intellij.openapi.project.DumbAware] to enable it in dumb mode.
  *
  * @param T settings type of this provider, if no settings required, please, use [NoSettings]
  * @see com.intellij.openapi.editor.InlayModel.addInlineElement
  * @see com.intellij.openapi.editor.InlayModel.addBlockElement
- *
- * To test it you may use InlayHintsProviderTestCase.
- * Mark as [com.intellij.openapi.project.DumbAware] to enable it in dumb mode.
  */
 @JvmDefaultWithCompatibility
 interface InlayHintsProvider<T : Any> {
   /**
-   * If this method is called, provider is enabled for this file
-   * Warning! Your collector should not use any settings besides [settings]
+   * If this method is called, the provider is enabled for this file.
+   *
+   * Warning: The collector should not use any settings besides [settings].
    */
   fun getCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector?
 
@@ -66,7 +69,7 @@ interface InlayHintsProvider<T : Any> {
   fun getPlaceholdersCollectorFor(file: PsiFile, editor: Editor, settings: T, sink: InlayHintsSink): InlayHintsCollector? = null
 
   /**
-   * Settings must be plain java object, fields of these settings will be copied via serialization.
+   * Settings must be a plain Java object - fields of these settings will be copied via serialization.
    * Must implement `equals` method, otherwise settings won't be able to track modification.
    * Returned object will be used to create configurable and collector.
    * It persists automatically.
@@ -76,8 +79,9 @@ interface InlayHintsProvider<T : Any> {
   @get:Nls(capitalization = Nls.Capitalization.Sentence)
 
   /**
-   * Name of this kind of hints. It will be used in settings and in context menu.
-   * Please, do not use word "hints" to avoid duplication
+   * Name of this kind of hints.
+   * It will be used in settings and in the context menu.
+   * Do not use the word "hints" to avoid duplication.
    */
   val name: String
 
@@ -108,6 +112,13 @@ interface InlayHintsProvider<T : Any> {
    * Checks whether the language is accepted by the provider.
    */
   fun isLanguageSupported(language: Language): Boolean = true
+
+  /**
+   * Determines a language for settings retrieval
+   * (can be used to share settings for multi-dialect languages, for example)
+   * @param language Original element language
+   */
+  fun getSettingsLanguage(language: Language): Language = language
 
   fun createFile(project: Project, fileType: FileType, document: Document): PsiFile {
     val factory = PsiFileFactory.getInstance(project)
@@ -186,7 +197,7 @@ interface ChangeListener {
 }
 
 /**
- * This class should be used if provider should not have settings. If you use e.g. [Unit] you will have annoying warning in logs.
+ * This class should be used if the provider should not have settings. If you use e.g. [Unit] you will have annoying warning in logs.
  */
 @Property(assertIfNoBindings = false)
 class NoSettings {

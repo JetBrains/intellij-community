@@ -1,39 +1,35 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.settingsSync.SettingsSyncSettings.Companion.COMPONENT_NAME
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
+import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
-import java.util.*
 
+@State(name = COMPONENT_NAME, storages = [Storage(FILE_SPEC, usePathMacroManager = false)])
 @ApiStatus.Internal
-fun interface SettingsSyncEnabledStateListener : EventListener {
-  fun enabledStateChanged(syncEnabled: Boolean)
-}
-
-@State(name = "SettingsSyncSettings", storages = [Storage(FILE_SPEC)])
-@ApiStatus.Internal
-class SettingsSyncSettings :
-  SimplePersistentStateComponent<SettingsSyncSettings.SettingsSyncSettingsState>(SettingsSyncSettingsState())
-{
-
+class SettingsSyncSettings : SettingsSyncState, SerializablePersistentStateComponent<SettingsSyncSettings.State>(State()) {
   companion object {
-    fun getInstance() = ApplicationManager.getApplication().getService(SettingsSyncSettings::class.java)
+    fun getInstance(): SettingsSyncSettings = service<SettingsSyncSettings>()
 
     const val FILE_SPEC = "settingsSync.xml"
+    const val COMPONENT_NAME = "SettingsSyncSettings"
   }
 
-  var migrationFromOldStorageChecked: Boolean
+  override var migrationFromOldStorageChecked: Boolean
     get() = state.migrationFromOldStorageChecked
     set(value) {
-      state.migrationFromOldStorageChecked = value
+      updateState {
+        it.withMigrationFromOldStorageChecked(value)
+      }
     }
 
-  var syncEnabled
+  override var syncEnabled
     get() = state.syncEnabled
     set(value) {
-      state.syncEnabled = value
+      updateState {
+        it.withSyncEnabled(value)
+      }
       fireSettingsStateChanged(value)
     }
 
@@ -41,65 +37,145 @@ class SettingsSyncSettings :
     SettingsSyncEvents.getInstance().fireEnabledStateChanged(syncEnabled)
   }
 
-  fun isCategoryEnabled(category: SettingsCategory) = !state.disabledCategories.contains(category)
+  override fun isCategoryEnabled(category: SettingsCategory) = state.isCategoryEnabled(category)
 
-  fun setCategoryEnabled(category: SettingsCategory, isEnabled: Boolean) {
-    if (isEnabled) {
-      state.disabledCategories.remove(category)
-    }
-    else {
-      if (!state.disabledCategories.contains(category)) {
-        state.disabledCategories.add(category)
-        state.disabledCategories.sort()
-      }
+  override fun setCategoryEnabled(category: SettingsCategory, isEnabled: Boolean) {
+    updateState {
+      it.withCategoryEnabled(category, isEnabled)
     }
   }
 
-  fun isSubcategoryEnabled(category: SettingsCategory, subcategoryId: String): Boolean {
-    val disabled = state.disabledSubcategories[category]
-    return disabled == null || !disabled.contains(subcategoryId)
+  override fun isSubcategoryEnabled(category: SettingsCategory, subcategoryId: String) = state.isSubcategoryEnabled(category, subcategoryId)
+  override fun setSubcategoryEnabled(category: SettingsCategory, subcategoryId: String, isEnabled: Boolean) {
+    updateState {
+      it.withSubcategoryEnabled(category, subcategoryId, isEnabled)
+    }
   }
 
-  fun setSubcategoryEnabled(category: SettingsCategory, subcategoryId: String, isEnabled: Boolean) {
-    val disabledList = state.disabledSubcategories[category]
-    if (isEnabled) {
-      if (disabledList != null) {
-        disabledList.remove(subcategoryId)
-        if (disabledList.isEmpty()) {
-          state.disabledSubcategories.remove(category)
-        }
-      }
+  override val disabledCategories: List<SettingsCategory>
+    get() = state.disabledCategories
+  override val disabledSubcategories: Map<SettingsCategory, List<String>>
+    get() = state.disabledSubcategories
+
+  fun applyFromState(state: SettingsSyncState) {
+    updateState {
+      State(state.disabledCategories, state.disabledSubcategories, state.migrationFromOldStorageChecked, state.syncEnabled)
     }
-    else {
-      if (disabledList == null) {
-        val newList = ArrayList<String>()
-        newList.add(subcategoryId)
-        state.disabledSubcategories.put(category, newList)
+  }
+
+  data class State(@JvmField val disabledCategories: List<SettingsCategory> = emptyList(),
+                   @JvmField val disabledSubcategories: Map<SettingsCategory, List<String>> = emptyMap(),
+                   @JvmField @field:Property val migrationFromOldStorageChecked: Boolean = false,
+                   @JvmField @field:Property val syncEnabled: Boolean = false) {
+    fun withSyncEnabled(enabled: Boolean): State {
+      return State(disabledCategories, disabledSubcategories, migrationFromOldStorageChecked, enabled)
+    }
+
+    fun withMigrationFromOldStorageChecked(checked: Boolean): State {
+      return State(disabledCategories, disabledSubcategories, checked, syncEnabled)
+    }
+
+    private fun withDisabledCategories(newCategories: List<SettingsCategory>): State {
+      return State(newCategories, disabledSubcategories, migrationFromOldStorageChecked, syncEnabled)
+    }
+
+    fun withCategoryEnabled(category: SettingsCategory, isEnabled: Boolean): State {
+      val newCategories = ArrayList<SettingsCategory>(disabledCategories)
+      if (isEnabled) {
+        newCategories -= category
       }
       else {
-        if (!disabledList.contains(subcategoryId)) {
-          disabledList.add(subcategoryId)
-          Collections.sort(disabledList)
+        if (!newCategories.contains(category)) newCategories += category
+      }
+      newCategories.sort()
+      return withDisabledCategories(newCategories)
+    }
+
+
+    private fun withDisabledSubcategories(newSubcategoriesMap: Map<SettingsCategory, List<String>>): State {
+      return State(disabledCategories, newSubcategoriesMap, migrationFromOldStorageChecked, syncEnabled)
+    }
+
+    fun withSubcategoryEnabled(category: SettingsCategory, subcategoryId: String, isEnabled: Boolean): State {
+      val newSubcategoriesMap = HashMap(disabledSubcategories)
+      val subCategoryList = newSubcategoriesMap[category]
+      if (isEnabled) {
+        if (subCategoryList != null) {
+          val newSubcategories = ArrayList(subCategoryList)
+          newSubcategories -= subcategoryId
+          if (newSubcategories.isEmpty()) {
+            newSubcategoriesMap.remove(category)
+          }
+          else {
+            newSubcategoriesMap[category] = newSubcategories
+          }
         }
       }
+      else {
+        val newSubcategories = if (subCategoryList == null) {
+          ArrayList()
+        }
+        else {
+          ArrayList(subCategoryList)
+        }
+        if (!newSubcategories.contains(subcategoryId)) {
+          newSubcategories += subcategoryId
+        }
+        newSubcategories.sort()
+        newSubcategoriesMap[category] = newSubcategories
+      }
+      return withDisabledSubcategories(newSubcategoriesMap)
     }
-    state.intIncrementModificationCount()
+
+    fun isCategoryEnabled(category: SettingsCategory) = !disabledCategories.contains(category)
+
+    fun isSubcategoryEnabled(category: SettingsCategory, subcategoryId: String): Boolean {
+      val disabled = disabledSubcategories[category]
+      return disabled == null || !disabled.contains(subcategoryId)
+    }
+  }
+}
+
+interface SettingsSyncState {
+  fun isCategoryEnabled(category: SettingsCategory): Boolean
+  fun setCategoryEnabled(category: SettingsCategory, isEnabled: Boolean)
+  fun isSubcategoryEnabled(category: SettingsCategory, subcategoryId: String): Boolean
+  fun setSubcategoryEnabled(category: SettingsCategory, subcategoryId: String, isEnabled: Boolean)
+
+  val disabledCategories: List<SettingsCategory>
+  val disabledSubcategories: Map<SettingsCategory, List<String>>
+
+  var syncEnabled: Boolean
+  var migrationFromOldStorageChecked: Boolean
+}
+
+class SettingsSyncStateHolder(initState: SettingsSyncSettings.State = SettingsSyncSettings.State()) : SettingsSyncState {
+  @Volatile
+  private var state = initState
+  override fun isCategoryEnabled(category: SettingsCategory) = state.isCategoryEnabled(category)
+
+  override fun setCategoryEnabled(category: SettingsCategory, isEnabled: Boolean) {
+    state = state.withCategoryEnabled(category, isEnabled)
   }
 
-  class SettingsSyncSettingsState : BaseState() {
-    var syncEnabled by property(false)
+  override fun isSubcategoryEnabled(category: SettingsCategory, subcategoryId: String) = state.isSubcategoryEnabled(category, subcategoryId)
 
-    var disabledCategories by list<SettingsCategory>()
-    var disabledSubcategories by map<SettingsCategory, ArrayList<String>>()
-
-    var migrationFromOldStorageChecked by property(false)
-
-    @TestOnly
-    internal fun reset() {
-      syncEnabled = false
-      disabledCategories = mutableListOf()
-      disabledSubcategories = mutableMapOf()
-      migrationFromOldStorageChecked = false
-    }
+  override fun setSubcategoryEnabled(category: SettingsCategory, subcategoryId: String, isEnabled: Boolean) {
+    state = state.withSubcategoryEnabled(category, subcategoryId, isEnabled)
   }
+
+  override val disabledCategories: List<SettingsCategory>
+    get() = state.disabledCategories
+  override val disabledSubcategories: Map<SettingsCategory, List<String>>
+    get() = state.disabledSubcategories
+  override var syncEnabled: Boolean
+    get() = state.syncEnabled
+    set(value) {
+      state = state.withSyncEnabled(value)
+    }
+  override var migrationFromOldStorageChecked: Boolean
+    get() = state.migrationFromOldStorageChecked
+    set(value) {
+      state = state.withMigrationFromOldStorageChecked(value)
+    }
 }

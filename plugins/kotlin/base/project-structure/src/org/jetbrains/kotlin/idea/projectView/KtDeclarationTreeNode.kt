@@ -10,7 +10,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.psi.*
 
 @ApiStatus.Internal
@@ -41,17 +40,11 @@ class KtDeclarationTreeNode private constructor(
         @ApiStatus.Internal
         @NlsSafe
         fun tryGetRepresentableText(declaration: KtDeclaration, renderArguments: Boolean = true): String {
-            val settings = declaration.containingKtFile.kotlinCustomSettings
-            fun StringBuilder.appendColon() {
-                if (settings.SPACE_BEFORE_TYPE_COLON) append(" ")
-                append(":")
-                if (settings.SPACE_AFTER_TYPE_COLON) append(" ")
-            }
 
             fun KtProperty.presentableText() = buildString {
                 append(name.orErrorName())
                 typeReference?.text?.let { reference ->
-                    appendColon()
+                    append(": ")
                     append(reference)
                 }
             }
@@ -68,7 +61,8 @@ class KtDeclarationTreeNode private constructor(
                     valueParameters.forEachIndexed { index, parameter ->
                         parameter.name?.let { parameterName ->
                             append(parameterName)
-                            appendColon()
+                            append(": ")
+                            Unit
                         }
                         parameter.typeReference?.text?.let { typeReference ->
                             append(typeReference)
@@ -81,7 +75,7 @@ class KtDeclarationTreeNode private constructor(
                 }
 
                 typeReference?.text?.let { returnTypeReference ->
-                    appendColon()
+                    append(": ")
                     append(returnTypeReference)
                 }
             }

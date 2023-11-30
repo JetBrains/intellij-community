@@ -173,7 +173,7 @@ abstract class WebTypesScopeBase :
 
           buildNameConverters(config.canonicalNames?.additionalProperties, { mergeConverters(listOf(it)) }, builder::addCanonicalNamesRule)
           buildNameConverters(config.matchNames?.additionalProperties, { mergeConverters(it) }, builder::addMatchNamesRule)
-          buildNameConverters(config.nameVariants?.additionalProperties, { mergeConverters(it) }, builder::addNameVariantsRule)
+          buildNameConverters(config.nameVariants?.additionalProperties, { mergeConverters(it) }, builder::addCompletionVariantsRule)
 
           Pair(framework, builder.build())
         }
@@ -196,7 +196,7 @@ abstract class WebTypesScopeBase :
     private val descriptionRenderer: (String) -> String =
       when (webTypes.descriptionMarkupWithLegacy) {
         WebTypes.DescriptionMarkup.HTML -> { doc -> doc }
-        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> HtmlMarkdownUtils.toHtml(doc, false) ?: ("<p>$doc") }
+        WebTypes.DescriptionMarkup.MARKDOWN -> { doc -> HtmlMarkdownUtils.toHtml(doc, false) }
         else -> { doc -> "<p>" + StringUtil.escapeXmlEntities(doc).replace(EOL_PATTERN, "<br>") }
       }
 

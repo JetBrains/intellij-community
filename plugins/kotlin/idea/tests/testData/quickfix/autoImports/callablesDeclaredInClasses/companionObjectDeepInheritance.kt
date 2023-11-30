@@ -13,3 +13,6 @@ object TObject : T3()
 fun usage() {
     T1.<caret>foobar()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.actions;
 
@@ -13,6 +13,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,16 +28,14 @@ final class PreferredProducerFind {
 
   private PreferredProducerFind() {}
 
-  @Nullable
-  public static RunnerAndConfigurationSettings createConfiguration(@NotNull Location location, @NotNull ConfigurationContext context) {
+  public static @Nullable RunnerAndConfigurationSettings createConfiguration(@NotNull Location location, @NotNull ConfigurationContext context) {
     List<ConfigurationFromContext> configsFromContext = getConfigurationsFromContext(location, context, true, true);
     ConfigurationFromContext fromContext = !ContainerUtil.isEmpty(configsFromContext) ? configsFromContext.get(0) : null;
     return fromContext != null ? fromContext.getConfigurationSettings() : null;
   }
 
-  @Nullable
   @Deprecated
-  public static List<RuntimeConfigurationProducer> findPreferredProducers(final Location location, final ConfigurationContext context, final boolean strict) {
+  public static @Nullable List<RuntimeConfigurationProducer> findPreferredProducers(final Location location, final ConfigurationContext context, final boolean strict) {
     if (location == null) {
       return null;
     }
@@ -58,8 +57,9 @@ final class PreferredProducerFind {
   }
 
   private static List<RuntimeConfigurationProducer> findAllProducers(Location location, ConfigurationContext context) {
-    final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<>();
-    for (final RuntimeConfigurationProducer prototype : RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER.getExtensionList()) {
+    final ArrayList<RuntimeConfigurationProducer> result = new ArrayList<>();
+    List<RuntimeConfigurationProducer> producers = RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER.getExtensionList();
+    for (final RuntimeConfigurationProducer prototype : DumbService.getInstance(context.getProject()).filterByDumbAwareness(producers)) {
       final RuntimeConfigurationProducer producer;
       try {
         producer = prototype.createProducer(location, context);
@@ -74,10 +74,10 @@ final class PreferredProducerFind {
 
       if (producer.getConfiguration() != null) {
         LOG.assertTrue(producer.getSourceElement() != null, producer);
-        producers.add(producer);
+        result.add(producer);
       }
     }
-    return producers;
+    return result;
   }
 
   /**
@@ -138,8 +138,7 @@ final class PreferredProducerFind {
     return configurationsFromContext;
   }
 
-  @Nullable
-  private static List<ConfigurationFromContext> getConfigurationsFromAlternativeLocations(
+  private static @Nullable List<ConfigurationFromContext> getConfigurationsFromAlternativeLocations(
     @NotNull MultipleRunLocationsProvider.AlternativeLocationsInfo alternativeLocationsInfo,
     @NotNull Location originalLocation,
     boolean strict,

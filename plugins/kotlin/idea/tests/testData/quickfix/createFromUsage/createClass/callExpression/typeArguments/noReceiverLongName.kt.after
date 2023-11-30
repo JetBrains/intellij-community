@@ -5,3 +5,4 @@ fun test() = Foo<String, Int>(2, "2")
 class Foo<T, U>(u: U, t: T) {
 
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromUsageFix

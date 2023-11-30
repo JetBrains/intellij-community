@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.Forceable;
@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.IOUtil;
-import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +20,7 @@ import java.io.IOException;
  * used by {@link PersistentFSAttributeAccessor}
  */
 //TODO RC: rename to VFSAttributesStorage
+@ApiStatus.Internal
 public interface AbstractAttributesStorage extends Forceable, Closeable {
 
   /**
@@ -33,6 +34,18 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
 
   /** Log a warning if attribute value size is larger than that */
   int WARN_ATTRIBUTE_VALUE_SIZE = SystemProperties.getIntProperty("vfs.file-attribute-size-warn", 100 * IOUtil.KiB);
+
+  /**
+   * Limit the total number of attributes. It seems to have too many different attributes is not a good idea,
+   * looks more like an ab-use of the attribute API.
+   * <p>
+   * Actual limit value is kind of arbitrary: the actual implementation limits may be wider, or not have limit
+   * at all.
+   * <p>
+   * I.e. the {@link AttributesStorageOverBlobStorage} binary format allows for 16k attributeId, see {@link AttributesStorageOverBlobStorage#MAX_SUPPORTED_ATTRIBUTE_ID},
+   * while {@link AttributesStorageOld} has MAX_INT as a limit.
+   */
+  int MAX_ATTRIBUTE_ID = SystemProperties.getIntProperty("vfs.file-attribute-max-id", 8 * 1024);
 
   /**
    * Exclusive upper bound for inline attribute size: attribute is inlined if its size < this value
@@ -64,24 +77,24 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
   void deleteAttributes(final @NotNull PersistentFSConnection connection,
                         final int fileId) throws IOException;
 
-  int getLocalModificationCount();
+  boolean isEmpty() throws IOException;
 
-  void checkAttributesStorageSanity(final @NotNull PersistentFSConnection connection,
-                                    final int fileId,
-                                    final @NotNull IntList usedAttributeRecordIds,
-                                    final @NotNull IntList validAttributeIds) throws IOException;
+  void checkAttributeRecordSanity(int fileId,
+                                  int attributeRecordId) throws IOException;
 
   static void checkAttributeValueSize(@NotNull FileAttribute attribute,
                                       int attributeValueSize) throws FileTooBigException {
     if (attributeValueSize > MAX_ATTRIBUTE_VALUE_SIZE) {
-      throw new FileTooBigException(
-        "Attribute " + attribute + " value is too large: " +
-        attributeValueSize + " b > max(" + MAX_ATTRIBUTE_VALUE_SIZE + ")" +
-        " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage."
-      );
+      String message = "Attribute " + attribute + " value is too large: " +
+                       attributeValueSize + " b > max(" + MAX_ATTRIBUTE_VALUE_SIZE + ")" +
+                       " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage.";
+      //RC: exceptions from .close() methods are frequently ignored (see e.g. kryo/Output)
+      //    => log the error right here, so ONE CAN'T SILENCE THE TRUTH!!!111
+      FSRecords.LOG.error(message);
+      throw new FileTooBigException(message);
     }
     else if (attributeValueSize > WARN_ATTRIBUTE_VALUE_SIZE) {
-      FSRecords.LOG.warn(
+      FSRecords.THROTTLED_LOG.warn(
         "Attribute " + attribute + " value is quite large: " +
         attributeValueSize + " b > warn threshold(" + WARN_ATTRIBUTE_VALUE_SIZE + ")" +
         " -> please, do not use VFS file attributes for huge blobs of data. Consider using GistManager or GistStorage."

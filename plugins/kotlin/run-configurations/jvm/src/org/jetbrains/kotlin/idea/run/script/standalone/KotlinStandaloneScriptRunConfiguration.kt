@@ -200,6 +200,7 @@ private class ScriptCommandLineState(
 
     private fun commonParameters(): JavaParameters {
         val params = JavaParameters()
+        JavaParametersUtil.configureConfiguration(params, myConfiguration)
         setupJavaParameters(params)
         val jreHome = if (configuration.isAlternativeJrePathEnabled) myConfiguration.alternativeJrePath else null
         JavaParametersUtil.configureProject(environment.project, params, JavaParameters.JDK_ONLY, jreHome)

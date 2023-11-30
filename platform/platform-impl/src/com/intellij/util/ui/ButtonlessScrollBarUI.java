@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.application.Application;
@@ -15,6 +15,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.MethodHandleUtil;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -42,7 +43,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     return jbColor(Gray._230, UIUtil.getListBackground());
   }
 
-  private JBColor jbColor(final Color regular, final Color dark) {
+  private JBColor jbColor(@NotNull Color regular, @NotNull Color dark) {
     return JBColor.lazy(() -> isDark() ? dark : regular);
   }
 

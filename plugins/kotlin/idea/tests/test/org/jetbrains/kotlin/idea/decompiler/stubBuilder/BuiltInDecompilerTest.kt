@@ -63,9 +63,9 @@ class BuiltInDecompilerForWrongAbiVersionTest : AbstractBuiltInDecompilerTest() 
     fun testStubTreesEqualForIncompatibleAbiVersion() {
         val serializedStub = doTest("test")
         KotlinTestUtils.assertEqualsToFile(
-            File(testDataPath + "test.text"),
+            File(testDataDirectory, "test.text"),
             myFixture.file.text.replace(BuiltInsBinaryVersion.INSTANCE.toString(), "\$VERSION\$")
         )
-        KotlinTestUtils.assertEqualsToFile(File(testDataPath + "test.stubs"), serializedStub)
+        KotlinTestUtils.assertEqualsToFile(File(testDataDirectory, "test.stubs"), serializedStub)
     }
 }

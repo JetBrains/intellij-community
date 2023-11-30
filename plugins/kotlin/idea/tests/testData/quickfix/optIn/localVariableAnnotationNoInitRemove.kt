@@ -1,6 +1,4 @@
 // "Remove annotation" "true"
-// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
-// WITH_STDLIB
 
 @RequiresOptIn
 @Target(AnnotationTarget.LOCAL_VARIABLE)
@@ -10,3 +8,6 @@ fun foo() {
     <caret>@SomeOptInAnnotation
     var x: Int
 }
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

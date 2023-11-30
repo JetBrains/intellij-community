@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PythonScripts")
 
 package com.jetbrains.python.run
@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.isAncestor
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.debugger.PyDebugRunner
@@ -41,14 +40,14 @@ private val LOG = Logger.getInstance("#com.jetbrains.python.run.PythonScripts")
 
 @JvmOverloads
 fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironment,
-                                             sdk: Sdk,
+                                             sdk: Sdk?,
                                              interpreterParameters: List<String>,
                                              isUsePty: Boolean = false): TargetedCommandLine {
   val commandLineBuilder = TargetedCommandLineBuilder(targetEnvironment.request)
   workingDir?.apply(targetEnvironment)?.let { commandLineBuilder.setWorkingDirectory(it) }
   commandLineBuilder.charset = charset
   inputFile?.let { commandLineBuilder.setInputFile(TargetValue.fixed(it.absolutePath)) }
-  sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
+  sdk?.configureBuilderToRunPythonOnTarget(commandLineBuilder)
   commandLineBuilder.addParameters(interpreterParameters)
   when (this) {
     is PythonScriptExecution -> pythonScriptPath?.let { commandLineBuilder.addParameter(it.apply(targetEnvironment)) }
@@ -57,16 +56,21 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
                                 ?: throw IllegalArgumentException("Python module name must be set")
   }
   for (parameter in parameters) {
-    commandLineBuilder.addParameter(parameter.apply(targetEnvironment))
+    val resolvedParameter = parameter.apply(targetEnvironment)
+    if (resolvedParameter != PythonExecution.SKIP_ARGUMENT) {
+      commandLineBuilder.addParameter(resolvedParameter)
+    }
   }
-  val userPathList = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
+  val userPathList = sdk?.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
   initPythonPath(envs, true, userPathList, targetEnvironment.request, false)
   for ((name, value) in envs) {
     commandLineBuilder.addEnvironmentVariable(name, value.apply(targetEnvironment))
   }
   val environmentVariablesForVirtualenv = mutableMapOf<String, String>()
   // TODO [Targets API] It would be cool to activate environment variables for any type of target
-  PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
+  if (sdk != null) {
+    PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
+  }
   // TODO [Targets API] [major] PATH env for virtualenv should extend existing PATH env
   environmentVariablesForVirtualenv.forEach { (name, value) -> commandLineBuilder.addEnvironmentVariable(name, value) }
   // TODO [Targets API] [major] `PythonSdkFlavor` should be taken into account to pass (at least) "IRONPYTHONPATH" or "JYTHONPATH"
@@ -78,7 +82,9 @@ fun PythonExecution.buildTargetedCommandLine(targetEnvironment: TargetEnvironmen
   // This fix shouldn't be here, since flavor patches envs (see configureBuilderToRunPythonOnTarget), but envs
   // then overwritten by patchEnvironmentVariablesForVirtualenv and envs
   // Fix must be removed after path merging implementation
-  commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
+  if (sdk != null) {
+    commandLineBuilder.fixCondaPathEnvIfNeeded(sdk)
+  }
   return commandLineBuilder.build()
 }
 
@@ -221,7 +227,7 @@ fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndic
  */
 fun TargetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project: Project, vararg modules: Module) {
   fun TargetEnvironmentRequest.addPathToVolume(basePath: Path) {
-    if (uploadVolumes.none { it.localRootPath.isAncestor(basePath) }) {
+    if (uploadVolumes.none { basePath.startsWith(it.localRootPath) }) {
       uploadVolumes += UploadRoot(localRootPath = basePath, targetRootPath = TargetPath.Temporary())
     }
   }

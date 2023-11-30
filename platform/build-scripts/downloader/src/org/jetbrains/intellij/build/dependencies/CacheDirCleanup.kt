@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import com.google.common.io.MoreFiles
@@ -22,7 +22,7 @@ import java.util.logging.Logger
  *
  * Why two-stage removing is required: suppose you are running some build scripts after a month of vacation.
  * Older downloaded files will be marked for deletion, and then some of them will be used again.
- * Without the marking they would be removed and re-downloaded again, which we do not want.
+ * Without the marking, they would be removed and re-downloaded again, which we do not want.
  */
 class CacheDirCleanup(private val cacheDir: Path) {
   companion object {

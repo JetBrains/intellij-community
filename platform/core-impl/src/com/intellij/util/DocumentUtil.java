@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +43,7 @@ public final class DocumentUtil {
     executeInBulk(document, true, task);
   }
 
-  public static void writeInRunUndoTransparentAction(@NotNull final Runnable runnable) {
+  public static void writeInRunUndoTransparentAction(final @NotNull Runnable runnable) {
     CommandProcessor.getInstance().runUndoTransparentAction(() -> ApplicationManager.getApplication().runWriteAction(runnable));
   }
 
@@ -90,8 +90,7 @@ public final class DocumentUtil {
     return document.getLineEndOffset(lineNumber);
   }
 
-  @NotNull
-  public static TextRange getLineTextRange(@NotNull Document document, int line) {
+  public static @NotNull TextRange getLineTextRange(@NotNull Document document, int line) {
     return TextRange.create(document.getLineStartOffset(line), document.getLineEndOffset(line));
   }
 
@@ -157,12 +156,7 @@ public final class DocumentUtil {
     return true;
   }
 
-  /**
-   * Calculates indent of the line containing {@code offset}
-   * @return Whitespaces at the beginning of the line
-   */
-  public static CharSequence getIndent(@NotNull Document document, int offset) {
-    int lineOffset = getLineStartOffset(offset, document);
+  private static int getIndentLengthAtLineStart(@NotNull Document document, int lineOffset) {
     int result = 0;
     while (lineOffset + result < document.getTextLength() &&
            Character.isWhitespace(document.getCharsSequence().charAt(lineOffset + result))) {
@@ -171,7 +165,32 @@ public final class DocumentUtil {
     if (result + lineOffset > document.getTextLength()) {
       result--;
     }
-    return document.getCharsSequence().subSequence(lineOffset, lineOffset + Math.max(result, 0));
+    return Math.max(result, 0);
+  }
+
+  /**
+   * Calculates size of indent of the line containing {@code offset}
+   * @return Number of whitespace characters at the beginning of the line
+   */
+  public static int getIndentLength(@NotNull Document document, int offset) {
+    return getIndentLengthAtLineStart(document, getLineStartOffset(offset, document));
+  }
+
+  /**
+   * Calculates indent of the line containing {@code offset}
+   * @return Whitespaces at the beginning of the line
+   */
+  public static CharSequence getIndent(@NotNull Document document, int offset) {
+    int lineOffset = getLineStartOffset(offset, document);
+    return document.getCharsSequence().subSequence(lineOffset, lineOffset + getIndentLengthAtLineStart(document, lineOffset));
+  }
+
+  /**
+   * Calculates offset of the first non-whitespace character of the {@code line}
+   */
+  public static int getLineStartIndentedOffset(@NotNull Document document, int line) {
+    int lineStartOffset = document.getLineStartOffset(line);
+    return lineStartOffset + getIndentLengthAtLineStart(document, lineStartOffset);
   }
 
   public static int calculateOffset(@NotNull Document document, int line, int column, int tabSize) {

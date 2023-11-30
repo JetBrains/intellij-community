@@ -7,7 +7,6 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import java.io.File
 import java.util.function.Consumer
 
 
@@ -98,9 +97,8 @@ class BuildScriptDataBuilder(
   override fun addTestImplementationDependency(dependency: ScriptElement.Statement.Expression) = apply { backend.addTestImplementationDependency(dependency) }
   override fun addTestRuntimeOnlyDependency(dependency: String) = apply { backend.addTestRuntimeOnlyDependency(dependency) }
   override fun addTestRuntimeOnlyDependency(dependency: ScriptElement.Statement.Expression) = apply { backend.addTestRuntimeOnlyDependency(dependency) }
-  override fun addBuildScriptClasspath(dependency: String) = apply { backend.addBuildScriptClasspath() }
-  override fun addBuildScriptClasspath(dependency: ScriptElement.Statement.Expression) = apply { backend.addBuildScriptClasspath() }
-  override fun addBuildScriptClasspath(vararg dependencies: File) = apply { backend.addBuildScriptClasspath() }
+  override fun addBuildScriptClasspath(dependency: String) = apply { backend.addBuildScriptClasspath(dependency) }
+  override fun addBuildScriptClasspath(dependency: ScriptElement.Statement.Expression) = apply { backend.addBuildScriptClasspath(dependency) }
   override fun withMavenCentral() = apply { backend.withMavenCentral() }
   override fun withBuildScriptMavenCentral() = apply { backend.withBuildScriptMavenCentral() }
   override fun applyPlugin(plugin: String) = apply { backend.applyPlugin(plugin) }
@@ -110,15 +108,25 @@ class BuildScriptDataBuilder(
   override fun withJavaLibraryPlugin() = apply { backend.withJavaLibraryPlugin() }
   override fun withIdeaPlugin() = apply { backend.withIdeaPlugin() }
   override fun withKotlinJvmPlugin() = apply { backend.withKotlinJvmPlugin() }
+  override fun withKotlinJvmPlugin(version: String?): BuildScriptDataBuilder = apply { backend.withKotlinJvmPlugin(version) }
   override fun withKotlinJsPlugin() = apply { backend.withKotlinJsPlugin() }
   override fun withKotlinMultiplatformPlugin() = apply { backend.withKotlinMultiplatformPlugin() }
+  override fun withKotlinJvmToolchain(jvmTarget: Int): BuildScriptDataBuilder = apply { backend.withKotlinJvmToolchain(jvmTarget) }
   override fun withGroovyPlugin() = apply { backend.withGroovyPlugin() }
   override fun withGroovyPlugin(version: String) = apply { backend.withGroovyPlugin(version) }
   override fun withApplicationPlugin(mainClass: String?, mainModule: String?, executableDir: String?, defaultJvmArgs: List<String>?) =
     apply { backend.withApplicationPlugin(mainClass, mainModule, executableDir, defaultJvmArgs) }
+  override fun withKotlinTest(): BuildScriptDataBuilder = apply { backend.withKotlinTest() }
   override fun withJUnit() = apply { backend.withJUnit() }
   override fun withJUnit4() = apply { backend.withJUnit4() }
   override fun withJUnit5() = apply { backend.withJUnit5() }
+  override fun withJava(configure: ScriptTreeBuilder.() -> Unit) = apply { backend.withJava(configure) }
+  override fun withJava(configure: Consumer<ScriptTreeBuilder>) = apply { backend.withJava(configure) }
+  override fun targetCompatibility(level: String) = apply { backend.targetCompatibility(level) }
+  override fun sourceCompatibility(level: String) = apply { backend.sourceCompatibility(level) }
+
+  override fun project(name: String) = backend.project(name)
+  override fun project(name: String, configuration: String) = backend.project(name, configuration)
   // @formatter:on
 
   companion object {

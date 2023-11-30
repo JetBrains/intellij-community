@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.google.gson.stream.JsonReader
@@ -23,7 +23,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
-open class HeapDumpAnalysisSupport {
+internal open class HeapDumpAnalysisSupport {
   companion object {
     fun getInstance(): HeapDumpAnalysisSupport = service<HeapDumpAnalysisSupport>()
   }

@@ -6,10 +6,10 @@ import training.dsl.parseLessonSample
 import training.learn.lesson.general.NewSelectLesson
 
 class JavaSelectLesson : NewSelectLesson() {
-  override val selectArgument = "\"$selectString\""
-  override val selectCall = """someMethod("$firstString", $selectArgument, "$thirdString")"""
+  override val selectArgument: String = "\"$selectString\""
+  override val selectCall: String = """someMethod("$firstString", $selectArgument, "$thirdString")"""
 
-  override val numberOfSelectsForWholeCall = 2
+  override val numberOfSelectsForWholeCall: Int = 2
 
   override val sample: LessonSample = parseLessonSample("""
     abstract class Scratch {
@@ -24,5 +24,5 @@ class JavaSelectLesson : NewSelectLesson() {
         }
     }
   """.trimIndent())
-  override val selectIf = sample.getPosition(1).selection!!.let { sample.text.substring(it.first, it.second) }
+  override val selectIf: String = sample.getPosition(1).selection!!.let { sample.text.substring(it.first, it.second) }
 }

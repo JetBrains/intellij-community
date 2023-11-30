@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.ui.uiDslTestAction
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.TopGap
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal class GroupsPanel {
 
-  val panel = panel {
+  val panel: DialogPanel = panel {
     lateinit var group1Visibility: JBCheckBox
     lateinit var group1Enabled: JBCheckBox
     lateinit var group1RowVisibility: JBCheckBox

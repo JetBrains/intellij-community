@@ -191,10 +191,10 @@ class GCRootPathsTree(
 
     // In regular nodes paths are grouped by class definition
     var edges: HashMap<Edge, RegularNode>? = null
-    var pathsCount = 0
-    var pathsSize = 0
-    var totalSizeInDwords = 0
-    val instances = IntOpenHashSet(1)
+    var pathsCount: Int = 0
+    var pathsSize: Int = 0
+    var totalSizeInDwords: Int = 0
+    val instances: IntOpenHashSet = IntOpenHashSet(1)
 
     override fun addEdge(objectId: Int,
                          objectSize: Int,
@@ -247,7 +247,7 @@ class GCRootPathsTree(
 
   class RootNode(private val classStore: ClassStore) : Node {
     // In root node each instance has a separate path
-    val edges = Int2ObjectOpenHashMap<Pair<RegularNode, Edge>>()
+    val edges: Int2ObjectOpenHashMap<Pair<RegularNode, Edge>> = Int2ObjectOpenHashMap<Pair<RegularNode, Edge>>()
 
     override fun addEdge(objectId: Int,
                          objectSize: Int,
@@ -299,7 +299,7 @@ class GCRootPathsTree(
     fun createHotPathReport(treeDisplayOptions: AnalysisConfig.TreeDisplayOptions, rootReasonGetter: (Int) -> String): String {
       val rootList = mutableListOf<Triple<Int, RegularNode, Edge>>()
       val result = StringBuilder()
-      val printFunc = { s: String -> result.appendln(s); Unit }
+      val printFunc = { s: String -> result.appendLine(s); Unit }
 
       for (entry in edges.int2ObjectEntrySet().fastIterator()) {
         rootList.add(Triple(entry.intKey, entry.value.first, entry.value.second))
@@ -365,7 +365,23 @@ class GCRootPathsTree(
               val childrenToReport =
                 currentNodeEdges
                   .entries
-                  .sortedByDescending { it.value.pathsSize }
+                  .sortedWith { a, b ->
+                    // First: by paths size, descending
+                    val compareByPathsSizeDesc = b.value.pathsSize.compareTo(a.value.pathsSize)
+                    if (compareByPathsSizeDesc != 0) return@sortedWith compareByPathsSizeDesc
+
+                    // Second, if paths sizes are the same: by total size, descending
+                    val compareByTotalSizeDesc = b.value.totalSizeInDwords.compareTo(a.value.totalSizeInDwords)
+                    if (compareByTotalSizeDesc != 0) return@sortedWith compareByTotalSizeDesc
+
+                    // Third, if total sizes are the same: by ref index
+                    val compareByRefIndex = a.key.refIndex.compareTo(b.key.refIndex)
+                    if (compareByRefIndex != 0) return@sortedWith compareByRefIndex
+
+                    // Last, if ref indexes are the same: by class name
+                    val compareByClassName = a.key.classDefinition.name.compareTo(b.key.classDefinition.name)
+                    return@sortedWith compareByClassName
+                  }
                   .filterIndexed { index, e ->
                     index == 0 ||
                     e.value.pathsCount >= minimumObjectsForReport ||

@@ -4,10 +4,9 @@ package com.intellij.ui
 import com.intellij.icons.AllIcons.Ide.RoundShadow
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.JBValue.UIInteger
-import java.awt.Color
-import java.awt.Graphics2D
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.geom.RoundRectangle2D
+import javax.swing.JComponent
 
 /**
  * @author Alexander Lobas
@@ -27,6 +26,28 @@ class NotificationBalloonRoundShadowBorderProvider(fillColor: Color, borderColor
   companion object {
     @JvmField
     val CORNER_RADIUS: JBValue = UIInteger("Notification.arc", 12)
+  }
+
+  private val java2DPainter = ShadowJava2DPainter("Notification", true)
+
+  fun hideSide(top: Boolean, bottom: Boolean) {
+    java2DPainter.hideSide(top, bottom)
+  }
+
+  override fun getInsets(): Insets {
+    if (ShadowJava2DPainter.enabled()) {
+      return java2DPainter.getInsets()
+    }
+    return super.getInsets()
+  }
+
+  override fun paintShadow(component: JComponent, g: Graphics) {
+    if (ShadowJava2DPainter.enabled()) {
+      java2DPainter.paintShadow(g as Graphics2D, 0, 0, component.width, component.height)
+    }
+    else {
+      super.paintShadow(component, g)
+    }
   }
 
   override fun paintBorder(bounds: Rectangle, g: Graphics2D) {

@@ -44,14 +44,13 @@ import java.util.List;
 import java.util.Set;
 
 final class ShowRunningListAction extends AnAction {
-
   ShowRunningListAction() {
     super(ExecutionBundle.messagePointer("show.running.list.action.name"),
-          ExecutionBundle.messagePointer("show.running.list.action.description"), null);
+          ExecutionBundle.messagePointer("show.running.list.action.description"));
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null || project.isDisposed()) return;
     final Ref<Pair<? extends JComponent, String>> stateRef = new Ref<>();

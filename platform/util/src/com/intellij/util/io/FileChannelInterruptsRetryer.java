@@ -3,9 +3,9 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
@@ -14,8 +14,11 @@ import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static com.intellij.util.SystemProperties.getIntProperty;
 
 /**
  * A class intended to overcome interruptibility of {@link FileChannel} by repeating passed operation
@@ -55,8 +58,15 @@ import java.util.concurrent.locks.ReentrantLock;
 public final class FileChannelInterruptsRetryer implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(FileChannelInterruptsRetryer.class);
 
-  private static final boolean LOG_STACKTRACE_OF_TOO_LONG_RETRY_CHAINS =
-    SystemProperties.getBooleanProperty("idea.vfs.LOG_STACKTRACE_OF_TOO_LONG_RETRY_CHAINS", true);
+  /** If a single IO operation still not succeeds after that many retries -- fail */
+  @VisibleForTesting
+  static final int MAX_RETRIES = getIntProperty("idea.vfs.FileChannelInterruptsRetryer.MAX_RETRIES", 64);
+
+  /**
+   * If value > 0: add stacktrace to each Nth in a row retry warning log message
+   * If value <=0: never add stacktrace to a retry warning log message
+   */
+  private static final int LOG_STACKTRACE_IF_RETRY_CHAIN_LONGER = getIntProperty("idea.vfs.LOG_STACKTRACE_IF_RETRY_CHAIN_LONGER", 32);
 
   private final @NotNull Lock openCloseLock = new ReentrantLock();
   private final @NotNull Path path;
@@ -64,6 +74,17 @@ public final class FileChannelInterruptsRetryer implements AutoCloseable {
 
   /** null if retryer has been closed */
   private volatile FileChannel channel;
+
+  /**
+   * Total number of retries across all instances of this class. Only retries count -- a first
+   * successful attempt doesn't.
+   */
+  private final static AtomicLong totalRetriedAttempts = new AtomicLong();
+
+  public static long totalRetriedAttempts(){
+    return totalRetriedAttempts.get();
+  }
+
 
   public FileChannelInterruptsRetryer(final @NotNull Path path,
                                       final Set<? extends @NotNull OpenOption> openOptions) throws IOException {
@@ -75,14 +96,14 @@ public final class FileChannelInterruptsRetryer implements AutoCloseable {
   public <T> T retryIfInterrupted(final @NotNull FileChannelIdempotentOperation<T> operation) throws IOException {
     boolean interruptedStatusWasCleared = false;
     try {
-      for (int turn = 0; ; turn++) {
+      for (int attempt = 0; ; attempt++) {
         final FileChannel channelLocalCopy = channel;
-        if (channelLocalCopy == null && turn == 0) {
+        if (channelLocalCopy == null && attempt == 0) {
           //we haven't tried yet -> just reject
           throw new ClosedChannelException();
         }
         try {
-          if (channelLocalCopy == null && turn >= 0) {
+          if (channelLocalCopy == null && attempt >= 0) {
             //we have tried already, and failed, so now we can't just reject, since previous unsuccessful
             // attempts may corrupt the data -> throw CCException (which will be caught and re-tried)
             throw new ClosedChannelException();
@@ -90,6 +111,15 @@ public final class FileChannelInterruptsRetryer implements AutoCloseable {
           return operation.execute(channelLocalCopy);
         }
         catch (ClosedChannelException e) {
+          totalRetriedAttempts.incrementAndGet();
+
+          if (attempt >= MAX_RETRIES) {
+            IOException ioe = new IOException(
+              "Channel[" + path + "][@" + System.identityHashCode(channelLocalCopy) + "] " +
+              "is interrupted/closed in the middle of operation " + MAX_RETRIES + " times in the row: surrender");
+            ioe.addSuppressed(e);
+            throw ioe;
+          }
           //TODO RC: this catches _all_ close causes, not only thread interruptions!
           //         (for the latter only ClosedByInterruptException should be caught)
           //         ...Actually, catching all ClosedXXXExceptions make sense for the primary
@@ -126,9 +156,11 @@ public final class FileChannelInterruptsRetryer implements AutoCloseable {
           //         which fails now)
 
 
-          if (LOG_STACKTRACE_OF_TOO_LONG_RETRY_CHAINS && (turn % 100 == 99)) {
+          boolean logStackTrace = LOG_STACKTRACE_IF_RETRY_CHAIN_LONGER > 0
+                                  && (attempt % LOG_STACKTRACE_IF_RETRY_CHAIN_LONGER == (LOG_STACKTRACE_IF_RETRY_CHAIN_LONGER - 1));
+          if (logStackTrace) {
             LOG.warn("Channel[" + path + "][@" + System.identityHashCode(channelLocalCopy) + "] is closed during " + operation
-                     + " 99 times in a row -- suspicious, log stacktrace", e);
+                     + " " + LOG_STACKTRACE_IF_RETRY_CHAIN_LONGER + " times in a row -- suspicious, log stacktrace", e);
           }
           else {
             LOG.warn("Channel[" + path + "][@" + System.identityHashCode(channelLocalCopy) + "] is closed during " + operation

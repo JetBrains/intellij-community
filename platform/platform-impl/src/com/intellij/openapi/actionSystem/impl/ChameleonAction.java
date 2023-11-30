@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,14 +26,24 @@ public final class ChameleonAction extends AnAction {
     copyFrom(myActions.values().iterator().next());
   }
 
-  @Nullable ChameleonAction addAction(@NotNull AnAction action, @Nullable ProjectType projectType) {
+  /**
+   * @return true on success, false on action conflict
+   */
+  boolean addAction(@NotNull AnAction action, @Nullable ProjectType projectType) {
     if (action instanceof ActionStub actionStub) {
-      action = ActionManagerImpl.Companion.convertStub$intellij_platform_ide_impl(actionStub);
+      action = ActionManagerImplKt.convertStub(actionStub);
+      if (action == null) {
+        return true;
+      }
 
-      if (action == null) return this;
       projectType = actionStub.getProjectType();
     }
-    return myActions.put(projectType, action) == null ? this : null;
+
+    if (myActions.containsKey(projectType)) {
+      return false;
+    }
+    myActions.put(projectType, action);
+    return true;
   }
 
   @Override
@@ -67,7 +77,7 @@ public final class ChameleonAction extends AnAction {
     return action != null ? action : myActions.get(null);
   }
 
-  @TestOnly
+  @ApiStatus.Internal
   public Map<ProjectType, AnAction> getActions() {
     return myActions;
   }

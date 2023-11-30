@@ -5,11 +5,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.platform.util.progress.RawProgressReporter
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 
@@ -17,11 +19,11 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   private val myProject: Project = myTree.project
 
   @Throws(MavenProcessCanceledException::class)
-  fun resolvePlugins(mavenProjectsToResolvePlugins: Collection<MavenProjectWithHolder>,
-                     embeddersManager: MavenEmbeddersManager,
-                     console: MavenConsole,
-                     process: MavenProgressIndicator,
-                     reportUnresolvedToSyncConsole: Boolean) {
+  suspend fun resolvePlugins(mavenProjectsToResolvePlugins: Collection<MavenProjectWithHolder>,
+                             embeddersManager: MavenEmbeddersManager,
+                             process: RawProgressReporter,
+                             eventHandler: MavenEventHandler,
+                             reportUnresolvedToSyncConsole: Boolean) {
     val mavenProjects = mavenProjectsToResolvePlugins.filter {
       !it.mavenProject.hasReadingProblems()
       && it.mavenProject.hasUnresolvedPlugins()
@@ -31,13 +33,18 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
     
     val firstProject = sortAndGetFirst(mavenProjects).mavenProject
     val baseDir = MavenUtil.getBaseDir(firstProject.directoryFile).toString()
-    process.setText(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.displayName))
+    process.text(MavenProjectBundle.message("maven.downloading.pom.plugins", firstProject.displayName))
     val embedder = embeddersManager.getEmbedder(MavenEmbeddersManager.FOR_PLUGINS_RESOLVE, baseDir)
     val unresolvedPluginIds: Set<MavenId>
     val filesToRefresh: MutableSet<Path> = HashSet()
     try {
       val mavenPluginIdsToResolve = collectMavenPluginIdsToResolve(mavenProjects)
-      val resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, console)
+      val mavenPluginIds = mavenPluginIdsToResolve.map { it.first }
+      MavenLog.LOG.info("maven plugin resolution started: $mavenPluginIds")
+      val forceUpdate = MavenProjectsManager.getInstance(myProject).forceUpdateSnapshots
+      val resolutionResults = embedder.resolvePlugins(mavenPluginIdsToResolve, process, eventHandler, forceUpdate)
+      val unresolvedPlugins = resolutionResults.filter { !it.isResolved }.map { it.mavenPluginId }
+      MavenLog.LOG.info("maven plugin resolution finished, unresolved: $unresolvedPlugins")
       val artifacts = resolutionResults.flatMap { it.artifacts }
       for (artifact in artifacts) {
         val pluginJar = artifact.file.toPath()
@@ -58,7 +65,7 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
     }
     finally {
       if (filesToRefresh.size > 0) {
-        LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh)
+        LocalFileSystem.getInstance().refreshNioFiles(filesToRefresh, true, false, null)
       }
       embeddersManager.release(embedder)
     }
@@ -67,9 +74,8 @@ class MavenPluginResolver(private val myTree: MavenProjectsTree) {
   private fun reportUnresolvedPlugins(unresolvedPluginIds: Set<MavenId>) {
     if (!unresolvedPluginIds.isEmpty()) {
       for (mavenPluginId in unresolvedPluginIds) {
-        MavenProjectsManager.getInstance(myProject)
-          .syncConsole.getListener(MavenServerConsoleIndicator.ResolveType.PLUGIN)
-          .showArtifactBuildIssue(mavenPluginId.key, null)
+        MavenProjectsManager.getInstance(myProject).syncConsole
+          .showArtifactBuildIssue(MavenServerConsoleIndicator.ResolveType.PLUGIN, mavenPluginId.key, null)
       }
     }
   }

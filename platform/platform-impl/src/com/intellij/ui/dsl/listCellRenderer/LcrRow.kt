@@ -2,38 +2,59 @@
 package com.intellij.ui.dsl.listCellRenderer
 
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
+import org.jetbrains.annotations.Nls
+import java.awt.Color
+import javax.swing.Icon
 import javax.swing.JList
 
 @ApiStatus.Experimental
 @LcrDslMarker
 interface LcrRow<T> {
 
+  enum class Gap {
+    /**
+     * Default gap between cells. Usages:
+     * * Gap between icon and related text
+     */
+    DEFAULT,
+
+    /**
+     * No space
+     */
+    NONE
+  }
+
+  @Deprecated("Will be removed because we want to get rid of swing dependency for RemDev")
+  val list: JList<out T>
+  val value: T
+  val index: Int
+  val selected: Boolean
+  val hasFocus: Boolean
+
+  /**
+   * Row background. Used if the row is not selected and on left/right sides of selected row (new UI only)
+   */
+  var background: Color?
+
+  /**
+   * Selection color if the row is selected or `null` otherwise
+   */
+  var selectionColor: Color?
+
+
+  /**
+   * The gap between the previous cell and the next one. Not used for the first cell
+   */
+  fun gap(gap: Gap)
+
   /**
    * Adds a cell with an icon
    */
-  fun icon(init: (LcrInitParams.() -> Unit)? = null): LcrIcon
+  fun icon(icon: Icon, init: (LcrIconInitParams.() -> Unit)? = null)
 
   /**
    * Adds a cell with a text
    */
-  fun text(init: (LcrTextInitParams.() -> Unit)? = null): LcrText
+  fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)? = null)
 
-  /**
-   * Adds a cell with custom component. Should be used only if standard methods like [icon] or [text] don't fit your needs
-   */
-  fun cell(component: JComponent, init: (LcrCellInitParams.() -> Unit)? = null): LcrCell
-
-  /**
-   * Register a renderer
-   * * One (and only one) renderer must be provided for every [listCellRenderer]
-   * * The renderer should configure cells, defined by [icon] and [text] methods
-   * * The initial state for all cells are set before every render invocation
-   */
-  fun renderer(init: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean, rowParams: RowParams) -> Unit)
-
-  /**
-   * Simplified version of overloaded method
-   */
-  fun renderer(init: (value: T) -> Unit)
 }

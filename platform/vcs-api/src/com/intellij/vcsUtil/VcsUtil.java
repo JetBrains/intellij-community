@@ -25,16 +25,19 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.vcs.VcsSymlinkResolver;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -75,16 +78,11 @@ public final class VcsUtil {
     return (int)Math.min(result, Integer.MAX_VALUE);
   }
 
-  public static void markFileAsDirty(final Project project, @NonNls String path) {
-    final FilePath filePath = VcsContextFactory.getInstance().createFilePathOn(new File(path));
-    VcsDirtyScopeManager.getInstance(project).fileDirty(filePath);
-  }
-
   /**
    * @return true if the given file resides under the root associated with any vcs
    */
   public static boolean isFileUnderVcs(Project project, @NotNull @NonNls String file) {
-    return getVcsFor(project, getFilePath(file)) != null;
+    return getVcsFor(project, getFilePath(file, false)) != null;
   }
 
   public static boolean isFileUnderVcs(Project project, @NotNull FilePath file) {
@@ -104,7 +102,7 @@ public final class VcsUtil {
   }
 
   public static boolean isFileForVcs(@NotNull @NonNls String path, Project project, AbstractVcs host) {
-    return getVcsFor(project, getFilePath(path)) == host;
+    return getVcsFor(project, getFilePath(path, false)) == host;
   }
 
   @Nullable
@@ -196,7 +194,12 @@ public final class VcsUtil {
     }
   }
 
+  /**
+   * @deprecated This method will detect {@link FilePath#isDirectory()} using NIO.
+   * Avoid using the method, if {@code isDirectory} is known from context or not important.
+   */
   @NotNull
+  @Deprecated
   public static FilePath getFilePath(@NotNull @NonNls String path) {
     return getFilePath(new File(path));
   }
@@ -206,7 +209,12 @@ public final class VcsUtil {
     return VcsContextFactory.getInstance().createFilePathOn(file);
   }
 
+  /**
+   * @deprecated This method will detect {@link FilePath#isDirectory()} using NIO.
+   * Avoid using the method, if {@code isDirectory} is known from context or not important.
+   */
   @NotNull
+  @Deprecated
   public static FilePath getFilePath(@NotNull File file) {
     return VcsContextFactory.getInstance().createFilePathOn(file);
   }
@@ -430,17 +438,8 @@ public final class VcsUtil {
   @NlsSafe
   @NotNull
   public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
-    VirtualFile projectDir = project.getBaseDir();
-
-    String repositoryPath = root.getPresentableUrl();
-    if (projectDir != null) {
-      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
-      if (relativePath != null) {
-        repositoryPath = relativePath;
-      }
-    }
-
-    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
+    if (project.isDisposed()) return root.getName();
+    return ProjectLevelVcsManager.getInstance(project).getShortNameForVcsRoot(root);
   }
 
   @NotNull
@@ -568,6 +567,24 @@ public final class VcsUtil {
     }
     mappings.add(newMapping);
     return mappings;
+  }
+
+  @NotNull
+  public static VirtualFile resolveSymlinkIfNeeded(@NotNull Project project, @NotNull VirtualFile file) {
+    VirtualFile symlink = resolveSymlink(project, file);
+    return symlink != null ? symlink : file;
+  }
+
+  @Nullable
+  public static VirtualFile resolveSymlink(@NotNull Project project, @Nullable VirtualFile file) {
+    if (file == null) return null;
+    for (VcsSymlinkResolver resolver : VcsSymlinkResolver.EP_NAME.getExtensionList(project)) {
+      if (resolver.isEnabled()) {
+        VirtualFile symlink = resolver.resolveSymlink(file);
+        if (symlink != null) return symlink;
+      }
+    }
+    return null;
   }
 
   /**

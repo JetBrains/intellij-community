@@ -15,13 +15,17 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPublic
 
-private class ExtensionClassShouldNotBePublicProviderForKotlin : ExtensionClassShouldNotBePublicProvider {
+internal class ExtensionClassShouldNotBePublicProviderForKotlin : ExtensionClassShouldNotBePublicProvider {
   override fun isPublic(aClass: PsiClass): Boolean {
     return aClass is KtLightClass && aClass.kotlinOrigin?.isPublic == true
   }
 
   override fun provideQuickFix(clazz: JvmClass, file: PsiFile): Array<out LocalQuickFix> {
     return arrayOf(ChangeModifierFix(clazz.name!!))
+  }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return true
   }
 }
 

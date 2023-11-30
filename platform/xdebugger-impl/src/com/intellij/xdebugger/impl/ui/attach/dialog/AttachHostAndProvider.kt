@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.openapi.project.Project
@@ -11,13 +12,17 @@ import javax.swing.Icon
 
 @Suppress("UNCHECKED_CAST")
 data class AttachHostAndProvider(
-  val host: XAttachHost,
+  override val host: XAttachHost,
   val provider: XAttachHostProvider<out XAttachHost>,
   val project: Project,
-  val dataHolder: UserDataHolder) {
+  val dataHolder: UserDataHolder): AttachHostItem {
+
+  override fun getId(): String {
+    return getPresentation()
+  }
 
   @Nls
-  fun getPresentation(): String {
+  override fun getPresentation(): String {
     val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemDisplayText(project, host, dataHolder)
   }
@@ -27,7 +32,7 @@ data class AttachHostAndProvider(
     return getPresentation()
   }
 
-  fun getIcon(): Icon {
+  override fun getIcon(): Icon {
     val presentationGroup = provider.presentationGroup as XAttachPresentationGroup<XAttachHost>
     return presentationGroup.getItemIcon(project, host, dataHolder)
   }

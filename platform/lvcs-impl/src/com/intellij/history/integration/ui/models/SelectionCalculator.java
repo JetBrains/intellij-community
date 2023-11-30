@@ -8,6 +8,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -75,8 +76,7 @@ public final class SelectionCalculator {
     return result;
   }
 
-  @Nullable
-  private String getRevisionContent(Revision r) {
+  private @Nullable String getRevisionContent(@NotNull Revision r) {
     Entry e = r.findEntry();
     if (e == null) return null;
     Content c = e.getContent();
@@ -84,6 +84,6 @@ public final class SelectionCalculator {
     return c.getString(e, myGateway);
   }
 
-  private static class ContentIsUnavailableException extends RuntimeException {
+  private static final class ContentIsUnavailableException extends RuntimeException {
   }
 }

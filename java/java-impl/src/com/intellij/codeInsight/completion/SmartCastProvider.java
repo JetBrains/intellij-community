@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
-import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.ExpectedTypeInfoImpl;
-import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.codeInsight.completion.util.CompletionStyleUtil;
 import com.intellij.codeInsight.guess.GuessManager;
@@ -104,12 +101,13 @@ final class SmartCastProvider {
     List<PsiType> dfaTypes = GuessManager.getInstance(operand.getProject()).getControlFlowExpressionTypeConjuncts(operand);
     if (!dfaTypes.isEmpty()) {
       return ContainerUtil.map(dfaTypes, dfaType ->
-        new ExpectedTypeInfoImpl(dfaType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, dfaType, TailType.NONE, null, ExpectedTypeInfoImpl.NULL));
+        new ExpectedTypeInfoImpl(dfaType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, dfaType, TailTypes.noneType(), null, ExpectedTypeInfoImpl.NULL));
     }
 
     PsiType type = operand.getType();
     return type == null || type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? Collections.emptyList() :
-           Collections.singletonList(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.NONE, null, ExpectedTypeInfoImpl.NULL));
+           Collections.singletonList(
+             new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailTypes.noneType(), null, ExpectedTypeInfoImpl.NULL));
   }
 
   private static void addHierarchyTypes(CompletionParameters parameters, PrefixMatcher matcher, ExpectedTypeInfo info, Consumer<? super PsiType> result, boolean quick) {

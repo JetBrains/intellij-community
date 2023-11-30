@@ -3,8 +3,9 @@ pluginManagement {
         mavenLocal()
         gradlePluginPortal()
         maven { url 'KOTLIN_BOOTSTRAP_REPO' }
+        maven { url 'KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO' }
         maven { url 'KOTLIN_REPO' }
     }
-
 }
+
 rootProject.name = 'simpleWasmApplication'

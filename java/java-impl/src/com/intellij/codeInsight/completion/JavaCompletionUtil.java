@@ -782,10 +782,10 @@ public final class JavaCompletionUtil {
     char completionChar = context.getCompletionChar();
     PsiFile file = context.getFile();
 
-    TailType tailType = completionChar == '(' ? TailType.NONE :
-                              completionChar == ':' ? TailType.COND_EXPR_COLON :
-                              LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
-    boolean hasTail = tailType != TailType.NONE && tailType != TailType.UNKNOWN;
+    TailType tailType = completionChar == '(' ? TailTypes.noneType() :
+                        completionChar == ':' ? TailTypes.conditionalExpressionColonType() :
+                        LookupItem.handleCompletionChar(context.getEditor(), item, completionChar);
+    boolean hasTail = tailType != TailTypes.noneType() && tailType != TailTypes.unknownType();
     boolean smart = completionChar == Lookup.COMPLETE_STATEMENT_SELECT_CHAR;
 
     if (completionChar == '(' || completionChar == '.' || completionChar == ',' || completionChar == ';' || completionChar == ':' || completionChar == ' ') {
@@ -820,7 +820,7 @@ public final class JavaCompletionUtil {
           return isPartOfLambda(token) ? null : token;
         }
 
-        private boolean isPartOfLambda(PsiElement token) {
+        private static boolean isPartOfLambda(PsiElement token) {
           return token != null && token.getParent() instanceof PsiExpressionList &&
                  PsiUtilCore.getElementType(PsiTreeUtil.nextVisibleLeaf(token.getParent())) == JavaTokenType.ARROW;
         }
@@ -848,9 +848,9 @@ public final class JavaCompletionUtil {
     TailType toInsert = tailType;
     LookupItem<?> lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
     if (toInsert == EqTailType.INSTANCE) {
-      toInsert = TailType.UNKNOWN;
+      toInsert = TailTypes.unknownType();
     }
-    if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
+    if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailTypes.unknownType()) {
       if (!hasTail && item.getObject() instanceof PsiMethod && PsiTypes.voidType().equals(((PsiMethod)item.getObject()).getReturnType())) {
         PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
         if (psiElement().beforeLeaf(psiElement().withText(".")).accepts(context.getFile().findElementAt(context.getTailOffset() - 1))) {
@@ -868,9 +868,13 @@ public final class JavaCompletionUtil {
           if (parent instanceof PsiLambdaExpression && !LambdaHighlightingUtil.insertSemicolonAfter((PsiLambdaExpression)parent)) {
             insertAdditionalSemicolon = false;
           }
+          if (parent instanceof PsiExpressionStatement && parent.getParent() instanceof PsiForStatement forStatement &&
+              forStatement.getUpdate() == parent) {
+            insertAdditionalSemicolon = false;
+          }
         }
         if (insertAdditionalSemicolon) {
-          toInsert = TailType.SEMICOLON;
+          toInsert = TailTypes.semicolonType();
         }
 
       }

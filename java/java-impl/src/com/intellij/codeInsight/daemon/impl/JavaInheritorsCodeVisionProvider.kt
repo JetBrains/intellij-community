@@ -4,7 +4,7 @@ package com.intellij.codeInsight.daemon.impl
 import com.intellij.codeInsight.codeVision.CodeVisionRelativeOrdering
 import com.intellij.codeInsight.hints.codeVision.InheritorsCodeVisionProvider
 import com.intellij.java.JavaBundle
-import com.intellij.lang.OuterModelsModificationTrackerManager
+import com.intellij.java.analysis.OuterModelsModificationTrackerManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -17,7 +17,7 @@ import java.awt.event.MouseEvent
 
 class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   companion object {
-    const val ID = "java.inheritors"
+    const val ID: String = "java.inheritors"
   }
 
   override fun acceptsFile(file: PsiFile): Boolean = file.language == JavaLanguage.INSTANCE
@@ -52,14 +52,14 @@ class JavaInheritorsCodeVisionProvider : InheritorsCodeVisionProvider() {
   private fun computeMethodInheritors(element: PsiMethod, project: Project) : Int {
     return CachedValuesManager.getCachedValue(element, CachedValueProvider {
       val overrides = JavaTelescope.collectOverridingMethods(element)
-      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(project))
     })
   }
 
   private fun computeClassInheritors(element: PsiClass, project: Project) : Int {
     return CachedValuesManager.getCachedValue(element, CachedValueProvider {
       val overrides = JavaTelescope.collectInheritingClasses(element)
-      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getInstance(project).tracker)
+      CachedValueProvider.Result(overrides, OuterModelsModificationTrackerManager.getTracker(project))
     })
   }
 

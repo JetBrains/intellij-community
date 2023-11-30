@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
 import com.intellij.notification.NotificationGroup;
@@ -50,11 +50,11 @@ public final class JBCefApp {
   private static final int MIN_SUPPORTED_JCEF_API_MAJOR_VERSION = 1;
   private static final int MIN_SUPPORTED_JCEF_API_MINOR_VERSION = 12;
 
-  @NotNull private final CefApp myCefApp;
+  private final @NotNull CefApp myCefApp;
 
-  @NotNull private final CefSettings myCefSettings;
+  private final @NotNull CefSettings myCefSettings;
 
-  @NotNull private final Disposable myDisposable = new Disposable() {
+  private final @NotNull Disposable myDisposable = new Disposable() {
     @Override
     public void dispose() {
       myCefApp.dispose();
@@ -75,12 +75,14 @@ public final class JBCefApp {
     boolean started = false;
     try {
       started = CefApp.startup(ArrayUtil.EMPTY_STRING_ARRAY);
-    } catch (UnsatisfiedLinkError e) {
+    }
+    catch (UnsatisfiedLinkError e) {
       LOG.error(e.getMessage());
     }
     if (!started) {
-      if (SystemInfoRt.isLinux)
+      if (SystemInfoRt.isLinux) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> SettingsHelper.showNotificationMissingLibraries());
+      }
       throw new IllegalStateException("CefApp failed to start");
     }
 
@@ -105,8 +107,7 @@ public final class JBCefApp {
    *
    * @throws IllegalStateException when JCEF initialization is not possible in current env
    */
-  @NotNull
-  public static JBCefApp getInstance() {
+  public static @NotNull JBCefApp getInstance() {
     if (Holder.INSTANCE == null) {
       synchronized (Holder.class) {
         if (Holder.INSTANCE == null) {
@@ -125,10 +126,9 @@ public final class JBCefApp {
   }
 
   private static final class Holder {
-    @Nullable static volatile JBCefApp INSTANCE = init();
+    static volatile @Nullable JBCefApp INSTANCE = init();
 
-    @Nullable
-    static JBCefApp init() {
+    static @Nullable JBCefApp init() {
       ourInitialized.set(true);
       JCefAppConfig config = null;
       if (isSupported()) {
@@ -146,7 +146,8 @@ public final class JBCefApp {
       if (config != null) {
         try {
           app = new JBCefApp(config);
-        } catch (IllegalStateException ignore) {
+        }
+        catch (IllegalStateException ignore) {
         }
       }
       return app;
@@ -183,8 +184,7 @@ public final class JBCefApp {
         return unsupported.apply("JCEF is manually disabled via 'ide.browser.jcef.enabled=false'");
       }
       if (GraphicsEnvironment.isHeadless() &&
-          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled"))
-      {
+          !RegistryManager.getInstance().is("ide.browser.jcef.headless.enabled")) {
         return unsupported.apply("JCEF is manually disabled in headless env via 'ide.browser.jcef.headless.enabled=false'");
       }
       if (!SKIP_VERSION_CHECK) {
@@ -201,14 +201,19 @@ public final class JBCefApp {
         }
         if (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION > version.apiVersion.major ||
             (MIN_SUPPORTED_JCEF_API_MAJOR_VERSION == version.apiVersion.major &&
-             MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor))
-        {
+             MIN_SUPPORTED_JCEF_API_MINOR_VERSION > version.apiVersion.minor)) {
           return unsupported.apply("JCEF: minimum supported API version is " +
                                    MIN_SUPPORTED_JCEF_API_MAJOR_VERSION + "." + MIN_SUPPORTED_JCEF_API_MINOR_VERSION +
                                    ", current is " + version.apiVersion.major + "." + version.apiVersion.minor);
         }
       }
-      if (!SKIP_MODULE_CHECK) {
+      String altCefPath = System.getProperty("ALT_CEF_FRAMEWORK_DIR", null);
+      if (altCefPath == null || altCefPath.isEmpty()) {
+        altCefPath = System.getenv("ALT_CEF_FRAMEWORK_DIR");
+      }
+
+      final boolean skipModuleCheck = (altCefPath != null && !altCefPath.isEmpty()) || SKIP_MODULE_CHECK;
+      if (!skipModuleCheck) {
         URL url = JCefAppConfig.class.getResource("JCefAppConfig.class");
         if (url == null) {
           return unsupported.apply("JCefAppConfig.class not found");
@@ -241,8 +246,13 @@ public final class JBCefApp {
     return myCefSettings.cache_path;
   }
 
+  @Contract(pure = true)
   @NotNull
-  public JBCefClient createClient() {
+  public Integer getRemoteDebuggingPort() {
+    return myCefSettings.remote_debugging_port;
+  }
+
+  public @NotNull JBCefClient createClient() {
     return createClient(false);
   }
 
@@ -339,8 +349,9 @@ public final class JBCefApp {
 
     @Override
     public void stateHasChanged(CefApp.CefAppState state) {
-      if (state.equals(CefApp.CefAppState.INITIALIZED))
+      if (state.equals(CefApp.CefAppState.INITIALIZED)) {
         LOG.info(String.format("jcef version: %s | cmd args: %s", CefApp.getInstance().getVersion().getJcefVersion(), myArgs));
+      }
     }
 
     @Override

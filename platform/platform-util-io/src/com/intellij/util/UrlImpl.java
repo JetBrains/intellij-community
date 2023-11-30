@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public final class UrlImpl implements Url {
+final class UrlImpl implements Url {
   private final String scheme;
   private final String authority;
 
@@ -34,7 +34,8 @@ public final class UrlImpl implements Url {
 
   @Override
   public @NotNull Url resolve(@NotNull String subPath) {
-    return new UrlImpl(scheme, authority, path.isEmpty() ? subPath : (path + "/" + subPath), parameters);
+    String newPath = path.isEmpty() && authority == null ? subPath : StringUtil.trimEnd(path, '/') + "/" + subPath;
+    return new UrlImpl(scheme, authority, newPath, parameters);
   }
 
   @Override

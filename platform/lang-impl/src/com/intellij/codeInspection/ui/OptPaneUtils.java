@@ -3,7 +3,6 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.options.OptionContainer;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.NlsContexts;
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
-import java.awt.*;
 
 @ApiStatus.Experimental
 public final class OptPaneUtils {
@@ -34,15 +32,13 @@ public final class OptPaneUtils {
                                   @NlsContexts.DialogTitle String title,
                                   @NonNls String helpId,
                                   @NotNull Runnable onSuccess) {
-    // TODO: disable OK button when validators are not happy
     // TODO: execute validator on focus
-    JPanel panel = new JPanel();
-    DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title(title);
+    DialogBuilder builder = new DialogBuilder(project).title(title);
     if (helpId != null) {
       builder.setHelpId(helpId);
     }
     JComponent component = OptionPaneRenderer.getInstance().render(data.getOptionController(), pane, builder, project);
-    panel.add(component);
+    builder.setCenterPanel(component);
     JComponent toFocus = UIUtil.uiTraverser(component)
       .filter(JComponent.class)
       .find(c -> c instanceof JTextComponent || c instanceof JComboBox<?> || c instanceof AbstractButton);

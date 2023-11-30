@@ -2,5 +2,6 @@
   "mainFile": "a/A.kt",
   "type": "MOVE_KOTLIN_METHOD",
   "methodToMove": "foo",
-  "methodParameter": "o"
+  "methodParameter": "o",
+  "enabledInK2": "false"
 }

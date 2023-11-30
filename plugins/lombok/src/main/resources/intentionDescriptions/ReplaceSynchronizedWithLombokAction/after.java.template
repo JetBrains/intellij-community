@@ -1,0 +1,9 @@
+import lombok.Synchronized;
+
+public class X {
+
+  @Synchronized
+  public void doSomething() {
+    // do something
+  }
+}

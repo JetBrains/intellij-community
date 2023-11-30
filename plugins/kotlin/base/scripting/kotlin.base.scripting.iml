@@ -6,10 +6,11 @@
       <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
@@ -19,6 +20,7 @@
     <orderEntry type="library" name="kotlinc.kotlin-scripting-jvm" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" />
     <orderEntry type="module" module-name="kotlin.base.util" />
@@ -42,5 +44,7 @@
     <orderEntry type="module" module-name="intellij.java.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.collaborationTools" />
     <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
   </component>
 </module>

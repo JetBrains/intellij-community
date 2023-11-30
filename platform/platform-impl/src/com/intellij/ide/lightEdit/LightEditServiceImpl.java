@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -55,7 +55,6 @@ import java.util.Objects;
 public final class LightEditServiceImpl implements LightEditService,
                                                    Disposable,
                                                    LightEditorListener,
-                                                   AppLifecycleListener,
                                                    PersistentStateComponent<LightEditConfiguration> {
   private static final Logger LOG = Logger.getInstance(LightEditServiceImpl.class);
 
@@ -80,7 +79,16 @@ public final class LightEditServiceImpl implements LightEditService,
     myEditorManager = new LightEditorManagerImpl(this);
     myEditorManager.addListener(this);
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    connection.subscribe(AppLifecycleListener.TOPIC,this);
+    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+      @Override
+      public void appClosing() {
+        ((EncodingManagerImpl)EncodingManager.getInstance()).clearDocumentQueue();
+        if (myFrameWrapper != null) {
+          closeAndDisposeFrame();
+        }
+        Disposer.dispose(myEditorManager);
+      }
+    });
     Disposer.register(this, myEditorManager);
   }
 
@@ -90,7 +98,7 @@ public final class LightEditServiceImpl implements LightEditService,
       boolean notify = false;
       if (myFrameWrapper == null) {
         mySaveSession = restoreSession;
-        myFrameWrapper = LightEditFrameWrapper.Companion.allocate(project, myConfiguration.frameInfo, () -> closeEditorWindow());
+        myFrameWrapper = LightEditFrameWrapperKt.allocateLightEditFrame(project, myConfiguration.frameInfo);
         LOG.info("Frame created");
         if (restoreSession) {
           restoreSession();
@@ -126,8 +134,7 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myLightEditProjectManager.getProject();
   }
 
@@ -136,8 +143,7 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  @NotNull
-  public Project openFile(@NotNull VirtualFile file) {
+  public @NotNull Project openFile(@NotNull VirtualFile file) {
     Project project = myLightEditProjectManager.getOrCreateProject();
     LightEditUtil.LightEditCommandLineOptions commandLineOptions = LightEditUtil.getCommandLineOptions();
     doWhenActionManagerInitialized(() -> {
@@ -224,15 +230,13 @@ public final class LightEditServiceImpl implements LightEditService,
       if (myFrameWrapper != null) {
         TabInfo info = getEditPanel().getTabs().getSelectedInfo();
         if (info != null) {
-          UiNotifyConnector
-            .doWhenFirstShown(info.getComponent(), () -> ApplicationManager.getApplication().invokeLater(() -> {
-              LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
-            }));
+          UiNotifyConnector.doWhenFirstShown(info.getComponent(), () -> ApplicationManager.getApplication().invokeLater(() -> {
+            LOG.info("Startup took: " + ManagementFactory.getRuntimeMXBean().getUptime() + " ms");
+          }));
         }
       }
     }
   }
-
 
   private void selectEditorTab(LightEditorInfo openEditorInfo) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
@@ -342,8 +346,7 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  @Nullable
-  public VirtualFile getSelectedFile() {
+  public @Nullable VirtualFile getSelectedFile() {
     LightEditFrameWrapper frameWrapper = myFrameWrapper;
     if (frameWrapper == null) return null;
     LightEditPanel panel = frameWrapper.getLightEditPanel();
@@ -354,8 +357,7 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  @Nullable
-  public FileEditor getSelectedFileEditor() {
+  public @Nullable FileEditor getSelectedFileEditor() {
     LightEditFrameWrapper frameWrapper = myFrameWrapper;
     if (frameWrapper == null) return null;
     LightEditPanel panel = frameWrapper.getLightEditPanel();
@@ -409,8 +411,7 @@ public final class LightEditServiceImpl implements LightEditService,
     return titleBuilder.toString();
   }
 
-  @Nullable
-  private static String getPresentablePath(@NotNull LightEditorInfo editorInfo) {
+  private static @Nullable String getPresentablePath(@NotNull LightEditorInfo editorInfo) {
     VirtualFile file = editorInfo.getFile();
     if (file instanceof LightVirtualFile) {
       Path preferredPath = editorInfo.getPreferredSavePath();
@@ -450,8 +451,7 @@ public final class LightEditServiceImpl implements LightEditService,
   }
 
   @Override
-  @NotNull
-  public LightEditorManager getEditorManager() {
+  public @NotNull LightEditorManager getEditorManager() {
     return myEditorManager;
   }
 
@@ -496,9 +496,7 @@ public final class LightEditServiceImpl implements LightEditService,
       LightEditTabs tabs = myFrameWrapper.getLightEditPanel().getTabs();
       List<VirtualFile> openFiles = tabs.getOpenFiles();
       myConfiguration.sessionFiles.clear();
-      myConfiguration.sessionFiles.addAll(
-        ContainerUtil.map(openFiles,
-                          openFile -> VfsUtilCore.pathToUrl(openFile.getPath())));
+      myConfiguration.sessionFiles.addAll(ContainerUtil.map(openFiles, openFile -> VfsUtilCore.pathToUrl(openFile.getPath())));
     }
   }
 
@@ -519,15 +517,6 @@ public final class LightEditServiceImpl implements LightEditService,
 
   void setFrameInfo(@NotNull FrameInfo frameInfo) {
     myConfiguration.frameInfo = frameInfo;
-  }
-
-  @Override
-  public void appClosing() {
-    ((EncodingManagerImpl)EncodingManager.getInstance()).clearDocumentQueue();
-    if (myFrameWrapper != null) {
-      closeAndDisposeFrame();
-    }
-    Disposer.dispose(myEditorManager);
   }
 
   @Override

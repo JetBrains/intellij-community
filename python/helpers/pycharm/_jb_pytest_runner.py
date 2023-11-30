@@ -5,7 +5,14 @@
 import pytest
 import sys
 from _pytest.config import get_plugin_manager
-from pkg_resources import iter_entry_points
+import warnings
+
+if sys.version_info[:2] >= (3, 10):
+    from importlib.metadata import entry_points as iter_entry_points
+else:
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=DeprecationWarning)
+        from pkg_resources import iter_entry_points
 
 from _jb_runner_tools import jb_patch_separator, jb_doc_args, JB_DISABLE_BUFFERING, \
     start_protocol, parse_arguments, \
@@ -25,7 +32,7 @@ if __name__ == '__main__':
     # to prevent "plugin already registered" problem we check it first
     plugins_to_load = []
     if not get_plugin_manager().hasplugin("pytest-teamcity"):
-        if "pytest-teamcity" not in map(lambda e: e.name, iter_entry_points(group='pytest11', name=None)):
+        if "pytest-teamcity" not in map(lambda e: e.name, iter_entry_points(group='pytest11')):
             plugins_to_load.append(pytest_plugin)
 
     args = sys.argv[1:]

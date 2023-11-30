@@ -1,13 +1,14 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.cce.processor.EvaluationRootProcessor
 import com.intellij.cce.core.CodeFragment
 import com.intellij.cce.core.CodeToken
+import com.intellij.cce.processor.EvaluationRootProcessor
 import com.intellij.cce.util.text
+import com.intellij.openapi.vfs.VirtualFile
 
 class CodeFragmentFromTextBuilder : CodeFragmentBuilder() {
-  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor): CodeFragment {
+  override fun build(file: VirtualFile, rootProcessor: EvaluationRootProcessor, featureName: String): CodeFragment {
     val text = file.text()
     val codeFragment = CodeFragment(0, text.length)
     codeFragment.text = text
@@ -20,7 +21,8 @@ class CodeFragmentFromTextBuilder : CodeFragmentBuilder() {
         if (ch == '_' || ch.isLetter() || (ch.isDigit() && curToken.isNotEmpty())) {
           if (curToken.isEmpty()) tokenOffset = offset
           curToken += ch
-        } else {
+        }
+        else {
           codeFragment.addChild(CodeToken(curToken, tokenOffset))
           curToken = ""
         }

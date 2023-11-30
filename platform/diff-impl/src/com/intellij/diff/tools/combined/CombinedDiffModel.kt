@@ -42,6 +42,4 @@ interface CombinedDiffModelListener : EventListener {
 
   @RequiresEdt
   fun onRequestContentsUnloaded(requests: Map<CombinedBlockId, DiffRequest>)
-
-  fun onProgressBar(visible: Boolean)
 }

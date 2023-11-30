@@ -34,7 +34,7 @@ public final class TableColumnAdder {
     }
   }
 
-  private static void addColumnToTable(@NotNull final Project project, List<TableRow> table, int columnNumber) {
+  private static void addColumnToTable(final @NotNull Project project, List<TableRow> table, int columnNumber) {
     for (int i = 0; i < table.size(); i++) {
       TableRow row = table.get(i);
       if (row.isEmpty()) {
@@ -111,7 +111,7 @@ public final class TableColumnAdder {
     return false;
   }
 
-  public static void addColumn(@NotNull final Project project, final Editor editor, final PsiFile file, boolean toInsertBefore)
+  public static void addColumn(final @NotNull Project project, final Editor editor, final PsiFile file, boolean toInsertBefore)
     throws IncorrectOperationException {
     PsiElement element = getCurrentPsiElement(editor, file);
     element = getParentWithName(element, new String[]{TD, TH});

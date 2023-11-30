@@ -3,6 +3,7 @@ package com.jetbrains.python.namespacePackages;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.projectView.ProjectView;
+import com.intellij.model.SideEffectGuard;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -65,15 +66,16 @@ public class PyNamespacePackagesService implements PersistentStateComponent<PyNa
   }
 
   public void toggleMarkingAsNamespacePackage(@NotNull VirtualFile directory) {
+    SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.SETTINGS);
     if (!directory.isDirectory()) return;
 
     if (canBeMarked(directory)) {
       myNamespacePackageFolders.add(directory);
-      PyNamespacePackagesStatisticsCollector.Companion.logToggleMarkingAsNamespacePackage(true);
+      PyNamespacePackagesStatisticsCollector.logToggleMarkingAsNamespacePackage(true);
     }
     else if (isMarked(directory)) {
       myNamespacePackageFolders.remove(directory);
-      PyNamespacePackagesStatisticsCollector.Companion.logToggleMarkingAsNamespacePackage(false);
+      PyNamespacePackagesStatisticsCollector.logToggleMarkingAsNamespacePackage(false);
     }
     else {
       throw new IllegalStateException("Can't toggle namespace package state for: " + directory.getName());

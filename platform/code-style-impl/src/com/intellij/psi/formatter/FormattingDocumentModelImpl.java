@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.formatter;
 
 import com.intellij.application.options.CodeStyle;
@@ -23,13 +23,13 @@ import org.jetbrains.annotations.Nullable;
 
 public final class FormattingDocumentModelImpl implements FormattingDocumentModel {
   private final WhiteSpaceFormattingStrategy myWhiteSpaceStrategy;
-  @NotNull private final Document myDocument;
-  @NotNull private final PsiFile myFile;
+  private final @NotNull Document myDocument;
+  private final @NotNull PsiFile myFile;
 
   private static final Logger LOG = Logger.getInstance(FormattingDocumentModelImpl.class);
   private final CodeStyleSettings mySettings;
 
-  public FormattingDocumentModelImpl(@NotNull final Document document, @NotNull PsiFile file) {
+  public FormattingDocumentModelImpl(final @NotNull Document document, @NotNull PsiFile file) {
     myDocument = document;
     myFile = file;
     Language language = file.getLanguage();
@@ -54,8 +54,7 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
     }
   }
 
-  @Nullable
-  public static Document getDocumentToBeUsedFor(final PsiFile file) {
+  public static @Nullable Document getDocumentToBeUsedFor(final PsiFile file) {
     final Project project = file.getProject();
     if (!file.isPhysical()) {
       return getDocumentForNonPhysicalFile(file);
@@ -69,8 +68,7 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
     return document;
   }
 
-  @NotNull
-  private static Document getDocumentForNonPhysicalFile(PsiFile file) {
+  private static @NotNull Document getDocumentForNonPhysicalFile(PsiFile file) {
     Document document = file.getViewProvider().getDocument();
     if (document != null && document.getTextLength() == file.getTextLength()) {
       return document;
@@ -109,14 +107,12 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
     return myDocument.getTextLength();
   }
 
-  @NotNull
   @Override
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
-  @NotNull
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
@@ -142,10 +138,9 @@ public final class FormattingDocumentModelImpl implements FormattingDocumentMode
     return false;
   }
 
-  @NotNull
   @Override
-  public CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset,
-                                                  ASTNode nodeAfter, boolean changedViaPsi)
+  public @NotNull CharSequence adjustWhiteSpaceIfNecessary(@NotNull CharSequence whiteSpaceText, int startOffset, int endOffset,
+                                                           ASTNode nodeAfter, boolean changedViaPsi)
   {
     if (!changedViaPsi) {
       return myWhiteSpaceStrategy.adjustWhiteSpaceIfNecessary(whiteSpaceText, myDocument.getCharsSequence(), startOffset, endOffset,

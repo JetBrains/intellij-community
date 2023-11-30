@@ -6,7 +6,7 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -42,7 +43,7 @@ import java.util.List;
  * Must be used inside the highlighting process only (e.g., in your {@link HighlightingPass#applyInformationToEditor()})
  */
 public final class UpdateHighlightersUtil {
-  static final Comparator<HighlightInfo> BY_START_OFFSET_NO_DUPS = (o1, o2) -> {
+  static final Comparator<HighlightInfo> BY_ACTUAL_START_OFFSET_NO_DUPS = (o1, o2) -> {
     int d = o1.getActualStartOffset() - o2.getActualStartOffset();
     if (d != 0) return d;
     d = o1.getActualEndOffset() - o2.getActualEndOffset();
@@ -76,17 +77,16 @@ public final class UpdateHighlightersUtil {
   }
 
   static final class HighlightInfoPostFilters {
-    private final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = new ExtensionPointName<>("com.intellij.highlightInfoPostFilter");
+    private static final ExtensionPointName<HighlightInfoPostFilter> EP_NAME = new ExtensionPointName<>("com.intellij.highlightInfoPostFilter");
     static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
-      for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {
+      for (HighlightInfoPostFilter filter : EP_NAME.getExtensionList(project)) {
         if (!filter.accept(info))
           return false;
       }
 
       return true;
     }
-    @NotNull
-    static List<HighlightInfo> applyPostFilter(@NotNull Project project, @NotNull List<? extends HighlightInfo> highlightInfos) {
+    static @NotNull List<HighlightInfo> applyPostFilter(@NotNull Project project, @NotNull List<? extends HighlightInfo> highlightInfos) {
       List<HighlightInfo> result = new ArrayList<>(highlightInfos.size());
       for (HighlightInfo info : highlightInfos) {
         if (accept(project, info)) {
@@ -109,7 +109,7 @@ public final class UpdateHighlightersUtil {
                                                    @NotNull Collection<? extends HighlightInfo> highlights,
                                                    @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
                                                    int group) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Document document = editor.getDocument();
     MarkupModelEx markup = (MarkupModelEx)editor.getMarkupModel();
     setHighlightersToEditor(project, document, startOffset, endOffset, highlights, colorsScheme, group, markup);
@@ -122,7 +122,7 @@ public final class UpdateHighlightersUtil {
                                              @NotNull Collection<? extends HighlightInfo> highlights,
                                              @Nullable EditorColorsScheme colorsScheme, // if null, the global scheme will be used
                                              int group) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     setHighlightersToEditor(project, document, startOffset, endOffset, highlights, colorsScheme, group, markup);
   }
@@ -158,7 +158,7 @@ public final class UpdateHighlightersUtil {
                                              @NotNull MarkupModelEx markup,
                                              int group,
                                              @NotNull HighlightingSession session) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     Project project = session.getProject();
     PsiFile psiFile = session.getPsiFile();
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
@@ -178,7 +178,7 @@ public final class UpdateHighlightersUtil {
     });
 
     List<HighlightInfo> filteredInfos = HighlightInfoPostFilters.applyPostFilter(project, infos);
-    ContainerUtil.quickSort(filteredInfos, BY_START_OFFSET_NO_DUPS);
+    ContainerUtil.quickSort(filteredInfos, BY_ACTUAL_START_OFFSET_NO_DUPS);
     Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     boolean[] changed = {false};
@@ -188,7 +188,7 @@ public final class UpdateHighlightersUtil {
         return true;
       }
       if (info.isFileLevelAnnotation()) {
-        codeAnalyzer.addFileLevelHighlight(group, info, psiFile);
+        codeAnalyzer.addFileLevelHighlight(group, info, psiFile, null);
         changed[0] = true;
         return true;
       }
@@ -207,13 +207,22 @@ public final class UpdateHighlightersUtil {
     }
   }
 
+  private static final Logger LOG = Logger.getInstance(UpdateHighlightersUtil.class);
   static boolean incinerateObsoleteHighlighters(@NotNull HighlightersRecycler infosToRemove, @NotNull HighlightingSession session) {
     boolean changed = false;
     // do not remove obsolete highlighters if we are in "essential highlighting only" mode, because otherwise all inspection-produced results would be gone
     for (RangeHighlighter highlighter : infosToRemove.forAllInGarbageBin()) {
-      if (shouldRemoveHighlighter(highlighter, session)) {
+      boolean shouldRemove = shouldRemoveHighlighter(highlighter, session);
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("incinerateObsoleteHighlighters "+highlighter+"; info:"+info+"; shouldRemove:"+shouldRemove);
+      }
+      if (shouldRemove) {
         highlighter.dispose();
         changed = true;
+        if (info != null && info.isFileLevelAnnotation()) {
+          session.removeFileLevelHighlight(info);
+        }
       }
     }
     return changed;
@@ -225,8 +234,8 @@ public final class UpdateHighlightersUtil {
   }
 
   private static boolean shouldRemoveInfoEvenInEssentialMode(@NotNull RangeHighlighter highlighter) {
-    Object tooltip = highlighter.getErrorStripeTooltip();
-    if (!(tooltip instanceof HighlightInfo info)) return true;
+    HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+    if (info == null) return true;
     int group = info.getGroup();
     if (group != Pass.LOCAL_INSPECTIONS
         && group != Pass.EXTERNAL_TOOLS
@@ -345,7 +354,7 @@ public final class UpdateHighlightersUtil {
   private static class InternalLayerSuppliers {
     private static final ExtensionPointName<InternalLayerSupplier> EP_NAME = ExtensionPointName.create("com.intellij.internalHighlightingLayerSupplier");
     private static int getLayerFromSuppliers(@NotNull HighlightInfo info) {
-      for (InternalLayerSupplier extension : EP_NAME.getExtensions()) {
+      for (InternalLayerSupplier extension : EP_NAME.getExtensionList()) {
         int layer = extension.getLayer(info);
         if (layer > 0) {
           return layer;
@@ -401,7 +410,7 @@ public final class UpdateHighlightersUtil {
   }
 
   static void updateHighlightersByTyping(@NotNull Project project, @NotNull DocumentEvent e) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Document document = e.getDocument();
     if (document.isInBulkUpdate()) return;
@@ -451,7 +460,7 @@ public final class UpdateHighlightersUtil {
    */
   public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
     if (IntentionPreviewUtils.isIntentionPreviewActive()) return;
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
     if (model == null) return;
 

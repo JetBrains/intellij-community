@@ -74,7 +74,7 @@ private fun buildDocument(reader: XMLStreamReader2, attributeMutator: AttributeM
                         /* parent = */ null,
                         /* namedElements = */ namedElements,
                         /* styleSheets = */ styleSheets,
-                        /* loadHelper = */ JSvgLoadHelper), SVG()
+                        /* loadHelper = */ jsvgLoadHelper), SVG()
         )
         processElementFragment(reader = reader,
                                root = root,
@@ -110,28 +110,20 @@ private fun buildDocument(reader: XMLStreamReader2, attributeMutator: AttributeM
   return root.node() as SVG
 }
 
-private object JSvgLoadHelper : LoadHelper {
-  private val resourceLoader: ResourceLoader by lazy {
-    ResourceLoader { uri ->
-      if (uri.scheme == "data") {
-        ValueUIFuture(ResourceUtil.loadImage(uri))
-      }
-      else {
-        LOG.warn("Only data URI is allowed (uri=$uri)")
-        null
-      }
-    }
+private val jsvgLoadHelper = LoadHelper(
+  /* attributeParser = */ AttributeParser(DefaultPaintParser()),
+  /* resourceLoader = */ ResourceLoader { uri ->
+  if (uri.scheme == "data") {
+    ValueUIFuture(ResourceUtil.loadImage(uri))
   }
-
-  private val attributeParser = AttributeParser(DefaultPaintParser())
-
-  override fun attributeParser(): AttributeParser = attributeParser
-
-  override fun resourceLoader(): ResourceLoader = resourceLoader
-}
+  else {
+    LOG.warn("Only data URI is allowed (uri=$uri)")
+    null
+  }
+})
 
 private val LOG: Logger
-  get() = Logger.getInstance(JSvgLoadHelper::class.java)
+  get() = Logger.getInstance(NodeMap::class.java)
 
 private val NODE_CONSTRUCTOR_MAP = NodeMap.createNodeConstructorMap(CollectionFactory.createCaseInsensitiveStringMap())
 
@@ -169,7 +161,7 @@ private fun processElementFragment(reader: XMLStreamReader2,
                         /* parent = */ parent.attributeNode(),
                         /* namedElements = */ namedElements,
                         /* styleSheets = */ styleSheets,
-                        /* loadHelper = */ JSvgLoadHelper),
+                        /* loadHelper = */ jsvgLoadHelper),
           svgNode,
         )
         parent.addChild(parsedElement)

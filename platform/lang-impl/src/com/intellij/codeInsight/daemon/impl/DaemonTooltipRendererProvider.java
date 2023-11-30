@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider;
@@ -21,11 +21,9 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 
-public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
-  @NotNull
-  private final Project myProject;
-  @NotNull
-  private final Editor myEditor;
+public final class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+  private final @NotNull Project myProject;
+  private final @NotNull Editor myEditor;
 
   DaemonTooltipRendererProvider(@NotNull Project project, @NotNull Editor editor) {
     myProject = project;
@@ -80,21 +78,18 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
     return bigRenderer;
   }
 
-  @NotNull
   @Override
-  public TooltipRenderer calcTooltipRenderer(@NotNull String text) {
+  public @NotNull TooltipRenderer calcTooltipRenderer(@NotNull String text) {
     return calcTooltipRenderer(text, 0);
   }
 
-  @NotNull
   @Override
-  public TooltipRenderer calcTooltipRenderer(@NotNull String text, int width) {
+  public @NotNull TooltipRenderer calcTooltipRenderer(@NotNull String text, int width) {
     return new DaemonTooltipRenderer(text, width, new Object[]{text});
   }
 
-  @NotNull
   @Override
-  public LineTooltipRenderer calcTooltipRenderer(@NlsContexts.Tooltip String text, @Nullable TooltipAction action, int width) {
+  public @NotNull LineTooltipRenderer calcTooltipRenderer(@NlsContexts.Tooltip String text, @Nullable TooltipAction action, int width) {
     return new DaemonTooltipWithActionRenderer(text, action, width, action == null ? new Object[]{text} : new Object[]{text, action});
   }
 }

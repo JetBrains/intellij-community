@@ -1,15 +1,16 @@
 package com.intellij.searchEverywhereMl.ranking.features
 
 import com.intellij.ide.actions.GotoFileItemProvider
-import com.intellij.ide.bookmarks.BookmarkManager
+import com.intellij.ide.bookmark.BookmarksManager
+import com.intellij.ide.bookmark.providers.LineBookmarkProvider
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.FILETYPE_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.IS_BOOKMARK_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.IS_DIRECTORY_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.IS_EXACT_MATCH_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Companion.REL_PATH_NAME_FEATURE_TO_FIELD
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.FILETYPE_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.IS_BOOKMARK_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.IS_DIRECTORY_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.IS_EXACT_MATCH_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.IS_EXACT_MATCH_WITH_REL_PATH_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider.Fields.REL_PATH_NAME_FEATURE_TO_FIELD
 
 
 internal class SearchEverywhereFileFeaturesProviderTest
@@ -37,9 +38,10 @@ internal class SearchEverywhereFileFeaturesProviderTest
 
   fun testIsInFavorites() {
     val addFileToBookmarks = { file: PsiFileSystemItem ->
-      BookmarkManager.getInstance(project).also {
-        it.addFileBookmark(file.virtualFile, "xxx")
-      }
+      val manager = BookmarksManager.getInstance(project)
+      val bookmark = LineBookmarkProvider.Util.find(project)?.createBookmark(file.virtualFile)
+      if (manager != null && bookmark != null)
+        manager.add(bookmark, com.intellij.ide.bookmark.BookmarkType.DEFAULT)
     }
 
     checkThatFeature(IS_BOOKMARK_DATA_KEY)

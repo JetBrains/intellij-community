@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -16,9 +16,8 @@ import java.util.Set;
 /**
  * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-@Deprecated
-public class NavBarModelBuilderImpl extends NavBarModelBuilder {
-
+@Deprecated(forRemoval = true)
+public final class NavBarModelBuilderImpl extends NavBarModelBuilder {
   @Override
   public void traverseToRoot(@NotNull PsiElement psiElement,
                              @NotNull Set<VirtualFile> roots,
@@ -48,12 +47,8 @@ public class NavBarModelBuilderImpl extends NavBarModelBuilder {
     }
   }
 
-  protected static PsiElement normalize(@Nullable PsiElement e) {
-    return NavBarModel.normalize(getOriginalElement(e));
-  }
-
   @Nullable
-  protected static PsiElement normalize(@Nullable PsiElement e, NavBarModelExtension ownerExtension) {
+  static PsiElement normalize(@Nullable PsiElement e, NavBarModelExtension ownerExtension) {
     PsiElement originalElement = getOriginalElement(e);
     if (ownerExtension != null) {
       return originalElement != null ? ownerExtension.adjustElement(originalElement) : null;

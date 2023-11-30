@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -22,28 +22,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  @SafeFieldForPreview
+public class AddMethodFix extends PsiUpdateModCommandAction<PsiClass> {
   private final SmartPsiElementPointer<PsiMethod> myMethodPrototype;
-  @SafeFieldForPreview
   private final List<String> myExceptions = new ArrayList<>();
-  private @IntentionName String myText;
 
   public AddMethodFix(@NotNull PsiMethod methodPrototype, @NotNull PsiClass implClass) {
     super(implClass);
     myMethodPrototype = SmartPointerManager.createPointer(methodPrototype);
-    setText(QuickFixBundle.message("add.method.text", methodPrototype.getName(), implClass.getName()));
   }
 
   public AddMethodFix(@NonNls @NotNull String methodText, @NotNull PsiClass implClass, String @NotNull ... exceptions) {
     this(createMethod(methodText, implClass), implClass);
     ContainerUtil.addAll(myExceptions, exceptions);
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return myStartElement.getContainingFile();
   }
 
   @NotNull
@@ -60,16 +50,6 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return result;
   }
 
-  @NotNull
-  @Override
-  public String getText() {
-    return myText;
-  }
-
-  protected void setText(@NotNull @IntentionName String text) {
-    myText = text;
-  }
-
   @Override
   @NotNull
   public String getFamilyName() {
@@ -77,48 +57,34 @@ public class AddMethodFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project,
-                             @NotNull PsiFile file,
-                             @NotNull PsiElement startElement,
-                             @NotNull PsiElement endElement) {
-    final PsiClass myClass = (PsiClass)startElement;
-
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiClass myClass) {
     PsiMethod methodPrototype = myMethodPrototype.getElement();
 
-    return methodPrototype != null &&
-           methodPrototype.isValid() &&
-           BaseIntentionAction.canModify(myClass) &&
-           myText != null &&
-           MethodSignatureUtil.findMethodBySignature(myClass, methodPrototype, false) == null
-      ;
+    if (methodPrototype == null || !methodPrototype.isValid() ||
+        MethodSignatureUtil.findMethodBySignature(myClass, methodPrototype, false) != null) {
+      return null;
+    }
+    return Presentation.of(QuickFixBundle.message("add.method.text", methodPrototype.getName(), myClass.getName()));
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiClass psiClass, @NotNull ModPsiUpdater updater) {
+    PsiMethod method = createMethod(psiClass);
+    if (method.getContainingFile().getOriginalFile() == context.file()) {
+      GenerateMembersUtil.positionCaret(updater, method, true);
+    }
+  }
+  
+  public PsiMethod createMethod(@NotNull PsiClass psiClass) {
     PsiMethod methodPrototype = myMethodPrototype.getElement();
-    if (methodPrototype == null) return;
-
-    PsiClass myClass = (PsiClass)startElement;
+    if (methodPrototype == null) return null;
 
     PsiCodeBlock body;
-    if (myClass.isInterface() && (body = methodPrototype.getBody()) != null) body.delete();
+    if (psiClass.isInterface() && (body = methodPrototype.getBody()) != null) body.delete();
     for (String exception : myExceptions) {
       PsiUtil.addException(methodPrototype, exception);
     }
-    PsiMethod method = (PsiMethod)myClass.add(methodPrototype);
-    method = (PsiMethod)method.replace(reformat(project, method));
-    postAddAction(file, editor, method);
-  }
-
-  protected void postAddAction(@NotNull PsiFile file,
-                               @Nullable Editor editor,
-                               PsiMethod newMethod) {
-    if (editor != null && newMethod.getContainingFile() == file) {
-      GenerateMembersUtil.positionCaret(editor, newMethod, true);
-    }
+    PsiMethod method = (PsiMethod)psiClass.add(methodPrototype);
+    return (PsiMethod)method.replace(reformat(psiClass.getProject(), method));
   }
 }

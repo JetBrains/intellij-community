@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale
 
 import com.intellij.ui.JreHiDpiUtil
+import org.jetbrains.annotations.TestOnly
 import java.awt.Component
-import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.GraphicsConfiguration
 import java.lang.ref.WeakReference
@@ -16,8 +16,6 @@ import java.util.function.Function
  * system scale can be updated via a call to [.update], reflecting the current component's
  * system scale (which may change as the component moves b/w devices).
  *
- * @see ScaleContextAware
- *
  * @author tav
  */
 class ScaleContext : UserScaleContext {
@@ -26,7 +24,7 @@ class ScaleContext : UserScaleContext {
      * Creates a context with all scale factors set to 1.
      */
     @JvmStatic
-    fun createIdentity(): ScaleContext = ScaleContext(ScaleType.USR_SCALE.of(1f), ScaleType.SYS_SCALE.of(1f))
+    fun createIdentity(): ScaleContext = ScaleContext(arrayOf(ScaleType.USR_SCALE.of(1f), ScaleType.SYS_SCALE.of(1f)))
 
     /**
      * Creates a context from the provided `ctx`.
@@ -71,7 +69,8 @@ class ScaleContext : UserScaleContext {
     /**
      * Creates a context with the provided scale factors
      */
-    fun of(vararg scales: Scale): ScaleContext = ScaleContext(scales = scales)
+    @TestOnly
+    fun of(scales: Array<Scale>): ScaleContext = ScaleContext(scales = scales)
 
     /**
      * Creates a default context with the default screen scale and the current user scale
@@ -102,7 +101,7 @@ class ScaleContext : UserScaleContext {
     pixScale = derivePixScale()
   }
 
-  private constructor(vararg scales: Scale) : this() {
+  private constructor(scales: Array<Scale>) : this() {
     for (scale in scales) {
       when (scale.type) {
         ScaleType.USR_SCALE -> {
@@ -124,23 +123,17 @@ class ScaleContext : UserScaleContext {
   /**
    * {@inheritDoc}
    */
-  override fun getScale(type: ScaleType): Double {
-    return if (type == ScaleType.SYS_SCALE) sysScale.value else super.getScale(type)
-  }
+  override fun getScale(type: ScaleType): Double = if (type == ScaleType.SYS_SCALE) sysScale.value else super.getScale(type)
 
-  override fun getScaleObject(type: ScaleType): Scale {
-    return if (type == ScaleType.SYS_SCALE) sysScale else super.getScaleObject(type)
-  }
+  override fun getScaleObject(type: ScaleType): Scale = if (type == ScaleType.SYS_SCALE) sysScale else super.getScaleObject(type)
 
   /**
    * {@inheritDoc}
    */
-  override fun getScale(type: DerivedScaleType): Double {
-    return when (type) {
-      DerivedScaleType.DEV_SCALE -> if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale.value else 1.0
-      DerivedScaleType.EFF_USR_SCALE -> usrScale.value * objScale.value
-      DerivedScaleType.PIX_SCALE -> pixScale
-    }
+  override fun getScale(type: DerivedScaleType): Double = when (type) {
+    DerivedScaleType.DEV_SCALE -> if (JreHiDpiUtil.isJreHiDPIEnabled()) sysScale.value else 1.0
+    DerivedScaleType.EFF_USR_SCALE -> usrScale.value * objScale.value
+    DerivedScaleType.PIX_SCALE -> pixScale
   }
 
   /**
@@ -178,21 +171,7 @@ class ScaleContext : UserScaleContext {
   }
 
   fun copyWithScale(scale: Scale): ScaleContext {
-    val result = ScaleContext(usrScale, sysScale, objScale, scale)
-    overriddenScales?.let {
-      result.overriddenScales = it.clone()
-    }
-    return result
-  }
-
-  // system scale from the current `Graphics` and the current user scale, object scale from the icon scale context
-  fun copyIfNeeded(g: Graphics): ScaleContext {
-    val newSystemScale = JBUIScale.sysScale(g as? Graphics2D)
-    val newUserScale = JBUIScale.userScale
-    if (newSystemScale == getScale(ScaleType.SYS_SCALE).toFloat() && newUserScale == getScale(ScaleType.USR_SCALE).toFloat()) {
-      return this
-    }
-    val result = ScaleContext(ScaleType.USR_SCALE.of(newUserScale), ScaleType.SYS_SCALE.of(newSystemScale), objScale)
+    val result = ScaleContext(arrayOf(usrScale, sysScale, objScale, scale))
     overriddenScales?.let {
       result.overriddenScales = it.clone()
     }
@@ -210,9 +189,8 @@ class ScaleContext : UserScaleContext {
     return setScale(scaleContext.sysScale) || updated
   }
 
-  override fun equals(other: Any?): Boolean {
-    return if (super.equals(other) && other is ScaleContext) other.sysScale.value == sysScale.value else false
-  }
+  override fun equals(other: Any?): Boolean =
+    if (super.equals(other) && other is ScaleContext) other.sysScale.value == sysScale.value else false
 
   override fun hashCode(): Int = sysScale.value.hashCode() * 31 + super.hashCode()
 
@@ -222,7 +200,7 @@ class ScaleContext : UserScaleContext {
   }
 
   override fun <T : UserScaleContext> copy(): T {
-    val result = ScaleContext(usrScale, sysScale, objScale)
+    val result = ScaleContext(arrayOf(usrScale, sysScale, objScale))
     result.updateAll(this)
     @Suppress("UNCHECKED_CAST")
     return result as T

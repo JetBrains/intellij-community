@@ -4,8 +4,10 @@ package org.intellij.plugins.markdown.lang.parser
 import com.intellij.psi.FileViewProvider
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.jetbrains.annotations.ApiStatus
 
-internal fun createMarkdownFile(viewProvider: FileViewProvider): MarkdownFile {
+@ApiStatus.Internal
+fun createMarkdownFile(viewProvider: FileViewProvider): MarkdownFile {
   val flavour = MarkdownFlavourProvider.findFlavour(viewProvider)
   return MarkdownFile(viewProvider, flavour)
 }

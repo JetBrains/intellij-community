@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineColumn;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -25,6 +26,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -242,18 +244,21 @@ public class ExpectedHighlightingData {
     String text = document.getText();
 
     Set<String> markers = myHighlightingTypes.keySet();
-    String typesRx = "(?:" + StringUtil.join(markers, ")|(?:") + ")";
-    String openingTagRx = "<(" + typesRx + ")" +
-                          "(?:\\s+descr=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                          "(?:\\s+type=\"([0-9A-Z_]+)\")?" +
-                          "(?:\\s+foreground=\"([0-9xa-f]+)\")?" +
-                          "(?:\\s+background=\"([0-9xa-f]+)\")?" +
-                          "(?:\\s+effectcolor=\"([0-9xa-f]+)\")?" +
-                          "(?:\\s+effecttype=\"([A-Z]+)\")?" +
-                          "(?:\\s+fonttype=\"([0-9]+)\")?" +
-                          "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
-                          "(?:\\s+tooltip=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
-                          "(/)?>";
+    String typesRx = String.join("|", markers);
+    String openingTagRx = "<(?<marker>" + typesRx + ")" +
+                          "(?:\\s+" +
+                          "(?:descr=\"(?<descr>(?:\\\\\"|[^\"])*)\"" +
+                          "|type=\"(?<type>[0-9A-Z_]+)\"" +
+                          "|foreground=\"(?<foreground>[0-9xa-f]+)\"" +
+                          "|background=\"(?<background>[0-9xa-f]+)\"" +
+                          "|effectcolor=\"(?<effectcolor>[0-9xa-f]+)\"" +
+                          "|effecttype=\"(?<effecttype>[A-Z]+)\"" +
+                          "|fonttype=\"(?<fonttype>[0-9]+)\"" +
+                          "|textAttributesKey=\"(?<textAttributesKey>(?:\\\\\"|[^\"])*)\"" +
+                          "|bundleMsg=\"(?<bundleMsg>(?:\\\\\"|[^\"])*)\"" +
+                          "|tooltip=\"(?<tooltip>(?:\\\\\"|[^\"])*)\"" +
+                          "))*" +
+                          "\\s*(?<closed>/)?>";
 
     Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
     Ref<Integer> textOffset = Ref.create(0);
@@ -267,18 +272,18 @@ public class ExpectedHighlightingData {
   private int extractExpectedHighlight(Matcher matcher, String text, Document document, Ref<Integer> textOffset) {
     document.deleteString(textOffset.get(), textOffset.get() + matcher.end() - matcher.start());
 
-    int groupIdx = 1;
-    String marker = matcher.group(groupIdx++);
-    String descr = matcher.group(groupIdx++);
-    String typeString = matcher.group(groupIdx++);
-    String foregroundColor = matcher.group(groupIdx++);
-    String backgroundColor = matcher.group(groupIdx++);
-    String effectColor = matcher.group(groupIdx++);
-    String effectType = matcher.group(groupIdx++);
-    String fontType = matcher.group(groupIdx++);
-    String attrKey = matcher.group(groupIdx++);
-    String tooltip = matcher.group(groupIdx++);
-    boolean closed = matcher.group(groupIdx) != null;
+    String marker = matcher.group("marker");
+    @NlsSafe String descr = matcher.group("descr");
+    String typeString = matcher.group("type");
+    String foregroundColor = matcher.group("foreground");
+    String backgroundColor = matcher.group("background");
+    String effectColor = matcher.group("effectcolor");
+    String effectType = matcher.group("effecttype");
+    String fontType = matcher.group("fonttype");
+    String attrKey = matcher.group("textAttributesKey");
+    String bundleMessage = matcher.group("bundleMsg");
+    @NlsSafe String tooltip = matcher.group("tooltip");
+    boolean closed = matcher.group("closed") != null;
 
     if (descr == null) {
       descr = ANY_TEXT;  // no descr means any string by default
@@ -363,7 +368,12 @@ public class ExpectedHighlightingData {
         builder.description(descr);
       }
       if (tooltip != null) {
-        builder.unescapedToolTip(tooltip);
+        if (tooltip.startsWith("<html>")) {
+          builder.escapedToolTip(tooltip);
+        }
+        else {
+          builder.unescapedToolTip(tooltip);
+        }
       }
       if (expectedHighlightingSet.endOfLine) builder.endOfLine();
       HighlightInfo highlightInfo = builder.createUnconditionally();
@@ -614,11 +624,11 @@ public class ExpectedHighlightingData {
       .filter(p -> p.first != null)
       .collect(Collectors.toList());
     boolean showAttributesKeys =
-      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> i.forcedTextAttributesKey != null);
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> info.forcedTextAttributesKey != null);
 
     String anyWrappedInHtml = XmlStringUtil.wrapInHtml(ANY_TEXT);
     boolean showTooltips =
-      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> !anyWrappedInHtml.equals(i.getToolTip()));
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(info -> !anyWrappedInHtml.equals(info.getToolTip()));
 
     // sort filtered highlighting data by end offset in descending order
     list.sort((o1, o2) -> {
@@ -705,7 +715,7 @@ public class ExpectedHighlightingData {
         }
       }
       if (showAttributesKeys) {
-        str.append(" textAttributesKey=\"").append(info.forcedTextAttributesKey).append('"');
+        str.append(" textAttributesKey=\"").append(ObjectUtils.notNull(info.forcedTextAttributesKey, info.type.getAttributesKey()).getExternalName()).append('"');
       }
       str.append('>');
       sb.insert(0, str);
@@ -770,8 +780,8 @@ public class ExpectedHighlightingData {
   private static boolean matchTooltips(boolean strictMatch, String t1, String t2) {
     if (Comparing.strEqual(t1, t2)) return true;
     if (strictMatch) return false;
-    t1 = t1 != null ? XmlStringUtil.stripHtml(t1) : null;
-    t2 = t2 != null ? XmlStringUtil.stripHtml(t2) : null;
+    t1 = t1 != null ? Strings.unescapeXmlEntities(XmlStringUtil.stripHtml(t1)) : null;
+    t2 = t2 != null ? Strings.unescapeXmlEntities(XmlStringUtil.stripHtml(t2)) : null;
     return matchDescriptions(false, t1, t2);
   }
 

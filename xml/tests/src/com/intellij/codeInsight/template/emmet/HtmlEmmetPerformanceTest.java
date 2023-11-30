@@ -7,11 +7,13 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -27,6 +29,8 @@ public class HtmlEmmetPerformanceTest extends BasePlatformTestCase {
         EditorAction action = (EditorAction)ActionManager.getInstance().getAction(IdeActions.ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB);
         //noinspection deprecation
         action.actionPerformed(myFixture.getEditor(), DataManager.getInstance().getDataContext());
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+        UIUtil.dispatchAllInvocationEvents();
       }
     }).useLegacyScaling().assertTiming();
     myFixture.checkResultByFile("performance_after.html");

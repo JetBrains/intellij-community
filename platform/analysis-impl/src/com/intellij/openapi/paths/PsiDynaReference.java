@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.paths;
 
@@ -22,7 +8,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceOwner;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
@@ -41,9 +26,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider, PsiReferencesWrapper {
 
   private final List<PsiReference> myReferences = new ArrayList<>();
-  private int myChosenOne = -1;
   private ResolveResult[] myCachedResult;
-  private @Nullable TextRange myPredefinedRange = null;
 
   public PsiDynaReference(final T psiElement) {
     super(psiElement, true);
@@ -69,36 +52,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   @Override
   public void setRangeInElement(TextRange rangeInElement) {
     super.setRangeInElement(rangeInElement);
-    this.myPredefinedRange = rangeInElement;
-  }
-
-  @NotNull
-  @Override
-  public TextRange getRangeInElement() {
-
-    PsiReference resolved = null;
-    List<PsiReference> references =
-      ContainerUtil.filter(myReferences, ref -> !(ref instanceof PsiReferencesWrapper) ||
-                                                !((PsiReferencesWrapper)ref).getReferences().isEmpty());
-    PsiReference reference = !references.isEmpty() ? references.get(0) : myReferences.get(0);
-
-    if (reference.resolve() != null) {
-      resolved = reference;
-    }
-
-    final TextRange range = reference.getRangeInElement();
-    int start = range.getStartOffset();
-    int end = range.getEndOffset();
-    for (int i = 1; i < references.size(); i++) {
-      reference = references.get(i);
-      TextRange textRange = PsiMultiReference.getReferenceRange(reference, myElement);
-      start = Math.min(start, textRange.getStartOffset());
-      if (resolved == null) {
-        end = Math.max(end, textRange.getEndOffset());
-      }
-    }
-    if (myPredefinedRange != null && myPredefinedRange.containsRange(start, end)) return myPredefinedRange;
-    return new TextRange(start, end);
   }
 
   @Override
@@ -113,8 +66,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   }
 
   @Override
-  @NotNull
-  public String getCanonicalText() {
+  public @NotNull String getCanonicalText() {
     final PsiReference reference = chooseReference();
     return reference == null ? myReferences.get(0).getCanonicalText() : reference.getCanonicalText();
   }
@@ -176,31 +128,30 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     return result.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
-  @Nullable
-  private PsiReference chooseReference() {
-    if (myChosenOne != -1) {
-      return myReferences.get(myChosenOne);
-    }
-    boolean flag = false;
-    for (int i = 0; i < myReferences.size(); i++) {
-      final PsiReference reference = myReferences.get(i);
-      if (reference.isSoft() && flag) continue;
-      if (!reference.isSoft() && !flag) {
-        myChosenOne = i;
-        flag = true;
-        continue;
-      }
-      if (reference.resolve() != null) {
-        myChosenOne = i;
-      }
-    }
-    return myChosenOne >= 0 ? myReferences.get(myChosenOne) : null;
+  private @Nullable PsiReference chooseReference() {
+    if (myReferences.isEmpty()) return null;
+
+    ContainerUtil.sort(myReferences, (o1, o2) -> {
+      final int byPriority = Double.compare(getPriority(o2), getPriority(o1));
+      if (byPriority != 0) return byPriority;
+
+      final int bySoftness = Boolean.compare(o2.isSoft(), o1.isSoft());
+      if (bySoftness != 0) return bySoftness;
+
+      return Boolean.compare(o2 instanceof FileReference, o1 instanceof FileReference);  // by ref type
+    });
+
+    return myReferences.get(0);
   }
 
-  @NotNull
+  private static double getPriority(@NotNull PsiReference o1) {
+    if (o1 instanceof PriorityReference) return ((PriorityReference)o1).getPriority();
+    return PsiReferenceRegistrar.DEFAULT_PRIORITY;
+  }
+
   @Override
-  @SuppressWarnings({"UnresolvedPropertyKey"})
-  public String getUnresolvedMessagePattern() {
+  @SuppressWarnings("UnresolvedPropertyKey")
+  public @NotNull String getUnresolvedMessagePattern() {
     final PsiReference reference = chooseReference();
 
     return reference instanceof EmptyResolveMessageProvider ?
@@ -221,7 +172,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
 
   public String toString() {
     //noinspection HardCodedStringLiteral
-    return "PsiDynaReference containing " + myReferences.toString();
+    return "PsiDynaReference containing " + myReferences;
   }
 
   @Override

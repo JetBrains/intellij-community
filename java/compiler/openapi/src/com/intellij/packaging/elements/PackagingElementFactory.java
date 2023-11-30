@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.elements;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,7 +8,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity;
+import com.intellij.platform.workspace.jps.entities.LibraryEntity;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +109,7 @@ public abstract class PackagingElementFactory {
 
   public abstract PackagingElementType<?> @NotNull [] getNonCompositeElementTypes();
 
-  public abstract PackagingElementType @NotNull [] getAllElementTypes();
+  public abstract @NotNull List<PackagingElementType> getAllElementTypes();
 
   public abstract ComplexPackagingElementType<?> @NotNull [] getComplexElementTypes();
 }

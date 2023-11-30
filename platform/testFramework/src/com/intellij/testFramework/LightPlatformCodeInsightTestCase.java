@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -9,6 +9,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -68,6 +69,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   private PsiFile myFile;
   private VirtualFile myVFile;
   private TestIndexingModeSupporter.IndexingMode myIndexingMode = IndexingMode.SMART;
+  private IndexingMode.ShutdownToken indexingModeShutdownToken;
 
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
@@ -277,7 +279,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    getIndexingMode().setUpTest(getProject(), getTestRootDisposable());
+    indexingModeShutdownToken = getIndexingMode().setUpTest(getProject(), getTestRootDisposable());
   }
 
   @Before  // runs after (all overrides of) setUp()
@@ -290,7 +292,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     try {
       Project project = getProject();
       if (myIndexingMode != null && project != null) {
-        myIndexingMode.tearDownTest(project);
+        if (indexingModeShutdownToken != null) {
+          myIndexingMode.tearDownTest(project, indexingModeShutdownToken);
+        }
 
         FileEditorManager editorManager = FileEditorManager.getInstance(project);
         for (VirtualFile openFile : editorManager.getOpenFiles()) {
@@ -411,7 +415,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       }
       assertEquals(failMessage, newFileText, fileText1);
 
-      EditorTestUtil.verifyCaretAndSelectionState(getEditor(), carets, message);
+      EditorTestUtil.verifyCaretAndSelectionState(getEditor(), carets, message, filePath);
     });
   }
 
@@ -688,7 +692,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NotNull
   protected DataContext getCurrentEditorDataContext() {
     DataContext defaultContext = DataManager.getInstance().getDataContext();
-    return dataId -> {
+    return CustomizedDataContext.create(defaultContext, dataId -> {
       if (CommonDataKeys.EDITOR.is(dataId)) {
         return getEditor();
       }
@@ -705,8 +709,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         if (editor == null) return null;
         return file.findElementAt(editor.getCaretModel().getOffset());
       }
-      return defaultContext.getData(dataId);
-    };
+      return null;
+    });
   }
 
   /**

@@ -1,11 +1,22 @@
 <idea-plugin>
-  <name>Settings Repository</name>
+  <name>Settings Repository (Deprecated)</name>
   <id>org.jetbrains.settingsRepository</id>
   <category>IDE Settings</category>
   <description><![CDATA[
-  <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
-  <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also you can do sync using VCS -> Sync Settings.</p>
-  <p>See the <a href="https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html#settings-repository">Share settings through a settings repository</a> for more info.</p>]]></description>
+  <p><strong>This plugin has been deprecated in favor of the bundled Settings Sync plugin.</strong></p>
+  <p>It will no longer be maintained (except for security patches).
+  Community pull-requests, however, are welcome via <a href="https://github.com/JetBrains/intellij-community">https://github.com/JetBrains/intellij-community</a>.</p>
+  <p>Related feature requests in Settings Sync:
+  <ul>
+    <li/>Sharing settings between team members: <a href="https://youtrack.jetbrains.com/issue/IDEA-309002/Make-Settings-Sync-new-separate-feature-suitable-for-team-settings-sharing">IDEA-309002</a>
+    <li/>Custom synchronization endpoint: <a href="https://youtrack.jetbrains.com/issue/IDEA-318537/Add-possibility-to-sync-settings-to-the-custom-cloud">IDEA-318537</a>
+  </ul>
+  </p>
+  <br/>
+  <p>Supports sharing settings between installations of IntelliJ Platform-based products used by the same developer (or team) on different computers.</p>
+  <p>Synchronization is performed automatically after successful completion of "Update Project" or "Push" actions. Also, you can do sync using VCS -> Sync Settings.</p>
+  <p>See the <a href="https://www.jetbrains.com/help/idea/sharing-your-ide-settings.html#settings-repository">Share settings through a settings repository</a> for more info.</p>
+]]></description>
   <vendor>JetBrains</vendor>
 
   <!-- otherwise plugin will be not loaded in tests -->

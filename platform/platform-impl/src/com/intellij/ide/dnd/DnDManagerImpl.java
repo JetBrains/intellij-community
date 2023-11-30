@@ -31,8 +31,8 @@ import java.lang.ref.WeakReference;
 public final class DnDManagerImpl extends DnDManager {
   private static final Logger LOG = Logger.getInstance(DnDManagerImpl.class);
 
-  @NonNls private static final String SOURCE_KEY = "DnD Source";
-  @NonNls private static final String TARGET_KEY = "DnD Target";
+  private static final @NonNls String SOURCE_KEY = "DnD Source";
+  private static final @NonNls String TARGET_KEY = "DnD Target";
 
   private static final Key<Pair<Image, Point>> DRAGGED_IMAGE_KEY = new Key<>("draggedImage");
 
@@ -96,7 +96,7 @@ public final class DnDManagerImpl extends DnDManager {
     cleanup(null, null);
   }
 
-  private void cleanup(@Nullable final DnDTarget target, @Nullable final JComponent targetComponent) {
+  private void cleanup(final @Nullable DnDTarget target, final @Nullable JComponent targetComponent) {
     Runnable cleanup = () -> {
       if (shouldCancelCurrentDnDOperation(target, targetComponent)) {
         myLastProcessedOverComponent = null;
@@ -345,8 +345,7 @@ public final class DnDManagerImpl extends DnDManager {
     return canGoToParent;
   }
 
-  @Nullable
-  private static Component findAllowedParentComponent(@NotNull Component aComponentOverDragging) {
+  private static @Nullable Component findAllowedParentComponent(@NotNull Component aComponentOverDragging) {
     Component eachParent = aComponentOverDragging;
     while (true) {
       eachParent = eachParent.getParent();
@@ -361,8 +360,7 @@ public final class DnDManagerImpl extends DnDManager {
     }
   }
 
-  @Nullable
-  private static DnDSource getSource(Component component) {
+  private static @Nullable DnDSource getSource(Component component) {
     if (component instanceof JComponent) {
       return (DnDSource)((JComponent)component).getClientProperty(SOURCE_KEY);
     }
@@ -482,8 +480,7 @@ public final class DnDManagerImpl extends DnDManager {
     clearRequest();
   }
 
-  @Nullable
-  private static JLayeredPane getLayeredPane(@Nullable Component aComponent) {
+  private static @Nullable JLayeredPane getLayeredPane(@Nullable Component aComponent) {
     if (aComponent == null) {
       return null;
     }
@@ -511,7 +508,7 @@ public final class DnDManagerImpl extends DnDManager {
     return myLastProcessedTarget.get();
   }
 
-  private static class NullTarget implements DnDTarget {
+  private static final class NullTarget implements DnDTarget {
     @Override
     public boolean update(DnDEvent aEvent) {
       aEvent.setDropPossible(false, "You cannot drop anything here");
@@ -539,8 +536,7 @@ public final class DnDManagerImpl extends DnDManager {
     LOG.debug("Reset events: " + s);
   }
 
-  @Nullable
-  private static DnDEventImpl resetEvent(DnDEvent event) {
+  private static @Nullable DnDEventImpl resetEvent(DnDEvent event) {
     if (event == null) return null;
     event.cleanUp();
     return null;
@@ -607,7 +603,7 @@ public final class DnDManagerImpl extends DnDManager {
     };
   }
 
-  private class MyDragSourceListener implements DragSourceListener {
+  private final class MyDragSourceListener implements DragSourceListener {
     private final DnDSource mySource;
 
     MyDragSourceListener(final DnDSource source) {
@@ -650,7 +646,7 @@ public final class DnDManagerImpl extends DnDManager {
     }
   }
 
-  private class MyDropTargetListener implements DropTargetListener {
+  private final class MyDropTargetListener implements DropTargetListener {
     @Override
     public void drop(final DropTargetDropEvent dtde) {
       SmoothAutoScroller.getSharedListener().drop(dtde);
@@ -734,7 +730,7 @@ public final class DnDManagerImpl extends DnDManager {
       cleanTargetComponent(dte.getDropTargetContext().getComponent());
     }
 
-    private void cleanTargetComponent(final Component c) {
+    private static void cleanTargetComponent(final Component c) {
       DnDTarget target = getTarget(c);
       if (target instanceof DnDNativeTarget && c instanceof JComponent) {
         ((JComponent)c).putClientProperty(DnDNativeTarget.EVENT_KEY, null);
@@ -769,8 +765,7 @@ public final class DnDManagerImpl extends DnDManager {
   }
 
   @Override
-  @Nullable
-  public Component getLastDropHandler() {
+  public @Nullable Component getLastDropHandler() {
     return SoftReference.dereference(myLastDropHandler);
   }
 }

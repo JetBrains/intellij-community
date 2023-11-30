@@ -1,18 +1,18 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.BundledPluginsState.Companion.savedBuildNumber
-import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.core.CoreBundle
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 
-class BundledPluginsStateTest : LightPlatformTestCase() {
+@TestApplication
+class BundledPluginsStateTest {
   @Test
-  fun testSaving() {
+  fun saving(@TempDir dir: Path) {
     val pluginIds = listOf(
       "foo" to null,
       "bar" to "UI",
@@ -20,24 +20,21 @@ class BundledPluginsStateTest : LightPlatformTestCase() {
       getIdeaDescriptor(it.first, it.second)
     }
 
-    BundledPluginsState.writePluginIdsToFile(pluginIds)
-    assertThat(BundledPluginsState.readPluginIdsFromFile())
-      .hasSameElementsAs(pluginIds.map { it.pluginId to it.category })
+    writePluginIdsToFile(pluginIds = pluginIds, configDir = dir)
+    assertThat(readPluginIdsFromFile(configDir = dir)).hasSameElementsAs(pluginIds.map { it.pluginId to it.category })
   }
 
   @Test
-  fun testSavingState() {
-    assertThat(BundledPluginsState.readPluginIdsFromFile().map(Pair<PluginId, Category>::first))
-      .hasSameElementsAs(BundledPluginsState.loadedPlugins.map(IdeaPluginDescriptor::getPluginId))
-
-    val savedBuildNumber = PropertiesComponent.getInstance().savedBuildNumber
-    assertThat(savedBuildNumber).isNotNull
-    assertThat(savedBuildNumber).isGreaterThanOrEqualTo(ApplicationInfo.getInstance().build)
+  fun categoryLocalized() {
+    for (descriptor in BundledPluginsState.loadedPlugins.filter { it.category != null }) {
+      val category = descriptor.category ?: continue
+      assertThat(CoreBundle.messageOrNull("plugin.category.${category.replace(' ', '.')}")).isEqualTo(category)
+    }
   }
+}
 
-  private fun getIdeaDescriptor(id: String, category: Category): IdeaPluginDescriptorImpl {
-    val descriptor = IdeaPluginDescriptorImpl(RawPluginDescriptor(), Path.of(""), true, PluginId.getId(id), null)
-    descriptor.category = category
-    return descriptor
-  }
+private fun getIdeaDescriptor(id: String, category: Category): IdeaPluginDescriptorImpl {
+  val descriptor = IdeaPluginDescriptorImpl(RawPluginDescriptor(), Path.of(""), true, PluginId.getId(id), null)
+  descriptor.category = category
+  return descriptor
 }

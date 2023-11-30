@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.BuilderCategory;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ModuleBuildTarget;
+import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.messages.CustomBuilderMessage;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -17,7 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
+public final class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(JavaBackwardReferenceIndexBuilder.class);
   public static final String BUILDER_ID = "compiler.ref.index";
   private static final String MESSAGE_TYPE = "processed module";
@@ -27,9 +30,8 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
     super(BuilderCategory.CLASS_POST_PROCESSOR);
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return JpsBuildBundle.message("builder.name.backward.references.indexer");
   }
 
@@ -59,9 +61,8 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
     JavaBackwardReferenceIndexWriter.closeIfNeeded(false);
   }
 
-  @NotNull
   @Override
-  public List<String> getCompilableFileExtensions() {
+  public @NotNull List<String> getCompilableFileExtensions() {
     return Collections.emptyList();
   }
 
@@ -69,7 +70,7 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
   public ExitCode build(CompileContext context,
                         ModuleChunk chunk,
                         DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                        OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
+                        OutputConsumer outputConsumer) throws IOException {
     final JavaBackwardReferenceIndexWriter writer = JavaBackwardReferenceIndexWriter.getInstance();
     if (writer != null) {
       final Throwable cause = writer.getRebuildRequestCause();

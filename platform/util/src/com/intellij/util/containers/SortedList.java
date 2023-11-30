@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class SortedList<T> extends AbstractList<T>{
+public final class SortedList<T> extends AbstractList<T>{
   private final SortedMap<T, List<T>> myMap;
   private final Comparator<? super T> myComparator;
   private List<T> myDelegate;

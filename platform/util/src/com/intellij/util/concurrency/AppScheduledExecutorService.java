@@ -135,7 +135,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
   }
 
-  static class BackendThreadPoolExecutor extends ThreadPoolExecutor implements ContextPropagatingExecutor {
+  static final class BackendThreadPoolExecutor extends ThreadPoolExecutor {
 
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory,
                               long keepAliveTime,
@@ -144,13 +144,8 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     }
 
     @Override
-    public void executeRaw(@NotNull Runnable command) {
-      super.execute(command);
-    }
-
-    @Override
     public void execute(@NotNull Runnable command) {
-      executeRaw(capturePropagationAndCancellationContext(command));
+      super.execute(capturePropagationAndCancellationContext(command));
     }
 
     @Override

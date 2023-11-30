@@ -13,7 +13,8 @@ import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.tooling.core.Extras
-import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportAction
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper
 import org.jetbrains.plugins.gradle.service.execution.createMainInitScript
@@ -63,25 +64,26 @@ fun <T : Any> buildGradleModel(
     )
 
     connector.connect().use { gradleConnection ->
-        val projectImportAction = ProjectImportAction(false, true)
-        projectImportAction.addProjectImportModelProvider(
-            ClassSetImportModelProvider(
-                setOf(
-                    clazz.java,
-                    /* Representative of the `kotlin.project-module` module */
-                    KotlinCompilation::class.java,
+        val projectImportAction = ProjectImportAction(false)
+        projectImportAction.addProjectImportModelProviders(
+            GradleClassProjectModelProvider.createAll(
+          clazz.java,
+          /* Representative of the `kotlin.project-module` module */
+          KotlinCompilation::class.java,
 
-                    /* Representative of the `kotlin-tooling-core` library */
-                    Extras::class.java,
+          /* Representative of the `kotlin-tooling-core` library */
+          Extras::class.java,
 
-                    /* Representative of the `kotlin-gradle-plugin-idea` library */
-                    IdeaKotlinDependency::class.java,
+          /* Representative of the `kotlin-gradle-plugin-idea` library */
+          IdeaKotlinDependency::class.java,
 
-                    /* Representative of the kotlin stdlib */
-                    Unit::class.java
-                ), setOf(IdeaProject::class.java)
-            )
-        )
+          /* Representative of the kotlin stdlib */
+          Unit::class.java
+        ))
+        projectImportAction.addProjectImportModelProviders(
+            GradleClassBuildModelProvider.createAll(
+          IdeaProject::class.java
+        ))
 
         val executionSettings = GradleExecutionSettings(null, null, DistributionType.BUNDLED, false)
         GradleExecutionHelper.attachTargetPathMapperInitScript(executionSettings)

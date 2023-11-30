@@ -1,15 +1,22 @@
 package org.jetbrains.plugins.textmate.regex;
 
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-public class StringWithId {
+public final class StringWithId {
+  public final Object id = new Object();
   public final byte[] bytes;
-  public final Object id;
 
   public StringWithId(String string) {
     bytes = string.getBytes(StandardCharsets.UTF_8);
-    id = new Object();
+  }
+
+  public StringWithId(CharSequence string) {
+    ByteBuffer byteBuffer = StandardCharsets.UTF_8.encode(CharBuffer.wrap(string));
+    bytes = new byte[byteBuffer.remaining()];
+    byteBuffer.get(bytes);
   }
 
   @Override

@@ -14,19 +14,22 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyT
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.moveToConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 
-class MovePropertyToConstructorIntention
+internal class MovePropertyToConstructorIntention
     : AbstractKotlinApplicableIntentionWithContext<KtProperty, MovePropertyToConstructorInfo>(KtProperty::class) {
 
-    override fun getFamilyName() = KotlinBundle.message("move.to.constructor")
+    override fun getFamilyName(): String = KotlinBundle.message("move.to.constructor")
 
-    override fun getActionName(element: KtProperty, context: MovePropertyToConstructorInfo) = familyName
+    override fun getActionName(element: KtProperty, context: MovePropertyToConstructorInfo): String = familyName
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtProperty> = ApplicabilityRanges.SELF
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtProperty> =
+        ApplicabilityRanges.SELF
 
-    override fun isApplicableByPsi(element: KtProperty) = element.isMovableToConstructorByPsi()
+    override fun isApplicableByPsi(element: KtProperty): Boolean =
+        element.isMovableToConstructorByPsi()
 
     context(KtAnalysisSession)
-    override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? = MovePropertyToConstructorInfo.create(element)
+    override fun prepareContext(element: KtProperty): MovePropertyToConstructorInfo? =
+        MovePropertyToConstructorInfo.create(element)
 
     override fun apply(element: KtProperty, context: MovePropertyToConstructorInfo, project: Project, editor: Editor?) {
         element.moveToConstructor(context)

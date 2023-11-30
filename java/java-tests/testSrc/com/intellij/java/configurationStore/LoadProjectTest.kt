@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.configurationStore
 
-import com.intellij.ProjectTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -114,7 +113,7 @@ class LoadProjectTest {
   fun `load module and library`() = runBlocking {
     loadProjectAndCheckResults("module-and-library", beforeOpen = { project ->
       //this emulates listener declared in plugin.xml, it's registered before the project is loaded
-      project.messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
+      project.messageBus.connect().subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
         override fun rootsChanged(event: ModuleRootEvent) {
           val library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries.single()
           assertThat(library.name).isEqualTo("foo")

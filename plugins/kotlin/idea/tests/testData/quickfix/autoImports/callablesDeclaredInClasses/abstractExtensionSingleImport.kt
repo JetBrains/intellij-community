@@ -14,3 +14,6 @@ object Obj : Base2()
 fun usage {
     10.<caret>based()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

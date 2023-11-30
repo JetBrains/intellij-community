@@ -23,7 +23,7 @@ final class InstallPluginInfo {
   public final boolean install;
   private TaskInfo myStatusBarTaskInfo;
   private boolean myClosed;
-  private static boolean myShowRestart;
+  private static boolean ourShowRestart;
 
   /**
    * Descriptor that has been loaded synchronously.
@@ -53,12 +53,12 @@ final class InstallPluginInfo {
 
   public synchronized void fromBackground(@NotNull MyPluginModel pluginModel) {
     myPluginModel = pluginModel;
-    myShowRestart = false;
+    ourShowRestart = false;
     closeStatusBarIndicator();
   }
 
   public static void showRestart() {
-    myShowRestart = true;
+    ourShowRestart = true;
   }
 
   public synchronized void finish(boolean success, boolean cancel, boolean showErrors, boolean restartRequired) {
@@ -69,10 +69,10 @@ final class InstallPluginInfo {
       MyPluginModel.finishInstall(myDescriptor);
       closeStatusBarIndicator();
       if (success && !cancel && restartRequired) {
-        myShowRestart = true;
+        ourShowRestart = true;
       }
-      if (MyPluginModel.myInstallingInfos.isEmpty() && myShowRestart) {
-        myShowRestart = false;
+      if (MyPluginModel.myInstallingInfos.isEmpty() && ourShowRestart) {
+        ourShowRestart = false;
         ApplicationManager.getApplication().invokeLater(() -> PluginManagerConfigurable.shutdownOrRestartApp());
       }
     }

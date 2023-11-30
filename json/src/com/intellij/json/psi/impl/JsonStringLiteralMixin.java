@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -27,9 +28,8 @@ public abstract class JsonStringLiteralMixin extends JsonLiteralImpl implements 
     return this;
   }
 
-  @NotNull
   @Override
-  public LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
+  public @NotNull LiteralTextEscaper<? extends PsiLanguageInjectionHost> createLiteralTextEscaper() {
     return new JSStringLiteralEscaper<PsiLanguageInjectionHost>(this) {
       @Override
       protected boolean isRegExpLiteral() {

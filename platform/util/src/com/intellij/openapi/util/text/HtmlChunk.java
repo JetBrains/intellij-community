@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -17,7 +17,7 @@ import java.util.stream.Stream;
  * @see HtmlBuilder
  */
 public abstract class HtmlChunk {
-  private static class Empty extends HtmlChunk {
+  private static final class Empty extends HtmlChunk {
     private static final Empty INSTANCE = new Empty();
     
     @Override
@@ -30,7 +30,7 @@ public abstract class HtmlChunk {
     }
   }
   
-  private static class Text extends HtmlChunk {
+  private static final class Text extends HtmlChunk {
     private final String myContent;
 
     private Text(String content) {
@@ -43,7 +43,7 @@ public abstract class HtmlChunk {
     }
   }
   
-  private static class Raw extends HtmlChunk {
+  private static final class Raw extends HtmlChunk {
     private final String myContent;
 
     private Raw(String content) {
@@ -56,7 +56,7 @@ public abstract class HtmlChunk {
     }
   }
   
-  static class Fragment extends HtmlChunk {
+  static final class Fragment extends HtmlChunk {
     private final List<? extends HtmlChunk> myContent;
 
     Fragment(List<? extends HtmlChunk> content) {
@@ -83,7 +83,7 @@ public abstract class HtmlChunk {
 
   }
   
-  private static class Nbsp extends HtmlChunk {
+  private static final class Nbsp extends HtmlChunk {
     private static final HtmlChunk ONE = new Nbsp(1);
     private final int myCount;
 
@@ -125,7 +125,10 @@ public abstract class HtmlChunk {
     public void appendTo(@NotNull StringBuilder builder) {
       builder.append('<').append(myTagName);
       myAttributes.entrySet().stream().sorted(Map.Entry.comparingByKey()).forEach(entry -> {
-        builder.append(' ').append(entry.getKey()).append("=\"").append(StringUtil.escapeXmlEntities(entry.getValue())).append('"');
+        builder.append(' ').append(entry.getKey());
+        if (entry.getValue() != null) {
+          builder.append("=\"").append(StringUtil.escapeXmlEntities(entry.getValue())).append('"');
+        }
       });
       if (myChildren.isEmpty()) {
         builder.append("/>");
@@ -156,6 +159,17 @@ public abstract class HtmlChunk {
     @Contract(pure = true)
     public @NotNull Element attr(@NonNls String name, int value) {
       return new Element(myTagName, myAttributes.with(name, Integer.toString(value)), myChildren);
+    }
+
+    /**
+     * Adds an attribute without '=' sign and a value
+     *
+     * @param name attribute name
+     * @return a new element that is like this element but has the specified attribute added or replaced
+     */
+    @Contract(pure = true)
+    public @NotNull Element attr(@NonNls String name) {
+      return new Element(myTagName, myAttributes.with(name, null), myChildren);
     }
 
     /**
@@ -251,7 +265,7 @@ public abstract class HtmlChunk {
     }
   }
 
-  private static class IconElement extends Element {
+  private static final class IconElement extends Element {
     private final @NotNull String myId;
     private final @NotNull Icon myIcon;
 

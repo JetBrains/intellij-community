@@ -13,9 +13,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.DimensionService;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.util.PopupImplUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +49,7 @@ public final class PopupPositionManager {
                                                  Position @NotNull ... relationToExistingPopup) {
     final LookupEx lookup = LookupManager.getActiveLookup(editor);
     if (lookup != null && lookup.getCurrentItem() != null && lookup.getComponent().isShowing()) {
-      new PositionAdjuster(lookup.getComponent()).adjust(hint, PositionAdjuster.getPopupSize(hint), relationToExistingPopup);
+      new PositionAdjuster(lookup.getComponent()).adjust(hint, PopupImplUtil.getPopupSize(hint), relationToExistingPopup);
       lookup.addLookupListener(new LookupListener() {
         @Override
         public void lookupCanceled(@NotNull LookupEvent event) {
@@ -63,7 +63,7 @@ public final class PopupPositionManager {
 
     final PositionAdjuster positionAdjuster = createPositionAdjuster(hint);
     if (positionAdjuster != null) {
-      positionAdjuster.adjust(hint, PositionAdjuster.getPopupSize(hint), relationToExistingPopup);
+      positionAdjuster.adjust(hint, PopupImplUtil.getPopupSize(hint), relationToExistingPopup);
       return;
     }
 
@@ -186,12 +186,15 @@ public final class PopupPositionManager {
     }
 
     public void adjust(@NotNull JBPopup popup, @NotNull Position @NotNull ... traversalPolicy) {
-      adjust(popup, getPopupSize(popup), traversalPolicy);
+      adjust(popup, PopupImplUtil.getPopupSize(popup), traversalPolicy);
     }
 
     public void adjust(@NotNull JBPopup popup, @NotNull Dimension d, @NotNull Position @NotNull ... traversalPolicy) {
       Rectangle bounds = adjustBounds(d, traversalPolicy);
+      adjust(popup, d, bounds);
+    }
 
+    public void adjust(@NotNull JBPopup popup, @NotNull Dimension d, Rectangle bounds) {
       Dimension size = bounds.getSize();
       if (!size.equals(d)) {
         popup.setSize(size);
@@ -283,20 +286,6 @@ public final class PopupPositionManager {
       return result;
     }
 
-    public static Dimension getPopupSize(final JBPopup popup) {
-      Dimension size = null;
-      if (popup instanceof AbstractPopup) {
-        final String dimensionKey = ((AbstractPopup)popup).getDimensionServiceKey();
-        if (dimensionKey != null) {
-          size = DimensionService.getInstance().getSize(dimensionKey);
-        }
-      }
 
-      if (size == null) {
-        size = popup.getContent().getPreferredSize();
-      }
-
-      return size;
-    }
   }
 }

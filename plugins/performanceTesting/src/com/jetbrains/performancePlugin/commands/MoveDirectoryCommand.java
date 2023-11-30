@@ -49,7 +49,7 @@ public class MoveDirectoryCommand extends AbstractCommand {
                                                               MoveFilesOrDirectoriesUtil.doMoveDirectory(sourcePsiDir, targetPsiDir);
                                                               LOG.info("Dir " + sourcePath + " has been moved to " + targetPath);
                                                               actionCallback.setDone();
-                                                            }), ModalityState.NON_MODAL);
+                                                            }), ModalityState.nonModal());
       } else {
         actionCallback.reject("Source or target dir is not found");
       }

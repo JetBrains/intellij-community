@@ -1,12 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-serialization-protobuf" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-protobuf-jvm:1.5.1" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-serialization-protobuf-jvm:1.6.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.6.0/kotlinx-serialization-protobuf-jvm-1.6.0.jar">
+          <sha256sum>837b836353bbac26729cf4085b226df442154171f115b11ef22c1a9a8bc2372d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.5.1/kotlinx-serialization-protobuf-jvm-1.5.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.6.0/kotlinx-serialization-protobuf-jvm-1.6.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.5.1/kotlinx-serialization-protobuf-jvm-1.5.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-serialization-protobuf-jvm/1.6.0/kotlinx-serialization-protobuf-jvm-1.6.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

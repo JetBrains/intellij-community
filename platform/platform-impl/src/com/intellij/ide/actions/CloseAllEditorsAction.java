@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -13,9 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseAllEditorsAction extends AnAction implements DumbAware {
+public class CloseAllEditorsAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(

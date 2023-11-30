@@ -18,7 +18,7 @@ public class PropertiesProviderImpl implements PropertiesProvider {
     Project project = scope.getProject();
     if (project == null) return null;
     Collection<Property> property =
-      PropertyKeyIndex.getInstance().get(propertyKey, project, scope);
+      PropertyKeyIndex.getInstance().getProperties(propertyKey, project, scope);
     if (property == null) return null;
     Property item = ContainerUtil.getFirstItem(property);
     return item != null ? item.getValue() : null;

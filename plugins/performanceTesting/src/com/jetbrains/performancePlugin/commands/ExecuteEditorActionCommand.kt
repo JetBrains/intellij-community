@@ -14,7 +14,6 @@ import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.jetbrains.performancePlugin.utils.EditorUtils.createEditorContext
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -32,7 +31,6 @@ class ExecuteEditorActionCommand(text: String, line: Int) : PlaybackCommandCorou
     val span = PerformanceTestSpan.TRACER.spanBuilder(PARTITION_SPAN_NAME + cleanSpanName(parameter)).setParent(
       PerformanceTestSpan.getContext())
     val spanRef = Ref<Span>()
-    val scopeRef = Ref<Scope>()
     val connection = context.project.messageBus.simpleConnect()
     val project = context.project
     val editor = FileEditorManager.getInstance(project).selectedTextEditor
@@ -41,8 +39,7 @@ class ExecuteEditorActionCommand(text: String, line: Int) : PlaybackCommandCorou
     }
     withContext(Dispatchers.EDT) {
       spanRef.set(span.startSpan())
-      scopeRef.set(spanRef.get().makeCurrent())
-      val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, scopeRef, expectedOpenedFile = expectedOpenedFile)
+      val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, expectedOpenedFile = expectedOpenedFile)
       executeAction(editor, parameter)
       job.waitForComplete()
     }

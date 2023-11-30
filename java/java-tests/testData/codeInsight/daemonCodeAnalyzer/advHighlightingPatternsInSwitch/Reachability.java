@@ -1,7 +1,7 @@
 import java.util.*;
 
 class Test {
-  void testEnumRechable(Day d) {
+  void testEnumRechable1(Day d) {
     switch (d) {
       case MONDAY, TUESDAY:
         throw new IllegalArgumentException();
@@ -11,17 +11,9 @@ class Test {
     System.out.println();
   }
 
-  void testEnumUncreachable1(Day d) {
-    switch (d) {
-      case MONDAY, TUESDAY, default:
-        throw new IllegalArgumentException();
-    }
-    <error descr="Unreachable statement">System.out.println();</error>
-  }
-
   void testEnumUnreachable2(Day d) {
     switch (d) {
-      case (Day dd && true):
+      case Day dd when true:
         throw new IllegalArgumentException();
     }
     <error descr="Unreachable statement">System.out.println();</error>
@@ -44,7 +36,7 @@ class Test {
       case Second s:
         throw new IllegalArgumentException();
     }
-    System.out.println();
+    <error descr="Unreachable statement">System.out.println();</error>
   }
 
   void testSealedClassUnreachable1(I i) {

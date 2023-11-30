@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Ascii;
@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.arrangement.TerminalWorkingDirectoryManager;
+import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
 import javax.swing.*;
 import java.awt.*;
@@ -70,15 +71,14 @@ public final class TerminalShellCommandHandlerHelper {
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, widget);
 
     ApplicationManager.getApplication().getMessageBus().connect(myWidget).subscribe(
-      TerminalCommandHandlerCustomizer.Companion.getTERMINAL_COMMAND_HANDLER_TOPIC(), () -> scheduleCommandHighlighting());
+      TerminalCommandHandlerCustomizer.Constants.getTERMINAL_COMMAND_HANDLER_TOPIC(), () -> scheduleCommandHighlighting());
 
     TerminalModelListener listener = () -> {
       if (System.currentTimeMillis() - myLastKeyPressedMillis.get() < TYPING_THRESHOLD_MS) {
         scheduleCommandHighlighting();
       }
     };
-    widget.getTerminalTextBuffer().addModelListener(listener);
-    Disposer.register(myWidget, () -> widget.getTerminalTextBuffer().removeModelListener(listener));
+    TerminalUtil.addModelListener(widget.getTerminalTextBuffer(), myWidget, listener);
   }
 
   public void processKeyPressed(KeyEvent e) {
@@ -177,7 +177,7 @@ public final class TerminalShellCommandHandlerHelper {
   }
 
   private boolean isEnabledForProject() {
-    return getPropertiesComponent().getBoolean(TerminalCommandHandlerCustomizer.TERMINAL_CUSTOM_COMMAND_EXECUTION, true);
+    return getPropertiesComponent().getBoolean(TerminalCommandHandlerCustomizer.Constants.TERMINAL_CUSTOM_COMMAND_EXECUTION, true);
   }
 
   @NotNull
@@ -284,11 +284,11 @@ public final class TerminalShellCommandHandlerHelper {
 
     if (executor == null) {
       onShellCommandExecuted();
-      TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, false);
+      TerminalUsageTriggerCollector.triggerSmartCommand(project, workingDirectory, localSession, command, handler, false);
       return false;
     }
 
-    TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, true);
+    TerminalUsageTriggerCollector.triggerSmartCommand(project, workingDirectory, localSession, command, handler, true);
     TerminalShellCommandHandler.Companion.executeShellCommandHandler(myWidget.getProject(), getWorkingDirectory(),
                                                                      !hasRunningCommands(), command, executor);
     clearTypedCommand(command);

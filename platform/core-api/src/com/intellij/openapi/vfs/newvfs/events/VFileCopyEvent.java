@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.events;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,49 +12,43 @@ public final class VFileCopyEvent extends VFileEvent {
   private final VirtualFile myNewParent;
   private final String myNewChildName;
 
-  public VFileCopyEvent(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String newChildName) {
-    super(requestor, false);
+  @ApiStatus.Internal
+  public VFileCopyEvent(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String newChildName) {
+    super(requestor);
     myFile = file;
     myNewParent = newParent;
     myNewChildName = newChildName;
   }
 
   @Override
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public VirtualFile getNewParent() {
+  public @NotNull VirtualFile getNewParent() {
     return myNewParent;
   }
 
-  @NotNull
-  public String getNewChildName() {
+  public @NotNull String getNewChildName() {
     return myNewChildName;
   }
 
-  @Nullable
-  public VirtualFile findCreatedFile() {
+  public @Nullable VirtualFile findCreatedFile() {
     return myNewParent.isValid() ? myNewParent.findChild(myNewChildName) : null;
   }
 
   @Override
-  @NonNls
   public String toString() {
     return "VfsEvent[copy " + myFile +" to " + myNewParent + " as " + myNewChildName +"]";
   }
 
-  @NotNull
   @Override
-  protected String computePath() {
+  protected @NotNull String computePath() {
     return myNewParent.getPath() + "/" + myNewChildName;
   }
 
-  @NotNull
   @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFile.getFileSystem();
   }
 

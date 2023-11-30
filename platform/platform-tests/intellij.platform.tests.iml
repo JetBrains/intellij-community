@@ -15,8 +15,8 @@
     <orderEntry type="library" scope="TEST" name="jmock.legacy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.storage" />
-    <orderEntry type="module" module-name="intellij.platform.workspaceModel.jps" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
@@ -70,6 +70,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Objenesis" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.impl" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="jackson-databind" level="project" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="hamcrest" level="project" />
@@ -77,5 +78,13 @@
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.testEntities" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit5Suites" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.instanceContainer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.webp" scope="TEST" />
   </component>
 </module>

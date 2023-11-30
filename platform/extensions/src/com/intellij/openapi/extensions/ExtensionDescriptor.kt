@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions
 
 import com.intellij.util.xml.dom.XmlElement
@@ -9,7 +9,7 @@ class ExtensionDescriptor(@JvmField val implementation: String?,
                           @JvmField val os: Os?,
                           @JvmField val orderId: String?,
                           @JvmField val order: LoadingOrder,
-                          @JvmField var element: XmlElement?,
+                          @JvmField val element: XmlElement?,
                           @JvmField val hasExtraAttributes: Boolean) {
   @Suppress("EnumEntryName")
   enum class Os {
@@ -22,8 +22,9 @@ class ExtensionPointDescriptor(@JvmField val name: String,
                                @JvmField val isNameQualified: Boolean,
                                @JvmField val className: String,
                                @JvmField val isBean: Boolean,
+                               @JvmField val hasAttributes: Boolean,
                                @JvmField val isDynamic: Boolean) {
-  fun getQualifiedName(pluginDescriptor: PluginDescriptor) = if (isNameQualified) name else "${pluginDescriptor.pluginId}.$name"
+  fun getQualifiedName(pluginDescriptor: PluginDescriptor): String = if (isNameQualified) name else "${pluginDescriptor.pluginId}.$name"
 
   // getQualifiedName() can be used instead, but this method allows avoiding temp string creation
   fun nameEquals(qualifiedName: String, pluginDescriptor: PluginDescriptor): Boolean {

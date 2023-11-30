@@ -15,8 +15,9 @@ import javax.swing.JPanel
 import javax.swing.JProgressBar
 import kotlin.math.max
 
-class NotebookBelowCellDelimiterPanel() : JPanel(GridLayout(1, 1)) {
+class NotebookBelowCellDelimiterPanel(val editor: EditorImpl) : JPanel(GridLayout(1, 1)) {
   private val steadyUI = JupyterProgressBarUI()
+  private var shouldUseCustomBackground = false
   private val progress = object : JProgressBar(0, 100) {
     init {
       setStopped()
@@ -29,7 +30,7 @@ class NotebookBelowCellDelimiterPanel() : JPanel(GridLayout(1, 1)) {
     }
   }
 
-  fun initialize(editor: EditorImpl, @Nls executionTimeDetails: String?, hasProgressBar: Boolean) {
+  fun initialize(@Nls executionTimeDetails: String?, hasProgressBar: Boolean) {
     val notebookAppearance = editor.notebookAppearance
     val customHeight = if (executionTimeDetails != null) notebookAppearance.EXECUTION_TIME_HEIGHT else notebookAppearance.SPACER_HEIGHT
     preferredSize = Dimension(preferredSize.width, customHeight)
@@ -43,6 +44,7 @@ class NotebookBelowCellDelimiterPanel() : JPanel(GridLayout(1, 1)) {
       label.foreground = UIUtil.getLabelInfoForeground()
       background = notebookAppearance.getCodeCellBackground(editor.colorsScheme)
       add(label, BorderLayout.WEST)
+      shouldUseCustomBackground = true
     } else if (hasProgressBar) {
       background = notebookAppearance.getCodeCellBackground(editor.colorsScheme)
       border = BorderFactory.createEmptyBorder(notebookAppearance.SPACER_HEIGHT - notebookAppearance.PROGRESS_STATUS_HEIGHT, 0, 0, 7)
@@ -50,7 +52,19 @@ class NotebookBelowCellDelimiterPanel() : JPanel(GridLayout(1, 1)) {
         setUI(steadyUI)
       })
       setProgressVisibility(false)
+      shouldUseCustomBackground = true
     }
+  }
+
+  override fun updateUI() {
+    // This method is called within constructor of JPanel, at this time state is not yet initialised, reference is null.
+    if (editor != null) {
+      background =
+        if (shouldUseCustomBackground)
+          editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
+        else editor.colorsScheme.defaultBackground
+    }
+    super.updateUI()
   }
 
   fun setProgressVisibility(showProgressBar: Boolean) {

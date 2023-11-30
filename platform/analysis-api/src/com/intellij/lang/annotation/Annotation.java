@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -62,19 +48,16 @@ public final class Annotation implements Segment {
   private boolean myAfterEndOfLine;
   private boolean myIsFileLevelAnnotation;
   private GutterIconRenderer myGutterIconRenderer;
-  @Nullable
-  private ProblemGroup myProblemGroup;
+  private @Nullable ProblemGroup myProblemGroup;
   private List<QuickFixInfo> myBatchFixes;
   private PsiReference unresolvedReference;
 
-  public static class QuickFixInfo {
-    @NotNull
-    public final IntentionAction quickFix;
-    @NotNull
-    public final TextRange textRange;
+  public static final class QuickFixInfo {
+    public final @NotNull IntentionAction quickFix;
+    public final @NotNull TextRange textRange;
     public final HighlightDisplayKey key;
 
-    QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, @Nullable final HighlightDisplayKey key) {
+    QuickFixInfo(@NotNull IntentionAction fix, @NotNull TextRange range, final @Nullable HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
       textRange = range;
@@ -167,7 +150,7 @@ public final class Annotation implements Segment {
    * @param key HighlightDisplayKey of the inspection which provided this fix
    */
   @Deprecated
-  public void registerFix(@NotNull IntentionAction fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+  public void registerFix(@NotNull IntentionAction fix, @Nullable TextRange range, final @Nullable HighlightDisplayKey key) {
     range = notNullize(range);
     List<QuickFixInfo> fixes = myQuickFixes;
     if (fixes == null) {
@@ -176,8 +159,7 @@ public final class Annotation implements Segment {
     fixes.add(new QuickFixInfo(fix, range, key));
   }
 
-  @NotNull
-  private TextRange notNullize(@Nullable TextRange range) {
+  private @NotNull TextRange notNullize(@Nullable TextRange range) {
     return range == null ? new TextRange(myStartOffset, myEndOffset) : range;
   }
 
@@ -206,7 +188,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link AnnotationBuilder#newFix(IntentionAction)} instead
    */
   @Deprecated
-  public <T extends IntentionAction & LocalQuickFix> void registerUniversalFix(@NotNull T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+  public <T extends IntentionAction & LocalQuickFix> void registerUniversalFix(@NotNull T fix, @Nullable TextRange range, final @Nullable HighlightDisplayKey key) {
     registerBatchFix(fix, range, key);
     registerFix(fix, range, key);
   }
@@ -264,8 +246,7 @@ public final class Annotation implements Segment {
    *
    * @return the annotation severity.
    */
-  @NotNull
-  public HighlightSeverity getSeverity() {
+  public @NotNull HighlightSeverity getSeverity() {
     return mySeverity;
   }
 
@@ -275,8 +256,7 @@ public final class Annotation implements Segment {
    *
    * @return the common problem type.
    */
-  @NotNull
-  public ProblemHighlightType getHighlightType() {
+  public @NotNull ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
 
@@ -287,8 +267,7 @@ public final class Annotation implements Segment {
    *
    * @return the text attribute key used for highlighting
    */
-  @NotNull
-  public TextAttributesKey getTextAttributes() {
+  public @NotNull TextAttributesKey getTextAttributes() {
     if (myEnforcedAttributesKey != null) return myEnforcedAttributesKey;
 
     return switch (myHighlightType) {
@@ -327,13 +306,11 @@ public final class Annotation implements Segment {
    * @return the list of quick fixes, or null if none have been registered.
    */
 
-  @Nullable
-  public List<QuickFixInfo> getQuickFixes() {
+  public @Nullable List<QuickFixInfo> getQuickFixes() {
     return myQuickFixes;
   }
 
-  @Nullable
-  public List<QuickFixInfo> getBatchFixes() {
+  public @Nullable List<QuickFixInfo> getBatchFixes() {
     return myBatchFixes;
   }
 
@@ -435,8 +412,7 @@ public final class Annotation implements Segment {
    *
    * @return the gutter icon renderer instance.
    */
-  @Nullable
-  public GutterIconRenderer getGutterIconRenderer() {
+  public @Nullable GutterIconRenderer getGutterIconRenderer() {
     return myGutterIconRenderer;
   }
 
@@ -447,7 +423,7 @@ public final class Annotation implements Segment {
    * @param gutterIconRenderer the gutter icon renderer instance.
    */
   @Deprecated
-  public void setGutterIconRenderer(@Nullable final GutterIconRenderer gutterIconRenderer) {
+  public void setGutterIconRenderer(final @Nullable GutterIconRenderer gutterIconRenderer) {
     myGutterIconRenderer = gutterIconRenderer;
   }
 
@@ -456,8 +432,7 @@ public final class Annotation implements Segment {
    *
    * @return the problem group
    */
-  @Nullable
-  public ProblemGroup getProblemGroup() {
+  public @Nullable ProblemGroup getProblemGroup() {
     return myProblemGroup;
   }
 
@@ -467,13 +442,12 @@ public final class Annotation implements Segment {
    *
    * @param problemGroup the problem group
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
     myProblemGroup = problemGroup;
   }
 
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "Annotation(" +
            "message='" + myMessage + "'" +
            ", severity='" + mySeverity + "'" +
@@ -485,7 +459,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void setUnresolvedReference(PsiReference reference) {
     unresolvedReference = reference;
   }
@@ -493,7 +467,7 @@ public final class Annotation implements Segment {
    * @deprecated use {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater#registerQuickFixesLater(PsiReference, AnnotationBuilder)}
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public PsiReference getUnresolvedReference() {
     return unresolvedReference;
   }

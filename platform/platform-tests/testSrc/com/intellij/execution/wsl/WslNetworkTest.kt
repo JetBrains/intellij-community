@@ -5,7 +5,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.fixtures.TestFixtureRule
-import org.junit.Assert.assertTrue
+import org.hamcrest.MatcherAssert
+import org.hamcrest.Matchers.isIn
 import org.junit.ClassRule
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -23,9 +24,13 @@ class WslNetworkTest {
     val ruleChain: RuleChain = RuleChain(appRule, wslRule)
   }
 
+  // wsl1 uses 127.0.0.1, wsl2 is 172.16.0.0/16 or 192.168.0.0/16
+  private val wslIpPrefix: Array<Byte>
+    get() = if (wslRule.wsl.version == 1) arrayOf(127) else arrayOf(172, 192).map { it.toByte() }.toTypedArray()
+
   @Test
   fun testWslIp() {
-    assertTrue("Wrong WSL IP", wslRule.wsl.wslIpAddress.hostAddress.startsWith("172."))
+    MatcherAssert.assertThat("Wrong WSL IP", wslRule.wsl.wslIpAddress.address[0], isIn(wslIpPrefix))
   }
 
   @Test
@@ -39,7 +44,7 @@ class WslNetworkTest {
   fun testWslHostIp() {
     for (alt in arrayOf(true, false)) {
       Registry.get("wsl.obtain.windows.host.ip.alternatively").withValue(alt) {
-        assertTrue("Wrong host IP", wslRule.wsl.hostIpAddress.hostAddress.startsWith("172."))
+        MatcherAssert.assertThat("Wrong host IP: alternative: $alt", wslRule.wsl.hostIpAddress.address[0], isIn(wslIpPrefix))
       }
     }
   }

@@ -4,7 +4,10 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.PceCancellationException
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -18,12 +21,6 @@ internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContex
   }
   catch (readCe: ReadCancellationException) {
     throw CannotReadException(readCe)
-  }
-  catch (currentJobCe: CurrentJobCancellationException) {
-    throw currentJobCe.cause
-  }
-  catch (pceCe: PceCancellationException) {
-    throw pceCe.cause
   }
 }
 
@@ -50,16 +47,14 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
       result.value
     }
   }
-  catch (currentJobCe: CurrentJobCancellationException) {
-    val jce: JobCanceledException = currentJobCe.cause
-    if (jce.cause is ReadCancellationException) {
-      throw ReadCancellationException(jce)
-    }
-    throw currentJobCe
-  }
-  catch (ce: CancellationException) {
+  catch (pceCe: PceCancellationException) { // may be thrown by ProgressManager.checkCanceled() inside [action] and wrapped by `blockingContext`
+    val pce = pceCe.cause
+    val ce = if (pce is CeProcessCanceledException) pce.cause else pceCe
     readJob.cancel(ce)
-    throw ce
+    if (ce is ReadCancellationException) {
+      throw ReadCancellationException(pce)
+    }
+    throw pce
   }
   catch (e: Throwable) {
     // `job.completeExceptionally(e)` will fail parent Job,

@@ -8,44 +8,42 @@ import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.belongsToScope
 import com.intellij.platform.diagnostic.telemetry.impl.CsvGzippedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.impl.MessageBusSpanExporter
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
+import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider
+import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
-import java.io.File
-import java.time.Duration
+import java.nio.file.Path
+import kotlin.time.Duration.Companion.seconds
 
-private val LOG = logger<RdctExportersProvider>()
-class RdctExportersProvider : OTelExportersProvider {
+private class RdctExportersProvider : OpenTelemetryExporterProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
-    return listOf(MessageBusSpanExporter())
+    if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null && getOtlpEndPoint() != null) {
+      return listOf(MessageBusSpanExporter())
+    }
+    else {
+      return emptyList()
+    }
   }
 
   override fun getMetricsExporters(): List<MetricExporter> {
-    val fileToWrite: File? = try {
-      CsvGzippedMetricsExporter.generatePathForConnectionMetrics().toFile()
+    if (System.getProperty(OpenTelemetryUtils.RDCT_CONN_METRICS_DIAGNOSTIC_FLAG) == null) {
+      return emptyList()
+    }
+
+    val fileToWrite: Path? = try {
+      CsvGzippedMetricsExporter.generatePathForConnectionMetrics()
     }
     catch (e: UnsupportedOperationException) {
-      LOG.warn("Failed to create a file for metrics")
+      logger<RdctExportersProvider>().warn("Failed to create a file for metrics")
       null
     }
     fileToWrite?.let {
-      return listOf(
-        FilteredMetricsExporter(CsvGzippedMetricsExporter(fileToWrite)) { metric ->
-          metric.belongsToScope(RDCT)
-        })
+      return listOf(FilteredMetricsExporter(SynchronizedClearableLazy { CsvGzippedMetricsExporter(fileToWrite) }) { metric ->
+        metric.belongsToScope(RDCT)
+      })
     }
     return emptyList()
   }
 
-  override fun isTracingAvailable(): Boolean {
-    return System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null &&
-           System.getProperty(OpenTelemetryUtils.IDEA_DIAGNOSTIC_OTLP) != null
-  }
-
-  override fun areMetricsAvailable(): Boolean {
-    return System.getProperty(OpenTelemetryUtils.RDCT_CONN_METRICS_DIAGNOSTIC_FLAG) != null
-  }
-
-  override fun getReadsInterval(): Duration {
-    return Duration.ofSeconds(1)
-  }
+  override fun getReadInterval() = 1.seconds
 }

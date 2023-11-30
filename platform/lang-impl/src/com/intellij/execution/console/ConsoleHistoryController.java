@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
-import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
@@ -13,6 +12,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -86,6 +86,7 @@ public class ConsoleHistoryController implements Disposable {
   private boolean myMultiline;
   private ModelHelper myHelper;
   private long myLastSaveStamp;
+  private boolean isMoveCaretToTheFirstLine = false;
 
   /**
    * @deprecated use {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView)} or {@link #ConsoleHistoryController(ConsoleRootType, String, LanguageConsoleView, ConsoleHistoryModel)}
@@ -104,6 +105,12 @@ public class ConsoleHistoryController implements Disposable {
                                    @NotNull LanguageConsoleView console, @NotNull ConsoleHistoryModel model) {
     myHelper = new ModelHelper(rootType, persistenceId, model);
     myConsole = console;
+  }
+
+  public ConsoleHistoryController(@NotNull ConsoleRootType rootType, @Nullable String persistenceId,
+                                  @NotNull LanguageConsoleView console, boolean moveCaretToTheFirstLine) {
+    this(rootType, persistenceId, console);
+    isMoveCaretToTheFirstLine = moveCaretToTheFirstLine;
   }
 
   @TestOnly
@@ -156,7 +163,7 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   public void install() {
-    myConsole.getProject().getMessageBus().connect(myConsole).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    myConsole.getProject().getMessageBus().connect(myConsole).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
         if (document == myConsole.getEditorDocument()) {
@@ -194,9 +201,9 @@ public class ConsoleHistoryController implements Disposable {
   }
 
   private void configureActions() {
-    EmptyAction.setupAction(myHistoryNext, "Console.History.Next", null);
-    EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
-    EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
+    ActionUtil.mergeFrom(myHistoryNext, "Console.History.Next");
+    ActionUtil.mergeFrom(myHistoryPrev, "Console.History.Previous");
+    ActionUtil.mergeFrom(myBrowseHistory, "Console.History.Browse");
     if (!myMultiline) {
       addShortcuts(myHistoryNext, getShortcutUpDown(true));
       addShortcuts(myHistoryPrev, getShortcutUpDown(false));
@@ -285,7 +292,7 @@ public class ConsoleHistoryController implements Disposable {
     return start;
   }
 
-  private class MyAction extends DumbAwareAction {
+  private final class MyAction extends DumbAwareAction {
     private final boolean myNext;
 
     @NotNull
@@ -302,6 +309,10 @@ public class ConsoleHistoryController implements Disposable {
       Entry command = myNext ? getModel().getHistoryNext() : getModel().getHistoryPrev();
       if (!myMultiline && command == null || !hasHistory && !myNext) return;
       setConsoleText(command, !hasHistory, true);
+      if (isMoveCaretToTheFirstLine && myNext) {
+        EditorEx consoleEditor = myConsole.getConsoleEditor();
+        consoleEditor.getCaretModel().moveToOffset(consoleEditor.getDocument().getLineEndOffset(0));
+      }
     }
 
     @Override

@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightFile
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationTest.Companion.useDefaultTemplate
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
@@ -343,6 +342,7 @@ abstract class AbstractScriptConfigurationTest : KotlinCompletionTestCase() {
             listOf(srcDir),
             target = outDir,
             classpath = classpath + listOf(outDir),
+            options = listOf("-Xabi-stability=stable"),
             compileKotlinSourcesBeforeJava = false
         ).compile()
         return outDir

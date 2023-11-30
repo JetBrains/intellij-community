@@ -14,16 +14,12 @@ class SuggestedRefactoringProviderImpl(project: Project) : SuggestedRefactoringP
     }
   }
 
-  val availabilityIndicator = SuggestedRefactoringAvailabilityIndicator(project)
+  val availabilityIndicator: SuggestedRefactoringAvailabilityIndicator = SuggestedRefactoringAvailabilityIndicator(project)
   private val changeCollector = SuggestedRefactoringChangeCollector(availabilityIndicator)
-  private val listener: SuggestedRefactoringChangeListener
+  private val listener = SuggestedRefactoringChangeListener(project, changeCollector, project)
 
   val state: SuggestedRefactoringState?
     get() = changeCollector.state
-
-  init {
-    listener = SuggestedRefactoringChangeListener(project, changeCollector, project)
-  }
 
   internal class Startup : ProjectActivity {
     override suspend fun execute(project: Project) {

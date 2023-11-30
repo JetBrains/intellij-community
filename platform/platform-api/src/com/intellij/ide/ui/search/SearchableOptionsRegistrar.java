@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
 
@@ -49,5 +50,17 @@ public abstract class SearchableOptionsRegistrar{
   public static String getSearchableOptionsXmlName() {
     DynamicBundle.LanguageBundleEP bundle = DynamicBundle.findLanguageBundle();
     return SEARCHABLE_OPTIONS_XML_NAME + (bundle != null ? "_" + bundle.locale : "") + ".xml";
+  }
+
+  public interface AdditionalLocationProvider {
+    /**
+     * Returns the additional location for {@code searchableOptions.xml}.
+     * By default, {@link SearchableOptionsRegistrar} will look for {@code searchableOptions.xml} inside plugin by path
+     * {@code <plugin-jar>/search/<prefix>.searchableOptions.<bundle>.xml}. Path returned by this method will also be
+     * checked for additional {@code <prefix>.searchableOptions.<bundle>.xml} files to load.
+     *
+     * @return the directory to check for additional searchable options files
+     */
+    @Nullable Path getAdditionalLocation();
   }
 }

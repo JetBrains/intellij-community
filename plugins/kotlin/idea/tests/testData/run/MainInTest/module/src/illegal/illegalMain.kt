@@ -18,3 +18,19 @@ class A {
         }
     }
 }
+
+class B {
+    @JvmStatic
+    fun main(args: Array<String?>) {
+        // no
+    }
+}
+
+class C {
+    inner class InnerClassWithMain {
+        @JvmStatic
+        fun main(args: Array<String>) {
+            // no
+        }
+    }
+}

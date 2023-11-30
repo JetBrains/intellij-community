@@ -1,21 +1,26 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static java.lang.Math.abs;
 
 public final class MaximizeActiveDialogAction extends WindowAction {
   private static final String NORMAL_BOUNDS = "NORMAL_BOUNDS";
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Window window = UIUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+    @Nullable Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    Window window = ComponentUtil.getWindow(component);
     if (!(window instanceof JDialog)) return;
     doMaximize((JDialog)window);
   }
@@ -32,7 +37,7 @@ public final class MaximizeActiveDialogAction extends WindowAction {
   public static boolean canBeMaximized(JDialog dialog) {
     JRootPane rootPane = dialog != null && dialog.isResizable() ? dialog.getRootPane() : null;
     if (rootPane == null) return false;
-    return !ScreenUtil.getScreenRectangle(dialog).equals(dialog.getBounds());
+    return !almostEquals(ScreenUtil.getScreenRectangle(dialog), dialog.getBounds());
   }
 
   public static void maximize(JDialog dialog) {
@@ -45,7 +50,12 @@ public final class MaximizeActiveDialogAction extends WindowAction {
     JRootPane rootPane = dialog != null && dialog.isResizable() ? dialog.getRootPane() : null;
     if (rootPane == null) return false;
     Rectangle screenRectangle = ScreenUtil.getScreenRectangle(dialog);
-    return dialog.getBounds().equals(screenRectangle) && rootPane.getClientProperty(NORMAL_BOUNDS) instanceof Rectangle;
+    return almostEquals(dialog.getBounds(), screenRectangle) && rootPane.getClientProperty(NORMAL_BOUNDS) instanceof Rectangle;
+  }
+
+  private static boolean almostEquals(@NotNull Rectangle r1, @NotNull Rectangle r2) {
+    int tolerance = Registry.intValue("ide.dialog.maximize.tolerance", 10);
+    return abs(r1.x - r2.x) <= tolerance && abs(r1.y - r2.y) <= tolerance && abs(r1.width - r2.width) <= tolerance && abs(r1.height - r2.height) <= tolerance;
   }
 
   public static void normalize(JDialog dialog) {

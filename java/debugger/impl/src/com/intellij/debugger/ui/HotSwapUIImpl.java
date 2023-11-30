@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
+import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
@@ -187,7 +188,7 @@ public final class HotSwapUIImpl extends HotSwapUI {
         ApplicationManager.getApplication().executeOnPooledThread(
           () -> reloadModifiedClasses(modifiedClasses, progress)
         );
-      }, ModalityState.NON_MODAL);
+      }, ModalityState.nonModal());
     });
   }
 
@@ -276,12 +277,14 @@ public final class HotSwapUIImpl extends HotSwapUI {
                                    @Nullable HotSwapStatusListener callback) {
     dontAskHotswapAfterThisCompilation();
     if (compileBeforeHotswap) {
-      ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(session.getProject());
+      Project project = session.getProject();
+      ProjectTaskManagerImpl.putBuildOriginator(project, this.getClass());
+      ProjectTaskManager projectTaskManager = ProjectTaskManager.getInstance(project);
       if (callback == null) {
         projectTaskManager.buildAllModules();
       }
       else {
-        ProjectTask buildProjectTask = projectTaskManager.createAllModulesBuildTask(true, session.getProject());
+        ProjectTask buildProjectTask = projectTaskManager.createAllModulesBuildTask(true, project);
         ProjectTaskContext context = new ProjectTaskContext(callback).withUserData(HOT_SWAP_CALLBACK_KEY, callback);
         projectTaskManager.run(context, buildProjectTask);
       }
@@ -299,7 +302,9 @@ public final class HotSwapUIImpl extends HotSwapUI {
   @Override
   public void compileAndReload(@NotNull DebuggerSession session, VirtualFile @NotNull ... files) {
     dontAskHotswapAfterThisCompilation();
-    ProjectTaskManager.getInstance(session.getProject()).compile(files);
+    Project project = session.getProject();
+    ProjectTaskManagerImpl.putBuildOriginator(project, this.getClass());
+    ProjectTaskManager.getInstance(project).compile(files);
     // The control flow continues at MyCompilationStatusListener.finished.
   }
 

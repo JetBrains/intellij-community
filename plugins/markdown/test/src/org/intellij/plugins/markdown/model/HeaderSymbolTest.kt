@@ -24,8 +24,7 @@ abstract class HeaderSymbolTest(private val testDataPath: String): BasePlatformT
 
   private fun renameByDeclaration(newName: String) {
     val declaration = findSymbolDeclarationAtCaret().firstOrNull() ?: return
-    val symbol = declaration.symbol
-    val target = when (symbol) {
+    val target = when (val symbol = declaration.symbol) {
       is RenameTarget -> symbol
       is RenameableSymbol -> symbol.renameTarget
       else -> null

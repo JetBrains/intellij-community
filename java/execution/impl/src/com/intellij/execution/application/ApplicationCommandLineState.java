@@ -3,9 +3,7 @@ package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.CommonJavaRunConfigurationParameters;
-import com.intellij.execution.ConfigurationWithCommandLineShortener;
-import com.intellij.execution.ExecutionException;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -13,6 +11,7 @@ import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -38,14 +37,23 @@ public abstract class ApplicationCommandLineState<T extends
     T configuration = getConfiguration();
 
     params.setMainClass(ReadAction.compute(() -> myConfiguration.getRunClass()));
-    setupJavaParameters(params);
+    String mainClass = params.getMainClass();
+    try {
+      JavaParametersUtil.configureConfiguration(params, myConfiguration);
+    }
+    catch (ProgramParametersConfigurator.ParametersConfiguratorException e) {
+      throw new ExecutionException(e);
+    }
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
     ReadAction.run(() -> {
       final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
       if (module.getModule() != null) {
         DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
-          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.getRunClass(), false,
+          if (mainClass == null) {
+            throw new CantRunException(ExecutionBundle.message("no.main.class.defined.error.message"));
+          }
+          int classPathType = JavaParametersUtil.getClasspathType(module, mainClass, false,
                                                                   isProvidedScopeIncluded());
           JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
         });
@@ -58,6 +66,8 @@ public abstract class ApplicationCommandLineState<T extends
     setupModulePath(params, module);
 
     params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
+
+    setupJavaParameters(params);
 
     return params;
   }

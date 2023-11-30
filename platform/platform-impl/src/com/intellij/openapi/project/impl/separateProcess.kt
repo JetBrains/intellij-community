@@ -1,7 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
-import com.intellij.diagnostic.Activity
+import com.intellij.ide.actions.OpenFileAction
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.CustomConfigMigrationOption
 import com.intellij.openapi.application.EDT
@@ -23,9 +27,33 @@ import java.util.concurrent.CancellationException
 import kotlin.io.path.div
 import kotlin.io.path.exists
 
-const val PER_PROJECT_INSTANCE_TEST_SCRIPT = "test_script.txt"
+const val PER_PROJECT_INSTANCE_TEST_SCRIPT: String = "test_script.txt"
 
-internal suspend fun checkChildProcess(projectStoreBaseDir: Path, activity: Activity): Boolean {
+class SeparateProcessActionsCustomizer : ActionConfigurationCustomizer {
+  override fun customize(actionManager: ActionManager) {
+    if (!ProjectManagerEx.IS_CHILD_PROCESS) return
+
+    // see com.jetbrains.thinclient.ThinClientActionsCustomizer
+
+    // we don't remove this action in case some code uses it
+    actionManager.replaceAction("OpenFile", NewProjectActionDisabler())
+    val fileOpenGroup = actionManager.getAction("FileOpenGroup") as DefaultActionGroup
+    fileOpenGroup.removeAll()
+
+    actionManager.unregisterAction("RecentProjectListGroup")
+  }
+}
+
+private class NewProjectActionDisabler : OpenFileAction() {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = false
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+  }
+}
+
+internal suspend fun checkChildProcess(projectStoreBaseDir: Path): Boolean {
   if (shouldOpenInChildProcess(projectStoreBaseDir)) {
     openInChildProcess(projectStoreBaseDir)
     if (!ProjectManagerEx.IS_CHILD_PROCESS) {
@@ -41,7 +69,6 @@ internal suspend fun checkChildProcess(projectStoreBaseDir: Path, activity: Acti
     for (processor in LowLevelProjectOpenProcessor.EP_NAME.extensions) {
       if (processor.beforeProjectOpened(projectStoreBaseDir) == LowLevelProjectOpenProcessor.PrepareProjectResult.CANCEL) {
         logger<ProjectManagerImpl>().info("Project opening preparation has been cancelled")
-        activity.end()
         throw ProcessCanceledException()
       }
     }

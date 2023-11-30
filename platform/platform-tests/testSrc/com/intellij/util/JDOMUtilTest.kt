@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
@@ -34,6 +34,11 @@ internal class JDOMUtilTest {
     Element("test").text = legalized
 
     assertThat(legalized).isEqualTo("0xFFFFstart0xFFFFend0xFFFF")
+  }
+
+  @Test
+  fun `lt in attribute value`() {
+    assertThat(JDOMUtil.write(Element("test").setAttribute("hello", "dog < cat"))).isEqualTo("""<test hello="dog &lt; cat" />""")
   }
 
   @Test

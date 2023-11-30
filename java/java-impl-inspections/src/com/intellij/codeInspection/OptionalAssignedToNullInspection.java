@@ -6,6 +6,8 @@ import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -98,11 +100,11 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
           boolean useIsEmpty =
             binOp.getOperationTokenType().equals(JavaTokenType.EQEQ) &&
             PsiUtil.isLanguageLevel11OrHigher(binOp);
-          holder.registerProblem(binOp, JavaBundle.message("inspection.null.value.for.optional.assigned.message"),
-                                 new ReplaceWithIsPresentFix(useIsEmpty),
-                                 new SetInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
-                                                            JavaBundle
-                                                              .message("inspection.null.value.for.optional.assigned.ignore.fix.name"), false));
+          holder.problem(binOp, JavaBundle.message("inspection.null.value.for.optional.assigned.message"))
+            .fix(new ReplaceWithIsPresentFix(useIsEmpty))
+            .fix(new UpdateInspectionOptionFix(OptionalAssignedToNullInspection.this, "WARN_ON_COMPARISON",
+                                               JavaBundle.message("inspection.null.value.for.optional.assigned.ignore.fix.name"), false))
+            .register();
         }
       }
 
@@ -186,7 +188,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiExpression)) return;
       String emptyCall = myTypeName + "." + myTypeParameter + myMethodName + "()";
       PsiElement result = new CommentTracker().replaceAndRestoreComments(element, emptyCall);
@@ -212,7 +214,7 @@ public class OptionalAssignedToNullInspection extends AbstractBaseJavaLocalInspe
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiBinaryExpression binOp = ObjectUtils.tryCast(element, PsiBinaryExpression.class);
       if (binOp == null) return;
       PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);

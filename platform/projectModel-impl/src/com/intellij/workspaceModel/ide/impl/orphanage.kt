@@ -5,15 +5,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspaceModel.jps.OrphanageWorkerEntitySource
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.jps.OrphanageWorkerEntitySource
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.workspaceModel.ide.EntitiesOrphanage
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.workspaceModel
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.system.measureTimeMillis
@@ -32,7 +32,7 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
 
     updater(builder)
 
-    val changes = builder.collectChanges(before)
+    val changes = builder.collectChanges()
 
     checkIfParentsAlreadyExist(changes, builder)
 
@@ -50,7 +50,6 @@ class EntitiesOrphanageImpl(private val project: Project) : EntitiesOrphanage {
     val snapshot = project.workspaceModel.currentSnapshot
     val orphanToSnapshotModule = orphanModules
       .mapNotNull { snapshot.resolve(it.symbolicId)?.let { sm -> it to sm } }
-      .asSequence()
 
     val adders = listOf(
       ContentRootAdder(),
@@ -133,7 +132,7 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
  * They may be refactored to remove the state and use them as extension points, if this will be needed
  */
 private interface EntityAdder {
-  fun collectOrphanRoots(orphanToSnapshotModules: Sequence<Pair<ModuleEntity, ModuleEntity>>)
+  fun collectOrphanRoots(orphanToSnapshotModules: List<Pair<ModuleEntity, ModuleEntity>>)
   fun hasUpdates(): Boolean
   fun addToBuilder(builder: MutableEntityStorage)
   fun cleanOrphanage(builder: MutableEntityStorage)
@@ -143,7 +142,7 @@ private class ContentRootAdder : EntityAdder {
   private lateinit var updates: List<Pair<ModuleEntity, List<ContentRootEntity.Builder>>>
   private val entitiesToRemoveFromOrphanage = ArrayList<ContentRootEntity>()
 
-  override fun collectOrphanRoots(orphanToSnapshotModules: Sequence<Pair<ModuleEntity, ModuleEntity>>) {
+  override fun collectOrphanRoots(orphanToSnapshotModules: List<Pair<ModuleEntity, ModuleEntity>>) {
     updates = orphanToSnapshotModules.mapNotNull { (orphanModule, snapshotModule) ->
       val existingUrls = snapshotModule.contentRoots.mapTo(HashSet()) { it.url }
       val rootsToAdd = orphanModule.contentRoots
@@ -156,7 +155,7 @@ private class ContentRootAdder : EntityAdder {
         snapshotModule to rootsToAdd
       }
       else null
-    }.toList()
+    }
   }
 
   override fun hasUpdates(): Boolean {
@@ -194,7 +193,7 @@ private class SourceRootAdder : EntityAdder {
   lateinit var updates: List<Pair<ModuleEntity, List<Pair<VirtualFileUrl, List<SourceRootEntity.Builder>>>>>
   private val entitiesToRemoveFromOrphanage = ArrayList<SourceRootEntity>()
 
-  override fun collectOrphanRoots(orphanToSnapshotModules: Sequence<Pair<ModuleEntity, ModuleEntity>>) {
+  override fun collectOrphanRoots(orphanToSnapshotModules: List<Pair<ModuleEntity, ModuleEntity>>) {
     updates = orphanToSnapshotModules.mapNotNull { (orphanModule, snapshotModule) ->
       val existingContentUrls = snapshotModule.contentRoots
         .associate { contentRoot -> contentRoot.url to contentRoot.sourceRoots.mapTo(HashSet()) { it.url } }
@@ -213,7 +212,7 @@ private class SourceRootAdder : EntityAdder {
         }
 
       if (rootsToAdd.isNotEmpty()) snapshotModule to rootsToAdd else null
-    }.toList()
+    }
   }
 
   override fun hasUpdates(): Boolean {
@@ -263,7 +262,7 @@ private class ExcludeRootAdder : EntityAdder {
   lateinit var updates: List<Pair<ModuleEntity, List<Pair<VirtualFileUrl, List<ExcludeUrlEntity.Builder>>>>>
   private val entitiesToRemoveFromOrphanage = ArrayList<ExcludeUrlEntity>()
 
-  override fun collectOrphanRoots(orphanToSnapshotModules: Sequence<Pair<ModuleEntity, ModuleEntity>>) {
+  override fun collectOrphanRoots(orphanToSnapshotModules: List<Pair<ModuleEntity, ModuleEntity>>) {
     updates = orphanToSnapshotModules.mapNotNull { (orphanModule, snapshotModule) ->
       val existingExcludes = snapshotModule.contentRoots
         .associate { contentRoot -> contentRoot.url to contentRoot.excludedUrls.mapTo(HashSet()) { it.url } }
@@ -282,7 +281,7 @@ private class ExcludeRootAdder : EntityAdder {
         }
 
       if (rootsToAdd.isNotEmpty()) snapshotModule to rootsToAdd else null
-    }.toList()
+    }
   }
 
   override fun hasUpdates(): Boolean {

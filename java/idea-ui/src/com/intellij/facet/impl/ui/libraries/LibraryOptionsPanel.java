@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.ui.libraries;
 
 import com.intellij.framework.library.DownloadableLibraryDescription;
@@ -175,7 +175,7 @@ public class LibraryOptionsPanel implements Disposable {
                                  NotNullComputable<String> pathProvider,
                                  FrameworkLibraryVersionFilter versionFilter,
                                  boolean showDoNotCreateOption, final List<? extends FrameworkLibraryVersion> versions) {
-    //todo[nik] create mySettings only in apply() method
+    //todo create mySettings only in apply() method
     mySettings = new LibraryCompositionSettings(libraryDescription, pathProvider, versionFilter, versions);
     Disposer.register(this, mySettings);
     List<Library> libraries = calculateSuitableLibraries();
@@ -292,7 +292,7 @@ public class LibraryOptionsPanel implements Disposable {
 
   private void doConfigure() {
     switch (myButtonEnumModel.getSelected()) {
-      case DOWNLOAD:
+      case DOWNLOAD -> {
         final LibraryDownloadSettings oldDownloadSettings = mySettings.getDownloadSettings();
         LOG.assertTrue(oldDownloadSettings != null);
         List<? extends FrameworkLibraryVersion> versions = mySettings.getCompatibleVersions();
@@ -304,9 +304,8 @@ public class LibraryOptionsPanel implements Disposable {
         if (newDownloadSettings != null) {
           mySettings.setDownloadSettings(newDownloadSettings);
         }
-        break;
-
-      case USE_LIBRARY:
+      }
+      case USE_LIBRARY -> {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item instanceof LibraryEditor) {
           EditLibraryDialog dialog = new EditLibraryDialog(myPanel, mySettings, (LibraryEditor)item);
@@ -315,11 +314,9 @@ public class LibraryOptionsPanel implements Disposable {
             WriteAction.run(() -> ((ExistingLibraryEditor)item).commit());
           }
         }
-        break;
-
-      case USE_FROM_PROVIDER:
-      case SETUP_LIBRARY_LATER:
-        break;
+      }
+      case USE_FROM_PROVIDER, SETUP_LIBRARY_LATER -> {
+      }
     }
     updateState();
   }

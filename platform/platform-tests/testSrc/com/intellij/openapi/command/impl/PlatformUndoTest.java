@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.CurrentEditorProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -40,20 +41,24 @@ public class PlatformUndoTest extends LightPlatformTestCase {
 
   private void undo() {
     UndoManagerImpl undoManager = getUndoManager();
-    FileEditor fileEditor = undoManager.getEditorProvider().getCurrentEditor();
+    FileEditor fileEditor = undoManager.getEditorProvider().getCurrentEditor(getProject());
     assertTrue(undoManager.isUndoAvailable(fileEditor));
     undoManager.undo(fileEditor);
   }
 
   private void runWithCurrentEditor(FileEditor currentEditor, Runnable task) {
     UndoManagerImpl undoManager = getUndoManager();
-    CurrentEditorProvider savedProvider = undoManager.getEditorProvider();
     try {
-      undoManager.setEditorProvider(() -> currentEditor);
+      undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
+        @Override
+        public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+          return currentEditor;
+        }
+      });
       task.run();
     }
     finally {
-      undoManager.setEditorProvider(savedProvider);
+      undoManager.setOverriddenEditorProvider(null);
     }
   }
 

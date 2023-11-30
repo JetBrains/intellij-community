@@ -28,13 +28,19 @@ import java.util.List;
  * User: zolotov
  */
 public interface SyntaxNodeDescriptor {
-  SyntaxNodeDescriptor EMPTY_NODE = new SyntaxNodeDescriptorImpl(null);
+  SyntaxNodeDescriptor EMPTY_NODE = new SyntaxNodeDescriptorImpl(null, null);
 
   @Nullable
   CharSequence getStringAttribute(@NotNull Constants.StringKey key);
 
   boolean hasBackReference(@NotNull Constants.StringKey key);
 
+  TextMateCapture @Nullable [] getCaptureRules(@NotNull Constants.CaptureKey key);
+
+  /**
+   * @deprecated use {@link #getCaptureRules(Constants.CaptureKey)}
+   */
+  @Deprecated(forRemoval = true)
   @Nullable
   Int2ObjectMap<CharSequence> getCaptures(@NotNull Constants.CaptureKey key);
 
@@ -50,9 +56,9 @@ public interface SyntaxNodeDescriptor {
   SyntaxNodeDescriptor findInRepository(int ruleId);
 
   /**
-   * @return scope name if node is root for language or empty string otherwise
+   * @return scope name if node is root for language or null otherwise
    */
-  @NotNull
+  @Nullable
   CharSequence getScopeName();
 
   @Nullable

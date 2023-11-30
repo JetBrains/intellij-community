@@ -85,9 +85,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * Returns {@code null} for default project.
    * <b>Note:</b> the word "presentable" here implies file system presentation, not a UI one.
    */
-  @Nullable
-  @SystemDependent @NonNls
-  default String getPresentableUrl() {
+  default @Nullable @SystemDependent @NonNls String getPresentableUrl() {
     return null;
   }
 

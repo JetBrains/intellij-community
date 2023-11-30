@@ -22,10 +22,12 @@
     <orderEntry type="module" module-name="intellij.settingsRepository" />
     <orderEntry type="module" module-name="intellij.properties" />
     <orderEntry type="module" module-name="intellij.markdown" />
+    <orderEntry type="module" module-name="intellij.markdown.plugin" />
     <orderEntry type="module" module-name="intellij.configurationScript" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.completionMlRanking" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh" />
+    <orderEntry type="module" module-name="intellij.terminal.sh" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.changeReminder" />
     <orderEntry type="module" module-name="intellij.xml.langInjection" />
     <orderEntry type="module" module-name="intellij.textmate" />
@@ -38,8 +40,9 @@
     <orderEntry type="module" module-name="intellij.color.scheme.twilight" />
     <orderEntry type="module" module-name="intellij.color.scheme.warmNeon" />
     <orderEntry type="module" module-name="intellij.color.scheme.github" />
-    <orderEntry type="module" module-name="intellij.dev" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.dev.plugin.noJava" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.python" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" scope="RUNTIME" />
   </component>
 </module>

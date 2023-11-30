@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,8 +38,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
   /**
    * Mutable internal list of items (must not be exposed to client)
    */
-  @NotNull
-  protected abstract List<T> getItems();
+  protected abstract @NotNull List<T> getItems();
 
   public void reset(@NotNull List<? extends T> originalItems) {
     helper.reset(originalItems);
@@ -66,8 +65,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     helper.process(processor);
   }
 
-  @NotNull
-  public final T getMutable(@NotNull T item) {
+  public final @NotNull T getMutable(@NotNull T item) {
     return helper.getMutable(item, -1);
   }
 
@@ -101,8 +99,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
       return modifiedToOriginal.containsKey(item) || !originalItems.contains(item);
     }
 
-    @NotNull
-    public T getMutable(@NotNull T item, int index) {
+    public @NotNull T getMutable(@NotNull T item, int index) {
       if (isMutable(item) || !isEditable(item)) {
         return item;
       }

@@ -58,8 +58,9 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
     else -> CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
   }
 
-  val defaultPluginVersion = if (context.buildNumber.endsWith(".SNAPSHOT")) {
-    "${context.buildNumber}.${pluginDateFormat.format(ZonedDateTime.now())}"
+  val snapshotSuffix = ".SNAPSHOT"
+  val defaultPluginVersion = if (context.buildNumber.endsWith(snapshotSuffix)) {
+    "${context.buildNumber.removeSuffix(snapshotSuffix)}.${pluginDateFormat.format(ZonedDateTime.now())}$snapshotSuffix"
   }
   else {
     context.buildNumber
@@ -79,7 +80,7 @@ internal fun patchPluginXml(moduleOutputPatcher: ModuleOutputPatcher,
                        toPublish = pluginsToPublish.contains(plugin),
                        retainProductDescriptorForBundledPlugin = plugin.retainProductDescriptorForBundledPlugin,
                        isEap = context.applicationInfo.isEAP,
-                       productName = context.applicationInfo.productName),
+                       productName = context.applicationInfo.fullProductName),
       context,
     )
   }

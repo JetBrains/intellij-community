@@ -1,7 +1,6 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
@@ -37,8 +36,7 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
   }
 
   private XLineBreakpoint<?> putBreakpoint(final VirtualFile file) {
-    return WriteAction.compute(() -> getBreakpointManager()
-      .addLineBreakpoint(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null, false));
+    return getBreakpointManager().addLineBreakpoint(XDebuggerTestCase.MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, null, false);
   }
 
   private VirtualFile createFile(@NotNull String path) throws IOException {

@@ -16,9 +16,7 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -251,9 +249,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     session.addSessionListener(new XDebugSessionListener() {
       @Override
       public void sessionStopped() {
-        ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> {
-          PyUnitTestsDebuggingService.removeInlaysAssociatedWithSession(session);
-        }));
+        PyUnitTestsDebuggingService.removeInlaysAssociatedWithSession(session);
       }
     });
   }
@@ -517,6 +513,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     settings.add(new WatchReturnValuesAction(this));
     settings.add(new PyVariableViewSettings.SimplifiedView(this));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
+    settings.add(new PyVariableViewSettings.QuotingPolicyGroup());
   }
 
   private static final class WatchReturnValuesAction extends ToggleAction {

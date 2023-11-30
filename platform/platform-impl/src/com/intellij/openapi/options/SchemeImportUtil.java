@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -20,11 +20,10 @@ import java.io.InputStream;
 import java.util.Set;
 
 public final class SchemeImportUtil {
-  @Nullable
-  public static VirtualFile selectImportSource(final String @NotNull [] sourceExtensions,
-                                               @NotNull Component parent,
-                                               @Nullable VirtualFile preselect,
-                                               @Nullable @NlsContexts.Label String description) {
+  public static @Nullable VirtualFile selectImportSource(final String @NotNull [] sourceExtensions,
+                                                         @NotNull Component parent,
+                                                         @Nullable VirtualFile preselect,
+                                                         @Nullable @NlsContexts.Label String description) {
     final Set<String> extensions = Set.of(sourceExtensions);
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false) {
       @Override
@@ -62,8 +61,7 @@ public final class SchemeImportUtil {
     return ArrayUtil.contains("jar", sourceExtensions);
   }
 
-  @NotNull
-  public static Element loadSchemeDom(@NotNull VirtualFile file) throws SchemeImportException {
+  public static @NotNull Element loadSchemeDom(@NotNull VirtualFile file) throws SchemeImportException {
     try (InputStream inputStream = file.getInputStream()) {
       return JDOMUtil.load(inputStream);
     }

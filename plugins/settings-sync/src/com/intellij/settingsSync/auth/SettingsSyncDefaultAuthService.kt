@@ -1,39 +1,58 @@
 package com.intellij.settingsSync.auth
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.settingsSync.SettingsSyncEvents
 import com.intellij.ui.JBAccountInfoService
-import com.intellij.util.EventDispatcher
 
 internal class SettingsSyncDefaultAuthService : SettingsSyncAuthService {
 
-  private val evenDispatcher = EventDispatcher.create(SettingsSyncAuthService.Listener::class.java)
+  companion object {
+    private val LOG = logger<SettingsSyncDefaultAuthService>()
+  }
+
+  @Volatile
+  private var invalidatedUserId: String? = null
 
   override fun isLoggedIn() : Boolean {
-    return JBAccountInfoService.getInstance()?.userData != null
+    val userData = getAccountInfoService()?.userData
+    return userData != null && invalidatedUserId != userData.id
   }
 
   override fun getUserData(): JBAccountInfoService.JBAData? {
-    if(ApplicationManagerEx.isInIntegrationTest()){
-      return JBAccountInfoService.JBAData("integrationTest", "testLogin", "testEmail@example.com")
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      return DummyJBAccountInfoService.userData
     }
-    return JBAccountInfoService.getInstance()?.userData
+    return getAccountInfoService()?.userData
   }
 
   override fun login() {
     if (!isLoggedIn()) {
-      JBAccountInfoService.getInstance()?.invokeJBALogin(
+      getAccountInfoService()?.invokeJBALogin(
         {
-          evenDispatcher.multicaster.stateChanged()
-        }, {
-          evenDispatcher.multicaster.stateChanged()
+          SettingsSyncEvents.getInstance().fireLoginStateChanged()
+        },
+        {
+          SettingsSyncEvents.getInstance().fireLoginStateChanged()
         })
     }
   }
 
-  override fun isLoginAvailable(): Boolean = JBAccountInfoService.getInstance() != null
+  override fun isLoginAvailable(): Boolean = getAccountInfoService() != null
 
-  override fun addListener(listener: SettingsSyncAuthService.Listener, disposable: Disposable) {
-    evenDispatcher.addListener(listener, disposable)
+  override fun invalidateJBA(userId: String) {
+    if (invalidatedUserId == userId) return
+
+    LOG.warn("Invalidating JBA")
+    invalidatedUserId = userId
+    SettingsSyncEvents.getInstance().fireLoginStateChanged()
+  }
+
+  // Extracted to simplify testing
+  override fun getAccountInfoService(): JBAccountInfoService? {
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      return DummyJBAccountInfoService
+    }
+    return JBAccountInfoService.getInstance()
   }
 }

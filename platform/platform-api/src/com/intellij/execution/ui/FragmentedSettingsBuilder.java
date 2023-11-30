@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.ide.DataManager;
@@ -268,15 +268,13 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
     myConfigId = configId;
   }
 
-  @NotNull
-  private static @NlsContexts.PopupAdvertisement String getHint(AnAction action) {
+  private static @NotNull @NlsContexts.PopupAdvertisement String getHint(AnAction action) {
     return (action != null && StringUtil.isNotEmpty(action.getTemplatePresentation().getDescription())) ?
            action.getTemplatePresentation().getDescription() : "";
   }
 
-  @NotNull
-  private DefaultActionGroup buildGroup(List<? extends SettingsEditorFragment<Settings, ?>> fragments,
-                                        Ref<? super JComponent> lastSelected) {
+  private @NotNull DefaultActionGroup buildGroup(List<? extends SettingsEditorFragment<Settings, ?>> fragments,
+                                                 Ref<? super JComponent> lastSelected) {
     fragments.sort(Comparator.comparingInt(SettingsEditorFragment::getMenuPosition));
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     String group = null;

@@ -203,7 +203,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
       super.setText2(text);
     }
 
-    private void updateLabel(final JLabel label, @NlsContexts.Label final String text) {
+    private static void updateLabel(final JLabel label, @NlsContexts.Label final String text) {
       UIUtil.invokeLaterIfNeeded(() -> label.setText(text));
     }
   }

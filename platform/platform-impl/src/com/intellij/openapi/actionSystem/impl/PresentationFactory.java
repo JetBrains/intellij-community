@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.openapi.actionSystem.ActionWithDelegate;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,11 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 public class PresentationFactory {
   private static final Key<Boolean> NEED_UPDATE_PRESENTATION = Key.create("NEED_UPDATE_PRESENTATION");
   private final Map<AnAction, Presentation> myPresentations = CollectionFactory.createConcurrentWeakMap();
-  private boolean myNeedRebuild;
+
+  private volatile boolean myNeedRebuild;
 
   private static final Collection<PresentationFactory> ourAllFactories = new WeakList<>();
 
@@ -28,12 +29,15 @@ public class PresentationFactory {
 
   public final @NotNull Presentation getPresentation(@NotNull AnAction action) {
     Presentation presentation = myPresentations.get(action);
+    if (presentation == null && action instanceof TransparentWrapper && action instanceof ActionWithDelegate<?> wrapper) {
+      presentation = myPresentations.get(wrapper.getDelegate());
+    }
     boolean needUpdate = presentation != null && Boolean.TRUE.equals(presentation.getClientProperty(NEED_UPDATE_PRESENTATION));
     if (presentation == null || needUpdate) {
       Presentation templatePresentation = action.getTemplatePresentation();
       if (presentation == null) {
         presentation = templatePresentation.clone();
-        presentation = ObjectUtils.notNull(myPresentations.putIfAbsent(action, presentation), presentation);
+        presentation = Objects.requireNonNullElse(myPresentations.putIfAbsent(action, presentation), presentation);
       }
       if (needUpdate) {
         presentation.setIcon(templatePresentation.getIcon());
@@ -62,7 +66,6 @@ public class PresentationFactory {
   }
 
   public void reset() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
     myPresentations.clear();
     myNeedRebuild = true;
   }
@@ -88,5 +91,8 @@ public class PresentationFactory {
         presentation.putClientProperty(NEED_UPDATE_PRESENTATION, true);
       }
     }
+  }
+
+  public interface TransparentWrapper {
   }
 }

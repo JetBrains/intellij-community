@@ -8,10 +8,6 @@
     <plugin id="tanvd.grazi"/>
   </dependencies>
 
-  <extensions defaultExtensionNs="com.intellij.searchEverywhereMl">
-    <itemSelectedListener implementation="com.intellij.searchEverywhereMl.typos.log.SearchEverywhereTyposLogger"/>
-  </extensions>
-
   <extensions defaultExtensionNs="com.intellij">
     <searchEverywhereSpellingCorrector
       implementation="com.intellij.searchEverywhereMl.typos.SearchEverywhereSpellingCorrectorFactoryImpl" />
@@ -27,12 +23,13 @@
     <registryKey key="search.everywhere.ml.typos.show.confidence"
                  description="Show confidence in Search Everywhere"
                  defaultValue="false"/>
-
-    <spellchecker.dictionary.runtimeDictionaryProvider
-      implementation="com.intellij.searchEverywhereMl.typos.models.RuntimeActionsDictionaryProvider"/>
-
-    <postStartupActivity implementation="com.intellij.searchEverywhereMl.typos.models.ActionsLanguageModel$ModelComputationStarter"/>
-
-    <statistics.counterUsagesCollector implementationClass="com.intellij.searchEverywhereMl.typos.log.SearchEverywhereTyposLogger"/>
   </extensions>
+
+  <actions>
+    <action id="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            class="com.intellij.searchEverywhereMl.typos.actions.DumpDictionaryToFileAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

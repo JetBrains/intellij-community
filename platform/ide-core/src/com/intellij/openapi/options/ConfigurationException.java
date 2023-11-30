@@ -2,6 +2,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,19 +39,34 @@ public class ConfigurationException extends Exception {
     myTitle = title;
   }
 
-  public boolean isHtmlMessage() {
-    return myIsHtmlMessage;
-  }
-
+  /**
+   * Sets the flag informing that this exception message is HTML, rather than the plain text 
+   * 
+   * @return this exception
+   */
   public @NotNull ConfigurationException withHtmlMessage() {
     myIsHtmlMessage = true;
     return this;
   }
 
+  /**
+   * @return the exception message. 
+   * 
+   * @deprecated It can be either plain text, or HTML. Use {@link #getMessageHtml()} to get the correct HTML message always.
+   */
   @Override
+  @Deprecated
   public @NlsContexts.DialogMessage String getMessage() {
     //noinspection HardCodedStringLiteral
     return super.getMessage();
+  }
+
+  /**
+   * @return HTML chunk representing the message.
+   */
+  public @NotNull HtmlChunk getMessageHtml() {
+    String message = getMessage();
+    return message == null ? HtmlChunk.empty() : myIsHtmlMessage ? HtmlChunk.raw(message) : HtmlChunk.text(message);
   }
 
   /**

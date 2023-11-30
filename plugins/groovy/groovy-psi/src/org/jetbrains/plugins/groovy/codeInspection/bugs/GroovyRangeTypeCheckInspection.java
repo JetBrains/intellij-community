@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -36,10 +37,10 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
   }
 
   @Override
-  protected GroovyFix buildFix(@NotNull PsiElement location) {
+  protected LocalQuickFix buildFix(@NotNull PsiElement location) {
     final GrRangeExpression range = (GrRangeExpression)location;
     final PsiType type = range.getType();
-    final List<GroovyFix> fixes = new ArrayList<>(3);
+    final List<LocalQuickFix> fixes = new ArrayList<>(3);
     if (type instanceof GrRangeType) {
       PsiType iterationType = ((GrRangeType)type).getIterationType();
       if (!(iterationType instanceof PsiClassType)) return null;
@@ -66,7 +67,7 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
       return new GroovyFix() {
         @Override
         protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
-          for (GroovyFix fix : fixes) {
+          for (LocalQuickFix fix : fixes) {
             fix.applyFix(project, descriptor);
           }
         }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies;
 
@@ -25,8 +25,7 @@ import java.util.Set;
 public class ForwardDependenciesBuilder extends DependenciesBuilder {
   private final Map<PsiFile, Set<PsiFile>> myDirectDependencies = new HashMap<>();
   private final int myTransitive;
-  @Nullable
-  private final GlobalSearchScope myTargetScope;
+  private final @Nullable GlobalSearchScope myTargetScope;
   private final Set<VirtualFile> myStarted = new HashSet<>();
 
   public ForwardDependenciesBuilder(@NotNull Project project, @NotNull AnalysisScope scope) {
@@ -66,13 +65,13 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
   }
 
   @Override
-  public void analyze() {
+  public void doAnalyze() {
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     psiManager.runInBatchFilesMode(() -> {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
       getScope().acceptIdempotentVisitor(new PsiRecursiveElementVisitor() {
         @Override
-        public void visitFile(@NotNull final PsiFile file) {
+        public void visitFile(final @NotNull PsiFile file) {
           visit(file, fileIndex, psiManager);
         }
       });
@@ -152,9 +151,8 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     while (isTransitive() && !collectedDeps.isEmpty());
   }
 
-  @NotNull
   @Override
-  public Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
+  public @NotNull Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
     return myDirectDependencies;
   }
 

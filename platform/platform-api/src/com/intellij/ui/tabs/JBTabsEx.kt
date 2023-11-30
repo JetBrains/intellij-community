@@ -10,7 +10,7 @@ import javax.swing.SwingConstants
 interface JBTabsEx : JBTabs {
   companion object {
     @JvmField
-    val NAVIGATION_ACTIONS_KEY = DataKey.create<JBTabsEx>("JBTabs")
+    val NAVIGATION_ACTIONS_KEY: DataKey<JBTabsEx> = DataKey.create("JBTabs")
   }
 
   val isEditorTabs: Boolean

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -27,16 +27,16 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   private int myListStackTop;
   private final Map<Key, HTMLComposerExtension> myExtensions = new HashMap<>();
   private final Map<Language, HTMLComposerExtension> myLanguageExtensions = new HashMap<>();
-  @NonNls protected static final String BR = "<br>";
-  @NonNls public static final String NBSP = "&nbsp;";
-  @NonNls public static final String CODE_CLOSING = "</code>";
-  @NonNls public static final String CODE_OPENING = "<code>";
-  @NonNls public static final String B_OPENING = "<b>";
-  @NonNls public static final String B_CLOSING = "</b>";
+  protected static final @NonNls String BR = "<br>";
+  public static final @NonNls String NBSP = "&nbsp;";
+  public static final @NonNls String CODE_CLOSING = "</code>";
+  public static final @NonNls String CODE_OPENING = "<code>";
+  public static final @NonNls String B_OPENING = "<b>";
+  public static final @NonNls String B_CLOSING = "</b>";
 
-  @NonNls protected static final String CLOSE_TAG = "\">";
-  @NonNls public static final String A_HREF_OPENING = "<a HREF=\"";
-  @NonNls public static final String A_CLOSING = "</a>";
+  protected static final @NonNls String CLOSE_TAG = "\">";
+  public static final @NonNls String A_HREF_OPENING = "<a HREF=\"";
+  public static final @NonNls String A_CLOSING = "</a>";
 
   protected HTMLComposerImpl() {
     myListStack = new int[5];
@@ -85,8 +85,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
-  @Nullable
-  private HTMLComposerExtension getLanguageExtension(final RefElement refElement) {
+  private @Nullable HTMLComposerExtension getLanguageExtension(final RefElement refElement) {
     final PsiElement element = refElement.getPsiElement();
     return element != null ? myLanguageExtensions.get(element.getLanguage()) : null;
   }
@@ -158,7 +157,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append(A_HREF_OPENING);
     buf.append(url);
     if (frameName != null) {
-      @NonNls final String target = "\" target=\"";
+      final @NonNls String target = "\" target=\"";
       buf.append(target);
       buf.append(frameName);
     }

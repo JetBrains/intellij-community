@@ -19,8 +19,13 @@ import com.intellij.execution.rmi.RemoteObject;
 
 public class MavenRemoteObject extends RemoteObject {
   @Override
-  protected boolean isKnownException(Throwable ex) {
-    return ex.getClass().getName().startsWith(MavenRemoteObject.class.getPackage().getName());
+  protected ExceptionProcessor createExceptionProcessor() {
+    return new ExceptionProcessor() {
+      @Override
+      protected boolean isKnownException(Throwable ex) {
+        return ex.getClass().getName().startsWith(MavenRemoteObject.class.getPackage().getName());
+      }
+    };
   }
 
   public RuntimeException wrapToSerializableRuntimeException(Throwable e) {

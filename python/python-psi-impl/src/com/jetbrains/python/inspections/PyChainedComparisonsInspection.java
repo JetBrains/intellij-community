@@ -16,8 +16,9 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
@@ -112,10 +113,10 @@ public class PyChainedComparisonsInspection extends PyInspection {
             if (!ignoreConstantInTheMiddle) {
               registerProblem(node, PyPsiBundle.message("INSP.simplify.chained.comparison"),
                               new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
-                              new SetInspectionOptionFix(
+                              LocalQuickFix.from(new UpdateInspectionOptionFix(
                                 PyChainedComparisonsInspection.this, "ignoreConstantInTheMiddle",
                                 PyPsiBundle.message("INSP.chained.comparisons.ignore.statements.with.constant.in.the.middle"),
-                                true));
+                                true)));
             }
           }
           else {

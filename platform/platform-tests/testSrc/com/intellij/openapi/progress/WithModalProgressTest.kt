@@ -10,7 +10,9 @@ import com.intellij.openapi.application.contextModality
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.impl.ModalCoroutineTest
 import com.intellij.openapi.application.impl.processApplicationQueue
-import com.intellij.util.timeoutRunBlocking
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import org.junit.jupiter.api.Assertions.*
@@ -19,7 +21,7 @@ import org.junit.jupiter.api.assertThrows
 import kotlin.coroutines.ContinuationInterceptor
 
 /**
- * @see RunBlockingModalTest
+ * @see RunWithModalProgressBlockingTest
  */
 class WithModalProgressTest : ModalCoroutineTest() {
 
@@ -43,7 +45,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
         assertTrue(LaterInvocator.isInModalContext())
         val contextModality = coroutineContext.contextModality()
         assertNotEquals(ModalityState.any(), contextModality)
-        assertNotEquals(ModalityState.NON_MODAL, contextModality)
+        assertNotEquals(ModalityState.nonModal(), contextModality)
         assertSame(ModalityState.current(), contextModality)
       }
     }
@@ -61,7 +63,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
           assertTrue(LaterInvocator.isInModalContext())
           val contextModality = coroutineContext.contextModality()
           assertNotEquals(ModalityState.any(), contextModality)
-          assertNotEquals(ModalityState.NON_MODAL, contextModality)
+          assertNotEquals(ModalityState.nonModal(), contextModality)
           assertSame(ModalityState.current(), contextModality)
         }
       }
@@ -71,12 +73,20 @@ class WithModalProgressTest : ModalCoroutineTest() {
 
   @Test
   fun dispatcher(): Unit = timeoutRunBlocking {
+    val dispatcher = coroutineContext[ContinuationInterceptor]
     withModalProgress {
-      assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+      assertSame(dispatcher, coroutineContext[ContinuationInterceptor])
     }
     withContext(Dispatchers.EDT) {
       withModalProgress {
-        assertSame(Dispatchers.Default, coroutineContext[ContinuationInterceptor])
+        assertSame(Dispatchers.EDT, coroutineContext[ContinuationInterceptor])
+      }
+    }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val limited = Dispatchers.Default.limitedParallelism(3)
+    withContext(limited) {
+      withModalProgress {
+        assertSame(limited, coroutineContext[ContinuationInterceptor])
       }
     }
   }
@@ -144,7 +154,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
   @Test
   fun `modal delays non-modal`(): Unit = timeoutRunBlocking {
     val modalCoroutine = launchModalCoroutineAndWait(this)
-    val nonModalCoroutine = launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {}
+    val nonModalCoroutine = launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {}
     processApplicationQueue()
     assertFalse(nonModalCoroutine.isCompleted)
     modalCoroutine.cancel()
@@ -179,7 +189,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
 
   @Test
   fun `non-modal edt coroutine is not resumed while modal is running`(): Unit = timeoutRunBlocking {
-    withContext(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+    withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       val modalCoroutine = launch {
         withModalProgress {
           yield()
@@ -215,7 +225,7 @@ class WithModalProgressTest : ModalCoroutineTest() {
 }
 
 private suspend fun <T> withModalProgress(action: suspend CoroutineScope.() -> T): T {
-  return withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), action)
+  return com.intellij.platform.ide.progress.withModalProgress(ModalTaskOwner.guess(), "", TaskCancellation.cancellable(), action)
 }
 
 private suspend fun launchModalCoroutineAndWait(cs: CoroutineScope): Job {

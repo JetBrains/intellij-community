@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -59,11 +60,9 @@ abstract class UndoRedo {
 
   protected abstract SharedUndoRedoStacksHolder getSharedReverseStacksHolder();
 
-  @DialogTitle
-  protected abstract String getActionName();
+  protected abstract @DialogTitle String getActionName();
 
-  @DialogMessage
-  protected abstract String getActionName(String commandName);
+  protected abstract @DialogMessage String getActionName(String commandName);
 
   protected abstract EditorAndState getBeforeState();
 
@@ -110,7 +109,7 @@ abstract class UndoRedo {
     else {
       if (!shouldMove && restore(getBeforeState(), true)) {
         setBeforeState(new EditorAndState(myEditor, myEditor.getState(FileEditorStateLevel.UNDO)));
-        return true;
+        if (!Registry.is("ide.undo.transparent.caret.movement")) return true;
       }
     }
 

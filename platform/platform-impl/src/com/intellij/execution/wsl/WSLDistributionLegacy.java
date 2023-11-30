@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.util.NullableLazyValue;
@@ -28,8 +28,7 @@ public final class WSLDistributionLegacy extends WSLDistribution {
     return StringUtil.isEmpty(localAppDataPath) ? null : localAppDataPath + WSL_ROOT_CHUNK;
   });
 
-  @Nullable
-  private static Path getExecutableRootPath() {
+  private static @Nullable Path getExecutableRootPath() {
     String windir = System.getenv().get("windir");
     return StringUtil.isEmpty(windir) ? null : Paths.get(windir, "System32");
   }
@@ -37,8 +36,7 @@ public final class WSLDistributionLegacy extends WSLDistribution {
   /**
    * @return legacy WSL ("Bash-on-Windows") if it's available, {@code null} otherwise
    */
-  @Nullable
-  public static WSLDistributionLegacy getInstance() {
+  public static @Nullable WSLDistributionLegacy getInstance() {
     final Path executableRoot = getExecutableRootPath();
     if (executableRoot == null) return null;
 
@@ -54,22 +52,20 @@ public final class WSLDistributionLegacy extends WSLDistribution {
     setVersion(1);
   }
 
-  @NotNull
   @Override
-  protected String getRunCommandLineParameter() {
+  protected @NotNull String getRunCommandLineParameter() {
     return "-c";
   }
 
-  @Nullable
   @Override
-  public String getWslPath(@NotNull String windowsPath) {
+  public @Nullable String getWslPath(@NotNull Path windowsPath) {
     String wslRootInHost = WSL_ROOT_IN_WINDOWS_PROVIDER.getValue();
     if (wslRootInHost == null) {
       return null;
     }
 
-    if (FileUtil.isAncestor(wslRootInHost, windowsPath, true)) {  // this is some internal WSL file
-      return FileUtil.toSystemIndependentName(windowsPath.substring(wslRootInHost.length()));
+    if (FileUtil.isAncestor(wslRootInHost, windowsPath.toString(), true)) {  // this is some internal WSL file
+      return FileUtil.toSystemIndependentName(windowsPath.toString().substring(wslRootInHost.length()));
     }
 
     return super.getWslPath(windowsPath);

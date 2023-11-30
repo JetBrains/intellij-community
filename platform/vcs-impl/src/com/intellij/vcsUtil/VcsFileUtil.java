@@ -12,6 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -513,28 +514,10 @@ public final class VcsFileUtil {
     return rc.toString();
   }
 
-  public static final HashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY = new FilePathCaseSensitiveStrategy();
-
-  private static class FilePathCaseSensitiveStrategy implements HashingStrategy<FilePath> {
-
-    @Override
-    public boolean equals(FilePath path1, FilePath path2) {
-      if (path1 == path2) return true;
-      if (path1 == null || path2 == null) return false;
-
-      if (path1.isDirectory() != path2.isDirectory()) return false;
-      String canonical1 = FileUtil.toCanonicalPath(path1.getPath());
-      String canonical2 = FileUtil.toCanonicalPath(path2.getPath());
-      return canonical1.equals(canonical2);
-    }
-
-    @Override
-    public int hashCode(FilePath path) {
-      if (path == null) return 0;
-
-      int result = path.getPath().isEmpty() ? 0 : FileUtil.toCanonicalPath(path.getPath()).hashCode();
-      result = 31 * result + (path.isDirectory() ? 1 : 0);
-      return result;
-    }
-  }
+  /**
+   * @deprecated Use {@link ChangesUtil#CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY}
+   */
+  @Deprecated(forRemoval = true)
+  public static final HashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY =
+    ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
 }

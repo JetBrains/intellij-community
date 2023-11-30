@@ -38,16 +38,16 @@ private val KNOB_COLOR = Color.WHITE
 private const val KNOB_RADIUS = 4
 
 class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JComponent(), ColorListener, ColorPipette.Callback {
-  var brightness = 1f
+  var brightness: Float = 1f
     private set
-  var hue = 1f
+  var hue: Float = 1f
     private set
-  var saturation = 0f
+  var saturation: Float = 0f
     private set
   var alpha: Int = 255
     private set
-  var pipetteMode = false
-  val robot = Robot()
+  var pipetteMode: Boolean = false
+  val robot: Robot = Robot()
 
   init {
     isOpaque = false
@@ -83,8 +83,7 @@ class SaturationBrightnessComponent(private val myModel: ColorPickerModel) : JCo
     val brightness = 1.0f - y.toFloat() / size.height
 
     val argb = ahsbToArgb(alpha, hue, saturation, brightness)
-    val newColor = Color(argb, true)
-    return newColor
+    return Color(argb, true)
   }
 
   override fun getPreferredSize(): Dimension = JBUI.size(PICKER_PREFERRED_WIDTH, 150)

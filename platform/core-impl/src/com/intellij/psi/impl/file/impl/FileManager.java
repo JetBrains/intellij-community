@@ -25,7 +25,7 @@ public interface FileManager {
   @Nullable
   PsiDirectory findDirectory(@NotNull VirtualFile vFile);
 
-  void reloadFromDisk(@NotNull PsiFile file); //Q: move to PsiFile(Impl)?
+  void reloadFromDisk(@NotNull PsiFile psiFile); //Q: move to PsiFile(Impl)?
 
   @Nullable
   PsiFile getCachedPsiFile(@NotNull VirtualFile vFile);
@@ -33,13 +33,13 @@ public interface FileManager {
   @TestOnly
   void cleanupForNextTest();
 
-  FileViewProvider findViewProvider(@NotNull VirtualFile file);
-  FileViewProvider findCachedViewProvider(@NotNull VirtualFile file);
-  void setViewProvider(@NotNull VirtualFile virtualFile, @Nullable FileViewProvider fileViewProvider);
+  FileViewProvider findViewProvider(@NotNull VirtualFile vFile);
+  FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile);
+  void setViewProvider(@NotNull VirtualFile vFile, @Nullable FileViewProvider viewProvider);
 
   @NotNull
   List<PsiFile> getAllCachedFiles();
 
   @NotNull
-  FileViewProvider createFileViewProvider(@NotNull VirtualFile file, boolean eventSystemEnabled);
+  FileViewProvider createFileViewProvider(@NotNull VirtualFile vFile, boolean eventSystemEnabled);
 }

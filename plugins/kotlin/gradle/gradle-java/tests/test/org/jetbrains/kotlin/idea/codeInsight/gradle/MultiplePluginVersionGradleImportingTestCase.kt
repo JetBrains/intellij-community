@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orde
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.checkWorkspaceModel
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_21
-import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_8_0
+import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_8_22
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Rule
@@ -109,7 +109,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
             if (!IS_UNDER_SAFE_PUSH) {
                 addVersions("7.4.2", V_1_7_21)
-                addVersions("7.6", V_1_8_0)
+                addVersions("7.6", V_1_8_22)
             }
 
             addVersions(
@@ -121,24 +121,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         }
     }
 
-    val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
-
-    protected val hmppProperties: Map<String, String>
-        get() = mapOf(
-            "enable_hmpp_flags" to enableHmppProperties,
-            "disable_hmpp_flags" to disableHmppProperties
-        )
-
-    protected val enableHmppProperties: String
-        get() = if (isHmppEnabledByDefault) "" else """
-            kotlin.mpp.enableGranularSourceSetsMetadata=true
-            kotlin.native.enableDependencyPropagation=false
-            kotlin.mpp.enableHierarchicalCommonization=true
-        """.trimIndent()
-
-    protected val disableHmppProperties: String
-        get() = if (isHmppEnabledByDefault) "kotlin.mpp.hierarchicalStructureSupport=false" else ""
-
     protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(
         useKts, GradleVersion.version(gradleVersion), kotlinPluginVersion
     )
@@ -146,7 +128,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
             putAll(androidImportingTestRule.properties)
-            putAll(hmppProperties)
             put("kotlin_plugin_version", kotlinPluginVersion.toString())
             put("kotlin_plugin_repositories", repositories(false))
             put("kts_kotlin_plugin_repositories", repositories(true))
@@ -242,8 +223,3 @@ fun MultiplePluginVersionGradleImportingTestCase.nativeDistLibraryDependency(
     return Regex("$namePart$platformPart")
 }
 
-fun setKgpImportInGradlePropertiesFile(projectRoot: VirtualFile, enableKgpDependencyResolution: Boolean) {
-    VfsUtil.virtualToIoFile(projectRoot).resolve("gradle.properties").apply {
-        appendText("\nkotlin.mpp.import.enableKgpDependencyResolution=$enableKgpDependencyResolution")
-    }
-}

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang.java6;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -12,7 +12,7 @@ import java.nio.ByteBuffer;
 public class BloomFilterBase {
   private final int myHashFunctionCount;
   private final int myBitsCount;
-  private final long[] myElementsSet;
+  private final long[] elementSet;
   private static final int BITS_PER_ELEMENT = 6;
 
   protected BloomFilterBase(int _maxElementCount, double probability) {
@@ -28,7 +28,7 @@ public class BloomFilterBase {
       bitsCount += 2;
     }
     myBitsCount = bitsCount;
-    myElementsSet = new long[(bitsCount >> BITS_PER_ELEMENT) + 1];
+    elementSet = new long[(bitsCount >> BITS_PER_ELEMENT) + 1];
   }
 
   private static boolean isPrime(int bits) {
@@ -47,14 +47,14 @@ public class BloomFilterBase {
   protected final void addIt(int prime, int prime2) {
     for (int i = 0; i < myHashFunctionCount; ++i) {
       int abs = Math.abs((i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount);
-      myElementsSet[abs >> BITS_PER_ELEMENT] |= (1L << abs);
+      elementSet[abs >> BITS_PER_ELEMENT] |= (1L << abs);
     }
   }
 
   protected final boolean maybeContains(int prime, int prime2) {
     for(int i = 0; i < myHashFunctionCount; ++i) {
       int abs = Math.abs((i * prime + prime2 * (myHashFunctionCount - i)) % myBitsCount);
-      if ((myElementsSet[abs >> BITS_PER_ELEMENT] & (1L << abs)) == 0) {
+      if ((elementSet[abs >> BITS_PER_ELEMENT] & (1L << abs)) == 0) {
         return false;
       }
     }
@@ -65,35 +65,24 @@ public class BloomFilterBase {
   protected BloomFilterBase(@NotNull DataInput input) throws IOException {
     myHashFunctionCount = DataInputOutputUtilRt.readINT(input);
     myBitsCount = DataInputOutputUtilRt.readINT(input);
-    myElementsSet = new long[(myBitsCount >> BITS_PER_ELEMENT) + 1];
+    elementSet = new long[(myBitsCount >> BITS_PER_ELEMENT) + 1];
 
-    for (int i = 0; i < myElementsSet.length; i++) {
-      myElementsSet[i] = input.readLong();
+    for (int i = 0; i < elementSet.length; i++) {
+      elementSet[i] = input.readLong();
     }
-  }
-
-  protected BloomFilterBase(@NotNull ByteBuffer buffer) throws IOException {
-    myHashFunctionCount = buffer.getInt();
-    myBitsCount = buffer.getInt();
-    myElementsSet = new long[(myBitsCount >> BITS_PER_ELEMENT) + 1];
-    buffer.asLongBuffer().get(myElementsSet);
-  }
-
-  public int sizeInBytes() {
-    return 4 * 2 + myElementsSet.length * 8;
   }
 
   public void save(@NotNull ByteBuffer buffer) {
     buffer.putInt(myHashFunctionCount);
     buffer.putInt(myBitsCount);
-    buffer.asLongBuffer().put(myElementsSet);
-    buffer.position(buffer.position() + myElementsSet.length * 8);
+    buffer.asLongBuffer().put(elementSet);
+    buffer.position(buffer.position() + elementSet.length * 8);
   }
 
   protected void save(@NotNull DataOutput output) throws IOException {
     DataInputOutputUtilRt.writeINT(output, myHashFunctionCount);
     DataInputOutputUtilRt.writeINT(output, myBitsCount);
-    for (long l : myElementsSet) {
+    for (long l : elementSet) {
       output.writeLong(l);
     }
   }

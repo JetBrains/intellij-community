@@ -19,6 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.readText
 
 class ProjectInspectionManagerTest {
   companion object {
@@ -173,33 +174,34 @@ class ProjectInspectionManagerTest {
       LocalFileSystem.getInstance().refreshAndFindFileByPath(projectConfigDir.toString())
 
       val profileDir = projectConfigDir.resolve(PROFILE_DIR)
-      profileDir.writeChild("profiles_settings.xml", """<component name="InspectionProjectProfileManager">
-        <settings>
-          <option name="PROJECT_PROFILE" value="idea.default" />
-          <version value="1.0" />
-          <info color="eb9904">
-            <option name="FOREGROUND" value="0" />
-            <option name="BACKGROUND" value="eb9904" />
-            <option name="ERROR_STRIPE_COLOR" value="eb9904" />
-            <option name="myName" value="Strong Warning" />
-            <option name="myVal" value="50" />
-            <option name="myExternalName" value="Strong Warning" />
-            <option name="myDefaultAttributes">
-              <option name="ERROR_STRIPE_COLOR" value="eb9904" />
-            </option>
-          </info>
-        </settings>
-      </component>""")
-      writeDefaultProfile(profileDir)
-      profileDir.writeChild("idea_default_teamcity.xml", """
+      profileDir.resolve("profiles_settings.xml").write("""
         <component name="InspectionProjectProfileManager">
-        <profile version="1.0">
-          <option name="myName" value="idea.default.teamcity" />
-          <inspection_tool class="AbsoluteAlignmentInUserInterface" enabled="false" level="WARNING" enabled_by_default="false">
-            <scope name="android" level="WARNING" enabled="false" />
-          </inspection_tool>
-        </profile>
-      </component>""")
+          <settings>
+            <option name="PROJECT_PROFILE" value="idea.default" />
+            <version value="1.0" />
+            <info color="eb9904">
+              <option name="FOREGROUND" value="0" />
+              <option name="BACKGROUND" value="eb9904" />
+              <option name="ERROR_STRIPE_COLOR" value="eb9904" />
+              <option name="myName" value="Strong Warning" />
+              <option name="myVal" value="50" />
+              <option name="myExternalName" value="Strong Warning" />
+              <option name="myDefaultAttributes">
+                <option name="ERROR_STRIPE_COLOR" value="eb9904" />
+              </option>
+            </info>
+          </settings>
+        </component>""".trimIndent().toByteArray())
+      writeDefaultProfile(profileDir)
+      profileDir.resolve("idea_default_teamcity.xml").write("""
+        <component name="InspectionProjectProfileManager">
+          <profile version="1.0">
+            <option name="myName" value="idea.default.teamcity" />
+            <inspection_tool class="AbsoluteAlignmentInUserInterface" enabled="false" level="WARNING" enabled_by_default="false">
+              <scope name="android" level="WARNING" enabled="false" />
+            </inspection_tool>
+          </profile>
+        </component>""".trimIndent().toByteArray())
 
       refreshProjectConfigDir(project)
       StoreReloadManager.getInstance(project).reloadChangedStorageFiles()
@@ -276,5 +278,5 @@ private val DEFAULT_PROJECT_PROFILE_CONTENT = """
   </component>""".trimIndent()
 
 private fun writeDefaultProfile(profileDir: Path) {
-  profileDir.writeChild("Project_Default.xml", DEFAULT_PROJECT_PROFILE_CONTENT)
+  profileDir.resolve("Project_Default.xml").write(DEFAULT_PROJECT_PROFILE_CONTENT.toByteArray())
 }

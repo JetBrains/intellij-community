@@ -17,7 +17,7 @@ abstract class AdditionalIcon(val action: ContentTabAction) {
   val afterText: Boolean get() = action.afterText
 
   val available: Boolean get() = action.available
-  fun runAction() = action.runAction()
+  fun runAction(): Unit = action.runAction()
 
   @get:NlsContexts.Tooltip
   val tooltip: String?

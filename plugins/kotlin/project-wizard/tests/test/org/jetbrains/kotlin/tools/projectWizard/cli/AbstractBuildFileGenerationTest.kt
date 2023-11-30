@@ -76,6 +76,10 @@ abstract class AbstractBuildFileGenerationTest : LightPlatformTestCase() {
                     listOf(Repositories.JETBRAINS_KOTLIN_BOOTSTRAP.url),
                     KOTLIN_REPO_BOOTSTRAP_PLACEHOLDER
                 )
+                .replaceAllTo(
+                    listOf(Repositories.JETBRAINS_KOTLIN_IDE_PLUGIN_DEPENDENCIES.url),
+                    KOTLIN_REPO_IDE_PLUGIN_DEPENDENCIES_PLACEHOLDER
+                )
                 .replace("gradle-${Versions.GRADLE.text}-bin.zip", "gradle-GRADLE_VERSION-bin.zip")
         }
         additionalChecks(expectedDirectory, tempDirectory)
@@ -92,6 +96,7 @@ abstract class AbstractBuildFileGenerationTest : LightPlatformTestCase() {
         private const val KOTLIN_VERSION_PLACEHOLDER = "KOTLIN_VERSION"
         private const val KOTLIN_REPO_PLACEHOLDER = "KOTLIN_REPO"
         private const val KOTLIN_REPO_BOOTSTRAP_PLACEHOLDER = "KOTLIN_BOOTSTRAP_REPO"
+        private const val KOTLIN_REPO_IDE_PLUGIN_DEPENDENCIES_PLACEHOLDER = "KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO"
 
         private val ACTUAL_KOTLIN_VERSION_STRING = KotlinVersionProviderTestWizardService.TEST_KOTLIN_VERSION.toString()
 

@@ -13,7 +13,8 @@ abstract class CompletionKeywordHandler<CONTEXT>(
 ) {
     object NO_CONTEXT
 
-    abstract fun CONTEXT.createLookups(
+    context(CONTEXT)
+    abstract fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
@@ -23,19 +24,20 @@ abstract class CompletionKeywordHandler<CONTEXT>(
 
 inline fun <CONTEXT> completionKeywordHandler(
     keyword: KtKeywordToken,
-    crossinline create: CONTEXT.(
+    crossinline create: context(CONTEXT)(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project
     ) -> Collection<LookupElement>
 ) = object : CompletionKeywordHandler<CONTEXT>(keyword) {
-    override fun CONTEXT.createLookups(
+    context(CONTEXT)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project
-    ): Collection<LookupElement> = create(parameters, expression, lookup, project)
+    ): Collection<LookupElement> = create(this@CONTEXT, parameters, expression, lookup, project)
 }
 
 /**

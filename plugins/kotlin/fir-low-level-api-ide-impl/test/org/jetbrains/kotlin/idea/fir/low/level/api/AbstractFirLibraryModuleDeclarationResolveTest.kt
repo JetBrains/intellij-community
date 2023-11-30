@@ -4,14 +4,13 @@
  */
 package org.jetbrains.kotlin.idea.fir.low.level.api
 
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolveToFirSymbol
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -36,6 +35,12 @@ abstract class AbstractFirLibraryModuleDeclarationResolveTest : KotlinLightCodeI
         val expectedFile = File(path.removeSuffix(".kt") + ".txt")
 
         val ktFile = myFixture.configureByFile(testDataFile.name) as KtFile
+
+        val fileText = ktFile.text
+        val classNames = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, "LOAD_AST:")
+        for (className in classNames) {
+            KotlinFullClassNameIndex[className, project, GlobalSearchScope.allScope(project)].first {it.containingKtFile.isCompiled}.text
+        }
 
         val caretResolutionTarget = ktFile.findReferenceAt(myFixture.caretOffset)?.resolve()
 

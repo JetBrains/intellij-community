@@ -9,3 +9,5 @@ fun newFun(b: String, a: Int, x: Any?){}
 fun foo() {
     <caret>newFun("x", 1, null)
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

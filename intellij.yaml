@@ -14,3 +14,9 @@ versionControl:
 sharedIndex:
   project:
     - url: https://index-cdn.jetbrains.com/v2/project/intellij-community
+
+repositoryLibrary:
+  displaySha256ChecksumUiSettings: true
+  sha256ChecksumAutoBuild: true
+  displayJarRepositoryBindingUi: false
+  jarRepositoryAutoBind: false

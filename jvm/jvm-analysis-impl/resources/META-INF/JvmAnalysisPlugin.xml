@@ -9,7 +9,11 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInspection.sourceToSink.SourceToSinkProvider"/>
     </extensionPoint>
-
+    <extensionPoint qualifiedName="com.intellij.codeInspection.suppressionAnnotationUtil"
+                    dynamic="true"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInspection.SuppressionAnnotationUtil"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--Test frameworks-->
@@ -29,6 +33,12 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.test.method.without.assertion.display.name"
                      implementationClass="com.intellij.codeInspection.test.TestMethodWithoutAssertionInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestCaseWithNoTestMethods"
+                     suppressId="JUnitTestCaseWithNoTests"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.test.case.without.test.methods.display.name"
+                     implementationClass="com.intellij.codeInspection.test.TestCaseWithoutTestsInspection"/>
     <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="TestCaseWithConstructor"
                      suppressId="JUnitTestCaseWithNonTrivialConstructors"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
@@ -69,6 +79,11 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit4.converter.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnit4ConverterInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="Junit4RunWithInspection"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
+                     key="jvm.inspections.junit4.inherited.runwith.display.name"
+                     implementationClass="com.intellij.codeInspection.test.junit.JUnit4RunWithInspection"/>
     <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnit5AssertionsConverter"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
@@ -94,7 +109,7 @@
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit.assertequals.may.be.assertsame.display.name"
                      implementationClass="com.intellij.codeInspection.test.junit.JUnitAssertEqualsMayBeAssertSameInspection"/>
-    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="JUnitMalformedDeclaration"
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="JUnitMalformedDeclaration"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="jvm.inspections.junit.malformed.declaration.name"
@@ -188,9 +203,19 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.api.display.name"
                      implementationClass="com.intellij.codeInspection.JavaApiUsageInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="SystemGetProperty"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.system.get.property.display.name"
+                     implementationClass="com.intellij.codeInspection.SystemGetPropertyInspection"/>
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING"
+                     shortName="SuppressionAnnotation"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="inspection.suppression.annotation.display.name"
+                     implementationClass="com.intellij.codeInspection.SuppressionAnnotationInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON" hideFromSettings="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>
+    <gotoRelatedProvider implementation="com.intellij.codeInspection.test.junit.JUnitParameterizedSourceGotoRelatedProvider"/>
     <inspectionCustomComponent implementation="com.intellij.codeInsight.options.JavaInspectionButtons"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">
@@ -198,6 +223,7 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInspection">
     <sourceToSinkProvider language="JAVA" implementationClass="com.intellij.codeInspection.sourceToSink.JavaSourceToSinkProvider"/>
+    <suppressionAnnotationUtil language="JAVA" implementationClass="com.intellij.codeInspection.JavaSuppressionAnnotationUtil"/>
   </extensions>
   <actions>
     <group id="UastInternal" text="UAST" internal="true" popup="true">

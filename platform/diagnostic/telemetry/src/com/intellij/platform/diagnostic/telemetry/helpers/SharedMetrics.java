@@ -3,7 +3,7 @@ package com.intellij.platform.diagnostic.telemetry.helpers;
 
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.TracerLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import io.opentelemetry.api.metrics.Meter;
@@ -13,21 +13,21 @@ import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 @ApiStatus.Internal
 public abstract class SharedMetrics {
-
   public final Scope rootScopeName;
   public final IJTracer tracer;
 
-  public SharedMetrics(Scope scope) {
+  public SharedMetrics(@NotNull Scope scope) {
     rootScopeName = scope;
-    this.tracer = TelemetryTracer.getInstance().getTracer(scope, false);
+    this.tracer = TelemetryManager.Companion.getTracer(scope);
   }
 
-  private final ConcurrentHashMap<String, Span> spans = new ConcurrentHashMap<>();
+  private final Map<String, Span> spans = new ConcurrentHashMap<>();
   private static final Logger LOG = Logger.getInstance(SharedMetrics.class);
 
   public Context getSpanContext(String spanName) {
@@ -86,6 +86,6 @@ public abstract class SharedMetrics {
   }
 
   public Meter getMeter() {
-    return TelemetryTracer.getMeter(rootScopeName);
+    return TelemetryManager.getInstance().getMeter(rootScopeName);
   }
 }

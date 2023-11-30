@@ -140,6 +140,7 @@ class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : Pytho
   }
 }
 
+@Suppress("JUnitTestCaseWithNoTests")
 class PyDelegateTestCase(private val languageLevel: LanguageLevel = LanguageLevel.getLatest()) : PyTestCase() {
 
   override fun getProjectDescriptor(): LightProjectDescriptor? {

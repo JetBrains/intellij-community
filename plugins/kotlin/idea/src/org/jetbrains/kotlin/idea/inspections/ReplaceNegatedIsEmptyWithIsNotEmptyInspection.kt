@@ -7,32 +7,30 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.inspections.collections.isCalling
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsight.utils.EmptinessCheckFunctionUtils
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getLastParentOfTypeInRow
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
-        return qualifiedExpressionVisitor(fun(expression) {
-            if (expression.getWrappingPrefixExpressionIfAny()?.operationToken != KtTokens.EXCL) return
-            val calleeExpression = expression.callExpression?.calleeExpression ?: return
-            val from = calleeExpression.text
-            val to = expression.invertSelectorFunction()?.callExpression?.calleeExpression?.text ?: return
+        return prefixExpressionVisitor(fun(expression) {
+            if (expression.operationToken != KtTokens.EXCL) return
+            val base = expression.baseExpression?.let { KtPsiUtil.deparenthesize(it) } ?: return
+            val from = base.calleeText() ?: return
+            val to = EmptinessCheckFunctionUtils.invertFunctionCall(base, ::fqName)?.calleeText() ?: return
             holder.registerProblem(
-                calleeExpression,
+                expression,
                 KotlinBundle.message("replace.negated.0.with.1", from, to),
                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                 ReplaceNegatedIsEmptyWithIsNotEmptyQuickFix(from, to)
@@ -40,18 +38,9 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyInspection : AbstractKotlinInspection()
         })
     }
 
-    companion object {
+    object Util {
         fun KtQualifiedExpression.invertSelectorFunction(bindingContext: BindingContext? = null): KtQualifiedExpression? {
-            val callExpression = callExpression ?: return null
-            val fromFunctionName = callExpression.calleeExpression?.text ?: return null
-            val (fromFunctionFqNames, toFunctionName) = functionNames[fromFunctionName] ?: return null
-            val context = bindingContext ?: analyze(BodyResolveMode.PARTIAL)
-            if (fromFunctionFqNames.none { callExpression.isCalling(it, context) }) return null
-            return KtPsiFactory(project).createExpressionByPattern(
-                "$0.$toFunctionName()",
-                receiverExpression,
-                reformat = false
-            ) as? KtQualifiedExpression
+            return EmptinessCheckFunctionUtils.invertFunctionCall(this) { fqName(it, bindingContext) } as? KtQualifiedExpression
         }
     }
 }
@@ -62,41 +51,26 @@ class ReplaceNegatedIsEmptyWithIsNotEmptyQuickFix(private val from: String, priv
     override fun getFamilyName() = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val qualifiedExpression = descriptor.psiElement.getStrictParentOfType<KtQualifiedExpression>() ?: return
-        val prefixExpression = qualifiedExpression.getWrappingPrefixExpressionIfAny() ?: return
-        prefixExpression.replaced(
-            KtPsiFactory(project).createExpressionByPattern(
-                "$0.$to()",
-                qualifiedExpression.receiverExpression
-            )
-        )
+        val prefixExpression = descriptor.psiElement as? KtPrefixExpression ?: return
+        val baseExpression = KtPsiUtil.deparenthesize(prefixExpression.baseExpression) ?: return
+        val psiFactory = KtPsiFactory(project)
+        val newExpression = when (baseExpression) {
+            is KtCallExpression -> psiFactory.createExpression("$to()")
+            is KtQualifiedExpression -> psiFactory.createExpressionByPattern("$0.$to()", baseExpression.receiverExpression)
+            else -> return
+        }
+        prefixExpression.replaced(newExpression)
     }
 }
 
-private fun PsiElement.getWrappingPrefixExpressionIfAny() =
-    (getLastParentOfTypeInRow<KtParenthesizedExpression>() ?: this).parent as? KtPrefixExpression
+private fun fqName(callExpression: KtCallExpression, bindingContext: BindingContext? = null): FqName? {
+    return callExpression
+        .getResolvedCall(bindingContext ?: callExpression.analyze(BodyResolveMode.PARTIAL))
+        ?.resultingDescriptor
+        ?.fqNameSafe
+}
 
-private val packages = listOf(
-    "java.util.ArrayList",
-    "java.util.HashMap",
-    "java.util.HashSet",
-    "java.util.LinkedHashMap",
-    "java.util.LinkedHashSet",
-    "kotlin.collections",
-    "kotlin.collections.List",
-    "kotlin.collections.Set",
-    "kotlin.collections.Map",
-    "kotlin.collections.MutableList",
-    "kotlin.collections.MutableSet",
-    "kotlin.collections.MutableMap",
-    "kotlin.text"
-)
-
-private val functionNames: Map<String, Pair<List<FqName>, String>> by lazy {
-    mapOf(
-        "isEmpty" to Pair(packages.map { FqName("$it.isEmpty") }, "isNotEmpty"),
-        "isNotEmpty" to Pair(packages.map { FqName("$it.isNotEmpty") }, "isEmpty"),
-        "isBlank" to Pair(listOf(FqName("kotlin.text.isBlank")), "isNotBlank"),
-        "isNotBlank" to Pair(listOf(FqName("kotlin.text.isNotBlank")), "isBlank"),
-    )
+private fun KtExpression.calleeText(): String? {
+    val call = (this as? KtQualifiedExpression)?.callExpression ?: this as? KtCallExpression ?: return null
+    return call.calleeExpression?.text
 }

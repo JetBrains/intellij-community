@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.PathMacroManager
@@ -7,7 +7,6 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.FileStorageCoreUtil
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -32,13 +31,18 @@ import kotlin.math.min
 abstract class XmlElementStorage protected constructor(val fileSpec: String,
                                                        protected val rootElementName: String?,
                                                        private val pathMacroSubstitutor: PathMacroSubstitutor? = null,
-                                                       roamingType: RoamingType? = RoamingType.DEFAULT,
+                                                       val roamingType: RoamingType,
                                                        private val provider: StreamProvider? = null) : StorageBaseEx<StateMap>() {
-  val roamingType = roamingType ?: RoamingType.DEFAULT
+  override val saveStorageDataOnReload: Boolean
+    get() {
+      return provider == null || provider.saveStorageDataOnReload
+    }
 
   protected abstract fun loadLocalData(): Element?
 
-  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean) = storageData.getState(componentName, archive)
+  final override fun getSerializedState(storageData: StateMap, component: Any?, componentName: String, archive: Boolean): Element? {
+    return storageData.getState(componentName, archive)
+  }
 
   final override fun archiveState(storageData: StateMap, componentName: String, serializedState: Element?) {
     storageData.archive(componentName, serializedState)
@@ -92,6 +96,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   protected abstract fun createSaveSession(states: StateMap): SaveSessionProducer
 
   override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+    LOG.debug("Running analyzeExternalChangesAndUpdateIfNeeded")
     val oldData = storageDataRef.get()
     val newData = getStorageData(true)
     if (oldData == null) {
@@ -100,6 +105,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     }
     else {
       val changedComponentNames = getChangedComponentNames(oldData, newData)
+      LOG.debug { "Changed components: $changedComponentNames" }
       if (changedComponentNames.isNotEmpty()) {
         LOG.debug { "analyzeExternalChangesAndUpdateIfNeeded: changedComponentNames $changedComponentNames for ${toString()}" }
         componentNames.addAll(changedComponentNames)
@@ -113,7 +119,8 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
     }
   }
 
-  abstract class XmlElementStorageSaveSessionProducer<T : XmlElementStorage>(private val originalStates: StateMap, protected val storage: T) : SaveSessionProducerBase() {
+  abstract class XmlElementStorageSaveSessionProducer<T : XmlElementStorage>(private val originalStates: StateMap,
+                                                                             protected val storage: T) : SaveSessionProducerBase() {
     private var copiedStates: MutableMap<String, Any>? = null
 
     private var newLiveStates: MutableMap<String, Element>? = HashMap()
@@ -195,30 +202,19 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
   }
 
   fun updatedFromStreamProvider(changedComponentNames: MutableSet<String>, deleted: Boolean) {
-    updatedFrom(changedComponentNames, deleted, true)
-  }
-
-  fun updatedFrom(changedComponentNames: MutableSet<String>, deleted: Boolean, useStreamProvider: Boolean) {
-    if (roamingType == RoamingType.DISABLED) {
-      // storage roaming was changed to DISABLED, but settings repository has old state
-      return
+    val newElement = if (deleted) null else loadElement(useStreamProvider = true)
+    val states = storageDataRef.get()
+    if (newElement == null) {
+      // if data was loaded, mark as changed all loaded components
+      if (states != null) {
+        changedComponentNames.addAll(states.keys())
+        setStates(oldStorageData = states, newStorageData = StateMap.EMPTY)
+      }
     }
-
-    LOG.runAndLogException {
-      val newElement = if (deleted) null else loadElement(useStreamProvider)
-      val states = storageDataRef.get()
-      if (newElement == null) {
-        // if data was loaded, mark as changed all loaded components
-        if (states != null) {
-          changedComponentNames.addAll(states.keys())
-          setStates(states, null)
-        }
-      }
-      else if (states != null) {
-        val newStates = loadState(newElement)
-        changedComponentNames.addAll(getChangedComponentNames(states, newStates))
-        setStates(states, newStates)
-      }
+    else if (states != null) {
+      val newStates = loadState(newElement)
+      changedComponentNames.addAll(getChangedComponentNames(states, newStates))
+      setStates(oldStorageData = states, newStorageData = newStates)
     }
   }
 }
@@ -249,7 +245,7 @@ internal class XmlDataWriter(private val rootElementName: String?,
         writer.append('"')
         var value = entry.value
         if (replacePathMap != null) {
-          value = replacePathMap.substitute(JDOMUtil.escapeText(value, false, true), SystemInfo.isFileSystemCaseSensitive)
+          value = replacePathMap.substitute(value, SystemInfo.isFileSystemCaseSensitive)
         }
         writer.append(JDOMUtil.escapeText(value, false, true))
         writer.append('"')

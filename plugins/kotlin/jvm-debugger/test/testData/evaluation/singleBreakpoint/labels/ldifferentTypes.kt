@@ -99,3 +99,5 @@ class A {
 
     fun test() = 1
 }
+
+// IGNORE_K2

@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="17" />
-            <stringArg name="apiVersion" arg="1.8" />
-            <stringArg name="languageVersion" arg="1.8" />
+            <stringArg name="apiVersion" arg="1.9" />
+            <stringArg name="languageVersion" arg="1.9" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -26,7 +26,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fir" level="project" />
@@ -52,10 +52,9 @@
     <orderEntry type="module" module-name="kotlin.base.project-structure" />
     <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
-    <orderEntry type="module" module-name="kotlin.base.highlighting" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" />
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
-    <orderEntry type="module" module-name="kotlin.idea" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
@@ -92,5 +91,8 @@
     <orderEntry type="module" module-name="kotlin.completion.tests-shared" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.bundled-compiler-plugins-support" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="kotlin.refactorings.common" />
   </component>
 </module>

@@ -19,6 +19,13 @@ interface AccountManager<A : Account, Cred> {
   val accountsState: StateFlow<Set<A>>
 
   /**
+   * Contains whether the account manager can persist credentials.
+   * If it cannot, one might need to notify the user of a way to
+   * fix this.
+   */
+  val canPersistCredentials: Flow<Boolean>
+
+  /**
    * Add/update account and it's credentials
    */
   suspend fun updateAccount(account: A, credentials: Cred)

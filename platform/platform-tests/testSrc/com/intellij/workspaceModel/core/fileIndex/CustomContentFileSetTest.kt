@@ -7,19 +7,19 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.assertIteratedContent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
-import com.intellij.testFramework.workspaceModel.updateProjectModelAsync
+import com.intellij.testFramework.workspaceModel.update
 import com.intellij.util.indexing.testEntities.IndexingTestEntity
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.toVirtualFileUrl
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -59,7 +59,7 @@ class CustomContentFileSetTest {
       assertIteratedContent(projectModel.project, mustNotContain = listOf(root, file))
     }
 
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelAsync {
+    WorkspaceModel.getInstance(projectModel.project).update {
       val url = root.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
       it.addEntity(IndexingTestEntity(listOf(url), emptyList(), NonPersistentEntitySource))
     }
@@ -72,7 +72,7 @@ class CustomContentFileSetTest {
       assertIteratedContent(projectModel.project, mustContain = listOf(root, file))
     }
 
-    WorkspaceModel.getInstance(projectModel.project).updateProjectModelAsync {
+    WorkspaceModel.getInstance(projectModel.project).update {
       it.removeEntity(it.entities(IndexingTestEntity::class.java).single())
     }
 

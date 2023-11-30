@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.timeoutRunBlocking
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

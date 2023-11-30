@@ -143,6 +143,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
 
 @ApiStatus.Experimental
 @Deprecated("Use Row.segmentedButton")
+@ApiStatus.ScheduledForRemoval
 internal class DeprecatedSegmentedButtonAction<T>(val option: T,
                                                   private val property: ObservableMutableProperty<T>,
                                                   @NlsActions.ActionText optionText: String,

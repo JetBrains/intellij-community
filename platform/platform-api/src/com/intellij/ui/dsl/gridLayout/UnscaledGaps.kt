@@ -3,7 +3,7 @@ package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
 import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Insets
 
@@ -13,7 +13,7 @@ import java.awt.Insets
 interface UnscaledGaps {
   companion object {
     @JvmField
-    val EMPTY = UnscaledGaps(0)
+    val EMPTY: UnscaledGaps = UnscaledGaps(0)
   }
 
   val top: Int
@@ -40,14 +40,7 @@ fun UnscaledGaps(top: Int = 0, left: Int = 0, bottom: Int = 0, right: Int = 0): 
   return UnscaledGapsImpl(top, left, bottom, right)
 }
 
-fun Insets.toUnscaledGaps(): UnscaledGaps = unscale().let { UnscaledGaps(it.top, it.left, it.bottom, it.right) }
-
-@ApiStatus.Internal
-fun Int.unscale(): Int = JBUI.unscale(this)
-
-@Suppress("UseDPIAwareInsets")
-@ApiStatus.Internal
-fun Insets.unscale(): Insets = Insets(top.unscale(), left.unscale(), bottom.unscale(), right.unscale())
+fun Insets.toUnscaledGaps(): UnscaledGaps = JBInsets.unscale(this).let { UnscaledGaps(it.top, it.left, it.bottom, it.right) }
 
 fun UnscaledGaps.toJBEmptyBorder(): JBEmptyBorder {
   return JBEmptyBorder(top, left, bottom, right)
@@ -76,5 +69,9 @@ private class UnscaledGapsImpl(private val _top: Int,
 
   override fun copy(top: Int, left: Int, bottom: Int, right: Int): UnscaledGaps {
     return UnscaledGapsImpl(top, left, bottom, right)
+  }
+
+  override fun toString(): String {
+    return "top = $top, left = $left, bottom = $bottom, right = $right"
   }
 }

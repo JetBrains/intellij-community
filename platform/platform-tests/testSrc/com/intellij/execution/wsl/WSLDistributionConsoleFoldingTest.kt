@@ -87,11 +87,12 @@ class WSLDistributionConsoleFoldingTest {
                              options.remoteWorkingDirectory.isNullOrEmpty() &&
                              (options.isPassEnvVarsUsingInterop || commandLine.environment.isEmpty()) &&
                              options.initShellCommands.isEmpty()) {
+        val shellPath = wslRule.wsl.shellPath
         if (commandLineString.contains(" ")) {
-          "${options.shellPath} -c \"$commandLineString\""
+          "$shellPath -l -c \"$commandLineString\""
         }
         else {
-          "${options.shellPath} -c $commandLineString"
+          "$shellPath -l -c $commandLineString"
         }
       } else {
         commandLineString

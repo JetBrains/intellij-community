@@ -99,13 +99,16 @@ private class ClassNameCalculatorVisitor : KtTreeVisitorVoid() {
 
     override fun visitNamedFunction(function: KtNamedFunction) {
         val isLocal = function.isLocal
+        val isFunctionLiteral = isLocal && function.name == null
         val name = when {
-            isLocal -> nextAnonymousName()
             function.isTopLevel -> getTopLevelName(function)
+            isFunctionLiteral -> nextAnonymousName()
+            // It is nextAnonymousName() for local functions too in the old backend,
+            // but in the IR it is compiled into a class function named as <OUTER_NAME>$<LOCAL_NAME>
             else -> function.name
         }
 
-        push(function, name, recordName = isLocal)
+        push(function, name, recordName = isFunctionLiteral)
 
         if (function.hasModifier(KtTokens.SUSPEND_KEYWORD) && !isLocal) {
             nextAnonymousName() // Extra $1 closure for suspend functions

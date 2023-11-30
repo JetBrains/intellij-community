@@ -22,7 +22,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 interface DefaultToolWindowLayoutExtension {
   companion object {
-    val EP_NAME = ExtensionPointName.create<DefaultToolWindowLayoutExtension>("com.intellij.defaultToolWindowLayout")
+    val EP_NAME: ExtensionPointName<DefaultToolWindowLayoutExtension> = ExtensionPointName.create("com.intellij.defaultToolWindowLayout")
   }
 
   fun buildV1Layout(builder: DefaultToolWindowLayoutBuilder)
@@ -259,17 +259,20 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
             contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO
           }
           addOrUpdate("Commit") { weight = 0.25f }
-          addOrUpdate("Structure") { weight = 0.25f }
+          addOrUpdate("Structure") {
+            weight = 0.25f
+            isSplit = true
+          }
         }
         ToolWindowDescriptor.ToolWindowAnchor.RIGHT -> {
           addOrUpdate("Notifications") {
             weight = 0.25f
             contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO
           }
+          addOrUpdate("AIAssistant") { weight = 0.25f }
           addOrUpdate("Database") { weight = 0.25f }
           addOrUpdate("Gradle") { weight = 0.25f }
           addOrUpdate("Maven") { weight = 0.25f }
-          addOrUpdate("Web Inspector") { weight = 0.25f }
         }
         ToolWindowDescriptor.ToolWindowAnchor.BOTTOM -> {
           addOrUpdate("Version Control")
@@ -365,5 +368,4 @@ class DefaultToolWindowLayoutProviderToExtensionAdapter : DefaultToolWindowLayou
       }
     }
   }
-
 }

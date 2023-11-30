@@ -1,13 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
-import com.intellij.ide.ApplicationInitializedListener
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager.getApplication
-import com.intellij.openapi.application.ConfigImportHelper.isNewUser
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -20,15 +17,13 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
-import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CalledInAny
 import java.util.*
 
@@ -41,29 +36,12 @@ private val appSettings get() = VcsApplicationSettings.getInstance()
 internal fun AnActionEvent.getProjectCommitMode(): CommitMode? =
   project?.let { CommitModeManager.getInstance(it).getCurrentCommitMode() }
 
-internal class NonModalCommitCustomization : ApplicationInitializedListener {
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    if (!isNewUser()) {
-      return
-    }
-
-    PropertiesComponent.getInstance().setValue(KEY, true)
-    appSettings.COMMIT_FROM_LOCAL_CHANGES = true
-    asyncScope.launch {
-      logStateChanged(null)
-    }
-  }
-
-  companion object {
-    private const val KEY = "NonModalCommitCustomization.IsApplied"
-
-    internal fun isNonModalCustomizationApplied(): Boolean = PropertiesComponent.getInstance().isTrueValue(KEY)
-  }
-}
-
 @Service(Service.Level.PROJECT)
 class CommitModeManager(private val project: Project) : Disposable {
   internal class MyStartupActivity : VcsStartupActivity {
+    override val order: Int
+      get() = VcsInitObject.MAPPINGS.order + 50
+
     override fun runActivity(project: Project) {
       @Suppress("TestOnlyProblems")
       if (project is ProjectEx && project.isLight) {
@@ -76,14 +54,12 @@ class CommitModeManager(private val project: Project) : Disposable {
         commitModeManager.updateCommitMode()
       }
     }
-
-    override fun getOrder(): Int = VcsInitObject.MAPPINGS.order + 50
   }
 
   private var commitMode: CommitMode = CommitMode.PendingCommitMode
 
   private fun scheduleUpdateCommitMode() {
-    getApplication().invokeLater(::updateCommitMode, ModalityState.NON_MODAL, project.disposed)
+    getApplication().invokeLater(::updateCommitMode, ModalityState.nonModal(), project.disposed)
   }
 
   @RequiresEdt
@@ -117,7 +93,7 @@ class CommitModeManager(private val project: Project) : Disposable {
   @CalledInAny
   fun getCurrentCommitMode() = commitMode
 
-  internal fun canSetNonModal(): Boolean {
+  private fun canSetNonModal(): Boolean {
     if (isForceNonModalCommit.asBoolean()) return true
     val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
     return activeVcses.isNotEmpty() && activeVcses.all { it.type == VcsType.distributed }
@@ -166,7 +142,7 @@ class CommitModeManager(private val project: Project) : Disposable {
       if (oldValue == value) return
 
       appSettings.COMMIT_FROM_LOCAL_CHANGES = value
-      logStateChanged(project)
+      VcsStatisticsCollector.logNonModalCommitStateChanged(project)
       getApplication().messageBus.syncPublisher(SETTINGS).settingsChanged()
     }
 

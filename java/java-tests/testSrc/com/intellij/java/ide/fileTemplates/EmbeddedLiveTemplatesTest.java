@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
@@ -29,13 +30,42 @@ public class EmbeddedLiveTemplatesTest extends BasePlatformTestCase {
            "First: Var Second: Var");
   }
 
-  protected void doTest(String text, String result) {
+  public void testVariablesOrder_IDEA_325386() {
+    setUpTest("""
+              # #[[$NAME$]]#
+              # #[[$EMAIL$]]#
+              # #[[$AGE$]]#
+              # #[[$FAVOURITE_COLOUR$]]#
+              """);
+
+    myFixture.type("_EXTENDED");
+    myFixture.type("\t");
+    myFixture.type("An email");
+    myFixture.type("\t");
+    myFixture.type("An age");
+    myFixture.type("\t");
+    myFixture.type("Orange");
+    myFixture.type("\t");
+
+    myFixture.checkResult("""
+                          # NAME_EXTENDED
+                          # An email
+                          # An age
+                          # Orange
+                          """);
+  }
+
+  protected void setUpTest(@NotNull String text) {
     CustomFileTemplate template = new CustomFileTemplate("foo", "txt");
     template.setText(text);
     template.setLiveTemplateEnabled(true);
     myFixture.testAction(new TestAction(template));
     VirtualFile[] files = FileEditorManager.getInstance(getProject()).getSelectedFiles();
     myFixture.openFileInEditor(files[0]);
+  }
+
+  protected void doTest(String text, String result) {
+    setUpTest(text);
     myFixture.checkResult(result);
   }
 

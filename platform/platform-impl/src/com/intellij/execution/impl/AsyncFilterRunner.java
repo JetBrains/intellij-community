@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.Filter;
@@ -13,8 +13,10 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Expirable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -28,13 +30,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class AsyncFilterRunner {
+final class AsyncFilterRunner {
   private static final Logger LOG = Logger.getInstance(AsyncFilterRunner.class);
   private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Console Filters");
   private final EditorHyperlinkSupport myHyperlinks;
   private final Editor myEditor;
   private final Queue<HighlighterJob> myQueue = new ConcurrentLinkedQueue<>();
-  @NotNull private List<FilterResult> myResults = new ArrayList<>();
+  private @NotNull List<FilterResult> myResults = new ArrayList<>();
 
   AsyncFilterRunner(@NotNull EditorHyperlinkSupport hyperlinks, @NotNull Editor editor) {
     myHyperlinks = hyperlinks;
@@ -44,12 +46,13 @@ class AsyncFilterRunner {
   void highlightHyperlinks(@NotNull Project project,
                            @NotNull Filter customFilter,
                            int startLine,
-                           int endLine) {
+                           int endLine,
+                           @NotNull Expirable token) {
     if (endLine < 0) return;
 
     Document document = myEditor.getDocument();
     long startStamp = document.getModificationStamp();
-    myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, document));
+    myQueue.offer(new HighlighterJob(project, customFilter, startLine, endLine, document, token));
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       runTasks();
       highlightAvailableResults();
@@ -95,8 +98,7 @@ class AsyncFilterRunner {
     }
   }
 
-  @NotNull
-  private List<FilterResult> takeAvailableResults() {
+  private @NotNull List<FilterResult> takeAvailableResults() {
     synchronized (myQueue) {
       List<FilterResult> results = myResults;
       myResults = new ArrayList<>();
@@ -113,7 +115,7 @@ class AsyncFilterRunner {
   }
 
   void waitForPendingFilters(long timeoutMs) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     
     long started = System.currentTimeMillis();
     while (true) {
@@ -168,7 +170,7 @@ class AsyncFilterRunner {
    * as the lifetime of FilterResult is longer (until EDT is free to apply events), and there can be many jobs
    * holding many document snapshots all together consuming a lot of memory.
    */
-  private class FilterResult {
+  private final class FilterResult {
     private final DeltaTracker myDelta;
     private final Filter.Result myResult;
 
@@ -184,27 +186,26 @@ class AsyncFilterRunner {
     }
   }
 
-  private class HighlighterJob {
-    @NotNull private final Project myProject;
+  private final class HighlighterJob {
+    private final @NotNull Project myProject;
     private final AtomicInteger startLine;
     private final int endLine;
     private final DeltaTracker delta;
-    @NotNull
-    private final Filter filter;
-    @NotNull
-    private final Document snapshot;
+    private final @NotNull Filter filter;
+    private final @NotNull Document snapshot;
 
     HighlighterJob(@NotNull Project project,
                    @NotNull Filter filter,
                    int startLine,
                    int endLine,
-                   @NotNull Document document) {
+                   @NotNull Document document,
+                   @NotNull Expirable expirableToken) {
       myProject = project;
       this.startLine = new AtomicInteger(startLine);
       this.endLine = endLine;
       this.filter = filter;
 
-      delta = new DeltaTracker(document, document.getLineEndOffset(endLine));
+      delta = new DeltaTracker(document, document.getLineEndOffset(endLine), expirableToken);
 
       snapshot = ((DocumentImpl)document).freeze();
     }
@@ -213,8 +214,7 @@ class AsyncFilterRunner {
       return !delta.isOutdated() && startLine.get() <= endLine;
     }
 
-    @Nullable
-    private AsyncFilterRunner.FilterResult analyzeNextLine() {
+    private @Nullable AsyncFilterRunner.FilterResult analyzeNextLine() {
       int line = startLine.get();
       Filter.Result result = analyzeLine(line);
       LOG.assertTrue(line == startLine.getAndIncrement());
@@ -232,23 +232,24 @@ class AsyncFilterRunner {
 
   }
 
-  private static class DeltaTracker {
+  private static final class DeltaTracker {
     private final int initialMarkerOffset;
     private final RangeMarker endMarker;
+    private final @NotNull Expirable myExpirableToken;
 
-    DeltaTracker(Document document, int offset) {
+    DeltaTracker(Document document, int offset, @NotNull Expirable token) {
+      myExpirableToken = token;
       initialMarkerOffset = offset;
       endMarker = document.createRangeMarker(initialMarkerOffset, initialMarkerOffset);
     }
 
     boolean isOutdated() {
-      return !endMarker.isValid() || endMarker.getEndOffset() == 0;
+      return !endMarker.isValid() || endMarker.getEndOffset() == 0 || myExpirableToken.isExpired();
     }
 
     int getOffsetDelta() {
       return endMarker.getStartOffset() - initialMarkerOffset;
     }
-
   }
 
 }

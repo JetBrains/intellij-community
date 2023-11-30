@@ -7,6 +7,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.util.ThrowableConvertor
 import com.intellij.util.messages.Topic
@@ -21,14 +22,14 @@ import java.util.function.Consumer
 abstract class ExecutionManager {
   companion object {
     @JvmField
-    val EXECUTION_SESSION_ID_KEY = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
+    val EXECUTION_SESSION_ID_KEY: Key<Any> = Key.create("EXECUTION_SESSION_ID_KEY")
 
     @JvmField
-    val EXECUTION_SKIP_RUN = Key.create<Boolean>("EXECUTION_SKIP_RUN")
+    val EXECUTION_SKIP_RUN: Key<Boolean> = Key.create("EXECUTION_SKIP_RUN")
 
     @JvmField
     @Topic.ProjectLevel
-    val EXECUTION_TOPIC = Topic("configuration executed", ExecutionListener::class.java, Topic.BroadcastDirection.TO_PARENT)
+    val EXECUTION_TOPIC: Topic<ExecutionListener> = Topic("configuration executed", ExecutionListener::class.java, Topic.BroadcastDirection.TO_PARENT)
 
     @JvmStatic
     fun getInstance(project: Project): ExecutionManager {
@@ -116,4 +117,10 @@ abstract class ExecutionManager {
 
   @ApiStatus.Experimental
   abstract fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?>
+
+  @ApiStatus.Internal
+  abstract fun getRunningDescriptors(condition: Condition<in RunnerAndConfigurationSettings>): List<RunContentDescriptor>
+
+  @ApiStatus.Internal
+  abstract fun getExecutors(descriptor: RunContentDescriptor): Set<Executor>
 }

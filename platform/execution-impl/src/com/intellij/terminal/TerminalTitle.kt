@@ -3,8 +3,11 @@ package com.intellij.terminal
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.jediterm.terminal.Terminal
+import com.jediterm.terminal.model.TerminalApplicationTitleListener
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -56,9 +59,16 @@ class TerminalTitle {
   }
 
   fun buildTitle(): @Nls String {
-    val title = userDefinedTitle ?: applicationTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
-    val trimmedTitle = StringUtil.trimMiddle(title, 20)
-    return if (tag != null) "$trimmedTitle ($tag)" else trimmedTitle
+    val title = userDefinedTitle ?: shortenApplicationTitle() ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
+    return if (tag != null) "$title ($tag)" else title
+  }
+
+  fun buildFullTitle(): @Nls String {
+    return userDefinedTitle ?: applicationTitle ?: defaultTitle ?: ExecutionBundle.message("terminal.default.title")
+  }
+
+  private fun shortenApplicationTitle(): String? {
+    return StringUtil.trimMiddle(applicationTitle ?: return null, 30)
   }
 
   private fun fireTitleChanged() {
@@ -71,4 +81,18 @@ class TerminalTitle {
                    var applicationTitle: @Nls String? = null,
                    var tag: @Nls String? = null,
                    var defaultTitle: @Nls String? = null)
+}
+
+fun TerminalTitle.bindApplicationTitle(terminal: Terminal, parentDisposable: Disposable) {
+  val listener = TerminalApplicationTitleListener { newApplicationTitle ->
+    if (AdvancedSettings.getBoolean("terminal.show.application.title")) {
+      change {
+        applicationTitle = newApplicationTitle
+      }
+    }
+  }
+  terminal.addApplicationTitleListener(listener)
+  Disposer.register(parentDisposable) {
+    terminal.removeApplicationTitleListener(listener)
+  }
 }

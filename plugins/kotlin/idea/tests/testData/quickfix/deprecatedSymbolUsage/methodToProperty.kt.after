@@ -10,3 +10,5 @@ interface X {
 fun foo(x: X): String {
     return x.<caret>x
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

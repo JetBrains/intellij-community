@@ -1,0 +1,12 @@
+// HIGHLIGHT: INFORMATION
+fun test(b: Boolean) {
+    var x: Int
+    x = if (b) {
+        println(1)
+        1
+    } else {
+        2
+    }
+}
+
+fun println(i: Int) {}

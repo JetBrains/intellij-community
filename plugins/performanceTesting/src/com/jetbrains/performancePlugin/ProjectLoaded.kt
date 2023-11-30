@@ -5,7 +5,7 @@ package com.jetbrains.performancePlugin
 import com.intellij.diagnostic.AbstractMessage
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.ThreadDumper
-import com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
+import com.intellij.driver.impl.InvokerMBean
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.ide.lightEdit.LightEditService
@@ -19,19 +19,23 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.InitProjectActivityJavaShim
-import com.intellij.openapi.ui.playback.PlaybackRunner
+import com.intellij.openapi.startup.InitProjectActivity
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.StatusBarEx
+import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
-import com.jetbrains.performancePlugin.commands.takeScreenshotOfFrame
+import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
 import com.jetbrains.performancePlugin.profilers.ProfilersController
 import com.jetbrains.performancePlugin.utils.ReporterCommandAsTelemetrySpan
 import io.opentelemetry.context.Context
@@ -48,25 +52,10 @@ import java.sql.Timestamp
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
-import kotlin.math.min
 import kotlin.time.Duration.Companion.minutes
 
-private const val MAX_DESCRIPTION_LENGTH = 7500
 private val LOG: Logger
   get() = Logger.getInstance("PerformancePlugin")
-
-/**
- * If an IDE error occurs and this flag is true, a failure of a TeamCity test will be printed
- * to stdout using TeamCity Service Messages (see [.reportTeamCityFailedTestAndBuildProblem]).
- * The name of the failed test will be inferred from the name of the script file
- * (its name without an extension, see [.getTeamCityFailedTestName]).
- */
-@Suppress("SpellCheckingInspection")
-private val MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR =
-  System.getProperty("testscript.must.report.teamcity.test.failure.on.error", "true").toBoolean()
-
-private val teamCityFailedTestName: String
-  get() = FileUtilRt.getNameWithoutExtension(getTestFile().name)
 
 private fun getTestFile(): File {
   val file = File(ProjectLoaded.TEST_SCRIPT_FILE_PATH!!)
@@ -77,96 +66,135 @@ private fun getTestFile(): File {
   return file
 }
 
-@Suppress("SpellCheckingInspection")
-class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListener {
-  private val alarm = Alarm()
-
-  override fun runActivity(project: Project) {
-    if (TEST_SCRIPT_FILE_PATH == null || ourScriptStarted) {
-      if (!ApplicationManager.getApplication().isUnitTestMode) {
-        LOG.info(PerformanceTestingBundle.message("startup.silent"))
-      }
-      return
-    }
-
-    ourScriptStarted = true
-    if (System.getProperty("ide.performance.screenshot") != null) {
-      @Suppress("DEPRECATION")
-      registerScreenshotTaking(System.getProperty("ide.performance.screenshot"), project.coroutineScope)
-    }
-
-    LOG.info("Start Execution")
-    PerformanceTestSpan.startSpan()
-    val profilerSettings = initializeProfilerSettingsForIndexing()
-    if (profilerSettings != null) {
-      try {
-        ProfilersController.getInstance().currentProfilerHandler.startProfiling(profilerSettings.first, profilerSettings.second)
-      }
-      catch (e: Exception) {
-        System.err.println("Start profile failed: ${e.message}")
-        ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
-      }
-    }
-    if (shouldOpenInSmartMode(project)) {
-      runScriptWhenInitializedAndIndexed(project)
-    }
-    else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
-      runScriptDuringIndexing(project)
-    }
-    else {
-      runScriptFromFile(project)
-    }
+private object ProjectLoadedService {
+  val alarm by lazy {
+    Alarm()
   }
 
+  @JvmField
+  var scriptStarted = false
+
+  @JvmField
+  var screenshotJob: kotlinx.coroutines.Job? = null
+
+  fun registerScreenshotTaking(folder: String, coroutineScope: CoroutineScope) {
+    screenshotJob = coroutineScope.launch {
+      while (true) {
+        delay(1.minutes)
+        takeScreenshotOfAllWindows(folder)
+      }
+    }
+  }
+}
+
+private fun runOnProjectInit(project: Project) {
+  if (ProjectLoaded.TEST_SCRIPT_FILE_PATH == null || ProjectLoadedService.scriptStarted) {
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      LOG.info(PerformanceTestingBundle.message("startup.silent"))
+    }
+    return
+  }
+
+  ProjectLoadedService.scriptStarted = true
+  if (System.getProperty("ide.performance.screenshot") != null) {
+    @Suppress("DEPRECATION")
+    (ProjectLoadedService.registerScreenshotTaking(
+      System.getProperty("ide.performance.screenshot"), project.coroutineScope))
+  }
+
+  LOG.info("Start Execution")
+  PerformanceTestSpan.startSpan()
+  val profilerSettings = initializeProfilerSettingsForIndexing()
+  if (profilerSettings != null) {
+    try {
+      ProfilersController.getInstance().currentProfilerHandler.startProfiling(profilerSettings.first, profilerSettings.second)
+    }
+    catch (e: Exception) {
+      System.err.println("Start profile failed: ${e.message}")
+      ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+    }
+  }
+  if (shouldOpenInSmartMode(project)) {
+    runScriptWhenInitializedAndIndexed(project, ProjectLoadedService.alarm)
+  }
+  else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
+    runScriptDuringIndexing(project, ProjectLoadedService.alarm)
+  }
+  else {
+    runScriptFromFile(project)
+  }
+}
+
+private class PerformancePluginInitProjectActivity : InitProjectActivity {
+  override suspend fun run(project: Project) {
+    blockingContext {
+      runOnProjectInit(project)
+    }
+  }
+}
+
+private const val TIMEOUT = 500
+
+private fun runScriptWhenInitializedAndIndexed(project: Project, alarm: Alarm) {
+  DumbService.getInstance(project).smartInvokeLater(Context.current().wrap(
+    Runnable {
+      alarm.addRequest(Context.current().wrap(
+        Runnable {
+          val statusBar = WindowManager.getInstance().getIdeFrame(project)?.statusBar as? StatusBarEx
+          val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcesses.isNotEmpty()
+          if (isDumb(project) || hasUserVisibleIndicators ||
+              !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
+            runScriptWhenInitializedAndIndexed(project, ProjectLoadedService.alarm)
+          }
+          else {
+            runScriptFromFile(project)
+          }
+        }), TIMEOUT)
+    }))
+}
+
+private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
+  ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap(
+    Runnable {
+      alarm.addRequest(Context.current().wrap(Runnable {
+        val indicators = CoreProgressManager.getCurrentIndicators()
+        var indexingInProgress = false
+        for (indicator in indicators) {
+          val indicatorText = indicator.text
+          @Suppress("HardCodedStringLiteral")
+          if (indicatorText != null && indicatorText.contains("Indexing")) {
+            indexingInProgress = true
+            break
+          }
+        }
+        if (indexingInProgress) {
+          runScriptFromFile(project)
+        }
+        else {
+          runScriptDuringIndexing(project, alarm)
+        }
+      }), TIMEOUT)
+    }))
+}
+
+@Suppress("SpellCheckingInspection")
+class ProjectLoaded : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
+    if (System.getProperty("com.sun.management.jmxremote") == "true") {
+      InvokerMBean.register({ PerformanceTestSpan.TRACER }, { PerformanceTestSpan.getContext() })
+    }
+
     if (ApplicationManagerEx.getApplicationEx().isLightEditMode) {
       LightEditService.getInstance().editorManager.addListener(object : LightEditorListener {
         override fun afterSelect(editorInfo: LightEditorInfo?) {
-          logStats("LightEditor")
-          runActivity(LightEditService.getInstance().project!!)
+          runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
+            logStats("LightEditor")
+          }
+          val project = LightEditService.getInstance().project!!
+          runOnProjectInit(project)
         }
       })
     }
-  }
-
-  private fun runScriptWhenInitializedAndIndexed(project: Project) {
-    DumbService.getInstance(project).smartInvokeLater(Context.current().wrap(
-      Runnable {
-        alarm.addRequest(Context.current().wrap(
-          Runnable {
-            if (isDumb(project) || !CoreProgressManager.getCurrentIndicators().isEmpty() ||
-                !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
-              runScriptWhenInitializedAndIndexed(project)
-            }
-            else {
-              runScriptFromFile(project)
-            }
-          }), TIMEOUT)
-      }))
-  }
-
-  private fun runScriptDuringIndexing(project: Project) {
-    ApplicationManager.getApplication().executeOnPooledThread(Context.current().wrap(
-      Runnable {
-        alarm.addRequest(Context.current().wrap(Runnable {
-          val indicators = CoreProgressManager.getCurrentIndicators()
-          var indexingInProgress = false
-          for (indicator in indicators) {
-            val indicatorText = indicator.text
-            @Suppress("HardCodedStringLiteral")
-            if (indicatorText != null && indicatorText.contains("Indexing")) {
-              indexingInProgress = true
-              break
-            }
-          }
-          if (indexingInProgress) {
-            runScriptFromFile(project)
-          }
-          else {
-            runScriptDuringIndexing(project)
-          }
-        }), TIMEOUT)
-      }))
   }
 
   internal class MyAppLifecycleListener : AppLifecycleListener {
@@ -183,86 +211,73 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
     }
 
     override fun appClosing() {
-      screenshotJob?.cancel()
+      ProjectLoadedService.screenshotJob?.cancel()
       PerformanceTestSpan.endSpan()
       reportErrorsFromMessagePool()
     }
   }
 
   companion object {
-    private const val TIMEOUT = 500
     @JvmField
     val TEST_SCRIPT_FILE_PATH: String? = System.getProperty("testscript.filename")
+  }
+}
 
-    private const val INDEXING_PROFILER_PREFIX = "%%profileIndexing"
-    private var screenshotJob: kotlinx.coroutines.Job? = null
-    private var ourScriptStarted = false
+internal fun runPerformanceScript(project: Project?, script: String?, mustExitOnFailure: Boolean) {
+  val playback = PlaybackRunnerExtended(script, CommandLogger(), project!!)
+  val scriptCallback = playback.run()
+  CommandsRunner.setActionCallback(scriptCallback)
+  registerOnFinishRunnables(scriptCallback, mustExitOnFailure)
+}
 
-    private fun registerScreenshotTaking(fileName: String, coroutineScope: CoroutineScope) {
-      screenshotJob = coroutineScope.launch {
-        while (true) {
-          delay(1.minutes)
-          takeScreenshotOfFrame(fileName)
-        }
-      }
+internal fun generifyErrorMessage(originalMessage: String): String {
+  return originalMessage // text@3ba5aac, text => text<ID>, text
+    .replace("[$@#][A-Za-z0-9-_]+".toRegex(), "<ID>") // java-design-patterns-master.db451f59 => java-design-patterns-master.<HASH>
+    .replace("[.]([A-Za-z]+[0-9]|[0-9]+[A-Za-z])[A-Za-z0-9]*".toRegex(), ".<HASH>") // 0x01 => <HEX>
+    .replace("0x[0-9a-fA-F]+".toRegex(), "<HEX>") // text1234text => text<NUM>text
+    .replace("[0-9]+".toRegex(), "<NUM>")
+}
+
+fun reportErrorsFromMessagePool() {
+  val messagePool = MessagePool.getInstance()
+  val ideErrors = messagePool.getFatalErrors(false, true)
+  for (message in ideErrors) {
+    try {
+      reportScriptError(message)
     }
-
-    private fun initializeProfilerSettingsForIndexing(): Pair<String, List<String>>? {
-      try {
-        val lines = FileUtil.loadLines(getTestFile())
-        for (line in lines) {
-          if (line.startsWith(INDEXING_PROFILER_PREFIX)) {
-            val command = line.substring(INDEXING_PROFILER_PREFIX.length).trim().split("\\s+".toRegex(), limit = 2)
-            val indexingActivity = command[0]
-            val profilingParameters = if (command.size > 1) {
-              command[1].trim().split(',').dropLastWhile { it.isEmpty() }
-            }
-            else {
-              ArrayList()
-            }
-            return Pair(indexingActivity, profilingParameters)
-          }
-        }
-      }
-      catch (ignored: IOException) {
-        System.err.println(PerformanceTestingBundle.message("startup.script.read.error"))
-        ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
-      }
-      return null
+    catch (e: IOException) {
+      LOG.error(e)
     }
-
-    fun reportErrorsFromMessagePool() {
-      val messagePool = MessagePool.getInstance()
-      val ideErrors = messagePool.getFatalErrors(false, true)
-      for (message in ideErrors) {
-        try {
-          reportScriptError(message)
-        }
-        catch (e: IOException) {
-          LOG.error(e)
-        }
-        finally {
-          message.isRead = true
-        }
-      }
-    }
-
-    internal fun generifyErrorMessage(originalMessage: String): String {
-      return originalMessage // text@3ba5aac, text => text<ID>, text
-        .replace("[$@#][A-Za-z0-9-_]+".toRegex(), "<ID>") // java-design-patterns-master.db451f59 => java-design-patterns-master.<HASH>
-        .replace("[.]([A-Za-z]+[0-9]|[0-9]+[A-Za-z])[A-Za-z0-9]*".toRegex(), ".<HASH>") // 0x01 => <HEX>
-        .replace("0x[0-9a-fA-F]+".toRegex(), "<HEX>") // text1234text => text<NUM>text
-        .replace("[0-9]+".toRegex(), "<NUM>")
-    }
-
-    @JvmStatic
-    fun runScript(project: Project?, script: String?, mustExitOnFailure: Boolean) {
-      val playback: PlaybackRunner = PlaybackRunnerExtended(script, CommandLogger(), project!!)
-      val scriptCallback = playback.run()
-      CommandsRunner.setActionCallback(scriptCallback)
-      registerOnFinishRunnables(scriptCallback, mustExitOnFailure)
+    finally {
+      message.isRead = true
     }
   }
+}
+
+private const val INDEXING_PROFILER_PREFIX = "%%profileIndexing"
+
+private fun initializeProfilerSettingsForIndexing(): Pair<String, List<String>>? {
+  try {
+    val lines = FileUtil.loadLines(getTestFile())
+    for (line in lines) {
+      if (line.startsWith(INDEXING_PROFILER_PREFIX)) {
+        val command = line.substring(INDEXING_PROFILER_PREFIX.length).trim().split("\\s+".toRegex(), limit = 2)
+        val indexingActivity = command[0]
+        val profilingParameters = if (command.size > 1) {
+          command[1].trim().split(',').dropLastWhile { it.isEmpty() }
+        }
+        else {
+          ArrayList()
+        }
+        return Pair(indexingActivity, profilingParameters)
+      }
+    }
+  }
+  catch (ignored: IOException) {
+    System.err.println(PerformanceTestingBundle.message("startup.script.read.error"))
+    ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+  }
+  return null
 }
 
 @Throws(IOException::class)
@@ -352,53 +367,26 @@ private fun runScriptFromFile(project: Project) {
   registerOnFinishRunnables(future = scriptCallback, mustExitOnFailure = true)
 }
 
-private fun encodeStringForTC(line: String): String {
-  return line.substring(0, min(MAX_DESCRIPTION_LENGTH.toDouble(), line.length.toDouble()).toInt())
-    .replace("\\|", "||")
-    .replace("\\[", "|[")
-    .replace("]", "|]")
-    .replace("\n", "|n")
-    .replace("'", "|'")
-    .replace("\r", "|r")
-}
-
-private fun reportTeamCityFailedTestAndBuildProblem(testName: String, failureMessage: String, @Suppress("SameParameterValue") failureDetails: String) {
-  val generifiedTestName = ProjectLoaded.generifyErrorMessage(testName)
-  System.out.printf("##teamcity[testFailed name='%s' message='%s' details='%s']\n",
-                    encodeStringForTC(generifiedTestName),
-                    encodeStringForTC(failureMessage),
-                    encodeStringForTC(failureDetails))
-  System.out.printf("##teamcity[buildProblem description='%s' identity='%s'] ",
-                    encodeStringForTC(failureMessage),
-                    encodeStringForTC(generifiedTestName))
-}
-
 @Suppress("RAW_RUN_BLOCKING")
 private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFailure: Boolean) {
   future
     .thenRun { LOG.info("Execution of the script has been finished successfully") }
     .exceptionally(Function { e ->
-      val message = "IDE will be terminated because some errors are detected while running the startup script: $e"
-      if (MUST_REPORT_TEAMCITY_TEST_FAILURE_ON_IDE_ERROR) {
-        val testName = teamCityFailedTestName
-        reportTeamCityFailedTestAndBuildProblem(testName, message, "")
-      }
-      if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
-        storeFailureToFile(e.message)
-      }
-      LOG.error(message)
-      if (System.getProperty("ide.performance.screenshot.on.failure") != null) {
-        runBlocking {
-          takeScreenshotOfFrame(System.getProperty("ide.performance.screenshot.on.failure"))
+      ApplicationManager.getApplication().executeOnPooledThread {
+        if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
+          storeFailureToFile(e.message)
         }
-      }
-      val threadDump = """
+        runBlocking {
+          takeScreenshotOfAllWindows("onFailure")
+        }
+        val threadDump = """
             Thread dump before IDE termination:
             ${ThreadDumper.dumpThreadsToString()}
             """.trimIndent()
-      LOG.info(threadDump)
-      if (mustExitOnFailure) {
-        ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+        LOG.info(threadDump)
+        if (mustExitOnFailure) {
+          ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
+        }
       }
       null
     })

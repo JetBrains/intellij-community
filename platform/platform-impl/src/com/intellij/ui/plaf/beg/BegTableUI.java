@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -13,7 +13,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-public class BegTableUI extends BasicTableUI {
+public final class BegTableUI extends BasicTableUI {
   private final KeyAdapter myAdapter= new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
@@ -29,7 +29,7 @@ public class BegTableUI extends BasicTableUI {
         }
       }
     };
-  @NonNls public static final String START_EDITING_ACTION_KEY = "startEditing";
+  public static final @NonNls String START_EDITING_ACTION_KEY = "startEditing";
 
   public static ComponentUI createUI(JComponent c) {
     return new BegTableUI();
@@ -58,7 +58,7 @@ public class BegTableUI extends BasicTableUI {
     return myAdapter;
   }
 
-  private class StartEditingAction extends AbstractAction {
+  private final class StartEditingAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
       JTable table = (JTable)e.getSource();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
@@ -78,11 +78,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                                for (PsiType parameter : classType.getParameters()) {
                                  parameter.accept(this);
                                }
-                               UClass target = UastContextKt.toUElement(classType.resolve(), UClass.class);
+                               PsiClass aClass = classType.resolve();
+                               UClass target = UastContextKt.toUElement(aClass, UClass.class);
                                if (target != null) {
                                  final RefElement refElement = refManager.getReference(target.getSourcePsi());
                                  if (refElement != null) refElement.initializeIfNeeded();
-                                 refFrom.addReference(refElement, target.getSourcePsi(), decl, false, true, null);
+                                 refFrom.addReference(refElement, aClass, decl, false, true, null);
                                }
                                return null;
                              }
@@ -194,7 +195,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            return;
                          }
                          PsiElement psiResolved = null;
-                         if (node instanceof UResolvable resolvable) {
+                         if (node instanceof UCallExpression callExpression &&
+                             "invoke".equals(callExpression.getMethodName()) &&
+                             callExpression.getReceiver() instanceof UResolvable resolvable) {
+                           psiResolved = resolvable.resolve();
+                         }
+                         else if (node instanceof UResolvable resolvable) {
                            psiResolved = resolvable.resolve();
                          }
                          else if (node instanceof UBinaryExpression binaryExpression) {
@@ -202,9 +208,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          else if (node instanceof UUnaryExpression unaryExpression) {
                            psiResolved = unaryExpression.resolveOperator();
-                         }
-                         if (psiResolved == null) {
-                           psiResolved = tryParenthesisOverloading(node);
                          }
 
                          psiResolved = returnToPhysical(psiResolved);
@@ -246,6 +249,10 @@ public class RefJavaUtilImpl extends RefJavaUtil {
 
                        @Override
                        public boolean visitCallableReferenceExpression(@NotNull UCallableReferenceExpression methodRef) {
+                         UExpression qualifierExpression = methodRef.getQualifierExpression();
+                         if (qualifierExpression != null) {
+                           qualifierExpression.accept(this);
+                         }
                          RefElement refMethod = refManager.getReference(methodRef.getSourcePsi());
                          if (refFrom == refMethod) {
                            visitReferenceExpression(methodRef);
@@ -396,16 +403,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
         }
       }
     }
-  }
-
-  private static PsiElement tryParenthesisOverloading(@NotNull UExpression node) {
-    if (node instanceof UCallExpression callExpression && "invoke".equals(callExpression.getMethodName())) {
-      UExpression receiver = callExpression.getReceiver();
-      if (receiver instanceof UResolvable resolvable) {
-        return resolvable.resolve();
-      }
-    }
-    return null;
   }
 
   private void updateRefMethod(PsiElement psiResolved,
@@ -649,20 +646,14 @@ public class RefJavaUtilImpl extends RefJavaUtil {
     return Integer.compare(getAccessNumber(a1), getAccessNumber(a2));
   }
 
-  @SuppressWarnings("StringEquality")
-  private static int getAccessNumber(String a) {
-    if (a == PsiModifier.PRIVATE) {
-      return 0;
-    }
-    if (a == PsiModifier.PACKAGE_LOCAL) {
-      return 1;
-    }
-    if (a == PsiModifier.PROTECTED) {
-      return 2;
-    }
-    if (a == PsiModifier.PUBLIC) return 3;
-
-    return -1;
+  private static int getAccessNumber(String modifier) {
+    return switch (modifier) {
+      case PsiModifier.PRIVATE -> 0;
+      case PsiModifier.PACKAGE_LOCAL -> 1;
+      case PsiModifier.PROTECTED -> 2;
+      case PsiModifier.PUBLIC -> 3;
+      default -> -1;
+    };
   }
 
   @Override
@@ -728,7 +719,7 @@ public class RefJavaUtilImpl extends RefJavaUtil {
   private static boolean isAccessedForReading(@NotNull UElement expression) {
     UElement parent = skipParentheses(expression);
     return !(parent instanceof UBinaryExpression binaryExpression) ||
-           !(binaryExpression.getOperator() instanceof UastBinaryOperator.AssignOperator) ||
+           binaryExpression.getOperator() != UastBinaryOperator.ASSIGN ||
            UastUtils.isUastChildOf(binaryExpression.getRightOperand(), expression, false);
   }
 

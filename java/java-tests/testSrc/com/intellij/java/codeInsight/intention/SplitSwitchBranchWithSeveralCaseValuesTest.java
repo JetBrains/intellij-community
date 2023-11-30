@@ -16,6 +16,6 @@ public class SplitSwitchBranchWithSeveralCaseValuesTest extends LightQuickFixPar
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_19;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
   }
 }

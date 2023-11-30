@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 final class DependencyContext implements NamingContext {
-  private final static String STRING_TABLE_NAME = "strings.tab";
+  private static final String STRING_TABLE_NAME = "strings.tab";
   private final PersistentStringEnumerator myEnumerator;
 
   private final Map<TypeRepr.AbstractType, TypeRepr.AbstractType> myTypeMap = new HashMap<>();
@@ -66,8 +66,7 @@ final class DependencyContext implements NamingContext {
   }
 
   @Override
-  @Nullable
-  public String getValue(final int s) {
+  public @Nullable String getValue(final int s) {
     try {
       String value = myEnumerator.valueOf(s);
       return value == null ? null : myRelativizer.toFull(value);

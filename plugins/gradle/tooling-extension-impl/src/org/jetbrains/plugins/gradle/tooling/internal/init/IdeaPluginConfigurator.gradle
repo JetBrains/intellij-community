@@ -1,0 +1,20 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+//file:noinspection GrPackage
+
+static def disableSources(PluginContainer plugins) {
+  plugins.withType(IdeaPlugin).all {
+    overridePluginSourcesPolicy(it)
+  }
+}
+
+static def overridePluginSourcesPolicy(IdeaPlugin plugin) {
+  def module = plugin?.model?.module
+  if (module != null) {
+    module.downloadJavadoc = false
+    module.downloadSources = false
+  }
+}
+
+allprojects {
+  disableSources(plugins)
+}

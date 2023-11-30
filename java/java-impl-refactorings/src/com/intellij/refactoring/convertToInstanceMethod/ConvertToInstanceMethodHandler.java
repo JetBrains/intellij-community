@@ -15,9 +15,9 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
-import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,7 +110,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler,
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
     PsiElement caretElement = BaseRefactoringAction.getElementAtCaret(editor, file);
-    return RefactoringActionContextUtil.getJavaMethodHeader(caretElement) != null;
+    return MethodUtils.getJavaMethodFromHeader(caretElement) != null;
   }
 
   static @NlsContexts.DialogTitle String getRefactoringName() {

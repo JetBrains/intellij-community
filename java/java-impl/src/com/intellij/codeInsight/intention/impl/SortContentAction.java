@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.google.common.collect.Comparators;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -13,7 +15,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -27,9 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
-public final class SortContentAction extends PsiElementBaseIntentionAction {
+public final class SortContentAction extends PsiUpdateModCommandAction<PsiElement> {
   public static final int MIN_ELEMENTS_COUNT = 3;
 
   private static final class Holder {
@@ -51,6 +51,10 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
     );
   }
 
+  public SortContentAction() {
+    super(PsiElement.class);
+  }
+  
   @Nls
   @NotNull
   @Override
@@ -58,14 +62,8 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
     return JavaBundle.message("intention.family.sort.content");
   }
 
-  @NotNull
   @Override
-  public String getText() {
-    return getFamilyName();
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     for (Sortable<?> sortable : Holder.OUR_SORTABLES) {
       if (sortable.isAvailable(element)) {
         sortable.replaceWithSorted(element);
@@ -74,11 +72,11 @@ public final class SortContentAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
     for (Sortable<?> sortable : Holder.OUR_SORTABLES) {
-      if (sortable.isAvailable(element)) return true;
+      if (sortable.isAvailable(element)) return Presentation.of(getFamilyName());
     }
-    return false;
+    return null;
   }
 
   private interface SortingStrategy {

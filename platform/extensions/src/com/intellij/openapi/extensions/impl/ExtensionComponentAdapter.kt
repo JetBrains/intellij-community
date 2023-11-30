@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.components.ComponentManager
@@ -7,16 +7,13 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-abstract class ExtensionComponentAdapter internal constructor(implementationClassName: String,
-                                                              @JvmField val pluginDescriptor: PluginDescriptor,
-                                                              override val orderId: String?,
-                                                              override val order: LoadingOrder,
-                                                              @JvmField internal val implementationClassResolver: ImplementationClassResolver) : LoadingOrder.Orderable {
-  companion object {
-    @JvmField
-    val EMPTY_ARRAY = arrayOfNulls<ExtensionComponentAdapter>(0)
-  }
-
+abstract class ExtensionComponentAdapter internal constructor(
+  implementationClassName: String,
+  @JvmField val pluginDescriptor: PluginDescriptor,
+  override val orderId: String?,
+  override val order: LoadingOrder,
+  @JvmField internal val implementationClassResolver: ImplementationClassResolver,
+) : LoadingOrder.Orderable {
   // Class or String
   @JvmField
   internal var implementationClassOrName: Any = implementationClassName

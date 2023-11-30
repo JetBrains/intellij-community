@@ -1,4 +1,6 @@
 // "Remove inapplicable @ExtensionFunctionType annotation" "true"
-// IGNORE_FIR
+// IGNORE_K2
 // WITH_STDLIB
 fun bar(f: <caret>@ExtensionFunctionType () -> Int): Int = TODO()
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix

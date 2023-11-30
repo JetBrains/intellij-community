@@ -1,7 +1,7 @@
 class C {
-    var x = ""
+    var x: String = ""
         set(x) {
-            println("old value: " + this.x)
+            println("old value: $field")
             field = x
         }
 }

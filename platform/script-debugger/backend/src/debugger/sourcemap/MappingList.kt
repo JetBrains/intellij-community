@@ -31,12 +31,9 @@ abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
 
   private val comparator: Comparator<MappingEntry> = Comparator.comparing(::getLine).thenComparing(::getColumn)
 
-  private val mappings: List<MappingEntry>
-
-  init {
-    // optimization: generated mappings already sorted
-    this.mappings = if (this is GeneratedMappingList) mappings else mappings.sortedWith(comparator).toList()
-  }
+  // optimization: generated mappings already sorted
+  private val mappings: List<MappingEntry> =
+    if (this is GeneratedMappingList) mappings else mappings.sortedWith(comparator).toList()
 
   override fun indexOf(line: Int, column: Int): Int {
     var middle = mappings.binarySearch(comparison = {

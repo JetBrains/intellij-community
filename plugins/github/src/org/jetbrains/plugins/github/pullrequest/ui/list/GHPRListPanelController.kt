@@ -2,59 +2,53 @@
 package org.jetbrains.plugins.github.pullrequest.ui.list
 
 import com.intellij.collaboration.async.combineAndCollect
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
+import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListSearchValue
-import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRSearchPanelViewModel
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal class GHPRListPanelController(
   project: Project,
   scope: CoroutineScope,
-  account: GithubAccount,
-  private val listLoader: GHListLoader<*>,
-  private val searchVm: GHPRSearchPanelViewModel,
-  private val repository: String,
+  private val listVm: GHPRListViewModel,
   private val emptyText: StatusText,
   private val listComponent: JComponent,
-  private val mainPanel: Wrapper,
-  listenersDisposable: Disposable
+  private val mainPanel: Wrapper
 ) {
-  private val loadingState: MutableStateFlow<Boolean> = MutableStateFlow(listLoader.loading)
-  private val errorState: MutableStateFlow<Throwable?> = MutableStateFlow(listLoader.error)
 
-  private val errorPanel: JComponent = createErrorPanel(project, scope, account)
+  private val errorPanel: JComponent = createErrorPanel(project, scope, listVm.account)
 
   init {
-    listLoader.addLoadingStateChangeListener(listenersDisposable) {
-      loadingState.value = listLoader.loading
-    }
-    listLoader.addErrorChangeListener(listenersDisposable) {
-      errorState.value = listLoader.error
-    }
-
     scope.launch {
-      errorState.collect { error ->
+      listVm.error.collect { error ->
         mainPanel.setContent(if (error != null) errorPanel else listComponent)
         mainPanel.repaint()
       }
     }
     scope.launch {
-      combineAndCollect(loadingState, searchVm.searchState) { isLoading, searchValue ->
+      combineAndCollect(listVm.loading, listVm.searchVm.searchState) { isLoading, searchValue ->
         updateEmptyText(isLoading, searchValue)
+      }
+    }
+
+    scope.launchNow {
+      listVm.focusRequests.collect {
+        yield()
+        CollaborationToolsUIUtil.focusPanel(mainPanel)
       }
     }
   }
@@ -67,23 +61,22 @@ internal class GHPRListPanelController(
     }
 
     if (searchValue.filterCount == 0) {
-      emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded", repository))
+      emptyText.appendText(GithubBundle.message("pull.request.list.nothing.loaded", listVm.repository))
     }
     else {
       emptyText
         .appendText(GithubBundle.message("pull.request.list.no.matches"))
         .appendSecondaryText(GithubBundle.message("pull.request.list.filters.clear"), SimpleTextAttributes.LINK_ATTRIBUTES) {
-          searchVm.searchState.value = GHPRListSearchValue.EMPTY
+          listVm.searchVm.searchState.value = GHPRListSearchValue.EMPTY
         }
     }
   }
 
   private fun createErrorPanel(project: Project, scope: CoroutineScope, account: GithubAccount): JComponent {
     val errorPresenter = GHPRErrorStatusPresenter(project, account) {
-      listLoader.reset()
-      listLoader.loadMore()
+      listVm.refresh()
     }
-    val errorPanel = ErrorStatusPanelFactory.create(scope, errorState, errorPresenter)
+    val errorPanel = ErrorStatusPanelFactory.create(scope, listVm.error, errorPresenter)
     return JPanel(SingleComponentCenteringLayout()).apply {
       add(errorPanel)
     }

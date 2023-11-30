@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeUtil;
 import com.intellij.codeInsight.ExpectedTypesProvider;
-import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -196,7 +196,8 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
       private void checkIfAllowed(PsiType type) {
         if (expectedTypes.length > 0) {
-          final ExpectedTypeInfo typeInfo = ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type, TailType.NONE);
+          final ExpectedTypeInfo typeInfo = ExpectedTypesProvider.createInfo(type, ExpectedTypeInfo.TYPE_STRICTLY, type,
+                                                                             TailTypes.noneType());
           for (ExpectedTypeInfo expectedType : expectedTypes) {
             if (expectedType.intersect(typeInfo).length != 0) {
               allowedTypes.add(type);
@@ -366,7 +367,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     if (defaultType == null) return;
     ReadAction.nonBlocking(() -> {
       return type.isValid() && defaultType.isValid() ? new StatisticsInfo(getStatsKey(defaultType), serialize(type)) : null;
-    }).finishOnUiThread(ModalityState.NON_MODAL, stat -> {
+    }).finishOnUiThread(ModalityState.nonModal(), stat -> {
       if (stat == null) return;
       StatisticsManager.getInstance().incUseCount(stat);
     }).submit(NonUrgentExecutor.getInstance());

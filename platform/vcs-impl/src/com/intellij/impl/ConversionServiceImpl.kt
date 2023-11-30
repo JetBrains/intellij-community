@@ -6,12 +6,13 @@ import com.intellij.conversion.impl.ConversionContextImpl
 import com.intellij.conversion.impl.ConversionRunner
 import com.intellij.conversion.impl.ProjectConversionUtil
 import com.intellij.conversion.impl.ui.ConvertProjectDialog
+import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle
@@ -22,10 +23,9 @@ import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.function.Supplier
 
 internal class ConversionServiceImpl : ConversionService() {
-  override fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult {
+  override suspend fun convertSilently(projectPath: Path, conversionListener: ConversionListener): ConversionResult {
     try {
       val context = ConversionContextImpl(projectPath)
       val runners = isConversionNeeded(context)
@@ -80,12 +80,11 @@ internal class ConversionServiceImpl : ConversionService() {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED
     }
 
-    val result: ConversionResultImpl
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      result = ConversionResultImpl(converters)
+    val result = if (ApplicationManagerEx.isInIntegrationTest()) {
+      ConversionResultImpl(converters)
     }
     else {
-      result = withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT) {
         val dialog = ConvertProjectDialog(context, converters)
         dialog.show()
         if (dialog.isConverted) {
@@ -97,11 +96,13 @@ internal class ConversionServiceImpl : ConversionService() {
       }
     }
 
-    try {
-      context.saveConversionResult()
-    }
-    catch (e: IOException) {
-      LOG.error(e)
+    if (result != ConversionResultImpl.CONVERSION_CANCELED) {
+      try {
+        context.saveConversionResult()
+      }
+      catch (e: IOException) {
+        LOG.error(e)
+      }
     }
     return result
   }
@@ -122,14 +123,12 @@ internal class ConversionServiceImpl : ConversionService() {
     val context = ConversionContextImpl((project as ProjectStoreOwner).componentStore.projectFilePath)
     val runners = ArrayList<ConversionRunner>()
     try {
-      val point = ConverterProvider.EP_NAME.point as ExtensionPointImpl<ConverterProvider>
-      point.processIdentifiableImplementations { supplier, id ->
-        val provider = supplier.get()
-        if (provider != null) {
-          val runner = ConversionRunner(getProviderId(supplier, id), provider, context)
-          if (runner.isModuleConversionNeeded(moduleFile)) {
-            runners.add(runner)
-          }
+      for (item in ConverterProvider.EP_NAME.filterableLazySequence()) {
+        val id = item.id ?: continue
+        val provider = item.instance ?: continue
+        val runner = ConversionRunner(id, provider, context)
+        if (runner.isModuleConversionNeeded(moduleFile)) {
+          runners.add(runner)
         }
       }
     }
@@ -177,7 +176,7 @@ internal class ConversionServiceImpl : ConversionService() {
 
 private val LOG = logger<ConversionServiceImpl>()
 
-private fun isConversionNeeded(context: ConversionContextImpl): List<ConversionRunner> {
+private suspend fun isConversionNeeded(context: ConversionContextImpl): List<ConversionRunner> {
   try {
     val oldMap = context.projectFileTimestamps
     var changed = false
@@ -185,7 +184,7 @@ private fun isConversionNeeded(context: ConversionContextImpl): List<ConversionR
       LOG.debug("conversion will be performed because no information about project files")
     }
     else {
-      val newMap = context.allProjectFiles
+      val newMap = CoroutineTracerShim.coroutineTracer.span("conversion: project files collecting") { context.allProjectFiles }
       LOG.debug("Checking project files")
       val iterator = Object2LongMaps.fastIterator(newMap)
       while (iterator.hasNext()) {
@@ -206,22 +205,16 @@ private fun isConversionNeeded(context: ConversionContextImpl): List<ConversionR
     }
     else {
       performedConversionIds = context.appliedConverters
-      if (LOG.isDebugEnabled) {
-        LOG.debug("Project files are up to date. Applied converters: $performedConversionIds")
-      }
+      LOG.debug { "Project files are up to date. Applied converters: $performedConversionIds" }
     }
 
     val runners = ArrayList<ConversionRunner>()
-    val point = ConverterProvider.EP_NAME.point as ExtensionPointImpl<ConverterProvider>
-    point.processIdentifiableImplementations { supplier, id ->
-      val providerId = getProviderId(supplier, id)
+    for (item in ConverterProvider.EP_NAME.filterableLazySequence()) {
+      val providerId = item.id ?: continue
       if (!performedConversionIds.contains(providerId)) {
-        val provider = supplier.get()
-        if (provider != null) {
-          val runner = ConversionRunner(providerId, provider, context)
-          if (runner.isConversionNeeded) {
-            runners.add(runner)
-          }
+        val runner = ConversionRunner(providerId, item.instance ?: continue, context)
+        if (runner.isConversionNeeded) {
+          runners.add(runner)
         }
       }
     }
@@ -233,6 +226,3 @@ private fun isConversionNeeded(context: ConversionContextImpl): List<ConversionR
   }
 }
 
-private fun getProviderId(supplier: Supplier<out ConverterProvider?>, id: String?): String {
-  return id ?: supplier.get()!!.deprecatedId
-}

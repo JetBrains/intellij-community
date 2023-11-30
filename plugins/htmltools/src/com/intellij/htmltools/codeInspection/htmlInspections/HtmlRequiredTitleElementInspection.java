@@ -7,7 +7,6 @@ import com.intellij.codeInspection.htmlInspections.HtmlLocalInspectionTool;
 import com.intellij.htmltools.HtmlToolsBundle;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlCustomElementDescriptor;
-import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class HtmlRequiredTitleElementInspection extends HtmlLocalInspectionTool {
+public final class HtmlRequiredTitleElementInspection extends HtmlLocalInspectionTool {
   private static final String TITLE = "title";
   private static final String HEAD = "head";
 
@@ -23,8 +22,7 @@ public class HtmlRequiredTitleElementInspection extends HtmlLocalInspectionTool 
   protected void checkTag(@NotNull XmlTag tag, @NotNull ProblemsHolder holder, boolean isOnTheFly) {
     if (!HtmlUtil.isHtmlTagContainingFile(tag)) return;
     if (!tag.getName().equalsIgnoreCase(HEAD)) return;
-    XmlElementDescriptor descriptor = tag.getDescriptor();
-    if (descriptor instanceof XmlCustomElementDescriptor && ((XmlCustomElementDescriptor)descriptor).isCustomElement()) return;
+    if (XmlCustomElementDescriptor.isCustomElement(tag)) return;
     final XmlTag[] subTags = tag.getSubTags();
     long count = Arrays.stream(subTags).filter((element) -> element.getName().equalsIgnoreCase(TITLE)).count();
     if (count > 0) return;
@@ -35,9 +33,8 @@ public class HtmlRequiredTitleElementInspection extends HtmlLocalInspectionTool 
                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HtmlRequiredTitleElement";
   }
 }

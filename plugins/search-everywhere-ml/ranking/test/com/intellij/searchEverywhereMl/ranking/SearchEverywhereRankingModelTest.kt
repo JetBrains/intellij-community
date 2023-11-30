@@ -7,19 +7,18 @@ import com.intellij.ide.util.gotoByName.ChooseByNameViewModel
 import com.intellij.mock.MockProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCache
 import com.intellij.searchEverywhereMl.ranking.features.HeavyFeaturesProviderTestCase
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereModelProvider
-import com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereRankingModel
 
 internal abstract class SearchEverywhereRankingModelTest
   : HeavyFeaturesProviderTestCase<SearchEverywhereFileFeaturesProvider>(SearchEverywhereFileFeaturesProvider::class.java) {
   abstract val tab: SearchEverywhereTabWithMlRanking
   private val featuresProviders by lazy { SearchEverywhereElementFeaturesProvider.getFeatureProviders() }
-  protected val model by lazy { SearchEverywhereRankingModel(SearchEverywhereModelProvider().getModel(tab.tabId)) }
+  protected val model by lazy { SearchEverywhereModelProvider().getModel(tab.tabId) }
   protected val mockProgressIndicator by lazy { MockProgressIndicator() }
 
   protected abstract fun filterElements(searchQuery: String): List<FoundItemDescriptor<*>>

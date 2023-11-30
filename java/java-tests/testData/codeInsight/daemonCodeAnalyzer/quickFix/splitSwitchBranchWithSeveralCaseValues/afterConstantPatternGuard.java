@@ -2,7 +2,7 @@
 class C {
     void foo(String o) {
         switch (o) {
-            case "42" -> {}
+            case "42" when s.isEmpty() -> {}
             case String s when s.isEmpty() -> {}
         }
     }

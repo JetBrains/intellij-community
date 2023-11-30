@@ -12,14 +12,15 @@ import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.DumpLookupElementWeights;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -403,8 +404,8 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testPreferApplicableAnnotations() {
     myFixture.addClass(
-      "\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Target;\n\n@Target(ElementType.ANNOTATION_TYPE)\n@interface TMetaAnno {}\n\n@Target(ElementType.LOCAL_VARIABLE)\n@interface TLocalAnno {}");
-    checkPreferredItems(0, "TMetaAnno", "Target", "TabLayoutPolicy", "TabPlacement");
+      "\nimport java.lang.annotation.ElementType;\nimport java.lang.annotation.Target;\n\n@Target(ElementType.ANNOTATION_TYPE)\n@interface TtMetaAnno {}\n\n@Target(ElementType.LOCAL_VARIABLE)\n@interface TtLocalAnno {}");
+    checkPreferredItems(0, "TtMetaAnno", "TtLocalAnno");
   }
 
   @NeedsIndex.ForStandardLibrary
@@ -995,5 +996,23 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     assertEquals(myFixture.getLookupElementStrings(), List.of("methodB", "methodA"));
   }
 
+
+  @NeedsIndex.Full
+  public void testCompletionRuleCaseOrdering() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.completeBasic();
+      assertPreferredItems(0, "case null", "case", "case null, default", "case A", "case B");
+    });
+  }
+
+  @NeedsIndex.Full
+  public void testCompletionCaseOrdering() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_21, () -> {
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.completeBasic();
+      assertPreferredItems(0, "case A", "case", "case B", "casecase", "case null", "case null, default");
+    });
+  }
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
 }

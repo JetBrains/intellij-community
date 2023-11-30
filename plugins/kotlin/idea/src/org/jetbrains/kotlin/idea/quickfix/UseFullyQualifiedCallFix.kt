@@ -25,7 +25,7 @@ class UseFullyQualifiedCallFix(
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
-        val result = AddFullQualifierIntention.applyTo(element, fqName)
+        val result = AddFullQualifierIntention.Holder.applyTo(element, fqName)
         ShortenReferences.DEFAULT.process(result)
     }
 
@@ -44,7 +44,7 @@ class UseFullyQualifiedCallFix(
             }
 
             val nameReferenceExpression = referenceExpression as? KtNameReferenceExpression ?: return null
-            if (!AddFullQualifierIntention.isApplicableTo(nameReferenceExpression, descriptor)) return null
+            if (!AddFullQualifierIntention.Holder.isApplicableTo(nameReferenceExpression, descriptor)) return null
             return UseFullyQualifiedCallFix(fqName, nameReferenceExpression)
         }
     }

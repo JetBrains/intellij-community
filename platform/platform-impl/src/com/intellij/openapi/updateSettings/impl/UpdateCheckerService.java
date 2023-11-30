@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
-import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.WhatsNewAction;
+import com.intellij.ide.actions.WhatsNewUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -16,15 +16,15 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
+import com.intellij.util.Url;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,11 +39,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.max;
 
-@SuppressWarnings("LightServiceMigrationCode")
 final class UpdateCheckerService {
   public static UpdateCheckerService getInstance() {
     return ApplicationManager.getApplication().getService(UpdateCheckerService.class);
@@ -53,7 +51,7 @@ final class UpdateCheckerService {
 
   private static final Logger LOG = Logger.getInstance(UpdateCheckerService.class);
 
-  private static final long CHECK_INTERVAL = DateFormatUtil.DAY;
+  private static final long CHECK_INTERVAL = TimeUnit.DAYS.toMillis(1);
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to 'com.intellij.updater.Runner.ERROR_LOG_FILE_NAME'
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
   private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
@@ -78,7 +76,9 @@ final class UpdateCheckerService {
 
   public void cancelChecks() {
     ScheduledFuture<?> future = myScheduledCheck;
-    if (future != null) future.cancel(false);
+    if (future != null) {
+      future.cancel(false);
+    }
   }
 
   private void appStarted() {
@@ -146,36 +146,7 @@ final class UpdateCheckerService {
     }
   }
 
-  static final class MyActivity implements StartupActivity.DumbAware {
-    private static final AtomicBoolean ourStarted = new AtomicBoolean(false);
-
-    MyActivity() {
-      Application app = ApplicationManager.getApplication();
-      if (app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode()) {
-        throw ExtensionNotApplicableException.create();
-      }
-    }
-
-    @Override
-    public void runActivity(@NotNull Project project) {
-      if (ourStarted.getAndSet(true)) return;
-
-      BuildNumber current = ApplicationInfo.getInstance().getBuild();
-      checkIfPreviousUpdateFailed(current);
-      showWhatsNew(project, current);
-      showSnapUpdateNotification(project, current);
-
-      cleanupObsoleteCustomRepositories();
-
-      showUpdatedPluginsNotification(project);
-
-      ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
-
-      deleteOldApplicationDirectories();
-    }
-  }
-
-  private static void checkIfPreviousUpdateFailed(BuildNumber current) {
+  static void checkIfPreviousUpdateFailed(BuildNumber current) {
     PropertiesComponent properties = PropertiesComponent.getInstance();
     if (current.asString().equals(properties.getValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY)) &&
         new File(PathManager.getLogPath(), ERROR_LOG_FILE_NAME).length() > 0) {
@@ -185,11 +156,13 @@ final class UpdateCheckerService {
     properties.unsetValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY);
   }
 
-  private static void showWhatsNew(Project project, BuildNumber current) {
-    String url = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
-    if (url != null && WhatsNewAction.isAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
+  static void showWhatsNew(Project project, BuildNumber current) {
+    Url url = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl();
+    if (url != null && WhatsNewUtil.isWhatsNewAvailable() && shouldShowWhatsNew(current, ApplicationInfoEx.getInstanceEx().isMajorEAP())) {
       if (UpdateSettings.getInstance().isShowWhatsNewEditor()) {
-        ApplicationManager.getApplication().invokeLater(() -> WhatsNewAction.openWhatsNewPage(project, url));
+        ApplicationManager.getApplication().invokeLater(
+          () -> WhatsNewAction.openWhatsNewPage(project, url.toExternalForm(), true),
+          project.getDisposed());
         IdeUpdateUsageTriggerCollector.majorUpdateHappened(true);
       }
       else {
@@ -239,7 +212,7 @@ final class UpdateCheckerService {
     return false;
   }
 
-  private static void showSnapUpdateNotification(Project project, BuildNumber current) {
+  static void showSnapUpdateNotification(Project project, BuildNumber current) {
     if (ExternalUpdateManager.ACTUAL != ExternalUpdateManager.SNAP) return;
 
     PropertiesComponent properties = PropertiesComponent.getInstance();
@@ -277,8 +250,8 @@ final class UpdateCheckerService {
     }
   }
 
-  private static void showUpdatedPluginsNotification(Project project) {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+  static void showUpdatedPluginsNotification(Project project) {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appWillBeClosed(boolean isRestart) {
         Collection<PluginId> plugins = InstalledPluginsState.getInstance().getUpdatedPlugins();
@@ -348,34 +321,36 @@ final class UpdateCheckerService {
     return Path.of(PathManager.getConfigPath(), ".updated_plugins_list");
   }
 
-  private static void deleteOldApplicationDirectories() {
+  static void deleteOldApplicationDirectories() {
+    PropertiesComponent propertyService = PropertiesComponent.getInstance();
     if (ConfigImportHelper.isConfigImported()) {
       long scheduledAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
       LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt));
-      PropertiesComponent.getInstance().setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
+      propertyService.setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
       OldDirectoryCleaner.Stats.scheduled();
     }
     else {
-      long scheduledAt = PropertiesComponent.getInstance().getLong(OLD_DIRECTORIES_SCAN_SCHEDULED, 0L), now;
+      long scheduledAt = propertyService.getLong(OLD_DIRECTORIES_SCAN_SCHEDULED, 0L), now;
       if (scheduledAt != 0 && (now = System.currentTimeMillis()) >= scheduledAt) {
         OldDirectoryCleaner.Stats.started((int)TimeUnit.MILLISECONDS.toDays(now - scheduledAt) + OLD_DIRECTORIES_SCAN_DELAY_DAYS);
         LOG.info("starting old directories scan");
         long expireAfter = now - TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS);
-        ProcessIOExecutorService.INSTANCE.execute(() -> new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, null));
-        PropertiesComponent.getInstance().unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
+
+        new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, null);
+        propertyService.unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
         LOG.info("old directories scan complete");
       }
     }
   }
 
-  private static void cleanupObsoleteCustomRepositories() {
+  static void cleanupObsoleteCustomRepositories() {
     UpdateSettings settings = UpdateSettings.getInstance();
     if (settings.isObsoleteCustomRepositoriesCleanNeeded()) {
       boolean cleaned = settings.getStoredPluginHosts().removeIf(host -> host.startsWith("https://secure.feed.toolbox.app/plugins"));
       if (cleaned) {
         LOG.info("Some obsolete TBE custom repositories have been removed");
       }
-      settings.setObsoleteCustomRepositoriesCleaned(false);
+      settings.setObsoleteCustomRepositoriesCleanNeeded(false);
     }
   }
 }

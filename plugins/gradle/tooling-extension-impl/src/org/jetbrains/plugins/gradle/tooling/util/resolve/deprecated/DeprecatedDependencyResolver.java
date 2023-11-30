@@ -3,6 +3,7 @@
 
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetCachedFinder;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.*;
@@ -21,13 +22,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.ExternalDependencyId;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.*;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
-import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -54,24 +54,24 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
   private static final boolean isArtifactResolutionQuerySupported = isDependencySubstitutionsSupported ||
                                                                     (GradleVersion.current().compareTo(GradleVersion.version("2.0")) >= 0);
 
-  @NotNull
-  private final Project myProject;
+  private final @NotNull ModelBuilderContext myContext;
+  private final @NotNull Project myProject;
   private final boolean myIsPreview;
   private final boolean myDownloadJavadoc;
   private final boolean myDownloadSources;
-  @NotNull
-  private final SourceSetCachedFinder mySourceSetFinder;
 
-  public DeprecatedDependencyResolver(@NotNull Project project,
-                                      boolean isPreview,
-                                      boolean downloadJavadoc,
-                                      boolean downloadSources,
-                                      @NotNull SourceSetCachedFinder sourceSetFinder) {
+  public DeprecatedDependencyResolver(
+    @NotNull ModelBuilderContext context,
+    @NotNull Project project,
+    boolean isPreview,
+    boolean downloadJavadoc,
+    boolean downloadSources
+  ) {
+    myContext = context;
     myProject = project;
     myIsPreview = isPreview;
     myDownloadJavadoc = downloadJavadoc;
     myDownloadSources = downloadSources;
-    mySourceSetFinder = sourceSetFinder;
   }
 
   @Override
@@ -97,10 +97,10 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
     final ExternalDepsResolutionResult result;
 
     if (!myIsPreview && isArtifactResolutionQuerySupported) {
-      result = new ArtifactQueryResolver(configuration, scope, myProject, myDownloadJavadoc, myDownloadSources, mySourceSetFinder).resolve();
+      result = new ArtifactQueryResolver(myContext, configuration, scope, myProject, myDownloadJavadoc, myDownloadSources).resolve();
     } else {
       result = new ExternalDepsResolutionResult(findDependencies(configuration, configuration.getAllDependencies(), scope),
-                                                new ArrayList<File>());
+                                                new ArrayList<>());
     }
 
     Set<ExternalDependency> fileDependencies = findAllFileDependencies(configuration.getAllDependencies(), scope);
@@ -111,8 +111,8 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
   protected static Multimap<ModuleComponentIdentifier, ProjectDependency> collectProjectDeps(@NotNull final Configuration configuration) {
     return projectDeps(configuration,
-                       ArrayListMultimap.<ModuleComponentIdentifier, ProjectDependency>create(),
-                       new HashSet<Configuration>());
+                       ArrayListMultimap.create(),
+                       new HashSet<>());
   }
 
   private static Multimap<ModuleComponentIdentifier, ProjectDependency> projectDeps(Configuration conf,
@@ -307,8 +307,9 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
 
     result.add(fileCollectionDependency);
 
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     for (File file : files) {
-      SourceSet outputDirSourceSet = mySourceSetFinder.findByArtifact(file.getPath());
+      SourceSet outputDirSourceSet = sourceSetFinder.findByArtifact(file.getPath());
       if (outputDirSourceSet != null) {
         result.addAll(
           collectSourceSetOutputDirsAsSingleEntryLibraries(outputDirSourceSet,
@@ -595,12 +596,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
           File[] hashDirs = versionDir.listFiles();
           if (hashDirs != null) {
             for (File hashDir : hashDirs) {
-              File[] sourcesJars = hashDir.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                  return name.endsWith("sources.jar");
-                }
-              });
+              File[] sourcesJars = hashDir.listFiles((dir, name) -> name.endsWith("sources.jar"));
 
               if (sourcesJars != null && sourcesJars.length > 0) {
                 sourcesFile = sourcesJars[0];
@@ -724,7 +720,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
                                                    @Nullable final String scope) {
     Set<ExternalDependency> result = new LinkedHashSet<>();
 
-    Set<ResolvedArtifact> resolvedArtifacts = myIsPreview ? Collections.<ResolvedArtifact>emptySet() :
+    Set<ResolvedArtifact> resolvedArtifacts = myIsPreview ? Collections.emptySet() :
                                               configuration.getResolvedConfiguration().getLenientConfiguration()
                                                 .getArtifacts(Specs.SATISFIES_ALL);
 
@@ -733,6 +729,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
       artifactMap.put(toMyModuleIdentifier(artifact.getModuleVersion().getId()), artifact);
     }
 
+    GradleSourceSetCachedFinder sourceSetFinder = GradleSourceSetCachedFinder.getInstance(myContext);
     for (Dependency it : dependencies) {
       try {
         if (it instanceof ProjectDependency) {
@@ -746,10 +743,10 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
           projectDependency.setScope(scope);
           projectDependency.setProjectPath(project.getPath());
           projectDependency.setConfigurationName(targetConfiguration == null ? "default" : targetConfiguration.getName());
-          Set<File> artifacts = new LinkedHashSet<>(targetConfiguration == null ? Collections.<File>emptySet() :
+          Set<File> artifacts = new LinkedHashSet<>(targetConfiguration == null ? Collections.emptySet() :
                                                     targetConfiguration.getAllArtifacts().getFiles().getFiles());
           projectDependency.setProjectDependencyArtifacts(artifacts);
-          projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(artifacts, mySourceSetFinder));
+          projectDependency.setProjectDependencyArtifactsSources(sourceSetFinder.findArtifactSources(artifacts));
 
           result.add(projectDependency);
         } else if (it != null) {

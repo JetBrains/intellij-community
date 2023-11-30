@@ -26,12 +26,8 @@ fun moveCaretIntoGeneratedElement(editor: Editor, element: PsiElement) {
 }
 
 class RestoreCaret<T : PsiElement>(beforeElement: T, val editor: Editor?) {
-    private val relativeOffset: Int
+    private val relativeOffset: Int = findRelativeOffset(beforeElement, editor)
     private val beforeElementTextLength: Int = beforeElement.textLength
-
-    init {
-        relativeOffset = findRelativeOffset(beforeElement, editor)
-    }
 
     fun restoreCaret(afterElement: T, defaultOffset: ((element: T) -> Int)? = null) {
         if (editor == null) return

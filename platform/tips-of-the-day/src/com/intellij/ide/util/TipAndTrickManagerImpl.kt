@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util
 
 import com.intellij.ide.GeneralSettings
@@ -12,7 +12,7 @@ import com.intellij.ui.GotItTooltipService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class TipAndTrickManagerImpl : TipAndTrickManager {
+internal class TipAndTrickManagerImpl : TipAndTrickManager {
   private var openedDialog: TipDialog? = null
 
   override suspend fun showTipDialog(project: Project?) = showTipDialog(project = project, tips = TipAndTrickBean.EP_NAME.extensionList)
@@ -20,7 +20,17 @@ class TipAndTrickManagerImpl : TipAndTrickManager {
   override suspend fun showTipDialog(project: Project, tip: TipAndTrickBean) = showTipDialog(project = project, tips = listOf(tip))
 
   private suspend fun showTipDialog(project: Project?, tips: List<TipAndTrickBean>) {
-    val sortingResult = if (tips.size > 1) TipOrderUtil.getInstance().sort(tips, project) else TipsSortingResult(tips)
+    val sortingResult = if (tips.size > 1) {
+      TipOrderUtil.getInstance().sort(tips, project).also { result ->
+        val tipsUsageManager = TipsUsageManager.getInstance()
+        if (!tipsUsageManager.wereTipsShownToday()) {
+          tipsUsageManager.fireTipProposed(result.tips[0])
+        }
+      }
+    }
+    else {
+      TipsSortingResult(tips)
+    }
     withContext(Dispatchers.EDT) {
       if (project?.isDisposed != true) {
         closeTipDialog()

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.java.workspace.entities.JavaModuleSettingsKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
@@ -19,7 +20,11 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.TestModuleProperties;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiJavaModule;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,6 +55,12 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    AcceptedLanguageLevelsSettings.allowLevel(getTestRootDisposable(), LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1]);
   }
 
   @Test
@@ -99,7 +110,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     importProject(
       """
         apply plugin: 'java'
-        sourceCompatibility = 1.5
+        java.sourceCompatibility = 1.5
         compileTestJava {
           sourceCompatibility = 1.8
         }
@@ -117,7 +128,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     int feature = LanguageLevel.HIGHEST.toJavaVersion().feature;
     importProject(
       "apply plugin: 'java'\n" +
-      "sourceCompatibility = " + feature+ "\n" +
+      "java.sourceCompatibility = " + feature+ "\n" +
       "apply plugin: 'java'\n" +
       "compileTestJava {\n" +
       "  sourceCompatibility = " + feature +"\n" +
@@ -137,7 +148,7 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     importProject(
       """
         apply plugin: 'java'
-        targetCompatibility = 1.8
+        java.targetCompatibility = 1.8
         compileJava {
           targetCompatibility = 1.5
         }
@@ -349,6 +360,24 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
 
     assertProjectLibraryCoordinates("Gradle: junit:junit:4.0",
                                     "junit", "junit", "4.0");
+  }
+
+  @Test
+  public void testJarManifestAutomaticModuleName() throws Exception {
+    importProject(
+      """
+        apply plugin: 'java'
+        tasks.named('jar') {
+          manifest {
+            attributes('Automatic-Module-Name': 'my.module.name')
+          }
+        }"""
+    );
+
+    var moduleEntity = WorkspaceModel.getInstance(myProject).getCurrentSnapshot().resolve(new ModuleId("project.main"));
+    var javaSettings = JavaModuleSettingsKt.getJavaSettings(moduleEntity);
+    var automaticModuleName = javaSettings.getManifestAttributes().get(PsiJavaModule.AUTO_MODULE_NAME);
+    assertEquals("my.module.name", automaticModuleName);
   }
 
   private static void assertExternalProjectIds(Map<String, ExternalProject> projectMap, String projectId, String... sourceSetModulesIds) {

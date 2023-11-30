@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.psi.PsiElement;
@@ -22,8 +22,7 @@ public final class FileReferenceUtil {
    * @see FileReference
    * @see com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet
    */
-  @Nullable
-  public static PsiFile findFile(@Nullable PsiElement element) {
+  public static @Nullable PsiFile findFile(@Nullable PsiElement element) {
     return element == null ? null : findFile(element.getReferences());
   }
 
@@ -36,8 +35,7 @@ public final class FileReferenceUtil {
    * @see com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
    * @see PsiElement#getReferences()
    */
-  @Nullable
-  public static PsiFile findFile(PsiReference...references) {
+  public static @Nullable PsiFile findFile(PsiReference...references) {
     for (int i = references.length - 1; i >= 0; i--) {
       PsiReference ref = references[i];
       if (ref instanceof FileReferenceOwner && !(ref instanceof PsiFileReference)) {
@@ -45,14 +43,13 @@ public final class FileReferenceUtil {
       }
       if (ref instanceof PsiFileReference) {
         PsiElement file = references[i].resolve();
-        return file instanceof PsiFile ? (PsiFile)file : null;
+        if(file instanceof PsiFile ) return (PsiFile)file;
       }
     }
     return null;
   }
 
-  @Nullable
-  public static PsiFileReference findFileReference(@NotNull PsiElement element) {
+  public static @Nullable PsiFileReference findFileReference(@NotNull PsiElement element) {
     PsiReference[] references = element.getReferences();
     for (int i = references.length - 1; i >= 0; i--) {
       PsiReference ref = references[i];

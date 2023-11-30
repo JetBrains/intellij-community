@@ -47,13 +47,13 @@ class ConvertArgumentToSetIntention : SelfTargetingIntention<KtExpression>(
 ), LowPriorityAction {
 
     override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean = when (element) {
-        is KtCallExpression -> isApplicableCall(element)
-        is KtBinaryExpression -> isApplicableBinary(element)
+        is KtCallExpression -> Holder.isApplicableCall(element)
+        is KtBinaryExpression -> Holder.isApplicableBinary(element)
         else -> false
     }
 
     override fun applyTo(element: KtExpression, editor: Editor?) {
-        val arguments = getConvertibleArguments(element)
+        val arguments = Holder.getConvertibleArguments(element)
         for (arg in arguments) {
             arg.replace(KtPsiFactory(element.project).createExpressionByPattern("$0.toSet()", arg))
         }
@@ -63,7 +63,7 @@ class ConvertArgumentToSetIntention : SelfTargetingIntention<KtExpression>(
     // Implementation for the intention and the related inspection
     // Unit rests: org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.ConvertArgumentToSet
     // Unit tests: org.jetbrains.kotlin.idea.inspections.ConvertToSetInspectionTest
-    companion object {
+    object Holder {
 
         /**
          * Compute the list of arguments for which the conversion is recommended.
@@ -79,7 +79,7 @@ class ConvertArgumentToSetIntention : SelfTargetingIntention<KtExpression>(
             else -> emptyList()
         }
 
-        private fun isApplicableCall(element: KtCallExpression): Boolean =
+        internal fun isApplicableCall(element: KtCallExpression): Boolean =
             getConvertibleCallArguments(element).isNotEmpty()
 
         private fun getConvertibleCallArguments(element: KtCallExpression): List<KtExpression> {
@@ -97,7 +97,7 @@ class ConvertArgumentToSetIntention : SelfTargetingIntention<KtExpression>(
             )
         }
 
-        private fun isApplicableBinary(element: KtBinaryExpression): Boolean =
+        internal fun isApplicableBinary(element: KtBinaryExpression): Boolean =
             getConvertibleBinaryArguments(element).isNotEmpty()
 
         private fun getConvertibleBinaryArguments(element: KtBinaryExpression): List<KtExpression> {
@@ -223,8 +223,7 @@ class ConvertArgumentToSetIntention : SelfTargetingIntention<KtExpression>(
          */
         private fun resolveName(element: KtElement): PsiElement? {
             val editor = element.findExistingEditor() ?: return null
-            val resolved = TargetElementUtil.findReference(editor, element.textOffset)?.resolve()
-            return resolved
+            return TargetElementUtil.findReference(editor, element.textOffset)?.resolve()
         }
 
         /**

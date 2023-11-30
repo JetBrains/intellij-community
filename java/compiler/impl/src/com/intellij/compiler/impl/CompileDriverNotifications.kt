@@ -1,14 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl
 
-import com.intellij.build.BuildContentManager
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -16,11 +14,10 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.util.NlsContexts.NotificationContent
-import com.intellij.openapi.wm.ToolWindowManager
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-@Service //project
+@Service(Service.Level.PROJECT)
 class CompileDriverNotifications(
   private val project: Project
 ) : Disposable {

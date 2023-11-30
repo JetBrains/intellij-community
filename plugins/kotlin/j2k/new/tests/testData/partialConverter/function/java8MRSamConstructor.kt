@@ -16,7 +16,7 @@ internal class Test {
     }
 
     companion object {
-        var field = Java8Class()
+        var field: Java8Class = Java8Class()
         fun staticFun(): Java8Class {
             TODO("_root_ide_package_")
         }
@@ -32,9 +32,11 @@ internal class Test {
 }
 
 internal class Test2
+
 internal class Java8Class {
     private val field: Java8Class = TODO("_root_ide_package_")
     private val h: MethodReferenceHelperClass = TODO("_root_ide_package_")
+
     fun testStaticFunction() {
         TODO("_root_ide_package_")
     }

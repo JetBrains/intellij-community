@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -265,22 +265,22 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
     return accessibleContext;
   }
 
-  private class AccessibleStripe extends AccessibleJPanel {
+  private final class AccessibleStripe extends AccessibleJPanel {
     @Override
     public AccessibleRole getAccessibleRole() {
       return AccessibilityUtils.GROUPED_ELEMENTS;
     }
   }
 
-  private @NlsSafe @Nullable String getAccessibleStripeName() {
-    if (getButtons().isEmpty()) return null;
+  private @NlsSafe String getAccessibleStripeName() {
+    if (getButtons().isEmpty()) return "";
 
     return switch (this.anchor) {
       case SwingConstants.TOP -> UIBundle.message("stripe.top.accessible.group.name");
       case SwingConstants.BOTTOM -> UIBundle.message("stripe.bottom.accessible.group.name");
       case SwingConstants.LEFT -> UIBundle.message("stripe.left.accessible.group.name");
       case SwingConstants.RIGHT -> UIBundle.message("stripe.right.accessible.group.name");
-      default -> null;
+      default -> "";
     };
   }
 }

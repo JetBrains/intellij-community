@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
@@ -22,11 +22,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class FilePatternPackageSet extends PatternBasedPackageSet {
+public final class FilePatternPackageSet extends PatternBasedPackageSet {
   private static final Logger LOG = Logger.getInstance(FilePatternPackageSet.class);
 
-  @NonNls public static final String SCOPE_FILE = "file";
-  @NonNls public static final String SCOPE_EXT = "ext";
+  public static final @NonNls String SCOPE_FILE = "file";
+  public static final @NonNls String SCOPE_EXT = "ext";
   private final String myPathPattern;
   private final Pattern myFilePattern;
   private final boolean myProjectFiles;
@@ -120,8 +120,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Override
-  @NotNull
-  public PackageSet createCopy() {
+  public @NotNull PackageSet createCopy() {
     return new FilePatternPackageSet(myModulePatternText, myPathPattern);
   }
 
@@ -131,8 +130,7 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     @NonNls StringBuilder buf = new StringBuilder(myProjectFiles ? SCOPE_FILE : SCOPE_EXT);
 
     if (myModulePattern != null || myModuleGroupPattern != null) {
@@ -159,23 +157,20 @@ public class FilePatternPackageSet extends PatternBasedPackageSet {
            Comparing.strEqual(oldQName + "/*", myPathPattern);
   }
 
-  @NotNull
   @Override
-  public PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName) {
+  public @NotNull PatternBasedPackageSet updatePattern(@NotNull String oldName, @NotNull String newName) {
     return new FilePatternPackageSet(myModulePatternText, myPathPattern.replace(oldName, newName), myProjectFiles);
   }
 
-  @NotNull
   @Override
-  public PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName) {
+  public @NotNull PatternBasedPackageSet updateModulePattern(@NotNull String oldName, @NotNull String newName) {
     return new FilePatternPackageSet(myModulePatternText.replace(oldName, newName), myPathPattern, myProjectFiles);
   }
 
-  @Nullable
-  public static String getRelativePath(@NotNull VirtualFile virtualFile,
-                                       @NotNull ProjectFileIndex index,
-                                       final boolean useFQName,
-                                       VirtualFile projectBaseDir) {
+  public static @Nullable String getRelativePath(@NotNull VirtualFile virtualFile,
+                                                 @NotNull ProjectFileIndex index,
+                                                 final boolean useFQName,
+                                                 VirtualFile projectBaseDir) {
     final VirtualFile contentRootForFile = index.getContentRootForFile(virtualFile);
     if (contentRootForFile != null) {
       String relativePath = VfsUtilCore.getRelativePath(virtualFile, contentRootForFile, '/');

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.*;
@@ -26,7 +26,7 @@ import java.util.ArrayList;
 public class BaseCompletionService extends CompletionService {
   private static final Logger LOG = Logger.getInstance(BaseCompletionService.class);
 
-  @Nullable protected CompletionProcess myApiCompletionProcess;
+  protected @Nullable CompletionProcess myApiCompletionProcess;
 
   @ApiStatus.Internal
   public static final Key<CompletionContributor> LOOKUP_ELEMENT_CONTRIBUTOR = Key.create("lookup element contributor");
@@ -72,13 +72,11 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  @NotNull
-  protected PrefixMatcher createMatcher(String prefix, boolean typoTolerant) {
+  protected @NotNull PrefixMatcher createMatcher(String prefix, boolean typoTolerant) {
     return createMatcher(prefix, true, typoTolerant);
   }
 
-  @NotNull
-  private static CamelHumpMatcher createMatcher(String prefix, boolean caseSensitive, boolean typoTolerant) {
+  private static @NotNull CamelHumpMatcher createMatcher(String prefix, boolean caseSensitive, boolean typoTolerant) {
     return new CamelHumpMatcher(prefix, caseSensitive, typoTolerant);
   }
 
@@ -89,16 +87,14 @@ public class BaseCompletionService extends CompletionService {
   }
 
   @Override
-  @Nullable
-  public CompletionProcess getCurrentCompletion() {
+  public @Nullable CompletionProcess getCurrentCompletion() {
     return myApiCompletionProcess;
   }
 
   protected static class BaseCompletionResultSet extends CompletionResultSet {
     protected final CompletionParameters myParameters;
     protected CompletionSorter mySorter;
-    @Nullable
-    protected final BaseCompletionService.BaseCompletionResultSet myOriginal;
+    protected final @Nullable BaseCompletionService.BaseCompletionResultSet myOriginal;
     private int myItemCounter = 0;
 
     protected BaseCompletionResultSet(Consumer<? super CompletionResult> consumer, PrefixMatcher prefixMatcher,
@@ -181,15 +177,13 @@ public class BaseCompletionService extends CompletionService {
     }
   }
 
-  @NotNull
-  protected CompletionSorterImpl addWeighersBefore(@NotNull CompletionSorterImpl sorter) {
+  protected @NotNull CompletionSorterImpl addWeighersBefore(@NotNull CompletionSorterImpl sorter) {
     return sorter;
   }
 
-  @NotNull
-  protected CompletionSorterImpl processStatsWeigher(@NotNull CompletionSorterImpl sorter,
-                                                     @NotNull Weigher weigher,
-                                                     @NotNull CompletionLocation location) {
+  protected @NotNull CompletionSorterImpl processStatsWeigher(@NotNull CompletionSorterImpl sorter,
+                                                              @NotNull Weigher weigher,
+                                                              @NotNull CompletionLocation location) {
     return sorter;
   }
 

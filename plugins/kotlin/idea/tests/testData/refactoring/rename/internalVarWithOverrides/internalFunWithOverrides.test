@@ -1,5 +1,6 @@
 {
   "type": "MARKED_ELEMENT",
   "mainFile": "test.kt",
-  "newName": "newOverridableVar"
+  "newName": "newOverridableVar",
+  "enabledInK2": "true"
 }

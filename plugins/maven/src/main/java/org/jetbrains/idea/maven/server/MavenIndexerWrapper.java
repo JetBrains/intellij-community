@@ -1,48 +1,74 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.indices.MavenIndices;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenIndexId;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.model.MavenRepositoryInfo;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<MavenServerIndexer> {
-  private static volatile Path ourTestIndicesDir;
-
-  private MavenIndices myIndices;
-
-  @TestOnly
-  public static void setTestIndicesDir(Path myTestIndicesDir) {
-    ourTestIndicesDir = myTestIndicesDir;
-  }
-
-  @NotNull
-  public static Path getIndicesDir() {
-    return ourTestIndicesDir == null
-           ? MavenUtil.getPluginSystemDir("Indices")
-           : ourTestIndicesDir;
-  }
 
 
   public MavenIndexerWrapper(@Nullable RemoteObjectWrapper<?> parent) {
     super(parent);
+  }
+
+  public @Nullable MavenIndexUpdateState startIndexing(MavenRepositoryInfo info, File indexDir) {
+    try {
+      MavenServerIndexer w = getOrCreateWrappee();
+      if (!(w instanceof AsyncMavenServerIndexer)) {
+        MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?");
+        return null;
+      }
+      return ((AsyncMavenServerIndexer)w).startIndexing(info, indexDir, ourToken);
+    }
+    catch (RemoteException e) {
+      handleRemoteError(e);
+    }
+    return null;
+  }
+
+  public void stopIndexing(MavenRepositoryInfo info) {
+    try {
+      MavenServerIndexer w = getOrCreateWrappee();
+      if (!(w instanceof AsyncMavenServerIndexer)) {
+        MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?");
+        return;
+      }
+      ((AsyncMavenServerIndexer)w).stopIndexing(info, ourToken);
+    }
+    catch (RemoteException e) {
+      handleRemoteError(e);
+    }
+  }
+
+  public List<MavenIndexUpdateState> status() {
+
+    try {
+      MavenServerIndexer w = getOrCreateWrappee();
+      if (!(w instanceof AsyncMavenServerIndexer)) {
+        MavenLog.LOG.warn("wrappee not an instance of AsyncMavenServerIndexer, is dedicated indexer enabled?");
+        return Collections.emptyList();
+      }
+      return ((AsyncMavenServerIndexer)w).status(ourToken);
+    }
+    catch (RemoteException e) {
+      handleRemoteError(e);
+    }
+    return Collections.emptyList();
   }
 
   public void releaseIndex(MavenIndexId mavenIndexId) throws MavenServerIndexerException {
@@ -74,13 +100,13 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   }
 
   public void updateIndex(@NotNull final MavenIndexId mavenIndexId,
-                          @Nullable final MavenGeneralSettings settings,
-                          @NotNull final MavenProgressIndicator indicator) throws MavenProcessCanceledException,
-                                                                         MavenServerIndexerException {
+                          @NotNull final MavenProgressIndicator indicator,
+                          boolean multithreaded) throws MavenProcessCanceledException,
+                                                        MavenServerIndexerException {
     performCancelable(() -> {
       MavenServerProgressIndicator indicatorWrapper = wrapAndExport(indicator);
       try {
-        getOrCreateWrappee().updateIndex(mavenIndexId, indicatorWrapper, ourToken);
+        getOrCreateWrappee().updateIndex(mavenIndexId, indicatorWrapper, multithreaded, ourToken);
       }
       finally {
         UnicastRemoteObject.unexportObject(indicatorWrapper, true);
@@ -97,7 +123,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
         List<IndexedMavenId> list;
         do {
           if (progress.isCanceled()) return null;
-          MavenLog.LOG.warn("process artifacts: " + start);
+          MavenLog.LOG.debug("process artifacts: " + start);
           list = getOrCreateWrappee().processArtifacts(mavenIndexId, start, ourToken);
           if (list != null) {
             processor.processArtifacts(list);
@@ -106,7 +132,8 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
         }
         while (list != null);
         return null;
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         return null;
       }
     });
@@ -116,7 +143,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   public List<AddArtifactResponse> addArtifacts(MavenIndexId mavenIndexId, Collection<File> artifactFiles) {
     return perform(() -> {
       try {
-        return getOrCreateWrappee().addArtifacts(mavenIndexId, artifactFiles, ourToken);
+        return getOrCreateWrappee().addArtifacts(mavenIndexId, new ArrayList<>(artifactFiles), ourToken);
       }
       catch (Throwable ignore) {
         return ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
@@ -130,19 +157,10 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   }
 
   @ApiStatus.Internal
-  public MavenIndices getOrCreateIndices() {
-    if (myIndices != null) {
-      return myIndices;
-    }
-    synchronized (this) {
-      if (myIndices == null) {
-        myIndices = createMavenIndices();
-      }
-      
-      return myIndices;
-    }
+  public MavenIndices getOrCreateIndices(Project project) {
+    return createMavenIndices(project);
   }
 
-  protected abstract MavenIndices createMavenIndices();
+  protected abstract MavenIndices createMavenIndices(Project project);
 }
 

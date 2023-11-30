@@ -15,6 +15,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.tooling.FileComparisonTestAssertionFailure;
 import org.gradle.tooling.events.FailureResult;
 import org.gradle.tooling.events.OperationDescriptor;
 import org.gradle.tooling.events.SkippedResult;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.StringJoiner;
 
@@ -39,12 +42,16 @@ public final class GradleProgressEventConverter {
 
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.externalSystem.event-processing");
 
+  private static final Charset FILE_COMPARISON_CONTENT_CHARSET = StandardCharsets.UTF_8;
+
   private static @NotNull String createEventId(@NotNull OperationDescriptor descriptor, @NotNull String operationId) {
     var joiner = new StringJoiner(" > ");
     joiner.add("[" + operationId + "]");
     var currentDescriptor = descriptor;
     while (currentDescriptor != null) {
-      joiner.add("[" + currentDescriptor.getDisplayName() + "]");
+      if (!isSkipped(currentDescriptor)) {
+        joiner.add("[" + currentDescriptor.getDisplayName() + "]");
+      }
       currentDescriptor = currentDescriptor.getParent();
     }
     return joiner.toString();
@@ -55,6 +62,9 @@ public final class GradleProgressEventConverter {
     @NotNull String operationId,
     @NotNull ProgressEvent event
   ) {
+    if (isSkipped(event.getDescriptor())) {
+      return null;
+    }
     if (event instanceof TaskProgressEvent taskProgressEvent) {
       return convertTaskProgressEvent(taskProgressEvent, taskId, operationId);
     }
@@ -158,6 +168,30 @@ public final class GradleProgressEventConverter {
     var message = failure.getMessage();
     var description = failure.getDescription();
     var causes = ContainerUtil.map(failure.getCauses(), it -> convertTestFailure(it));
+    if (failure instanceof FileComparisonTestAssertionFailure comparisonFailure) {
+      var exceptionName = comparisonFailure.getClassName();
+      var stackTrace = comparisonFailure.getStacktrace();
+
+      var expectedContent = comparisonFailure.getExpectedContent();
+      var expectedText = expectedContent != null ?
+                         new String(expectedContent, FILE_COMPARISON_CONTENT_CHARSET) :
+                         comparisonFailure.getExpected();
+      var expectedFile = expectedContent != null ?
+                         comparisonFailure.getExpected() :
+                         null;
+
+      var actualContent = comparisonFailure.getActualContent();
+      var actualText = actualContent != null ?
+                       new String(actualContent, FILE_COMPARISON_CONTENT_CHARSET) :
+                       comparisonFailure.getActual();
+      var actualFile = actualContent != null ?
+                       comparisonFailure.getActual() :
+                       null;
+
+      if (expectedText != null && actualText != null) {
+        return new TestAssertionFailure(exceptionName, message, stackTrace, description, causes, expectedText, actualText, expectedFile, actualFile);
+      }
+    }
     if (failure instanceof org.gradle.tooling.TestAssertionFailure assertionFailure) {
       var exceptionName = assertionFailure.getClassName();
       var stackTrace = assertionFailure.getStacktrace();
@@ -189,48 +223,6 @@ public final class GradleProgressEventConverter {
     return new TestOperationDescriptorImpl(displayName, eventTime, null, null, null);
   }
 
-  public static @Nullable ExternalSystemTaskNotificationEvent convertProgressBuildEvent(
-    @NotNull ExternalSystemTaskId taskId,
-    @NotNull Object id,
-    @NotNull ProgressEvent event
-  ) {
-    var total = -1L;
-    var progress = -1L;
-    var unit = "";
-    if (event instanceof StatusEvent statusEvent) {
-      total = statusEvent.getTotal();
-      progress = statusEvent.getProgress();
-      unit = statusEvent.getUnit();
-    }
-    var operationName = convertBuildEventDisplayName(event);
-    if (operationName == null) {
-      return null;
-    }
-    var esEvent = new ProgressBuildEventImpl(id, null, event.getEventTime(), operationName + "...", total, progress, unit);
-    return new ExternalSystemBuildEvent(taskId, esEvent);
-  }
-
-  private static @Nullable @NlsSafe String convertBuildEventDisplayName(@NotNull ProgressEvent event) {
-    @NlsSafe String operationName = event.getDescriptor().getName();
-    if (operationName.startsWith("Download ")) {
-      var path = operationName.substring("Download ".length());
-      return GradleBundle.message("progress.title.download", PathUtil.getFileName(path));
-    }
-    if (event instanceof TaskProgressEvent) {
-      return GradleBundle.message("progress.title.run.tasks");
-    }
-    if (event instanceof TestProgressEvent) {
-      return GradleBundle.message("progress.title.run.tests");
-    }
-    if (event.getDisplayName().startsWith("Configure project ")) {
-      return GradleBundle.message("progress.title.configure.projects");
-    }
-    else if (event.getDisplayName().startsWith("Cross-configure project ")) {
-      return GradleBundle.message("progress.title.configure.projects");
-    }
-    return null;
-  }
-
   public static @Nullable ExternalSystemTaskNotificationEvent legacyConvertProgressBuildEvent(
     @NotNull ExternalSystemTaskId taskId,
     @NotNull Object id,
@@ -247,7 +239,7 @@ public final class GradleProgressEventConverter {
     return new ExternalSystemBuildEvent(taskId, esEvent);
   }
 
-  private static @Nullable @NlsSafe String legacyConvertBuildEventDisplayName(@NotNull String eventDescription) {
+  public static @Nullable @NlsSafe String legacyConvertBuildEventDisplayName(@NotNull String eventDescription) {
     if (eventDescription.startsWith("Download ")) {
       var path = eventDescription.substring("Download ".length());
       return GradleBundle.message("progress.title.download", PathUtil.getFileName(path));
@@ -278,5 +270,20 @@ public final class GradleProgressEventConverter {
     @NotNull String event
   ) {
     return new ExternalSystemTaskNotificationEvent(taskId, event);
+  }
+
+  private static boolean isSkipped(@NotNull OperationDescriptor descriptor) {
+    String name = descriptor.getDisplayName();
+    return isMissedProgressEvent(name) || isUnnecessaryTestProgressEvent(name);
+  }
+
+  private static boolean isUnnecessaryTestProgressEvent(@NotNull String name) {
+    return name.startsWith("Gradle Test Executor") || name.startsWith("Gradle Test Run");
+  }
+
+  private static boolean isMissedProgressEvent(@NotNull String name) {
+    return name.startsWith("Execute executeTests for") || name.startsWith("Executing task")
+           || name.startsWith("Run tasks") || name.startsWith("Run main tasks")
+           || name.startsWith("Run build");
   }
 }

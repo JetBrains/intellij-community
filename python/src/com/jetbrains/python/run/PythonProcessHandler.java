@@ -3,13 +3,17 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.KillableColoredProcessHandler;
+import com.intellij.execution.process.AnsiEscapeDecoder;
+import com.intellij.execution.process.KillableProcessHandler;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
-public class PythonProcessHandler extends KillableColoredProcessHandler {
+public class PythonProcessHandler extends KillableProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
+
+  private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
   public static boolean softKillOnWin() {
     return Registry.is("kill.windows.processes.softly", false);
@@ -26,5 +30,19 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
   @Override
   protected boolean shouldDestroyProcessRecursively() {
     return true;
+  }
+
+  @Override
+  public final void notifyTextAvailable(@NotNull final String text, @NotNull final Key outputType) {
+    if (hasPty()) {
+      super.notifyTextAvailable(text, outputType);
+    } else {
+      myAnsiEscapeDecoder.escapeText(text, outputType, this);
+    }
+  }
+
+  @Override
+  public void coloredTextAvailable(@NotNull String text, @NotNull Key attributes) {
+    super.notifyTextAvailable(text, attributes);
   }
 }

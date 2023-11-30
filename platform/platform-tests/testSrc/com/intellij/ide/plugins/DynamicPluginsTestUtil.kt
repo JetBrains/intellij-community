@@ -26,9 +26,9 @@ internal fun loadDescriptorInTest(
     loadDescriptorFromFileOrDir(
       file = dir,
       context = DescriptorListLoadingContext(
-        brokenPluginVersions = emptyMap(),
+        customBrokenPluginVersions = emptyMap(),
         productBuildNumber = { buildNumber },
-        disabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
+        customDisabledPlugins = disabledPlugins.mapTo(LinkedHashSet(), PluginId::getId),
       ),
       pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
       isBundled = isBundled,

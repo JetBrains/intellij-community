@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.JavaStackFrame;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -30,7 +29,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.sun.jdi.InvalidStackFrameException;
-import com.sun.jdi.NativeMethodException;
 import com.sun.jdi.VMDisconnectedException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -49,9 +47,8 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
 
   @Override
   public boolean canDrop(@NotNull XStackFrame frame) {
-    if (frame instanceof JavaStackFrame) {
-      StackFrameProxyImpl proxy = ((JavaStackFrame)frame).getStackFrameProxy();
-      return !proxy.isBottom() && proxy.getVirtualMachine().canPopFrames();
+    if (frame instanceof JavaStackFrame javaStackFrame) {
+        return javaStackFrame.getStackFrameProxy().getVirtualMachine().canPopFrames() && javaStackFrame.getDescriptor().canDrop();
     }
     return false;
   }
@@ -82,10 +79,6 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
           return;
         }
         popFrame(debugProcess, debuggerContext, stackFrame);
-      }
-      catch (NativeMethodException e2) {
-        Messages.showMessageDialog(project, JavaDebuggerBundle.message("error.native.method.exception"),
-                                   XDebuggerBundle.message("xdebugger.reset.frame.title"), Messages.getErrorIcon());
       }
       catch (InvalidStackFrameException | VMDisconnectedException ignored) {
       }
@@ -152,13 +145,14 @@ public class JvmDropFrameActionHandler implements XDropFrameHandler {
             .show(project);
 
           switch (res) {
-            case Messages.CANCEL:
+            case Messages.CANCEL -> {
               return true;
-            case Messages.NO:
-              break;
-            case Messages.YES: // evaluate finally
+            }
+            case Messages.NO -> {}
+            case Messages.YES -> { // evaluate finally
               evaluateAndAct(project, stackFrame, sb, callback);
               return true;
+            }
           }
         }
       }

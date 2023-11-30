@@ -1,0 +1,147 @@
+<idea-plugin>
+    <actions>
+        <!-- Kotlin Console REPL-->
+        <action id="KotlinConsoleREPL" class="org.jetbrains.kotlin.console.actions.RunKotlinConsoleAction"
+                icon="org.jetbrains.kotlin.idea.KotlinIcons.LAUNCH">
+            <add-to-group group-id="KotlinToolsGroup" anchor="last"/>
+        </action>
+
+        <action id="ConfigureKotlinInProject" class="org.jetbrains.kotlin.idea.actions.ConfigureKotlinJavaInProjectAction">
+            <add-to-group group-id="KotlinToolsGroup"/>
+        </action>
+
+        <action id="CreateIncrementalCompilationBackup"
+                class="org.jetbrains.kotlin.idea.internal.makeBackup.CreateIncrementalCompilationBackup" internal="true">
+            <add-to-group group-id="KotlinInternalGroup"/>
+        </action>
+
+        <action id="ReactivePostOpenProjectActionsAction" class="org.jetbrains.kotlin.idea.actions.internal.ReactivePostOpenProjectActionsAction"
+                text="Kotlin Project Post-Open Activity" internal="true">
+            <add-to-group group-id="KotlinInternalGroup"/>
+        </action>
+    </actions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <projectService serviceInterface="org.jetbrains.kotlin.console.KotlinConsoleKeeper"
+                        serviceImplementation="org.jetbrains.kotlin.console.KotlinConsoleKeeper"/>
+
+        <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.compiler.configuration.KotlinBuildProcessParametersProvider"/>
+
+        <projectService serviceInterface="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"
+                        serviceImplementation="org.jetbrains.kotlin.idea.scratch.ScratchFileAutoRunner"/>
+
+        <projectService serviceImplementation="org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState"/>
+
+        <framework.type implementation="org.jetbrains.kotlin.idea.framework.JavaFrameworkType"/>
+
+        <library.presentationProvider implementation="org.jetbrains.kotlin.idea.framework.JavaRuntimePresentationProvider"/>
+
+        <configurationType implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationType"/>
+        <configurationType implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationType"/>
+        <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer"/>
+        <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer"/>
+
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector"
+                            serviceImplementation="org.jetbrains.kotlin.idea.run.KotlinFE10MainFunctionDetector"/>
+
+        <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.JSLibraryType"/>
+        <library.type implementation="org.jetbrains.kotlin.idea.base.platforms.library.WasmLibraryType"/>
+        <library.javaSourceRootDetector implementation="org.jetbrains.kotlin.idea.configuration.KotlinSourceRootDetector"/>
+
+        <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
+
+        <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
+
+        <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
+
+        <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.inspections.JavaOutsideModuleDetector"/>
+
+        <consoleFilterProvider implementation="org.jetbrains.kotlin.idea.run.KotlinConsoleFilterProvider"/>
+
+        <externalSystemTaskNotificationListener implementation="org.jetbrains.kotlin.idea.configuration.KotlinExternalSystemSyncListener"/>
+
+        <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.versions.UnsupportedAbiVersionNotificationPanelProvider"/>
+
+        <scratch.creationHelper language="kotlin"
+                                implementationClass="org.jetbrains.kotlin.idea.scratch.KtScratchFileCreationHelper"/>
+        <runLineMarkerContributor language="kotlin"
+                                  implementationClass="org.jetbrains.kotlin.idea.scratch.actions.ScratchRunLineMarkerContributor"/>
+
+        <applicationService serviceInterface="org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.IdeaKotlinUastResolveProviderService"/>
+        <projectService serviceInterface="org.jetbrains.uast.kotlin.KotlinUastResolveProviderService"
+                        serviceImplementation="org.jetbrains.uast.kotlin.internal.IdeaKotlinUastResolveProviderService"/>
+
+        <postStartupActivity implementation="org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerStartupActivity"/>
+
+      <notificationGroup id="Configure Kotlin in Project" displayType="STICKY_BALLOON" isLogByDefault="true"
+                         bundle="messages.KotlinJvmBundle" key="notification.group.configure.kotlin.in.project"/>
+
+      <registryKey key="kotlin.ultra.light.classes.empty.text.range"
+                   description="Return 'null' text range as in old light class implementation"
+                   defaultValue="false"
+                   restartRequired="false"/>
+
+      <registryKey key="kotlin.uast.force.uinjectionhost"
+                   description="Whether to convert `KtStringTemplateExpression` to `KotlinStringTemplateUPolyadicExpression` in all cases"
+                   defaultValue="false"
+                   restartRequired="false"/>
+
+      <registryKey key="kotlin.uast.use.psi.type.precheck"
+                   description="Whether to use Psi Source type checking optimization"
+                   defaultValue="true"
+                   restartRequired="true"/>
+
+      <registryKey key="kotlin.jps.instrument.bytecode"
+                   description="Enable bytecode instrumentation for Kotlin classes"
+                   defaultValue="false"
+                   restartRequired="false"/>
+
+      <registryKey key="kotlin.not.configured.show.notification"
+                   defaultValue="true"
+                   description="Show notification about Kotlin missing configuration"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.jetbrains.uast">
+        <uastLanguagePlugin implementation="org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin"/>
+        <analysis.uastAnalysisPlugin implementation="org.jetbrains.uast.kotlin.analysis.KotlinUastAnalysisPlugin"/>
+        <evaluation.uastEvaluatorExtension implementation="org.jetbrains.uast.kotlin.evaluation.KotlinEvaluatorExtension"/>
+        <generate.uastCodeGenerationPlugin implementation="org.jetbrains.uast.kotlin.generate.KotlinUastCodeGenerationPlugin"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.jetbrains.kotlin">
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JvmIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10JsIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10WasmIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10NativeIdePlatformKindTooling"/>
+        <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10CommonIdePlatformKindTooling"/>
+
+        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
+
+        <declarationAttributeAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
+        <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
+
+        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgComponentContainerContributor"/>
+        <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgExpressionCodegenExtension"/>
+        <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.NoArgUltraLightClassModifierExtension"/>
+        <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
+
+        <newFileHook implementation="org.jetbrains.kotlin.idea.configuration.NewKotlinFileConfigurationHook"/>
+        <quickFixContributor implementation="org.jetbrains.kotlin.idea.quickfix.JvmQuickFixRegistrar"/>
+        <facetValidatorCreator implementation="org.jetbrains.kotlin.idea.facet.KotlinLibraryValidatorCreator"/>
+    </extensions>
+
+    <resource-bundle>messages.KotlinBundle</resource-bundle>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"
+              topic="org.jetbrains.kotlin.idea.scratch.ScratchFileListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.project.DumbService$DumbModeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.configuration.KotlinUpdateNotificationListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+    <listener class="org.jetbrains.kotlin.idea.compiler.KotlinCompilationStatusListener"
+              topic="com.intellij.openapi.compiler.CompilationStatusListener"/>
+  </projectListeners>
+</idea-plugin>

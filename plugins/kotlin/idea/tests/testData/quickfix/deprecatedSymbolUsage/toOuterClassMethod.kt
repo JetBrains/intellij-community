@@ -13,3 +13,5 @@ class Outer {
 fun foo(inner: Outer.Inner) {
     inner.<caret>oldFun()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -32,10 +33,7 @@ import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,6 +69,7 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.JavaVersion;
@@ -304,7 +303,7 @@ public final class PlatformTestUtil {
     }
     else {
       assert !application.isWriteAccessAllowed() : "do not wait under write action to avoid possible deadlock";
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
     }
   }
 
@@ -329,11 +328,16 @@ public final class PlatformTestUtil {
   }
 
   public static void waitWhileBusy(@NotNull JTree tree) {
+    waitWhileBusy(() -> isBusy(tree, tree.getModel()));
+  }
+
+  public static void waitWhileBusy(@NotNull Supplier<Boolean> busyCondition) {
     assertDispatchThreadWithoutWriteAccess();
     long startTimeMillis = System.currentTimeMillis();
-    while (isBusy(tree, tree.getModel())) {
+    while (busyCondition.get()) {
       assertMaxWaitTimeSince(startTimeMillis);
       TimeoutUtil.sleep(5);
+      UIUtil.dispatchAllInvocationEvents();
     }
   }
 
@@ -443,7 +447,7 @@ public final class PlatformTestUtil {
                                    "; alarm passed=" + alarmInvoked1.get() +
                                    "; modality1=" + initialModality +
                                    "; modality2=" + ModalityState.current() +
-                                   "; non-modal=" + (initialModality == ModalityState.NON_MODAL) +
+                                   "; non-modal=" + (initialModality == ModalityState.nonModal()) +
                                    "; invokeLater passed=" + runnableInvoked.get() +
                                    "; pooled alarm passed=" + pooledRunnableInvoked.get() +
                                    "; app.disposed=" + app.isDisposed() +
@@ -468,12 +472,14 @@ public final class PlatformTestUtil {
   public static void dispatchAllInvocationEventsInIdeEventQueue() {
     assertDispatchThreadWithoutWriteAccess();
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-    while (true) {
-      AWTEvent event = eventQueue.peekEvent();
-      if (event == null) break;
-      event = eventQueue.getNextEvent();
-      if (event instanceof InvocationEvent) {
-        eventQueue.dispatchEvent(event);
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      while (true) {
+        AWTEvent event = eventQueue.peekEvent();
+        if (event == null) break;
+        event = eventQueue.getNextEvent();
+        if (event instanceof InvocationEvent) {
+          eventQueue.dispatchEvent(event);
+        }
       }
     }
   }
@@ -484,7 +490,7 @@ public final class PlatformTestUtil {
   public static void dispatchAllEventsInIdeEventQueue() {
     assertEventQueueDispatchThread();
     while (true) {
-      try {
+      try (AccessToken ignored = ThreadContext.resetThreadContext()) {
         if (dispatchNextEventIfAny() == null) break;
       }
       catch (InterruptedException e) {
@@ -630,8 +636,8 @@ public final class PlatformTestUtil {
    */
   // to warn about not calling .assertTiming() in the end
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable<?> test) {
-    return startPerformanceTestWithVariableInputSize(what, expectedMs, 1, () -> {
+  public static @NotNull PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String launchName, int expectedMs, @NotNull ThrowableRunnable<?> test) {
+    return startPerformanceTestWithVariableInputSize(launchName, expectedMs, 1, () -> {
       test.run();
       return 1;
     });
@@ -646,11 +652,11 @@ public final class PlatformTestUtil {
    * </p>
    */
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo startPerformanceTestWithVariableInputSize(@NonNls @NotNull String what,
+  public static @NotNull PerformanceTestInfo startPerformanceTestWithVariableInputSize(@NonNls @NotNull String launchName,
                                                                                        int expectedMs,
                                                                                        int expectedInputSize,
                                                                                        @NotNull ThrowableComputable<Integer, ?> test) {
-    return new PerformanceTestInfo(test, expectedMs, expectedInputSize, what);
+    return new PerformanceTestInfo(test, expectedMs, expectedInputSize, launchName);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
@@ -786,7 +792,8 @@ public final class PlatformTestUtil {
         assertArrayEquals(fileExpected.getPath(), fileExpected.contentsToByteArray(), fileActual.contentsToByteArray());
       }
       else if (!StringUtil.equals(expected, actual)) {
-        throw new FileComparisonFailure("Text mismatch in the file " + fileExpected.getName(), expected, actual, fileExpected.getPath());
+        throw new FileComparisonFailure("Text mismatch in the file " + fileExpected.getName(), expected, actual,
+                                        fileActual.getUserData(VfsTestUtil.TEST_DATA_FILE_PATH));
       }
     }
   }
@@ -1067,8 +1074,16 @@ public final class PlatformTestUtil {
     Pair<@NotNull ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId, null);
     ProcessHandler processHandler = result.second.getProcessHandler();
     assertNotNull("Process handler must not be null!", processHandler);
-    waitWithEventsDispatching("Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
-                              processHandler::isProcessTerminated, Math.toIntExact(timeoutInSeconds));
+    waitWithEventsDispatching(
+      () -> "Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
+      processHandler::isProcessTerminated, Math.toIntExact(timeoutInSeconds),
+      () -> {
+        if (!processHandler.isProcessTerminated()) {
+          LOG.debug("Destroying process: " + processHandler);
+          processHandler.destroyProcess();
+        }
+      });
+
     return result.first;
   }
 
@@ -1109,33 +1124,43 @@ public final class PlatformTestUtil {
     }
     Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
     ExecutionEnvironment executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
-    ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, descriptor -> {
-      LOG.debug("Process started");
-      if (descriptorProcessor != null) {
-        descriptorProcessor.accept(descriptor);
+    boolean[] failure = {false};
+    ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
+      @Override
+      public void processNotStarted() {
+        failure[0] = true;
       }
-      ProcessHandler processHandler = descriptor.getProcessHandler();
-      assertNotNull(processHandler);
-      processHandler.addProcessListener(new ProcessAdapter() {
-        @Override
-        public void startNotified(@NotNull ProcessEvent event) {
-          LOG.debug("Process notified");
-        }
 
-        @Override
-        public void processTerminated(@NotNull ProcessEvent event) {
-          LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
+      @Override
+      public void processStarted(RunContentDescriptor descriptor) {
+        ProcessHandler processHandler = descriptor.getProcessHandler();
+        LOG.debug("Process started: ", processHandler);
+        if (descriptorProcessor != null) {
+          descriptorProcessor.accept(descriptor);
         }
+        assertNotNull(processHandler);
+        processHandler.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void startNotified(@NotNull ProcessEvent event) {
+            LOG.debug("Process notified: ", processHandler);
+          }
 
-        @Override
-        public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
-          LOG.debug(outputType + ": " + event.getText());
-        }
-      });
-      refRunContentDescriptor.set(descriptor);
+          @Override
+          public void processTerminated(@NotNull ProcessEvent event) {
+            LOG.debug("Process terminated: exitCode: ", event.getExitCode(), "; text: ", event.getText(), "; process: ", processHandler);
+          }
+
+          @Override
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+            LOG.debug(outputType + ": " + event.getText());
+          }
+        });
+        refRunContentDescriptor.set(descriptor);
+      }
     });
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
-    waitWithEventsDispatching("Process failed to start in 60 seconds", () -> !refRunContentDescriptor.isNull(), 60);
+    waitWithEventsDispatching("Process failed to start in 60 seconds", () -> !refRunContentDescriptor.isNull() || failure[0], 60);
+    assertFalse("Process could not start for configuration: " + runConfiguration, failure[0]);
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }
 

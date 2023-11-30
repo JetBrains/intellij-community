@@ -1,9 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn.lesson.general.assistance
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.util.text.Strings
 import com.intellij.ui.HyperlinkLabel
-import org.apache.commons.lang.StringEscapeUtils
 import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
@@ -55,7 +55,7 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
     task("ShowErrorDescription") {
       text(LessonsBundle.message("editor.coding.assistance.show.warning.description", action(it)))
       // escapeHtml required in case of hieroglyph localization
-      val inspectionInfoLabelText = StringEscapeUtils.escapeHtml(IdeBundle.message("inspection.message.inspection.info"))
+      val inspectionInfoLabelText = Strings.escapeXmlEntities(IdeBundle.message("inspection.message.inspection.info"))
       triggerUI().component { ui: JEditorPane ->
         ui.text.isToStringContains(inspectionInfoLabelText)
       }
@@ -75,7 +75,7 @@ abstract class EditorCodingAssistanceLesson(private val sample: LessonSample) :
         else null
       }
       stateCheck { editor.document.charsSequence.contains(warningFixedText) }
-      restoreByUi()
+      restoreByUi(delayMillis = defaultRestoreDelay)
       test {
         Thread.sleep(500)
         invokeActionViaShortcut("ALT SHIFT ENTER")

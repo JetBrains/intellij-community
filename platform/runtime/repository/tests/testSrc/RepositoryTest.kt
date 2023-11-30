@@ -7,6 +7,8 @@ import com.intellij.testFramework.rules.TempDirectoryExtension
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 
 class RepositoryTest {
@@ -132,5 +134,17 @@ class RepositoryTest {
     )
     val classpath = repository.getModule(RuntimeModuleId.raw("ij.main")).moduleClasspath
     assertEquals(listOf("bar.jar", "foo.jar", "baz.jar").map { tempDirectory.rootPath.resolve(it) }, classpath)
+  }
+
+  @ParameterizedTest(name = "stored bootstrap module = {0}")
+  @ValueSource(strings = ["", "ij.foo", "ij.bar"])
+  fun `bootstrap classpath`(storedBootstrapModule: String) {
+    val descriptors = arrayOf(
+      RawRuntimeModuleDescriptor("ij.foo", listOf("foo.jar"), emptyList()),
+      RawRuntimeModuleDescriptor("ij.bar", listOf("bar.jar"), listOf("ij.foo")),
+    )
+    val basePath = tempDirectory.rootPath
+    val repository = createRepository(basePath, *descriptors, bootstrapModuleName = storedBootstrapModule.takeIf { it.isNotEmpty() })
+    assertEquals(listOf(basePath.resolve("bar.jar"), basePath.resolve("foo.jar")), repository.getBootstrapClasspath("ij.bar"))
   }
 }

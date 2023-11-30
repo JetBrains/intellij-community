@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.StorageLockContext;
@@ -31,13 +32,11 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   protected static final int PAGE_SIZE = 1 << 15;
   protected static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
 
-  /**
-   * Not so much records because each of them could be up to 64k, which leads to OoM quite quickly
-   */
+  /** Not so many records because each of them could be up to 64k, which leads to OoM quite quickly */
   protected static final int ENOUGH_RECORDS = 1 << 15;
 
   protected static final int ARBITRARY_FILE_ID = 157;
-  protected static final int ARBITRARY_ATTRIBUTE_ID = 10;
+  protected static final int ARBITRARY_ATTRIBUTE_ID = AttributesStorageOverBlobStorage.MAX_SUPPORTED_ATTRIBUTE_ID - 1;
 
 
   @BeforeClass
@@ -157,6 +156,28 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   }
 
   @Test
+  public void singleBigRecordInserted_ReportedExistInStorage_AndCouldBeReadBack_WithForEach() throws IOException {
+    final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
+      .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
+
+    final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(record, attributesStorage);
+
+    final Long2ObjectMap<AttributeRecord> recordsReadWithForEach = readAllRecordsWithForEach(attributesStorage);
+    assertEquals(
+      "1 record must be read",
+      recordsReadWithForEach.size(),
+      1
+    );
+
+    final AttributeRecord recordRead = recordsReadWithForEach.get(insertedRecord.uniqueId());
+    assertNotNull(insertedRecord + " must be read back",
+                  recordRead);
+    assertArrayEquals(insertedRecord + " must be read back with same content",
+                      recordRead.attributeBytes(),
+                      insertedRecord.attributeBytes());
+  }
+
+  @Test
   public void fewAttributesInsertedForFile_AreAllReportedExistInStorage_AndCouldBeReadBack() throws IOException {
     final AttributeRecord[] records = {
       newAttributeRecord(ARBITRARY_FILE_ID, 1)
@@ -248,6 +269,44 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   }
 
   @Test
+  public void singleAttributeInserted_CouldBeDeletedTwice_If_IGNORE_ALREADY_DELETED_ERRORS_Enabled() throws IOException {
+    final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
+      .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
+
+    final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(record, attributesStorage);
+
+    assertTrue("Attribute just inserted must exist",
+               insertedRecord.existsInStorage(attributesStorage)
+    );
+
+    final boolean deleted = attributes.deleteRecord(insertedRecord, attributesStorage);
+    assertTrue("Attribute must be deleted successfully", deleted);
+    final boolean exists = insertedRecord.existsInStorage(attributesStorage);
+    assertFalse("Attribute just deleted must NOT exist", exists);
+
+    if (AttributesStorageOverBlobStorage.IGNORE_ALREADY_DELETED_ERRORS) {
+      final boolean deletedSecondTime = attributesStorage.deleteAttributes(
+        insertedRecord.recordId(),
+        insertedRecord.fileId()
+      );
+      assertFalse("Attribute is already deleted, must not be deleted on second attempt",
+                  deletedSecondTime);
+    }
+    else {
+      try {
+        attributesStorage.deleteAttributes(
+          insertedRecord.recordId(),
+          insertedRecord.fileId()
+        );
+        fail("IGNORE_ALREADY_DELETED_ERRORS=false => must throw error on second attempt to delete already deleted record");
+      }
+      catch (RecordAlreadyDeletedException e) {
+        //OK, it is expected to get an error if IGNORE_ALREADY_DELETED_ERRORS=false
+      }
+    }
+  }
+
+  @Test
   public void manyAttributesInserted_AreAllReportedExistInStorage_AndCouldBeReadBackAsIs() throws IOException {
     final int maxAttributeValueSize = Short.MAX_VALUE / 2;
     final int differentAttributesCount = 1024;
@@ -305,15 +364,8 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     // Hence, here I decided to use .uniqueId() to match written records with the records read back, and delay more correct implementation
     // until the need for it satisfies its cost.
 
-    final Long2ObjectMap<AttributeRecord> recordsReadWithForEach = new Long2ObjectOpenHashMap<>();
-    attributesStorage.forEachAttribute((recordId, fileId, attributeId, attributeValue, inlinedAttribute) -> {
-      final AttributeRecord attributeRecord = new AttributeRecord(recordId, fileId, attributeId)
-        .withAttributeBytes(attributeValue, attributeValue.length);
-      recordsReadWithForEach.put(
-        attributeRecord.uniqueId(),
-        attributeRecord
-      );
-    });
+    final Long2ObjectMap<AttributeRecord>
+      recordsReadWithForEach = readAllRecordsWithForEach(attributesStorage);
     assertEquals(
       "Same number of records must be read",
       recordsReadWithForEach.size(),
@@ -465,6 +517,20 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     }
   }
 
+  protected static Long2ObjectMap<AttributeRecord> readAllRecordsWithForEach(AttributesStorageOverBlobStorage storage) throws IOException {
+    final Long2ObjectMap<AttributeRecord> recordsReadWithForEach = new Long2ObjectOpenHashMap<>();
+
+    storage.forEachAttribute((recordId, fileId, attributeId, attributeValue, inlinedAttribute) -> {
+
+      final AttributeRecord attributeRecord = new AttributeRecord(recordId, fileId, attributeId)
+        .withAttributeBytes(attributeValue, attributeValue.length);
+
+      recordsReadWithForEach.put(attributeRecord.uniqueId(), attributeRecord);
+    });
+
+    return recordsReadWithForEach;
+  }
+
   protected static AttributeRecord[] generateManyRandomRecords(final int size,
                                                                final int differentAttributesCount,
                                                                final int maxAttributeValueSize,
@@ -475,7 +541,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
       .limit(size / 2)
       .distinct()
       .toArray();
-    final int[] attributeIds = rnd.ints(0, AttributesStorageOverBlobStorage.MAX_ATTRIBUTE_ID + 1)
+    final int[] attributeIds = rnd.ints(0, AbstractAttributesStorage.MAX_ATTRIBUTE_ID + 1)
       .filter(id -> id > 0)
       .limit(differentAttributesCount)
       .distinct()
@@ -499,7 +565,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   //TODO RC: make AttributeRecord inner class of Attributes, hence methods .store() and .delete()
   //         could be invoked through AttributeRecord itself
   //@Immutable
-  public static class AttributeRecord {
+  protected static class AttributeRecord {
     private final int attributesRecordId;
     private final int fileId;
     private final int attributeId;
@@ -614,12 +680,12 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
   /**
    * AttributeRecords are logically not independent: in real use-cases attributeRecordId is tiered
-   * to fileId (via FSRecords), hence AttributeRecords with same fileId can't have different attributeRecordIds.
+   * to fileId (via FSRecords), hence AttributeRecords with the same fileId can't have different attributeRecordIds.
    * This class emulates (very small subset of) FSRecords: it keeps fileId -> attributeRecordId mapping,
    * and maintains it during insertions/updates/deletions -- this is why all modifications should go
    * through it
    */
-  public static class Attributes {
+  protected static class Attributes {
     private final Int2IntMap fileIdToAttributeRecordId = new Int2IntOpenHashMap();
 
     public AttributeRecord insertOrUpdateRecord(final AttributeRecord record,

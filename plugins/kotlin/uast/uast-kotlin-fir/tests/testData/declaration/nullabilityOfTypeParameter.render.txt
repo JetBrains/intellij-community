@@ -25,6 +25,19 @@ public final class NullabilityOfTypeParameterKt {
     }
 }
 
+public final class CircularArray {
+    public final fun getFirst() : E {
+        return TODO()
+    }
+    public final fun getLast() : E {
+        return TODO()
+    }
+    public final fun setLast(value: E) : void {
+        return TODO()
+    }
+    public fun CircularArray() = UastEmptyExpression
+}
+
 public final class NonNullUpperBound {
     public final fun inheritedNullability(@org.jetbrains.annotations.NotNull i: T) : T {
         return i

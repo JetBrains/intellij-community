@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -8,7 +8,6 @@ import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.createProf
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
@@ -34,7 +33,7 @@ class YamlInspectionConfigImpl(override val inspection: String,
                                override val enabled: Boolean?,
                                override val severity: String?,
                                override val ignore: List<String>,
-                               override val options: Map<String, *>) : YamlInspectionConfig
+                               override val options: Map<String, String>) : YamlInspectionConfig
 
 class YamlGroupConfigImpl(override val group: String,
                           override val enabled: Boolean?,
@@ -124,7 +123,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
 
       val includeProvider: (Path) -> Reader = {
-        val includePath = configFile.parent.toNioPath().resolve(it)
+        val includePath = Path.of(configFile.parent).resolve(it)
         require(includePath.exists()) { "File does not exist: ${includePath.toCanonicalPath()}" }
         includePath.reader()
       }
@@ -161,7 +160,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       val inspectionId = config.inspection
       if (inspectionId != null) {
         return YamlInspectionConfigImpl(inspectionId, config.enabled, config.severity, config.ignore,
-                                        config.options ?: emptyMap<String, Any>())
+                                        config.options ?: emptyMap())
       }
       val groupId = config.group
       if (groupId != null) {
@@ -195,7 +194,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
           }
         }
         val options = (configuration as? YamlInspectionConfig)?.options
-        if (options != null) {
+        if (!options.isNullOrEmpty()) {
           val element = Element("tool")
           YamlProfileUtils.writeXmlOptions(element, options)
           inspectionTools.defaultState.tool.tool.readSettings(element)
@@ -305,6 +304,12 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
         }
       }
       return false
+    }
+
+    override fun hashCode(): Int = packages.hashCode()
+
+    override fun equals(other: Any?): Boolean {
+      return packages == (other as? HierarchyPackageSet)?.packages
     }
   }
 }

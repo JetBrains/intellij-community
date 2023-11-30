@@ -23,7 +23,7 @@ import java.util.List;
  * @see MasqueradingLexer
  */
 public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
-  private final static Logger LOG = Logger.getInstance(MasqueradingPsiBuilderAdapter.class);
+  private static final Logger LOG = Logger.getInstance(MasqueradingPsiBuilderAdapter.class);
 
   private List<MyShiftedToken> myShrunkSequence;
 
@@ -47,17 +47,16 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     initShrunkSequence();
   }
 
-  public MasqueradingPsiBuilderAdapter(@NotNull final Project project,
-                                       @NotNull final ParserDefinition parserDefinition,
-                                       @NotNull final MasqueradingLexer lexer,
-                                       @NotNull final ASTNode chameleon,
-                                       @NotNull final CharSequence text) {
+  public MasqueradingPsiBuilderAdapter(final @NotNull Project project,
+                                       final @NotNull ParserDefinition parserDefinition,
+                                       final @NotNull MasqueradingLexer lexer,
+                                       final @NotNull ASTNode chameleon,
+                                       final @NotNull CharSequence text) {
     this(new PsiBuilderImpl(project, parserDefinition, lexer, chameleon, text));
   }
 
-  @NotNull
   @Override
-  public CharSequence getOriginalText() {
+  public @NotNull CharSequence getOriginalText() {
     return myShrunkCharSequence;
   }
 
@@ -148,6 +147,22 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
   }
 
   @Override
+  public void rawAdvanceLexer(int steps) {
+    if (steps < 0) {
+      throw new IllegalArgumentException("Steps must be a positive integer - lexer can only be advanced. " +
+                                         "Use Marker.rollbackTo if you want to rollback PSI building.");
+    }
+    if (steps == 0) return;
+    // Be permissive as advanceLexer() and don't throw error if advancing beyond eof state
+    myLexPosition += steps;
+    if (myLexPosition > myShrunkSequence.size() || myLexPosition < 0 /* int overflow */ ) {
+      myLexPosition = myShrunkSequence.size();
+    }
+    skipWhitespace();
+    synchronizePositions(false);
+  }
+
+  @Override
   public int rawTokenTypeStart(int steps) {
     int cur = myLexPosition + steps;
     if (cur < 0) return -1;
@@ -165,9 +180,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     return myLexPosition < myShrunkSequence.size() ? myShrunkSequence.get(myLexPosition).shrunkStart : myShrunkCharSequence.length();
   }
 
-  @Nullable
   @Override
-  public IElementType getTokenType() {
+  public @Nullable IElementType getTokenType() {
     if (eof()) {
       return null;
     }
@@ -176,9 +190,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     return myLexPosition < myShrunkSequence.size() ? myShrunkSequence.get(myLexPosition).elementType : null;
   }
 
-  @Nullable
   @Override
-  public String getTokenText() {
+  public @Nullable String getTokenText() {
     if (eof()) {
       return null;
     }
@@ -203,9 +216,8 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
     return true;
   }
 
-  @NotNull
   @Override
-  public Marker mark() {
+  public @NotNull Marker mark() {
     Marker originalPositionMarker = null;
     // In the case of the topmost node all should be inserted
     if (myLexPosition != 0) {
@@ -363,8 +375,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
       super.error(message);
     }
 
-    @NotNull
-    private Marker getDelegateOrThis(@NotNull Marker marker) {
+    private static @NotNull Marker getDelegateOrThis(@NotNull Marker marker) {
       if (marker instanceof DelegateMarker) {
         return ((DelegateMarker)marker).getDelegate();
       }

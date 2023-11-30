@@ -2,10 +2,12 @@
 package org.jetbrains.kotlin.idea.refactoring.intentions
 
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -140,18 +142,24 @@ object OperatorToFunctionConverter {
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     private fun isOfNullableType(expression: KtExpression): Boolean? = allowAnalysisOnEdt {
-        analyze(expression) {
-            expression.getKtType()?.isMarkedNullable
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        allowAnalysisFromWriteAction {
+            analyze(expression) {
+                expression.getKtType()?.isMarkedNullable
+            }
         }
     }
 
     @OptIn(KtAllowAnalysisOnEdt::class)
     private fun getCalledFunctionName(element: KtBinaryExpression): Name? = allowAnalysisOnEdt {
-        analyze(element) {
-            val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull()
-            val targetSymbol = resolvedCall?.partiallyAppliedSymbol?.symbol
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        allowAnalysisFromWriteAction {
+            analyze(element) {
+                val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull()
+                val targetSymbol = resolvedCall?.partiallyAppliedSymbol?.symbol
 
-            (targetSymbol as? KtNamedSymbol)?.name
+                (targetSymbol as? KtNamedSymbol)?.name
+            }
         }
     }
 

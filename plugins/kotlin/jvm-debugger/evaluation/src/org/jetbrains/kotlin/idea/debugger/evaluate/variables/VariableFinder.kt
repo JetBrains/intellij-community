@@ -29,6 +29,7 @@ import kotlin.coroutines.Continuation
 import com.sun.jdi.Type as JdiType
 import org.jetbrains.org.objectweb.asm.Type as AsmType
 
+private const val OLD_CONTEXT_RECEIVER_PREFIX = "_context_receiver"
 
 class VariableFinder(val context: ExecutionContext) {
     private val frameProxy = context.frameProxy
@@ -91,7 +92,10 @@ class VariableFinder(val context: ExecutionContext) {
 
         class ContextReceiver(asmType: AsmType) : VariableKind(asmType) {
             override fun capturedNameMatches(name: String) =
-                name.startsWith(CONTEXT_RECEIVER_PREFIX) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX)
+                name.startsWith(CONTEXT_RECEIVER_PREFIX)
+                        || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX)
+                        || name.startsWith(OLD_CONTEXT_RECEIVER_PREFIX)
+                        || name.startsWith(AsmUtil.CAPTURED_PREFIX + OLD_CONTEXT_RECEIVER_PREFIX)
         }
     }
 

@@ -6,10 +6,10 @@ import org.jetbrains.annotations.ApiStatus
 sealed interface Align {
   companion object {
     @JvmField
-    val FILL = AlignX.FILL + AlignY.FILL
+    val FILL: Align = AlignX.FILL + AlignY.FILL
 
     @JvmField
-    val CENTER = AlignX.CENTER + AlignY.CENTER
+    val CENTER: Align = AlignX.CENTER + AlignY.CENTER
   }
 }
 

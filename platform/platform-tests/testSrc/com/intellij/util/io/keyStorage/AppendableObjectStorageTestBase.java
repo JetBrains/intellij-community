@@ -19,12 +19,12 @@ import static org.hamcrest.Matchers.*;
 
 public abstract class AppendableObjectStorageTestBase<V> {
 
-  public static final int ENOUGH_VALUES = 32 << 10;
+  public static final int ENOUGH_VALUES = 128 << 10;
 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private AppendableObjectStorage<V> appendableStorage;
+  protected AppendableObjectStorage<V> appendableStorage;
 
 
   // ================= simple single-value tests: =====================================================
@@ -35,8 +35,8 @@ public abstract class AppendableObjectStorageTestBase<V> {
 
     appendableStorage.lockWrite();
     try {
-      final int offset = appendableStorage.append(valueAppended);
-      final V valueReadBack = appendableStorage.read(offset, false);
+      final int valueId = appendableStorage.append(valueAppended);
+      final V valueReadBack = appendableStorage.read(valueId, false);
       assertThat(
         "Value appended must be read back as-is",
         valueReadBack,
@@ -53,10 +53,10 @@ public abstract class AppendableObjectStorageTestBase<V> {
     final V valueWritten = generateValue();
     appendableStorage.lockWrite();
     try {
-      final int offset = appendableStorage.append(valueWritten);
+      final int valueId = appendableStorage.append(valueWritten);
       assertThat(
         "Value just appended must have same bytes",
-        appendableStorage.checkBytesAreTheSame(offset, valueWritten),
+        appendableStorage.checkBytesAreTheSame(valueId, valueWritten),
         is(true)
       );
     }
@@ -70,28 +70,25 @@ public abstract class AppendableObjectStorageTestBase<V> {
     V valueAppended = generateValue();
 
 
+    final int valueIdAppended;
     appendableStorage.lockWrite();
     try {
-      int offsetAppended = appendableStorage.append(valueAppended);
-
-      //RC: must flush data before .processAll()!
-      appendableStorage.force();
-
-      List<Pair<Integer, V>> valuesAndOffsets = new ArrayList<>();
-      appendableStorage.processAll((valueOffset, value) -> {
-        valuesAndOffsets.add(Pair.pair(valueOffset, value));
-        return true;
-      });
-
-      assertThat(
-        "Value appended must be read back as-is by .processAll()",
-        valuesAndOffsets,
-        contains(Pair.pair(offsetAppended, valueAppended))
-      );
+      valueIdAppended = appendableStorage.append(valueAppended);
     }
     finally {
       appendableStorage.unlockWrite();
     }
+    List<Pair<Integer, V>> valuesAndValueIds = new ArrayList<>();
+    appendableStorage.processAll((valueId, value) -> {
+      valuesAndValueIds.add(Pair.pair(valueId, value));
+      return true;
+    });
+
+    assertThat(
+      "Value appended must be read back as-is by .processAll()",
+      valuesAndValueIds,
+      contains(Pair.pair(valueIdAppended, valueAppended))
+    );
   }
 
   // ================= multi-value property-based tests: ===========================================
@@ -100,17 +97,17 @@ public abstract class AppendableObjectStorageTestBase<V> {
   public void manyValuesAppendedToStorage_AllReadBackAsIs() throws Exception {
     List<V> valuesAppended = generateValues(ENOUGH_VALUES);
 
-    List<Pair<Integer, V>> valuesAndOffsets = new ArrayList<>();
+    List<Pair<Integer, V>> valuesAndvalueIds = new ArrayList<>();
     appendableStorage.lockWrite();
     try {
       for (V valueToAppend : valuesAppended) {
-        int appendedAtOffset = appendableStorage.append(valueToAppend);
-        valuesAndOffsets.add(Pair.pair(appendedAtOffset, valueToAppend));
+        int valueId = appendableStorage.append(valueToAppend);
+        valuesAndvalueIds.add(Pair.pair(valueId, valueToAppend));
       }
-      for (Pair<Integer, V> valuesAndOffset : valuesAndOffsets) {
-        final V valueAppended = valuesAndOffset.second;
-        final Integer appendedAtOffset = valuesAndOffset.first;
-        V valueReadBack = appendableStorage.read(appendedAtOffset, false);
+      for (Pair<Integer, V> valuesAndvalueId : valuesAndvalueIds) {
+        final V valueAppended = valuesAndvalueId.second;
+        final int valueId = valuesAndvalueId.first;
+        V valueReadBack = appendableStorage.read(valueId, false);
         assertThat(
           "Value appended must be read back as-is",
           valueReadBack,
@@ -127,19 +124,19 @@ public abstract class AppendableObjectStorageTestBase<V> {
   public void manyValuesAppendedToStorage_MustBeAllEqualToThemself() throws Exception {
     List<V> valuesAppended = generateValues(ENOUGH_VALUES);
 
-    List<Pair<Integer, V>> valuesAndOffsets = new ArrayList<>();
+    List<Pair<Integer, V>> valuesAndValueIds = new ArrayList<>();
     appendableStorage.lockWrite();
     try {
       for (V valueToAppend : valuesAppended) {
-        int appendedAtOffset = appendableStorage.append(valueToAppend);
-        valuesAndOffsets.add(Pair.pair(appendedAtOffset, valueToAppend));
+        int valueId = appendableStorage.append(valueToAppend);
+        valuesAndValueIds.add(Pair.pair(valueId, valueToAppend));
       }
-      for (Pair<Integer, V> valuesAndOffset : valuesAndOffsets) {
-        final V valueAppended = valuesAndOffset.second;
-        final Integer appendedAtOffset = valuesAndOffset.first;
+      for (Pair<Integer, V> valuesAndvalueId : valuesAndValueIds) {
+        final V valueAppended = valuesAndvalueId.second;
+        final int valueId = valuesAndvalueId.first;
         assertThat(
-          "Value appended ([" + valueAppended + "] at offset " + appendableStorage + ") must have same bytes",
-          appendableStorage.checkBytesAreTheSame(appendedAtOffset, valueAppended),
+          "Value appended ([" + valueAppended + "] at valueId " + appendableStorage + ") must have same bytes",
+          appendableStorage.checkBytesAreTheSame(valueId, valueAppended),
           is(true)
         );
       }
@@ -153,27 +150,27 @@ public abstract class AppendableObjectStorageTestBase<V> {
   public void manyValuesAppendedToStorage_AllReadBackAsIs_WithProcessAll() throws Exception {
     List<V> valuesAppended = generateValues(ENOUGH_VALUES);
 
-    List<Pair<Integer, V>> valuesAndOffsetsAppended = new ArrayList<>();
+    List<Pair<Integer, V>> valuesAndValueIdsAppended = new ArrayList<>();
     appendableStorage.lockWrite();
     try {
       for (V valueToAppend : valuesAppended) {
-        int appendedAtOffset = appendableStorage.append(valueToAppend);
-        valuesAndOffsetsAppended.add(Pair.pair(appendedAtOffset, valueToAppend));
+        int valueId = appendableStorage.append(valueToAppend);
+        valuesAndValueIdsAppended.add(Pair.pair(valueId, valueToAppend));
       }
 
       //RC: must flush data before .processAll()!
       appendableStorage.force();
 
-      List<Pair<Integer, V>> valuesAndOffsetsReadBack = new ArrayList<>();
-      appendableStorage.processAll((valueOffset, value) -> {
-        valuesAndOffsetsReadBack.add(Pair.pair(valueOffset, value));
+      List<Pair<Integer, V>> valuesAndValueIdsReadBack = new ArrayList<>();
+      appendableStorage.processAll((valueId, value) -> {
+        valuesAndValueIdsReadBack.add(Pair.pair(valueId, value));
         return true;
       });
 
       assertThat(
-        "Values appended must be all read as-is (with apt offsets) by .processAll()",
-        valuesAndOffsetsReadBack,
-        containsInAnyOrder(valuesAndOffsetsAppended.toArray())
+        "Values appended must be all read as-is (with apt valueIds) by .processAll()",
+        valuesAndValueIdsReadBack,
+        containsInAnyOrder(valuesAndValueIdsAppended.toArray())
       );
     }
     finally {
@@ -182,18 +179,17 @@ public abstract class AppendableObjectStorageTestBase<V> {
   }
 
   @Test
-  public void storage_isDirty_afterEachAppend_AndBecomeNotDirtyAfterFlush() throws Exception {
+  public void storage_becomeNotDirty_AfterFlush() throws Exception {
     List<V> valuesAppended = generateValues(ENOUGH_VALUES);
 
     appendableStorage.lockWrite();
     try {
       for (V valueToAppend : valuesAppended) {
         appendableStorage.append(valueToAppend);
-        assertThat(
-          "Storage must be .dirty since value was just appended to it",
-          appendableStorage.isDirty(),
-          is(true)
-        );
+        //It seems natural to check appendableStorage.isDirty here, but it is not guaranteed to be dirty,
+        // because underlying PagedStorage/FilePageCache could flush the pages just because they need
+        // room for the new pages to cache. Hence appendableStorage.isDirty in 99+% of cases, but sometimes
+        // it is !dirty even though something was just appended to it.
 
         appendableStorage.force();
 

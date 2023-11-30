@@ -7,6 +7,8 @@ import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -267,7 +269,7 @@ public class OptionalIsPresentInspection extends AbstractBaseJavaLocalInspection
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       if (!(element instanceof PsiExpression condition)) return;
       PsiReferenceExpression optionalRef = extractOptionalFromPresenceCheck(condition);
       if (optionalRef == null) return;

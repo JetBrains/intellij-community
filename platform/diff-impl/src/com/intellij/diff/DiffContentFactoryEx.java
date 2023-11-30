@@ -69,14 +69,5 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
     @NotNull DocumentContent buildFromText(@NotNull String text, boolean respectLineSeparators);
 
     @NotNull DocumentContent buildFromBytes(byte @NotNull [] content);
-
-    /**
-     * @deprecated Prefer using {@link #buildFromBytes(byte[])}.
-     */
-    @Deprecated
-    default @NotNull DocumentContent buildFromBytes(byte @NotNull [] content, @NotNull Charset charset) {
-      withDefaultCharset(charset);
-      return buildFromBytes(content);
-    }
   }
 }

@@ -2,12 +2,9 @@ package org.jetbrains.intellij.build.images.sync.dotnet
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonObject
-import com.intellij.util.io.isDirectory
+import com.intellij.openapi.util.io.FileUtil
 import java.nio.file.Path
-import kotlin.io.path.exists
-import kotlin.io.path.name
-import kotlin.io.path.relativeTo
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 object RiderIconsJsonGenerator {
 
@@ -27,9 +24,9 @@ object RiderIconsJsonGenerator {
     val expuiItems = expuiFolders.flatMap { folder ->
       folder.walkTopDown()
         .filter { it.isFile && it.extension.lowercase() == "svg" }
-        .groupBy { g -> g.nameWithoutExtension.takeWhile { c -> !postfixSymbols.contains(c) } }
+        .groupBy { g -> "${g.parentFile.name}/${g.nameWithoutExtension.takeWhile { c -> !postfixSymbols.contains(c) }}" }
         .map { g -> // We want to know if there is file with postfix which does not have main file
-          g.value.firstOrNull { it.nameWithoutExtension == g.key }
+          g.value.singleOrNull { "${it.parentFile.name}/${it.nameWithoutExtension}" == g.key }
             ?.let { ExpuiItem(it.toPath(), folder.parentFile.resolve(it.relativeTo(folder)).toPath()) }
           ?: error("Can't find file without postfix with name ${g.key} among files: [${g.value.joinToString(", ") { it.path }}]")
         }
@@ -53,8 +50,8 @@ object RiderIconsJsonGenerator {
       .map { g ->
         val obj = JsonObject()
         g.value
-          .sortedBy { it.originFile }
-          .forEach { obj.addProperty(it.originFile.name, it.originFile.relativeTo(iconsResourcesPath).toString()) }
+          .sortedBy { it.originFile.toString().lowercase() }
+          .forEach { obj.addProperty(it.originFile.name, FileUtil.toSystemIndependentName(it.originFile.relativeTo (iconsResourcesPath).toString())) }
 
         g.key.relativeTo(iconsResourcesPath) to obj
       }

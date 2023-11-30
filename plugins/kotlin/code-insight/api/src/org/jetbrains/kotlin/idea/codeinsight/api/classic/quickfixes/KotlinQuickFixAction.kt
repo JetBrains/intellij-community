@@ -20,7 +20,8 @@ abstract class KotlinQuickFixAction<out T : PsiElement>(element: T) : QuickFixAc
 
     final override fun invoke(project: Project, editor: Editor?, file: PsiFile) {
         val element = element ?: return
-        if (file is KtFile && IntentionPreviewUtils.prepareElementForWrite(element)) {
+        if (file is KtFile &&
+            (startInWriteAction() && getElementToMakeWritable(file) == file || IntentionPreviewUtils.prepareElementForWrite(element))) {
             invoke(project, editor, file)
         }
     }

@@ -102,11 +102,15 @@ public interface IPersistentFSRecordsStorage extends Forceable, AutoCloseable {
     int getVersion() throws IOException;
 
     int getGlobalModCount();
+
+    //TODO int getErrorsAccumulated();
   }
 
   interface HeaderForUpdate extends HeaderForRead {
     void setConnectionStatus(final int code) throws IOException;
 
     void setVersion(final int version) throws IOException;
+
+    //TODO void setErrorsAccumulated(final int errors) throws IOException;
   }
 }

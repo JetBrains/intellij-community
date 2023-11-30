@@ -15,19 +15,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
-                     groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlBundle"/>
-    <advancedSetting default="true" id="searcheverywhere.ml.sort.files"
-                     groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlBundle"/>
-    <advancedSetting default="true" id="searcheverywhere.ml.sort.classes"
-                     groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlBundle"/>
-    <advancedSetting default="false" id="searcheverywhere.ml.sort.all"
-                     groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlBundle"/>
-
     <registryKey defaultValue="false"
                  description="When enabled ML experiments with actions order won't be performed"
                  key="search.everywhere.force.disable.experiment.action.ml"/>
@@ -116,11 +103,20 @@
       implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereRunConfigurationFeaturesProvider"/>
     <searchEverywhereElementFeaturesProvider
       implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywherePsiElementFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTypoFeaturesProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereFileGroupFeatureProvider"/>
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereTextFeaturesProvider"/>
 
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.ActionKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.PsiElementKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.RunConfigurationsKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.NavigationItemKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TypoKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TextKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.CalculatorKeyProvider"/>
 
     <rankingModelLoader
       implementation="com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereActionsRankingModelLoader"/>
@@ -144,9 +140,11 @@
 
   <actions>
     <action id="com.intellij.searchEverywhereMl.ranking.actions.OpenFeaturesInScratchFileAction"
-            class="com.intellij.searchEverywhereMl.ranking.actions.OpenFeaturesInScratchFileAction">
+            class="com.intellij.searchEverywhereMl.ranking.actions.OpenFeaturesInScratchFileAction"
+            internal="true">
       <add-to-group group-id="MaintenanceGroup" anchor="last"/>
       <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt 1"/>
+      <override-text place="GoToAction"/>
     </action>
   </actions>
 </idea-plugin>

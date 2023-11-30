@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.codeInsight.highlighting.PassRunningAssert;
@@ -29,8 +29,7 @@ public abstract class ReferenceProvidersRegistry {
     return ApplicationManager.getApplication().getService(ReferenceProvidersRegistry.class);
   }
 
-  @NotNull
-  public abstract PsiReferenceRegistrar getRegistrar(@NotNull Language language);
+  public abstract @NotNull PsiReferenceRegistrar getRegistrar(@NotNull Language language);
 
   public static PsiReference @NotNull [] getReferencesFromProviders(@NotNull PsiElement context) {
     return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);

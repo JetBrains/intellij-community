@@ -5,11 +5,13 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.*;
@@ -109,17 +111,15 @@ public final class BringVariableIntoScopeFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommands.psiUpdate(myOutOfScopeVariable, (outOfScopeVariable) -> {
-      PsiFile file = outOfScopeVariable.getContainingFile();
-      PsiReferenceExpression reference = PsiTreeUtil.findSameElementInCopy(myUnresolvedReference, file);
-      invoke(file, outOfScopeVariable, reference);
+    return ModCommand.psiUpdate(myOutOfScopeVariable, (outOfScopeVariable, updater) -> {
+      PsiReferenceExpression reference = updater.getWritable(myUnresolvedReference);
+      invoke(outOfScopeVariable, reference);
     });
   }
 
-  private static void invoke(@NotNull PsiFile file,
-                             @NotNull PsiLocalVariable outOfScopeVariable,
-                             @NotNull PsiReferenceExpression reference) {
-    PsiManager manager = file.getManager();
+  private static void invoke(@NotNull PsiLocalVariable outOfScopeVariable, @NotNull PsiReferenceExpression reference) {
+    PsiFile file = outOfScopeVariable.getContainingFile();
+    Project project = file.getProject();
     outOfScopeVariable.normalizeDeclaration();
     PsiUtil.setModifierProperty(outOfScopeVariable, PsiModifier.FINAL, false);
     PsiElement commonParent = PsiTreeUtil.findCommonParent(outOfScopeVariable, reference);
@@ -128,7 +128,8 @@ public final class BringVariableIntoScopeFix implements ModCommandAction {
                        outOfScopeVariable : reference;
 
     while(child.getParent() != commonParent) child = child.getParent();
-    PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText("int i = 0", null);
+    PsiDeclarationStatement newDeclaration = (PsiDeclarationStatement)JavaPsiFacade.getElementFactory(project)
+      .createStatementFromText("int i = 0", null);
     PsiVariable variable = (PsiVariable)newDeclaration.getDeclaredElements()[0].replace(outOfScopeVariable);
     if (variable.getInitializer() != null) {
       PsiTypeElement typeElement = variable.getTypeElement();
@@ -148,15 +149,15 @@ public final class BringVariableIntoScopeFix implements ModCommandAction {
     LOG.assertTrue(declaredElements.length > 0, added.getText());
     PsiLocalVariable addedVar = (PsiLocalVariable)declaredElements[0];
     assert addedVar != null : added;
-    CodeStyleManager.getInstance(manager.getProject()).reformat(commonParent);
+    CodeStyleManager.getInstance(project).reformat(commonParent);
 
     //Leave initializer assignment
     PsiExpression initializer = outOfScopeVariable.getInitializer();
     if (initializer != null) {
-      PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(manager.getProject()).createStatementFromText(
+      PsiExpressionStatement assignment = (PsiExpressionStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText(
         outOfScopeVariable.getName() + "= e;", null);
       Objects.requireNonNull(((PsiAssignmentExpression)assignment.getExpression()).getRExpression()).replace(initializer);
-      assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(manager.getProject()).reformat(assignment);
+      assignment = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(assignment);
       PsiDeclarationStatement declStatement = PsiTreeUtil.getParentOfType(outOfScopeVariable, PsiDeclarationStatement.class);
       LOG.assertTrue(declStatement != null);
       PsiElement parent = declStatement.getParent();

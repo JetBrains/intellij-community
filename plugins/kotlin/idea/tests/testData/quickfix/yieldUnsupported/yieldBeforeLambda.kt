@@ -8,3 +8,5 @@ object yield {
 fun test() {
     yie<caret>ld {  }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UnsupportedYieldFix

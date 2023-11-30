@@ -3,10 +3,14 @@
 
 package com.intellij.codeInsight.highlighting
 
+import com.intellij.find.FindBundle
 import com.intellij.find.FindManager
 import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.impl.FindManagerImpl
-import com.intellij.find.usages.api.*
+import com.intellij.find.usages.api.PsiUsage
+import com.intellij.find.usages.api.Usage
+import com.intellij.find.usages.api.UsageAccess
+import com.intellij.find.usages.api.UsageOptions
 import com.intellij.find.usages.impl.AllSearchOptions
 import com.intellij.find.usages.impl.buildQuery
 import com.intellij.find.usages.impl.symbolSearchTarget
@@ -15,6 +19,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.targetSymbols
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -27,7 +32,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.annotations.ApiStatus
 
-internal fun highlightUsages(project: Project, editor: Editor, file: PsiFile): Boolean {
+fun highlightUsages(project: Project, editor: Editor, file: PsiFile): Boolean {
   val allTargets = targetSymbols(file, editor.caretModel.offset)
   if (allTargets.isEmpty()) {
     return false
@@ -41,7 +46,9 @@ internal fun highlightUsages(project: Project, editor: Editor, file: PsiFile): B
 
 private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFile, symbol: Symbol, clearHighlights: Boolean) {
   val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = getUsageRanges(file, symbol) ?: return
+  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = ActionUtil.underModalProgress(
+    project, FindBundle.message("progress.title.finding.usages")
+  ) { getUsageRanges(file, symbol) } ?: return
   HighlightUsagesHandler.highlightUsages(
     project, hostEditor,
     readRanges + readDeclarationRanges,
@@ -53,31 +60,22 @@ private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFil
 
 internal fun getUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
   val psiTarget: PsiElement? = PsiSymbolService.getInstance().extractElementFromSymbol(symbol)
+  val hostFile = InjectedLanguageManager.getInstance(file.project).getTopLevelFile(file) ?: file
   if (psiTarget != null) {
-    return getPsiUsageRanges(file, psiTarget)
+    return getPsiUsageRanges(hostFile, psiTarget)
   }
   else {
-    return getSymbolUsageRanges(file, symbol)
+    return getSymbolUsageRanges(hostFile, symbol)
   }
 }
 
-private fun getPsiUsageRanges(file: PsiFile, psiTarget: PsiElement): UsageRanges {
+private fun getPsiUsageRanges(hostFile: PsiFile, psiTarget: PsiElement): UsageRanges {
   val readRanges = ArrayList<TextRange>()
   val writeRanges = ArrayList<TextRange>()
   val readDeclarationRanges = ArrayList<TextRange>()
   val writeDeclarationRanges = ArrayList<TextRange>()
 
-  val project = file.project
-  val hostFile: PsiFile = psiTarget.containingFile?.let { targetContainingFile ->
-    val injectedManager = InjectedLanguageManager.getInstance(project)
-    if (injectedManager.isInjectedFragment(file) != injectedManager.isInjectedFragment(targetContainingFile)) {
-      // weird case when injected symbol references host file
-      injectedManager.getTopLevelFile(file)
-    }
-    else {
-      null
-    }
-  } ?: file
+  val project = hostFile.project
   val searchScope: SearchScope = LocalSearchScope(hostFile)
   val detector: ReadWriteAccessDetector? = ReadWriteAccessDetector.findDetector(psiTarget)
   val oldHandler: FindUsagesHandler? = (FindManager.getInstance(project) as FindManagerImpl)
@@ -104,10 +102,10 @@ private fun getPsiUsageRanges(file: PsiFile, psiTarget: PsiElement): UsageRanges
   return UsageRanges(readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges)
 }
 
-private fun getSymbolUsageRanges(file: PsiFile, symbol: Symbol): UsageRanges? {
-  val project: Project = file.project
+private fun getSymbolUsageRanges(hostFile: PsiFile, symbol: Symbol): UsageRanges? {
+  val project: Project = hostFile.project
   val searchTarget = symbolSearchTarget(project, symbol) ?: return null
-  val searchScope = LocalSearchScope(file)
+  val searchScope = LocalSearchScope(hostFile)
   val usages: Collection<Usage> = buildQuery(project, searchTarget, AllSearchOptions(
     options = UsageOptions.createOptions(searchScope),
     textSearch = true,

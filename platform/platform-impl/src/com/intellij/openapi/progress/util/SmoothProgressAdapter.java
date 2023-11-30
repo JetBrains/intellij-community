@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,9 +64,8 @@ public final class SmoothProgressAdapter extends AbstractProgressIndicatorExBase
     }
   }
 
-  @NotNull
   @Override
-  public ProgressIndicator getOriginalProgressIndicator() {
+  public @NotNull ProgressIndicator getOriginalProgressIndicator() {
     return myOriginal;
   }
 
@@ -93,7 +92,7 @@ public final class SmoothProgressAdapter extends AbstractProgressIndicatorExBase
   }
 
   public void startBlocking() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     start();
     if (isModal()) {
       showDialog();

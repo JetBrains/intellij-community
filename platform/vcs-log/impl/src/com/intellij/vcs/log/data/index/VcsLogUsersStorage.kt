@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
 
 internal interface VcsLogUsersStorage {
-  fun getCommitterOrAuthorForCommit(commitId: Int): VcsUser?
+  fun getCommitterForCommit(commitId: Int): VcsUser?
 
   fun getAuthorForCommit(commitId: Int): VcsUser?
 
@@ -15,7 +15,9 @@ internal interface VcsLogUsersStorage {
     return commitIds.mapNotNull { commitId -> getAuthorForCommit(commitId)?.let { user -> commitId to user } }.toMap()
   }
 
-  fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser>
+  fun getCommitterForCommits(commitIds: Iterable<Int>): Map<Int, VcsUser> {
+    return commitIds.mapNotNull { commitId -> getCommitterForCommit(commitId)?.let { user -> commitId to user } }.toMap()
+  }
 
   @Throws(IOException::class, StorageException::class)
   fun getCommitsForUsers(users: Set<VcsUser>): IntSet?

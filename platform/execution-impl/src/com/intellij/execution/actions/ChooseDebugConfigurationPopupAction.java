@@ -18,7 +18,7 @@ package com.intellij.execution.actions;
 
 import com.intellij.execution.Executor;
 
-public class ChooseDebugConfigurationPopupAction extends ChooseRunConfigurationPopupAction {
+public final class ChooseDebugConfigurationPopupAction extends ChooseRunConfigurationPopupAction {
   @Override
   protected Executor getDefaultExecutor() {
     return super.getAlternativeExecutor();

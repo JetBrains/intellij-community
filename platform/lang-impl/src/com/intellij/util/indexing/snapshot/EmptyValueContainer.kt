@@ -10,7 +10,7 @@ import java.util.function.IntPredicate
 object EmptyValueContainer: ValueContainer<Nothing>() {
   override fun getValueIterator(): ValueIterator<Nothing> = EmptyValueIterator
 
-  override fun size() = 0
+  override fun size(): Int = 0
 }
 
 private object EmptyValueIterator: InvertedIndexValueIterator<Nothing> {

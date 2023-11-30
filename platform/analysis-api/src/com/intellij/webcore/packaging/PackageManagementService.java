@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webcore.packaging;
 
 import com.intellij.execution.ExecutionException;
@@ -23,8 +23,7 @@ public abstract class PackageManagementService {
    *
    * @return list of URLs, or null if the repository management is not supported by this package management service.
    */
-  @Nullable
-  public List<String> getAllRepositories() {
+  public @Nullable List<String> getAllRepositories() {
     return null;
   }
 
@@ -190,13 +189,12 @@ public abstract class PackageManagementService {
   }
 
   public static class ErrorDescription {
-    @NotNull private final @NlsContexts.DetailedDescription String myMessage;
-    @Nullable private final String myCommand;
-    @Nullable private final String myOutput;
-    @Nullable private final @NlsContexts.DetailedDescription String mySolution;
+    private final @NotNull @NlsContexts.DetailedDescription String myMessage;
+    private final @Nullable String myCommand;
+    private final @Nullable String myOutput;
+    private final @Nullable @NlsContexts.DetailedDescription String mySolution;
 
-    @Nullable
-    public static ErrorDescription fromMessage(@Nullable @NlsContexts.DetailedDescription String message) {
+    public static @Nullable ErrorDescription fromMessage(@Nullable @NlsContexts.DetailedDescription String message) {
       return message != null ? new ErrorDescription(message, null, null, null) : null;
     }
 
@@ -210,32 +208,28 @@ public abstract class PackageManagementService {
     /**
      * The reason message that explains why the error has occurred.
      */
-    @NotNull
-    public @NlsContexts.DetailedDescription String getMessage() {
+    public @NotNull @NlsContexts.DetailedDescription String getMessage() {
       return myMessage;
     }
 
     /**
      * The packaging command that has been executed, if it is meaningful to the user.
      */
-    @Nullable
-    public @NlsSafe String getCommand() {
+    public @Nullable @NlsSafe String getCommand() {
       return myCommand;
     }
 
     /**
      * The output of the packaging command.
      */
-    @Nullable
-    public @NlsSafe String getOutput() {
+    public @Nullable @NlsSafe String getOutput() {
       return myOutput;
     }
 
     /**
      * A possible solution of this packaging problem for the user.
      */
-    @Nullable
-    public @NlsContexts.DetailedDescription String getSolution() {
+    public @Nullable @NlsContexts.DetailedDescription String getSolution() {
       return mySolution;
     }
   }

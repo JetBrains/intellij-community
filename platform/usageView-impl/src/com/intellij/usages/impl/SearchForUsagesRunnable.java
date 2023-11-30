@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -6,6 +6,7 @@ import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -41,6 +42,7 @@ import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.xml.util.XmlStringUtil;
@@ -149,7 +151,10 @@ final class SearchForUsagesRunnable implements Runnable {
       resultListener = addHrefHandling(resultListener, SHOW_PROJECT_FILE_OCCURRENCES_HREF_TARGET, searchIncludingProjectFileUsages);
     }
 
-    Collection<UnloadedModuleDescription> unloaded = getUnloadedModulesBelongingToScope();
+    Collection<UnloadedModuleDescription> unloaded;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333936, EA-828575")) {
+      unloaded = getUnloadedModulesBelongingToScope();
+    }
     MessageType actualType = messageType;
     if (!unloaded.isEmpty()) {
       if (actualType == MessageType.INFO) {
@@ -439,7 +444,7 @@ final class SearchForUsagesRunnable implements Runnable {
             MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
             notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
           }
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
+        }, ModalityState.nonModal(), myProject.getDisposed());
       }
     }
     else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
@@ -458,7 +463,7 @@ final class SearchForUsagesRunnable implements Runnable {
         lines.add(createOptionsHtml(mySearchFor));
         MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
         notifyByFindBalloon(createGotToOptionsListener(mySearchFor), type, lines);
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
+      }, ModalityState.nonModal(), myProject.getDisposed());
     }
     else {
       UsageViewEx usageView = myUsageViewRef.get();
@@ -481,7 +486,7 @@ final class SearchForUsagesRunnable implements Runnable {
         ApplicationManager.getApplication().invokeLater(() -> {
           MessageType type = myOutOfScopeUsages.get() == 0 ? MessageType.INFO : MessageType.WARNING;
           notifyByFindBalloon(hyperlinkListener, type, lines);
-        }, ModalityState.NON_MODAL, myProject.getDisposed());
+        }, ModalityState.nonModal(), myProject.getDisposed());
       }
     }
 

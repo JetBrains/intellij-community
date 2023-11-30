@@ -68,6 +68,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     new AttributesDescriptor(PyBundle.message("python.colors.class.definition"), PyHighlighter.PY_CLASS_DEFINITION),
     new AttributesDescriptor(PyBundle.message("python.colors.type.annotation"), PyHighlighter.PY_ANNOTATION),
     new AttributesDescriptor(PyBundle.message("python.colors.local.variables"), PyHighlighter.PY_LOCAL_VARIABLE),
+    new AttributesDescriptor(PyBundle.message("python.colors.type.parameters"), PyHighlighter.PY_TYPE_PARAMETER),
   };
 
   @NonNls private static final Map<String,TextAttributesKey> ourTagToDescriptorMap = ImmutableMap.<String, TextAttributesKey>builder()
@@ -87,6 +88,7 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
     .put("mcall", PyHighlighter.PY_METHOD_CALL)
     .put("annotation", PyHighlighter.PY_ANNOTATION)
     .put("localVar", PyHighlighter.PY_LOCAL_VARIABLE)
+    .put("typeParam", PyHighlighter.PY_TYPE_PARAMETER)
     .putAll(RainbowHighlighter.createRainbowHLM())
     .build();
 
@@ -148,10 +150,11 @@ public class PythonColorsPage implements RainbowColorSettingsPage, InspectionCol
       "        <localVar>text_string</localVar> = u\"Cyrillic Я is \\u042f. Oops: \\u042g\"\n" +
       "        <self>self</self>.<mcall>make_sense</mcall>(<kwarg>whatever</kwarg>=1)\n" +
       "    \n" +
-      "    def <funcDef>make_sense</funcDef>(<self>self</self>, <param>whatever</param>):\n" +
+      "    def <funcDef>make_sense[<typeParam>T</typeParam>]</funcDef>(<self>self</self>, <param>whatever:</param> <annotation>T</annotation>):\n" +
       "        <self>self</self>.sense = <param>whatever</param>\n" +
       "\n" +
       "<localVar>x</localVar> = <builtin>len</builtin>('abc')\n" +
+      "type <localVar>my_int</localVar> = <builtin>int</builtin>\n" +
       "print(f.<predefinedUsage>__doc__</predefinedUsage>)"
     ;
   }

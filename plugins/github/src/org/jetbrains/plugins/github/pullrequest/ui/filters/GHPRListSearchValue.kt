@@ -5,19 +5,21 @@ import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchValu
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.QualifierName
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.Qualifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRSearchQuery.Term.QueryPart
 
+@ApiStatus.Experimental
 @Serializable
-internal data class GHPRListSearchValue(override val searchQuery: String? = null,
-                                        val state: State? = null,
-                                        val assignee: String? = null,
-                                        val reviewState: ReviewState? = null,
-                                        val author: String? = null,
-                                        val label: String? = null) : ReviewListSearchValue {
+data class GHPRListSearchValue(override val searchQuery: String? = null,
+                               val state: State? = null,
+                               val assignee: String? = null,
+                               val reviewState: ReviewState? = null,
+                               val author: String? = null,
+                               val label: String? = null) : ReviewListSearchValue {
 
   @Transient
   override val filterCount: Int = calcFilterCount()

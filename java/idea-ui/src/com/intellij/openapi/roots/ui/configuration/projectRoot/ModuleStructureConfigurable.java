@@ -17,7 +17,6 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
@@ -41,14 +40,15 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +57,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -191,7 +194,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   @Override
   protected void updateSelection(@Nullable NamedConfigurable configurable) {
     myProjectStructureConfigurable.getFacetStructureConfigurable().disposeMultipleSettingsEditor();
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     super.updateSelection(configurable);
     if (configurable != null) {
       updateModuleEditorSelection(configurable);
@@ -538,12 +541,33 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return myContext.myModulesConfigurator.getFacetsConfigurator();
   }
 
-  private void addModule(boolean anImport) {
+  private void addModule(boolean anImport, boolean detectModuleBase) {
     final List<Module> modules;
     if (anImport) {
       modules = myContext.myModulesConfigurator.addImportModule(myTree);
     } else {
-      modules = myContext.myModulesConfigurator.addNewModule();
+      // If the user creates a module when selecting an existing module in the project structure dialog,
+      //   they may expect that the new module "will be located under the selected one".
+      // This is not completely correct from the project model point of view, as the modules cannot be located under each other,
+      //   but from the user perspective it makes sense.
+      //
+      // So, here we take the first content root of the selected module and use it as the base path for the new module.
+      // In the majority of cases, there is only one content root, so the new module will be located there.
+      // If there are multiple content roots, it still makes sense to place the new module under some of them.
+      //
+      // The base path is detected only if the add action was executed from the tree context action. If it was executed from the "plus"
+      //   button, we don't detect the module base.
+      String basePath = null;
+      if (detectModuleBase) {
+        Module selectedModule = getSelectedModule();
+        if (selectedModule != null) {
+          VirtualFile file = Arrays.stream(ModuleRootManager.getInstance(selectedModule).getContentRoots()).findFirst().orElse(null);
+          if (file != null) {
+            basePath = file.getPath();
+          }
+        }
+      }
+      modules = myContext.myModulesConfigurator.addNewModule(basePath);
     }
     if (modules != null && !modules.isEmpty()) {
       //new module wizard may add yet another SDK to the project
@@ -874,18 +898,18 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @Override
-  protected AbstractAddGroup createAddAction() {
+  protected AbstractAddGroup createAddAction(boolean fromPopup) {
     return new AbstractAddGroup(JavaUiBundle.message("add.new.header.text")) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable
                                     final AnActionEvent e) {
 
-        AnAction addModuleAction = new AddModuleAction(false);
+        AnAction addModuleAction = new AddModuleAction(false, fromPopup);
         addModuleAction.getTemplatePresentation().setText(JavaUiBundle.message("action.text.new.module"));
         List<AnAction> result = new ArrayList<>();
         result.add(addModuleAction);
 
-        AnAction importModuleAction = new AddModuleAction(true);
+        AnAction importModuleAction = new AddModuleAction(true, fromPopup);
         importModuleAction.getTemplatePresentation().setText(JavaUiBundle.message("action.text.import.module"));
         importModuleAction.getTemplatePresentation().setIcon(AllIcons.ToolbarDecorator.Import);
         result.add(importModuleAction);
@@ -1062,7 +1086,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
       VirtualFile content = LocalFileSystem.getInstance().findFileByNioFile(myComponentPath);
       if (content == null) {
-        PathKt.createFile(myComponentPath);
+        try {
+          Files.createFile(NioFiles.createParentDirectories(myComponentPath));
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
         content = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(myComponentPath);
       }
       modifiableRootModel.addContentEntry(content);
@@ -1076,15 +1105,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
   private final class AddModuleAction extends AnAction implements DumbAware {
     private final boolean myImport;
+    private final boolean myDetectModuleBase;
 
-    AddModuleAction(boolean anImport) {
+    AddModuleAction(boolean anImport, boolean detectModuleBase) {
       super(JavaUiBundle.message("add.new.module.text.full"), null, AllIcons.Nodes.Module);
       myImport = anImport;
+      myDetectModuleBase = detectModuleBase;
     }
 
     @Override
     public void actionPerformed(@NotNull final AnActionEvent e) {
-      addModule(myImport);
+      addModule(myImport, myDetectModuleBase);
     }
   }
 

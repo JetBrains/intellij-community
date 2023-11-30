@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.CommonBundle;
@@ -30,7 +30,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-class EditVariableDialog extends DialogWrapper {
+final class EditVariableDialog extends DialogWrapper {
   private final ArrayList<Variable> myVariables;
   private JBTable myTable;
   private final Editor myEditor;
@@ -149,7 +149,7 @@ class EditVariableDialog extends DialogWrapper {
     }, null, null));
   }
 
-  private class VariablesModel extends AbstractTableModel implements EditableModel {
+  private final class VariablesModel extends AbstractTableModel implements EditableModel {
     private final String[] myNames;
 
     VariablesModel(String[] names) {

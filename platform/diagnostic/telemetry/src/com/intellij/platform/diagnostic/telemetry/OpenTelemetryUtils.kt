@@ -10,32 +10,29 @@ import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.data.MetricDataType
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
-import java.util.stream.Stream
 
 @ApiStatus.Internal
 object OpenTelemetryUtils {
-  //flags
-  const val RDCT_TRACING_DIAGNOSTIC_FLAG = "rdct.diagnostic.otlp"
-  const val IDEA_DIAGNOSTIC_OTLP = "idea.diagnostic.opentelemetry.otlp"
-  const val RDCT_CONN_METRICS_DIAGNOSTIC_FLAG = "rdct.connection.metrics.enabled"
-  const val RDCT_LUX_METRICS_DIAGNOSTIC_FLAG = "lux.metrics.enabled"
+  // flags
+  const val RDCT_TRACING_DIAGNOSTIC_FLAG: String = "rdct.diagnostic.otlp"
+  const val RDCT_CONN_METRICS_DIAGNOSTIC_FLAG: String = "rdct.connection.metrics.enabled"
+  const val RDCT_LUX_METRICS_DIAGNOSTIC_FLAG: String = "lux.metrics.enabled"
 
-  @JvmStatic
-  fun toCsvStream(metricData: MetricData): Stream<String> {
+  fun toCsvStream(metricData: MetricData): Sequence<String> {
     return when (metricData.type) {
-      MetricDataType.LONG_SUM -> metricData.longSumData.points.stream().map { p: LongPointData ->
+      MetricDataType.LONG_SUM -> metricData.longSumData.points.asSequence().map { p: LongPointData ->
         concatToCsvLine(metricData.name, p.startEpochNanos, p.epochNanos, p.value.toString())
       }
-      MetricDataType.DOUBLE_SUM -> metricData.doubleSumData.points.stream().map { p: DoublePointData ->
+      MetricDataType.DOUBLE_SUM -> metricData.doubleSumData.points.asSequence().map { p: DoublePointData ->
         concatToCsvLine(metricData.name, p.startEpochNanos, p.epochNanos, p.value.toString())
       }
-      MetricDataType.LONG_GAUGE -> metricData.longGaugeData.points.stream().map { p: LongPointData ->
+      MetricDataType.LONG_GAUGE -> metricData.longGaugeData.points.asSequence().map { p: LongPointData ->
         concatToCsvLine(metricData.name, p.startEpochNanos, p.epochNanos, p.value.toString())
       }
-      MetricDataType.DOUBLE_GAUGE -> metricData.doubleGaugeData.points.stream().map { p: DoublePointData ->
+      MetricDataType.DOUBLE_GAUGE -> metricData.doubleGaugeData.points.asSequence().map { p: DoublePointData ->
         concatToCsvLine(metricData.name, p.startEpochNanos, p.epochNanos, p.value.toString())
       }
-      else -> Stream.of(concatToCsvLine(metricData.name, -1, -1, "<metrics type " + metricData.type + " is not supported yet>"))
+      else -> sequenceOf(concatToCsvLine(metricData.name, -1, -1, "<metrics type " + metricData.type + " is not supported yet>"))
     }
   }
 
@@ -43,7 +40,6 @@ object OpenTelemetryUtils {
     return ("$name,$startEpochNanos,$endEpochNanos,$value")
   }
 
-  @JvmStatic
   fun csvHeadersLines(): List<String> {
     return listOf(
       "# OpenTelemetry Metrics report: .csv, 4 fields: ",
@@ -54,17 +50,15 @@ object OpenTelemetryUtils {
   }
 
   /** @return base path for metrics reporting, or null, if metrics reporting is configured to be off */
-  @JvmStatic
   fun metricsReportingPath(): Path? {
     val metricsReportingPath = System.getProperty("idea.diagnostic.opentelemetry.metrics.file", "open-telemetry-metrics.csv")
     if(metricsReportingPath.isBlank()){
       return null
     }
-    //if metrics path is relative -> resolve it against IDEA logDir:
+    // if a metrics path is relative -> resolve it against IDEA logDir:
     return PathManager.getLogDir().resolve(metricsReportingPath).toAbsolutePath()
   }
 
-  @JvmStatic
   fun setupFileLimiterForMetrics(metricsReportingBasePath: Path): FileSetLimiter {
     val suffixDateFormat = System.getProperty("idea.diagnostic.opentelemetry.metrics.suffix-date-format", "yyyy-MM-dd-HH-mm-ss")
     return FileSetLimiter
@@ -87,7 +81,6 @@ object OpenTelemetryUtils {
    *
    * If metricsReportingBasePath is relative -> method resolves it against IDEA logs folder to make absolute.
    */
-  @JvmStatic
   fun generateFileForMetrics(metricsReportingBasePath: Path): Path {
     val maxFilesToKeep = SystemProperties.getIntProperty("idea.diagnostic.opentelemetry.metrics.max-files-to-keep", 14)
 

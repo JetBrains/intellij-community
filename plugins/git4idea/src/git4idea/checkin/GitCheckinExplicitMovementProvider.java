@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -28,14 +28,12 @@ public abstract class GitCheckinExplicitMovementProvider {
   /**
    * @return Text for checkbox in commit options
    */
-  @NotNull
-  public abstract String getDescription();
+  public abstract @NotNull String getDescription();
 
   /**
    * @return commit message for the commit with movements
    */
-  @NotNull
-  public abstract String getCommitMessage(@NotNull String originalCommitMessage);
+  public abstract @NotNull String getCommitMessage(@NotNull String originalCommitMessage);
 
   /**
    * This method could be called several times per commit operation. For instance, to update commit options UI so that it reflects current
@@ -43,8 +41,7 @@ public abstract class GitCheckinExplicitMovementProvider {
    *
    * @return file movements, that should be committed explicitly
    */
-  @NotNull
-  public abstract Collection<Movement> collectExplicitMovements(@NotNull Project project,
+  public abstract @NotNull Collection<Movement> collectExplicitMovements(@NotNull Project project,
                                                                 @NotNull List<FilePath> beforePaths,
                                                                 @NotNull List<FilePath> afterPaths);
 
@@ -55,21 +52,19 @@ public abstract class GitCheckinExplicitMovementProvider {
                                       @NotNull List<Couple<FilePath>> movedPaths) { }
 
   public static class Movement {
-    @NotNull private final FilePath myBeforePath;
-    @NotNull private final FilePath myAfterPath;
+    private final @NotNull FilePath myBeforePath;
+    private final @NotNull FilePath myAfterPath;
 
     public Movement(@NotNull FilePath beforePath, @NotNull FilePath afterPath) {
       myBeforePath = beforePath;
       myAfterPath = afterPath;
     }
 
-    @NotNull
-    public FilePath getBefore() {
+    public @NotNull FilePath getBefore() {
       return myBeforePath;
     }
 
-    @NotNull
-    public FilePath getAfter() {
+    public @NotNull FilePath getAfter() {
       return myAfterPath;
     }
 

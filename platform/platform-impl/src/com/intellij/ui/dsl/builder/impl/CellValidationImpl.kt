@@ -16,7 +16,7 @@ import javax.swing.JComponent
 internal class CellValidationImpl<out T>(private val dialogPanelConfig: DialogPanelConfig, private val cell: T,
                                          private val interactiveComponent: JComponent) : CellValidation<T> {
 
-  override var enabled = true
+  override var enabled: Boolean = true
 
   override fun enabledIf(predicate: ComponentPredicate) {
     enabled = predicate()

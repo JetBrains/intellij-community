@@ -30,6 +30,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
@@ -111,6 +112,13 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @Nullable
+  public InterpreterStatisticsInfo getInterpreterInfoForStatistics() {
+    if (myInterpreterPanel == null) return null;
+    PyAddSdkPanel panel = myInterpreterPanel.getSelectedPanel();
+    return panel.getStatisticInfo();
+  }
+
+  @Nullable
   private Sdk getInterpreterPanelSdk() {
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
@@ -136,7 +144,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
    * @return path for project on remote side provided by user
    */
   @Nullable
-  public final String getRemotePath() {
+  public String getRemotePath() {
     final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
     if (interpreterPanel == null) return null;
     final PyAddExistingSdkPanel panel = ObjectUtils.tryCast(interpreterPanel.getSelectedPanel(), PyAddExistingSdkPanel.class);

@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.getInstance
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffPreview
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
 import com.intellij.openapi.vcs.history.VcsDiffUtil
@@ -37,6 +36,7 @@ import com.intellij.vcs.log.history.FileHistoryUtil
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.MergedChange
 import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.VcsLogActionIds
@@ -55,7 +55,7 @@ import javax.swing.tree.DefaultTreeModel
  * Change browser for commits in the Log. For merge commits, can display changes to the commits parents in separate groups.
  */
 class VcsLogChangesBrowser internal constructor(project: Project,
-                                                private val uiProperties: MainVcsLogUiProperties,
+                                                private val uiProperties: VcsLogUiProperties,
                                                 private val dataGetter: (CommitId) -> VcsShortCommitDetails,
                                                 isWithEditorDiffPreview: Boolean,
                                                 parent: Disposable) : AsyncChangesBrowserBase(project, false, false), Disposable {
@@ -100,6 +100,8 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
     hideViewerBorder()
     setup(viewerScrollPane, Side.TOP)
+
+    getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.changes.accessible.name"))
 
     myViewer.setEmptyText(VcsLogBundle.message("vcs.log.changes.select.commits.to.view.changes.status"))
     myViewer.rebuildTree()
@@ -281,18 +283,15 @@ class VcsLogChangesBrowser internal constructor(project: Project,
                           selectedData: VcsTreeModelData): Any? {
     if (VcsDataKeys.VCS.`is`(dataId)) {
       val rootsVcs = JBIterable.from(roots)
-        .map { root: VirtualFile? -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+        .map { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
         .filterNotNull()
         .unique()
         .single()
       if (rootsVcs != null) return rootsVcs.keyInstanceMethod
 
       val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
-        .map { change: Change? ->
-          ChangesUtil.getFilePath(
-            change!!)
-        }
-        .map { root: FilePath? -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+        .map { change -> ChangesUtil.getFilePath(change) }
+        .map { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
         .filterNotNull()
         .unique()
         .single()
@@ -320,7 +319,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     val diffPreviewController = editorDiffPreviewController
     val isWithEditorDiffPreview = VcsLogUiUtil.isDiffPreviewInEditor(myProject)
     if (isWithEditorDiffPreview && diffPreviewController == null) {
-      editorDiffPreviewController = VcsLogChangesBrowserDiffPreviewController()
+      editorDiffPreviewController = createDiffPreviewController()
     }
     else if (!isWithEditorDiffPreview && diffPreviewController != null) {
       diffPreviewController.activePreview.closePreview()
@@ -364,14 +363,10 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     fun onModelUpdated()
   }
 
-  private inner class VcsLogChangesBrowserDiffPreviewController : DiffPreviewControllerBase() {
-    override val simplePreview: DiffPreview
-      get() = VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser)
-
-    override fun createCombinedDiffPreview(): CombinedDiffPreview {
-      return VcsLogCombinedDiffPreview(this@VcsLogChangesBrowser)
-    }
-  }
+  private fun createDiffPreviewController(): DiffPreviewController = DiffPreviewControllerImpl(
+    simpleDiffPreviewBuilder = { VcsLogEditorDiffPreview(myProject, this@VcsLogChangesBrowser) },
+    combinedDiffPreviewBuilder = { VcsLogCombinedDiffPreview(this@VcsLogChangesBrowser) },
+  )
 
   private class ParentTag(commit: Hash, private val text: @Nls String) : ValueTag<Hash>(commit) {
     override fun toString() = text
@@ -405,7 +400,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
 
       val singleCommitDetail = details.singleOrNull()
       if (singleCommitDetail == null) {
-        return CommitModel(roots, VcsLogUtil.collectChanges(details) { it.changes }, emptyMap(), null)
+        return CommitModel(roots, VcsLogUtil.collectChanges(details), emptyMap(), null)
       }
 
       val changesToParents = if (singleCommitDetail.parents.size > 1) {

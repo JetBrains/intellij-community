@@ -118,6 +118,8 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
             ).firstOrNull()?.let { options += it }
         }
 
+        options.addAll(listOf("-language-version", "1.9"))
+
         val outputDir = FileUtil.createTempDirectory(dirName, "")
 
         KotlinCompilerStandalone(

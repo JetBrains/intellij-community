@@ -22,8 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * Formatter removes such white spaces, i.e. keeps only line feed symbol. But we want to preserve caret position then.
  * So, if 'virtual space in editor' is enabled, we save target visual column. Caret indent is ensured otherwise
  */
-public class CaretPositionKeeper {
-  final static Key<CaretPositionKeeper> POSITION_KEEPER_KEY = Key.create("formatter.caret.position.keeper");
+public final class CaretPositionKeeper {
 
   Editor      myEditor;
   Document    myDocument;

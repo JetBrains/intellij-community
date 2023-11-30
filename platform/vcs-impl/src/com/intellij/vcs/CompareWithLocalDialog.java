@@ -31,7 +31,6 @@ import com.intellij.ui.content.ContentFactory;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,8 +120,7 @@ public final class CompareWithLocalDialog {
 
       myChangesBrowser = changesBrowser;
 
-      StatusText emptyText = myChangesBrowser.getViewer().getEmptyText();
-      myLoadingPanel = new LoadingChangesPanel(myChangesBrowser, emptyText, this);
+      myLoadingPanel = new LoadingChangesPanel(myChangesBrowser, this);
       add(myLoadingPanel, BorderLayout.CENTER);
     }
 

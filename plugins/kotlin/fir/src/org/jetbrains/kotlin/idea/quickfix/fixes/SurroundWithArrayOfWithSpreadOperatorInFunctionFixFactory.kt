@@ -12,19 +12,20 @@ import org.jetbrains.kotlin.builtins.StandardNames.FqNames.arrayClassFqNameToPri
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicatorInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicator
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinApplicatorTargetWithInput
-import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticModCommandFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.modCommandApplicator
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
 
     class Input(val fullyQualifiedArrayOfCall: String, val shortArrayOfCall: String) : KotlinApplicatorInput
 
-    private val applicator = applicator<KtExpression, Input> {
+    private val applicator = modCommandApplicator<KtExpression, Input> {
         familyName(KotlinBundle.lazyMessage("surround.with.array.of"))
         actionName { _, input ->
             KotlinBundle.getMessage("surround.with.0", input.shortArrayOfCall)
@@ -40,24 +41,26 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
             val newArgument = psiFactory.createArgument(surroundedWithArrayOf, argumentName)
 
             val replacedArgument = argument.replace(newArgument) as KtValueArgument
-            // Essentially this qualifier is always `kotlin` in `kotlin.arrayOf(...)`. We choose to shorten this part so that the argument
-            // is not touched by reference shortener.
-            val arrayOfQualifier = (replacedArgument.getArgumentExpression() as KtDotQualifiedExpression).receiverExpression!!
-            shortenReferences(arrayOfQualifier)
+            val qualifiedCallExpression = replacedArgument.getArgumentExpression() as KtDotQualifiedExpression
+
+            // We want to properly shorten the fully-qualified `kotlin.arrayOf(...)` call.
+            // To shorten only this call and avoid shortening the arguments, we pass only the selector part (`arrayOf`) to the shortener.
+            qualifiedCallExpression.getQualifiedElementSelector()?.let { shortenReferences(it) }
         }
     }
 
     val assigningSingleElementToVarargInNamedFormFunction =
-        diagnosticFixFactory(KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionError::class, applicator) { diagnostic ->
+        diagnosticModCommandFixFactory(KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionError::class, applicator) { diagnostic ->
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
     val assigningSingleElementToVarargInNamedFormFunctionWarning =
-        diagnosticFixFactory(KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionWarning::class, applicator) { diagnostic ->
+        diagnosticModCommandFixFactory(KtFirDiagnostic.AssigningSingleElementToVarargInNamedFormFunctionWarning::class, applicator) { diagnostic ->
             createFix(diagnostic.expectedArrayType, diagnostic.psi)
         }
 
+    context(KtAnalysisSession)
     @Suppress("unused")
-    private fun KtAnalysisSession.createFix(expectedArrayType: KtType, psi: KtExpression): List<KotlinApplicatorTargetWithInput<KtExpression, Input>> {
+    private fun createFix(expectedArrayType: KtType, psi: KtExpression): List<KotlinApplicatorTargetWithInput<KtExpression, Input>> {
         val arrayClassId = (expectedArrayType as? KtUsualClassType)?.classId
         val primitiveType = arrayClassFqNameToPrimitiveType[arrayClassId?.asSingleFqName()?.toUnsafe()]
         val arrayOfCallName = ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY[primitiveType] ?: ArrayFqNames.ARRAY_OF_FUNCTION

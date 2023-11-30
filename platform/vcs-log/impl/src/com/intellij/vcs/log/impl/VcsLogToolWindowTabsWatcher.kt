@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -14,6 +13,7 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.TabbedContent
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.impl.VcsLogToolWindowTabsWatcher.VcsLogToolWindowTab
 import com.intellij.vcs.log.ui.VcsLogUiEx
@@ -52,8 +52,10 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
   }
 
   override fun closeTabs(tabs: List<VcsLogWindow>) {
+    val tabIds = tabs.filterIsInstance<VcsLogToolWindowTab>().filter { it.isClosedOnDispose }.map { it.id }
+    if (tabIds.isEmpty()) return
+
     toolWindow?.let { window ->
-      val tabIds = tabs.filterIsInstance(VcsLogToolWindowTab::class.java).filter { it.isClosedOnDispose }.map { it.id }
       for (tabId in tabIds) {
         val closed = VcsLogContentUtil.closeLogTab(window.contentManager, tabId)
         LOG.assertTrue(closed, """
@@ -66,7 +68,7 @@ internal class VcsLogToolWindowTabsWatcher(private val project: Project,
   }
 
   private fun installContentListeners() {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     toolWindow?.let { window ->
       addContentManagerListener(window, object : VcsLogTabsListener(project, window, mainDisposable) {
         override fun selectionChanged(tabId: String) {

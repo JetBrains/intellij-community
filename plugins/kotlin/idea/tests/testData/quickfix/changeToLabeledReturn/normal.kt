@@ -7,3 +7,4 @@ fun bar() {
         return<caret> 1
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToLabeledReturnFix

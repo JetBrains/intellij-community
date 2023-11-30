@@ -73,19 +73,17 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     Disposer.dispose(myAlarm);
   }
 
-  public void setData(final Project project,
-                    final PsiDirectory initialTargetDirectory,
-                    final EditorComboBox editorComboBox) {
-    setData(project, initialTargetDirectory, __->{}, editorComboBox);
+  public void setData(@NotNull Project project, @Nullable PsiDirectory initialTargetDirectory, @NotNull EditorComboBox editorComboBox) {
+    setData(project, initialTargetDirectory, __ -> {}, editorComboBox);
   }
 
-  public void setData(final Project project,
-                      final PsiDirectory initialTargetDirectory,
-                      final Consumer<? super @NlsContexts.DialogMessage String> errorMessageUpdater,
-                      final EditorComboBox editorComboBox) {
-    myInitialTargetDirectory = initialTargetDirectory;
-    mySourceRoots = getSourceRoots(project, initialTargetDirectory);
+  public void setData(@NotNull Project project,
+                      @Nullable PsiDirectory targetDirectory,
+                      @NotNull Consumer<? super @NlsContexts.DialogMessage String> errorMessageUpdater,
+                      @NotNull EditorComboBox editorComboBox) {
     myProject = project;
+    myInitialTargetDirectory = targetDirectory;
+    mySourceRoots = getSourceRoots(project, targetDirectory);
     myUpdateErrorMessage = errorMessageUpdater;
     String leaveInSameSourceRoot = JavaBundle.message("leave.in.same.source.root.item");
     ComboboxSpeedSearch search = new ComboboxSpeedSearch(getComboBox(), null) {
@@ -114,50 +112,42 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
       }
     }));
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final VirtualFile initialSourceRoot =
-      initialTargetDirectory != null ? fileIndex.getSourceRootForFile(initialTargetDirectory.getVirtualFile()) : null;
-    myLeaveInTheSameRoot = initialTargetDirectory == null ||
-                           initialSourceRoot != null && !fileIndex.isInLibrarySource(initialSourceRoot);
+    final VirtualFile sourceRoot = targetDirectory != null ? fileIndex.getSourceRootForFile(targetDirectory.getVirtualFile()) : null;
+    myLeaveInTheSameRoot = targetDirectory == null || sourceRoot != null && !fileIndex.isInLibrarySource(sourceRoot);
     addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         final ComboBoxModel<DirectoryChooser.ItemWrapper> model = getComboBox().getModel();
+        VirtualFile root = CommonMoveClassesOrPackagesUtil.chooseSourceRoot(
+          new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()),
+          mySourceRoots,
+          targetDirectory
+        );
+        if (root == null) return;
+        List<DirectoryChooser.ItemWrapper> items = new ArrayList<>(model.getSize());
+        for (int i = 0; i < model.getSize(); i++) items.add(model.getElementAt(i));
+        record NonBlockingResult(@NotNull VirtualFile root, @Nullable DirectoryChooser.ItemWrapper item) {
+        }
         ReadAction
-          .nonBlocking(() -> {
-            return CommonMoveClassesOrPackagesUtil.chooseSourceRoot(
-              new PackageWrapper(PsiManager.getInstance(project), getTargetPackage()),
-              mySourceRoots,
-              initialTargetDirectory
-            );
-          })
+          .nonBlocking(() -> new NonBlockingResult(
+            root,
+            ContainerUtil.find(items, item ->
+              item != DirectoryChooser.ItemWrapper.NULL
+              && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)
+            )
+          ))
           .expireWith(DestinationFolderComboBox.this)
-          .finishOnUiThread(ModalityState.current(), root -> {
-            if (root == null) return;
-            List<DirectoryChooser.ItemWrapper> items = new ArrayList<>(model.getSize());
-            for (int i = 0; i < model.getSize(); i++) {
-              items.add(model.getElementAt(i));
+          .finishOnUiThread(ModalityState.current(), result -> {
+            if (result.item != null) {
+              getComboBox().setSelectedItem(result.item);
+              getComboBox().repaint();
             }
-            record NonBlockingResult(@NotNull VirtualFile root, @Nullable DirectoryChooser.ItemWrapper item) {
-            }
-            ReadAction
-              .nonBlocking(() -> {
-                return new NonBlockingResult(root, ContainerUtil.find(items, item ->
-                  item != DirectoryChooser.ItemWrapper.NULL
-                  && Comparing.equal(fileIndex.getSourceRootForFile(item.getDirectory().getVirtualFile()), root)
-                ));
-              })
-              .expireWith(DestinationFolderComboBox.this)
-              .finishOnUiThread(ModalityState.current(), result -> {
-                if (result.item != null) {
-                  getComboBox().setSelectedItem(result.item);
-                  getComboBox().repaint();
-                }
-                setComboboxModel(result.root, result.root, true);
-              }).submit(AppExecutorUtil.getAppExecutorService());
-          }).submit(AppExecutorUtil.getAppExecutorService());
+            setComboboxModel(result.root, result.root, true);
+          })
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
-    final AtomicReference<VirtualFile> selection = new AtomicReference<>(initialSourceRoot);
+    final AtomicReference<VirtualFile> selection = new AtomicReference<>(sourceRoot);
     editorComboBox.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
@@ -165,11 +155,11 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         DirectoryChooser.ItemWrapper selectedItem = (DirectoryChooser.ItemWrapper)comboBox.getSelectedItem();
         VirtualFile initialTargetDirectorySourceRoot = selectedItem != null && selectedItem != DirectoryChooser.ItemWrapper.NULL
                                                        ? fileIndex.getSourceRootForFile(selectedItem.getDirectory().getVirtualFile())
-                                                       : initialSourceRoot;
+                                                       : sourceRoot;
         setComboboxModel(initialTargetDirectorySourceRoot, selection.get(), false);
       }
     });
-    setComboboxModel(initialSourceRoot, selection.get(), false);
+    setComboboxModel(sourceRoot, selection.get(), false);
     getComboBox().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -185,8 +175,8 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
               }
             }
             String relativeSrcPath = null;
-            if (initialSourceRoot != null) {
-              relativeSrcPath = ProjectUtil.calcRelativeToProjectPath(initialSourceRoot, myProject, true, false, true);
+            if (sourceRoot != null) {
+              relativeSrcPath = ProjectUtil.calcRelativeToProjectPath(sourceRoot, myProject, true, false, true);
             }
             return new NonBlockingResult(getUpdateErrorMessage(fileIndex, selectedItem), relativeSrcPath);
           })
@@ -200,7 +190,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   }
 
   @NotNull
-  protected List<VirtualFile> getSourceRoots(Project project, PsiDirectory initialTargetDirectory) {
+  protected List<VirtualFile> getSourceRoots(@NotNull Project project, @Nullable PsiDirectory initialTargetDirectory) {
     return JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
   }
 
@@ -252,17 +242,13 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
     return null;
   }
 
-  private void setComboboxModel(final VirtualFile initialTargetDirectorySourceRoot,
-                                final VirtualFile oldSelection,
-                                final boolean forceIncludeAll) {
+  private void setComboboxModel(@Nullable VirtualFile sourceRoot, @Nullable VirtualFile oldSelection, boolean forceIncludeAll) {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(() -> setComboboxModelInternal(initialTargetDirectorySourceRoot, oldSelection, forceIncludeAll), 300, ModalityState.stateForComponent(this));
+    myAlarm.addRequest(() -> setComboboxModelInternal(sourceRoot, oldSelection, forceIncludeAll), 300, ModalityState.stateForComponent(this));
   }
 
   private static final DirectoryChooser.ItemWrapper NO_UPDATE_REQUIRED = DirectoryChooser.ItemWrapper.NULL;
-  private void setComboboxModelInternal(final VirtualFile initialTargetDirectorySourceRoot,
-                                        final VirtualFile oldSelection,
-                                        final boolean forceIncludeAll) {
+  private void setComboboxModelInternal(@Nullable VirtualFile sourceRoot, @Nullable VirtualFile oldSelection, boolean forceIncludeAll) {
     if (myProject.isDisposed()) return;
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     JComboBox<DirectoryChooser.ItemWrapper> comboBox = getComboBox();
@@ -293,7 +279,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
           DirectoryChooser.ItemWrapper itemWrapper = new DirectoryChooser.ItemWrapper(targetDirectory, pathsToCreate.get(targetDirectory));
           items.add(itemWrapper);
           final VirtualFile sourceRootForFile = fileIndex.getSourceRootForFile(targetDirectory.getVirtualFile());
-          if (Comparing.equal(sourceRootForFile, initialTargetDirectorySourceRoot)) {
+          if (Comparing.equal(sourceRootForFile, sourceRoot)) {
             initial = itemWrapper;
           }
           else if (Comparing.equal(sourceRootForFile, oldSelection)) {
@@ -303,9 +289,11 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
         if (myLeaveInTheSameRoot) {
           items.add(DirectoryChooser.ItemWrapper.NULL);
         }
-        final DirectoryChooser.ItemWrapper selection = chooseSelection(initialTargetDirectorySourceRoot, fileIndex, items, initial, oldOne);
+        final DirectoryChooser.ItemWrapper selection = chooseSelection(sourceRoot, fileIndex, items, initial, oldOne);
 
-        String relativeSrcPath = ProjectUtil.calcRelativeToProjectPath(initialTargetDirectorySourceRoot, myProject, true, false, true);
+        String relativeSrcPath = sourceRoot != null
+                                 ? ProjectUtil.calcRelativeToProjectPath(sourceRoot, myProject, true, false, true)
+                                 : null;
         if (model instanceof CollectionComboBoxModel) {
           boolean sameModel = model.getSize() == items.size();
           if (sameModel) {

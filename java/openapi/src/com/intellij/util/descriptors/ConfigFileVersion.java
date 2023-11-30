@@ -16,19 +16,19 @@
 
 package com.intellij.util.descriptors;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 
 public class ConfigFileVersion {
   private final String myName;
   private @NonNls final String myTemplateName;
 
-  public ConfigFileVersion(final String name, final @NonNls String templateName) {
+  public ConfigFileVersion(final @NlsSafe String name, final @NonNls String templateName) {
     myName = name;
     myTemplateName = templateName;
   }
 
-
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 

@@ -5,6 +5,8 @@ import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue.ParameterReturnValue;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -115,7 +117,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiExpression arg = ObjectUtils.tryCast(element, PsiExpression.class);
       if (arg == null) return;
       PsiReferenceExpression comparedToNull = ExpressionUtils.getReferenceExpressionFromNullComparison(arg, false);
@@ -133,7 +135,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(startElement, PsiMethodCallExpression.class);
       if (call == null) return;
       PsiElement parent = call.getParent();

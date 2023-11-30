@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -72,8 +72,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   private Icon myAddIcon;
   private boolean myForcedDnD;
 
-  @NotNull
-  protected abstract JComponent getComponent();
+  protected abstract @NotNull JComponent getComponent();
 
   protected abstract void updateButtons();
 
@@ -89,8 +88,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return myActionsPanel;
   }
 
-  @NotNull
-  public ToolbarDecorator initPosition() {
+  public @NotNull ToolbarDecorator initPosition() {
     setToolbarPosition(SystemInfo.isMac && Registry.is("action.toolbar.position.bottom.on.mac")
                        ? ActionToolbarPosition.BOTTOM
                        : ActionToolbarPosition.TOP);
@@ -106,13 +104,11 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return setToolbarPosition(ActionToolbarPosition.TOP).setPanelBorder(JBUI.Borders.empty());
   }
 
-  @NotNull
-  public static ToolbarDecorator createDecorator(@NotNull JComponent component) {
+  public static @NotNull ToolbarDecorator createDecorator(@NotNull JComponent component) {
     return createDecorator(component, null);
   }
 
-  @NotNull
-  public static ToolbarDecorator createDecorator(@NotNull JComponent component, @Nullable ElementProducer<?> producer) {
+  public static @NotNull ToolbarDecorator createDecorator(@NotNull JComponent component, @Nullable ElementProducer<?> producer) {
     if (component instanceof JTree) {
       return createDecorator((JTree)component, producer);
     }
@@ -134,76 +130,62 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     }
   }
 
-  @NotNull
-  public static ToolbarDecorator createDecorator(@NotNull JTable table) {
+  public static @NotNull ToolbarDecorator createDecorator(@NotNull JTable table) {
     return new TableToolbarDecorator(table, null).initPosition();
   }
 
-  @NotNull
-  public static ToolbarDecorator createDecorator(@NotNull JTree tree) {
+  public static @NotNull ToolbarDecorator createDecorator(@NotNull JTree tree) {
     return createDecorator(tree, null);
   }
 
-  @NotNull
-  private static ToolbarDecorator createDecorator(@NotNull JTree tree, @Nullable ElementProducer<?> producer) {
+  private static @NotNull ToolbarDecorator createDecorator(@NotNull JTree tree, @Nullable ElementProducer<?> producer) {
     return new TreeToolbarDecorator(tree, producer).initPosition();
   }
 
-  @NotNull
-  public static <T> ToolbarDecorator createDecorator(@NotNull JList<T> list) {
+  public static @NotNull <T> ToolbarDecorator createDecorator(@NotNull JList<T> list) {
     return new ListToolbarDecorator<>(list, null).initPosition();
   }
 
-  @NotNull
-  public static <T> ToolbarDecorator createDecorator(@NotNull JList<T> list, EditableModel editableModel) {
+  public static @NotNull <T> ToolbarDecorator createDecorator(@NotNull JList<T> list, EditableModel editableModel) {
     return new ListToolbarDecorator<>(list, editableModel).initPosition();
   }
 
-  @NotNull
-  public static <T> ToolbarDecorator createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
+  public static @NotNull <T> ToolbarDecorator createDecorator(@NotNull TableView<T> table, @Nullable ElementProducer<T> producer) {
     return new TableToolbarDecorator(table, producer).initPosition();
   }
 
-  @NotNull
-  public ToolbarDecorator disableAddAction() {
+  public @NotNull ToolbarDecorator disableAddAction() {
     return setAddAction(null);
   }
 
-  @NotNull
-  public ToolbarDecorator disableRemoveAction() {
+  public @NotNull ToolbarDecorator disableRemoveAction() {
     return setRemoveAction(null);
   }
 
-  @NotNull
-  public ToolbarDecorator disableUpAction() {
+  public @NotNull ToolbarDecorator disableUpAction() {
     return setMoveUpAction(null);
   }
 
-  @NotNull
-  public ToolbarDecorator disableUpDownActions() {
+  public @NotNull ToolbarDecorator disableUpDownActions() {
     disableUpAction();
     return disableDownAction();
   }
 
-  @NotNull
-  public ToolbarDecorator disableDownAction() {
+  public @NotNull ToolbarDecorator disableDownAction() {
     return setMoveDownAction(null);
   }
 
-  @NotNull
-  public ToolbarDecorator setPanelBorder(Border border) {
+  public @NotNull ToolbarDecorator setPanelBorder(Border border) {
     myPanelBorder = border;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setToolbarBorder(Border border) {
+  public @NotNull ToolbarDecorator setToolbarBorder(Border border) {
     myToolbarBorder = border;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setScrollPaneBorder(Border border) {
+  public @NotNull ToolbarDecorator setScrollPaneBorder(Border border) {
     myScrollPaneBorder = border;
     return this;
   }
@@ -216,8 +198,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * @param actionNames ordered action names corresponding to the value of the {@code text} property of the action's template presentation
    * @return this ToolbarDecorator
    */
-  @NotNull
-  public ToolbarDecorator setButtonComparator(@Nls String @NotNull ... actionNames) {
+  public @NotNull ToolbarDecorator setButtonComparator(@Nls String @NotNull ... actionNames) {
     final List<String> names = Arrays.asList(actionNames);
     myButtonComparator = (o1, o2) -> {
       final String t1 = o1.getTemplatePresentation().getText();
@@ -238,8 +219,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * @param action the action to add
    * @return this ToolbarDecorator
    */
-  @NotNull
-  public ToolbarDecorator addExtraAction(@NotNull AnAction action) {
+  public @NotNull ToolbarDecorator addExtraAction(@NotNull AnAction action) {
     myExtraActions.add(action);
     return this;
   }
@@ -251,8 +231,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * @return this ToolbarDecorator
    */
   @Deprecated
-  @NotNull
-  public ToolbarDecorator addExtraAction(@NotNull AnActionButton action) {
+  public @NotNull ToolbarDecorator addExtraAction(@NotNull AnActionButton action) {
     myExtraActions.add(action);
     return this;
   }
@@ -262,8 +241,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * @param actions the actions to add
    * @return this ToolbarDecorator
    */
-  @NotNull
-  public ToolbarDecorator addExtraActions(AnAction @NotNull ... actions) {
+  public @NotNull ToolbarDecorator addExtraActions(AnAction @NotNull ... actions) {
     for (AnAction action : actions) {
       if (action != null) {
         addExtraAction(action);
@@ -279,8 +257,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
    * @return this ToolbarDecorator
    */
   @Deprecated
-  @NotNull
-  public ToolbarDecorator addExtraActions(AnActionButton @NotNull ... actions) {
+  public @NotNull ToolbarDecorator addExtraActions(AnActionButton @NotNull ... actions) {
     for (AnActionButton action : actions) {
       if (action != null) {
         addExtraAction(action);
@@ -289,115 +266,97 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setToolbarPosition(ActionToolbarPosition position) {
+  public @NotNull ToolbarDecorator setToolbarPosition(ActionToolbarPosition position) {
     myToolbarPosition = position;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setAddAction(AnActionButtonRunnable action) {
+  public @NotNull ToolbarDecorator setAddAction(AnActionButtonRunnable action) {
     myAddActionEnabled = action != null;
     myAddAction = action;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setEditAction(AnActionButtonRunnable action) {
+  public @NotNull ToolbarDecorator setEditAction(AnActionButtonRunnable action) {
     myEditActionEnabled = action != null;
     myEditAction = action;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setRemoveAction(AnActionButtonRunnable action) {
+  public @NotNull ToolbarDecorator setRemoveAction(AnActionButtonRunnable action) {
     myRemoveActionEnabled = action != null;
     myRemoveAction = action;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setMoveUpAction(AnActionButtonRunnable action) {
+  public @NotNull ToolbarDecorator setMoveUpAction(AnActionButtonRunnable action) {
     myUpActionEnabled = action != null;
     myUpAction = action;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setMoveDownAction(AnActionButtonRunnable action) {
+  public @NotNull ToolbarDecorator setMoveDownAction(AnActionButtonRunnable action) {
     myDownActionEnabled = action != null;
     myDownAction = action;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setAddActionName(@ActionText String name) {
+  public @NotNull ToolbarDecorator setAddActionName(@ActionText String name) {
     myAddName = name;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setEditActionName(@ActionText String name) {
+  public @NotNull ToolbarDecorator setEditActionName(@ActionText String name) {
     myEditName = name;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setRemoveActionName(@ActionText String name) {
+  public @NotNull ToolbarDecorator setRemoveActionName(@ActionText String name) {
     myRemoveName = name;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setMoveUpActionName(@ActionText String name) {
+  public @NotNull ToolbarDecorator setMoveUpActionName(@ActionText String name) {
     myMoveUpName = name;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setMoveDownActionName(@ActionText String name) {
+  public @NotNull ToolbarDecorator setMoveDownActionName(@ActionText String name) {
     myMoveDownName = name;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setAddActionUpdater(AnActionButtonUpdater updater) {
+  public @NotNull ToolbarDecorator setAddActionUpdater(AnActionButtonUpdater updater) {
     myAddActionUpdater = updater;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setRemoveActionUpdater(AnActionButtonUpdater updater) {
+  public @NotNull ToolbarDecorator setRemoveActionUpdater(AnActionButtonUpdater updater) {
     myRemoveActionUpdater = updater;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setEditActionUpdater(AnActionButtonUpdater updater) {
+  public @NotNull ToolbarDecorator setEditActionUpdater(AnActionButtonUpdater updater) {
     myEditActionUpdater = updater;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setMoveUpActionUpdater(AnActionButtonUpdater updater) {
+  public @NotNull ToolbarDecorator setMoveUpActionUpdater(AnActionButtonUpdater updater) {
     myMoveUpActionUpdater = updater;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setMoveDownActionUpdater(AnActionButtonUpdater updater) {
+  public @NotNull ToolbarDecorator setMoveDownActionUpdater(AnActionButtonUpdater updater) {
     myMoveDownActionUpdater = updater;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setForcedDnD() {
+  public @NotNull ToolbarDecorator setForcedDnD() {
     myForcedDnD = true;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setActionGroup(@NotNull ActionGroup actionGroup) {
+  public @NotNull ToolbarDecorator setActionGroup(@NotNull ActionGroup actionGroup) {
     AnAction[] actions = actionGroup.getChildren(null);
     for (AnAction action : actions) {
       if (!(action instanceof Separator)) {
@@ -407,25 +366,21 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setPreferredSize(Dimension size) {
+  public @NotNull ToolbarDecorator setPreferredSize(Dimension size) {
     myPreferredSize = size;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setMinimumSize(Dimension size) {
+  public @NotNull ToolbarDecorator setMinimumSize(Dimension size) {
     myMinimumSize = size;
     return this;
   }
 
-  @NotNull
-  public ToolbarDecorator setVisibleRowCount(int rowCount) {
+  public @NotNull ToolbarDecorator setVisibleRowCount(int rowCount) {
     return this;//do nothing by default
   }
 
-  @NotNull
-  public ToolbarDecorator setAddIcon(Icon addIcon) {
+  public @NotNull ToolbarDecorator setAddIcon(Icon addIcon) {
     myAddIcon = addIcon;
     return this;
   }
@@ -433,8 +388,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
   /**
    * @return panel that contains wrapped component (with added scrollpane) and toolbar panel.
    */
-  @NotNull
-  public JPanel createPanel() {
+  public @NotNull JPanel createPanel() {
     CommonActionsPanel.Buttons[] buttons = getButtons();
     JComponent contextComponent = getComponent();
     UIUtil.putClientProperty(contextComponent, JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY, true);
@@ -544,8 +498,7 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
 
   protected abstract boolean isModelEditable();
 
-  @NotNull
-  static Object getPlacement(@NotNull ActionToolbarPosition position) {
+  static @NotNull Object getPlacement(@NotNull ActionToolbarPosition position) {
     return switch (position) {
       case TOP -> BorderLayout.NORTH;
       case LEFT -> BorderLayout.WEST;
@@ -613,33 +566,27 @@ public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFac
     };
   }
 
-  @Nullable
-  public static AnActionButton findAddButton(@NotNull JComponent container) {
+  public static @Nullable AnActionButton findAddButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.ADD);
   }
 
-  @Nullable
-  public static AnActionButton findEditButton(@NotNull JComponent container) {
+  public static @Nullable AnActionButton findEditButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.EDIT);
   }
 
-  @Nullable
-  public static AnActionButton findRemoveButton(@NotNull JComponent container) {
+  public static @Nullable AnActionButton findRemoveButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.REMOVE);
   }
 
-  @Nullable
-  public static AnActionButton findUpButton(@NotNull JComponent container) {
+  public static @Nullable AnActionButton findUpButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.UP);
   }
 
-  @Nullable
-  public static AnActionButton findDownButton(@NotNull JComponent container) {
+  public static @Nullable AnActionButton findDownButton(@NotNull JComponent container) {
     return findButton(container, CommonActionsPanel.Buttons.DOWN);
   }
 
-  @Nullable
-  private static AnActionButton findButton(JComponent comp, CommonActionsPanel.Buttons type) {
+  private static @Nullable AnActionButton findButton(JComponent comp, CommonActionsPanel.Buttons type) {
     final CommonActionsPanel panel = UIUtil.findComponentOfType(comp, CommonActionsPanel.class);
     if (panel != null) {
       return panel.getAnActionButton(type);

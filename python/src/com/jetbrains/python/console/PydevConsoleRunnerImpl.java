@@ -57,7 +57,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.MessageCategory;
@@ -69,12 +68,15 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PythonPluginDisposable;
+import com.jetbrains.python.console.actions.ConsoleCopyOutputAction;
+import com.jetbrains.python.console.actions.ScrollToTheEndAction;
 import com.jetbrains.python.console.actions.ShowCommandQueueAction;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyVariableViewSettings;
+import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
@@ -220,19 +222,32 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     // Execute
     actions.add(
       new ConsoleExecuteAction(myConsoleView, myConsoleExecuteActionHandler, myConsoleExecuteActionHandler.getEmptyExecuteAction(),
-                               myConsoleExecuteActionHandler));
+                               myConsoleExecuteActionHandler, PythonIcons.Python.ExecuteCurrentStatement));
     toolbarActions.addAll(actions);
     // Attach Debugger
     toolbarActions.add(new ConnectDebuggerAction());
+    // Show Queue
+    toolbarActions.add(new ShowCommandQueueAction(myConsoleView));
+    // Scroll to the end
+    toolbarActions.add(new ScrollToTheEndAction(myConsoleView.getEditor()));
+    // Separator
+    toolbarActions.add(Separator.create());
     // Settings
     DefaultActionGroup settings = DefaultActionGroup.createPopupGroup(() -> PyBundle.message("pydev.console.runner.settings"));
     settings.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     settings.add(new PyVariableViewSettings.SimplifiedView(null));
     settings.add(new PyVariableViewSettings.VariablesPolicyGroup());
+    settings.add(new PyVariableViewSettings.QuotingPolicyGroup());
     toolbarActions.add(settings);
-    // New console
-    toolbarActions.add(new NewConsoleAction());
-
+    // Output actions
+    DefaultActionGroup outputActions = DefaultActionGroup.createPopupGroup(() -> PyBundle.message("pydev.console.runner.output.actions"));
+    outputActions.getTemplatePresentation().setIcon(AllIcons.General.InspectionsEye);
+    outputActions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication)); // Show Variables
+    outputActions.add(new SoftWrapAction()); // Use soft wraps
+    outputActions.add(Separator.create());
+    outputActions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory()); // Console History
+    outputActions.add(new ConsoleCopyOutputAction(myConsoleView)); // Copy Console Output
+    toolbarActions.add(outputActions);
     // Actions without icons
     actions.add(PyConsoleUtil.createInterruptAction(myConsoleView));
     actions.add(PyConsoleUtil.createTabCompletionAction(myConsoleView));
@@ -241,23 +256,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return actions;
   }
 
-  private List<AnAction> fillOutputActionsToolbar(final DefaultActionGroup toolbarActions) {
-    List<AnAction> actions = new ArrayList<>();
-    // Use soft wraps
-    actions.add(new SoftWrapAction());
-    // Scroll to the end
-    actions.add(PyConsoleUtil.createScrollToEndAction(myConsoleView.getEditor()));
-    // Print
-    actions.add(PyConsoleUtil.createPrintAction(myConsoleView));
-    // Show Variables
-    actions.add(new ShowVarsAction(myConsoleView, myPydevConsoleCommunication));
-    // Show Queue
-    actions.add(new ShowCommandQueueAction(myConsoleView));
-    // Console History
-    actions.add(ConsoleHistoryController.getController(myConsoleView).getBrowseHistory());
-    toolbarActions.addAll(actions);
-    return actions;
-  }
 
   @Override
   public void open() {
@@ -617,8 +615,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     String commandLineString = StringUtil.join(targetedCommandLine.getCommandPresentation(targetEnvironment), " ");
     PyRemotePathMapper pathMapper =
       PydevConsoleRunnerUtil.createTargetEnvironmentPathMapper(myProject, sdk, myConsoleSettings, targetEnvironment);
-    ProcessHandler processHandler =
-      PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, targetedCommandLine.getCharset(), pathMapper, true);
+    boolean isMostlySilentProcess = true;
+    ProcessHandler processHandler = PyCustomProcessHandlerProvider.createProcessHandler(process, targetEnvironment, commandLineString,
+                                                                                        targetedCommandLine.getCharset(), pathMapper,
+                                                                                        isMostlySilentProcess);
     return new TargetProcessHandlerFactory(processHandler, process, commandLineString, communicationServer, targetEnvironment);
   }
 
@@ -937,15 +937,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
 
     // tool bar actions
     final List<AnAction> actions = fillRunActionsToolbar(runToolbarActions);
-    final List<AnAction> outputActions;
-    if (!isHorizontalAndUnitedToolbar) {
-      outputActions = fillOutputActionsToolbar(outputToolbarActions);
-    }
-    else {
-      runToolbarActions.add(new Separator());
-      outputActions = fillOutputActionsToolbar(runToolbarActions);
-    }
-    actions.addAll(outputActions);
 
     registerActionShortcuts(actions, myConsoleView.getConsoleEditor().getComponent());
     registerActionShortcuts(actions, mainPanel);
@@ -1083,7 +1074,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       }
 
       public void setup() {
-        EmptyAction.setupAction(this, CONSOLE_SPLIT_LINE_ACTION_ID, null);
+        ActionUtil.mergeFrom(this, CONSOLE_SPLIT_LINE_ACTION_ID);
       }
     }
 
@@ -1107,7 +1098,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     myConsoleExecuteActionHandler =
       new PydevConsoleExecuteActionHandler(myConsoleView, myProcessHandler, myPydevConsoleCommunication);
     myConsoleExecuteActionHandler.setEnabled(false);
-    new ConsoleHistoryController(PyConsoleRootType.Companion.getInstance(), "", myConsoleView).install();
+    new ConsoleHistoryController(PyConsoleRootType.Companion.getInstance(), "", myConsoleView, true).install();
     return myConsoleExecuteActionHandler;
   }
 
@@ -1224,13 +1215,18 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     mySdk = sdk;
   }
 
+  @Override
+  public @Nullable Sdk getSdk() {
+    return mySdk;
+  }
+
   private class ConnectDebuggerAction extends ToggleAction implements DumbAware {
     private boolean mySelected = false;
     private XDebugSession mySession = null;
 
     ConnectDebuggerAction() {
       super(PyBundle.messagePointer("console.attach.debugger"), PyBundle.messagePointer("console.attach.debugger.description"),
-            AllIcons.Actions.StartDebugger);
+            PythonIcons.Python.AttachDebugger);
     }
 
     @Override
@@ -1271,34 +1267,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       else {
         //TODO: disable debugging
       }
-    }
-  }
-
-
-  private static class NewConsoleAction extends AnAction implements DumbAware {
-    NewConsoleAction() {
-      super(PyBundle.messagePointer("console.new.console"), PyBundle.messagePointer("console.new.console.description"),
-            AllIcons.General.Add);
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(true);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      final Project project = e.getData(CommonDataKeys.PROJECT);
-      if (project != null) {
-        PydevConsoleRunner runner =
-          PythonConsoleRunnerFactory.getInstance().createConsoleRunner(project, e.getData(PlatformCoreDataKeys.MODULE));
-        runner.run(true);
-      }
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
     }
   }
 
@@ -1376,6 +1344,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     @NotNull
     private final Sdk mySdk;
     private final Map<String, String> myEnvironmentVariables;
+    @NotNull
+    private List<String> myEnvFiles;
 
     public PythonConsoleRunParams(@NotNull PyConsoleOptions.PyConsoleSettings consoleSettings,
                                   @Nullable String workingDir,
@@ -1386,8 +1356,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       mySdk = sdk;
       myEnvironmentVariables = envs;
       myEnvironmentVariables.putAll(consoleSettings.getEnvs());
+      myEnvFiles = consoleSettings.myEnvFiles;
       PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
-      if (debuggerSettings.getValuesPolicy() != PyDebugValue.ValuesPolicy.SYNC) {
+      if (debuggerSettings.getValuesPolicy() != ValuesPolicy.SYNC) {
         myEnvironmentVariables.put(PyDebugValue.POLICY_ENV_VARS.get(debuggerSettings.getValuesPolicy()), "True");
       }
       if (PyConsoleOutputCustomizer.Companion.getInstance().isInlineOutputSupported()) {
@@ -1399,6 +1370,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       if (myConsoleSettings.myInterpreterOptions.contains(ASYNCIO_REPL_COMMAND)) {
         myConsoleSettings.myInterpreterOptions = "";
       }
+      PythonEnvUtil.setPythonDontWriteBytecode(myEnvironmentVariables);
     }
 
     @Override
@@ -1512,6 +1484,17 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     @Override
     public void setAddSourceRoots(boolean flag) {
       throw new UnsupportedOperationException();
+    }
+
+    @NotNull
+    @Override
+    public List<String> getEnvFilePaths() {
+      return myEnvFiles;
+    }
+
+    @Override
+    public void setEnvFilePaths(@NotNull List<String> strings) {
+      myEnvFiles = strings;
     }
   }
 }

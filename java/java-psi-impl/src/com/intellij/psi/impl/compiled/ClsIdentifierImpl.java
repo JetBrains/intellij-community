@@ -65,7 +65,7 @@ class ClsIdentifierImpl extends ClsElementImpl implements PsiIdentifier, PsiJava
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaTokenType.IDENTIFIER);
   }
 

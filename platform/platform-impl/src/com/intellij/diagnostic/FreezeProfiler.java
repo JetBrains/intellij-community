@@ -18,4 +18,6 @@ public interface FreezeProfiler {
 
   /** @param reportDir directory for intermediate results -- same as passed in {@link #start(File)} before */
   @NotNull List<Attachment> getAttachments(@NotNull Path reportDir);
+
+  default void checkCrash(@NotNull String crashContent) {}
 }

@@ -4,4 +4,3 @@
 fun test() {
     val a = <caret>TestSample
 }
-/* IGNORE_FIR */

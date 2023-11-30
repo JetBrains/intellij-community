@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.text.Matcher;
@@ -105,7 +104,7 @@ public final class SpeedSearchUtil {
 
   public static void appendColoredFragmentForMatcher(@NotNull @NlsContexts.Label String text,
                                                      SimpleColoredComponent component,
-                                                     @NotNull final SimpleTextAttributes attributes,
+                                                     final @NotNull SimpleTextAttributes attributes,
                                                      @Nullable Matcher matcher,
                                                      Color selectedBg,
                                                      boolean selected) {
@@ -163,18 +162,6 @@ public final class SpeedSearchUtil {
     if (lastOffset < text.length()) {
       simpleColoredComponent.append(text.substring(lastOffset), plain);
     }
-  }
-
-  /**
-   * @deprecated use more generic {@link #applySpeedSearchHighlightingFiltered(JTree, Object, SimpleColoredComponent, boolean, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void applySpeedSearchHighlightingFiltered(@NotNull JTree tree,
-                                                          @NotNull Object value,
-                                                          @NotNull ColoredTreeCellRenderer coloredTreeCellRenderer,
-                                                          boolean mainTextOnly,
-                                                          boolean selected) {
-    applySpeedSearchHighlightingFiltered(tree, value, (SimpleColoredComponent)coloredTreeCellRenderer, mainTextOnly, selected);
   }
 
   public static void applySpeedSearchHighlightingFiltered(@NotNull JTree tree,

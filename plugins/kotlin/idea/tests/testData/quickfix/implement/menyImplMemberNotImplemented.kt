@@ -12,3 +12,4 @@ open class B {
 }
 
 class<caret> C : A, B()
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler

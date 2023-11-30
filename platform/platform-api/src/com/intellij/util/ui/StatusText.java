@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -270,7 +270,7 @@ public abstract class StatusText {
   }
 
   private void repaintOwner() {
-    if (myOwner != null && isStatusVisibleInner()) myOwner.repaint();
+    if (myOwner != null && myOwner.isShowing() && isStatusVisibleInner()) myOwner.repaint();
   }
 
   public StatusText appendText(@NlsContexts.StatusText String text) {
@@ -337,9 +337,8 @@ public abstract class StatusText {
 
   public Iterable<JComponent> getWrappedFragmentsIterable() {
     return new Iterable<>() {
-      @NotNull
       @Override
-      public Iterator<JComponent> iterator() {
+      public @NotNull Iterator<JComponent> iterator() {
         Iterable<JComponent> components = JBIterable.<Fragment>empty()
           .append(myPrimaryColumn.fragments)
           .append(mySecondaryColumn.fragments)

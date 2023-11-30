@@ -80,7 +80,7 @@ internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeMa
   private fun getHashStream(): HashStream64 {
     var result = digest
     if (result == null) {
-      result = Hashing.komihash4_3().hashStream()!!
+      result = Hashing.komihash5_0().hashStream()!!
       digest = result
     }
     else {
@@ -225,14 +225,14 @@ internal class SchemeLoader<T : Scheme, MUTABLE_SCHEME : T>(private val schemeMa
   }
 }
 
-internal inline fun lazyPreloadScheme(bytes: ByteArray,
-                                      isOldSchemeNaming: Boolean,
-                                      consumer: (name: String?, parser: XMLStreamReader) -> Unit) {
+internal inline fun <T> lazyPreloadScheme(bytes: ByteArray,
+                                          isOldSchemeNaming: Boolean,
+                                          consumer: (name: String?, parser: XMLStreamReader) -> T?): T? {
   val reader = createXmlStreamReader(bytes)
-  consumer(preload(isOldSchemeNaming, reader), reader)
+  return consumer(readSchemeNameFromXml(isOldSchemeNaming = isOldSchemeNaming, parser = reader), reader)
 }
 
-private fun preload(isOldSchemeNaming: Boolean, parser: XMLStreamReader): String? {
+private fun readSchemeNameFromXml(isOldSchemeNaming: Boolean, parser: XMLStreamReader): String? {
   var eventType = parser.eventType
 
   fun findName(): String? {
@@ -278,7 +278,7 @@ private fun preload(isOldSchemeNaming: Boolean, parser: XMLStreamReader): String
   return null
 }
 
-internal class ExternalInfo(var fileNameWithoutExtension: String, var fileExtension: String?) {
+internal class ExternalInfo(@JvmField var fileNameWithoutExtension: String, @JvmField var fileExtension: String?) {
   // we keep it to detect rename
   var schemeKey: String? = null
 

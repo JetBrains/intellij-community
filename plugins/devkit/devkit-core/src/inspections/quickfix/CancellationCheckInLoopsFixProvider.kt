@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle
@@ -40,7 +39,7 @@ internal class JavaCancellationCheckInLoopsFixProvider : CancellationCheckInLoop
 }
 
 
-class InsertCancellationCheckFix(
+internal class InsertCancellationCheckFix(
   private val cancellationCheckCallFqn: String,
   loopKeyword: PsiElement,
 ) : LocalQuickFixOnPsiElement(loopKeyword) {
@@ -50,11 +49,11 @@ class InsertCancellationCheckFix(
   override fun getText(): String = familyName
 
   override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean {
-    return PsiTreeUtil.getParentOfType(startElement, PsiLoopStatement::class.java) != null
+    return startElement.parentOfType<PsiLoopStatement>() != null
   }
 
   override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
-    val loopStatement = PsiTreeUtil.getParentOfType(startElement, PsiLoopStatement::class.java) ?: return
+    val loopStatement = startElement.parentOfType<PsiLoopStatement>() ?: return
     val factory = PsiElementFactory.getInstance(project)
 
     val cancellationCheckText = "${cancellationCheckCallFqn}();"

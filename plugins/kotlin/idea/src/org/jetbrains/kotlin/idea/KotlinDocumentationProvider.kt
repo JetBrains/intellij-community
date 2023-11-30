@@ -28,6 +28,7 @@ import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
@@ -337,7 +338,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         @Nls
         private fun getTextImpl(element: PsiElement, originalElement: PsiElement?, quickNavigation: Boolean): String? {
             if (element is PsiWhiteSpace) {
-                val itElement = findElementWithText(originalElement, "it")
+                val itElement = findElementWithText(originalElement, StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier)
                 val itReference = itElement?.getParentOfType<KtNameReferenceExpression>(false)
                 if (itReference != null) {
                     return getTextImpl(itReference, originalElement, quickNavigation)
@@ -377,7 +378,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 }
             } else if (element is KtDeclaration) {
                 return renderKotlinDeclaration(element, quickNavigation)
-            } else if (element is KtNameReferenceExpression && element.getReferencedName() == "it") {
+            } else if (element is KtNameReferenceExpression && element.getReferencedNameAsName() == StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) {
                 return renderKotlinImplicitLambdaParameter(element, quickNavigation)
             } else if (element is KtLightDeclaration<*, *>) {
                 val origin = element.kotlinOrigin ?: return null

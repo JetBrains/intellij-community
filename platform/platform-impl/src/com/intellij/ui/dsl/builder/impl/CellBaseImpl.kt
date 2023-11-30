@@ -11,13 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
 
-  var horizontalAlign = HorizontalAlign.LEFT
+  var horizontalAlign: HorizontalAlign = HorizontalAlign.LEFT
     private set
 
-  var verticalAlign = VerticalAlign.CENTER
+  var verticalAlign: VerticalAlign = VerticalAlign.CENTER
     private set
 
-  var resizableColumn = false
+  var resizableColumn: Boolean = false
     private set
 
   var rightGap: RightGap? = null
@@ -36,11 +36,7 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   }
 
   override fun visibleIf(property: ObservableProperty<Boolean>): CellBase<T> {
-    visible(property.get())
-    property.whenPropertyChanged {
-      visible(it)
-    }
-    return this
+    return visibleIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   override fun enabledIf(predicate: ComponentPredicate): CellBase<T> {
@@ -50,11 +46,7 @@ internal sealed class CellBaseImpl<T : CellBase<T>> : CellBase<T> {
   }
 
   override fun enabledIf(property: ObservableProperty<Boolean>): CellBase<T> {
-    enabled(property.get())
-    property.whenPropertyChanged {
-      enabled(it)
-    }
-    return this
+    return enabledIf(ComponentPredicate.fromObservableProperty(property))
   }
 
   @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")

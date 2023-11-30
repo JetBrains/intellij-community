@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ContextAwareRunnable;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -9,15 +11,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
-import com.intellij.util.concurrency.QueueProcessor;
+import com.intellij.util.concurrency.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -177,13 +177,13 @@ public class Alarm implements Disposable {
   }
 
   public void addComponentRequest(@NotNull Runnable request, int delayMillis) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myActivationComponent != null;
     _addRequest(request, delayMillis, ModalityState.stateForComponent(myActivationComponent));
   }
 
   public void addComponentRequest(@NotNull Runnable request, long delayMillis) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myActivationComponent != null;
     _addRequest(request, delayMillis, ModalityState.stateForComponent(myActivationComponent));
   }
@@ -206,7 +206,8 @@ public class Alarm implements Disposable {
   }
 
   void _addRequest(@NotNull Runnable request, long delayMillis, @Nullable ModalityState modalityState) {
-    Request requestToSchedule = new Request(request, modalityState, delayMillis);
+    ChildContext childContext = AppExecutorUtil.propagateContextOrCancellation() ? Propagation.createChildContext() : null;
+    Request requestToSchedule = new Request(request, modalityState, delayMillis, childContext);
     synchronized (LOCK) {
       checkDisposed();
       if (myActivationComponent == null || isActivationComponentShowing()) {
@@ -219,7 +220,7 @@ public class Alarm implements Disposable {
   }
 
   private boolean isActivationComponentShowing() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     assert myActivationComponent != null;
     return myActivationComponent.isShowing();
   }
@@ -327,12 +328,13 @@ public class Alarm implements Disposable {
     private final long myDelayMillis;
     @NotNull
     private final String myClientId;
+    private final @Nullable ChildContext myChildContext;
 
     @Async.Schedule
-    private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis) {
+    private Request(@NotNull Runnable task, @Nullable ModalityState modalityState, long delayMillis, @Nullable ChildContext childContext) {
       synchronized (LOCK) {
         myTask = task;
-
+        myChildContext = childContext;
         myModalityState = modalityState;
         myDelayMillis = delayMillis;
         myClientId = ClientId.getCurrentValue();
@@ -362,7 +364,14 @@ public class Alarm implements Disposable {
       try {
         if (!myDisposed && task != null) {
           try (AccessToken ignored = ClientId.withClientId(myClientId)) {
-            QueueProcessor.runSafely(task);
+            if (myChildContext != null) {
+              try (AccessToken ignored2 = ThreadContext.installThreadContext(myChildContext.getContext(), true)) {
+                QueueProcessor.runSafely(() -> myChildContext.runAsCoroutine(task));
+              }
+            }
+            else {
+              QueueProcessor.runSafely(task);
+            }
           }
         }
       }
@@ -378,10 +387,10 @@ public class Alarm implements Disposable {
     // must be called under LOCK
     private void schedule() {
       if (myModalityState == null) {
-        myFuture = myExecutorService.schedule(this, myDelayMillis, TimeUnit.MILLISECONDS);
+        myFuture = myExecutorService.schedule(Propagation.contextAwareCallable(this), myDelayMillis, TimeUnit.MILLISECONDS);
       }
       else {
-        myFuture = EdtScheduledExecutorService.getInstance().schedule(this, myModalityState, myDelayMillis, TimeUnit.MILLISECONDS);
+        myFuture = EdtScheduledExecutorService.getInstance().schedule((ContextAwareRunnable)this::run, myModalityState, myDelayMillis, TimeUnit.MILLISECONDS);
       }
     }
 
@@ -391,6 +400,12 @@ public class Alarm implements Disposable {
      */
     private @Nullable Runnable cancel() {
       Future<?> future = myFuture;
+      if (myChildContext != null) {
+        Job job = myChildContext.getJob();
+        if (job != null) {
+          job.cancel(null);
+        }
+      }
       if (future != null) {
         future.cancel(false);
         myFuture = null;
@@ -414,7 +429,7 @@ public class Alarm implements Disposable {
   @Deprecated(forRemoval = true)
   public @NotNull Alarm setActivationComponent(@NotNull JComponent component) {
     PluginException.reportDeprecatedUsage("Alarm#setActivationComponent", "Please use `#Alarm(JComponent, Disposable)` instead");
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     myActivationComponent = component;
     //noinspection ResultOfObjectAllocationIgnored
     UiNotifyConnector.installOn(component, new Activatable() {

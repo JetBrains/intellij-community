@@ -3,26 +3,35 @@ package com.intellij.settingsSync
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.keymap.impl.KeymapImpl
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
-import com.intellij.util.io.readText
+import com.intellij.settingsSync.notification.NotificationService
+import com.intellij.settingsSync.notification.NotificationServiceImpl
+import com.intellij.testFramework.replaceService
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
+import org.mockito.Mockito
+import org.mockito.Mockito.verify
 import java.nio.charset.Charset
 import java.time.Instant
+import java.util.*
 import kotlin.io.path.div
 import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 @RunWith(JUnit4::class)
 internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
@@ -179,7 +188,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
                                                             setOf(fileState), null, emptyMap(), emptySet()))
 
     waitForSettingsToBeApplied(generalSettings) {
-      SettingsSynchronizer.syncSettings()
+      fireSettingsChanged()
     }
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
   }
@@ -287,8 +296,8 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     //assertTrue("Didn't await for the push request", cdl.await(5, TIMEOUT_UNIT))
   }
 
-  // temporarily disabled: the failure needs to be investigated
-  //@Test
+  @Test
+  @Ignore // TODO investigate
   fun `local and remote changes in different files are both applied`() {
     val generalSettings = GeneralSettings.getInstance().init()
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
@@ -311,7 +320,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
     executeAndWaitUntilPushed {
       waitForSettingsToBeApplied(generalSettings, EditorSettingsExternalizable.getInstance()) {
-        SettingsSynchronizer.syncSettings() // merge will happen here
+        fireSettingsChanged() // merge will happen here
       }
     }
 
@@ -329,6 +338,20 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     }
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
     assertFalse(EditorSettingsExternalizable.getInstance().isShowIntentionBulb)
+  }
+
+  @TestFor(issues = ["IDEA-291623"])
+  @Test
+  fun `zip file size limit exceed`() {
+    val notificationServiceSpy = Mockito.spy<NotificationServiceImpl>()
+    ApplicationManager.getApplication().replaceService(NotificationService::class.java, notificationServiceSpy, disposable)
+
+    EditorSettingsExternalizable.getInstance().initModifyAndSave {
+      languageBreadcrumbsMap = (1..100000).associate { UUID.randomUUID().toString() to true } // please FIXME if you now a better way to make a fat file
+    }
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+
+    verify(notificationServiceSpy).notifyZipSizeExceed()
   }
 
   //@Test

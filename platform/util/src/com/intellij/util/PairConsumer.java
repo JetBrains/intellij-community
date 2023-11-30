@@ -16,11 +16,14 @@
 
 package com.intellij.util;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.util.function.BiConsumer;
 
 /**
- * Deprecated. Use {@link java.util.function.BiConsumer} instead
+ * Obsolete, use {@link java.util.function.BiConsumer} instead.
  */
+@ApiStatus.Obsolete
 @FunctionalInterface
 public interface PairConsumer<S, T> extends BiConsumer<S, T> {
   void consume(S s, T t);

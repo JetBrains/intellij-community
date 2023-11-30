@@ -25,8 +25,7 @@ class SyntheticKeywordConstructorContributor : AbstractGeneratedConstructorContr
   override fun failFastCheck(processor: PsiScopeProcessor, state: ResolveState): Boolean {
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return true
     val nameHint = ResolveUtil.getNameHint(processor)
-    if (nameHint != null && nameHint != SUPER) return true
-    return false
+    return nameHint != null && nameHint != SUPER
   }
 
   override fun generateSyntheticElements(annotation: PsiAnnotation, closure: GrClosableBlock, mode: String): Iterable<PsiElement> {

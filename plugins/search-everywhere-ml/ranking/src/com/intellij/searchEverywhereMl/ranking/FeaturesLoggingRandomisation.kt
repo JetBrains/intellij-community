@@ -5,7 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.searchEverywhereMl.common.SearchEverywhereTabWithMlRanking
+import com.intellij.searchEverywhereMl.SearchEverywhereTabWithMlRanking
 import java.util.*
 
 internal class FeaturesLoggingRandomisation {

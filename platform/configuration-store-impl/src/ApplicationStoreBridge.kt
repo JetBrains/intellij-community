@@ -6,9 +6,9 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
+import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
 import com.intellij.util.PathUtil
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReader
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.metrics.Meter
 import org.jdom.Element

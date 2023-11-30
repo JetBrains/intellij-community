@@ -2,9 +2,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -64,7 +62,10 @@ public abstract class Decompressor {
     @Override
     protected Entry nextEntry() throws IOException {
       TarArchiveEntry te;
-      while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory() || te.isSymbolicLink())) /* skipping unsupported */;
+      while ((te = myStream.getNextTarEntry()) != null &&
+             !((te.isFile() && !te.isLink()) // ignore hardlink
+               || te.isDirectory()
+               || te.isSymbolicLink())) /* skipping unsupported */;
       if (te == null) return null;
       if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName(), te.getSize());
       // UNIX permissions are ignored on Windows
@@ -104,10 +105,10 @@ public abstract class Decompressor {
 
     /**
      * <p>Returns an alternative implementation that is slower but supports ZIP extensions (UNIX/DOS attributes, symlinks).</p>
-     * <p><b>NOTE</b>: requires Commons Compress to be on the classpath.</p>
+     * <p><b>NOTE</b>: requires the Apache Commons Compress library to be on the classpath.</p>
      */
     public @NotNull Decompressor withZipExtensions() {
-      return new CommonsZip(mySource);
+      return new ExtZip(mySource);
     }
 
     //<editor-fold desc="Implementation">
@@ -143,13 +144,13 @@ public abstract class Decompressor {
       myZip.close();
     }
 
-    private static final class CommonsZip extends Decompressor {
+    private static final class ExtZip extends Decompressor {
       private final Path mySource;
       private org.apache.commons.compress.archivers.zip.ZipFile myZip;
       private Enumeration<? extends ZipArchiveEntry> myEntries;
       private ZipArchiveEntry myEntry;
 
-      CommonsZip(Path file) {
+      ExtZip(Path file) {
         mySource = file;
       }
 
@@ -215,7 +216,7 @@ public abstract class Decompressor {
     public static final int DOS_READ_ONLY = 0b01;
     public static final int DOS_HIDDEN = 0b010;
 
-    /** An entry name (separators converted to '/' and trimmed); handle with care */
+    /** An entry name with separators converted to '/' and trimmed; handle with care */
     public final String name;
     public final Type type;
     /** Depending on the source, could be POSIX permissions, DOS attributes, or just {@code 0} */
@@ -240,10 +241,37 @@ public abstract class Decompressor {
     }
   }
 
+  /**
+   * Policy for handling symbolic links which point to outside of archive.
+   * <p>Example:</p>
+   * {@code foo -> /opt/foo}
+   * <p>or</p>
+   * {@code foo -> ../foo}
+   */
+  public enum EscapingSymlinkPolicy {
+    /**
+     * Extract as is with no modification or check. Potentially can point to a completely different object
+     * if the archive is transferred from some other host.
+     */
+    ALLOW,
+
+    /**
+     * Check during extraction and throw exception. See {@link Decompressor#verifySymlinkTarget}
+     */
+    DISALLOW,
+
+    /**
+     * <p>Make absolute symbolic links relative from the extraction directory.</p>
+     * For example, when archive contains link to {@code /opt/foo} and archive is extracted to
+     * {@code /foo/bar} then the resulting link will be {@code /foo/bar/opt/foo}
+     */
+    RELATIVIZE_ABSOLUTE
+  }
+
   private @Nullable Predicate<? super Entry> myFilter = null;
   private @Nullable List<String> myPathPrefix = null;
   private boolean myOverwrite = true;
-  private boolean myAllowEscapingSymlinks = true;
+  private EscapingSymlinkPolicy myEscapingSymlinkPolicy = EscapingSymlinkPolicy.ALLOW;
   private BiConsumer<? super Entry, ? super Path> myPostProcessor;
 
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
@@ -261,8 +289,8 @@ public abstract class Decompressor {
     return this;
   }
 
-  public Decompressor allowEscapingSymlinks(boolean allowEscapingSymlinks) {
-    myAllowEscapingSymlinks = allowEscapingSymlinks;
+  public Decompressor escapingSymlinkPolicy(EscapingSymlinkPolicy policy) {
+    myEscapingSymlinkPolicy = policy;
     return this;
   }
 
@@ -338,19 +366,30 @@ public abstract class Decompressor {
               throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
             }
 
-            if (!myAllowEscapingSymlinks) {
-              verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+            String target = entry.linkTarget;
+
+            switch (myEscapingSymlinkPolicy) {
+              case DISALLOW: {
+                verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+                break;
+              }
+              case RELATIVIZE_ABSOLUTE: {
+                if (OSAgnosticPathUtil.isAbsolute(target)) {
+                  target = FileUtil.join(outputDir.toString(), entry.linkTarget.substring(1));
+                }
+                break;
+              }
             }
 
             if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
               try {
-                Path outputTarget = Paths.get(entry.linkTarget);
+                Path outputTarget = Paths.get(target);
                 NioFiles.createDirectories(outputFile.getParent());
                 Files.deleteIfExists(outputFile);
                 Files.createSymbolicLink(outputFile, outputTarget);
               }
               catch (InvalidPathException e) {
-                throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget, e);
+                throw new IOException("Invalid symlink entry: " + entry.name + " -> " + target, e);
               }
             }
             break;

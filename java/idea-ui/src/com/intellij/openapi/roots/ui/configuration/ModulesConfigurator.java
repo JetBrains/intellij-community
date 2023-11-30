@@ -38,12 +38,12 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -424,9 +424,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @Nullable
-  public List<Module> addNewModule() {
+  public List<Module> addNewModule(@Nullable String defaultPath) {
     if (myProject.isDefault()) return null;
-    return addModule(this::createNewModuleWizard);
+    return addModule(() -> createNewModuleWizard(defaultPath));
   }
 
   private Module createModule(final ModuleBuilder builder) {
@@ -478,9 +478,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   }
 
   @NotNull
-  private AbstractProjectWizard createNewModuleWizard() {
+  private AbstractProjectWizard createNewModuleWizard(@Nullable String defaultPath) {
     var wizardFactory = ApplicationManager.getApplication().getService(NewProjectWizardFactory.class);
-    return wizardFactory.create(myProject, this);
+    return wizardFactory.create(myProject, this, defaultPath);
   }
 
   public void deleteModules(@NotNull List<? extends ModuleEditor> selectedEditors) {
@@ -585,15 +585,17 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
 
   @ApiStatus.Internal
   public interface NewProjectWizardFactory {
-    @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider);
+    @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath);
   }
 
   @ApiStatus.Internal
   public static class NewProjectWizardFactoryImpl implements NewProjectWizardFactory {
 
     @Override
-    public @NotNull NewProjectWizard create(@Nullable Project project, @NotNull ModulesProvider modulesProvider) {
-      return new NewProjectWizard(project, modulesProvider, null);
+    public @NotNull NewProjectWizard create(@Nullable Project project,
+                                            @NotNull ModulesProvider modulesProvider,
+                                            @Nullable String defaultPath) {
+      return new NewProjectWizard(project, modulesProvider, defaultPath);
     }
   }
 }

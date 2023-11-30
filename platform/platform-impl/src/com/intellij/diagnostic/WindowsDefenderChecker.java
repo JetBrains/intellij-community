@@ -1,20 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
+import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.Wbemcli;
@@ -24,30 +24,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Sources:
  * <a href="https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-extension-file-exclusions-microsoft-defender-antivirus">Defender Settings</a>,
  * <a href="https://learn.microsoft.com/en-us/powershell/module/defender/">Defender PowerShell Module</a>.
  */
-@SuppressWarnings("MethodMayBeStatic")
+@SuppressWarnings({"MethodMayBeStatic", "DuplicatedCode"})
 public class WindowsDefenderChecker {
   private static final Logger LOG = Logger.getInstance(WindowsDefenderChecker.class);
 
   private static final String IGNORE_STATUS_CHECK = "ignore.virus.scanning.warn.message";
   private static final String HELPER_SCRIPT_NAME = "defender-exclusions.ps1";
-  private static final String SIG_MARKER = "# SIG # Begin signature block";
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 30_000;
   private static final ExtensionPointName<Extension> EP_NAME = ExtensionPointName.create("com.intellij.defender.config");
 
@@ -59,30 +54,16 @@ public class WindowsDefenderChecker {
     return ApplicationManager.getApplication().getService(WindowsDefenderChecker.class);
   }
 
-  private final NullableLazyValue<Path> myHelper = volatileLazyNullable(() -> {
-    var candidate = PathManager.findBinFile(HELPER_SCRIPT_NAME);
-    if (candidate != null) {
-      try {
-        if (Files.readString(candidate).contains(SIG_MARKER)) {
-          return candidate;
-        }
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-    }
-    LOG.info("'" + HELPER_SCRIPT_NAME + (candidate == null ? "' is missing" : "' is unsigned"));
-    return null;
-  });
-
-  public boolean isStatusCheckIgnored(@NotNull Project project) {
-    return PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
+  public final boolean isStatusCheckIgnored(@NotNull Project project) {
+    return !Registry.is("ide.check.windows.defender.rules") ||
+           PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
            PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK);
   }
 
-  final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
+  public final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
     var component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     if (ignore) {
+      logCaller("scope=" + (project == null ? "global" : project));
       component.setValue(IGNORE_STATUS_CHECK, true);
     }
     else {
@@ -95,7 +76,7 @@ public class WindowsDefenderChecker {
    * {@link Boolean#FALSE} means something from the above list is not true.
    * {@code null} means the IDE cannot detect the status.
    */
-  public @Nullable Boolean isRealTimeProtectionEnabled() {
+  public final @Nullable Boolean isRealTimeProtectionEnabled() {
     if (!JnaLoader.isLoaded()) {
       LOG.debug("JNA is not loaded");
       return null;
@@ -129,6 +110,7 @@ public class WindowsDefenderChecker {
       return Boolean.TRUE.equals(rtProtection);
     }
     catch (COMException e) {
+      // reference: https://learn.microsoft.com/en-us/windows/win32/wmisdk/wmi-error-constants
       if (e.matchesErrorCode(Wbemcli.WBEM_E_INVALID_NAMESPACE)) return false;  // Microsoft Defender not installed
       var message = "WMI Microsoft Defender check failed";
       var hresult = e.getHresult();
@@ -142,14 +124,10 @@ public class WindowsDefenderChecker {
     }
   }
 
-  final boolean canRunScript() {
-    return myHelper.getValue() != null;
-  }
-
   private enum AntivirusProduct {DisplayName, ProductState}
   private enum MpComputerStatus {RealTimeProtectionEnabled}
 
-  final @NotNull List<Path> getImportantPaths(@NotNull Project project) {
+  public final @NotNull List<Path> getPathsToExclude(@NotNull Project project) {
     var paths = new TreeSet<Path>();
 
     var projectDir = ProjectUtil.guessProjectDir(project);
@@ -166,9 +144,15 @@ public class WindowsDefenderChecker {
     return new ArrayList<>(paths);
   }
 
-  final boolean excludeProjectPaths(@NotNull List<Path> paths) {
+  public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
+    logCaller("paths=" + paths);
+
     try {
-      var script = requireNonNull(myHelper.getValue(), "missing/dysfunctional helper");
+      var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
+      if (script == null) {
+        LOG.info("'" + HELPER_SCRIPT_NAME + "' is missing from '" + PathManager.getBinPath() + "'");
+        return false;
+      }
 
       var psh = PathEnvironmentVariableUtil.findInPath("powershell.exe");
       if (psh == null) {
@@ -181,28 +165,37 @@ public class WindowsDefenderChecker {
         return false;
       }
 
-      var scriptlet = "(Get-AuthenticodeSignature '" + script + "').Status";
-      var command = new GeneralCommandLine(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
-      var output = run(command);
-      if (output.getExitCode() != 0 || !"Valid".equals(output.getStdout().trim())) {
-        LOG.info("validation failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
+      var scriptlet = "(Get-AuthenticodeSignature '" + script.toString().replace("'", "''") + "').Status";
+      var command = new ProcessBuilder(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
+      var start = System.nanoTime();
+      var output = run(command, Charset.defaultCharset());
+      if (output.getExitCode() != 0) {
+        logProcessError("validation failed", command, start, output);
+        return false;
+      }
+      var status = output.getStdout().trim();
+      if ("NotSigned".equals(status) && ApplicationInfo.getInstance().getBuild().isSnapshot()) {
+        LOG.info("allowing unsigned helper in dev. build " + ApplicationInfo.getInstance().getBuild());
+      }
+      else if (!"Valid".equals(status)) {
+        LOG.info("validation failed: status='" + status + "'");
         return false;
       }
 
-      command = ExecUtil.sudoCommand(
-        new GeneralCommandLine(Stream.concat(
-          Stream.of(psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
-          paths.stream().map(Path::toString)
-        ).toList()),
-        ""
-      ).withCharset(StandardCharsets.UTF_8);
-      output = run(command);
+      var launcher = PathManager.findBinFileWithException("launcher.exe");
+      command = new ProcessBuilder(Stream.concat(
+        Stream.of(launcher.toString(), psh.getPath(), "-ExecutionPolicy", "Bypass", "-NoProfile", "-NonInteractive", "-File", script.toString()),
+        paths.stream().map(Path::toString)
+      ).toList());
+      start = System.nanoTime();
+      output = run(command, StandardCharsets.UTF_8);
       if (output.getExitCode() != 0) {
-        LOG.info("script failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
+        logProcessError("exclusion failed", command, start, output);
         return false;
       }
       else {
         LOG.info("OK; script output:\n" + output.getStdout().trim());
+        PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
         return true;
       }
     }
@@ -212,11 +205,26 @@ public class WindowsDefenderChecker {
     }
   }
 
-  private static ProcessOutput run(GeneralCommandLine command) throws ExecutionException {
-    command.getEnvironment().remove("PSModulePath");
-    return ExecUtil.execAndGetOutput(
-      command.withRedirectErrorStream(true).withWorkDirectory(PathManager.getTempPath()),
-      POWERSHELL_COMMAND_TIMEOUT_MS);
+  private static ProcessOutput run(ProcessBuilder command, Charset charset) throws IOException {
+    var tempDir = NioFiles.createDirectories(Path.of(PathManager.getTempPath()));
+    command.environment().put("PSModulePath", "");
+    command.redirectErrorStream(true);
+    command.directory(tempDir.toFile());
+    return new CapturingProcessHandler(command.start(), charset, "PowerShell")
+      .runProcess(POWERSHELL_COMMAND_TIMEOUT_MS);
+  }
+
+  private static void logProcessError(String prefix, ProcessBuilder command, long start, ProcessOutput output) {
+    var t = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start);
+    LOG.info(prefix + ":\n[" + output.getExitCode() + ", " + t + "ms] " + command.command() + "\noutput: " + output.getStdout().trim());
+  }
+
+  private static void logCaller(String prefix) {
+    var options = EnumSet.of(StackWalker.Option.SHOW_HIDDEN_FRAMES, StackWalker.Option.SHOW_REFLECT_FRAMES);
+    var trace = StackWalker.getInstance(options).walk(stack -> stack.skip(1).limit(10)
+      .map(frame -> "  " + frame.toStackTraceElement())
+      .collect(Collectors.joining("\n", prefix + "; called from:\n", "\n  ...")));
+    LOG.info(trace);
   }
 
   public @NotNull String getConfigurationInstructionsUrl() {

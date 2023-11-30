@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.bookmark.BookmarkType;
@@ -31,6 +31,7 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -42,7 +43,11 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * @deprecated Please use the new bookmarks manager {@link com.intellij.ide.bookmark.BookmarksManager}.
+ */
 @State(name = "BookmarkManager", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
+@Deprecated
 public final class BookmarkManager implements PersistentStateComponent<Element> {
   private record BookmarkInfo(Bookmark bookmark, int line, String text) {
   }
@@ -87,7 +92,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
 
   @NotNull
   public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull @NlsSafe String description) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Bookmark b = new Bookmark(myProject, file, lineIndex, description);
     // increment all other indices and put new bookmark at index 0
@@ -175,7 +180,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   }
 
   public void removeBookmark(@NotNull Bookmark bookmark) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     VirtualFile file = bookmark.getFile();
     if (myBookmarks.remove(file, bookmark)) {
       int index = bookmark.index;
@@ -224,7 +229,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
         if (newList != null) {
           applyNewState(newList, true);
         }
-      }, ModalityState.NON_MODAL, myProject.getDisposed());
+      }, ModalityState.nonModal(), myProject.getDisposed());
     });
   }
 
@@ -346,7 +351,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
    * Try to move bookmark one position up in the list
    */
   public void moveBookmarkUp(@NotNull Bookmark bookmark) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final int index = bookmark.index;
     if (index > 0) {
       Bookmark other = ContainerUtil.find(myBookmarks.values(), b -> b.index == index - 1);
@@ -363,7 +368,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
    * Try to move bookmark one position down in the list
    */
   public void moveBookmarkDown(@NotNull Bookmark bookmark) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final int index = bookmark.index;
     if (index < myBookmarks.values().size() - 1) {
       Bookmark other = ContainerUtil.find(myBookmarks.values(), b -> b.index == index + 1);
@@ -397,7 +402,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   }
 
   public void setMnemonic(@NotNull Bookmark bookmark, char c) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     final Bookmark old = findBookmarkForMnemonic(c);
     if (old != null) removeBookmark(old);
     updateMnemonic(bookmark, c);
@@ -410,7 +415,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   }
 
   public void setDescription(@NotNull Bookmark bookmark, @NotNull @NlsSafe String description) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     bookmark.setDescription(description);
     getPublisher().bookmarkChanged(bookmark);
   }
@@ -534,7 +539,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
       }
     }
 
-    private String getLineContent(Document document, int line) {
+    private static String getLineContent(Document document, int line) {
       int start = document.getLineStartOffset(line);
       int end = document.getLineEndOffset(line);
       return document.getText(new TextRange(start, end));

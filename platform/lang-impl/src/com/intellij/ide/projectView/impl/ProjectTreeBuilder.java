@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ProjectTopics;
 import com.intellij.ide.CopyPasteUtil;
 import com.intellij.ide.bookmark.BookmarksListener;
 import com.intellij.ide.bookmark.FileBookmarksListener;
@@ -46,7 +45,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
 
     final MessageBusConnection connection = project.getMessageBus().connect(this);
 
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         queueUpdate();
@@ -81,7 +80,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
     return new ProjectTreeBuilderPsiListener(project);
   }
 
-  protected class ProjectTreeBuilderPsiListener extends ProjectViewPsiTreeChangeListener {
+  protected final class ProjectTreeBuilderPsiListener extends ProjectViewPsiTreeChangeListener {
     public ProjectTreeBuilderPsiListener(final Project project) {
       super(project);
     }
@@ -150,7 +149,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
             synchronized (myFilesToRefresh) {
               myFilesToRefresh.removeAll(filesToRefresh);
             }
-          }, 200, ModalityState.NON_MODAL);
+          }, 200, ModalityState.nonModal());
         }
       }
     }

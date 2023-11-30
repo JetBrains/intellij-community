@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner.history.actions;
 
 import com.intellij.execution.TestStateStorage;
@@ -20,13 +20,12 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ImportTestsGroup extends ActionGroup {
   private SMTRunnerConsoleProperties myProperties;
   public ImportTestsGroup() {
     super(() -> SmRunnerBundle.message("sm.test.runner.import.test.group.history"),
-          () -> SmRunnerBundle.message("sm.test.runner.import.test.group.open.recent.session"), AllIcons.Vcs.History);
+          () -> SmRunnerBundle.message("sm.test.runner.import.test.group.open.recent.session"), () -> AllIcons.Vcs.History);
     setPopup(true);
     getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.TOOLBAR);
   }

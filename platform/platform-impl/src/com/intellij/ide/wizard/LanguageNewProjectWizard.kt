@@ -6,6 +6,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 @JvmDefaultWithCompatibility
 interface LanguageNewProjectWizard : NewProjectWizardMultiStepFactory<NewProjectWizardLanguageStep> {
   companion object {
-    val EP_NAME = ExtensionPointName<LanguageNewProjectWizard>("com.intellij.newProjectWizard.language")
+    val EP_NAME: ExtensionPointName<LanguageNewProjectWizard> = ExtensionPointName("com.intellij.newProjectWizard.language")
   }
 }

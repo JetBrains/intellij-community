@@ -61,20 +61,15 @@ private suspend fun getAuthData(project: Project, url: String, server: GitLabSer
     .filter { it.server == server }
     .associateWith { accountManager.findCredentials(it) }
 
-  val isAccountUnique: (GitLabServerPath, String) -> Boolean = { newServer, newName ->
-    accountManager.accountsState.value.none { it.server == newServer || it.name == newName }
-  }
-
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     when (accountsWithTokens.size) {
       0 -> {
-        GitLabLoginUtil.logInViaToken(project, null, server, login, isAccountUnique)
+        GitLabLoginUtil.logInViaToken(project, null, server, login, accountManager::isAccountUnique)
       }
       1 -> {
         // apparently the token is missing or incorrect, otherwise this account should've been provided by silent provider
         val account = accountsWithTokens.keys.first()
-        val token = accountsWithTokens[account]
-                    ?: GitLabLoginUtil.updateToken(project, null, account, login, isAccountUnique)
+        val token = GitLabLoginUtil.updateToken(project, null, account, login, accountManager::isAccountUnique)
                     ?: return@withContext null
         account to token
       }
@@ -83,12 +78,13 @@ private suspend fun getAuthData(project: Project, url: String, server: GitLabSer
           GitLabLoginUtil.chooseAccount(project, null, GitLabBundle.message("account.choose.git.description", url), accountsWithTokens.keys)
           ?: return@withContext null
         val token = accountsWithTokens[account]
-                    ?: GitLabLoginUtil.updateToken(project, null, account, login, isAccountUnique)
+                    ?: GitLabLoginUtil.updateToken(project, null, account, login, accountManager::isAccountUnique)
                     ?: return@withContext null
         account to token
       }
     }
   }?.let { (account, token) ->
+    accountManager.updateAccount(account, token)
     AuthData(account.name, token)
   }
 }

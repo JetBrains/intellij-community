@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.*;
@@ -41,6 +41,7 @@ import com.intellij.reference.SoftReference;
 import com.intellij.unscramble.ThreadState;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.AbstractDebuggerSession;
@@ -158,7 +159,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
                          final State state,
                          final Event event,
                          final @NlsContexts.Label String description) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       final DebuggerSession session = context.getDebuggerSession();
       LOG.assertTrue(session == DebuggerSession.this || session == null);
       final Runnable setStateRunnable = () -> {
@@ -418,7 +419,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   private SuspendContextImpl getSuspendContext() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return getContextManager().getContext().getSuspendContext();
   }
 
@@ -432,7 +433,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       String connectionName = DebuggerUtilsImpl.getConnectionDisplayName(remoteConnection);
       description.append("; ").append(JavaDebuggerBundle.message("status.waiting.attach.address", connectionName));
     }
-    getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
+    DebuggerInvocationUtil.swingInvokeLater(getProject(), () -> {
+      getContextManager().setState(SESSION_EMPTY_CONTEXT, State.WAITING_ATTACH, Event.START_WAIT_ATTACH, description.toString());
+    });
   }
 
   private class MyDebugProcessListener extends DebugProcessAdapterImpl {
@@ -715,7 +718,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
       myUpdateAlarm.addRequest(() -> {
         final DebuggerStateManager contextManager = getContextManager();
         contextManager.fireStateChanged(contextManager.getContext(), Event.THREADS_REFRESH);
-      }, ApplicationManager.getApplication().isUnitTestMode() ? 0 : 100, ModalityState.NON_MODAL);
+      }, ApplicationManager.getApplication().isUnitTestMode() ? 0 : 100, ModalityState.nonModal());
     }
   }
 

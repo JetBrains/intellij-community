@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.TestScheme
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.util.toByteArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking

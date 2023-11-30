@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareToggleAction
 
 class EditorSplitGroup : DefaultActionGroup() {
@@ -21,7 +22,7 @@ class EditorSplitGroup : DefaultActionGroup() {
   }
 }
 
-abstract class ChangeEditorSplitAction(private val myVerticalSplit: Boolean) : DumbAwareToggleAction() {
+abstract class ChangeEditorSplitAction(private val myVerticalSplit: Boolean) : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun isSelected(e: AnActionEvent): Boolean {
     val editor = e.getEditorWithPreview() ?: return false
     return editor.isVerticalSplit == myVerticalSplit

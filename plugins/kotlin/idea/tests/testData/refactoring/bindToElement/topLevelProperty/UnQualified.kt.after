@@ -1,0 +1,10 @@
+// FILE: test/UnQualified.kt
+// BIND_TO test.bar.fooBar
+package test
+
+import test.bar.fooBar
+
+fun foo() {
+    val x = <caret>fooBar
+}
+

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
@@ -9,49 +9,12 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.withPushPop
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.util.registry.Registry
 
-class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProjectConfigurator {
-  companion object {
-    private val LOG: Logger = logger<UnknownSdkInspectionCommandLineConfigurator>()
+private val LOG: Logger = logger<UnknownSdkInspectionCommandLineConfigurator>()
 
-    fun configureUnknownSdks(project: Project, indicator: ProgressIndicator) {
-      require(!ApplicationManager.getApplication().isWriteIntentLockAcquired) {
-        "The code below uses the same GUI thread to complete operations. Running from EDT would deadlock"
-      }
-      ApplicationManager.getApplication().assertIsNonDispatchThread()
+internal class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProjectConfigurator {
 
-
-      indicator.withPushPop {
-        indicator.text = ProjectBundle.message("config.unknown.progress.scanning")
-
-        val problems = UnknownSdkTracker
-          .getInstance(project)
-          .collectUnknownSdks(UnknownSdkCollector(project), indicator)
-
-        if (problems.isEmpty()) return@withPushPop
-        indicator.isIndeterminate = false
-
-        for ((i, problem) in problems.withIndex()) {
-          val fix = problem.suggestedFixAction
-
-          if (fix == null) {
-            LOG.warn("Failed to resolve ${problem.sdkTypeAndNameText}: ${problem.notificationText}")
-            continue
-          }
-
-          LOG.info("Resolving ${problem.sdkTypeAndNameText}")
-          indicator.withPushPop {
-            indicator.fraction = i.toDouble() / problems.size
-            indicator.text = ProjectBundle.message("config.unknown.progress.configuring", problem.sdkTypeAndNameText)
-            fix.applySuggestionBlocking(indicator)
-          }
-        }
-      }
-    }
-  }
-
-  override fun getName() = "sdk"
+  override fun getName(): String = "sdk"
 
   override fun getDescription(): String = ProjectBundle.message("config.unknown.sdk.commandline.configure")
 
@@ -59,10 +22,45 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     !ApplicationManager.getApplication().isUnitTestMode
 
   override fun configureEnvironment(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {
-    Registry.get("unknown.sdk.auto").setValue(false) // forbid UnknownSdkTracker post startup activity as we run it here
+    System.setProperty("unknown.sdk.auto", false.toString())
   }
 
   override fun configureProject(project: Project, context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {
     configureUnknownSdks(project, context.progressIndicator)
+  }
+
+  private fun configureUnknownSdks(project: Project, indicator: ProgressIndicator) {
+    require(!ApplicationManager.getApplication().isWriteIntentLockAcquired) {
+      "The code below uses the same GUI thread to complete operations. Running from EDT would deadlock"
+    }
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+
+
+    indicator.withPushPop {
+      indicator.text = ProjectBundle.message("config.unknown.progress.scanning")
+
+      val problems = UnknownSdkTracker
+        .getInstance(project)
+        .collectUnknownSdks(UnknownSdkCollector(project), indicator)
+
+      if (problems.isEmpty()) return@withPushPop
+      indicator.isIndeterminate = false
+
+      for ((i, problem) in problems.withIndex()) {
+        val fix = problem.suggestedFixAction
+
+        if (fix == null) {
+          LOG.warn("Failed to resolve ${problem.sdkTypeAndNameText}: ${problem.notificationText}")
+          continue
+        }
+
+        LOG.info("Resolving ${problem.sdkTypeAndNameText}")
+        indicator.withPushPop {
+          indicator.fraction = i.toDouble() / problems.size
+          indicator.text = ProjectBundle.message("config.unknown.progress.configuring", problem.sdkTypeAndNameText)
+          fix.applySuggestionBlocking(indicator)
+        }
+      }
+    }
   }
 }

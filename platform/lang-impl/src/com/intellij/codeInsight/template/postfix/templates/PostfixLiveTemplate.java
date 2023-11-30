@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +115,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
   @Override
   public void expand(@NotNull final String key, @NotNull final CustomTemplateCallback callback) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     Editor editor = callback.getEditor();
     PsiFile file = callback.getContext().getContainingFile();
@@ -138,7 +139,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
                                     @NotNull Editor editor,
                                     @NotNull PostfixTemplateProvider provider,
                                     @NotNull PostfixTemplate postfixTemplate) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("editing.completion.postfix");
     final PsiFile file = callback.getContext().getContainingFile();
     if (isApplicableTemplate(provider, key, file, editor, postfixTemplate)) {
@@ -251,7 +252,7 @@ public class PostfixLiveTemplate extends CustomLiveTemplateBase {
 
 
   private static int deleteTemplateKey(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final String key) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
 
     final int currentOffset = editor.getCaretModel().getOffset();
     final int newOffset = currentOffset - key.length();

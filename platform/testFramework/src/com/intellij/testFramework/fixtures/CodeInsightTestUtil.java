@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
@@ -18,10 +19,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInsight.template.impl.actions.ListTemplatesAction;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSession;
-import com.intellij.lang.annotation.Annotator;
-import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.*;
 import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -324,10 +322,11 @@ public final class CodeInsightTestUtil {
                                                                 @NotNull Consumer<? super Out> resultChecker) {
     Out result = annotator.doAnnotate(in);
     resultChecker.accept(result);
-    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(psiFile), false);
-    ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
-    annotationHolder.assertAllAnnotationsCreated();
-    return List.copyOf(annotationHolder);
+    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotationHolder -> {
+      ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
+      annotationHolder.assertAllAnnotationsCreated();
+      return List.copyOf(annotationHolder);
+    });
   }
 
   /**
@@ -335,23 +334,24 @@ public final class CodeInsightTestUtil {
    */
   @NotNull
   public static List<Annotation> testAnnotator(@NotNull Annotator annotator, @NotNull PsiElement @NotNull... elements) {
-    PsiFile file = elements[0].getContainingFile();
-    AnnotationHolderImpl annotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), false);
-    for (PsiElement element : elements) {
-      annotationHolder.runAnnotatorWithContext(element, annotator);
-    }
-    annotationHolder.assertAllAnnotationsCreated();
-    return List.copyOf(annotationHolder);
+    PsiFile psiFile = elements[0].getContainingFile();
+    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotationHolder -> {
+      for (PsiElement element : elements) {
+        annotationHolder.runAnnotatorWithContext(element, annotator);
+      }
+      annotationHolder.assertAllAnnotationsCreated();
+      return List.copyOf(annotationHolder);
+    });
   }
 
-  public static void runIdentifierHighlighterPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(file, editor, file.getTextRange());
+  public static void runIdentifierHighlighterPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(psiFile, editor, psiFile.getTextRange());
     assert pass != null;
     try {
       ReadAction.nonBlocking(() -> {
         DaemonProgressIndicator indicator = new DaemonProgressIndicator();
         ProgressManager.getInstance().runProcess(() -> {
-          HighlightingSessionImpl.runInsideHighlightingSession(file, editor.getColorsScheme(), ProperTextRange.create(file.getTextRange()), false, session -> {
+          HighlightingSessionImpl.runInsideHighlightingSession(psiFile, editor.getColorsScheme(), ProperTextRange.create(psiFile.getTextRange()), false, session -> {
             pass.doCollectInformation(session);
           });
         }, indicator);

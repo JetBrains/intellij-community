@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -14,7 +14,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
-public class LiveTemplateLookupActionProvider implements LookupActionProvider {
+public final class LiveTemplateLookupActionProvider implements LookupActionProvider {
   @Override
   public void fillActions(@NotNull LookupElement element, final @NotNull Lookup lookup, @NotNull Consumer<? super @NotNull LookupElementAction> consumer) {
     if (element instanceof LiveTemplateLookupElementImpl) {

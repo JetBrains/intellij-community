@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.CustomSourceRootPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jdom.Element
 import org.jetbrains.jps.model.JpsDummyElement
 import org.jetbrains.jps.model.JpsElement
@@ -21,7 +23,6 @@ import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtensio
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer
 import org.jetbrains.jps.model.serialization.module.UnknownSourceRootPropertiesSerializer
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 object SourceRootPropertiesHelper {
   @Suppress("UNCHECKED_CAST")
@@ -103,23 +104,25 @@ object SourceRootPropertiesHelper {
                                                     properties: P,
                                                     serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
     when (serializer.typeId) {
-      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> diff.addJavaSourceRootEntity(
-        sourceRoot = sourceRootEntity,
+      JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> diff addEntity JavaSourceRootPropertiesEntity(
         generated = (properties as JavaSourceRootProperties).isForGeneratedSources,
-        packagePrefix = properties.packagePrefix
-      )
+        packagePrefix = properties.packagePrefix,
+        entitySource = sourceRootEntity.entitySource) {
+        sourceRoot = sourceRootEntity
+      }
 
-      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> diff.addJavaResourceRootEntity(
-        sourceRoot = sourceRootEntity,
+      JpsJavaModelSerializerExtension.JAVA_RESOURCE_ROOT_ID, JpsJavaModelSerializerExtension.JAVA_TEST_RESOURCE_ROOT_ID -> diff addEntity JavaResourceRootPropertiesEntity(
         generated = (properties as JavaResourceRootProperties).isForGeneratedSources,
-        relativeOutputPath = properties.relativeOutputPath
-      )
+        relativeOutputPath = properties.relativeOutputPath,
+        entitySource = sourceRootEntity.entitySource) {
+        sourceRoot = sourceRootEntity
+      }
 
       else -> if (properties !is JpsDummyElement) {
-        diff.addCustomSourceRootPropertiesEntity(
-          sourceRoot = sourceRootEntity,
-          propertiesXmlTag = savePropertiesToString(serializer, properties)
-        )
+        diff addEntity CustomSourceRootPropertiesEntity(propertiesXmlTag = savePropertiesToString(serializer, properties),
+                                                        entitySource = sourceRootEntity.entitySource) {
+          sourceRoot = sourceRootEntity
+        }
       }
     }
   }

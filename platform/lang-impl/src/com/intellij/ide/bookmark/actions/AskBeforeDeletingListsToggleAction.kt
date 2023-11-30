@@ -7,7 +7,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 
 internal class AskBeforeDeletingListsToggleAction : DumbAwareToggleAction() {
 
-  override fun isSelected(event: AnActionEvent) = event.bookmarksViewState?.askBeforeDeletingLists ?: true
+  override fun isSelected(event: AnActionEvent): Boolean = event.bookmarksViewState?.askBeforeDeletingLists ?: true
 
   override fun setSelected(event: AnActionEvent, isSelected: Boolean) {
     event.bookmarksViewState?.askBeforeDeletingLists = isSelected

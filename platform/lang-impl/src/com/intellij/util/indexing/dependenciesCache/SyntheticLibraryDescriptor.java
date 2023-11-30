@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.dependenciesCache;
 
 import com.intellij.navigation.ItemPresentation;
@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.Set;
 
-class SyntheticLibraryDescriptor {
+final class SyntheticLibraryDescriptor {
   @NotNull
   public final Class<? extends AdditionalLibraryRootsProvider> providerClass;
   @NotNull
@@ -88,7 +88,7 @@ class SyntheticLibraryDescriptor {
     return ContainerUtil.union(sourceRoots, binaryRoots);
   }
 
-  public final boolean contains(@NotNull VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     return contains(file, true, true);
   }
 

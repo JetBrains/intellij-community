@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.openapi.application.Experiments;
@@ -32,21 +32,23 @@ public final class LargeFileEditorProvider implements DefaultPlatformFileEditorP
                && file.isInLocalFileSystem());
   }
 
-  @NotNull
   @Override
-  public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+  public boolean acceptRequiresReadAction() {
+    return false;
+  }
+
+  @Override
+  public @NotNull FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
     return new LargeFileEditorImpl(project, file);
   }
 
-  @NotNull
   @Override
-  public String getEditorTypeId() {
+  public @NotNull String getEditorTypeId() {
     return PROVIDER_ID;
   }
 
-  @NotNull
   @Override
-  public FileEditorPolicy getPolicy() {
+  public @NotNull FileEditorPolicy getPolicy() {
     return FileEditorPolicy.NONE;
   }
 
@@ -60,9 +62,8 @@ public final class LargeFileEditorProvider implements DefaultPlatformFileEditorP
     }
   }
 
-  @NotNull
   @Override
-  public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+  public @NotNull FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
     LargeFileEditorState state = new LargeFileEditorState();
     if (JDOMUtil.isEmpty(sourceElement)) {
       return state;

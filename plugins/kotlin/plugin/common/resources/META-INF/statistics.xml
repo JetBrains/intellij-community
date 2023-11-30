@@ -1,4 +1,8 @@
 <idea-plugin>
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingImportListener"
+              topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
+  </projectListeners>
   <extensions defaultExtensionNs="com.intellij">
     <statistics.validation.customValidationRule implementation="org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorIdValidationRule"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector"/>
@@ -13,10 +17,14 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector"/>
     <statistics.counterUsagesCollector
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector"/>
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.IDESettingsFUSCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.ProjectConfigurationCollector"/>
+    <statistics.counterUsagesCollector
+            implementationClass="org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector"/>
     <internal.statistic.libraryUsageImportProcessor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.statistics.KotlinLibraryUsageImportProcessor"/>
+    <statistics.applicationUsagesCollector implementation="org.jetbrains.kotlin.idea.statistics.K2MetricsFUSCollector"/>
   </extensions>
 </idea-plugin>

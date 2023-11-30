@@ -45,8 +45,8 @@ public interface UpdateSession {
    * This way some data can be computed once and shared between several actions.
    * Both in their <code>update</code> and <code>actionPerformed</code> methods.
    */
-  default @NotNull <T> T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> provider) {
-    return provider.get();
+  default @NotNull <T> T sharedData(@NotNull Key<T> key, @NotNull Supplier<? extends T> supplier) {
+    return supplier.get();
   }
 
   /**

@@ -25,13 +25,13 @@ internal class ExtensionClassShouldBeFinalAndNonPublicInspection : DevKitJvmInsp
         val language = sourceElement?.language ?: return true
         val file = clazz.containingFile ?: return true
         val isFinal = clazz.hasModifier(JvmModifier.FINAL)
-        val extensionClassShouldNotBePublicProvider = ExtensionClassShouldNotBePublicProviders.forLanguage(language)
+        val extensionClassShouldNotBePublicProvider = getProvider(ExtensionClassShouldNotBePublicProviders, language) ?: return true
         val isPublic = extensionClassShouldNotBePublicProvider.isPublic(clazz)
         if (isFinal && !isPublic) return true
         if (!ExtensionUtil.isInstantiatedExtension(clazz) { false }) return true
         if (!isFinal) {
           val actions = createModifierActions(clazz, modifierRequest(JvmModifier.FINAL, true))
-          val errorMessageProvider = ExtensionClassShouldBeFinalErrorMessageProviders.forLanguage(language)
+          val errorMessageProvider = getProvider(ExtensionClassShouldBeFinalErrorMessageProviders, language) ?: return true
           val message = errorMessageProvider.provideErrorMessage()
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
           sink.highlight(message, *fixes)

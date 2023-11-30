@@ -595,7 +595,7 @@ public final class JarRepositoryManager {
     private static List<RemoteRepository> createRemoteRepositories(Collection<RemoteRepositoryDescription> repositoryDescriptions) {
       ArrayList<RemoteRepository> remotes = new ArrayList<>();
       for (RemoteRepositoryDescription repository : repositoryDescriptions) {
-        ArtifactRepositoryManager.ArtifactAuthenticationData authData = obtainAuthenticationData(repository.getUrl());
+        ArtifactRepositoryManager.ArtifactAuthenticationData authData = obtainAuthenticationData(repository);
         remotes.add(
           ArtifactRepositoryManager.createRemoteRepository(repository.getId(), repository.getUrl(), authData, repository.isAllowSnapshots())
         );

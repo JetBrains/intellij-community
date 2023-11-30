@@ -3,7 +3,7 @@
     <module name="kotlin.refactorings.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.refactoring.move.K2MoveRefactoringSupport"
-                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRefactoringSupport"/>
+    <refactoring.moveHandler order="first" implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.K2MoveHandler"/>
+    <moveFileHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesHandler"/>
   </extensions>
 </idea-plugin>

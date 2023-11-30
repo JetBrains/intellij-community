@@ -11,7 +11,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class LightEditReloadFileAction extends DumbAwareAction implements LightEditCompatible {
+public final class LightEditReloadFileAction extends DumbAwareAction implements LightEditCompatible {
   public LightEditReloadFileAction() {
     super(ApplicationBundle.message("light.edit.reload.action"));
   }

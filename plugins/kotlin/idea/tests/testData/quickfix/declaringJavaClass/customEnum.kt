@@ -1,5 +1,5 @@
 // "Replace with 'declaringJavaClass'" "true"
-// ACTION: Add method contract to 'getDeclaringClass()'
+// ACTION: Add method contract to 'getDeclaringClass()'...
 // ACTION: Introduce local variable
 // ACTION: Put calls on separate lines
 // ACTION: Replace with 'declaringJavaClass'
@@ -11,3 +11,4 @@ enum class CustomEnum { A; }
 fun foo() {
     CustomEnum.A.<caret>declaringClass
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.DeclaringJavaClassMigrationFix

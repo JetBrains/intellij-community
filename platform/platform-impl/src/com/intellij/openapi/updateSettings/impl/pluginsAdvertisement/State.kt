@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
@@ -26,20 +26,21 @@ import com.intellij.openapi.util.text.Strings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.mapSmartSet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.TimeUnit
 
-data class PluginAdvertiserExtensionsData(
+internal data class PluginAdvertiserExtensionsData(
   // Either extension or file name. Depends on which of the two properties has more priority for advertising plugins for this specific file.
-  val extensionOrFileName: String,
-  val plugins: Set<PluginData> = emptySet(),
+  @JvmField val extensionOrFileName: String,
+  @JvmField val plugins: Set<PluginData> = emptySet(),
 )
 
 @State(name = "PluginAdvertiserExtensions", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 @Service(Service.Level.APP)
 class PluginAdvertiserExtensionsStateService : SerializablePersistentStateComponent<PluginAdvertiserExtensionsStateService.State>(State()) {
-
   /**
    * Stores locally installed plugins (both enabled and disabled) supporting given filenames/extensions.
    */
@@ -50,7 +51,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
     private val LOG = logger<PluginAdvertiserExtensionsStateService>()
 
     @JvmStatic
-    val instance
+    val instance: PluginAdvertiserExtensionsStateService
       get() = service<PluginAdvertiserExtensionsStateService>()
 
     @JvmStatic
@@ -101,7 +102,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
 
     private fun findEnabledPlugin(plugins: Set<String>): IdeaPluginDescriptor? {
       return if (plugins.isNotEmpty())
-        PluginManagerCore.getLoadedPlugins().find {
+        PluginManagerCore.loadedPlugins.find {
           it.isEnabled && plugins.contains(it.pluginId.idString)
         }
       else
@@ -116,7 +117,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build<String, PluginAdvertiserExtensionsData>()
 
-  fun createExtensionDataProvider(project: Project) = ExtensionDataProvider(project)
+  fun createExtensionDataProvider(project: Project): ExtensionDataProvider = ExtensionDataProvider(project)
 
   fun registerLocalPlugin(matcher: FileNameMatcher, descriptor: PluginDescriptor) {
     updateState { oldState ->
@@ -126,7 +127,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  fun updateCache(extensionOrFileName: String): Boolean {
+  suspend fun updateCache(extensionOrFileName: String): Boolean {
     if (cache.getIfPresent(extensionOrFileName) != null) {
       return false
     }
@@ -137,8 +138,11 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
       return false
     }
 
-    val compatiblePlugins = requestCompatiblePlugins(extensionOrFileName, knownExtensions.get(extensionOrFileName))
-    updateCache(extensionOrFileName, compatiblePlugins)
+    withContext(Dispatchers.IO) {
+      val compatiblePlugins = requestCompatiblePlugins(extensionOrFileName, knownExtensions.get(extensionOrFileName))
+      updateCache(extensionOrFileName, compatiblePlugins)
+    }
+
     return true
   }
 
@@ -176,7 +180,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
      * The return value of null indicates that the locally available data is not enough to produce a suggestion,
      * and we need to fetch up-to-date data from the marketplace.
      */
-    fun requestExtensionData(fileName: String, fileType: FileType): PluginAdvertiserExtensionsData? {
+    internal fun requestExtensionData(fileName: String, fileType: FileType): PluginAdvertiserExtensionsData? {
       fun noSuggestions() = PluginAdvertiserExtensionsData(fileName, emptySet())
 
       val fullExtension = getFullExtension(fileName)

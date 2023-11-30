@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.style
 
 import java.awt.Color
@@ -7,11 +7,15 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
 
-class Properties {
+internal class Properties {
   private val map = HashMap<StyleProperty, Any?>()
+
   var background: Color?
     set(value) = setValue(StyleProperty.BACKGROUND, value)
     get() = getValue(StyleProperty.BACKGROUND) as Color
+  var hover: Color?
+    set(value) = setValue(StyleProperty.HOVER, value)
+    get() = getValue(StyleProperty.HOVER) as Color
   var isOpaque: Boolean?
     set(value) = setValue(StyleProperty.OPAQUE, value)
     get() = getValue(StyleProperty.OPAQUE) as Boolean

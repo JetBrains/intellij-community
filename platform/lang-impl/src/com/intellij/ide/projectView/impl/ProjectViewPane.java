@@ -44,6 +44,11 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     super(project);
   }
 
+  @Override
+  public void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
+    support.setMultiSelectionEnabled(false);
+  }
+
   @NotNull
   @Override
   public String getTitle() {

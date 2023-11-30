@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.application.options.schemes.SchemeNameGenerator;
@@ -20,20 +20,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
-  @NonNls
-  public static final String CODE_STYLES_DIR_PATH = "codestyles";
+  public static final @NonNls String CODE_STYLES_DIR_PATH = "codestyles";
 
   protected final SchemeManager<CodeStyleScheme> mySchemeManager;
 
   public CodeStyleSchemesImpl(@NotNull SchemeManagerFactory schemeManagerFactory) {
     mySchemeManager = schemeManagerFactory.create(CODE_STYLES_DIR_PATH, new LazySchemeProcessor<CodeStyleScheme, CodeStyleSchemeImpl>() {
-      @NotNull
       @Override
-      public CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder,
-                                              @NotNull String name,
-                                              @NotNull Function1<? super String, String> attributeProvider,
-                                              boolean isBundled) {
-        return new CodeStyleSchemeImpl(attributeProvider.invoke("name"), attributeProvider.invoke("parent"), dataHolder);
+      public @NotNull CodeStyleSchemeImpl createScheme(@NotNull SchemeDataHolder<? super CodeStyleSchemeImpl> dataHolder,
+                                                       @NotNull String name,
+                                                       @NotNull Function1<? super String, String> attributeProvider,
+                                                       boolean isBundled) {
+        return new CodeStyleSchemeImpl(attributeProvider.invoke("name"), dataHolder);
       }
     }, null, null, SettingsCategory.CODE);
 
@@ -149,9 +147,8 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     return defaultScheme;
   }
 
-  @Nullable
   @Override
-  public CodeStyleScheme findSchemeByName(@NotNull String name) {
+  public @Nullable CodeStyleScheme findSchemeByName(@NotNull String name) {
     return mySchemeManager.findSchemeByName(name);
   }
 
@@ -160,8 +157,7 @@ public abstract class CodeStyleSchemesImpl extends CodeStyleSchemes {
     mySchemeManager.addScheme(scheme);
   }
 
-  @NotNull
-  public static SchemeManager<CodeStyleScheme> getSchemeManager() {
+  public static @NotNull SchemeManager<CodeStyleScheme> getSchemeManager() {
     return ((CodeStyleSchemesImpl)CodeStyleSchemes.getInstance()).mySchemeManager;
   }
 }

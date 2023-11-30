@@ -19,20 +19,23 @@ abstract class AbstractPluginManagerProxy : PluginManagerProxy {
   protected abstract val pluginEnabler: PluginEnabler
   protected abstract fun isDescriptorEssential(pluginId: PluginId): Boolean
 
-  override fun enablePlugins(plugins: Set<PluginId>) {
-    pluginEnabler.enableById(plugins)
+  override fun enablePlugins(plugins: Set<PluginId>) : Boolean {
+    if (plugins.isEmpty()) {
+      return true
+    }
+    return pluginEnabler.enableById(plugins)
   }
 
-  override fun disablePlugins(plugins: Set<PluginId>) {
+  override fun disablePlugins(plugins: Set<PluginId>) : Boolean {
     if (plugins.isEmpty()) {
-      return
+      return true
     }
     val essentials2disable = plugins.filter { isEssential(it) }.toSet()
     if (essentials2disable.isNotEmpty()) {
       LOG.info("Won't disable essential (or effectively essential) plugins: $essentials2disable")
     }
     val nonessentialPlugins = plugins - essentials2disable
-    pluginEnabler.disableById(nonessentialPlugins)
+    return pluginEnabler.disableById(nonessentialPlugins)
   }
 
   private fun getEffectiveEssentialPlugins(): Set<PluginId> {

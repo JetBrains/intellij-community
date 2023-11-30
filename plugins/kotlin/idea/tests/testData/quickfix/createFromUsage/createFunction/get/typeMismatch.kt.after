@@ -10,3 +10,4 @@ fun test() {
 private operator fun A.get(s: String) {
     TODO("Not yet implemented")
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.CreateExtensionCallableFromUsageFix

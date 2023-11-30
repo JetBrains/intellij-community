@@ -39,7 +39,7 @@ public class TwosideContentPanel extends JPanel {
     assert contents.size() == 2;
 
     myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
-    DiffContentPanel.syncTitleHeights(myPanels);
+    DiffContentLayoutPanel.syncTitleHeights(myPanels);
 
     mySplitter = new DiffSplitter();
     mySplitter.setFirstComponent(Side.LEFT.select(myPanels));

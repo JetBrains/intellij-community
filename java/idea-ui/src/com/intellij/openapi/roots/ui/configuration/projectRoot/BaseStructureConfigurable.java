@@ -37,7 +37,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
-import java.util.function.Predicate;
 
 public abstract class BaseStructureConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable, Place.Navigator {
   protected StructureConfigurableContext myContext;
@@ -248,7 +247,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<>();
-    AbstractAddGroup addAction = createAddAction();
+    AbstractAddGroup addAction = createAddAction(fromPopup);
     if (addAction != null) {
       result.add(addAction);
     }
@@ -277,7 +276,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   @Nullable
-  protected abstract AbstractAddGroup createAddAction();
+  protected abstract AbstractAddGroup createAddAction(boolean fromPopup);
 
   protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
     return Collections.emptyList();
@@ -310,7 +309,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
 
   final class MyRemoveAction extends MyDeleteAction {
     MyRemoveAction() {
-      super((Predicate<Object[]>)objects -> {
+      super(objects -> {
         List<MyNode> nodes = new ArrayList<>();
         for (Object object : objects) {
           if (!(object instanceof MyNode)) return false;

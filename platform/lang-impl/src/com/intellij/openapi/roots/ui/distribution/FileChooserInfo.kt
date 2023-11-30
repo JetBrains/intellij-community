@@ -13,10 +13,10 @@ interface FileChooserInfo {
   val fileChooserMacroFilter: ((Macro) -> Boolean)?
 
   companion object {
-    val ALL = { it: Macro -> MacrosDialog.Filters.ALL.test(it) }
-    val NONE = { it: Macro -> MacrosDialog.Filters.NONE.test(it) }
-    val ANY_PATH = { it: Macro -> MacrosDialog.Filters.ANY_PATH.test(it) }
-    val DIRECTORY_PATH = { it: Macro -> MacrosDialog.Filters.DIRECTORY_PATH.test(it) }
-    val FILE_PATH = { it: Macro -> MacrosDialog.Filters.FILE_PATH.test(it) }
+    val ALL: (Macro) -> Boolean = { it: Macro -> MacrosDialog.Filters.ALL.test(it) }
+    val NONE: (Macro) -> Boolean = { it: Macro -> MacrosDialog.Filters.NONE.test(it) }
+    val ANY_PATH: (Macro) -> Boolean = { it: Macro -> MacrosDialog.Filters.ANY_PATH.test(it) }
+    val DIRECTORY_PATH: (Macro) -> Boolean = { it: Macro -> MacrosDialog.Filters.DIRECTORY_PATH.test(it) }
+    val FILE_PATH: (Macro) -> Boolean = { it: Macro -> MacrosDialog.Filters.FILE_PATH.test(it) }
   }
 }

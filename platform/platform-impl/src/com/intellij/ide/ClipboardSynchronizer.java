@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.Patches;
@@ -9,10 +9,12 @@ import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.datatransfer.DataTransferer;
@@ -51,7 +53,7 @@ public final class ClipboardSynchronizer implements Disposable {
     else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfoRt.isMac) {
       myClipboardHandler = new MacClipboardHandler();
     }
-    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfoRt.isXWindow) {
+    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && StartupUiUtil.isXToolkit()) {
       myClipboardHandler = new XWinClipboardHandler();
     }
     else if (SystemInfoRt.isWindows) {
@@ -73,13 +75,11 @@ public final class ClipboardSynchronizer implements Disposable {
     return ClipboardUtil.handleClipboardSafely(() -> myClipboardHandler.areDataFlavorsAvailable(flavors), false);
   }
 
-  @Nullable
-  public Transferable getContents() {
+  public @Nullable Transferable getContents() {
     return ClipboardUtil.handleClipboardSafely(myClipboardHandler::getContents, null);
   }
 
-  @Nullable
-  public Object getData(@NotNull DataFlavor dataFlavor) {
+  public @Nullable Object getData(@NotNull DataFlavor dataFlavor) {
     return ClipboardUtil.handleClipboardSafely(() -> {
       try {
         return myClipboardHandler.getData(dataFlavor);
@@ -91,7 +91,7 @@ public final class ClipboardSynchronizer implements Disposable {
     }, null);
   }
 
-  public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
+  public void setContent(final @NotNull Transferable content, final @NotNull ClipboardOwner owner) {
     myClipboardHandler.setContent(content, owner);
   }
 
@@ -130,19 +130,33 @@ public final class ClipboardSynchronizer implements Disposable {
       return false;
     }
 
-    @Nullable
-    public Transferable getContents() {
+    public @Nullable Transferable getContents() {
       Clipboard clipboard = getClipboard();
-      return clipboard == null ? null: clipboard.getContents(this);
+      if (clipboard == null) {
+        return null;
+      }
+      Transferable contents = clipboard.getContents(this);
+      if (LOG.isDebugEnabled()) {
+        // this temporary logging is needed to investigate clipboard pasting issue (see IDEA-316996)
+        LOG.debug("Clipboard class: " + clipboard.getClass().getName());
+        LOG.debug("ClipboardHandler class: " + getClass().getName());
+        try {
+          String text = (String) contents.getTransferData(DataFlavor.stringFlavor);
+          text = text.substring(0, Math.min(text.length(), 256)).replaceAll("\\R", " ");
+          LOG.debug("Transferable contents: " + text);
+        } catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+      return contents;
     }
 
-    @Nullable
-    public Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+    public @Nullable Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
       Clipboard clipboard = getClipboard();
       return clipboard == null ? null : clipboard.getData(dataFlavor);
     }
 
-    public void setContent(@NotNull Transferable content, @NotNull final ClipboardOwner owner) {
+    public void setContent(@NotNull Transferable content, final @NotNull ClipboardOwner owner) {
       Clipboard clipboard = getClipboard();
       if (clipboard == null) {
         return;
@@ -175,8 +189,7 @@ public final class ClipboardSynchronizer implements Disposable {
   private static final class MacClipboardHandler extends ClipboardHandler {
     private Pair<String, Transferable> myFullTransferable;
 
-    @Nullable
-    private Transferable doGetContents() {
+    private @Nullable Transferable doGetContents() {
       return super.getContents();
     }
 
@@ -207,15 +220,14 @@ public final class ClipboardSynchronizer implements Disposable {
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+    public @Nullable Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
       if (myFullTransferable == null) return super.getData(dataFlavor);
       Transferable contents = getContents();
       return contents == null ? null : contents.getTransferData(dataFlavor);
     }
 
     @Override
-    public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
+    public void setContent(final @NotNull Transferable content, final @NotNull ClipboardOwner owner) {
       if (Registry.is("ide.mac.useNativeClipboard") && content.isDataFlavorSupported(DataFlavor.stringFlavor)) {
         try {
           String stringData = (String) content.getTransferData(DataFlavor.stringFlavor);
@@ -284,8 +296,7 @@ public final class ClipboardSynchronizer implements Disposable {
     }
 
     @Override
-    @Nullable
-    public Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
+    public @Nullable Object getData(@NotNull DataFlavor dataFlavor) throws IOException, UnsupportedFlavorException {
       Transferable currentContent = myCurrentContent;
       if (currentContent != null) {
         return currentContent.getTransferData(dataFlavor);
@@ -300,7 +311,7 @@ public final class ClipboardSynchronizer implements Disposable {
     }
 
     @Override
-    public void setContent(@NotNull final Transferable content, @NotNull final ClipboardOwner owner) {
+    public void setContent(final @NotNull Transferable content, final @NotNull ClipboardOwner owner) {
       myCurrentContent = content;
       super.setContent(content, owner);
     }

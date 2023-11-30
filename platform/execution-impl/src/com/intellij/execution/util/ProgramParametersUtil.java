@@ -37,8 +37,7 @@ public final class ProgramParametersUtil {
     return new ProgramParametersConfigurator().expandPathAndMacros(path, module, project);
   }
 
-  @Nullable
-  public static Module getModule(CommonProgramRunConfigurationParameters configuration) {
+  public static @Nullable Module getModule(CommonProgramRunConfigurationParameters configuration) {
     return new ProgramParametersConfigurator().getModule(configuration);
   }
 }

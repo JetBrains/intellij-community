@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAccumulator;
 
-public class Timer {
+public final class Timer {
   public static final Timer instance = new Timer();
 
   private String myActivityName = "default";

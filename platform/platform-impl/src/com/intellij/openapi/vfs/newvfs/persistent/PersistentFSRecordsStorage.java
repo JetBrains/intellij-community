@@ -1,13 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.util.io.CleanableStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 @ApiStatus.Internal
-public interface PersistentFSRecordsStorage {
+public interface PersistentFSRecordsStorage extends CleanableStorage {
   int NULL_ID = FSRecords.NULL_FILE_ID;
   int MIN_VALID_ID = NULL_ID + 1;
 
@@ -66,11 +67,11 @@ public interface PersistentFSRecordsStorage {
 
   @PersistentFS.Attributes int getFlags(int fileId) throws IOException;
 
-  //TODO RC: what semantics is assumed for the method in concurrent context? If it is 'update atomically' than
-  //         it makes it harder to implement a storage in a lock-free way
-
   /**
-   * Fills all record fields in one shot
+   * Fills all record fields in one shot.
+   * Fields modifications are not atomic: method should be used in absence of concurrent modification, e.g.
+   * on startup, or for filling new, just allocated record, while fileId just allocated is not yet published
+   * for other threads to access.
    */
   void fillRecord(int fileId,
                   long timestamp,
@@ -81,8 +82,7 @@ public interface PersistentFSRecordsStorage {
                   boolean overwriteAttrRef) throws IOException;
 
   /**
-   * @throws IndexOutOfBoundsException if fileId is outside of valid range: <=0 or > max recordId
-   *                                   allocated so far
+   * @throws IndexOutOfBoundsException if fileId is outside of range (0..max] of the fileIds allocated so far
    */
   void cleanRecord(int fileId) throws IOException;
 
@@ -94,23 +94,20 @@ public interface PersistentFSRecordsStorage {
 
   int getConnectionStatus() throws IOException;
 
+  int getErrorsAccumulated() throws IOException;
+
+  void setErrorsAccumulated(int errors) throws IOException;
+
   void setVersion(int version) throws IOException;
 
   int getVersion() throws IOException;
 
   int getGlobalModCount();
 
-  /**
-   * @return length of underlying file storage, in bytes
-   * @deprecated TODO RC: this method has very little utility: different implementation use different
-   * pagination and pre-allocation strategies -- file length is very implementation-specific. The only
-   * current usage (in checkSanity() method) is really incorrect, since it relies on specific
-   * implementation allocation strategy. Method .recordsCount() has clearer semantics and doesn't
-   * expose implementation details.
-   */
-  long length();
-
   int recordsCount();
+
+  /** @return max fileId already allocated by this storage */
+  int maxAllocatedID();
 
   boolean isDirty();
 
@@ -124,7 +121,8 @@ public interface PersistentFSRecordsStorage {
   void close() throws IOException;
 
   /** Close the storage and remove all its data files */
-  void closeAndRemoveAllFiles() throws IOException;
+  @Override
+  void closeAndClean() throws IOException;
 
   @FunctionalInterface
   interface FsRecordProcessor {

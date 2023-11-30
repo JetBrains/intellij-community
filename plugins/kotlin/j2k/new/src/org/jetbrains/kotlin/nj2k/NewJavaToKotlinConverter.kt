@@ -82,7 +82,8 @@ class NewJavaToKotlinConverter(
     fun elementsToKotlin(
         inputElements: List<PsiElement>,
         processor: WithProgressProcessor,
-        bodyFilter: ((PsiElement) -> Boolean)?
+        bodyFilter: ((PsiElement) -> Boolean)?,
+        forInlining: Boolean = false
     ): Result {
         val phaseDescription = KotlinNJ2KBundle.message("phase.converting.j2k")
         val contextElement = inputElements.firstOrNull() ?: return Result(emptyList(), null, null)
@@ -98,7 +99,7 @@ class NewJavaToKotlinConverter(
         }
 
         val importStorage = JKImportStorage(languageVersion)
-        val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, converterServices, importStorage, bodyFilter)
+        val treeBuilder = JavaToJKTreeBuilder(symbolProvider, typeFactory, converterServices, importStorage, bodyFilter, forInlining)
 
         // we want to leave all imports as is in the case when user is converting only imports
         val saveImports = inputElements.all { element ->

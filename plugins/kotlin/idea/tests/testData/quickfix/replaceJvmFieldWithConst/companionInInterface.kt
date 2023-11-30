@@ -6,3 +6,4 @@ interface IFace {
         <caret>@JvmField val a = "Lorem ipsum"
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ReplaceJvmFieldWithConstFix

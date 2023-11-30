@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.LibraryOrigin
@@ -23,9 +24,9 @@ private constructor(private val libraryName: @NlsSafe String?,
                     private val classRoots: List<VirtualFile>,
                     private val sourceRoots: List<VirtualFile>) : LibraryIndexableFilesIterator {
 
-  override fun getDebugName() = "Library ${presentableLibraryName} " +
-                                "(#${classRoots.validCount()} class roots, " +
-                                "#${sourceRoots.validCount()} source roots)"
+  override fun getDebugName(): String = "Library ${presentableLibraryName} " +
+                                        "(#${classRoots.validCount()} class roots, " +
+                                        "#${sourceRoots.validCount()} source roots)"
 
   override fun getIndexingProgressText(): String = IndexingBundle.message("indexable.files.provider.indexing.library.name",
                                                                           presentableLibraryName)
@@ -47,17 +48,23 @@ private constructor(private val libraryName: @NlsSafe String?,
     fileFilter: VirtualFileFilter
   ): Boolean {
     val roots = runReadAction {
-      (classRoots.asSequence() + sourceRoots.asSequence()).filter { it.isValid }.toSet()
+      getRoots().filter { it.isValid }.toSet()
     }
     return IndexableFilesIterationMethods.iterateRoots(project, roots, fileIterator, fileFilter)
   }
 
   override fun getRootUrls(project: Project): Set<String> {
-    return (classRoots + sourceRoots).map { it.url }.toSet()
+    return getRoots().map { it.url }.toSet()
+  }
+
+  private fun getRoots(): Sequence<VirtualFile> {
+    return if (iterateOverSourceRoots) (classRoots.asSequence() + sourceRoots.asSequence()) else classRoots.asSequence()
   }
 
   companion object {
-    fun collectFiles(library: Library, rootType: OrderRootType, rootsToFilter: List<VirtualFile>? = null): List<VirtualFile> {
+    private val iterateOverSourceRoots = SystemProperties.getBooleanProperty("LibraryIndexableFilesIterator.iterate.over.sources", true)
+
+    fun collectFiles(library: Library, rootType: OrderRootType, rootsToFilter: Collection<VirtualFile>? = null): List<VirtualFile> {
       val libraryRoots = library.rootProvider.getFiles(rootType)
       val rootsToIterate: List<VirtualFile> = rootsToFilter?.filter { root ->
         libraryRoots.find { libraryRoot ->
@@ -70,8 +77,8 @@ private constructor(private val libraryName: @NlsSafe String?,
     @RequiresReadLock
     @JvmStatic
     fun createIterator(library: Library,
-                       roots: List<VirtualFile>? = null,
-                       sourceRoots: List<VirtualFile>? = null): LibraryIndexableFilesIteratorImpl? =
+                       roots: Collection<VirtualFile>? = null,
+                       sourceRoots: Collection<VirtualFile>? = null): LibraryIndexableFilesIteratorImpl? =
       if (library is LibraryEx && library.isDisposed)
         null
       else

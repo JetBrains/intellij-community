@@ -37,6 +37,11 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
       }
       .toList()
 
+  override fun listSymbols(scopeStack: Stack<WebSymbolsScope>,
+                           queryExecutor: WebSymbolsQueryExecutor,
+                           expandPatterns: Boolean): List<WebSymbol> =
+    items.flatMap { it.listSymbols(scopeStack, queryExecutor, expandPatterns) }
+
   data class Reference(
     val location: List<WebSymbolQualifiedName> = emptyList(),
     val qualifiedKind: WebSymbolQualifiedKind,
@@ -54,6 +59,16 @@ class WebSymbolsPatternReferenceResolver(private vararg val items: Reference) : 
                            includeVirtual, includeAbstract, false, scope)
       if (filter == null) return matches
       return filter.filterNameMatches(matches, queryExecutor, scope, emptyMap())
+    }
+
+    fun listSymbols(scope: Stack<WebSymbolsScope>,
+                    queryExecutor: WebSymbolsQueryExecutor,
+                    expandPatterns: Boolean): List<WebSymbol> {
+      val symbols = queryExecutor.withNameConversionRules(nameConversionRules)
+        .runListSymbolsQuery(location, qualifiedKind,
+                             expandPatterns, includeVirtual, includeAbstract, false, scope)
+      if (filter == null) return symbols
+      return filter.filterNameMatches(symbols, queryExecutor, scope, emptyMap())
     }
 
     fun codeCompletion(name: String,

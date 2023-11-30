@@ -16,6 +16,8 @@ class KotlinUClass(
     psi: KtLightClass,
     givenParent: UElement?
 ) : AbstractKotlinUClass(givenParent), PsiClass by psi {
+    private val uastAnchorPart = UastLazyPart<UIdentifier?>()
+
     override val ktClass = psi.kotlinOrigin
 
     override val javaPsi: KtLightClass = psi
@@ -32,9 +34,10 @@ class KotlinUClass(
 
     override fun getContainingFile(): PsiFile = unwrapFakeFileForLightClass(psi.containingFile)
 
-    override val uastAnchor: UIdentifier? by lz {
-        getIdentifierSourcePsi()?.let { KotlinUIdentifier(nameIdentifier, it, this) }
-    }
+    override val uastAnchor: UIdentifier?
+        get() = uastAnchorPart.getOrBuild {
+            getIdentifierSourcePsi()?.let { KotlinUIdentifier(nameIdentifier, it, this) }
+        }
 
     private fun getIdentifierSourcePsi(): PsiElement? {
         ktClass?.nameIdentifier?.let { return it }

@@ -114,7 +114,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     return new BaseInputStreamReader(streamToRead, charset);
   }
 
-  protected class SimpleOutputReader extends BaseOutputReader {
+  protected final class SimpleOutputReader extends BaseOutputReader {
     private final Key<?> myProcessOutputType;
 
     public SimpleOutputReader(Reader reader, Key<?> outputType, Options options, @NotNull @NonNls String presentableName) {

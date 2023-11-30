@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -22,7 +23,9 @@ public class AddToPermitsListTest extends LightJavaCodeInsightFixtureTestCase {
   public void testNoPermitsListSameFileInheritors() {
     PsiClass aClass = myFixture.addClass("sealed class A {} record A1() extends A{} record A2() extends A{}");
     myFixture.configureByText("B.java", "final class B extends <caret>A {}");
-    checkPreviewAndInvoke(aClass, "Add 'B' to permits list of sealed class 'A'", "sealed class A permits A1, A2, B {}");
+    checkPreviewAndInvoke(aClass, "Add 'B' to permits list of sealed class 'A'", 
+                          "sealed class A permits A1, A2, B {} record A1() extends A{} record A2() extends A{}",
+                          "sealed class A permits A1, A2, B {}");
   }
 
   public void testUnorderedPermitsList() {
@@ -48,10 +51,15 @@ public class AddToPermitsListTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private void checkPreviewAndInvoke(PsiClass aClass, String hint, String expectedText) {
+    checkPreviewAndInvoke(aClass, hint, expectedText, expectedText);
+  }
+
+  private void checkPreviewAndInvoke(PsiClass aClass, String hint, String expectedPreview, String expectedClass) {
     IntentionAction intention = myFixture.findSingleIntention(hint);
     String previewText = myFixture.getIntentionPreviewText(intention);
-    assertEquals(expectedText, previewText);
+    assertEquals(expectedPreview, previewText);
     myFixture.launchAction(intention);
-    assertEquals(expectedText, aClass.getText());
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    assertEquals(expectedClass, aClass.getText());
   }
 }

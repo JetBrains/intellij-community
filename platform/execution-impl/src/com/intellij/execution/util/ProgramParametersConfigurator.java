@@ -1,12 +1,14 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.util;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
+import com.intellij.execution.EnvFilesOptions;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
-import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.impl.ExecutionManagerImpl;
+import com.intellij.execution.impl.statistics.MacroUsageCollector;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacroWithParams;
@@ -29,26 +31,22 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.execution.ParametersListUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static com.intellij.execution.util.EnvFilesUtilKt.configureEnvsFromFiles;
 
 public class ProgramParametersConfigurator {
   private static final ExtensionPointName<WorkingDirectoryProvider> WORKING_DIRECTORY_PROVIDER_EP_NAME =
     ExtensionPointName.create("com.intellij.module.workingDirectoryProvider");
 
   /** @deprecated use {@link PathMacroUtil#MODULE_WORKING_DIR} instead */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static final String MODULE_WORKING_DIR = "%MODULE_WORKING_DIR%";
   private static final DataKey<Boolean> VALIDATION_MODE = DataKey.create("validation.mode");
@@ -58,7 +56,11 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    Map<String, String> envs = new HashMap<>(configuration.getEnvs());
+    Map<String, String> envs = new HashMap<>();
+    if (configuration instanceof EnvFilesOptions) {
+      envs.putAll(configureEnvsFromFiles((EnvFilesOptions)configuration, true));
+    }
+    envs.putAll(configuration.getEnvs());
     EnvironmentUtil.inlineParentOccurrences(envs);
     for (Map.Entry<String, String> each : envs.entrySet()) {
       each.setValue(expandPath(each.getValue(), module, project));
@@ -74,11 +76,14 @@ public class ProgramParametersConfigurator {
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
+  /**
+   * Expands macros, which may contain values representing paths, e.g., working directory, input file, etc.
+   */
   @Contract("!null, _, _ -> !null")
   public @Nullable String expandPathAndMacros(String s, @Nullable Module module, @NotNull Project project) {
     String path = s;
     if (path != null) path = expandPath(path, module, project);
-    if (path != null) path = expandMacros(path, projectContext(project, module), false);
+    if (path != null) path = expandMacros(path, projectContext(project, module, myValidation), false);
     return path;
   }
 
@@ -86,83 +91,71 @@ public class ProgramParametersConfigurator {
     myValidation = validation;
   }
 
-  private DataContext projectContext(Project project, Module module) {
+  @ApiStatus.Internal
+  public static @NotNull DataContext projectContext(@NotNull Project project, @Nullable Module module, @Nullable Boolean validationMode) {
     return dataId -> {
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return project.getBaseDir();
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
+      if (PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY.is(dataId)) return project.getBaseDir();
       if (PlatformCoreDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
-      if (VALIDATION_MODE.is(dataId)) return myValidation;
+      if (VALIDATION_MODE.is(dataId)) return validationMode;
       return null;
     };
   }
 
   /**
-   * Unless expanding macros in a generic value that doesn't represent a path of some kind, or a parameter string,
-   * consider using the following specialized methods instead:
-   *
-   * @see #expandMacrosAndParseParameters For values representing parameters: program arguments, VM options
-   * @see #expandPathAndMacros For paths: working directory, input file, etc.
+   * Expands macros not representing a path or a parameter string.
+   * IMPORTANT: If any macro contains a path or a parameter, consider using one of:
+   * <ul>
+   * <li>{@link #expandMacrosAndParseParameters} for values representing parameters: program arguments, VM options, etc.
+   * <li>{@link #expandPathAndMacros} for paths: working directory, input file, etc.
+   * </ul>
    */
   public static String expandMacros(@Nullable String path) {
     return !StringUtil.isEmpty(path) ? expandMacros(path, DataContext.EMPTY_CONTEXT, false) : path;
   }
 
+  /**
+   * Expands macros, which may contain values representing parameters, e.g., program arguments, VM options, etc.
+   */
   public static @NotNull List<String> expandMacrosAndParseParameters(@Nullable String parametersStringWithMacros) {
     if (StringUtil.isEmpty(parametersStringWithMacros)) {
       return Collections.emptyList();
     }
-    String expandedParametersString = expandMacros(parametersStringWithMacros, DataContext.EMPTY_CONTEXT, true);
+    String expandedParametersString = expandMacros(parametersStringWithMacros, createContext(DataContext.EMPTY_CONTEXT), true);
     return ParametersListUtil.parse(expandedParametersString);
   }
 
-  private static String expandMacros(String path, DataContext dataContext, boolean applyParameterEscaping) {
+  private static String expandMacros(@NotNull String path, @NotNull DataContext fallbackDataContext, boolean applyParameterEscaping) {
     if (!Registry.is("allow.macros.for.run.configurations")) {
       return path;
     }
 
-    DataContext threadContext = ExecutionUtil.getThreadContext();
-    DataContext context = threadContext == null ? dataContext : new DataContext() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        Object data = dataContext.getData(dataId);
-        return data != null ? data : threadContext.getData(dataId);
-      }
-    };
-    for (Macro macro : MacroManager.getInstance().getMacros()) {
-      boolean paramsMacro = macro instanceof MacroWithParams;
-      String template = "$" + macro.getName() + (paramsMacro ? "(" : "$");
-      for (int index = path.indexOf(template);
-           index != -1 && index < path.length() + template.length();
-           index = path.indexOf(template, index)) {
-        String value;
-        int tailIndex;
-        if (paramsMacro) {
-          int endIndex = path.indexOf(")$", index + template.length());
-          if (endIndex != -1) {
-            value = StringUtil.notNullize(previewOrExpandMacro(macro, context, path.substring(index + template.length(), endIndex)));
-            tailIndex = endIndex + 2;
-          }
-          else {
-            //noinspection AssignmentToForLoopParameter
-            index += template.length();
-            continue;
-          }
-        }
-        else {
-          tailIndex = index + template.length();
-          value = StringUtil.notNullize(previewOrExpandMacro(macro, context));
-        }
-        if (applyParameterEscaping) {
-          value = ParametersListUtil.escape(value);
-        }
-        path = path.substring(0, index) + value + path.substring(tailIndex);
-        //noinspection AssignmentToForLoopParameter
-        index += value.length();
-      }
+    DataContext context = createContext(fallbackDataContext);
+    try {
+      Collection<Macro> macros = MacroManager.getInstance().getMacros();
+      return MacroManager.expandMacros(path, macros, (macro, occurence) -> {
+        String value = StringUtil.notNullize(previewOrExpandMacro(macro, context, occurence));
+        return applyParameterEscaping ? ParametersListUtil.escape(value) : value;
+      });
     }
-    return path;
+    catch (Macro.ExecutionCancelledException ignore) {
+      return path; // won't happen :)
+    }
   }
 
-  private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String @NotNull ... args) {
+  private static DataContext createContext(@NotNull DataContext fallbackDataContext) {
+    DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
+    return envContext == null ? fallbackDataContext : new DataContext() {
+      @Override
+      public @Nullable Object getData(@NotNull String dataId) {
+        Object data = envContext.getData(dataId);
+        return data != null ? data : fallbackDataContext.getData(dataId);
+      }
+    };
+  }
+
+  private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String occurence) {
     try {
       if (macro instanceof PromptingMacro || macro instanceof MacroWithParams) {
         Boolean mode = VALIDATION_MODE.getData(dataContext);
@@ -170,19 +163,20 @@ public class ProgramParametersConfigurator {
           throw new IncorrectOperationException();
         }
       }
-      return macro instanceof PromptingMacro ?
-             macro.expand(dataContext, args):
-             ReadAction.compute(() -> macro.expand(dataContext, args));
+      String value = macro instanceof PromptingMacro ?
+                     macro.expandOccurence(dataContext, occurence) :
+                     ReadAction.nonBlocking(() -> macro.expandOccurence(dataContext, occurence)).executeSynchronously();
+      MacroUsageCollector.logMacroExpanded(macro, value != null);
+      return value;
     }
     catch (Macro.ExecutionCancelledException e) {
       return null;
     }
   }
 
-  @SystemIndependent
-  public @Nullable String getWorkingDir(@NotNull CommonProgramRunConfigurationParameters configuration,
-                                        @NotNull Project project,
-                                        @Nullable Module module) {
+  public @SystemIndependent @Nullable String getWorkingDir(@NotNull CommonProgramRunConfigurationParameters configuration,
+                                                           @NotNull Project project,
+                                                           @Nullable Module module) {
     String workingDirectory = PathUtil.toSystemIndependentName(configuration.getWorkingDirectory());
 
     String projectDirectory = getDefaultWorkingDir(project);
@@ -191,17 +185,16 @@ public class ProgramParametersConfigurator {
       if (workingDirectory == null) return null;
     }
 
-    workingDirectory = expandPathAndMacros(workingDirectory, module, project);
+    workingDirectory = expandPathAndMacros(workingDirectory, module, project)
+      .replace(PathMacroUtil.DEPRECATED_MODULE_DIR, PathMacroUtil.MODULE_WORKING_DIR)
+      .replace(MODULE_WORKING_DIR, PathMacroUtil.MODULE_WORKING_DIR);
 
-    if (MODULE_WORKING_DIR.equals(workingDirectory) || PathMacroUtil.DEPRECATED_MODULE_DIR.equals(workingDirectory)) {
-      workingDirectory = PathMacroUtil.MODULE_WORKING_DIR;
-    }
-    if (PathMacroUtil.MODULE_WORKING_DIR.equals(workingDirectory)) {
+    if (workingDirectory.contains(PathMacroUtil.MODULE_WORKING_DIR)) {
       if (module != null) {
         String moduleDirectory = getDefaultWorkingDir(module);
-        if (moduleDirectory != null) return moduleDirectory;
+        if (moduleDirectory != null) return workingDirectory.replace(PathMacroUtil.MODULE_WORKING_DIR, moduleDirectory);
       }
-      if (projectDirectory != null) return projectDirectory;
+      if (projectDirectory != null) return workingDirectory.replace(PathMacroUtil.MODULE_WORKING_DIR, projectDirectory);
     }
 
     if (projectDirectory != null && !OSAgnosticPathUtil.isAbsolute(workingDirectory)) {
@@ -268,5 +261,11 @@ public class ProgramParametersConfigurator {
 
   protected @Nullable Module getModule(CommonProgramRunConfigurationParameters cp) {
     return cp instanceof ModuleBasedConfiguration ? ((ModuleBasedConfiguration<?, ?>)cp).getConfigurationModule().getModule() : null;
+  }
+
+  public static final class ParametersConfiguratorException extends RuntimeException {
+    public ParametersConfiguratorException(@Nls String message, Throwable cause) {
+      super(message, cause);
+    }
   }
 }

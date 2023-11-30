@@ -3,5 +3,6 @@
   "mainFile": "test/test.kt",
   "newName": "namedFunB",
   "withRuntime": "true",
-  "hint": "Function 'namedFunB' is already declared in class 'A'"
+  "hint": "Function 'namedFunB' is already declared in class 'A'",
+   "enabledInK2": "true"
 }

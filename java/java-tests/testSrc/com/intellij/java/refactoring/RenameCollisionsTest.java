@@ -249,6 +249,9 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
   public void testRenameTypeParamToSuper() {
     doTest("T");
   }
+  public void testRenameSwitchToUnnamedJava21Preview() {
+    doTest("_");
+  }
 
   public void testInnerClassNameCollisionWithSuperClassOfContainer() {
     doTest("handleAction");

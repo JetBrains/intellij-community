@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.Consumer;
 import org.gradle.tooling.model.BuildIdentifier;
 import org.gradle.tooling.model.BuildModel;
 import org.gradle.tooling.model.ProjectIdentifier;
@@ -32,6 +31,7 @@ import java.lang.reflect.Method;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * @author Vladislav.Soroka
@@ -121,7 +121,7 @@ public abstract class ModelsHolder<B extends BuildModel, P extends ProjectModel>
           T deserializedData = mySerializer.read((byte[])entry.getValue(), modelClazz);
           if (modelClazz.isInstance(deserializedData)) {
             if (myPathsConverter != null) {
-              myPathsConverter.consume(deserializedData);
+              myPathsConverter.accept(deserializedData);
             }
             myModelsById.put(key, deserializedData);
           }

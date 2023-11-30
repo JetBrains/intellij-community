@@ -4,12 +4,16 @@ package com.intellij.codeInspection.java18api;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,6 +38,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.siyeh.ig.psiutils.EquivalenceChecker.getCanonicalPsiEquivalence;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.*;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 
@@ -86,6 +91,49 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
         PsiExpression noneBranch = condition.getNoneBranch(expression.getThenExpression(), expression.getElseExpression());
         processGetPut(condition, existsBranch, existsBranch, noneBranch);
       }
+      @Override
+      public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
+        PsiExpression expression = variable.getInitializer();
+        PsiMethodCallExpression getCall = extractMapMethodCall(expression, "get");
+        if (getCall == null) return;
+
+        List<PsiReferenceExpression> references = VariableAccessUtils
+          .getVariableReferences(variable, PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class));
+
+        if (references.isEmpty()) return;
+
+        PsiMethodCallExpression commonPutCall = findPutMethodParent(references.get(0).getElement());
+
+        if (commonPutCall == null || !isCommonPutCallForAllReferences(references, commonPutCall)) return;
+
+        PsiExpression getCallQualifierExpression = getCall.getMethodExpression().getQualifierExpression();
+        PsiExpression putCallQualifierExpression = commonPutCall.getMethodExpression().getQualifierExpression();
+
+        EquivalenceChecker equivalenceChecker = getCanonicalPsiEquivalence();
+
+        if (! equivalenceChecker.expressionsAreEquivalent(getCallQualifierExpression, putCallQualifierExpression)) return;
+
+        PsiStatement variableDeclarationStatement = PsiTreeUtil.getParentOfType(variable, PsiDeclarationStatement.class);
+        PsiElement nextSibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(variableDeclarationStatement);
+        if (! (nextSibling instanceof PsiStatement)) return;
+        PsiExpressionStatement putCallStatement = ObjectUtils.tryCast(commonPutCall.getParent(), PsiExpressionStatement.class);
+
+        if (nextSibling != putCallStatement) return;
+
+        PsiExpression[] getArgs = getCall.getArgumentList().getExpressions();
+        PsiExpression[] putArgs = commonPutCall.getArgumentList().getExpressions();
+
+        if (getArgs.length != 1 || putArgs.length != 2 ||
+            ! equivalenceChecker.expressionsAreEquivalent(getArgs[0], putArgs[0])) return;
+
+        PsiExpression value = putArgs[1];
+        if (LambdaGenerationUtil.canBeUncheckedLambda(value)) {
+          GetPutToComputeFix fix = new GetPutToComputeFix(variable);
+          holder.registerProblem(commonPutCall,
+                                 QuickFixBundle.message("java.8.map.api.inspection.description", "compute"), fix);
+        }
+
+      }
 
       @Override
       public void visitIfStatement(@NotNull PsiIfStatement statement) {
@@ -100,7 +148,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
             processMerge(condition, existsBranch, noneBranch);
           }
           if(condition.hasVariable()) return;
-          EquivalenceChecker.Match match = EquivalenceChecker.getCanonicalPsiEquivalence().statementsMatch(noneBranch, existsBranch);
+          EquivalenceChecker.Match match = getCanonicalPsiEquivalence().statementsMatch(noneBranch, existsBranch);
 
           processGetPut(condition, existsBranch, match.getRightDiff(), match.getLeftDiff());
         }
@@ -127,13 +175,34 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
                                QuickFixBundle.message("java.8.map.api.inspection.description", fix.myMethodName), fix);
       }
 
-      private boolean hasMapUsages(@NotNull MapLoopCondition condition, @Nullable PsiExpression value) {
+      private static PsiMethodCallExpression findPutMethodParent(PsiElement element) {
+        while (element != null && !(element instanceof PsiMethod)) {
+          if (element instanceof PsiExpression expression) {
+            PsiMethodCallExpression putCall = extractMapMethodCall(expression, "put");
+            if (putCall != null) return putCall;
+          }
+          element = element.getParent();
+        }
+        return null;
+      }
+
+      private static boolean isCommonPutCallForAllReferences(List<PsiReferenceExpression> references, PsiMethodCallExpression commonPutCall) {
+        for (PsiReferenceExpression reference : references) {
+          PsiMethodCallExpression putCall = findPutMethodParent(reference);
+          if (putCall != commonPutCall) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      private static boolean hasMapUsages(@NotNull MapLoopCondition condition, @Nullable PsiExpression value) {
         return !VariableAccessUtils.getVariableReferences(condition.getMap(), value).stream()
           .map(ExpressionUtils::getCallForQualifier)
           .allMatch(call -> condition.isValueAccess(call));
       }
 
-      private boolean isUsedAsReference(@NotNull PsiElement value, @NotNull MapLoopCondition condition) {
+      private static boolean isUsedAsReference(@NotNull PsiElement value, @NotNull MapLoopCondition condition) {
         return !VariableAccessUtils.getVariableReferences(condition.getIterParam(), value).stream()
           .map(ExpressionUtils::getCallForQualifier)
           .allMatch(KEY_VALUE_GET_METHODS);
@@ -271,7 +340,7 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     return StringUtil.toLowerCase(nameCandidate);
   }
 
-  private static class ReplaceWithSingleMapOperation implements LocalQuickFix {
+  private static class ReplaceWithSingleMapOperation extends PsiUpdateModCommandQuickFix {
     private final String myMethodName;
     private final SmartPsiElementPointer<PsiMethodCallExpression> myCallPointer;
     private final SmartPsiElementPointer<PsiExpression> myValuePointer;
@@ -286,34 +355,23 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
     }
 
     @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      PsiMethodCallExpression call = myCallPointer.getElement();
-      PsiExpression value = myValuePointer.getElement();
-      PsiElement result = myResultPointer.getElement();
-      if (call == null || value == null || result == null) return null;
-      return new ReplaceWithSingleMapOperation(myMethodName, PsiTreeUtil.findSameElementInCopy(call, target),
-                                               PsiTreeUtil.findSameElementInCopy(value, target), 
-                                               PsiTreeUtil.findSameElementInCopy(result, target));
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement outerElement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiIfStatement.class,
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiElement outerElement = PsiTreeUtil.getParentOfType(element, PsiIfStatement.class,
                                                             PsiConditionalExpression.class, PsiForeachStatement.class);
       if (outerElement == null) return;
       MapCondition condition = outerElement instanceof PsiForeachStatement ?
                                MapLoopCondition.create((PsiForeachStatement)outerElement) :
                                fromConditional(outerElement, true);
       if(condition == null) return;
-      PsiMethodCallExpression call = myCallPointer.getElement();
+      PsiMethodCallExpression call = updater.getWritable(myCallPointer.getElement());
       if (call == null) return;
       PsiExpressionList argsList = call.getArgumentList();
       PsiExpression[] args = argsList.getExpressions();
       if(args.length == 0) return;
       if ((myMethodName.equals("merge") || myMethodName.equals("replaceAll")) && args.length != 2) return;
-      PsiExpression value = myValuePointer.getElement();
+      PsiExpression value = updater.getWritable(myValuePointer.getElement());
       if (value == null) return;
-      PsiElement result = myResultPointer.getElement();
+      PsiElement result = updater.getWritable(myResultPointer.getElement());
       if(result == null) return;
 
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -460,6 +518,45 @@ public class Java8MapApiInspection extends AbstractBaseJavaLocalInspectionTool {
       PsiStatement result = PsiTreeUtil.getParentOfType(call, PsiStatement.class);
       LOG.assertTrue(result != null);
       return new ReplaceWithSingleMapOperation(methodName, call, value, result);
+    }
+  }
+  private static class GetPutToComputeFix extends PsiUpdateModCommandQuickFix {
+    private final SmartPsiElementPointer<PsiLocalVariable> variablePointer;
+    private GetPutToComputeFix(PsiLocalVariable variable) {
+      variablePointer = SmartPointerManager.createPointer(variable);
+    }
+
+    @Override
+    public @NotNull String getName() {
+      return QuickFixBundle.message("java.8.map.api.inspection.fix.text", "compute");
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return QuickFixBundle.message("java.8.map.api.inspection.fix.family.name");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      CommentTracker commentTracker = new CommentTracker();
+      PsiMethodCallExpression call = (PsiMethodCallExpression) element;
+      PsiLocalVariable variable = updater.getWritable(variablePointer.getElement());
+      if (variable == null) return;
+      ExpressionUtils.bindCallTo(call, "compute");
+      String variableName = variable.getName();
+
+      PsiExpressionList argsList = call.getArgumentList();
+      PsiExpression[] args = argsList.getExpressions();
+      if(args.length != 2) return;
+      PsiExpression exp = args[1];
+
+      VariableNameGenerator generator = new VariableNameGenerator(call, VariableKind.PARAMETER);
+      String keyName = generator.byName("k", "key").generate(true);
+
+      String lambdaParameters = "(" + keyName + ", " + variableName + ")";
+      String lambdaExpressionText = lambdaParameters + " -> " + commentTracker.text(exp);
+      commentTracker.delete(variable);
+      commentTracker.replaceExpressionAndRestoreComments(exp, lambdaExpressionText);
     }
   }
 

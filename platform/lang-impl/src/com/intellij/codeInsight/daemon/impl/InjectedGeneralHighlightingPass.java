@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
@@ -42,11 +42,11 @@ import static com.intellij.openapi.editor.colors.EditorColors.createInjectedLang
 
 final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
-  private final @Nullable Collection<? extends @NotNull TextRange> myReducedRanges;
+  private final @Nullable List<? extends @NotNull TextRange> myReducedRanges;
 
   InjectedGeneralHighlightingPass(@NotNull PsiFile file,
                                   @NotNull Document document,
-                                  @Nullable Collection<? extends @NotNull TextRange> reducedRanges,
+                                  @Nullable List<? extends @NotNull TextRange> reducedRanges,
                                   int startOffset,
                                   int endOffset,
                                   boolean updateAll,
@@ -57,9 +57,8 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     myReducedRanges = reducedRanges;
   }
 
-  @NotNull
   @Override
-  protected String getPresentableName() {
+  protected @NotNull String getPresentableName() {
     return IdeBundle.message("highlighting.pass.injected.presentable.name");
   }
 
@@ -70,11 +69,12 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     List<Divider.DividedElements> allDivided = new ArrayList<>();
     Divider.divideInsideAndOutsideAllRoots(myFile, myRestrictRange, myPriorityRange, SHOULD_HIGHLIGHT_FILTER, new CommonProcessors.CollectProcessor<>(allDivided));
 
-    List<PsiElement> allInsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
-    List<PsiElement> allOutsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.outside));
+    List<PsiElement> allInsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.inside()));
+    List<PsiElement> allOutsideElements = ContainerUtil.concat(ContainerUtil.map(allDivided, d -> d.outside()));
 
     List<HighlightInfo> resultInside = new ArrayList<>(100);
     List<HighlightInfo> resultOutside = new ArrayList<>(100);
+
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     TextAttributesKey fragmentKey = createInjectedLanguageFragmentKey(myFile.getLanguage());
     processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, (injectedPsi, places) ->
@@ -114,6 +114,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
             }
           }
         }
+
         myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(), resultOutside, myRestrictRange, new ProperTextRange(0, myDocument.getTextLength()), getId());
       }
     }
@@ -181,11 +182,10 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
   }
 
-  @NotNull
-  private HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi, @NotNull DocumentWindow documentWindow,
-                                               @NotNull InjectedLanguageManager injectedLanguageManager,
-                                               @NotNull Consumer<? super HighlightInfo> outInfos) {
-    HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
+  private @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi, @NotNull DocumentWindow documentWindow,
+                                                        @NotNull InjectedLanguageManager injectedLanguageManager,
+                                                        @NotNull Consumer<? super HighlightInfo> outInfos) {
+    List<HighlightInfoFilter> filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensionList();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(injectedPsi, filters) {
       @Override
@@ -269,7 +269,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
                           info.getDescription(), info.getToolTip(), info.getSeverity(), isAfterEndOfLine, null,
-                          false, 0, info.getProblemGroup(), info.getInspectionToolId(), info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference, injectedPsi);
+                          false, 0, info.getProblemGroup(), info.toolId, info.getGutterIconRenderer(), info.getGroup(), info.unresolvedReference);
       patched.setHint(info.hasHint());
 
       info.findRegisteredQuickFix((descriptor, quickfixTextRange) -> {

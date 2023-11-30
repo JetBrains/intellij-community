@@ -5,30 +5,32 @@ package org.jetbrains.kotlin.idea.facet
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.serviceContainer.AlreadyDisposedException
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
-import org.jetbrains.kotlin.idea.base.util.caching.*
+import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntityCache
+import org.jetbrains.kotlin.idea.base.util.caching.newEntity
+import org.jetbrains.kotlin.idea.base.util.caching.oldEntity
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
-import org.jetbrains.kotlin.idea.facet.KotlinFacetModificationTracker.Companion.isKotlinFacet
 
 class KotlinFacetSettingsProviderImpl(project: Project) :
-    SynchronizedFineGrainedEntityCache<Module, KotlinFacetSettings>(project, doSelfInitialization = false),
+    SynchronizedFineGrainedEntityCache<Module, IKotlinFacetSettings>(project, doSelfInitialization = false),
     WorkspaceModelChangeListener,
     KotlinCompilerSettingsListener,
     KotlinFacetSettingsProvider {
 
     override fun getSettings(module: Module) = KotlinFacet.get(module)?.configuration?.settings
 
-    override fun getInitializedSettings(module: Module): KotlinFacetSettings = runReadAction { get(module) }
+    override fun getInitializedSettings(module: Module): IKotlinFacetSettings = runReadAction { get(module) }
 
-    override fun calculate(key: Module): KotlinFacetSettings {
+    override fun calculate(key: Module): IKotlinFacetSettings {
         val kotlinFacetSettings = getSettings(key) ?: KotlinFacetSettings()
         kotlinFacetSettings.initializeIfNeeded(key, null)
         return kotlinFacetSettings
@@ -53,7 +55,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     override fun beforeChanged(event: VersionedStorageChange) {
         val moduleChanges = event.getChanges(ModuleEntity::class.java)
         val facetChanges = event.getChanges(FacetEntity::class.java)
-        if (moduleChanges.none() && facetChanges.none()) return
+        if (moduleChanges.isEmpty() && facetChanges.isEmpty()) return
 
         val storageBefore = event.storageBefore
         val storageAfter = event.storageAfter

@@ -8,10 +8,10 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.messages.Topic
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.jps.util.JpsPathUtil
@@ -39,10 +39,10 @@ class KotlinBundledUsageDetector(private val project: Project, private val cs: C
                 return
             }
 
-            val changes = event.getChanges(LibraryEntity::class.java).also { if (it.none()) return }
+            val changes = event.getChanges(LibraryEntity::class.java).ifEmpty { return }
 
             cs.launch {
-                val isDistUsedInLibraries = changes
+                val isDistUsedInLibraries = changes.asSequence()
                     .mapNotNull { it.newEntity }
                     .flatMap { it.roots }
                     .any { it.url.url.isStartsWithDistPrefix }

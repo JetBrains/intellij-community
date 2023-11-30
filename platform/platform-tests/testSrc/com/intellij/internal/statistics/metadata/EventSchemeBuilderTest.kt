@@ -5,9 +5,11 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder.buildEventsScheme
 import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder.pluginInfoFields
 import com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
 import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
+import com.intellij.internal.statistic.eventLog.events.scheme.PluginSchemeDescriptor
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
@@ -17,7 +19,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 class EventSchemeBuilderTest : BasePlatformTestCase() {
 
   fun `test generate string field validated by regexp`() {
-    doFieldTest(EventFields.StringValidatedByRegexp("count", "integer"), hashSetOf("{regexp#integer}"))
+    doFieldTest(EventFields.StringValidatedByRegexpReference("count", "integer"), hashSetOf("{regexp#integer}"))
   }
 
   fun `test generate string field validated by enum`() {
@@ -69,6 +71,11 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     doCompositeFieldTest(EventFields.Class("quickfix_name"), expectedValues)
   }
 
+  fun `test generate plugin section`() {
+    val descriptors = buildEventsScheme(null)
+    assertTrue(descriptors.any { x -> x.plugin.id == "com.intellij" })
+  }
+
   private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {
     val group = buildGroupDescription(eventField)
     val event = group.schema.first()
@@ -84,7 +91,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   private fun buildGroupDescription(eventField: EventField<*>): GroupDescriptor {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)
-    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup),"testPlugin" )
+    val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
     val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
     assertSize(1, groups)
     return groups.first()
@@ -93,7 +100,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   enum class TestEnum { FOO, BAR }
 
   @Suppress("StatisticsCollectorNotRegistered")
-  class TestCounterCollector(val eventLogGroup: EventLogGroup) : CounterUsagesCollector() {
+  class TestCounterCollector(private val eventLogGroup: EventLogGroup) : CounterUsagesCollector() {
     override fun getGroup(): EventLogGroup = eventLogGroup
   }
 

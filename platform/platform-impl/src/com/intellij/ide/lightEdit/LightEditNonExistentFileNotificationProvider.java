@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.function.Function;
 
-public class LightEditNonExistentFileNotificationProvider implements EditorNotificationProvider, DumbAware {
+public final class LightEditNonExistentFileNotificationProvider implements EditorNotificationProvider, DumbAware {
   @Override
   public @Nullable Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
                                                                                                                  @NotNull VirtualFile file) {

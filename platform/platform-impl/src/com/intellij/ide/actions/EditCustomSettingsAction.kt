@@ -44,7 +44,7 @@ abstract class EditCustomSettingsAction : DumbAwareAction() {
   protected open fun charset(): Charset = StandardCharsets.UTF_8
   protected open fun prepareDocument(document: Document?) { }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = (e.project != null || WelcomeFrame.getInstance() != null) && file() != null

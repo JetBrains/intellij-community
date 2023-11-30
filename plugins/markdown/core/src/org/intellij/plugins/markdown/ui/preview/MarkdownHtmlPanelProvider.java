@@ -17,8 +17,6 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,35 +27,30 @@ import java.util.List;
 public abstract class MarkdownHtmlPanelProvider {
 
   public static final ExtensionPointName<MarkdownHtmlPanelProvider> EP_NAME =
-    ExtensionPointName.create("org.intellij.markdown.html.panel.provider");
+    new ExtensionPointName<>("org.intellij.markdown.html.panel.provider");
 
-  @NotNull
-  public abstract MarkdownHtmlPanel createHtmlPanel();
+  public abstract @NotNull MarkdownHtmlPanel createHtmlPanel();
 
   @ApiStatus.Experimental
-  @NotNull
-  public MarkdownHtmlPanel createHtmlPanel(@NotNull Project project, @NotNull VirtualFile virtualFile) {
+  public @NotNull MarkdownHtmlPanel createHtmlPanel(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     return createHtmlPanel();
   }
 
-  @NotNull
-  public abstract AvailabilityInfo isAvailable();
+  public abstract @NotNull AvailabilityInfo isAvailable();
 
-  @NotNull
-  public abstract ProviderInfo getProviderInfo();
+  public abstract @NotNull ProviderInfo getProviderInfo();
 
-  public static MarkdownHtmlPanelProvider @NotNull [] getProviders() {
-    return EP_NAME.getExtensions();
+  public static  @NotNull List<MarkdownHtmlPanelProvider> getProviders() {
+    return EP_NAME.getExtensionList();
   }
 
-  @NotNull
-  public static MarkdownHtmlPanelProvider createFromInfo(@NotNull ProviderInfo providerInfo) {
+  public static @NotNull MarkdownHtmlPanelProvider createFromInfo(@NotNull ProviderInfo providerInfo) {
     for (MarkdownHtmlPanelProvider provider : getProviders()) {
       if (provider.getProviderInfo().getClassName().equals(providerInfo.getClassName())) {
         return provider;
       }
     }
-    return getProviders()[0];
+    return getProviders().get(0);
   }
 
   public static boolean hasAvailableProviders() {
@@ -68,13 +61,9 @@ public abstract class MarkdownHtmlPanelProvider {
     return ContainerUtil.filter(getProviders(), provider -> provider.isAvailable() == AvailabilityInfo.AVAILABLE);
   }
 
-  public static class ProviderInfo {
-    @NotNull
-    @Attribute("name")
-    private String myName;
-    @NotNull
-    @Attribute("className")
-    private String className;
+  public static final class ProviderInfo {
+    @Attribute("name") private @NotNull String myName;
+    @Attribute("className") private @NotNull String className;
 
     @SuppressWarnings("unused")
     private ProviderInfo() {
@@ -87,13 +76,11 @@ public abstract class MarkdownHtmlPanelProvider {
       this.className = className;
     }
 
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myName;
     }
 
-    @NotNull
-    public String getClassName() {
+    public @NotNull String getClassName() {
       return className;
     }
 
@@ -123,7 +110,7 @@ public abstract class MarkdownHtmlPanelProvider {
     }
   }
 
-  public static abstract class AvailabilityInfo {
+  public abstract static class AvailabilityInfo {
     public static final AvailabilityInfo AVAILABLE = new AvailabilityInfo() {
       @Override
       public boolean checkAvailability(@NotNull JComponent parentComponent) {

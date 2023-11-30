@@ -3,20 +3,20 @@ package com.intellij.packaging.impl.elements;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.java.workspace.entities.ArtifactRootElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.elements.ArtifactRootElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactRootElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -88,7 +88,10 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
       return (PackagingElementEntity)o.getOrAddEntity(diff, source, project);
     });
 
-    ArtifactRootElementEntity entity = ExtensionsKt.addArtifactRootElementEntity(diff, children, source);
+    ArtifactRootElementEntity entity = diff.addEntity(ArtifactRootElementEntity.create(source, entityBuilder -> {
+      entityBuilder.setChildren(children);
+      return Unit.INSTANCE;
+    }));
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(entity, this);
     return entity;
   }

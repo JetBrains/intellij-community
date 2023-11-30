@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLayeredPane
@@ -27,12 +28,22 @@ open class LoadingDecorator @JvmOverloads constructor(
   parent: Disposable,
   private val startDelayMs: Int,
   useMinimumSize: Boolean = false,
-  icon: AsyncProcessIcon = AsyncProcessIcon.Big("Loading")
+  icon: AnimatedIcon = AsyncProcessIcon.createBig("Loading")
 ) {
   companion object {
     @JvmField
     val OVERLAY_BACKGROUND: Color = JBColor.namedColor("BigSpinner.background", JBColor.PanelBackground)
   }
+
+  constructor(content: JComponent?,
+              parent: Disposable,
+              startDelayMs: Int,
+              useMinimumSize: Boolean = false,
+              icon: AsyncProcessIcon) : this(content = content,
+                                             parent = parent,
+                                             startDelayMs = startDelayMs,
+                                             useMinimumSize = useMinimumSize,
+                                             icon = icon as AnimatedIcon)
 
   var overlayBackground: Color? = null
 
@@ -64,8 +75,8 @@ open class LoadingDecorator @JvmOverloads constructor(
     )
     Disposer.register(parent, fadeOutAnimator)
     pane.add(content, JLayeredPane.DEFAULT_LAYER, 0)
-    Disposer.register(parent, loadingLayer.progress)
     Disposer.register(parent) {
+      loadingLayer.progress.dispose()
       startRequestJob?.cancel()
     }
   }
@@ -91,7 +102,7 @@ open class LoadingDecorator @JvmOverloads constructor(
     }
   }
 
-  protected open fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AsyncProcessIcon): NonOpaquePanel {
+  protected open fun customizeLoadingLayer(parent: JPanel, text: JLabel, icon: AnimatedIcon): NonOpaquePanel {
     parent.layout = GridBagLayout()
     text.font = StartupUiUtil.labelFont
     text.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
@@ -118,7 +129,9 @@ open class LoadingDecorator @JvmOverloads constructor(
       startRequestJob = ApplicationManager.getApplication().coroutineScope.launch {
         delay((startDelayMs - (System.currentTimeMillis() - scheduledTime)).coerceAtLeast(0))
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          doStartLoading(takeSnapshot)
+          blockingContext {
+            doStartLoading(takeSnapshot)
+          }
         }
       }
     }
@@ -144,13 +157,13 @@ open class LoadingDecorator @JvmOverloads constructor(
     pane.repaint()
   }
 
-  private inner class LoadingLayer(processIcon: AsyncProcessIcon) : JPanel() {
+  private inner class LoadingLayer(processIcon: AnimatedIcon) : JPanel() {
     val text = JLabel("", SwingConstants.CENTER)
 
     private var snapshot: BufferedImage? = null
     private var snapshotBg: Color? = null
 
-    val progress: AsyncProcessIcon
+    val progress: AnimatedIcon
 
     val isLoading: Boolean
       get() = _visible

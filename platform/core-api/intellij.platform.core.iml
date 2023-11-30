@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="1.8" />
-            <stringArg name="apiVersion" arg="1.8" />
-            <stringArg name="languageVersion" arg="1.8" />
+            <stringArg name="apiVersion" arg="1.9" />
+            <stringArg name="languageVersion" arg="1.9" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -26,9 +26,12 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.util" exported="" />
     <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="library" exported="" name="kotlinx-collections-immutable" level="project" />
   </component>
 </module>

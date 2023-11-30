@@ -1,10 +1,10 @@
 {
-  "name": "High contrast",
+  "name": "High Contrast",
   "dark": true,
   "author": "JetBrains",
-
-  "editorScheme": "/themes/highContrastScheme.xml",
-
+  "parentTheme": "Darcula",
+  "nameKey": "high.contrast.theme.name",
+  "editorScheme": "High contrast",
   "ui": {
     "*": {
       "background": "#000000",
@@ -142,8 +142,6 @@
       "selectedForeground": "#FFFFFF",
       "selectedBackground": "#0e5d73",
       "inactiveMaskColor": "#000000FF",
-
-      "unselectedBlend": "0.7",
 
       "underlineColor": "#1AEBFF",
       "underlineHeight": 4,
@@ -504,9 +502,12 @@
         "borderInsets": "12,6,12,6",
         "background": "#000000",
         "hoverBackground": "#3333FF",
-        "pressedBackground": "#3333FF"
+        "pressedBackground": "#3333FF",
+        "transparentHoverBackground": "#3333FF"
       }
     },
+
+    "TitlePane.Button.hoverBackground": "#3333FF",
 
     "Window.border" : "1,1,1,1,E6E6E6",
 

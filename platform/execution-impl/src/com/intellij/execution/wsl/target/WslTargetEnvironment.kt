@@ -17,17 +17,20 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.io.sizeOrNull
+import com.intellij.util.io.fileSizeSafe
 import java.io.IOException
+import java.net.InetAddress
 import java.nio.file.Path
 import java.util.*
 
-class WslTargetEnvironment constructor(override val request: WslTargetEnvironmentRequest,
-                                       private val distribution: WSLDistribution) : TargetEnvironment(request), ExternallySynchronized {
+private const val LOCALHOST = "localhost"
+
+class WslTargetEnvironment(override val request: WslTargetEnvironmentRequest,
+                           private val distribution: WSLDistribution) : TargetEnvironment(request), ExternallySynchronized {
 
   private val myUploadVolumes: MutableMap<UploadRoot, UploadableVolume> = HashMap()
   private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
-  private val myTargetPortBindings: MutableMap<TargetPortBinding, Int> = HashMap()
+  private val myTargetPortBindings: MutableMap<TargetPortBinding, ResolvedPortBinding> = HashMap()
   private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = HashMap()
   private val proxies = mutableMapOf<Int, WslProxy>() //port to proxy
   private val remoteDirsToDelete = mutableListOf<String>()
@@ -40,13 +43,15 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     get() = Collections.unmodifiableMap(myUploadVolumes)
   override val downloadVolumes: Map<DownloadRoot, DownloadableVolume>
     get() = Collections.unmodifiableMap(myDownloadVolumes)
-  override val targetPortBindings: Map<TargetPortBinding, Int>
+  override val targetPortBindings: Map<TargetPortBinding, ResolvedPortBinding>
     get() = Collections.unmodifiableMap(myTargetPortBindings)
   override val localPortBindings: Map<LocalPortBinding, ResolvedPortBinding>
     get() = Collections.unmodifiableMap(myLocalPortBindings)
 
   override val targetPlatform: TargetPlatform
     get() = TargetPlatform(Platform.UNIX)
+
+  private val wslIpAddress: InetAddress = distribution.wslIpAddress
 
   init {
     val useWslSync = (request as? VolumeCopyingRequest)?.shouldCopyVolumes == true && Registry.`is`("ide.wsl.use_wsl_sync")
@@ -73,7 +78,8 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
       if (targetPortBinding.local != null && targetPortBinding.local != theOnlyPort) {
         throw UnsupportedOperationException("Local target's TCP port forwarder is not implemented")
       }
-      myTargetPortBindings[targetPortBinding] = theOnlyPort
+      myTargetPortBindings[targetPortBinding] = ResolvedPortBinding(localEndpoint = HostPort(wslIpAddress.hostAddress, theOnlyPort),
+                                                                    targetEndpoint = HostPort(LOCALHOST, targetPortBinding.target))
     }
 
     for (localPortBinding in request.localPortBindings) {
@@ -84,10 +90,6 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
       myLocalPortBindings[localPortBinding] = ResolvedPortBinding(hostPort, hostPort)
     }
   }
-
-  // TODO Breaks encapsulation. Instead, targetPortBinding should contain hosts to connect to.
-  fun getWslIpAddress(): String =
-    distribution.wslIpAddress.hostAddress
 
   private fun getWslPort(localPort: Int): Int {
     proxies[localPort]?.wslIngressPort?.let {
@@ -143,7 +145,6 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
   private inner class Volume(override val localRoot: Path,
                              override val targetRoot: String,
                              private val useWslSync: Boolean) : UploadableVolume, DownloadableVolume {
-
     @Throws(IOException::class)
     override fun resolveTargetPath(relativePath: String): String {
       val localPath = FileUtil.toCanonicalPath(FileUtil.join(localRoot.toString(), relativePath))
@@ -162,16 +163,15 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
         WslSync.syncWslFolders("$targetRoot/$relativePath", localRoot.resolve(relativePath), distribution, linToWinCopy = true)
         return
       }
-      // Synchronization may be slow -- let us wait until file size does not change
-      // in a reasonable amount of time
+      // synchronization may be slow -- let us wait until file size does not change in a reasonable amount of time
       // (see https://github.com/microsoft/WSL/issues/4197)
       val path = localRoot.resolve(relativePath)
-      var previousSize = -2L  // sizeOrNull returns -1 if file does not exist
-      var newSize = path.sizeOrNull()
+      var previousSize = -2L
+      var newSize = path.fileSizeSafe(-1)
       while (previousSize < newSize) {
         Thread.sleep(100)
         previousSize = newSize
-        newSize = path.sizeOrNull()
+        newSize = path.fileSizeSafe(-1)
       }
       if (newSize == -1L) {
         LOG.warn("Path $path was not found on local filesystem")

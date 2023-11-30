@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.keymap.impl.KeymapImpl;
@@ -22,18 +22,16 @@ public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
     comboBox.setRenderer(SimpleListCellRenderer.create("", value -> itemEditor.getName(value)));
   }
 
-  @NotNull
   @Override
-  public MutableCollectionComboBoxModel<T> getModel() {
+  public @NotNull MutableCollectionComboBoxModel<T> getModel() {
     return model;
   }
 
-  @NotNull
-  public ComboBox getComboBox() {
+  public @NotNull ComboBox getComboBox() {
     return comboBox;
   }
 
-  private class NameEditor extends FixedComboBoxEditor {
+  private final class NameEditor extends FixedComboBoxEditor {
     private T item = null;
     private boolean mutated;
 

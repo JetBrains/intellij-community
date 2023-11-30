@@ -29,7 +29,8 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     private set
   override var isOutdated: Boolean = thread.isOutdated
     private set
-  override val commit = thread.originalCommit
+  override val originalCommit = thread.originalCommit
+  override val commit = thread.commit
   override val filePath = thread.path
   override val diffHunk = thread.diffHunk
 

@@ -107,7 +107,7 @@ class CompositeScriptConfigurationManager(val project: Project, val scope: Corou
             ?: default.isConfigurationLoadingInProgress(file)
 
     fun getLightScriptInfo(file: String): ScriptClassRootsCache.LightScriptInfo? =
-        classpathRoots.getLightScriptInfo(file)
+        updater.classpathRoots.getLightScriptInfo(file)
 
     override fun updateScriptDefinitionReferences() {
         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()

@@ -409,7 +409,8 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     if (referenceTarget instanceof PyFunction) {
       if (NumpyUfuncs.isUFunc(((PyFunction)referenceTarget).getName()) && isInsideNumPy(referenceTarget)) {
         // we intentionally looking here for the user stub class
-        final PyClass uFuncClass = PyPsiFacade.getInstance(referenceTarget.getProject()).findClass("numpy.core.ufunc");
+        PyPsiFacade facade = PyPsiFacade.getInstance(referenceTarget.getProject());
+        final PyClass uFuncClass = facade.createClassByQName("numpy.core.ufunc", referenceTarget);
         if (uFuncClass != null) {
           return Ref.create(new PyClassTypeImpl(uFuncClass, false));
         }

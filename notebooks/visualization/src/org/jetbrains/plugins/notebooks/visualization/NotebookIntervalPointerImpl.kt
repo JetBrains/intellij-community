@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.*
 
@@ -18,7 +19,8 @@ class NotebookIntervalPointerFactoryImplProvider : NotebookIntervalPointerFactor
     val notebookCellLines = NotebookCellLines.get(document)
     val factory = NotebookIntervalPointerFactoryImpl(notebookCellLines,
                                                      DocumentReferenceManager.getInstance().create(document),
-                                                     UndoManager.getInstance(project))
+                                                     UndoManager.getInstance(project),
+                                                     project)
 
     notebookCellLines.intervalListeners.addListener(factory)
     Disposer.register(project) {
@@ -57,7 +59,8 @@ private data class RedoContext(val changes: List<Change>) : ChangesContext
  */
 class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: NotebookCellLines,
                                          private val documentReference: DocumentReference,
-                                         private val undoManager: UndoManager?) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
+                                         undoManager: UndoManager?,
+                                         private val project: Project) : NotebookIntervalPointerFactory, NotebookCellLines.IntervalListener {
   private val pointers = ArrayList<NotebookIntervalPointerImpl>()
   private var changesContext: ChangesContext? = null
   override val changeListeners: EventDispatcher<NotebookIntervalPointerFactory.ChangeListener> =
@@ -67,22 +70,25 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     pointers.addAll(notebookCellLines.intervals.asSequence().map { NotebookIntervalPointerImpl(it) })
   }
 
+  private val validUndoManager: UndoManager? = undoManager
+    get() = field?.takeIf { !project.isDisposed }
+
   override fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.softAssertReadAccess()
     return pointers[interval.ordinal].also {
       require(it.interval == interval)
     }
   }
 
   override fun modifyPointers(changes: Iterable<NotebookIntervalPointerFactory.Change>) {
-    ApplicationManager.getApplication()?.assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
 
     val eventChanges = NotebookIntervalPointersEventChanges()
     applyChanges(changes, eventChanges)
 
     val pointerEvent = NotebookIntervalPointersEvent(eventChanges, cellLinesEvent = null, EventSource.ACTION)
 
-    undoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
+    validUndoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
       override fun undo() {
         val invertedChanges = invertChanges(eventChanges)
         updatePointersByChanges(invertedChanges)
@@ -99,6 +105,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   }
 
   override fun documentChanged(event: NotebookCellLinesEvent) {
+    ThreadingAssertions.assertWriteAccess()
     try {
       val pointersEvent = when (val context = changesContext) {
         is DocumentChangedContext -> documentChangedByAction(event, context)
@@ -118,6 +125,8 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   }
 
   override fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {
+    ThreadingAssertions.assertWriteAccess()
+    val undoManager = validUndoManager
     if (undoManager == null || undoManager.isUndoOrRedoInProgress) return
     val context = DocumentChangedContext()
     try {
@@ -143,7 +152,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     updateChangedIntervals(event, eventChanges)
     updateShiftedIntervals(event)
 
-    undoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
+    validUndoManager?.undoableActionPerformed(object : BasicUndoableAction(documentReference) {
       override fun undo() {
         changesContext = UndoContext(eventChanges)
       }
@@ -197,6 +206,13 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   private fun makeSnapshot(interval: NotebookCellLines.Interval) =
     PointerSnapshot(pointers[interval.ordinal], interval)
 
+  private fun hasSingleIntervalsWithSameTypeAndLanguage(oldIntervals: List<NotebookCellLines.Interval>,
+                                                        newIntervals: List<NotebookCellLines.Interval>): Boolean {
+    val old = oldIntervals.singleOrNull() ?: return false
+    val new = newIntervals.singleOrNull() ?: return false
+    return old.type == new.type && old.language == new.language
+  }
+
   private fun updateChangedIntervals(e: NotebookCellLinesEvent, eventChanges: NotebookIntervalPointersEventChanges) {
     when {
       !e.isIntervalsChanged() -> {
@@ -205,7 +221,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
           eventChanges.add(OnEdited(pointers[editedInterval.ordinal], editedInterval, editedInterval))
         }
       }
-      e.oldIntervals.size == 1 && e.newIntervals.size == 1 && e.oldIntervals.first().type == e.newIntervals.first().type -> {
+      hasSingleIntervalsWithSameTypeAndLanguage(e.oldIntervals, e.newIntervals) -> {
         // only one interval changed size
         for (editedInterval in e.newAffectedIntervals) {
           val ptr = pointers[editedInterval.ordinal]
@@ -314,12 +330,16 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     }
 
   private fun onUpdated(event: NotebookIntervalPointersEvent) {
+    safelyUpdate(changeListeners.multicaster, event)
+    safelyUpdate(ApplicationManager.getApplication().messageBus.syncPublisher(NotebookIntervalPointerFactory.ChangeListener.TOPIC), event)
+  }
+
+  private fun safelyUpdate(listener: NotebookIntervalPointerFactory.ChangeListener, event: NotebookIntervalPointersEvent) {
     try {
-      changeListeners.multicaster.onUpdated(event)
-      ApplicationManager.getApplication().messageBus.syncPublisher(NotebookIntervalPointerFactory.ChangeListener.TOPIC).onUpdated(event)
+      listener.onUpdated(event)
     }
-    catch (e: Exception) {
-      thisLogger().error("NotebookIntervalPointerFactory.ChangeListener shouldn't throw exceptions", e)
+    catch (t: Throwable) {
+      thisLogger().error("$listener shouldn't throw exceptions", t)
     }
   }
 

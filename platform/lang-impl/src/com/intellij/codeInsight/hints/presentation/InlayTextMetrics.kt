@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.ide.ui.AntialiasingType
@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.StartupUiUtil
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.getFontWithFallback
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 import java.awt.FontMetrics
@@ -79,7 +79,7 @@ class InlayTextMetrics(
         editorFont.deriveFont(fontType, size)
       } else {
         val familyName = StartupUiUtil.labelFont.family
-        UIUtil.getFontWithFallback(familyName, fontType, size)
+        getFontWithFallback(familyName, fontType, size)
       }
       val context = getCurrentContext(editor.component)
       val metrics = FontInfo.getFontMetrics(font, context)
@@ -103,7 +103,7 @@ class InlayTextMetrics(
   // Editor metrics:
   val ascent: Int = editor.ascent
   val descent: Int = (editor as? EditorImpl)?.descent ?: 0
-  val lineHeight = editor.lineHeight
+  val lineHeight: Int = editor.lineHeight
   private val editorComponent = editor.component
 
   fun isActual(size: Float, familyName: String) : Boolean {

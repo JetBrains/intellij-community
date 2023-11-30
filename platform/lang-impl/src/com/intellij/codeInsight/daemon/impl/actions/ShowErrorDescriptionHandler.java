@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
+final class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
   private final boolean myRequestFocus;
 
   ShowErrorDescriptionHandler(boolean requestFocus) {
@@ -28,8 +28,7 @@ class ShowErrorDescriptionHandler implements CodeInsightActionHandler {
     }
   }
 
-  @Nullable
-  static HighlightInfo findInfoUnderCaret(@NotNull Project project, @NotNull Editor editor) {
+  static @Nullable HighlightInfo findInfoUnderCaret(@NotNull Project project, @NotNull Editor editor) {
     if (editor instanceof EditorWindow) {
       throw new IllegalArgumentException("Unexpected injected editor: " + editor);
     }

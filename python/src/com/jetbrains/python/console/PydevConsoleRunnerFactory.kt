@@ -16,6 +16,7 @@ import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.*
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.findPythonTargetInterpreter
+import com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir
 import com.jetbrains.python.sdk.PythonEnvUtil
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.InvalidPathException
@@ -150,7 +151,7 @@ open class PydevConsoleRunnerFactory : PythonConsoleRunnerFactory() {
       }
       if (path != null && !path.exists()) {
         thisLogger().warn("Can't find $path")
-        path = null;
+        path = null
       }
       return path?.let { targetPath(it) } ?: if (!workingDir.isNullOrBlank()) constant(workingDir) else null
     }

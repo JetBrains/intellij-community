@@ -74,10 +74,10 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   }
 
   private fun configureWizardStepSettings(step: NewProjectWizardStep, moduleInfo: ModuleInfo, parentData: ProjectData?) {
-    step.baseData!!.name = moduleInfo.name
-    step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
     step.languageData!!.language = "Java"
     step.javaBuildSystemData!!.buildSystem = "Gradle"
+    step.baseData!!.name = moduleInfo.name
+    step.baseData!!.path = testRoot.toNioPath().getResolvedPath(moduleInfo.relativePath).parent.toCanonicalPath()
     step.javaGradleData!!.gradleDsl = when (moduleInfo.useKotlinDsl) {
       true -> GradleNewProjectWizardStep.GradleDsl.KOTLIN
       else -> GradleNewProjectWizardStep.GradleDsl.GROOVY

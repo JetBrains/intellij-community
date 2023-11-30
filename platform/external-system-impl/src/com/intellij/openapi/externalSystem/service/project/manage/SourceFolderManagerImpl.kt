@@ -27,15 +27,16 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.toBuilder
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.XCollection
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.toBuilder
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.TestOnly
@@ -176,7 +177,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
     }.asCompletableFuture()
 
     if (application.isUnitTestMode) {
-      ApplicationManager.getApplication().assertIsDispatchThread()
+      ThreadingAssertions.assertEventDispatchThread()
       operationsStates.removeIf { it.isDone }
       operationsStates.add(future)
     }
@@ -226,18 +227,18 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   }
 
   private fun batchUpdateModels(project: Project, modules: Collection<Module>, modifier: (ModifiableRootModel) -> Unit) {
-    val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
-    val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
-      val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
-      val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
-                                                                                           false)
-      modifiableRootModel as ModifiableRootModelBridge
-      modifier.invoke(modifiableRootModel)
-      modifiableRootModel.prepareForCommit()
-      modifiableRootModel
-    }.toList()
-
     ApplicationManager.getApplication().invokeAndWait {
+      val diffBuilder = WorkspaceModel.getInstance(project).currentSnapshot.toBuilder()
+      val modifiableRootModels = modules.asSequence().filter { !it.isDisposed }.map { module ->
+        val moduleRootComponentBridge = ModuleRootManager.getInstance(module) as ModuleRootComponentBridge
+        val modifiableRootModel = moduleRootComponentBridge.getModifiableModelForMultiCommit(ExternalSystemRootConfigurationAccessor(diffBuilder),
+                                                                                             false)
+        modifiableRootModel as ModifiableRootModelBridge
+        modifier.invoke(modifiableRootModel)
+        modifiableRootModel.prepareForCommit()
+        modifiableRootModel
+      }.toList()
+
       WriteAction.run<RuntimeException> {
         if (project.isDisposed) return@run
         WorkspaceModel.getInstance(project).updateProjectModel("Source folder manager: batch update models") { updater ->
@@ -320,7 +321,7 @@ class SourceFolderManagerImpl(private val project: Project) : SourceFolderManage
   @TestOnly
   @Throws(Exception::class)
   fun consumeBulkOperationsState(stateConsumer: (Future<*>) -> Unit) {
-    ApplicationManager.getApplication().assertIsDispatchThread()
+    ThreadingAssertions.assertEventDispatchThread()
     assert(ApplicationManager.getApplication().isUnitTestMode)
     for (operationsState in operationsStates) {
       stateConsumer.invoke(operationsState)

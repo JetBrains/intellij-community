@@ -38,7 +38,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     }
 
     if (myAdded == null) {
-      myAdded = new ValueContainerImpl<>();
+      myAdded = ValueContainerImpl.createNewValueContainer();
     }
     myAdded.addValue(inputId, value);
   }

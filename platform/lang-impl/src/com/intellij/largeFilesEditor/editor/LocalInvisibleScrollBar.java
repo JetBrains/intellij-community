@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,7 +7,7 @@ import com.intellij.ui.components.JBScrollBar;
 import javax.swing.*;
 import java.awt.*;
 
-public class LocalInvisibleScrollBar extends JBScrollBar {
+public final class LocalInvisibleScrollBar extends JBScrollBar {
 
   private static final Logger LOG = Logger.getInstance(LocalInvisibleScrollBar.class);
 
@@ -29,7 +29,7 @@ public class LocalInvisibleScrollBar extends JBScrollBar {
     setMaximumSize(zeroDimension);
   }
 
-  private class MyBoundedRangeModel extends DefaultBoundedRangeModel {
+  private final class MyBoundedRangeModel extends DefaultBoundedRangeModel {
 
     @Override
     public void setRangeProperties(int newValue, int newExtent, int newMin, int newMax, boolean adjusting) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -12,6 +12,7 @@ import com.intellij.ide.nls.NlsMessages;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
@@ -48,6 +49,7 @@ import com.intellij.tracing.Tracer;
 import com.intellij.util.Chunk;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -162,7 +164,7 @@ public final class CompileDriver {
   }
 
   public static void setCompilationStartedAutomatically(CompileScope scope) {
-    //todo[nik] pass this option as a parameter to compile/make methods instead
+    //todo pass this option as a parameter to compile/make methods instead
     scope.putUserData(COMPILATION_STARTED_AUTOMATICALLY, true);
   }
 
@@ -205,7 +207,7 @@ public final class CompileDriver {
   private List<TargetTypeBuildScope> mergeScopesFromProviders(CompileScope scope,
                                                               List<TargetTypeBuildScope> scopes,
                                                               boolean forceBuild) {
-    for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
+    for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensionList()) {
       List<TargetTypeBuildScope> providerScopes = ReadAction.compute(
         () -> myProject.isDisposed() ? Collections.emptyList()
                                      : provider.getBuildTargetScopes(scope, myProject, forceBuild));
@@ -346,24 +348,13 @@ public final class CompileDriver {
               }
             }
             case BUILD_COMPLETED -> {
-              ExitStatus status = ExitStatus.SUCCESS;
-              if (event.hasCompletionStatus()) {
-                final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status completionStatus =
-                  event.getCompletionStatus();
-                switch (completionStatus) {
-                  case CANCELED:
-                    status = ExitStatus.CANCELLED;
-                    break;
-                  case ERRORS:
-                    status = ExitStatus.ERRORS;
-                    break;
-                  case SUCCESS:
-                    break;
-                  case UP_TO_DATE:
-                    status = ExitStatus.UP_TO_DATE;
-                    break;
-                }
-              }
+              ExitStatus status = !event.hasCompletionStatus() ? ExitStatus.SUCCESS : 
+                                  switch (event.getCompletionStatus()) {
+                case CANCELED -> ExitStatus.CANCELLED;
+                case ERRORS -> ExitStatus.ERRORS;
+                case SUCCESS -> ExitStatus.SUCCESS;
+                case UP_TO_DATE -> ExitStatus.UP_TO_DATE;
+              };
               compileContext.putUserDataIfAbsent(COMPILE_SERVER_BUILD_STATUS, status);
             }
             case CUSTOM_BUILDER_MESSAGE -> {
@@ -396,7 +387,8 @@ public final class CompileDriver {
                        final boolean withModalProgress,
                        final CompileStatusNotification callback,
                        final CompilerMessage message) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
+    ModalityState modalityState = ModalityState.current();
 
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     final String name = JavaCompilerBundle.message(
@@ -424,7 +416,7 @@ public final class CompileDriver {
       }
 
       // ensure the project model seen by build process is up-to-date
-      CompilerDriverHelperKt.saveSettings(myProject, isUnitTestMode);
+      CompilerDriverHelperKt.saveSettings(myProject, modalityState, isUnitTestMode);
       Tracer.Span compileWorkSpan = Tracer.start("compileWork");
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
       final BuildManager buildManager = BuildManager.getInstance();
@@ -480,15 +472,16 @@ public final class CompileDriver {
         compilerCacheManager.flushCaches();
         flushCompilerCaches.complete();
 
-        final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
+        final ExitStatus status = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
+        final long duration = notifyCompilationCompleted(compileContext, callback, status);
         CompilerUtil.logDuration(
-          "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
-          compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
-          "; warnings: " +
-          compileContext.getMessageCount(CompilerMessageCategory.WARNING),
+          "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " + compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+          "; warnings: " + compileContext.getMessageCount(CompilerMessageCategory.WARNING),
           duration
         );
-
+        if (status == ExitStatus.SUCCESS) {
+          BuildUsageCollector.logBuildCompleted(duration, isRebuild, false);
+        }
       }
     };
 

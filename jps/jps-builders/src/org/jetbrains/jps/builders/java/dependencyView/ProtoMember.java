@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataInputOutputUtil;
@@ -16,18 +16,17 @@ import java.util.Set;
 
 abstract class ProtoMember extends Proto {
 
-  @NotNull
-  public final TypeRepr.AbstractType myType;
+  public final @NotNull TypeRepr.AbstractType myType;
   public final Object myValue;
 
-  private static abstract class DataDescriptor<T> {
+  private abstract static class DataDescriptor<T> {
     public static final DataDescriptor NONE = new DataDescriptor(0, null) {
       @Override
       public Object load(DataInput out) {
         return null;
       }
       @Override
-      public void save(DataOutput out, Object value) throws IOException {
+      public void save(DataOutput out, Object value) {
       }
     };
     public static final DataDescriptor<String> STRING = new DataDescriptor<String>(1, String.class) {
@@ -97,8 +96,7 @@ abstract class ProtoMember extends Proto {
     };
 
     private final byte myId;
-    @Nullable
-    private final Class<T> myDataType;
+    private final @Nullable Class<T> myDataType;
 
     private DataDescriptor(int id, Class<T> dataType) {
       myId = (byte)id;
@@ -109,16 +107,14 @@ abstract class ProtoMember extends Proto {
       return myId;
     }
 
-    @Nullable
-    public Class<T> getDataType() {
+    public @Nullable Class<T> getDataType() {
       return myDataType;
     }
 
     public abstract void save(DataOutput out, T value) throws IOException;
     public abstract T load(DataInput in) throws IOException;
 
-    @NotNull
-    public static DataDescriptor findById(byte tag) {
+    public static @NotNull DataDescriptor findById(byte tag) {
       if (STRING.getId() == tag) {
         return STRING;
       }
@@ -177,8 +173,7 @@ abstract class ProtoMember extends Proto {
   protected ProtoMember(final int access,
                         final int signature,
                         final int name,
-                        @NotNull
-                        final TypeRepr.AbstractType t,
+                        final @NotNull TypeRepr.AbstractType t,
                         @NotNull
                         Set<TypeRepr.ClassType> annotations,
                         final Object value) {

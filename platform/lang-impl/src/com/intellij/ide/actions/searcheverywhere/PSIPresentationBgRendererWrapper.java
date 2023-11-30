@@ -22,6 +22,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,8 @@ import java.util.List;
 import java.util.function.Function;
 
 public final class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
-                                                               AutoCompletionContributor, PossibleSlowContributor {
+                                                               AutoCompletionContributor, PossibleSlowContributor, EssentialContributor,
+                                                               SearchEverywhereExtendedInfoProvider, SearchEverywherePreviewProvider {
   private final AbstractGotoSEContributor myDelegate;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }
@@ -50,7 +52,12 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     return PossibleSlowContributor.checkSlow(myDelegate);
   }
 
-  public static SearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
+  @Override
+  public boolean isEssential() {
+    return EssentialContributor.checkEssential(myDelegate);
+  }
+
+  public static WeightedSearchEverywhereContributor<Object> wrapIfNecessary(AbstractGotoSEContributor delegate) {
     if (Registry.is("psi.element.list.cell.renderer.background")) {
       return new PSIPresentationBgRendererWrapper(delegate);
     }
@@ -80,6 +87,12 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
 
   private static FoundItemDescriptor<Object> element2presentation(FoundItemDescriptor<Object> elementDescriptor,
                                                                   Function<? super PsiElement, ? extends TargetPresentation> presentationCalculator) {
+    if (elementDescriptor.getItem() instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
+      var newDescriptor = new FoundItemDescriptor<Object>(itemWithSimilarity.getValue(), elementDescriptor.getWeight());
+      var descriptorWithPresentation = element2presentation(newDescriptor, presentationCalculator);
+      return new FoundItemDescriptor<>(new PsiItemWithSimilarity<>(descriptorWithPresentation.getItem(),
+                                                                   itemWithSimilarity.getSimilarityScore()), elementDescriptor.getWeight());
+    }
     if (elementDescriptor.getItem() instanceof PsiElement psi) {
       TargetPresentation presentation = presentationCalculator.apply(psi);
       return new FoundItemDescriptor<>(new PsiItemWithPresentation(psi, presentation), elementDescriptor.getWeight());
@@ -89,6 +102,9 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   private static Object getItem(Object value) {
+    if (value instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
+      return getItem(itemWithSimilarity.getValue());
+    }
     return value instanceof PsiItemWithPresentation ? ((PsiItemWithPresentation)value).getItem() : value;
   }
 
@@ -96,7 +112,8 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     /**
      * @see #create(Object, Object)
      */
-    PsiItemWithPresentation(PsiElement first, TargetPresentation second) {
+    @ApiStatus.Internal
+    public PsiItemWithPresentation(PsiElement first, TargetPresentation second) {
       super(first, second);
     }
 
@@ -119,6 +136,9 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
 
     @Override
     public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      if (value instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
+        return getListCellRendererComponent(list, itemWithSimilarity.getValue(), index, isSelected, cellHasFocus);
+      }
       if (!(value instanceof PsiItemWithPresentation itemAndPresentation)) {
         return delegateRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       }
@@ -206,6 +226,11 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   @Override
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    return myDelegate.createExtendedInfo();
+  }
+
+  @Override
   public @NotNull List<AnAction> getActions(@NotNull Runnable onChanged) {
     return myDelegate.getActions(onChanged);
   }
@@ -290,9 +315,14 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   public static @Nullable PsiElement toPsi(Object o) {
+    if (o instanceof PsiItemWithSimilarity<?> itemWithSimilarity) return toPsi(itemWithSimilarity.getValue());
     if (o instanceof PsiElement) return (PsiElement)o;
     if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
     if (o instanceof PsiElementNavigationItem) return ((PsiElementNavigationItem)o).getTargetElement();
     return null;
+  }
+
+  public AbstractGotoSEContributor getDelegate() {
+    return myDelegate;
   }
 }

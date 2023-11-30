@@ -3,7 +3,8 @@ package org.jetbrains.plugins.gradle.tooling.builder;
 
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder;
+import org.jetbrains.plugins.gradle.tooling.Message;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
 
 import java.io.Serializable;
@@ -26,12 +27,20 @@ public class ProjectPropertiesTestModelBuilder implements ModelBuilderService {
     return new ProjectPropertiesImpl(propertiesMap);
   }
 
-  @NotNull
   @Override
-  public ErrorMessageBuilder getErrorMessageBuilder(@NotNull Project project, @NotNull Exception e) {
-    return ErrorMessageBuilder
-      .create(project, e, "Test model import errors")
-      .withDescription("Unable to import Test model");
+  public void reportErrorMessage(
+    @NotNull String modelName,
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull Exception exception
+  ) {
+    context.getMessageReporter().createMessage()
+      .withGroup("gradle.test.group")
+      .withKind(Message.Kind.ERROR)
+      .withTitle("Test model import errors")
+      .withText("Unable to import Test model")
+      .withException(exception)
+      .reportMessage(project);
   }
 
   public interface ProjectProperties {

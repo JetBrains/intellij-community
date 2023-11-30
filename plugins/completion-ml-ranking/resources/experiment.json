@@ -46,14 +46,42 @@
     },
     {
       "number": 15,
-      "description": "Full Line local model",
+      "description": "Full Line - Inline independent DROP UNKNOWN RED CODE",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
     },
     {
       "number": 16,
-      "description": "Full Line trigger model",
+      "description": "Full Line - Inline with trigger model",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 17,
+      "description": "Completion performance (early lookup & MLRanking)",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 18,
+      "description": "Completion performance (early lookup)",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 19,
+      "description": "Completion performance",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 22,
+      "description": "Full Line - Inline independent",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
@@ -69,14 +97,14 @@
     {
       "id": "python",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13, 15, 16 ],
+      "includeGroups": [13, 15, 16, 15, 16, 22, 22, 13],
       "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12, 13 ],
-      "shouldLogElementFeatures": false
+      "includeGroups": [ 7, 8, 8, 8, 12, 17, 17, 17 ],
+      "shouldLogElementFeatures": true
     },
     {
       "id": "scala",
@@ -109,12 +137,6 @@
       "shouldLogElementFeatures": false
     },
     {
-      "id": "rust",
-      "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 8, 12, 13],
-      "shouldLogElementFeatures": true
-    },
-    {
       "id": "swift",
       "experimentBucketsCount": 4,
       "includeGroups": [ 7, 8, 12, 13],
@@ -136,6 +158,18 @@
       "id": "objectivec",
       "experimentBucketsCount": 4,
       "includeGroups": [ 7, 8, 12 ],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "html",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 7, 12, 12, 13, 13 ],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "css",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 7, 12, 12, 13, 13 ],
       "shouldLogElementFeatures": false
     }
   ]

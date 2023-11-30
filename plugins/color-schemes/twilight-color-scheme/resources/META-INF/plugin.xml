@@ -8,6 +8,6 @@
     Twilight editor color scheme for all IntelliJ-based IDEs.
   </description>
   <extensions defaultExtensionNs="com.intellij">
-    <bundledColorScheme path="/colorSchemes/twilight"/>
+    <bundledColorScheme id="Twilight" path="/colorSchemes/twilight"/>
   </extensions>
 </idea-plugin>

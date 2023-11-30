@@ -10,7 +10,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,15 +21,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Allows controlling and accessing the information about a running process.
+ *
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
  */
 public abstract class ProcessHandler extends UserDataHolderBase {
   private static final Logger LOG = Logger.getInstance(ProcessHandler.class);
   /**
-   * todo: replace with an overridable method [nik]
-   *
-   * @deprecated
+   * @deprecated override {@link #isSilentlyDestroyOnClose()} instead
    */
-  @Deprecated @ApiStatus.ScheduledForRemoval public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
+  @Deprecated @SuppressWarnings("DeprecatedIsStillUsed") 
+  public static final Key<Boolean> SILENTLY_DESTROY_ON_CLOSE = Key.create("SILENTLY_DESTROY_ON_CLOSE");
   public static final Key<Boolean> TERMINATION_REQUESTED = Key.create("TERMINATION_REQUESTED");
 
   private final @NotNull List<@NotNull ProcessListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -114,8 +114,11 @@ public abstract class ProcessHandler extends UserDataHolderBase {
    * Destroys the process if {@link #isStartNotified()} returns {@code true},
    * or postpones the action until {@link #startNotify()} is called.
    *
-   * <p>It changes the process handler's state and {@link #isProcessTerminating} becomes true. This method may return without waiting for
-   * the process termination. Upon the completion of the process termination, {@link #isProcessTerminated} becomes true.
+   * <p>It changes the process handler's state - {@link #isProcessTerminating} becomes true.
+   * The method may perform potentially time-consuming operation, so it should be executed
+   * on a background thread without the read action. This method may return without waiting
+   * for the process termination.
+   * <p>Upon the process termination, {@link #isProcessTerminated} becomes true.
    */
   public void destroyProcess() {
     myAfterStartNotifiedRunner.execute(() -> {

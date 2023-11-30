@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -77,9 +78,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!EditorModificationUtil.requestWriting(editor)) return;
 
-    DataContext context = dataId -> {
-      return PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : dataContext.getData(dataId);
-    };
+    DataContext context = CustomizedDataContext.create(dataContext, dataId ->
+      PasteAction.TRANSFERABLE_PROVIDER.is(dataId) ? (Producer<Transferable>)() -> transferable : null);
 
     final Project project = editor.getProject();
     final Document document = editor.getDocument();
@@ -126,7 +126,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     }
   }
 
-  private static class ProcessorAndData<Data extends TextBlockTransferableData> {
+  private static final class ProcessorAndData<Data extends TextBlockTransferableData> {
     final CopyPastePostProcessor<Data> processor;
     final @NotNull List<? extends Data> data;
 

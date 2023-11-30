@@ -2,12 +2,12 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
+import org.jetbrains.jps.javac.Iterators.BooleanFunction;
+import org.jetbrains.jps.javac.Iterators.Function;
 
 import javax.tools.*;
 import java.io.Closeable;

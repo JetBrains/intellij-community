@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.DataManager;
@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.Wrapper;
@@ -30,6 +30,7 @@ import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -82,14 +83,18 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(final MouseEvent e) {
-        if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) return;
+        if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) {
+          return;
+        }
         if (JBTabsImpl.isSelectionClick(e) && myInfo.isEnabled()) {
-          final TabInfo selectedInfo = myTabs.getSelectedInfo();
+          TabInfo selectedInfo = myTabs.getSelectedInfo();
           if (selectedInfo != myInfo) {
             myInfo.setPreviousSelection(selectedInfo);
           }
           Component c = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
-          if (c instanceof InplaceButton) return;
+          if (c instanceof InplaceButton) {
+            return;
+          }
           myTabs.select(info, true);
           JBPopup container = PopupUtil.getPopupContainerFor(TabLabel.this);
           if (container != null && ClientProperty.isTrue(container.getContent(), MorePopupAware.class)) {
@@ -189,12 +194,8 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   @Override
   public boolean isFocusable() {
-    // We don't want the focus unless we are the selected tab.
-    if (myTabs.getSelectedLabel() != this) {
-      return false;
-    }
-
-    return super.isFocusable();
+    // we don't want the focus unless we are the selected tab
+    return myTabs.getSelectedLabel() == this && super.isFocusable();
   }
 
   private SimpleColoredComponent createLabel() {
@@ -211,12 +212,13 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
       protected Color getActiveTextColor(Color attributesColor) {
         TabPainterAdapter painterAdapter = myTabs.tabPainterAdapter;
         TabTheme theme = painterAdapter.getTabTheme();
-        Color foreground = myTabs.getSelectedInfo() == myInfo
-                           && (UIUtil.getLabelForeground().equals(attributesColor) || attributesColor == null)
-                           ? myTabs.isActiveTabs(myInfo)
-                             ? theme.getUnderlinedTabForeground()
-                             : theme.getUnderlinedTabInactiveForeground()
-                           : super.getActiveTextColor(attributesColor);
+        Color foreground;
+        if (myTabs.getSelectedInfo() == myInfo && (attributesColor == null || UIUtil.getLabelForeground().equals(attributesColor))) {
+          foreground = myTabs.isActiveTabs(myInfo) ? theme.getUnderlinedTabForeground() : theme.getUnderlinedTabInactiveForeground();
+        }
+        else {
+          foreground = super.getActiveTextColor(attributesColor);
+        }
         return editLabelForeground(foreground);
       }
 
@@ -275,7 +277,6 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     myCentered = toCenter;
   }
-
 
   public void paintOffscreen(Graphics g) {
     synchronized (getTreeLock()) {
@@ -417,7 +418,6 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     JBPopupMenu.showByEvent(e, myTabs.getActivePopup());
   }
 
-
   public void setText(final SimpleColoredText text) {
     myLabel.change(() -> {
       myLabel.clear();
@@ -430,7 +430,6 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
     invalidateIfNeeded();
   }
-
 
   private void invalidateIfNeeded() {
     if (getLabelComponent().getRootPane() == null) return;
@@ -450,25 +449,20 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     myTabs.revalidateAndRepaint(false);
   }
 
-  public void setIcon(final Icon icon) {
+  public void setIcon(@Nullable Icon icon) {
     setIcon(icon, 0);
   }
 
   private boolean hasIcons() {
-    LayeredIcon layeredIcon = getLayeredIcon();
-    boolean hasIcons = false;
-    Icon[] layers = layeredIcon.getAllLayers();
-    for (Icon layer1 : layers) {
+    for (Icon layer1 : getLayeredIcon().getAllLayers()) {
       if (layer1 != null) {
-        hasIcons = true;
-        break;
+        return true;
       }
     }
-
-    return hasIcons;
+    return false;
   }
 
-  private void setIcon(@Nullable final Icon icon, int layer) {
+  private void setIcon(@Nullable Icon icon, int layer) {
     LayeredIcon layeredIcon = getLayeredIcon();
     layeredIcon.setIcon(icon, layer);
     if (hasIcons()) {
@@ -524,11 +518,11 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     }
 
     MergedUiDecoration resultDec = mergeUiDecorations(decoration, JBTabsImpl.defaultDecorator.getDecoration());
-    setBorder(IdeBorderFactory.createEmptyBorder(resultDec.labelInsets()));
+    setBorder(new EmptyBorder(resultDec.labelInsets()));
     myLabel.setIconTextGap(resultDec.iconTextGap());
 
     Insets contentInsets = resultDec.contentInsetsSupplier().apply(getActionsPosition());
-    myLabelPlaceholder.setBorder(IdeBorderFactory.createEmptyBorder(contentInsets));
+    myLabelPlaceholder.setBorder(new EmptyBorder(contentInsets));
   }
 
   public static MergedUiDecoration mergeUiDecorations(@NotNull UiDecorator.UiDecoration customDec,
@@ -549,8 +543,8 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
 
   private static @NotNull Insets mergeInsets(@Nullable Insets custom, @NotNull Insets def) {
     if (custom != null) {
-      return JBInsets.addInsets(new Insets(getValue(def.top, custom.top), getValue(def.left, custom.left),
-                                           getValue(def.bottom, custom.bottom), getValue(def.right, custom.right)));
+      return new Insets(getValue(def.top, custom.top), getValue(def.left, custom.left),
+                        getValue(def.bottom, custom.bottom), getValue(def.right, custom.right));
     }
     return def;
   }
@@ -735,17 +729,6 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     }
   }
 
-  void updateActionLabelPosition() {
-    if (myActionPanel != null) {
-      if (!myActionPanel.isVisible()) {
-        remove(myActionPanel);
-      }
-      else {
-        add(myActionPanel, isTabActionsOnTheRight() ? BorderLayout.EAST : BorderLayout.WEST);
-      }
-    }
-  }
-
   public void setForcePaintBorders(boolean forcePaintBorders) {
     this.forcePaintBorders = forcePaintBorders;
   }
@@ -776,7 +759,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
         && myLabel.findFragmentAt(pointInLabel.x) == SimpleColoredComponent.FRAGMENT_ICON) {
       String toolTip = myIcon.getToolTip(false);
       if (toolTip != null) {
-        return StringUtil.capitalize(toolTip);
+        return Strings.capitalize(toolTip);
       }
     }
     return super.getToolTipText(event);
@@ -832,9 +815,7 @@ public class TabLabel extends JPanel implements Accessible, DataProvider {
     }
   }
 
-
-  private class MyTabLabelLayout extends BorderLayout {
-
+  private final class MyTabLabelLayout extends BorderLayout {
     @Override
     public void addLayoutComponent(Component comp, Object constraints) {
       checkConstraints(constraints);

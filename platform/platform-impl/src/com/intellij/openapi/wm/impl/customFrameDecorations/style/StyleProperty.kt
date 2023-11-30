@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.style
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import java.awt.Color
 import java.awt.Insets
 import javax.swing.AbstractButton
@@ -9,14 +10,18 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
 
-sealed class StyleProperty(
+internal const val HOVER_KEY: String = "STYLE_HOVER"
+private val LOG: Logger
+  get() = logger<StyleProperty>()
+
+internal sealed class StyleProperty(
   private val setProperty: (JComponent, Any?) -> Unit,
-  val getProperty: (JComponent) -> Any?,
+  private val getProperty: (JComponent) -> Any?,
   private val valueType: Class<out Any?>,
-  val componentType: Class<out Any?> = JComponent::class.java
+  private val componentType: Class<out Any?> = JComponent::class.java
 ) {
   companion object {
-    fun getPropertiesSnapshot(component: JComponent): Properties {
+    fun getPropertySnapshot(component: JComponent): Properties {
       val base = Properties()
       for (p in arrayOf(FOREGROUND, BACKGROUND, OPAQUE, BORDER, ICON, MARGIN)) {
         if (p.componentType.isInstance(component))
@@ -35,6 +40,12 @@ sealed class StyleProperty(
   object BACKGROUND : StyleProperty(
     { component, background -> component.background = background as Color? },
     { component -> component.background },
+    Color::class.java
+  )
+
+  object HOVER : StyleProperty(
+    { component, background -> component.putClientProperty(HOVER_KEY, background as Color?) },
+    { component -> component.getClientProperty(HOVER_KEY) },
     Color::class.java
   )
 
@@ -64,19 +75,16 @@ sealed class StyleProperty(
     AbstractButton::class.java
   )
 
-  protected val log = Logger.getInstance(StyleProperty::class.java)
   private fun checkTypes(component: JComponent, value: Any?): Boolean {
     if (!componentType.isInstance(component)) {
-      log.warn(
-        javaClass.canonicalName + " Incorrect class type: " + component.javaClass.canonicalName + " instead of " + componentType.canonicalName)
+      LOG.warn("${javaClass.canonicalName} Incorrect class type: ${component.javaClass.canonicalName} instead of ${componentType.canonicalName}")
       return false
     }
     if (valueType == Boolean::class.java) {
       return (value == true || value == false)
     }
     if (!(value == null || valueType.isInstance(value))) {
-      log.warn(
-        javaClass.canonicalName + " Incorrect value type: " + value.javaClass.canonicalName + " instead of " + valueType.canonicalName)
+      LOG.warn("${javaClass.canonicalName} Incorrect value type: ${value.javaClass.canonicalName} instead of ${valueType.canonicalName}")
       return false
     }
     return true

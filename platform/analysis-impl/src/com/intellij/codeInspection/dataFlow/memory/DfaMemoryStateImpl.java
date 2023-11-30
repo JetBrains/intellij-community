@@ -413,8 +413,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       return true;
     }
 
-    @Nullable
-    private MergePatch tryMergeDiffs(Supplier<MergePatch> singleDiff) {
+    private @Nullable MergePatch tryMergeDiffs(Supplier<MergePatch> singleDiff) {
       if (!(mySingleDiff instanceof DropOrderingMergePatch)) return null;
       MergePatch diff = singleDiff.get();
       if (diff instanceof DropOrderingMergePatch && diff.myApplyToRight != mySingleDiff.myApplyToRight) {
@@ -835,8 +834,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public boolean applyContractCondition(@NotNull DfaCondition condition) {
     if (condition instanceof DfaRelation relation) {
       if (relation.isEquality()) {
-        checkEphemeral(relation.getLeftOperand(), relation.getRightOperand());
-        checkEphemeral(relation.getRightOperand(), relation.getLeftOperand());
+        checkEphemeral(relation.leftOperand(), relation.rightOperand());
+        checkEphemeral(relation.rightOperand(), relation.leftOperand());
       }
     }
     return applyCondition(condition);
@@ -878,9 +877,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean applyRelationCondition(@NotNull DfaRelation dfaRelation) {
-    DfaValue dfaLeft = dfaRelation.getLeftOperand();
-    DfaValue dfaRight = dfaRelation.getRightOperand();
-    RelationType relationType = dfaRelation.getRelation();
+    DfaValue dfaLeft = dfaRelation.leftOperand();
+    DfaValue dfaRight = dfaRelation.rightOperand();
+    RelationType relationType = dfaRelation.relationType();
 
     if (DfaTypeValue.isUnknown(dfaLeft) || DfaTypeValue.isUnknown(dfaRight)) return true;
     // Such relations are only useful to update ephemeral marks in applyContractCondition
@@ -1277,7 +1276,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       type = type.fromRelation(RelationType.EQ);
       for (DfaVariableValue value : eqClass.asList()) {
         if (value != dfaVar) {
-          recordVariableType(value, type);
+          recordVariableType(value, type.meet(value.getInherentType()));
           if (!updateQualifierOnEquality(value, value)) return false;
         }
       }
@@ -1285,8 +1284,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  @NotNull
-  protected DfaValue canonicalize(@NotNull DfaValue value) {
+  protected @NotNull DfaValue canonicalize(@NotNull DfaValue value) {
     if (value instanceof DfaVariableValue) {
       return canonicalize((DfaVariableValue)value);
     }

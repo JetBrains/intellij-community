@@ -119,9 +119,10 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     final Project project = assignment.getProject();
     final String rightText = rExpression.getText();
     String initializerText;
-    if ("+".equals(opSign) && ExpressionUtils.isZero(initializer) ||
-        "*".equals(opSign) && ExpressionUtils.isOne(initializer)) {
+    if (isIdentity(initializer, opSign)) {
       initializerText = rightText;
+    } else if (isIdentity(rExpression, opSign)) {
+      initializerText = initializer.getText();
     } else {
       boolean parenthesesForLhs = PsiPrecedenceUtil.getPrecedence(initializer) > PsiPrecedenceUtil.getPrecedenceForOperator(simpleOp);
       boolean parenthesesForRhs = PsiPrecedenceUtil.areParenthesesNeeded(sign, rExpression);
@@ -130,6 +131,14 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     }
     initializerExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, assignment);
     return (PsiExpression)CodeStyleManager.getInstance(project).reformat(initializerExpression);
+  }
+
+  private static boolean isIdentity(PsiExpression operand, String opSign) {
+    return "+".equals(opSign) && ExpressionUtils.isZero(operand) ||
+           "*".equals(opSign) && ExpressionUtils.isOne(operand) ||
+           "^".equals(opSign) && ExpressionUtils.isLiteral(operand, false) ||
+           "|".equals(opSign) && ExpressionUtils.isLiteral(operand, false) ||
+           "&".equals(opSign) && ExpressionUtils.isLiteral(operand, true);
   }
 
   @Nullable

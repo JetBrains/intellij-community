@@ -1,38 +1,35 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
 import com.intellij.util.CommonJavaRefactoringUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Collections.emptyList;
 
-public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
+public class VariableAccessFromInnerClassJava10Fix extends PsiUpdateModCommandAction<PsiElement> {
   @NonNls private final static String[] NAMES = {
     "ref",
     "lambdaContext",
@@ -40,15 +37,8 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
     "rContext"
   };
 
-  private final PsiElement myContext;
-
   public VariableAccessFromInnerClassJava10Fix(PsiElement context) {
-    myContext = context;
-  }
-
-  @Override
-  public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new VariableAccessFromInnerClassJava10Fix(PsiTreeUtil.findSameElementInCopy(myContext, target));
+    super(context);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -59,30 +49,27 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!PsiUtil.isLanguageLevel10OrHigher(file)) return false;
-    if (!myContext.isValid()) return false;
-    PsiReferenceExpression reference = tryCast(myContext, PsiReferenceExpression.class);
-    if (reference == null) return false;
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (!PsiUtil.isLanguageLevel10OrHigher(context.file())) return null;
+    PsiReferenceExpression reference = tryCast(element, PsiReferenceExpression.class);
+    if (reference == null) return null;
     PsiLocalVariable variable = tryCast(reference.resolve(), PsiLocalVariable.class);
-    if (variable == null) return false;
+    if (variable == null) return null;
     PsiDeclarationStatement declarationStatement = tryCast(variable.getParent(), PsiDeclarationStatement.class);
-    if (declarationStatement == null) return false;
-    if (declarationStatement.getDeclaredElements().length != 1) return false;
+    if (declarationStatement == null) return null;
+    if (declarationStatement.getDeclaredElements().length != 1) return null;
     String name = variable.getName();
 
     PsiType type = variable.getType();
     if (!PsiTypesUtil.isDenotableType(type, variable)) {
-      return false;
+      return null;
     }
-    setText(QuickFixBundle.message("convert.variable.to.field.in.anonymous.class.fix.name", name));
-    return true;
+    return Presentation.of(QuickFixBundle.message("convert.variable.to.field.in.anonymous.class.fix.name", name));
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!(myContext instanceof PsiReferenceExpression referenceExpression) || !myContext.isValid()) return;
-    if (!FileModificationService.getInstance().preparePsiElementsForWrite(myContext)) return;
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+    if (!(element instanceof PsiReferenceExpression referenceExpression)) return;
 
     PsiLocalVariable variable = tryCast(referenceExpression.resolve(), PsiLocalVariable.class);
     if (variable == null) return;
@@ -97,9 +84,10 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
       return;
     }
 
-
-    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-    String boxName = codeStyleManager.suggestUniqueVariableName(NAMES[0], variable, true);
+    Project project = context.project();
+    List<String> suggestions = new VariableNameGenerator(variable, VariableKind.LOCAL_VARIABLE)
+      .byName(NAMES).generateAll(true);
+    String boxName = suggestions.get(0);
     String boxDeclarationText = "var " +
                                 boxName +
                                 " = new Object(){" +
@@ -107,25 +95,11 @@ public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
                                 "};";
     PsiStatement boxDeclaration = JavaPsiFacade.getElementFactory(project).createStatementFromText(boxDeclarationText, variable);
     replaceReferences(variable, boxName);
-    if (editor == null) {
-      variable.replace(boxDeclaration);
-      return;
-    }
     PsiStatement statement = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
     if (statement == null) return;
     PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)statement.replace(boxDeclaration);
     PsiLocalVariable localVariable = (PsiLocalVariable)declarationStatement.getDeclaredElements()[0];
-    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-    SmartPsiElementPointer<PsiLocalVariable> pointer = smartPointerManager.createSmartPsiElementPointer(localVariable);
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-    PsiLocalVariable varToChange = pointer.getElement();
-    if (varToChange == null) return;
-    editor.getCaretModel().moveToOffset(varToChange.getTextOffset());
-    editor.getSelectionModel().removeSelection();
-    LinkedHashSet<String> suggestions = Arrays.stream(NAMES)
-      .map(suggestion -> codeStyleManager.suggestUniqueVariableName(suggestion, varToChange, var -> var == varToChange))
-      .collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
-    new MemberInplaceRenamer(varToChange, varToChange, editor).performInplaceRefactoring(suggestions);
+    updater.rename(localVariable, suggestions);
   }
 
   private static void replaceReferences(PsiLocalVariable variable, String boxName) {

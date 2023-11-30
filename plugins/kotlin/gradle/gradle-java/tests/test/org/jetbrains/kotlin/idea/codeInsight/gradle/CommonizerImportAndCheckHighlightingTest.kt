@@ -21,7 +21,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
     override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
 
     override fun setUp() {
-        val testedVersions = setOf(KotlinGradlePluginVersions.lastStable, KotlinGradlePluginVersions.latest)
+        val testedVersions = setOf(KotlinGradlePluginVersions.latestStable, KotlinGradlePluginVersions.latest)
         Assume.assumeTrue(
             "CommonizerImportAndCheckHighlightingTest only runs against $testedVersions",
             kotlinPluginVersion in testedVersions,
@@ -40,14 +40,14 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
 
             module("project.p1.nativeMain") {
                 highlightingCheck(module)
-                libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                 libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
             }
 
             module("project.p1.appleAndLinuxMain") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
@@ -55,7 +55,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.linuxMain") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
@@ -63,7 +63,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.appleMain") {
                 if (SystemInfo.isMac) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
@@ -71,7 +71,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.iosMain") {
                 if (SystemInfo.isMac) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
@@ -79,7 +79,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.linuxArm64Main") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
                         libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), scope)
                     }
@@ -90,7 +90,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.linuxX64Main") {
                 if (SystemInfo.isMac || SystemInfo.isLinux) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
                         libraryDependencyByUrl(Regex(""".*/\(linux_arm64, linux_x64\)/.*posix.*"""), scope)
                     }
@@ -101,7 +101,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.macosMain") {
                 if (SystemInfo.isMac) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     if (kotlinPluginVersion < KotlinToolingVersion("1.5.30-dev")) {
                         libraryDependencyByUrl(Regex(""".*/\(.*macos_x64.*\)/.*posix.*"""), scope)
                     }
@@ -112,7 +112,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
             module("project.p1.windowsMain") {
                 if (SystemInfo.isWindows) {
                     highlightingCheck(module)
-                    libraryDependencyByUrl(Regex(""".*withPosix.*"""), scope)
+                    libraryDependencyByUrl(Regex(""".*cinterop-withPosix.*"""), scope)
                     libraryDependencyByUrl(Regex(""".*posix.*"""), scope)
                 }
             }
@@ -223,7 +223,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                  */
                 run {
                     val withPosixLibraryNameRegex = Regex(
-                        """Gradle: project:p1-cinterop-withPosix.*\(linux_arm64, linux_x64, macos_x64, mingw_x64, mingw_x86\).*"""
+                        """(Gradle: )?project:p1-cinterop-withPosix.*\(linux_arm64, linux_x64, macos_x64, mingw_x64\).*"""
                     )
 
                     val libraryOrderEntries = module.rootManager.orderEntries
@@ -282,7 +282,7 @@ class CommonizerImportAndCheckHighlightingTest : MultiplePluginVersionGradleImpo
                  */
                 run {
                     val withPosixLibraryNameRegex = Regex(
-                        """Gradle: project:p1-cinterop-withPosix( \| |:)linux_x64"""
+                        """(Gradle: )?project:p1-cinterop-withPosix( \| |:)linux_x64"""
                     )
 
                     val withPosixEntriesMatchingNamingScheme = module.rootManager.orderEntries

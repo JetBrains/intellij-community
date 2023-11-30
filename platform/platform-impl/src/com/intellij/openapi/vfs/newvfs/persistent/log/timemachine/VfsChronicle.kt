@@ -6,219 +6,140 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.movableIn
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.moveFiltered
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.TraverseDirection
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.RecordsOperation
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperationTag.*
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.NotEnoughInformationCause
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.VfsRecoveryException
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.bind
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.Property.State.Companion.fmap
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.VirtualFileSnapshot.RecoveredChildrenIds
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State.Companion.bind
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.AttributeDataRule.Companion.forFileId
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentModificationRule.Companion.forContentRecordId
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.ContentOperation
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.PropertyOverwriteRule.Companion.forFileId
+import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsSnapshot.RecoveredChildrenIds
 
 object VfsChronicle {
-
   /*
    * lookup... methods traverse operations log in a given direction and return a filled LookupResult if evidence was found
    * that a property was set to a contained value in that range (first such event in traversal order)
    */
 
-  // TODO: if operation.result is an exception, it should probably be accounted, but it's not completely clear how right now
-
   inline fun lookupNameId(iterator: OperationLogStorage.Iterator,
                           fileId: Int,
                           direction: TraverseDirection = TraverseDirection.REWIND,
-                          crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
-    traverseOperationsLogForLookup(
-      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_NAME_ID, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
-      onValid = { operation, detect ->
-        when (operation) {
-          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
-          is RecordsOperation.SetNameId -> if (operation.fileId == fileId) detect(operation.nameId)
-          is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.nameId)
-          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
+                          crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.nameId, stopIf)
 
   inline fun lookupParentId(iterator: OperationLogStorage.Iterator,
                             fileId: Int,
                             direction: TraverseDirection = TraverseDirection.REWIND,
-                            crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
-    traverseOperationsLogForLookup(
-      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_PARENT, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
-      onValid = { operation, detect ->
-        when (operation) {
-          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
-          is RecordsOperation.SetParent -> if (operation.fileId == fileId) detect(operation.parentId)
-          is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.parentId)
-          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
+                            crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.parentId, stopIf)
 
   inline fun lookupLength(iterator: OperationLogStorage.Iterator,
                           fileId: Int,
                           direction: TraverseDirection = TraverseDirection.REWIND,
-                          crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Long> =
-    traverseOperationsLogForLookup(
-      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_LENGTH, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
-      onValid = { operation, detect ->
-        when (operation) {
-          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0L)
-          is RecordsOperation.SetLength -> if (operation.fileId == fileId) detect(operation.length)
-          is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.length)
-          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0L)
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
+                          crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Long> =
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.length, stopIf)
 
   inline fun lookupTimestamp(iterator: OperationLogStorage.Iterator,
                              fileId: Int,
                              direction: TraverseDirection = TraverseDirection.REWIND,
-                             crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Long> =
-    traverseOperationsLogForLookup(
-      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_TIMESTAMP, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
-      onValid = { operation, detect ->
-        when (operation) {
-          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0L)
-          is RecordsOperation.SetTimestamp -> if (operation.fileId == fileId) detect(operation.timestamp)
-          is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.timestamp)
-          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0L)
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
+                             crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Long> =
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.timestamp, stopIf)
 
   inline fun lookupFlags(iterator: OperationLogStorage.Iterator,
                          fileId: Int,
                          direction: TraverseDirection = TraverseDirection.REWIND,
-                         crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
-    traverseOperationsLogForLookup(
-      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_FLAGS, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
-      onValid = { operation, detect ->
-        when (operation) {
-          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
-          is RecordsOperation.SetFlags -> if (operation.fileId == fileId) detect(operation.flags)
-          is RecordsOperation.FillRecord -> if (operation.fileId == fileId) detect(operation.flags)
-          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
+                         crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.flags, stopIf)
 
   inline fun lookupContentRecordId(iterator: OperationLogStorage.Iterator,
                                    fileId: Int,
                                    direction: TraverseDirection = TraverseDirection.REWIND,
-                                   crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
-    traverseOperationsLogForLookup(
-      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_CONTENT_RECORD_ID, REC_CLEAN_RECORD), condition,
-      onValid = { operation, detect ->
-        when (operation) {
-          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
-          is RecordsOperation.SetContentRecordId -> if (operation.fileId == fileId) detect(operation.recordId)
-          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
+                                   crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.contentRecordId, stopIf)
 
   inline fun lookupAttributeRecordId(iterator: OperationLogStorage.Iterator,
                                      fileId: Int,
                                      direction: TraverseDirection = TraverseDirection.REWIND,
-                                     crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<Int> =
-    traverseOperationsLogForLookup(
-      iterator, direction, VfsOperationTagsMask(REC_ALLOC, REC_SET_ATTR_REC_ID, REC_FILL_RECORD, REC_CLEAN_RECORD), condition,
-      onValid = { operation, detect ->
-        when (operation) {
-          is RecordsOperation.AllocateRecord -> if (operation.result.hasValue && operation.result.value == fileId) detect(0)
-          is RecordsOperation.SetAttributeRecordId -> if (operation.fileId == fileId) detect(operation.recordId)
-          is RecordsOperation.FillRecord -> if (operation.fileId == fileId && operation.overwriteAttrRef) detect(0)
-          is RecordsOperation.CleanRecord -> if (operation.fileId == fileId) detect(0)
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
-
-  sealed interface ContentOperation {
-    fun interface Set : ContentOperation {
-      fun readContent(payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
-    }
-
-    fun interface Modify : ContentOperation {
-      fun modifyContent(previousContent: ByteArray,
-                        payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>): State.DefinedState<ByteArray>
-    }
-  }
+                                     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<Int> =
+    traverseOperationsLogForPropertyOverwriteLookup(iterator, direction, fileId, VfsModificationContract.attributeRecordId, stopIf)
 
   fun lookupContentOperation(iterator: OperationLogStorage.Iterator,
                              contentRecordId: Int,
                              direction: TraverseDirection = TraverseDirection.REWIND,
-                             condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<ContentOperation> {
-    val rewriteContentCase: (Int, PayloadRef) -> ContentOperation? = { recordId: Int, dataPayloadRef: PayloadRef ->
-      if (recordId == contentRecordId) ContentOperation.Set { payloadReader -> payloadReader(dataPayloadRef) }
-      else null
-    }
-    return traverseOperationsLogForLookup(
+                             stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<ContentOperation> =
+    traverseOperationsLogForVfsModificationLookup(
       iterator, direction,
-      VfsOperationTagsMask(CONTENT_ACQUIRE_NEW_RECORD, CONTENT_WRITE_BYTES,
-                           CONTENT_WRITE_STREAM, CONTENT_WRITE_STREAM_2,
-                           CONTENT_REPLACE_BYTES, CONTENT_APPEND_STREAM),
-      condition,
-      onValid = { operation, detect ->
-        when (operation) {
-          is ContentsOperation.AcquireNewRecord ->
-            if (operation.result.hasValue && operation.result.value == contentRecordId) {
-              detect(ContentOperation.Set { ByteArray(0).let(State::Ready) })
-            }
-          is ContentsOperation.WriteBytes -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
-          is ContentsOperation.WriteStream -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
-          is ContentsOperation.WriteStream2 -> rewriteContentCase(operation.recordId, operation.dataPayloadRef)?.let(detect)
-          is ContentsOperation.ReplaceBytes -> {
-            if (operation.recordId == contentRecordId) {
-              detect(ContentOperation.Modify { before, payloadReader ->
-                payloadReader(operation.dataPayloadRef).fmap { data ->
-                  if (operation.offset < 0 || operation.offset + data.size > before.size) { // from AbstractStorage.replaceBytes
-                    throw VfsRecoveryException("replaceBytes: replace is out of bounds: " +
-                                               "offset=${operation.offset} data.size=${data.size} before.size=${before.size}")
-                  }
-                  else {
-                    before.copyOfRange(0, operation.offset) +
-                    data +
-                    before.copyOfRange(operation.offset + data.size, before.size)
-                  }
-                }
-              })
-            }
-          }
-          is ContentsOperation.AppendStream -> {
-            if (operation.recordId == contentRecordId) {
-              detect(ContentOperation.Modify { before, payloadReader ->
-                payloadReader(operation.dataPayloadRef).fmap { before + it }
-              })
-            }
-          }
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
-  }
+      VfsModificationContract.content.relevantOperations, VfsModificationContract.content.forContentRecordId(contentRecordId),
+      stopIf
+    )
 
-  fun restoreContent(iterator: OperationLogStorage.Iterator,
-                     contentRecordId: Int,
-                     payloadReader: (PayloadRef) -> State.DefinedState<ByteArray>,
-                     condition: (OperationLogStorage.Iterator) -> Boolean = { true }): State.DefinedState<ByteArray> {
-    if (contentRecordId == 0) return State.NotAvailable(NotEnoughInformationCause("VFS didn't cache file's content"))
-    val restoreStack = mutableListOf<ContentOperation.Modify>()
-    while (iterator.hasPrevious() && condition(iterator)) {
-      val lookup =
-        lookupContentOperation(iterator, contentRecordId, TraverseDirection.REWIND, condition)
-      if (!lookup.found) return State.NotAvailable() // didn't find any relevant content op
-      when (val op = lookup.value) {
-        is ContentOperation.Modify -> restoreStack.add(op)
-        is ContentOperation.Set -> {
-          return restoreStack.foldRight(op.readContent(payloadReader)) { modOp, data ->
-            data.bind { modOp.modifyContent(it, payloadReader) }
-          }
+  interface ContentRestorationSequence {
+    val initial: ContentOperation.Set?
+
+    /** in chronological order */
+    val modifications: List<ContentOperation.Modify>
+
+    companion object {
+      val ContentRestorationSequence.isFormed: Boolean get() = initial != null
+      fun ContentRestorationSequence.restoreContent(payloadReader: PayloadReader): State.DefinedState<ByteArray> {
+        return modifications.fold(
+          initial?.readContent(payloadReader) ?: return State.NotAvailable("initial content was not found")
+        ) { data, modOp ->
+          data.bind { modOp.modifyContent(it, payloadReader) }
         }
       }
     }
-    // no ContentOp.SetValue was found
-    return State.NotAvailable()
+  }
+
+  operator fun ContentRestorationSequence.plus(rhs: ContentRestorationSequence): ContentRestorationSequence {
+    val lhs = this@plus
+    return object : ContentRestorationSequence {
+      override val initial: ContentOperation.Set?
+      override val modifications: List<ContentOperation.Modify>
+      init {
+        if (rhs.initial != null) {
+          initial = rhs.initial
+          modifications = rhs.modifications
+        } else {
+          initial = lhs.initial
+          modifications = lhs.modifications + rhs.modifications
+        }
+      }
+    }
+  }
+
+  class ContentRestorationSequenceBuilder : ContentRestorationSequence {
+    private val modificationsDeque = ArrayDeque<ContentOperation.Modify>()
+    override val modifications: List<ContentOperation.Modify> get() = modificationsDeque.toList()
+    override var initial: ContentOperation.Set? = null
+      private set
+
+    fun prependModification(mod: ContentOperation.Modify) = modificationsDeque.addFirst(mod)
+    fun appendModification(mod: ContentOperation.Modify) = modificationsDeque.addLast(mod)
+
+    fun setInitial(set: ContentOperation.Set) {
+      assert(initial == null)
+      initial = set
+    }
+  }
+
+
+  fun lookupContentRestorationStack(iterator: OperationLogStorage.Iterator,
+                                    contentRecordId: Int,
+                                    stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): State.DefinedState<ContentRestorationSequence> {
+    if (contentRecordId == 0) return State.notEnoughInformation("VFS didn't cache file's content")
+    val seqBuilder = ContentRestorationSequenceBuilder()
+    while (iterator.hasPrevious() && !stopIf(iterator)) {
+      val lookup = lookupContentOperation(iterator, contentRecordId, TraverseDirection.REWIND, stopIf)
+      if (!lookup.found) return State.NotAvailable() // didn't find any relevant content op
+      when (val op = lookup.value) {
+        is ContentOperation.Modify -> seqBuilder.prependModification(op)
+        is ContentOperation.Set -> {
+          return seqBuilder.let(State::Ready)
+        }
+      }
+    }
+    return seqBuilder.let(State::Ready)
   }
 
   /**
@@ -226,21 +147,15 @@ object VfsChronicle {
    */
   inline fun lookupAttributeData(iterator: OperationLogStorage.Iterator,
                                  fileId: Int,
-                                 enumeratedAttrId: Int,
+                                 enumeratedAttribute: EnumeratedFileAttribute,
                                  direction: TraverseDirection = TraverseDirection.REWIND,
-                                 crossinline condition: (OperationLogStorage.Iterator) -> Boolean = { true }): LookupResult<PayloadRef?> =
-    traverseOperationsLogForLookup(
-      iterator, direction, VfsOperationTagsMask(ATTR_DELETE_ATTRS, ATTR_WRITE_ATTR), condition,
-      onValid = { operation, detect ->
-        when (operation) {
-          is AttributesOperation.DeleteAttributes -> if (operation.fileId == fileId) detect(null)
-          is AttributesOperation.WriteAttribute ->
-            if (operation.fileId == fileId && operation.attributeIdEnumerated == enumeratedAttrId) detect(operation.attrDataPayloadRef)
-          else -> throw IllegalStateException("filtered read is broken")
-        }
-      })
-
-  private class RecoveredChildrenIdsImpl(val ids: List<Int>, override val isComplete: Boolean): RecoveredChildrenIds, List<Int> by ids
+                                 crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false }): LookupResult<PayloadRef?> =
+    traverseOperationsLogForVfsModificationLookup(
+      iterator, direction,
+      VfsModificationContract.attributeData.relevantOperations,
+      VfsModificationContract.attributeData.forFileId(fileId).andIf { it.affectsAttribute(enumeratedAttribute) }.map { it.data },
+      stopIf
+    )
 
   fun restoreChildrenIds(iterator: OperationLogStorage.Iterator, fileId: Int): RecoveredChildrenIds {
     val childrenIds = mutableSetOf<Int>()
@@ -250,23 +165,25 @@ object VfsChronicle {
     ) {
       when (it) {
         is RecordsOperation.AllocateRecord -> {
-          if (it.result.hasValue) {
+          if (it.result.isSuccess) {
             val id = it.result.value
-            if (fileId == id) return RecoveredChildrenIdsImpl(childrenIds.toList(), true)
+            if (fileId == id) return RecoveredChildrenIds.of(childrenIds.toList(), true)
             seenDifferentSetParent.add(id)
           }
         }
         is RecordsOperation.SetParent -> {
           if (it.parentId == fileId && !seenDifferentSetParent.contains(it.fileId)) {
             childrenIds.add(it.fileId)
-          } else {
+          }
+          else {
             seenDifferentSetParent.add(it.fileId)
           }
         }
         is RecordsOperation.FillRecord -> {
           if (it.parentId == fileId && !seenDifferentSetParent.contains(it.fileId)) {
             childrenIds.add(it.fileId)
-          } else {
+          }
+          else {
             seenDifferentSetParent.add(it.fileId)
           }
         }
@@ -276,30 +193,7 @@ object VfsChronicle {
         else -> throw IllegalStateException("filtered read is broken")
       }
     }
-    return RecoveredChildrenIdsImpl(childrenIds.toList(), false)
-  }
-
-  /**
-   * @see [restoreChildrenIds]
-   */
-  fun restoreRootIds(iterator: OperationLogStorage.Iterator): List<Int> = restoreChildrenIds(iterator, 1) // ROOT_FILE_ID
-
-  inline fun traverseOperationsLog(
-    iterator: OperationLogStorage.Iterator,
-    direction: TraverseDirection,
-    toReadMask: VfsOperationTagsMask,
-    crossinline continueCondition: (OperationLogStorage.Iterator) -> Boolean = { true },
-    onInvalid: (cause: Throwable) -> Unit = { throw it },
-    onIncomplete: (tag: VfsOperationTag) -> Unit = {},
-    onValid: (operation: VfsOperation<*>) -> Unit
-  ) {
-    while (iterator.movableIn(direction) && continueCondition(iterator)) {
-      when (val read = iterator.moveFiltered(direction, toReadMask)) {
-        is OperationReadResult.Invalid -> onInvalid(read.cause)
-        is OperationReadResult.Incomplete -> onIncomplete(read.tag)
-        is OperationReadResult.Valid -> onValid(read.operation)
-      }
-    }
+    return RecoveredChildrenIds.of(childrenIds.toList(), false)
   }
 
   // allows T to be nullable
@@ -318,7 +212,7 @@ object VfsChronicle {
       fun <T> LookupResult<T>.getOrNull(): T? = mapCases({ null }) { it }
 
       inline fun <T> LookupResult<T>.toState(
-        notFoundCause: () -> NotEnoughInformationCause = { State.Companion.UnspecifiedNotAvailableException }
+        notFoundCause: () -> NotEnoughInformationCause = { UnspecifiedNotAvailableException }
       ): State.DefinedState<T> = mapCases({ State.NotAvailable(notFoundCause()) }, State::Ready)
     }
   }
@@ -337,27 +231,101 @@ object VfsChronicle {
       }
 
     fun detect(value: T) {
-      _value = value
-      found = true
+      if (!found) {
+        _value = value
+        found = true
+      }
     }
   }
 
   /**
-   * @param onValid `detect` must be called to succeed the lookup, traversal will stop after it
+   * Default behaviour:
+   *
+   * [onInvalid] throws the cause -- some unexpected exception happened in [OperationLogStorage], can't do anything about it;
+   *
+   * [onIncomplete] -- if the operation's tag is contained in [toReadMask], then we're interested in it, but it is Incomplete => information
+   *                    about the operation has been lost, better to throw [IllegalStateException]; if it's not contained, then there are two cases:
+   *                    1. an operation is actually [OperationReadResult.Complete], but due to [toReadMask] filter it was not read completely,
+   *                    2. it is actually [OperationReadResult.Incomplete] -- both cases shouldn't affect our computation anyway
+   *                    (this is a subtle place as one may want to stop the traverse at any Incomplete so this needs to be carefully
+   *                    revised at the usage site);
+   *
+   * [onCompleteExceptional] -- operation's tag is contained in [toReadMask], but the operation has finished with an exception; by default throw [IllegalStateException]
+   */
+  inline fun traverseOperationsLog(
+    iterator: OperationLogStorage.Iterator,
+    direction: TraverseDirection,
+    toReadMask: VfsOperationTagsMask,
+    crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>) -> Unit = { throw IllegalStateException("Exceptional operation met: $it (iterPos=${iterator.getPosition()})") },
+    onComplete: (operation: VfsOperation<*>) -> Unit
+  ) {
+    while (iterator.movableIn(direction) && !stopIf(iterator)) {
+      when (val read = iterator.moveFiltered(direction, toReadMask)) {
+        is OperationReadResult.Invalid -> onInvalid(read.cause)
+        is OperationReadResult.Incomplete -> onIncomplete(read.tag)
+        is OperationReadResult.Complete -> {
+          if (read.operation.result.isSuccess) onComplete(read.operation)
+          else onCompleteExceptional(read.operation)
+        }
+      }
+    }
+  }
+
+  /**
+   * Default behaviour is same as [traverseOperationsLog].
+   * @param onComplete `detect` must be called to succeed the lookup, traversal will stop afterward
    */
   inline fun <T> traverseOperationsLogForLookup(
     iterator: OperationLogStorage.Iterator,
     direction: TraverseDirection,
     toReadMask: VfsOperationTagsMask,
-    crossinline continueCondition: (OperationLogStorage.Iterator) -> Boolean = { true },
+    crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
     onInvalid: (cause: Throwable) -> Unit = { throw it },
-    onIncomplete: (tag: VfsOperationTag) -> Unit = {},
-    onValid: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { op, _ -> throw IllegalStateException("Exceptional operation met: $op (iterPos=${iterator.getPosition()})") },
+    onComplete: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit
   ): LookupResult<T> {
     val result = LookupResultImpl<T>()
-    traverseOperationsLog(iterator, direction, toReadMask, { !result.found && continueCondition(it) }, onInvalid, onIncomplete) {
-      onValid(it, result::detect)
-    }
+    traverseOperationsLog(
+      iterator, direction, toReadMask, { result.found || stopIf(it) }, onInvalid, onIncomplete,
+      onCompleteExceptional = { op -> onCompleteExceptional(op, result::detect) },
+      onComplete = { op -> onComplete(op, result::detect) }
+    )
     return result
   }
+
+  inline fun <T> traverseOperationsLogForVfsModificationLookup(
+    iterator: OperationLogStorage.Iterator,
+    direction: TraverseDirection,
+    relevantOperations: VfsOperationTagsMask,
+    ifModifies: ConditionalVfsModifier<T>,
+    crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (relevantOperations.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { op, _ -> throw IllegalStateException("Exceptional operation met: $op (iterPos=${iterator.getPosition()})") },
+  ): LookupResult<T> =
+    traverseOperationsLogForLookup(
+      iterator, direction, relevantOperations, stopIf,
+      onInvalid, onIncomplete, onCompleteExceptional,
+      onComplete = { op, detect -> op.ifModifies(detect) }
+    )
+
+  inline fun <T> traverseOperationsLogForPropertyOverwriteLookup(
+    iterator: OperationLogStorage.Iterator,
+    direction: TraverseDirection,
+    fileId: Int,
+    propertyRule: VfsModificationContract.PropertyOverwriteRule<T>,
+    crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (propertyRule.relevantOperations.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { op, _ -> throw IllegalStateException("Exceptional operation met: $op (iterPos=${iterator.getPosition()})") },
+  ): LookupResult<T> =
+    traverseOperationsLogForVfsModificationLookup(
+      iterator, direction,
+      propertyRule.relevantOperations, propertyRule.forFileId(fileId), stopIf,
+      onInvalid, onIncomplete, onCompleteExceptional
+    )
 }

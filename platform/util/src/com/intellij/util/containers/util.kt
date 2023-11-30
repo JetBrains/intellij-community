@@ -1,19 +1,80 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.util.containers
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.Java11Shim
 import com.intellij.util.SmartList
 import com.intellij.util.lang.CompoundRuntimeException
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
+import kotlin.collections.isNullOrEmpty
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
   val list = get(key)
   if (list != null && list.remove(value) && list.isEmpty()) {
     remove(key)
   }
+}
+
+/**
+ * Do not use it for a concurrent map (doesn't make sense).
+ */
+@Internal
+@Experimental
+fun <K : Any, V> Map<K, V>.without(key: K): Map<K, V> {
+  if (!containsKey(key)) {
+    return this
+  }
+  else if (size == 1) {
+    return Java11Shim.INSTANCE.mapOf()
+  }
+  else {
+    val result = HashMap<K, V>(size, 0.5f)
+    result.putAll(this)
+    result.remove(key)
+    return result
+  }
+}
+
+/**
+ * Do not use it for a concurrent map (doesn't make sense).
+ */
+@Internal
+@Experimental
+fun <K : Any, V> Map<K, V>.with(key: K, value: V): Map<K, V> {
+  val size = size
+  if (size == 0) {
+    return Java11Shim.INSTANCE.mapOf(key, value)
+  }
+
+  // do not use a java-immutable map, same as ours UnmodifiableHashMap and fastutil it uses open addressing hashing
+  // - https://stackoverflow.com/a/16303438
+  val result = HashMap<K, V>(size + 1, 0.5f)
+  result.putAll(this)
+  result.put(key, value)
+  return result
+}
+
+/**
+ * Do not use it for a concurrent map (doesn't make sense).
+ */
+@Internal
+@Experimental
+fun <K : Any, V> Map<K, V>.withAll(otherMap: Map<K, V>): Map<K, V> {
+  val totalSize = size + otherMap.size
+  if (totalSize == 0) {
+    return Java11Shim.INSTANCE.mapOf()
+  }
+
+  val result = HashMap<K, V>(totalSize, 0.5f)
+  result.putAll(this)
+  result.putAll(otherMap)
+  return result
 }
 
 fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
@@ -32,11 +93,6 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
   replaceWith = ReplaceWith("isNullOrEmpty()", imports = ["kotlin.collections.isNullOrEmpty"])
 )
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
-
-@get:ApiStatus.ScheduledForRemoval
-@get:Deprecated("use tail()", ReplaceWith("tail()"), DeprecationLevel.ERROR)
-val <T> List<T>.tail: List<T>
-  get() = tail()
 
 /**
  * @return all the elements of a non-empty list except the first one
@@ -73,11 +129,11 @@ fun <T> List<T>.init(): List<T> {
 }
 
 fun <T> List<T>?.nullize(): List<T>? {
-  return if (this == null || this.isEmpty()) null else this
+  return if (this.isNullOrEmpty()) null else this
 }
 
 fun <T> Array<T>?.nullize(): Array<T>? {
-  return if (this == null || this.isEmpty()) null else this
+  return if (this.isNullOrEmpty()) null else this
 }
 
 inline fun <T> Array<out T>.forEachGuaranteed(operation: (T) -> Unit) {
@@ -105,7 +161,7 @@ inline fun <T> Iterator<T>.forEachGuaranteed(operation: (T) -> Unit) {
 }
 
 inline fun <T> Collection<T>.forEachLoggingErrors(logger: Logger, operation: (T) -> Unit) {
-  asSequence().forEach {
+  for (it in this) {
     try {
       operation(it)
     }
@@ -142,7 +198,7 @@ fun <T> Stream<T>?.getIfSingle(): T? {
 }
 
 /**
- * There probably could be some performance issues if there is lots of streams to concat. See
+ * There probably could be some performance issues if there are lots of streams to concat. See
  * http://mail.openjdk.org/pipermail/lambda-dev/2013-July/010659.html for some details.
  *
  * See also [Stream.concat] documentation for other possible issues of concatenating large number of streams.
@@ -183,7 +239,7 @@ inline fun <T, R> Collection<T>.mapSmart(transform: (T) -> R): List<R> {
 }
 
 /**
- * Not mutable set will be returned.
+ * Not a mutable set will be returned.
  */
 inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
   return when (val size = size) {
@@ -261,7 +317,7 @@ fun <T> Collection<T>.minimalElements(comparator: Comparator<in T>): Collection<
  *   .stopAfter { it == 3 }
  *   .forEach(::println)
  * ```
- * @return an iterator, which stops [this] Iterator after first element for which [predicate] returns `true`
+ * @return an iterator, which stops [this] Iterator after a first element for which [predicate] returns `true`
  */
 inline fun <T> Iterator<T>.stopAfter(crossinline predicate: (T) -> Boolean): Iterator<T> {
   return iterator {
@@ -317,6 +373,17 @@ fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: 
 }
 
 /**
- * Returns a new sequence either of single given element, if it is not null, or empty sequence if the element is null.
+ * Returns a new sequence either of single-given elements, if it is not null, or empty sequence if the element is null.
  */
 fun <T : Any> sequenceOfNotNull(element: T?): Sequence<T> = if (element == null) emptySequence() else sequenceOf(element)
+
+fun <K, V : Any> Map<K, V>.reverse(): Map<V, K> = map { (k, v) -> v to k }.toMap()
+
+fun <K, V> Iterable<Pair<K, V>>.toMultiMap(): MultiMap<K, V> = toMultiMap(MultiMap.createLinked())
+
+fun <K, V> Iterable<Pair<K, V>>.toMultiMap(multiMap: MultiMap<K, V>): MultiMap<K, V> {
+  forEach {
+    multiMap.putValue(it.first, it.second)
+  }
+  return multiMap
+}

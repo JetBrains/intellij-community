@@ -94,6 +94,8 @@ public abstract class ActionPlaces {
 
   public static final String TODO_VIEW_POPUP = "TodoViewPopup";
   public static final String TODO_VIEW_TOOLBAR = "TodoViewToolbar";
+  public static final String PROBLEMS_VIEW_POPUP = "ProblemsViewPopup";
+  public static final String PROBLEMS_VIEW_TOOLBAR = "ProblemsViewToolbar";
 
   public static final String COPY_REFERENCE_POPUP = "CopyReferencePopup";
 
@@ -182,6 +184,8 @@ public abstract class ActionPlaces {
 
   public static final String PROJECT_WIDGET_POPUP = "ProjectWidgetPopup";
 
+  public static final String NEW_UI_ONBOARDING = "NewUiOnboarding";
+
   // Vcs Log
   public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
   public static final String VCS_LOG_TOOLBAR_PLACE = "Vcs.Log.Toolbar";
@@ -202,6 +206,10 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_EXPLORER_POPUP = "UnitTests.ExplorerPopup";
   public static final String RIDER_UNIT_TESTS_PROGRESSBAR_POPUP = "UnitTests.ProgressBarPopup";
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
+
+  public static final String IMPORT_SETTINGS_DIALOG = "Import.Settings.Dialog";
+
+  public static final String JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP = "Editor.Jupyter.Cell.Output.Popup";
 
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place) ||
@@ -242,13 +250,18 @@ public abstract class ActionPlaces {
     EDITOR_ANNOTATIONS_AREA_POPUP,
     RUN_ANYTHING_POPUP, RUN_TOOLBAR_LEFT_SIDE,
     VCS_LOG_TABLE_PLACE, VCS_HISTORY_PLACE, VCS_LOG_TOOLBAR_POPUP_PLACE, VCS_LOG_BRANCHES_PLACE, VCS_TOOLBAR_WIDGET,
-    PROJECT_WIDGET_POPUP
+    PROJECT_WIDGET_POPUP,
+    JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP
   );
 
   private static final String POPUP_PREFIX = "popup@";
 
   public static boolean isPopupPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
+  }
+
+  public static boolean isNewUiToolbarPlace(@NotNull String place) {
+    return place.startsWith(NEW_UI_RUN_TOOLBAR);
   }
 
   public static boolean isCommonPlace(@NotNull String place) {

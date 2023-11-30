@@ -1,10 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
-import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar;
-import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar;
 import com.intellij.framework.detection.DetectedFrameworkDescription;
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.framework.detection.FrameworkDetector;
@@ -23,21 +19,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.PlatformModifiableModelsProvider;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -98,8 +87,9 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }, project);
   }
 
-  private void projectOpened() {
-    @NotNull Collection<String> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
+  void jpsProjectLoaded(@NotNull FrameworkDetectorRegistry frameworkDetectorRegistry) {
+    LOG.debug("Queue frameworks detection after opening the project");
+    Collection<String> ids = frameworkDetectorRegistry.getAllDetectorIds();
     synchronized (myLock) {
       myDetectorsToProcess.clear();
       myDetectorsToProcess.addAll(ids);
@@ -107,37 +97,14 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     queueDetection();
   }
 
-  static final class MyPostStartupActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      getInstance(project).projectOpened();
-    }
-  }
-
-  static final class FrameworkDetectionHighlightingPassFactory implements TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
-    @Override
-    public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-      registrar.registerTextEditorHighlightingPass(this, TextEditorHighlightingPassRegistrar.Anchor.LAST, -1, false, false);
-    }
-
-    @Override
-    public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-      final @NotNull Collection<String> detectors = FrameworkDetectorRegistry.getInstance().getDetectorIds(file.getFileType());
-      if (!detectors.isEmpty()) {
-        return new FrameworkDetectionHighlightingPass(file.getProject(), editor, detectors);
-      }
-      return null;
-    }
-  }
-
   public void doInitialize() {
-    myDetectionQueue = new MergingUpdateQueue("FrameworkDetectionQueue", 500, true, null, myProject, null, false);
+    myDetectionQueue = new MergingUpdateQueue("FrameworkDetectionQueue", 500, true, null, this, null, false);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myDetectionQueue.hideNotify();
     }
     myDetectedFrameworksData = new DetectedFrameworksData(myProject);
     FrameworkDetectionIndex.getInstance().addListener(this, myProject);
-    myProject.getMessageBus().connect().subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
+    myProject.getMessageBus().connect(this).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
       public void enteredDumbMode() {
         myDetectionQueue.suspend();
@@ -209,14 +176,16 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }
 
     if (!newDescriptions.isEmpty()) {
-      Set<String> frameworkNames =
-      ReadAction.nonBlocking(() -> {
-        Set<String> names = new HashSet<>();
-        for (final DetectedFrameworkDescription description : FrameworkDetectionUtil.removeDisabled(newDescriptions, oldDescriptions)) {
-          names.add(description.getDetector().getFrameworkType().getPresentableName());
-        }
-        return names;
-      }).executeSynchronously();
+      Set<String> frameworkNames = ReadAction.nonBlocking(() -> {
+          Set<String> names = new HashSet<>();
+          for (final DetectedFrameworkDescription description : FrameworkDetectionUtil.removeDisabled(newDescriptions, oldDescriptions)) {
+            names.add(description.getDetector().getFrameworkType().getPresentableName());
+          }
+          return names;
+        })
+        .expireWith(this)
+        .executeSynchronously();
+
       if (!frameworkNames.isEmpty()) {
         String names = StringUtil.join(frameworkNames, ", ");
         final String text = ProjectBundle.message("framework.detected.info.text", names, frameworkNames.size());
@@ -271,8 +240,9 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
     }
     catch (IndexNotReadyException e) {
       DumbService.getInstance(myProject)
-        .showDumbModeNotification(
-          LangBundle.message("popup.content.information.about.detected.frameworks"));
+        .showDumbModeNotificationForFunctionality(
+          LangBundle.message("popup.content.information.about.detected.frameworks"),
+          DumbModeBlockedFunctionality.FrameworkDetection);
       return;
     }
 
@@ -317,25 +287,6 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
   private static void ensureIndexIsUpToDate(@NotNull Project project, Collection<String> detectors) {
     for (String detectorId : detectors) {
       FileBasedIndex.getInstance().getValues(FrameworkDetectionIndex.NAME, detectorId, GlobalSearchScope.projectScope(project));
-    }
-  }
-
-  private static final class FrameworkDetectionHighlightingPass extends TextEditorHighlightingPass {
-    private final Collection<String> myDetectors;
-
-    FrameworkDetectionHighlightingPass(@NotNull Project project, Editor editor, Collection<String> detectors) {
-      super(project, editor.getDocument(), false);
-
-      myDetectors = detectors;
-    }
-
-    @Override
-    public void doCollectInformation(@NotNull ProgressIndicator progress) {
-      ensureIndexIsUpToDate(myProject, myDetectors);
-    }
-
-    @Override
-    public void doApplyInformationToEditor() {
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public final class IdeaWideProxySelector extends ProxySelector {
-  private final static Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
+  private static final Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
   private static final String DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory";
 
   private final HttpConfigurable myHttpConfigurable;
@@ -72,8 +72,7 @@ public final class IdeaWideProxySelector extends ProxySelector {
     return CommonProxy.NO_PROXY_LIST;
   }
 
-  @NotNull
-  private List<Proxy> selectUsingPac(@NotNull URI uri) {
+  private @NotNull List<Proxy> selectUsingPac(@NotNull URI uri) {
     // It is important to avoid resetting Pac based ProxySelector unless option was changed
     // New instance will download configuration file and interpret it before making the connection
     String pacUrlForUse = myHttpConfigurable.USE_PAC_URL && !StringUtil.isEmpty(myHttpConfigurable.PAC_URL) ? myHttpConfigurable.PAC_URL : null;

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import org.jetbrains.annotations.*;
 
 import java.util.List;
@@ -41,7 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental
-public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferenceQuickFixUpdater {
+public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferenceQuickFixUpdater {
   private static final Key<Future<?>> JOB = Key.create("JOB");
   private final Project myProject;
   private volatile boolean enabled = true;
@@ -136,10 +138,10 @@ public class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedReferen
       return;
     }
     if (info.isUnresolvedReferenceQuickFixesComputed()) return;
-    job = ForkJoinPool.commonPool().submit(() ->
+    job = ForkJoinPool.commonPool().submit(ThreadContext.captureThreadContext(() ->
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(
         () -> ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(
-          () -> registerReferenceFixes(info, editor, file, reference, visibleRange), new DaemonProgressIndicator())), null);
+          () -> registerReferenceFixes(info, editor, file, reference, visibleRange), new DaemonProgressIndicator()))), null);
     refElement.putUserData(JOB, job);
   }
 

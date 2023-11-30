@@ -48,7 +48,7 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 private fun getIdsToHide(toolWindowManager: ToolWindowManagerEx): Sequence<String> {

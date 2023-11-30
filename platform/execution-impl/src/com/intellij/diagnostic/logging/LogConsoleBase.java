@@ -51,7 +51,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -149,8 +152,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return myModel;
   }
 
-  @Nullable
-  protected BufferedReader updateReaderIfNeeded(@Nullable BufferedReader reader) throws IOException {
+  protected @Nullable BufferedReader updateReaderIfNeeded(@Nullable BufferedReader reader) throws IOException {
     return reader;
   }
 
@@ -166,7 +168,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         }
 
         @Override
-        public void actionPerformed(@NotNull final AnActionEvent e) {
+        public void actionPerformed(final @NotNull AnActionEvent e) {
           var console = ComponentUtil.getParentOfType(ConsoleWithFloatingToolbar.class, getConsoleNotNull().getComponent());
           if (console != null) {
             console.myFloatingToolbar.scheduleShow();
@@ -206,7 +208,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @Override
-  public void onFilterStateChange(@NotNull final LogFilter filter) {
+  public void onFilterStateChange(final @NotNull LogFilter filter) {
     filterConsoleOutput();
   }
 
@@ -216,8 +218,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     if (!myWasInitialized) {
       myWasInitialized = true;
       var console = getConsoleNotNull().getComponent();
@@ -260,8 +261,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private static final class ConsoleWithFloatingToolbar extends JBLayeredPane {
-    private final static int TOP_OFFSET = 25;
-    private final static int RIGHT_OFFSET = 20;
+    private static final int TOP_OFFSET = 25;
+    private static final int RIGHT_OFFSET = 20;
 
     private final @NotNull JComponent myComponent;
     private final @NotNull FloatingToolbar myFloatingToolbar;
@@ -288,12 +289,12 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  private static abstract class ToggleSearchFilterAction extends ToggleAction implements CustomComponentAction {
+  private abstract static class ToggleSearchFilterAction extends ToggleAction implements CustomComponentAction {
     ToggleSearchFilterAction() {
       super(() -> ExecutionBundle.message("log.toggle.filter.component"), new LayeredIcon(AllIcons.General.Filter, null));
     }
 
-    protected @NotNull abstract JComponent getSearchFilterComponent();
+    protected abstract @NotNull JComponent getSearchFilterComponent();
 
     protected boolean isModified(@NotNull JComponent component) {
       return false;
@@ -357,9 +358,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  @NotNull
   @Override
-  public String getTabTitle() {
+  public @NotNull String getTabTitle() {
     return myTitle;
   }
 
@@ -433,7 +433,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     if (process != null) {
       final ProcessAdapter stopListener = new ProcessAdapter() {
         @Override
-        public void processTerminated(@NotNull final ProcessEvent event) {
+        public void processTerminated(final @NotNull ProcessEvent event) {
           process.removeProcessListener(this);
           stopRunning(true);
         }
@@ -472,8 +472,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   }
 
-  @Nullable
-  private Editor getEditor() {
+  private @Nullable Editor getEditor() {
     final ConsoleView console = getConsole();
     return console != null ? CommonDataKeys.EDITOR.getData((DataProvider) console) : null;
   }
@@ -568,8 +567,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     return 0;
   }
 
-  @Nullable
-  public ConsoleView getConsole() {
+  public @Nullable ConsoleView getConsole() {
     return myConsole;
   }
 
@@ -579,8 +577,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
    * If we get the assertion then it is a time to revisit logic of caller ;)
    */
 
-  @NotNull
-  private ConsoleView getConsoleNotNull() {
+  private @NotNull ConsoleView getConsoleNotNull() {
     final ConsoleView console = getConsole();
     assert console != null: "it looks like console has been disposed";
     return console;
@@ -597,8 +594,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @Override
-  @Nullable
-  public JComponent getToolbarContextComponent() {
+  public @Nullable JComponent getToolbarContextComponent() {
     final ConsoleView console = getConsole();
     return console == null ? null : console.getComponent();
   }
@@ -651,8 +647,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  @NotNull
-  protected Component getTextFilterComponent() {
+  protected @NotNull Component getTextFilterComponent() {
     return myFilter;
   }
 
@@ -675,7 +670,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  private static class LightProcessHandler extends ProcessHandler {
+  private static final class LightProcessHandler extends ProcessHandler {
 
     private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
 
@@ -700,13 +695,12 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
 
     @Override
-    @Nullable
-    public OutputStream getProcessInput() {
+    public @Nullable OutputStream getProcessInput() {
       return null;
     }
   }
 
-  private class ReaderThread implements Runnable {
+  private final class ReaderThread implements Runnable {
     private BufferedReader myReader;
     private boolean myRunning = false;
     private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, LogConsoleBase.this);

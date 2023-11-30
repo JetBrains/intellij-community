@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,7 +89,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
                                   ? Collections.emptyList() : collectAutoImports(file);
 
     return new FutureTask<>(() -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       CoreCodeStyleUtil.setSequentialProcessingAllowed(false);
       try {
         for (Runnable runnable : runnables) {
@@ -141,7 +142,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   private static void fixAllImportsSilently(@NotNull PsiFile file, @NotNull List<? extends BooleanSupplier> actions) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (actions.isEmpty()) return;
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) return;
@@ -195,7 +196,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     collector.setOptimizeImportsNotification(hint);
   }
 
-  static class NotificationInfo {
+  static final class NotificationInfo {
     static final NotificationInfo NOTHING_CHANGED_NOTIFICATION = new NotificationInfo(false, null);
     static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
 

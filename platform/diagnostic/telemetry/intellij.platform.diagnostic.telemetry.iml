@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="11" />
-            <stringArg name="apiVersion" arg="1.8" />
-            <stringArg name="languageVersion" arg="1.8" />
+            <stringArg name="apiVersion" arg="1.9" />
+            <stringArg name="languageVersion" arg="1.9" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -23,9 +23,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" exported="" />
   </component>
 </module>

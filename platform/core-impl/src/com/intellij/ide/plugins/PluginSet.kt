@@ -3,6 +3,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -22,7 +23,7 @@ class PluginSet internal constructor(
   fun getEnabledModules(): List<IdeaPluginDescriptorImpl> = enabledModules
 
   @TestOnly
-  fun getUnsortedEnabledModules(): Collection<IdeaPluginDescriptorImpl> = ArrayList(enabledModuleMap.values)
+  fun getUnsortedEnabledModules(): Collection<IdeaPluginDescriptorImpl> = Java11Shim.INSTANCE.copyOf(enabledModuleMap.values)
 
   fun isPluginInstalled(id: PluginId): Boolean = findInstalledPlugin(id) != null
 
@@ -40,7 +41,7 @@ class PluginSet internal constructor(
     // in tests or on plugin installation it is not present in a plugin list, may exist on plugin update, though
     // linear search is ok here - not a hot method
     val oldModule = enabledPlugins.find { it == module } // todo may exist on update
-    PluginManagerCore.getLogger().assertTrue((oldModule == null || !oldModule.isEnabled) && module.isEnabled)
+    PluginManagerCore.logger.assertTrue((oldModule == null || !oldModule.isEnabled) && module.isEnabled)
 
     val unsortedPlugins = LinkedHashSet(allPlugins)
     unsortedPlugins.removeIf { it == module }

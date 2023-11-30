@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots.impl
 
 import com.intellij.concurrency.SensitiveProgressWrapper
-import com.intellij.model.ModelBranchImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.Logger
@@ -175,7 +174,6 @@ object FilesScanExecutor {
     val fileIndex = ProjectRootManager.getInstance(project).fileIndex
     val searchInLibs = scope.isSearchInLibraries
     val deque = ConcurrentLinkedDeque<Any>()
-    ModelBranchImpl.processModifiedFilesInScope(scope) { e: VirtualFile -> deque.add(e) }
     if (scope is VirtualFileEnumeration) {
       ContainerUtil.addAll<VirtualFile>(deque, FileBasedIndexEx.toFileIterable((scope as VirtualFileEnumeration).asArray()))
     }

@@ -1,0 +1,8 @@
+// SKIP_ERRORS_BEFORE
+// AFTER-WARNING: The expression is unused
+// AFTER-WARNING: The expression is unused
+fun foo(i : Int) {
+    val <caret>b = 0 == i
+    if (b) 1
+    else if (b) 2
+}

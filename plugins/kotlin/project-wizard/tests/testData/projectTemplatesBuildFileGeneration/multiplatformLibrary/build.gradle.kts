@@ -9,12 +9,13 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven("KOTLIN_BOOTSTRAP_REPO")
+    maven("KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO")
     maven("KOTLIN_REPO")
 }
 
 kotlin {
     jvm {
-        jvmToolchain(11)
+        jvmToolchain(8)
         withJava()
         testRuns.named("test") {
             executionTask.configure {

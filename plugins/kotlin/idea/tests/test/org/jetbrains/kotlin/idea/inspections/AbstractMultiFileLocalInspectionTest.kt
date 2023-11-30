@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -13,18 +14,16 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
-import org.jdom.Document
-import org.jdom.input.SAXBuilder
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.jsonUtils.getString
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
 
 abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTest() {
     override fun getProjectDescriptor(): LightProjectDescriptor {
-        val testFile = File(testDataPath, fileName())
-        val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
+        val testFile = File(testDataDirectory, fileName())
+        val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
         val withRuntime = config["withRuntime"]?.asBoolean ?: false
         return if (withRuntime)
             KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -32,28 +31,29 @@ abstract class AbstractMultiFileLocalInspectionTest : AbstractLocalInspectionTes
             KotlinLightProjectDescriptor.INSTANCE
     }
 
+    open fun inspectionClassFieldName(): String = "inspectionClass"
+
     override fun doTest(path: String) {
         val testFile = File(path)
-        val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
+        val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
 
         val mainFilePath = config.getString("mainFile")
         val mainFile = File(testFile.parent, "before/$mainFilePath")
         val mainFileText = FileUtil.loadFile(mainFile, true)
         TestCase.assertTrue("\"<caret>\" is missing in file \"$mainFilePath\"", mainFileText.contains("<caret>"))
 
-        val inspection = Class.forName(config.getString("inspectionClass")).newInstance() as AbstractKotlinInspection
+        val inspection = Class.forName(config.getString(inspectionClassFieldName())).getDeclaredConstructor().newInstance() as LocalInspectionTool
         val problemExpectedString = config["problem"]?.asString // null means "some problem", "none" means no problem
         val localFixTextString = config["fix"]?.asString // null means "some single fix" or "none" if no problem expected
+        val inspectionSettings = loadInspectionSettings(testFile)
 
-        val inspectionSettings = File(testFile.parentFile, "settings.xml")
-            .takeIf { it.exists() }
-            ?.let { (SAXBuilder().build(it) as Document).rootElement }
-
+        val expectedHighlightString = InTextDirectivesUtils.findStringWithPrefixes(
+            mainFileText, "// $expectedProblemHighlightType: "
+        )
 
         doTest(path) test@{
             myFixture.configureFromTempProjectFile(mainFilePath)
-
-            runInspectionWithFixesAndCheck(inspection, problemExpectedString, null, localFixTextString, inspectionSettings)
+            runInspectionWithFixesAndCheck(inspection, problemExpectedString, expectedHighlightString, localFixTextString, inspectionSettings)
         }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
@@ -40,8 +40,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     switchTo(element, findAnchor(element));
   }
 
-  @Nullable
-  private Pair<Identikit.ByAnchor, PsiElement> findAnchor(@NotNull PsiElement element) {
+  private @Nullable Pair<Identikit.ByAnchor, PsiElement> findAnchor(@NotNull PsiElement element) {
     Language language = myIdentikit.getFileLanguage();
     if (language == null) return null;
     return Identikit.withAnchor(element, language);
@@ -122,8 +121,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     return myForInjected;
   }
 
-  @Nullable
-  private TextRange calcPsiRange() {
+  private @Nullable TextRange calcPsiRange() {
     return hasRange() ? new UnfairTextRange(myStartOffset, myEndOffset) : null;
   }
 
@@ -140,8 +138,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     setRange(null);
   }
 
-  @Nullable
-  public static PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull Language language) {
+  public static @Nullable PsiFile restoreFileFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project, @NotNull Language language) {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
@@ -155,8 +152,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     });
   }
 
-  @Nullable
-  public static PsiDirectory restoreDirectoryFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+  public static @Nullable PsiDirectory restoreDirectoryFromVirtual(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return null;
       VirtualFile child = restoreVFile(virtualFile);
@@ -167,8 +163,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
     });
   }
 
-  @Nullable
-  private static VirtualFile restoreVFile(@NotNull VirtualFile virtualFile) {
+  private static @Nullable VirtualFile restoreVFile(@NotNull VirtualFile virtualFile) {
     VirtualFile child;
     if (virtualFile.isValid()) {
       child = virtualFile;
@@ -205,8 +200,7 @@ public class SelfElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  @NotNull
-  final VirtualFile getVirtualFile() {
+  final @NotNull VirtualFile getVirtualFile() {
     return myFile;
   }
 

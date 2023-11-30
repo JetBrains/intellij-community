@@ -19,6 +19,7 @@ fileFilter = null
 moduleName = 'null'
 customScopeName = 'null'
 searchInProjectFiles = false
+userDataMap = {}
 
 --
 
@@ -50,6 +51,7 @@ fileFilter = null
 moduleName = 'null'
 customScopeName = 'null'
 searchInProjectFiles = false
+userDataMap = {}
 
 --
 
@@ -80,6 +82,7 @@ fileFilter = null
 moduleName = 'null'
 customScopeName = 'null'
 searchInProjectFiles = false
+userDataMap = {}
 
 --
 

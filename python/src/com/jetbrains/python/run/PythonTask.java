@@ -40,7 +40,7 @@ import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +54,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import static com.intellij.execution.target.value.TargetEnvironmentFunctions.constant;
+import static com.intellij.execution.target.value.TargetEnvironmentFunctions.targetPath;
+
 /**
  * Base class for tasks which are run from PyCharm with results displayed in a toolwindow (manage.py, setup.py, Sphinx etc).
  * This class was written long before targets API was invented hence it doesn't provide API to mark upload/download volumes.
@@ -62,18 +65,18 @@ import java.util.function.Function;
  * If you still need to use this class for targets api: Use {@link #addPathParameter(Path)} for paths so they would be uploaded before call
  * <p>
  * Redundant uploads/downloads are another reason to use Targets API directly
- *
- * @deprecated This class doesn't provide full support for Targets API but does it best to emulate it in some cases. Use targets API directly.
+ * <p>
+ * <i>NB! This class doesn't provide full support for Targets API but does it best to emulate it in some cases. Use targets API directly.</i>
  */
-@Deprecated
+@ApiStatus.Obsolete
 public class PythonTask {
   /**
    * Mils we wait to process to be stopped when "rerun" called
    */
   private static final long TIME_TO_WAIT_PROCESS_STOP = 2000L;
   private static final int TIMEOUT_TO_WAIT_FOR_TASK = 30000;
-  protected final Module myModule;
-  private final Sdk mySdk;
+  protected final @NotNull Module myModule;
+  protected final @NotNull Sdk mySdk;
   private String myWorkingDirectory;
   private String myRunnerScript;
   private HelperPackage myHelper = null;
@@ -88,36 +91,31 @@ public class PythonTask {
   private String myHelpId;
   private Runnable myAfterCompletion;
 
-  public PythonTask(Module module, @TabTitle String runTabTitle) throws ExecutionException {
-    this(module, runTabTitle, PythonSdkUtil.findPythonSdk(module));
+  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle) throws ExecutionException {
+    this(module, runTabTitle, requirePythonSdk(module));
   }
 
-  @NotNull
-  public static PythonTask create(@NotNull final Module module,
-                                  @Nls @NotNull final String runTabTitle,
-                                  @NotNull final Sdk sdk) {
-    // Ctor throws checked exception which is not good, so this wrapper saves user from dumb code
-    try {
-      return new PythonTask(module, runTabTitle, sdk);
+  protected static @NotNull Sdk requirePythonSdk(@Nullable Module module) throws ExecutionException {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) {
+      throw new ExecutionException(PyBundle.message("python.task.cannot.find.python.interpreter.for.selected.module"));
     }
-    catch (final ExecutionException ignored) {
-      throw new AssertionError("Exception thrown file should not be");
-    }
+    return sdk;
   }
 
-  public PythonTask(final Module module, @TabTitle String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
+  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle, @NotNull Sdk sdk) {
     myModule = module;
     myRunTabTitle = runTabTitle;
     mySdk = sdk;
-    if (mySdk == null) { // TODO: Get rid of such a weird contract
-      throw new ExecutionException(PyBundle.message("python.task.cannot.find.python.interpreter.for.selected.module"));
-    }
   }
 
   public String getWorkingDirectory() {
     return myWorkingDirectory;
   }
 
+  /**
+   * @param workingDirectory the optional working directory on the local machine
+   */
   public void setWorkingDirectory(String workingDirectory) {
     myWorkingDirectory = workingDirectory;
   }
@@ -191,12 +189,8 @@ public class PythonTask {
    */
   @NotNull
   private ProcessHandler executeTargetBasedProcess(@NotNull PyTargetAwareAdditionalData data) throws ExecutionException {
-    var sdk = mySdk;
     var helper = myHelper;
     var script = myRunnerScript;
-    var module = myModule;
-    assert module != null : "No module set";
-    assert sdk != null : "No sdk set";
     assert (helper == null) != (script == null) : "Either script or helper must be set but not both";
     PythonScriptExecution execution;
     TargetEnvironmentRequest request;
@@ -204,7 +198,8 @@ public class PythonTask {
     var uploadedPaths = new HashMap<@NotNull Path, @NotNull Function<TargetEnvironment, String>>();
     if (helper != null) {
       // Special shortcut for helper: use it instead of creating environment request manually
-      var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, module.getProject());
+      var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, myModule.getProject());
+      helpersAwareRequest.preparePyCharmHelpers();
       assert helpersAwareRequest != null : data.getClass() + " is not supported";
       execution = PythonScripts.prepareHelperScriptExecution(helper, helpersAwareRequest);
       request = helpersAwareRequest.getTargetEnvironmentRequest();
@@ -214,12 +209,13 @@ public class PythonTask {
       var configuration = data.getTargetEnvironmentConfiguration();
       assert configuration != null : data.getClass() + " is not supported";
 
-      request = configuration.createEnvironmentRequest(module.getProject());
+      request = configuration.createEnvironmentRequest(myModule.getProject());
       execution = new PythonScriptExecution();
       // We do not know if script path is local or not, so we only support target script
-      execution.setPythonScriptPath(environment -> script);
+      execution.setPythonScriptPath(constant(script));
     }
 
+    customizePythonExecution(request, execution, myModule);
 
     // All paths params must be uploaded before call
     for (int i = 0; i < myParameters.size(); i++) {
@@ -236,10 +232,13 @@ public class PythonTask {
     // Workdir should also be uploaded
     var workDir = myWorkingDirectory;
     if (workDir != null) {
-      execution.setWorkingDir(addDirToUploadList(request, uploadedPaths, workDir));
+      execution.setWorkingDir(targetPath(Path.of(workDir)));
     }
     TargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
-    var commandLine = PythonScripts.buildTargetedCommandLine(execution, environment, sdk, new ArrayList<>());
+
+    setupPythonPath(request, execution);
+
+    var commandLine = PythonScripts.buildTargetedCommandLine(execution, environment, mySdk, new ArrayList<>());
 
     for (var volume : environment.getUploadVolumes().values()) {
       try {
@@ -279,11 +278,24 @@ public class PythonTask {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(downloadVolumesAfterProcess, "...", false, module.getProject());
+          .runProcessWithProgressSynchronously(downloadVolumesAfterProcess, "...", false, myModule.getProject());
       }
     });
     return handler;
   }
+
+  protected void setupPythonPath(@NotNull TargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution) {
+    setupPythonPath(myModule, mySdk, request, pythonExecution, true, true);
+  }
+
+  protected static void setupPythonPath(@NotNull Module module, @NotNull Sdk sdk, @NotNull TargetEnvironmentRequest request,
+                                        @NotNull PythonExecution pythonExecution, boolean addContent, boolean addSource) {
+    PythonCommandLineState.buildPythonPath(module.getProject(), module, pythonExecution, sdk, null, false, addContent,
+                                           addSource, false, request);
+  }
+
+  protected void customizePythonExecution(@NotNull TargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution,
+                                          @NotNull Module module) { }
 
   /**
    * Utility fun for {@link #executeTargetBasedProcess(PyTargetAwareAdditionalData)}, see usage
@@ -314,9 +326,7 @@ public class PythonTask {
     // give the hint for Docker Compose process starter that this process should be run with `docker-compose run` command
     // (yep, this is hacky)
     commandLine.putUserData(PyRemoteProcessStarter.RUN_AS_AUXILIARY_PROCESS, true);
-    return PyRemoteProcessStarter.startLegacyRemoteProcess(additionalData, commandLine,
-                                                                 myModule.getProject(),
-                                                                 null);
+    return PyRemoteProcessStarter.startLegacyRemoteProcess(additionalData, commandLine, myModule.getProject(), null);
   }
 
 
@@ -427,7 +437,11 @@ public class PythonTask {
       })
       .withStop(() -> process.destroyProcess(), () -> !process.isProcessTerminated()
       )
-      .withAfterCompletion(myAfterCompletion)
+      .withAfterCompletion(() -> {
+        if (process.getExitCode() != null && process.getExitCode() == 0) {
+          myAfterCompletion.run();
+        }
+      })
       .withHelpId(myHelpId)
       .run();
   }

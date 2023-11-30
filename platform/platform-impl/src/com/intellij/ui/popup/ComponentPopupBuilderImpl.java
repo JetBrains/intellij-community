@@ -1,31 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +47,8 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myPlaceWithinScreen = true;
   private Processor<? super JBPopup> myPinCallback;
   private Dimension myMinSize;
+  private boolean myStretchToOwnerWidth = false;
+  private boolean myStretchToOwnerHeight = false;
   private MaskProvider myMaskProvider;
   private float myAlpha;
   private List<Object> myUserData;
@@ -94,71 +78,61 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setMayBeParent(boolean mayBeParent) {
+  public @NotNull ComponentPopupBuilder setMayBeParent(boolean mayBeParent) {
     myMayBeParent = mayBeParent;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setTitle(@NlsContexts.PopupTitle String title) {
+  public @NotNull ComponentPopupBuilder setTitle(@NlsContexts.PopupTitle String title) {
     myTitle = title;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setResizable(final boolean resizable) {
+  public @NotNull ComponentPopupBuilder setResizable(final boolean resizable) {
     myResizable = resizable;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setMovable(final boolean movable) {
+  public @NotNull ComponentPopupBuilder setMovable(final boolean movable) {
     myMovable = movable;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setCancelOnClickOutside(final boolean cancel) {
+  public @NotNull ComponentPopupBuilder setCancelOnClickOutside(final boolean cancel) {
     myCancelOnClickOutside = cancel;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setCancelOnMouseOutCallback(@NotNull final MouseChecker shouldCancel) {
+  public @NotNull ComponentPopupBuilder setCancelOnMouseOutCallback(final @NotNull MouseChecker shouldCancel) {
     myCancelOnMouseOutCallback = shouldCancel;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder addListener(@NotNull final JBPopupListener listener) {
+  public @NotNull ComponentPopupBuilder addListener(final @NotNull JBPopupListener listener) {
     myListeners.add(listener);
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setRequestFocus(final boolean requestFocus) {
+  public @NotNull ComponentPopupBuilder setRequestFocus(final boolean requestFocus) {
     myRequestFocus = requestFocus;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setFocusable(final boolean focusable) {
+  public @NotNull ComponentPopupBuilder setFocusable(final boolean focusable) {
     myFocusable = focusable;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setDimensionServiceKey(final Project project, final String key, final boolean useForXYLocation) {
+  public @NotNull ComponentPopupBuilder setDimensionServiceKey(final Project project, final String key, final boolean useForXYLocation) {
     myDimensionServiceKey = key;
     myUseDimServiceForXYLocation = useForXYLocation;
     myProject = project;
@@ -166,49 +140,42 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setCancelCallback(@NotNull final Computable<Boolean> shouldProceed) {
+  public @NotNull ComponentPopupBuilder setCancelCallback(final @NotNull Computable<Boolean> shouldProceed) {
     myCallback = shouldProceed;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setCancelButton(@NotNull final IconButton cancelButton) {
+  public @NotNull ComponentPopupBuilder setCancelButton(final @NotNull IconButton cancelButton) {
     myCancelButton = cancelButton;
     return this;
   }
   @Override
-  @NotNull
-  public ComponentPopupBuilder setCommandButton(@NotNull ActiveComponent button) {
+  public @NotNull ComponentPopupBuilder setCommandButton(@NotNull ActiveComponent button) {
     myCommandButton = button;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setCouldPin(@Nullable final Processor<? super JBPopup> callback) {
+  public @NotNull ComponentPopupBuilder setCouldPin(final @Nullable Processor<? super JBPopup> callback) {
     myPinCallback = callback;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setKeyboardActions(@NotNull List<? extends Pair<ActionListener, KeyStroke>> keyboardActions) {
+  public @NotNull ComponentPopupBuilder setKeyboardActions(@NotNull List<? extends Pair<ActionListener, KeyStroke>> keyboardActions) {
     myKeyboardActions = keyboardActions;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setSettingButtons(@NotNull Component button) {
+  public @NotNull ComponentPopupBuilder setSettingButtons(@NotNull Component button) {
     mySettingsButtons = button;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setCancelOnOtherWindowOpen(final boolean cancelOnWindow) {
+  public @NotNull ComponentPopupBuilder setCancelOnOtherWindowOpen(final boolean cancelOnWindow) {
     myCancelOnWindow = cancelOnWindow;
     return this;
   }
@@ -219,28 +186,24 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     return this;
   }
 
-  @NotNull
   @Override
-  public ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<? super KeyEvent> handler) {
+  public @NotNull ComponentPopupBuilder setKeyEventHandler(@NotNull BooleanFunction<? super KeyEvent> handler) {
     myKeyEventHandler = handler;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setProject(Project project) {
+  public @NotNull ComponentPopupBuilder setProject(Project project) {
     myProject = project;
     return this;
   }
 
   @Override
-  @NotNull
-  public JBPopup createPopup() {
+  public @NotNull JBPopup createPopup() {
     return createPopup(DEFAULT_POPUP_SUPPLIER);
   }
 
-  @NotNull
-  public AbstractPopup createPopup(Supplier<? extends AbstractPopup> popupSupplier) {
+  public @NotNull AbstractPopup createPopup(Supplier<? extends AbstractPopup> popupSupplier) {
     AbstractPopup popup = popupSupplier.get().init(
       myProject, myComponent, myPreferredFocusedComponent, myRequestFocus, myFocusable, myMovable, myDimensionServiceKey,
       myResizable, myTitle, myCallback, myCancelOnClickOutside, myListeners, myUseDimServiceForXYLocation, myCommandButton,
@@ -249,6 +212,9 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
       myShowShadow, myShowBorder, myBorderColor, myCancelOnWindowDeactivation, myKeyEventHandler
     );
+
+    popup.setStretchToOwnerWidth(myStretchToOwnerWidth);
+    popup.setStretchToOwnerHeight(myStretchToOwnerHeight);
 
     popup.setNormalWindowLevel(myNormalWindowLevel);
     popup.setOkHandler(myOkHandler);
@@ -267,71 +233,73 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private final Supplier<AbstractPopup> DEFAULT_POPUP_SUPPLIER = () -> new AbstractPopup();
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setRequestFocusCondition(@NotNull Project project, @NotNull Condition<? super Project> condition) {
+  public @NotNull ComponentPopupBuilder setRequestFocusCondition(@NotNull Project project, @NotNull Condition<? super Project> condition) {
     myRequestFocus = condition.value(project);
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setTitleIcon(@NotNull final ActiveIcon icon) {
+  public @NotNull ComponentPopupBuilder setTitleIcon(final @NotNull ActiveIcon icon) {
     myTitleIcon = icon;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setCancelKeyEnabled(final boolean enabled) {
+  public @NotNull ComponentPopupBuilder setCancelKeyEnabled(final boolean enabled) {
     myCancelKeyEnabled = enabled;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setLocateByContent(final boolean byContent) {
+  public @NotNull ComponentPopupBuilder setLocateByContent(final boolean byContent) {
     myLocateByContent = byContent;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setLocateWithinScreenBounds(final boolean within) {
+  public @NotNull ComponentPopupBuilder setLocateWithinScreenBounds(final boolean within) {
     myPlaceWithinScreen = within;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setMinSize(final Dimension minSize) {
+  public @NotNull ComponentPopupBuilder setMinSize(final Dimension minSize) {
     myMinSize = minSize;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setMaskProvider(MaskProvider maskProvider) {
+  public @NotNull ComponentPopupBuilder setStretchToOwnerWidth(boolean stretchToOwnerWidth) {
+    myStretchToOwnerWidth = stretchToOwnerWidth;
+    return this;
+  }
+
+  @Override
+  public @NotNull ComponentPopupBuilder setStretchToOwnerHeight(boolean stretchToOwnerHeight) {
+    myStretchToOwnerHeight = stretchToOwnerHeight;
+    return this;
+  }
+
+  @Override
+  public @NotNull ComponentPopupBuilder setMaskProvider(MaskProvider maskProvider) {
     myMaskProvider = maskProvider;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setAlpha(final float alpha) {
+  public @NotNull ComponentPopupBuilder setAlpha(final float alpha) {
     myAlpha = alpha;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setBelongsToGlobalPopupStack(final boolean isInStack) {
+  public @NotNull ComponentPopupBuilder setBelongsToGlobalPopupStack(final boolean isInStack) {
     myInStack = isInStack;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder addUserData(final Object object) {
+  public @NotNull ComponentPopupBuilder addUserData(final Object object) {
     if (myUserData == null) {
       myUserData = new ArrayList<>();
     }
@@ -340,71 +308,61 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setModalContext(final boolean modal) {
+  public @NotNull ComponentPopupBuilder setModalContext(final boolean modal) {
     myModalContext = modal;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setFocusOwners(final Component @NotNull [] focusOwners) {
+  public @NotNull ComponentPopupBuilder setFocusOwners(final Component @NotNull [] focusOwners) {
     myFocusOwners = focusOwners;
     return this;
   }
 
   @Override
-  @NotNull
-  public ComponentPopupBuilder setAdText(@Nullable final String text) {
+  public @NotNull ComponentPopupBuilder setAdText(final @Nullable String text) {
     return setAdText(text, SwingConstants.LEFT);
   }
 
-  @NotNull
   @Override
-  public ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment) {
+  public @NotNull ComponentPopupBuilder setAdText(@Nullable String text, int textAlignment) {
     myAd = text;
     myAdAlignment = textAlignment;
     return this;
   }
 
-  @NotNull
   @Override
-  public ComponentPopupBuilder setAdvertiser(@Nullable JComponent advertiser) {
+  public @NotNull ComponentPopupBuilder setAdvertiser(@Nullable JComponent advertiser) {
     myAdvertiser = advertiser;
     return this;
   }
 
-  @NotNull
   @Override
-  public ComponentPopupBuilder setShowShadow(boolean show) {
+  public @NotNull ComponentPopupBuilder setShowShadow(boolean show) {
     myShowShadow = show;
     return this;
   }
 
-  @NotNull
   @Override
-  public ComponentPopupBuilder setShowBorder(boolean show) {
+  public @NotNull ComponentPopupBuilder setShowBorder(boolean show) {
     myShowBorder = show;
     return this;
   }
 
-  @NotNull
   @Override
-  public ComponentPopupBuilder setNormalWindowLevel(boolean b) {
+  public @NotNull ComponentPopupBuilder setNormalWindowLevel(boolean b) {
     myNormalWindowLevel = b;
     return this;
   }
 
-  @NotNull
   @Override
-  public ComponentPopupBuilder setBorderColor(Color color) {
+  public @NotNull ComponentPopupBuilder setBorderColor(Color color) {
     myBorderColor = color;
     return this;
   }
   
-  @NotNull
   @Override
-  public ComponentPopupBuilder setOkHandler(@Nullable Runnable okHandler) {
+  public @NotNull ComponentPopupBuilder setOkHandler(@Nullable Runnable okHandler) {
     myOkHandler = okHandler;
     return this;
   }

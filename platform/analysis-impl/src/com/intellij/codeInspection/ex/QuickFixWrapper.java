@@ -13,9 +13,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -25,6 +23,8 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.MathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -37,20 +37,23 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   private final ProblemDescriptor myDescriptor;
   private final LocalQuickFix myFix;
 
-  @NotNull
-  public static IntentionAction wrap(@NotNull ProblemDescriptor descriptor, int fixNumber) {
+  public static @NotNull IntentionAction wrap(@NotNull ProblemDescriptor descriptor, int fixNumber) {
     LOG.assertTrue(fixNumber >= 0, fixNumber);
     QuickFix<?>[] fixes = descriptor.getFixes();
     LOG.assertTrue(fixes != null && fixes.length > fixNumber);
 
     final QuickFix<?> fix = fixes[fixNumber];
+    if (fix instanceof IntentionAction intention) {
+      return intention;
+    }
+    LocalQuickFix localFix = (LocalQuickFix) fix;
     if (fix instanceof ModCommandQuickFix modCommandFix) {
       IntentionAction intention = new ModCommandQuickFixAction(descriptor, modCommandFix).asIntention();
       PsiFile file = descriptor.getPsiElement().getContainingFile();
       intention.isAvailable(file.getProject(), null, file); // cache presentation in wrapper
       return intention;
     }
-    return fix instanceof IntentionAction ? (IntentionAction)fix : new QuickFixWrapper(descriptor, (LocalQuickFix)fix);
+    return new QuickFixWrapper(descriptor, localFix);
   }
 
   /**
@@ -61,9 +64,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myFix;
     }
-    ModCommandAction modCommand = action instanceof ModCommandAction mc ? mc:
-                                  ModCommandAction.unwrap((IntentionAction)action);                              
-    if (modCommand instanceof ModCommandQuickFixAction qfAction) {
+    if (action.asModCommandAction() instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myFix;
     }
     return null;
@@ -77,7 +78,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.getFile();
     }
-    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
+    if (action.asModCommandAction() instanceof ModCommandQuickFixAction qfAction) {
       PsiElement element = qfAction.myDescriptor.getPsiElement();
       return element == null ? null : element.getContainingFile();
     }
@@ -90,14 +91,12 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     return getFamilyName();
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return myFix.getName();
   }
 
@@ -129,9 +128,8 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return myFix.startInWriteAction();
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return myFix.getElementToMakeWritable(file);
   }
 
@@ -141,14 +139,12 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
    * as the implementation may be different in the future
    */
   @Deprecated
-  @NotNull
-  public LocalQuickFix getFix() {
+  public @NotNull LocalQuickFix getFix() {
     return myFix;
   }
 
-  @NotNull
   @Override
-  public Priority getPriority() {
+  public @NotNull Priority getPriority() {
     return myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL;
   }
 
@@ -157,14 +153,13 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myDescriptor.getHighlightType();
     }
-    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
+    if (action.asModCommandAction() instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myDescriptor.getHighlightType();
     }
     return null;
   }
 
-  @Nullable
-  public PsiFile getFile() {
+  public @Nullable PsiFile getFile() {
     PsiElement element = myDescriptor.getPsiElement();
     return element != null ? element.getContainingFile() : null;
   }
@@ -201,13 +196,15 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     return myFix.getRangesToHighlight(file.getProject(), myDescriptor);
   }
 
-  private static class ModCommandQuickFixAction implements ModCommandAction {
+  private static final class ModCommandQuickFixAction implements ModCommandAction {
     private final @NotNull ProblemDescriptor myDescriptor;
     private final @NotNull ModCommandQuickFix myFix;
+    private final @Nullable ModCommandAction myUnwrappedAction;
 
     private ModCommandQuickFixAction(@NotNull ProblemDescriptor descriptor, @NotNull ModCommandQuickFix fix) {
       myDescriptor = descriptor;
       myFix = fix;
+      myUnwrappedAction = ModCommandService.getInstance().unwrap(myFix);
     }
 
     @Override
@@ -217,6 +214,13 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
 
     @Override
     public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+      if (myUnwrappedAction != null) {
+        if (myDescriptor.getStartElement() == null) return null;
+        ActionContext descriptorContext = ActionContext.from(myDescriptor);
+        return myUnwrappedAction.getPresentation(
+          descriptorContext.withOffset(MathUtil.clamp(context.offset(), descriptorContext.selection().getStartOffset(),
+                                                      descriptorContext.selection().getEndOffset())));
+      }
       PsiElement psiElement = myDescriptor.getPsiElement();
       if (psiElement == null || !psiElement.isValid()) return null;
       PsiFile containingFile = psiElement.getContainingFile();
@@ -224,9 +228,20 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
              containingFile.getViewProvider().getVirtualFile().equals(context.file().getViewProvider().getVirtualFile()))) {
         return null;
       }
-      return Presentation.of(myFix.getName())
-        .withPriority(myFix instanceof PriorityAction ? ((PriorityAction)myFix).getPriority() : Priority.NORMAL)
-        .withIcon(myFix instanceof Iconable ? ((Iconable)myFix).getIcon(0) : null);
+      Presentation presentation = Presentation.of(myFix.getName());
+      List<RangeToHighlight> highlight = myFix.getRangesToHighlight(context.project(), myDescriptor);
+      if (!highlight.isEmpty()) {
+        Presentation.HighlightRange[] ranges = ContainerUtil.map2Array(highlight, Presentation.HighlightRange.class,
+                                                          r -> new Presentation.HighlightRange(r.getRangeInFile(), r.getHighlightKey()));
+        presentation = presentation.withHighlighting(ranges);
+      }
+      if (myFix instanceof Iconable iconable) {
+        presentation = presentation.withIcon(iconable.getIcon(0));
+      }
+      if (myFix instanceof PriorityAction priorityAction) {
+        presentation = presentation.withPriority(priorityAction.getPriority());
+      }
+      return presentation;
     }
 
     @Override

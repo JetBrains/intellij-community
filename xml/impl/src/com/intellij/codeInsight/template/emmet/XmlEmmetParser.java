@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
@@ -33,9 +33,9 @@ public class XmlEmmetParser extends EmmetParser {
   private static final String DEFAULT_TAG = "div";
   private static final int DEFAULT_LOREM_LENGTH = 30;
   private static final Pattern LOREM_PATTERN = Pattern.compile("(lorem|lipsum)(\\d*)");
-  @NonNls private static final String DEFAULT_INLINE_TAG = "span";
-  @NonNls private static final String LOREM_KEYWORD = "lorem";
-  @NonNls private static final String LIPSUM_KEYWORD = "lipsum";
+  private static final @NonNls String DEFAULT_INLINE_TAG = "span";
+  private static final @NonNls String LOREM_KEYWORD = "lorem";
+  private static final @NonNls String LIPSUM_KEYWORD = "lipsum";
 
   private boolean hasTagContext = false;
   private final Stack<String> tagLevel = new Stack<>();
@@ -75,8 +75,7 @@ public class XmlEmmetParser extends EmmetParser {
     }
   }
 
-  @Nullable
-  private String parseAttributeName() {
+  private @Nullable String parseAttributeName() {
     StringBuilder name = new StringBuilder();
     ZenCodingToken token = getToken();
     while (token != null) {
@@ -108,8 +107,7 @@ public class XmlEmmetParser extends EmmetParser {
     }
   }
 
-  @NotNull
-  private static String getAttributeValueByToken(@Nullable ZenCodingToken token, boolean allowOperations) {
+  private static @NotNull String getAttributeValueByToken(@Nullable ZenCodingToken token, boolean allowOperations) {
     if (token == null) {
       return "";
     }
@@ -135,9 +133,8 @@ public class XmlEmmetParser extends EmmetParser {
     return "";
   }
 
-  @Nullable
   @Override
-  protected ZenCodingNode parseTemplate() {
+  protected @Nullable ZenCodingNode parseTemplate() {
     ZenCodingToken token = getToken();
     String templateKey = getDefaultTemplateKey();
     boolean mustHaveSelector = true;
@@ -207,13 +204,11 @@ public class XmlEmmetParser extends EmmetParser {
     return result;
   }
 
-  @Nullable
-  private String getDefaultTemplateKey() {
+  private @Nullable String getDefaultTemplateKey() {
     return isHtml ? suggestTagName() : null;
   }
 
-  @Nullable
-  private static String getParentTag(ZenCodingNode node) {
+  private static @Nullable String getParentTag(ZenCodingNode node) {
     if (node instanceof TemplateNode) {
       return ((TemplateNode)node).getTemplateToken().getKey();
     }
@@ -226,8 +221,7 @@ public class XmlEmmetParser extends EmmetParser {
     return null;
   }
 
-  @Nullable
-  private ZenCodingNode parseLorem(String templateKey) {
+  private @Nullable ZenCodingNode parseLorem(String templateKey) {
     Matcher matcher = LOREM_PATTERN.matcher(templateKey);
     if (matcher.matches()) {
       int loremWordsCount = DEFAULT_LOREM_LENGTH;
@@ -279,8 +273,7 @@ public class XmlEmmetParser extends EmmetParser {
     }
   }
 
-  @NotNull
-  private Map<String, String> parseSelectors() {
+  private @NotNull Map<String, String> parseSelectors() {
     final Map<String, String> result = new LinkedHashMap<>();
     List<Couple<String>> attrList = parseSelector();
     while (attrList != null) {
@@ -300,8 +293,7 @@ public class XmlEmmetParser extends EmmetParser {
     return result;
   }
 
-  @Nullable
-  private List<Couple<String>> parseSelector() {
+  private @Nullable List<Couple<String>> parseSelector() {
     ZenCodingToken token = getToken();
     if (token == ZenCodingTokens.OPENING_SQ_BRACKET) {
       advance();
@@ -327,13 +319,11 @@ public class XmlEmmetParser extends EmmetParser {
     return null;
   }
 
-  @NotNull
-  protected String getClassAttributeName() {
+  protected @NotNull String getClassAttributeName() {
     return HtmlUtil.CLASS_ATTRIBUTE_NAME;
   }
 
-  @NotNull
-  private List<Couple<String>> parseAttributeList() {
+  private @NotNull List<Couple<String>> parseAttributeList() {
     final List<Couple<String>> result = new ArrayList<>();
     while (true) {
       final Couple<String> attribute = parseAttribute();
@@ -350,8 +340,7 @@ public class XmlEmmetParser extends EmmetParser {
     }
   }
 
-  @Nullable
-  private Couple<String> parseAttribute() {
+  private @Nullable Couple<String> parseAttribute() {
     final int position = getCurrentPosition();
     String attributeName = parseAttributeName();
     if (attributeName != null && !attributeName.isEmpty()) {
@@ -383,8 +372,7 @@ public class XmlEmmetParser extends EmmetParser {
     return null;
   }
 
-  @NotNull
-  private String parseAttributeValue() {
+  private @NotNull String parseAttributeValue() {
     ZenCodingToken token;
     final StringBuilder attrValueBuilder = new StringBuilder();
     String value;

@@ -2,45 +2,33 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Objects;
 
-public class RemoveRedundantParameterTypesFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class RemoveRedundantParameterTypesFix extends PsiUpdateModCommandAction<PsiLambdaExpression> {
   public RemoveRedundantParameterTypesFix(@NotNull PsiLambdaExpression lambdaExpression) {
     super(lambdaExpression);
   }
 
-  @Nls
   @Override
-  public @NotNull String getText() {
+  public @NotNull String getFamilyName() {
     return JavaBundle.message("quickfix.family.remove.redundant.parameter.types");
   }
 
   @Override
-  public @NotNull String getFamilyName() {
-    return getText();
-  }
-
-  @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
-    removeLambdaParameterTypesIfPossible((PsiLambdaExpression)startElement);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiLambdaExpression lambda, @NotNull ModPsiUpdater updater) {
+    removeLambdaParameterTypesIfPossible(lambda);
   }
 
   public static boolean isApplicable(@NotNull PsiParameterList parameterList) {

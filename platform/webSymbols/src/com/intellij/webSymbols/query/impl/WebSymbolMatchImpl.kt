@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols.query.impl
 
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.model.Pointer
+import com.intellij.model.Symbol
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
@@ -12,17 +15,20 @@ import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.coalesceApiStatus
 import com.intellij.webSymbols.utils.merge
 import javax.swing.Icon
 
-internal open class WebSymbolMatchImpl private constructor(override val matchedName: String,
-                                                           override val nameSegments: List<WebSymbolNameSegment>,
-                                                           override val namespace: SymbolNamespace,
-                                                           override val kind: SymbolKind,
-                                                           override val origin: WebSymbolOrigin,
-                                                           private val explicitPriority: Priority?,
-                                                           private val explicitProximity: Int?) : WebSymbolMatch {
+internal open class WebSymbolMatchImpl private constructor(
+  override val matchedName: String,
+  override val nameSegments: List<WebSymbolNameSegment>,
+  override val namespace: SymbolNamespace,
+  override val kind: SymbolKind,
+  override val origin: WebSymbolOrigin,
+  private val explicitPriority: Priority?,
+  private val explicitProximity: Int?
+) : WebSymbolMatch {
 
   protected fun reversedSegments() = Sequence { ReverseListIterator(nameSegments) }
 
@@ -119,12 +125,30 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
     reversedSegments()
       .flatMap { it.symbols.asSequence() }
       .map {
-        if (it === this) super.getDocumentationTarget(location)
+        if (it === this) super<WebSymbolMatch>.getDocumentationTarget(location)
         else it.getDocumentationTarget(location)
       }
       .filter { it !is WebSymbolDocumentationTarget || it.symbol.createDocumentation(location)?.isNotEmpty() == true }
       .firstOrNull()
-    ?: super.getDocumentationTarget(location)
+    ?: super<WebSymbolMatch>.getDocumentationTarget(location)
+
+  override fun isEquivalentTo(symbol: Symbol): Boolean =
+    super<WebSymbolMatch>.isEquivalentTo(symbol)
+    || nameSegments.filter { it.start != it.end }
+      .let { nonEmptySegments ->
+        nonEmptySegments.size == 1
+        && nonEmptySegments[0].symbols.any { it.isEquivalentTo(symbol) }
+      }
+
+  override val searchTarget: WebSymbolSearchTarget?
+    get() = if (nameSegments.filter { it.start != it.end }
+        .takeIf { it.size == 1 }
+        ?.get(0)
+        ?.symbols
+        ?.all { it is SearchTarget || it is SearchTargetSymbol || it.searchTarget != null } == true)
+      WebSymbolSearchTarget.create(this)
+    else
+      null
 
   override fun equals(other: Any?): Boolean =
     other is WebSymbolMatch
@@ -221,6 +245,9 @@ internal open class WebSymbolMatchImpl private constructor(override val matchedN
 
     override fun getNavigationTargets(project: Project): Collection<NavigationTarget> =
       super<WebSymbolMatchImpl>.getNavigationTargets(project)
+
+    override fun isEquivalentTo(symbol: Symbol): Boolean =
+      super<WebSymbolMatchImpl>.isEquivalentTo(symbol)
 
   }
 

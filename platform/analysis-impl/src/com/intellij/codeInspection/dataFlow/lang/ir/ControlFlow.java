@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.dataFlow.lang.ir;
 
@@ -24,14 +24,14 @@ import java.util.*;
  * Represents code block IR (list of instructions)
  */
 public final class ControlFlow {
-  private @NotNull final List<Instruction> myInstructions;
-  private @NotNull final Object2IntMap<PsiElement> myElementToStartOffsetMap;
-  private @NotNull final Object2IntMap<PsiElement> myElementToEndOffsetMap;
-  private @NotNull final DfaValueFactory myFactory;
-  private @NotNull final PsiElement myPsiAnchor;
+  private final @NotNull List<Instruction> myInstructions;
+  private final @NotNull Object2IntMap<PsiElement> myElementToStartOffsetMap;
+  private final @NotNull Object2IntMap<PsiElement> myElementToEndOffsetMap;
+  private final @NotNull DfaValueFactory myFactory;
+  private final @NotNull PsiElement myPsiAnchor;
   private int[] myLoopNumbers;
 
-  public ControlFlow(@NotNull final DfaValueFactory factory, @NotNull PsiElement psiAnchor) {
+  public ControlFlow(final @NotNull DfaValueFactory factory, @NotNull PsiElement psiAnchor) {
     myFactory = factory;
     myPsiAnchor = psiAnchor;
     myInstructions = new ArrayList<>();
@@ -81,11 +81,11 @@ public final class ControlFlow {
     return new FixedOffset(myInstructions.size());
   }
 
-  public void startElement(PsiElement psiElement) {
+  public void startElement(@NotNull PsiElement psiElement) {
     myElementToStartOffsetMap.put(psiElement, myInstructions.size());
   }
 
-  public void finishElement(PsiElement psiElement) {
+  public void finishElement(@NotNull PsiElement psiElement) {
     myElementToEndOffsetMap.put(psiElement, myInstructions.size());
   }
 

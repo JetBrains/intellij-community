@@ -2,8 +2,10 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
@@ -23,9 +25,12 @@ object NegatedBinaryExpressionSimplificationUtils {
 
         @OptIn(KtAllowAnalysisOnEdt::class)
         allowAnalysisOnEdt {
-            analyze(expression) {
-                fun KtType?.isFloatingPoint() = this != null && (isFloat || isDouble)
-                return !expression.left?.getKtType().isFloatingPoint() && !expression.right?.getKtType().isFloatingPoint()
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(expression) {
+                    fun KtType?.isFloatingPoint() = this != null && (isFloat || isDouble)
+                    return !expression.left?.getKtType().isFloatingPoint() && !expression.right?.getKtType().isFloatingPoint()
+                }
             }
         }
     }

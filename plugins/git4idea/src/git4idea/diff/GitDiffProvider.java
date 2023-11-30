@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.diff;
 
 import com.intellij.openapi.components.Service;
@@ -62,27 +62,25 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
    * {@inheritDoc}
    */
   @Override
-  @Nullable
-  public VcsRevisionNumber getCurrentRevision(VirtualFile file) {
+  public @Nullable VcsRevisionNumber getCurrentRevision(VirtualFile file) {
     if (file.isDirectory()) {
       return null;
     }
     try {
-      return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()), "HEAD");
+      return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file), "HEAD");
     }
     catch (VcsException e) {
       return null;
     }
   }
 
-  @Nullable
   @Override
-  public VcsRevisionDescription getCurrentRevisionDescription(final VirtualFile file) {
+  public @Nullable VcsRevisionDescription getCurrentRevisionDescription(final VirtualFile file) {
     if (file.isDirectory()) {
       return null;
     }
     try {
-      return GitHistoryUtils.getCurrentRevisionDescription(myProject, VcsUtil.getFilePath(file.getPath()));
+      return GitHistoryUtils.getCurrentRevisionDescription(myProject, VcsUtil.getFilePath(file));
     }
     catch (VcsException e) {
       return null;
@@ -93,8 +91,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
    * {@inheritDoc}
    */
   @Override
-  @Nullable
-  public ItemLatestState getLastRevision(VirtualFile file) {
+  public @Nullable ItemLatestState getLastRevision(VirtualFile file) {
     if (file.isDirectory()) {
       return null;
     }
@@ -102,7 +99,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
       return null;
     }
     try {
-      return GitHistoryUtils.getLastRevision(myProject, VcsUtil.getFilePath(file.getPath()));
+      return GitHistoryUtils.getLastRevision(myProject, VcsUtil.getFilePath(file));
     }
     catch (VcsException e) {
       return null;
@@ -117,14 +114,13 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
            status == FileStatus.MERGED_WITH_CONFLICTS;
   }
 
-  @Nullable
   @Override
-  public ContentRevision createCurrentFileContent(@NotNull VirtualFile file) {
+  public @Nullable ContentRevision createCurrentFileContent(@NotNull VirtualFile file) {
     if (file.isDirectory()) return null;
     if (GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file) == null) return null;
 
     VcsRevisionNumber revisionNumber = getCurrentRevision(file);
-    FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file.getPath()));
+    FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file));
     return GitContentRevision.createRevision(filePath, revisionNumber, myProject, file.getCharset());
   }
 
@@ -132,8 +128,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
    * {@inheritDoc}
    */
   @Override
-  @Nullable
-  public ContentRevision createFileContent(VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
+  public @Nullable ContentRevision createFileContent(VcsRevisionNumber revisionNumber, VirtualFile selectedFile) {
     if (selectedFile.isDirectory()) {
       return null;
     }
@@ -151,7 +146,8 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
+      GitVcs.getInstance(myProject)
+        .showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
     }
 
     try {
@@ -163,7 +159,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
         }
       }
       GitContentRevision candidate =
-        (GitContentRevision) GitContentRevision.createRevision(filePath, revisionNumber, myProject,
+        (GitContentRevision)GitContentRevision.createRevision(filePath, revisionNumber, myProject,
                                                               selectedFile.getCharset());
       try {
         candidate.getContent();
@@ -174,7 +170,8 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
+      GitVcs.getInstance(myProject)
+        .showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
     }
     return null;
   }
@@ -214,10 +211,9 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
     return true;
   }
 
-  @NotNull
   @Override
-  public Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
-                                                  @NotNull VcsRevisionNumber revNum) throws VcsException {
+  public @NotNull Collection<Change> compareWithWorkingDir(@NotNull VirtualFile fileOrDir,
+                                                           @NotNull VcsRevisionNumber revNum) throws VcsException {
     final GitRepository repo = GitUtil.getRepositoryForFile(myProject, fileOrDir);
     FilePath filePath = VcsUtil.getFilePath(fileOrDir);
 

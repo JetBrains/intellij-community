@@ -16,11 +16,14 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * pointer to a PsiFile + range inside the file.
+ * Pointer to a PsiFile + range inside the file.
  * {@link #getRange()} will return the range inside the PsiFile
+ *
+ * @see SmartPointerManager#createSmartPsiFileRangePointer(PsiFile, TextRange)
  */
 public interface SmartPsiFileRange extends SmartPsiElementPointer<PsiFile> {
   /**

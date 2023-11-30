@@ -3,8 +3,6 @@ package com.intellij.webSymbols.webTypes.json
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter
 
-import java.util.ArrayList
-
 interface GenericContributionsHost {
 
   @get:JsonAnyGetter

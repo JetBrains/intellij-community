@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -89,7 +91,7 @@ public class MergeFilterChainAction extends PsiUpdateModCommandAction<PsiIdentif
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier identifier, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiIdentifier identifier, @NotNull ModPsiUpdater updater) {
     final PsiMethodCallExpression filterCall = PsiTreeUtil.getParentOfType(identifier, PsiMethodCallExpression.class);
     LOG.assertTrue(filterCall != null);
 

@@ -4,10 +4,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.ModCommands;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -40,17 +37,17 @@ public class AddExceptionToCatchFix implements ModCommandAction {
     int offset = context.offset();
 
     PsiElement element = findElement(context.file(), offset);
-    if (element == null) return ModCommands.nop();
+    if (element == null) return ModCommand.nop();
 
     PsiTryStatement tryStatement = (PsiTryStatement)element.getParent();
     List<PsiClassType> unhandledExceptions = new ArrayList<>(getExceptions(element, null));
-    if (unhandledExceptions.isEmpty()) return ModCommands.nop();
+    if (unhandledExceptions.isEmpty()) return ModCommand.nop();
 
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
-    return ModCommands.psiUpdate(tryStatement, (ts, updater) -> invoke(ts, unhandledExceptions, updater));
+    return ModCommand.psiUpdate(tryStatement, (ts, updater) -> invoke(ts, unhandledExceptions, updater));
   }
   
-  private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull EditorUpdater updater) {
+  private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull ModPsiUpdater updater) {
     PsiFile file = tryStatement.getContainingFile();
     PsiCodeBlock catchBlockToSelect = null;
 

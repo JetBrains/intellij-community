@@ -12,12 +12,12 @@ abstract class IdeVersionedDataParser<T : IdeVersionedDataState> {
   companion object {
     internal class IdeVersion(val v: String) : Comparable<IdeVersion> {
       override fun compareTo(other: IdeVersion): Int {
-        return VersionComparatorUtil.compare(v, other.v) { 0 }
+        return VersionComparatorUtil.compare(v, other.v, VersionComparatorUtil.TokenPrioritizer { 0 })
       }
     }
 
     fun <T> parseVersion(p: String?, transform: (String) -> T): T? {
-      if (p == null || p == "INF") return null;
+      if (p == null || p == "INF") return null
       return transform(p)
     }
 
@@ -48,7 +48,7 @@ abstract class IdeVersionedDataParser<T : IdeVersionedDataState> {
 
       parseJson(obj)?.let {
         it.isDefault = false
-        it.ideVersion = versionInfo
+        it.ideVersion = ideVersion
         it.lastUpdateTime = System.currentTimeMillis()
         return it
       }

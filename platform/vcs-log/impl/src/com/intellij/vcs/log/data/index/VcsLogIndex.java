@@ -19,6 +19,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 public interface VcsLogIndex {
 
   boolean isIndexed(int commit);
@@ -33,6 +35,8 @@ public interface VcsLogIndex {
   void addListener(@NotNull IndexingFinishedListener l);
 
   void removeListener(@NotNull IndexingFinishedListener l);
+
+  @NotNull Set<VirtualFile> getIndexingRoots();
 
   interface IndexingFinishedListener {
     void indexingFinished(@NotNull VirtualFile root);

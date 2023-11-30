@@ -38,11 +38,11 @@ fun install(filterable: Filterable<ExecutionNode>) {
 }
 
 @ApiStatus.Experimental
-open class FilterToggleAction constructor(@NlsContexts.Command text: String,
-                                          private val stateKey: String?,
-                                          private val filterable: Filterable<ExecutionNode>,
-                                          private val filter: Predicate<ExecutionNode>,
-                                          private val defaultState: Boolean) : ToggleAction(text), DumbAware {
+open class FilterToggleAction(@NlsContexts.Command text: String,
+                              private val stateKey: String?,
+                              private val filterable: Filterable<ExecutionNode>,
+                              private val filter: Predicate<ExecutionNode>,
+                              private val defaultState: Boolean) : ToggleAction(text), DumbAware {
   override fun isSelected(e: AnActionEvent): Boolean {
     val presentation = e.presentation
     val filteringEnabled = filterable.isFilteringEnabled
@@ -56,7 +56,7 @@ open class FilterToggleAction constructor(@NlsContexts.Command text: String,
     return filterable.contains(filter)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {

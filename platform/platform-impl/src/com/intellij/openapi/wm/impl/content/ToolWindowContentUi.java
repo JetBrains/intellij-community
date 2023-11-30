@@ -9,6 +9,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -19,7 +20,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -60,12 +60,15 @@ import java.util.function.Predicate;
 
 public final class ToolWindowContentUi implements ContentUI, DataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
-  @NonNls public static final String HIDE_ID_LABEL = "HideIdLabel";
-  @NonNls public static final Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
+  public static final @NonNls String HIDE_ID_LABEL = "HideIdLabel";
+  public static final @NonNls Key<Boolean> ALLOW_DND_FOR_TABS = Key.create("AllowDragAndDropForTabs");
   // when client property is set to true in toolwindow component, the toolbar is always visible in the tool window header
-  @NonNls public static final Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
-  @NonNls private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
+  public static final @NonNls Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
+  private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
+  @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
+
+  @ApiStatus.Internal public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
 
   private final @NotNull ContentManager contentManager;
   int dropOverIndex = -1;
@@ -96,8 +99,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
 
   private final JPanel tabComponent = new TabPanel();
 
-  @NotNull
-  public JPanel getTabComponent() {
+  public @NotNull JPanel getTabComponent() {
     return tabComponent;
   }
 
@@ -140,8 +142,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           if (mainContents.size() == 1) {
             Content mainContent = mainContents.get(0);
             JComponent component = mainContent.getComponent();
-            SingleContentSupplier supplier = component instanceof DataProvider provider
-                                             ? SingleContentSupplier.KEY.getData(provider) : null;
+            SingleContentSupplier supplier = SingleContentSupplier.Companion.getSupplierFrom(component);
             if (supplier != null && supplier.getSubContents().containsAll(subContents)) {
               for (Content subContent : subContents) {
                 ContentManager m = subContent.getManager();
@@ -226,13 +227,11 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     showContent = new ShowContentAction(window, contentComponent, contentManager);
   }
 
-  @NotNull
-  public String getToolWindowId() {
+  public @NotNull String getToolWindowId() {
     return window.getId();
   }
 
-  @NotNull
-  public ToolWindow getWindow() {
+  public @NotNull ToolWindow getWindow() {
     return window;
   }
 
@@ -279,8 +278,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     rebuild();
   }
 
-  @NotNull
-   public ContentLayout getCurrentLayout() {
+  public @NotNull ContentLayout getCurrentLayout() {
     if (type == ToolWindowContentUiType.TABBED) {
       return tabsLayout;
     }
@@ -367,27 +365,23 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return true;
   }
 
-  @NotNull
   @Override
-  public String getCloseActionName() {
+  public @NotNull String getCloseActionName() {
     return getCurrentLayout().getCloseActionName();
   }
 
-  @NotNull
   @Override
-  public String getCloseAllButThisActionName() {
+  public @NotNull String getCloseAllButThisActionName() {
     return getCurrentLayout().getCloseAllButThisActionName();
   }
 
-  @NotNull
   @Override
-  public String getPreviousContentActionName() {
+  public @NotNull String getPreviousContentActionName() {
     return getCurrentLayout().getPreviousContentActionName();
   }
 
-  @NotNull
   @Override
-  public String getNextContentActionName() {
+  public @NotNull String getNextContentActionName() {
     return getCurrentLayout().getNextContentActionName();
   }
 
@@ -474,16 +468,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
 
       @Override
-      public void mouseClicked(MouseEvent e) {
-        if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-          if (ui.tabsLayout.doubleClickActions.isEmpty() || !(e.getComponent() instanceof ContentTabLabel)) {
-            ToolWindowManagerEx manager = ui.window.getToolWindowManager();
-            manager.setMaximized(ui.window, !manager.isMaximized(ui.window));
-          }
-        }
-      }
-
-      @Override
       public void mouseReleased(@NotNull MouseEvent e) {
         if (!e.isPopupTrigger()) {
           if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
@@ -510,7 +494,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       }
 
       private boolean isToolWindowDrag(MouseEvent e) {
-        if (!Registry.is("ide.new.tool.window.dnd")) {
+        if (!AdvancedSettings.getBoolean("ide.tool.window.header.dnd")) {
           return false;
         }
 
@@ -643,8 +627,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     popupMenu.getComponent().show(comp, x, y);
   }
 
-  @NotNull
-  private static AnAction createSplitTabsAction(@NotNull TabbedContent content) {
+  private static @NotNull AnAction createSplitTabsAction(@NotNull TabbedContent content) {
     return new DumbAwareAction(IdeBundle.message("action.text.split.group", content.getTitlePrefix())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -653,8 +636,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     };
   }
 
-  @NotNull
-  private static AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
+  private static @NotNull AnAction createMergeTabsAction(@NotNull ContentManager manager, @NotNull TabGroupId groupId) {
     return new DumbAwareAction(IdeBundle.message("action.text.merge.tabs.to.group", groupId.getDisplayName())) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -696,8 +678,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
+  public @Nullable Object getData(@NotNull @NonNls String dataId) {
     if (PlatformDataKeys.TOOL_WINDOW.is(dataId)) {
       return window;
     }
@@ -720,8 +701,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     return null;
   }
 
-  @NotNull
-  private CloseAction.CloseTarget computeCloseTarget() {
+  private @NotNull CloseAction.CloseTarget computeCloseTarget() {
     if (contentManager.canCloseContents()) {
       Content selected = contentManager.getSelectedContent();
       if (selected != null && selected.isCloseable()) {

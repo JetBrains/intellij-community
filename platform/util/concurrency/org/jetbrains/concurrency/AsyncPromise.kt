@@ -1,15 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.concurrency
 
+import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.ExceptionUtilRt
 import com.intellij.util.Function
+import com.intellij.util.concurrency.captureBiConsumerThreadContext
+import com.intellij.util.concurrency.createChildContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.BiConsumer
 import java.util.function.Consumer
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
 open class AsyncPromise<T> private constructor(internal val f: CompletableFuture<T>,
                                                private val hasErrorHandler: AtomicBoolean,
@@ -19,7 +26,7 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
 
     @Internal
     @JvmField
-    val CANCELED = object: CancellationException() {
+    val CANCELED: CancellationException = object : CancellationException() {
       override fun fillInStackTrace(): Throwable = this
     }
   }
@@ -101,9 +108,10 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
 
   private fun whenComplete(action: BiConsumer<T, Throwable?>): CompletableFuture<T> {
     val result = CompletableFuture<T>()
+    val captured = captureBiConsumerThreadContext(action)
     f.handle { value, error ->
       try {
-        action.accept(value, error)
+        captured.accept(value, error)
         if (error != null) result.completeExceptionally(error)
         else result.complete(value)
       }
@@ -130,7 +138,30 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
   }
 
   override fun <SUB_RESULT : Any?> then(done: Function<in T, out SUB_RESULT>): Promise<SUB_RESULT> {
-    return AsyncPromise(f.thenApply { done.`fun`(it) }, hasErrorHandler, addExceptionHandler = true)
+    return AsyncPromise(wrapWithCancellationPropagation { ctx ->
+      f.thenApply { t ->
+        installThreadContext(ctx, true).use {
+          done.`fun`(t)
+        }
+      }
+    }, hasErrorHandler, addExceptionHandler = true)
+  }
+
+  private inline fun <T> wrapWithCancellationPropagation(producer: (CoroutineContext) -> CompletableFuture<T>): CompletableFuture<T> {
+    val (childContext, childContinuation) = createChildContext()
+    val capturingFuture = producer(childContext)
+    return capturingFuture.whenComplete { _, result ->
+      when (result) {
+        null -> childContinuation?.resume(Unit)
+        is ProcessCanceledException -> childContinuation?.resumeWithException(CancellationException())
+        is CompletionException -> when (val cause = result.cause) {
+          is CancellationException -> childContinuation?.resumeWithException(cause)
+          null -> childContinuation?.resume(Unit)
+          else -> childContinuation?.resumeWithException(cause)
+        }
+        else -> childContinuation?.resumeWithException(result)
+      }
+    }
   }
 
   override fun <SUB_RESULT : Any?> thenAsync(doneF: Function<in T, out Promise<SUB_RESULT>>): Promise<SUB_RESULT> {
@@ -168,9 +199,9 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
     return true
   }
 
-  protected open fun shouldLogErrors() = !hasErrorHandler.get()
+  protected open fun shouldLogErrors(): Boolean = !hasErrorHandler.get()
 
-  fun setError(error: String) = setError(createError(error))
+  fun setError(error: String): Boolean = setError(createError(error))
 }
 
 inline fun <T> AsyncPromise<*>.catchError(runnable: () -> T): T? {

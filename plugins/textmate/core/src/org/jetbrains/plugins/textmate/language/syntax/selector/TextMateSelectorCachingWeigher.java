@@ -8,7 +8,7 @@ import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
+public final class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
   @NotNull private final TextMateSelectorWeigher myOriginalWeigher;
   private final Cache<@NotNull CacheKey, @NotNull TextMateWeigh> myCache;
 

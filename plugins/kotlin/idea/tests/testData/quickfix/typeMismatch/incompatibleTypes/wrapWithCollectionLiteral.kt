@@ -5,3 +5,4 @@ fun test(ints: List<Int>, i: Int) {
         <caret>i -> {}
     }
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.WrapWithCollectionLiteralCallFix

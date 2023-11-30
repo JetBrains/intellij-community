@@ -30,7 +30,7 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
 
     open val isCrossLanguageFix: Boolean = false
 
-    protected open fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile) = true
+    protected open fun isAvailableImpl(project: Project, editor: Editor?, file: PsiFile): Boolean = true
 
     final override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean {
         if (isUnitTestMode()) {
@@ -48,7 +48,7 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
         }
     }
 
-    override fun startInWriteAction() = true
+    override fun startInWriteAction(): Boolean = true
 
     /**
      * This implementation clones current intention replacing [elementPointer]
@@ -89,5 +89,5 @@ abstract class QuickFixActionBase<out T : PsiElement>(element: T) : IntentionAct
      * @throws CloneNotSupportedException always
      */
     @Throws(CloneNotSupportedException::class)
-    override fun clone() = throw CloneNotSupportedException()
+    override fun clone(): Any = throw CloneNotSupportedException()
 }

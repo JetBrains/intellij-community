@@ -20,7 +20,7 @@ private const val invalidationMarkerFileName = "invalidation.marker"
 @Service(Service.Level.APP)
 internal class JBCefAppCache {
   @get:NotNull
-  val path by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+  val path: Path by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
     prepareCachePath()
   }
 

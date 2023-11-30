@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
+import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 
@@ -20,7 +21,7 @@ interface StartUpPerformanceService {
 
   fun getPluginCostMap(): Map<String, Object2LongMap<String>>
 
-  fun getMetrics(): Object2IntMap<String>?
+  fun getMetrics(): Flow<Object2IntMap<String>>
 
   fun getLastReport(): ByteBuffer?
 

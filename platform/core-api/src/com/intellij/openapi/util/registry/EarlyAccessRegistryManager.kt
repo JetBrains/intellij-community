@@ -69,6 +69,7 @@ private val map: ConcurrentHashMap<String, String>?
 object EarlyAccessRegistryManager {
   @Suppress("ConstPropertyName")
   const val fileName: String = "early-access-registry.txt"
+  const val DISABLE_SAVE_PROPERTY = "early.access.registry.disable.saving"
 
   fun getBoolean(key: String): Boolean {
     return getString(key).toBoolean()
@@ -113,6 +114,15 @@ object EarlyAccessRegistryManager {
     saveConfigFile(map, configFile) { map.get(it) }
   }
 
+  /**
+   * Updates value for registry property which may be accessed via this class. 
+   * Use this function instead of the default [RegistryValue.setValue] to ensure that the updated value will be saved to [fileName]. 
+   */
+  fun setBoolean(key: String, value: Boolean) {
+    lazyMap.value[key] = value.toString()
+    ApplicationManager.getApplication().serviceIfCreated<RegistryManager>()?.get(key)?.setValue(value)
+  }
+  
   fun syncAndFlush() {
     // Why do we sync? get (not yet loaded) -> not changed by a user but actually in a registry -> no explicit put
     // Why maybe in a registry but not in our store?
@@ -159,6 +169,8 @@ private fun getOrFromSystemProperty(map: ConcurrentHashMap<String, String>, key:
 private inline fun saveConfigFile(map: ConcurrentHashMap<String, String>,
                                   @Suppress("SameParameterValue") configFile: Path,
                                   provider: (String) -> String?) {
+  if (System.getProperty(EarlyAccessRegistryManager.DISABLE_SAVE_PROPERTY) == "true")
+    return
   val lines = mutableListOf<String>()
   for (key in map.keys.sorted()) {
     val value = provider(key) ?: continue

@@ -8,6 +8,10 @@
             qualifiedName="org.jetbrains.kotlin.foreignUsagesRenameProcessor"
             interface="org.jetbrains.kotlin.idea.refactoring.rename.ForeignUsagesRenameProcessor"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.postInsertDeclarationCallback"
+            interface="org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.PostInsertDeclarationCallback"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -20,11 +24,13 @@
 
     <nameSuggestionProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggestionProvider"/>
 
-    <lang.floatingToolbarFilter language="kotlin" implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarFilter$ENABLED" />
-
     <lang.refactoringSupport
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSupportProvider"/>
+
+    <projectService serviceInterface="org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableService"
+                    serviceImplementation="org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableServiceK1Impl"
+    />
 
     <lang.refactoringSupport.classMembersRefactoringSupport
             language="kotlin"
@@ -35,15 +41,9 @@
             implementationClass="org.jetbrains.kotlin.idea.refactoring.suggested.KotlinSuggestedRefactoringSupport"/>
 
     <refactoring.helper implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinRefactoringHelperForDelayedRequests"/>
-    <refactoring.helper implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinOptimizeImportsRefactoringHelper"/>
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.memberInfo.K1MemberInfoSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport"/>
-
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.move.K1MoveRefactoringSupport"
-                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRefactoringSupport"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.move.K1MoveConflictCheckerSupport"
-                        serviceInterface="org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveConflictCheckerSupport"/>
 
     <refactoring.moveHandler
             id="kotlin.moveMethod"
@@ -85,8 +85,6 @@
             language="JAVA"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.KotlinToJavaInlineHandler"/>
 
-    <refactoring.overrideMethodProcessor implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinOverrideMethodsProcessor"/>
-
     <refactoring.safeDeleteProcessor
             id="kotlinProcessor"
             implementation="org.jetbrains.kotlin.idea.refactoring.safeDelete.KotlinSafeDeleteProcessor"
@@ -111,22 +109,10 @@
             serviceInterface="org.jetbrains.kotlin.idea.references.KtReferenceMutateService"
             serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K1ReferenceMutateService"/>
 
-    <renamePsiElementProcessor id="KotlinAwareJavaGetter"
-                               implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAwareJavaGetterRenameProcessor"
-                               order="first"/>
-    <renamePsiElementProcessor implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler$Processor"
-                               id="JavaSyntheticPropertyFromKotlin"/>
-
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.refactoring.rename.K1RenameRefactoringSupport"
                         serviceInterface="org.jetbrains.kotlin.idea.refactoring.rename.KotlinRenameRefactoringSupport"/>
 
-    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableRenamerFactory"/>
-    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableRenamerFactoryForJavaClass"/>
-    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticVariableInJavaRenamerFactory"/>
-    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticInheritorRenamerFactory"/>
-    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticOverloadsRenamerFactory"/>
     <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.KotlinAutomaticTestRenamerFactory"/>
-    <automaticRenamerFactory implementation="org.jetbrains.kotlin.idea.refactoring.rename.AutomaticParameterRenamerFactory"/>
 
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlinePropertyHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinInlineNamedFunctionHandler"/>
@@ -151,17 +137,9 @@
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinImplicitLambdaParameter"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameDynamicMemberHandler"/>
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameOnSecondaryConstructorHandler"/>
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJavaSyntheticPropertyHandler"/>
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameSyntheticDeclarationByReferenceHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.JavaMemberByKotlinReferenceInplaceRenameHandler"/>
     <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameJvmNameHandler"/>
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameBackingFieldReferenceHandler"/>
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameClassByCompanionObjectShortReferenceHandler"/>
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameByLabeledReferenceHandler"/>
-    <renameHandler implementation="org.jetbrains.kotlin.idea.refactoring.rename.RenameImportAliasByReferenceHandler"/>
   </extensions>
 
   <actions>

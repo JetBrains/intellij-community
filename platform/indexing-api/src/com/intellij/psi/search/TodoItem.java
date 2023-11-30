@@ -4,6 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -16,7 +17,11 @@ public interface TodoItem {
   @NotNull
   TextRange getTextRange();
 
-  @NotNull
+  /**
+   * Returns a {@link TodoPattern} that matches this item. A pattern may be missing if an item does not match any patterns, as can be the
+   * case when an item is created for a language's built-in syntax instead of from an occurrence in a comment.
+   */
+  @Nullable
   TodoPattern getPattern();
 
   @NotNull

@@ -123,13 +123,20 @@ public final class RemoteUtil {
   }
 
   public static <T> T substituteClassLoader(final @NotNull T remote, final @Nullable ClassLoader classLoader) throws Exception {
-    return executeWithClassLoader(() -> {
-      Object proxy = Proxy.newProxyInstance(classLoader, remote.getClass().getInterfaces(), new InvocationHandler() {
-        @Override
-        public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
-          return executeWithClassLoader(() -> invokeRemote(method, method, remote, args, classLoader, true), classLoader);
+    final class MyHandler implements InvocationHandler {
+      @Override
+      public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
+        if ("equals".equals(method.getName())) {
+          Object arg = args.length == 1 ? args[0] : null;
+          if (arg != null && Proxy.isProxyClass(arg.getClass()) && Proxy.getInvocationHandler(arg) instanceof MyHandler) {
+            return arg.equals(remote);
+          }
         }
-      });
+        return executeWithClassLoader(() -> invokeRemote(method, method, remote, args, classLoader, true), classLoader);
+      }
+    }
+    return executeWithClassLoader(() -> {
+      Object proxy = Proxy.newProxyInstance(classLoader, remote.getClass().getInterfaces(), new MyHandler());
       return (T)proxy;
     }, classLoader);
   }
@@ -217,7 +224,7 @@ public final class RemoteUtil {
     return e;
   }
 
-  private static class RemoteInvocationHandler implements InvocationHandler {
+  private static final class RemoteInvocationHandler implements InvocationHandler {
     private final Object myRemote;
     private final Class<?> myClazz;
     private final ClassLoader myLoader;

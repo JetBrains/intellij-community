@@ -51,6 +51,7 @@ import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -273,6 +274,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       return false;
     }
 
+    //kotlin j2k fails badly if moved under progress
     myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
       @Override
       public boolean isOnlyOneReferenceToInline() {
@@ -795,11 +797,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @Nullable
   private PsiLocalVariable declareThis(PsiSubstitutor callSubstitutor, PsiCodeBlock block) {
     PsiClass containingClass = myMethod.getContainingClass();
-    if (myMethod.hasModifierProperty(PsiModifier.STATIC) || containingClass == null) return null;
+    if (myMethod.hasModifierProperty(PsiModifier.STATIC) || containingClass == null || containingClass instanceof PsiUnnamedClass) return null;
     PsiType thisType = GenericsUtil.getVariableTypeByExpressionType(myFactory.createType(containingClass, callSubstitutor));
-    String[] names = myJavaCodeStyle.suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, thisType).names;
-    String thisVarName = names[0];
-    thisVarName = myJavaCodeStyle.suggestUniqueVariableName(thisVarName, myMethod.getFirstChild(), true);
+    String thisVarName = new VariableNameGenerator(myMethod.getFirstChild(), VariableKind.LOCAL_VARIABLE)
+      .byType(thisType).byName("self").generate(true);
     PsiExpression initializer = myFactory.createExpressionFromText("null", null);
     PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(thisVarName, thisType, initializer);
     declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);

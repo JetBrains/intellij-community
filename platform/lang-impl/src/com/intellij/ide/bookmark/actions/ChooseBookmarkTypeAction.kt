@@ -43,6 +43,7 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction() {
       .setMovable(false).setResizable(false)
       .setTitle(title).createPopup()
     chooser.onChosen = { chosenType, description ->
+      popup.closeOk(null)
       if (manager.getType(bookmark) == null) {
         manager.toggle(bookmark, chosenType)
       } else {
@@ -51,7 +52,6 @@ internal class ChooseBookmarkTypeAction : DumbAwareAction() {
       if (description != "") {
         manager.getGroups(bookmark).firstOrNull()?.setDescription(bookmark, description)
       }
-      popup.closeOk(null)
     }
     popup.showInBestPositionFor(event.dataContext)
   }

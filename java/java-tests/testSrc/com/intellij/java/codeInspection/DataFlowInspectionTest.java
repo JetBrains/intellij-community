@@ -6,12 +6,17 @@ import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -158,6 +163,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
 
   private void checkIntentionResult(String hint) {
     myFixture.launchAction(myFixture.findSingleIntention(hint));
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
     PsiTestUtil.checkPsiMatchesTextIgnoringNonCode(getFile());
   }
@@ -580,7 +586,10 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testPureNoArgMethodAsVariable() { doTest(); }
   public void testRedundantAssignment() {
     doTest();
-    assertIntentionAvailable("Extract side effect");
+    UiInterceptors.register(new ChooserInterceptor(List.of("Extract side effect", "Delete assignment completely"), "Extract side effect"));
+    IntentionAction action = myFixture.findSingleIntention("Remove redundant assignment");
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
   public void testXorNullity() { doTest(); }
   public void testPrimitiveNull() { doTest(); }
@@ -700,6 +709,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testGetterNullityAfterCheck() { doTest(); }
   public void testInferenceNullityMismatch() { doTestWith((insp, __) -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false); }
   public void testFieldInInstanceInitializer() { doTest(); }
+  public void testCallsBeforeFieldInitializing() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17, () -> doTest());
+  }
   public void testNullableCallWithPrecalculatedValueAndSpecialField() { doTest(); }
   public void testJoinConstantAndSubtype() { doTest(); }
   public void testDereferenceInThrowMessage() { doTest(); }
@@ -726,4 +738,8 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBooleanOrEquals() { doTest(); }
   public void testDuplicatedByPointlessBooleanInspection() { doTest(); }
   public void testSystemOutNullSource() { doTest(); }
+  public void testPrimitiveTypeFieldInWrapper() { doTest(); }
+  public void testNullWarningAfterInstanceofCheck() { doTest(); }
+  public void testNullWarningAfterInstanceofAndNullCheck() { doTest(); }
+  public void testInitializedViaSuperCall() { doTest(); }
 }

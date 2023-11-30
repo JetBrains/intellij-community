@@ -1,11 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.cloud;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
-import com.intellij.terminal.ui.TerminalWidget;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
@@ -21,27 +19,17 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   private final @NlsSafe String myPipeName;
   private final CloudTerminalProcess myProcess;
   private final TtyResizeHandler myTtyResizeHandler;
-  private final boolean myDeferSessionUntilFirstShown;
 
   public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, @NotNull CloudTerminalProcess process,
-                             @Nullable TtyResizeHandler resizeHandler,
-                             boolean deferSessionUntilFirstShown) {
+                             @Nullable TtyResizeHandler resizeHandler) {
     super(project);
     myPipeName = pipeName;
     myProcess = process;
     myTtyResizeHandler = resizeHandler;
-    myDeferSessionUntilFirstShown = deferSessionUntilFirstShown;
   }
 
   public CloudTerminalRunner(@NotNull Project project, @NotNull @NlsSafe String pipeName, CloudTerminalProcess process) {
-    this(project, pipeName, process, null, false);
-  }
-
-  @Override
-  public @NotNull TerminalWidget startShellTerminalWidget(@NotNull Disposable parent,
-                                                          @NotNull ShellStartupOptions startupOptions,
-                                                          boolean deferSessionStartUntilUiShown) {
-    return super.startShellTerminalWidget(parent, startupOptions, myDeferSessionUntilFirstShown);
+    this(project, pipeName, process, null);
   }
 
   @Override

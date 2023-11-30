@@ -28,6 +28,7 @@ class KotlinAnnotationsIndex internal constructor() : StringStubIndexExtension<K
 
     override fun getVersion(): Int = super.getVersion() + 1
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinAnnotationsIndex[key, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtAnnotationEntry> {
         return Helper[shortName, project, scope]
     }

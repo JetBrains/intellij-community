@@ -22,14 +22,14 @@ public final class PsiQuickFixFactory {
   }
 
   public static LocalQuickFix createModifierListFix(@NotNull PsiModifierListOwner owner, @NotNull String modifier, boolean shouldHave, final boolean showContainingClass) {
-    return new ModifierFix(owner, modifier, shouldHave, showContainingClass);
+    return LocalQuickFix.from(new ModifierFix(owner, modifier, shouldHave, showContainingClass));
   }
 
   public static LocalQuickFix createNewFieldFix(@NotNull PsiClass psiClass, @NotNull String name, @NotNull PsiType psiType, @Nullable String initializerText, String... modifiers) {
-    return new CreateFieldQuickFix(psiClass, name, psiType, initializerText, modifiers);
+    return LocalQuickFix.from(new CreateFieldQuickFix(psiClass, name, psiType, initializerText, modifiers));
   }
 
   public static LocalQuickFix createChangeAnnotationParameterFix(@NotNull PsiAnnotation psiAnnotation, @NotNull String name, @Nullable String newValue) {
-    return new ChangeAnnotationParameterQuickFix(psiAnnotation, name, newValue);
+    return LocalQuickFix.from(new ChangeAnnotationParameterQuickFix(psiAnnotation, name, newValue));
   }
 }

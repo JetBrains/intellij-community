@@ -49,7 +49,7 @@ class WizardDefaultDataGeneratorSettings<T : IdeVersionedDataState>(
 
 internal fun main(args: Array<String>) {
     assert(args.size == 1) { "Should be 1 arg: Path to project" }
-    val applicationInfo = Paths.get(args[0], "ultimate/ultimate-resources/src/idea/ApplicationInfo.xml")
+    val applicationInfo = Paths.get(args[0], "ultimate/ultimate-resources/resources/idea/ApplicationInfo.xml")
     val generatedFolder = Paths.get(args[0], "community/plugins/kotlin/project-wizard/core/generated")
     val applicationVersion = readAppVersion(applicationInfo)
 

@@ -1,18 +1,23 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModel
 import com.intellij.collaboration.ui.codereview.list.search.ReviewListSearchPanelViewModelBase
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.drop
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelViewModel<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter> {
   val currentUser: GitLabUserDTO
@@ -24,13 +29,14 @@ internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelVi
   val reviewerFilterState: MutableStateFlow<MergeRequestsMemberFilterValue?>
   val labelFilterState: MutableStateFlow<GitLabMergeRequestsFiltersValue.LabelFilterValue?>
 
-  suspend fun getMergeRequestMembers(): List<GitLabMemberDTO>
-
-  suspend fun getLabels(): List<GitLabLabelDTO>
+  val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>>
+  val labels: Flow<Result<List<GitLabLabelDTO>>>
 }
 
+@OptIn(FlowPreview::class)
 internal class GitLabMergeRequestsFiltersViewModelImpl(
   scope: CoroutineScope,
+  private val project: Project?, // only for statistics
   historyModel: GitLabMergeRequestsFiltersHistoryModel,
   override val currentUser: GitLabUserDTO,
   override val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
@@ -40,7 +46,7 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
       scope,
       historyModel,
       emptySearch = GitLabMergeRequestsFiltersValue.EMPTY,
-      defaultQuickFilter = GitLabMergeRequestsQuickFilter.Open()
+      defaultQuickFilter = defaultQuickFilter(currentUser)
     ) {
   override fun GitLabMergeRequestsFiltersValue.withQuery(query: String?): GitLabMergeRequestsFiltersValue {
     return copy(searchQuery = query)
@@ -74,17 +80,21 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
     copy(label = it)
   }
 
-  override suspend fun getLabels(): List<GitLabLabelDTO> = projectData.getLabels()
+  override val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>> = projectData.members
+  override val labels: Flow<Result<List<GitLabLabelDTO>>> = projectData.labels
 
-  override suspend fun getMergeRequestMembers(): List<GitLabMemberDTO> =
-    projectData.getMembers().filter { isValidMergeRequestAccessLevel(it.accessLevel) }
+  init {
+    scope.launchNow {
+      // with debounce to avoid collecting intermediate state
+      searchState.drop(1).debounce(5000).collect {
+        if (it.filterCount > 0) {
+          GitLabStatistics.logMrFiltersApplied(project, it)
+        }
+      }
+    }
+  }
 
   companion object {
-    private fun isValidMergeRequestAccessLevel(accessLevel: GitLabAccessLevel): Boolean {
-      return accessLevel == GitLabAccessLevel.REPORTER ||
-             accessLevel == GitLabAccessLevel.DEVELOPER ||
-             accessLevel == GitLabAccessLevel.MAINTAINER ||
-             accessLevel == GitLabAccessLevel.OWNER
-    }
+    fun defaultQuickFilter(user: GitLabUserDTO): GitLabMergeRequestsQuickFilter = GitLabMergeRequestsQuickFilter.AssignedToMe(user)
   }
 }

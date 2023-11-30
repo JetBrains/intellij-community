@@ -47,7 +47,7 @@ public abstract class PyPsiPath {
     @Nullable
     @Override
     public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
-      return PyPsiFacade.getInstance(context.getProject()).findClass(myQualifiedName.toString());
+      return PyPsiFacade.getInstance(context.getProject()).createClassByQName(myQualifiedName.toString(), context);
     }
   }
 

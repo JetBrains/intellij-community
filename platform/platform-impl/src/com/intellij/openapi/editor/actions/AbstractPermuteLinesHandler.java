@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -66,8 +66,7 @@ public abstract class AbstractPermuteLinesHandler extends EditorWriteActionHandl
     editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
-  @Nullable
-  private static Couple<Integer> getTargetLineRange(@NotNull Caret caret) {
+  private static @Nullable Couple<Integer> getTargetLineRange(@NotNull Caret caret) {
     Document document = caret.getEditor().getDocument();
     int startOffset = caret.hasSelection() ? caret.getSelectionStart() : 0;
     int endOffset = caret.hasSelection() ? caret.getSelectionEnd() : document.getTextLength();

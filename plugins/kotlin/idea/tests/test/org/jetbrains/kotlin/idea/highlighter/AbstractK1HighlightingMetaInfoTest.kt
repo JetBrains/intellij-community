@@ -10,7 +10,7 @@ abstract class AbstractK1HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             testKtFile.toPath(),
-            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_FE10,
+            disableTestDirective = IgnoreTests.DIRECTIVES.IGNORE_K1,
             additionalFilesExtensions = arrayOf(HIGHLIGHTING_EXTENSION)
         ) {
             super.doTest(unused)

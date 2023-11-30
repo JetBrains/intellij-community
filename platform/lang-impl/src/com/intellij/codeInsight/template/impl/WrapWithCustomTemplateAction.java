@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateEditingListener;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Document;
@@ -16,9 +18,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
-public class WrapWithCustomTemplateAction extends AnAction {
+public final class WrapWithCustomTemplateAction extends AnAction {
   private final CustomLiveTemplate myTemplate;
   private final Editor myEditor;
   @Nullable private final Runnable myAfterExecutionCallback;
@@ -61,10 +64,15 @@ public class WrapWithCustomTemplateAction extends AnAction {
     if (selection != null) {
       selection = selection.trim();
       PsiDocumentManager.getInstance(myFile.getProject()).commitAllDocuments();
-      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile));
-      if (myAfterExecutionCallback != null) {
-        myAfterExecutionCallback.run();
-      }
+      myTemplate.wrap(selection, new CustomTemplateCallback(myEditor, myFile) {
+        @Override
+        public void startTemplate(@NotNull Template template, Map<String, String> predefinedValues, TemplateEditingListener listener) {
+          super.startTemplate(template, predefinedValues, listener);
+          if (myAfterExecutionCallback != null) {
+            myAfterExecutionCallback.run();
+          }
+        }
+      });
     }
   }
 }

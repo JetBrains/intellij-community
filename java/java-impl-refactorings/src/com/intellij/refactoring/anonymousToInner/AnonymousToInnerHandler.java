@@ -2,6 +2,7 @@
 package com.intellij.refactoring.anonymousToInner;
 
 import com.intellij.codeInsight.ChangeContextUtil;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -18,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,26 +28,28 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandlerOnPsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.VariableData;
 import com.intellij.refactoring.util.classMembers.ElementNeedsThis;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.jdk.VarargParameterInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiElement<PsiAnonymousClass> {
+public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiElement<PsiClass> {
   private static final Logger LOG = Logger.getInstance(AnonymousToInnerHandler.class);
 
   private Project myProject;
 
   private PsiManager myManager;
 
-  private PsiAnonymousClass myAnonClass;
+  private PsiClass myAnonOrLocalClass;
   private PsiClass myTargetClass;
   protected String myNewClassName;
 
@@ -62,51 +66,60 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
 
   @Override
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file, DataContext dataContext) {
+    myProject = project;
     final int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final PsiAnonymousClass anonymousClass = findAnonymousClass(file, offset);
-    if (anonymousClass == null) {
+    final @Nullable PsiClass anonymousOrLocal = findClassToMove(file, offset);
+    if (anonymousOrLocal == null) {
       showErrorMessage(editor, RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("error.wrong.caret.position.anonymous")));
       return;
     }
-    final PsiElement parent = anonymousClass.getParent();
+    final PsiElement parent = anonymousOrLocal.getParent();
     if (parent instanceof PsiEnumConstant) {
       showErrorMessage(editor, RefactoringBundle.getCannotRefactorMessage(
         JavaRefactoringBundle.message("anonymous.to.inner.enum.constant.cannot.refactor.message")));
       return;
     }
-    invoke(project, editor, anonymousClass);
+    invoke(project, editor, anonymousOrLocal);
   }
 
   private void showErrorMessage(Editor editor, @NlsContexts.DialogMessage String message) {
-    CommonRefactoringUtil.showErrorHint(myProject, editor, message, getRefactoringName(), HelpID.ANONYMOUS_TO_INNER);
+    CommonRefactoringUtil.showErrorHint(myProject, editor, message, JavaRefactoringBundle.message("anonymousToInner.refactoring.name"), HelpID.ANONYMOUS_TO_INNER);
   }
 
   @Override
-  public void invoke(final Project project, Editor editor, final PsiAnonymousClass anonymousClass) {
+  public void invoke(final Project project, Editor editor, final PsiClass anonymousOrLocalClass) {
     myProject = project;
 
     myManager = PsiManager.getInstance(myProject);
-    myAnonClass = anonymousClass;
+    myAnonOrLocalClass = anonymousOrLocalClass;
 
-    PsiClassType baseRef = myAnonClass.getBaseClassType();
+    for (PsiClassType baseRef : myAnonOrLocalClass.getSuperTypes()) {
+      // Ignore j.l.Record and j.l.Enum base classes, so we can move records/enums with broken/missing JDK 
+      String refText = baseRef.getCanonicalText();
+      if (CommonClassNames.JAVA_LANG_RECORD.equals(refText) ||
+          CommonClassNames.JAVA_LANG_ENUM.equals(refText)) {
+        continue;
+      }
+      PsiClass baseClass = baseRef.resolve();
+      if (baseClass == null) {
+        String message = JavaRefactoringBundle.message("error.cannot.resolve", refText);
+        showErrorMessage(editor, message);
+        return;
+      }
 
-    PsiClass baseClass = baseRef.resolve();
-    if (baseClass == null) {
-      String message = JavaRefactoringBundle.message("error.cannot.resolve", baseRef.getCanonicalText());
-      showErrorMessage(editor, message);
-      return;
+      if (PsiUtil.isLocalClass(baseClass)) {
+        String message = JavaRefactoringBundle.message("error.not.supported.for.local",
+                                                       JavaRefactoringBundle.message("anonymousToInner.refactoring.name"));
+        showErrorMessage(editor, message);
+        return;
+      }
     }
 
-    if (PsiUtil.isLocalClass(baseClass)) {
-      String message = JavaRefactoringBundle.message("error.not.supported.for.local", getRefactoringName());
-      showErrorMessage(editor, message);
-      return;
-    }
-
-    PsiElement targetContainer = findTargetContainer(myAnonClass);
+    PsiElement targetContainer = findTargetContainer(myAnonOrLocalClass);
     if (FileTypeUtils.isInServerPageFile(targetContainer) && targetContainer instanceof PsiFile) {
-      String message = JavaRefactoringBundle.message("error.not.supported.for.jsp", getRefactoringName());
+      String message = JavaRefactoringBundle.message("error.not.supported.for.jsp",
+                                                     JavaRefactoringBundle.message("anonymousToInner.refactoring.name"));
       showErrorMessage(editor, message);
       return;
     }
@@ -116,7 +129,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, myTargetClass)) return;
 
     Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<>();
-    collectUsedVariables(variableInfoMap, myAnonClass);
+    if (!myAnonOrLocalClass.hasModifierProperty(PsiModifier.STATIC)) {
+      collectUsedVariables(variableInfoMap, myAnonOrLocalClass);
+    }
     final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[0]);
     myVariableInfos = infos;
     Arrays.sort(myVariableInfos,
@@ -135,7 +150,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
         };
         ApplicationManager.getApplication().runWriteAction(action);
       },
-      getRefactoringName(),
+      JavaRefactoringBundle.message("anonymousToInner.refactoring.name"),
       null
     );
 
@@ -144,27 +159,66 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   protected boolean showRefactoringDialog() {
     final boolean anInterface = myTargetClass.isInterface();
     final boolean needsThis = needsThis() || PsiUtil.isInnerClass(myTargetClass);
+    boolean showCanBeStatic = !needsThis && !anInterface && !myAnonOrLocalClass.hasModifierProperty(PsiModifier.STATIC);
     final AnonymousToInnerDialog dialog = new AnonymousToInnerDialog(
       myProject,
-      myAnonClass,
+      myAnonOrLocalClass,
       myVariableInfos,
-      !needsThis && !anInterface);
+      showCanBeStatic);
     if (!dialog.showAndGet()) {
       return false;
     }
     myNewClassName = dialog.getClassName();
     myVariableInfos = dialog.getVariableInfos();
-    myMakeStatic = !needsThis && (anInterface || dialog.isMakeStatic());
+    myMakeStatic = !myAnonOrLocalClass.hasModifierProperty(PsiModifier.STATIC) && !needsThis && (anInterface || dialog.isMakeStatic());
     return true;
   }
 
   private void doRefactoring() throws IncorrectOperationException {
     calculateTypeParametersToCreate();
-    ChangeContextUtil.encodeContextInfo(myAnonClass, false);
+    ChangeContextUtil.encodeContextInfo(myAnonOrLocalClass, false);
+    updateLocalClassConstructors(myAnonOrLocalClass);
     PsiClass innerClass = (PsiClass)myTargetClass.add(createClass(myNewClassName));
     ChangeContextUtil.decodeContextInfo(innerClass, myTargetClass, RefactoringChangeUtil.createThisExpression(myTargetClass.getManager(), myTargetClass));
-    
-    PsiNewExpression newExpr = (PsiNewExpression) myAnonClass.getParent();
+
+    if (myAnonOrLocalClass instanceof PsiAnonymousClass) {
+      migrateAnonymousClassCreation(innerClass);
+    } else {
+      migrateLocalClassReferences(innerClass);
+    }
+    collapseDiamonds(innerClass);
+  }
+
+  private void collapseDiamonds(PsiClass innerClass) {
+    for (PsiReference reference : ReferencesSearch.search(innerClass, new LocalSearchScope(myTargetClass)).findAll()) {
+      if (reference.getElement() instanceof PsiJavaCodeReferenceElement refElement && refElement.isValid()) {
+        PsiElement parent = refElement.getParent();
+        if (parent instanceof PsiAnonymousClass anonymousClass) {
+          parent = anonymousClass.getParent();
+        }
+        if (parent instanceof PsiNewExpression newExpression) {
+          PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
+          if (ref != null && PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, newExpression.getType())) {
+            RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(ref.getParameterList());
+          }
+        }
+      }
+    }
+  }
+
+  private void migrateLocalClassReferences(PsiClass innerClass) {
+    SearchScope scope = myAnonOrLocalClass.getUseScope();
+    Collection<PsiReference> refs = ReferencesSearch.search(myAnonOrLocalClass, scope).findAll();
+    myAnonOrLocalClass.delete();
+    for (PsiReference reference : refs) {
+      if (reference.getElement().isValid()) {
+        reference.bindToElement(innerClass);
+      }
+    }
+  }
+
+  private void migrateAnonymousClassCreation(PsiClass innerClass) {
+    PsiNewExpression newExpr = (PsiNewExpression) myAnonOrLocalClass.getParent();
     @NonNls StringBuilder buf = new StringBuilder();
     buf.append("new ");
     buf.append(innerClass.getName());
@@ -194,18 +248,18 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     buf.append(")");
     PsiNewExpression newClassExpression =
       (PsiNewExpression)JavaPsiFacade.getElementFactory(myManager.getProject()).createExpressionFromText(buf.toString(), null);
-    newClassExpression = (PsiNewExpression)newExpr.replace(newClassExpression);
-    if (PsiDiamondTypeUtil.canCollapseToDiamond(newClassExpression, newClassExpression, newClassExpression.getType())) {
-      RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(newClassExpression.getClassOrAnonymousClassReference().getParameterList());
-    }
+    newExpr.replace(newClassExpression);
   }
 
   @Nullable
-  public static PsiAnonymousClass findAnonymousClass(PsiFile file, int offset) {
+  private static PsiClass findClassToMove(PsiFile file, int offset) {
     PsiElement element = file.findElementAt(offset);
     while (element != null) {
       if (element instanceof PsiAnonymousClass anonymousClass) {
         return anonymousClass;
+      }
+      if (element instanceof PsiClass psiClass && PsiUtil.isLocalClass(psiClass)) {
+        return psiClass;
       }
       if (element instanceof PsiNewExpression newExpression && newExpression.getAnonymousClass() != null) {
         return newExpression.getAnonymousClass();
@@ -215,8 +269,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     return null;
   }
 
-  public static PsiElement findTargetContainer(PsiAnonymousClass anonClass) {
-    PsiElement parent = anonClass.getParent();
+  public static PsiElement findTargetContainer(PsiClass anonOrLocalClass) {
+    PsiElement parent = anonOrLocalClass.getParent();
     while (true) {
       if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
         return parent;
@@ -236,7 +290,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
           PsiElement refElement = expression.resolve();
           if (refElement instanceof PsiVariable var && !(refElement instanceof PsiField)) {
             final PsiClass containingClass = PsiTreeUtil.getParentOfType(var, PsiClass.class);
-            if (PsiTreeUtil.isAncestor(containingClass, myAnonClass, true)) {
+            if (PsiTreeUtil.isAncestor(containingClass, myAnonOrLocalClass, true)) {
               saveVariable(variableInfoMap, var, expression);
             }
           }
@@ -250,8 +304,8 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   public boolean needsThis() {
     if(cachedNeedsThis == null) {
 
-      ElementNeedsThis memberNeedsThis = new ElementNeedsThis(myTargetClass, myAnonClass);
-      myAnonClass.accept(memberNeedsThis);
+      ElementNeedsThis memberNeedsThis = new ElementNeedsThis(myTargetClass, myAnonOrLocalClass);
+      myAnonOrLocalClass.accept(memberNeedsThis);
       class HasExplicitThis extends JavaRecursiveElementWalkingVisitor {
         boolean hasExplicitThis;
         @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
@@ -262,8 +316,10 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
         }
       }
       final HasExplicitThis hasExplicitThis = new HasExplicitThis();
-      PsiExpressionList argList = myAnonClass.getArgumentList();
-      if (argList != null) argList.accept(hasExplicitThis);
+      if (myAnonOrLocalClass instanceof PsiAnonymousClass anonymousClass) {
+        PsiExpressionList argList = anonymousClass.getArgumentList();
+        if (argList != null) argList.accept(hasExplicitThis);
+      }
       cachedNeedsThis = memberNeedsThis.usesMembers() || hasExplicitThis.hasExplicitThis;
     }
     return cachedNeedsThis.booleanValue();
@@ -283,13 +339,15 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
 
   private boolean isUsedInInitializer(PsiElement usage) {
     PsiElement parent = usage.getParent();
-    while (!myAnonClass.equals(parent)) {
+    while (!myAnonOrLocalClass.equals(parent)) {
       if (parent instanceof PsiExpressionList expressionList) {
-        if (myAnonClass.equals(expressionList.getParent())) {
+        if (myAnonOrLocalClass.equals(expressionList.getParent())) {
           return true;
         }
-      } else if (parent instanceof PsiClassInitializer && myAnonClass.equals(((PsiClassInitializer)parent).getContainingClass())) {
-        //class initializers will be moved to constructor to be generated
+      } else if ((parent instanceof PsiClassInitializer || parent instanceof PsiField || 
+                  parent instanceof PsiMethod method && method.isConstructor())
+                 && myAnonOrLocalClass.equals(((PsiMember)parent).getContainingClass())) {
+        //class and field initializers will be moved to constructor to be generated
         return true;
       }
       parent = parent.getParent();
@@ -298,28 +356,63 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   }
 
   private PsiClass createClass(String name) throws IncorrectOperationException {
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myAnonClass.getProject());
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
-    final PsiNewExpression newExpression = (PsiNewExpression) myAnonClass.getParent();
-    final PsiMethod superConstructor = newExpression.resolveConstructor();
+    renameReferences(myAnonOrLocalClass);
+    updateSelfReferences(myAnonOrLocalClass, name);
 
-    PsiClass aClass = factory.createClass(name);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
+
+    PsiClass aClass;
+    if (myAnonOrLocalClass instanceof PsiAnonymousClass anonymousClass) {
+      aClass = createInnerFromAnonymous(name, anonymousClass, factory);
+    }
+    else {
+      aClass = createInnerFromLocal(name, factory);
+    }
     final PsiTypeParameterList typeParameterList = aClass.getTypeParameterList();
     LOG.assertTrue(typeParameterList != null);
     for (PsiTypeParameter typeParameter : myTypeParametersToCreate) {
-      typeParameterList.add((typeParameter));
+      typeParameterList.add(typeParameter);
     }
 
-    if (!myTargetClass.isInterface()) {
-      PsiUtil.setModifierProperty(aClass, PsiModifier.PRIVATE, true);
-      PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(myAnonClass, PsiModifierListOwner.class);
-      if (owner != null && owner.hasModifierProperty(PsiModifier.STATIC)) {
-        PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
-      }
-    } else {
-      PsiUtil.setModifierProperty(aClass, PsiModifier.PACKAGE_LOCAL, true);
+    setupModifiers(aClass);
+
+    if (myVariableInfos.length > 0) {
+      removeInitializers(aClass);
+      createFields(aClass);
     }
-    PsiJavaCodeReferenceElement baseClassRef = myAnonClass.getBaseClassReference();
+
+    if (myAnonOrLocalClass instanceof PsiAnonymousClass) {
+      createAnonymousClassConstructor(aClass);
+    }
+
+    PsiElement lastChild = aClass.getLastChild();
+    if (PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON)) {
+      lastChild.delete();
+    }
+
+    return aClass;
+  }
+
+  @NotNull
+  private PsiClass createInnerFromLocal(String name, PsiElementFactory factory) {
+    PsiClass aClass = (PsiClass)myAnonOrLocalClass.copy();
+    PsiIdentifier identifier = factory.createIdentifier(name);
+    Objects.requireNonNull(aClass.getNameIdentifier()).replace(identifier);
+    for (PsiMethod method : aClass.getMethods()) {
+      if (method.isConstructor()) {
+        PsiIdentifier methodName = method.getNameIdentifier();
+        if (methodName != null) {
+          methodName.replace(identifier);
+        }
+      }
+    }
+    return aClass;
+  }
+
+  @NotNull
+  private PsiClass createInnerFromAnonymous(String name, PsiAnonymousClass anonymousClass, PsiElementFactory factory) {
+    PsiClass aClass = factory.createClass(name);
+    PsiJavaCodeReferenceElement baseClassRef = anonymousClass.getBaseClassReference();
     final PsiReferenceParameterList parameterList = baseClassRef.getParameterList();
     if (parameterList != null) {
       final PsiTypeElement[] parameterElements = parameterList.getTypeParameterElements();
@@ -334,17 +427,106 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
                                  aClass.getExtendsList();
       if (refList != null) refList.add(baseClassRef);
     }
-
-    renameReferences(myAnonClass);
-    copyClassBody(myAnonClass, aClass, myVariableInfos.length > 0);
-
-    if (myVariableInfos.length > 0) {
-      createFields(aClass);
+    PsiElement lbrace = myAnonOrLocalClass.getLBrace();
+    PsiElement rbrace = myAnonOrLocalClass.getRBrace();
+    if (lbrace != null) {
+      aClass.addRange(lbrace.getNextSibling(), rbrace != null ? rbrace.getPrevSibling() : myAnonOrLocalClass.getLastChild());
     }
+    return aClass;
+  }
 
+  private void setupModifiers(@NotNull PsiClass aClass) {
+    if (!myTargetClass.isInterface()) {
+      PsiUtil.setModifierProperty(aClass, PsiModifier.PRIVATE, true);
+      PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(myAnonOrLocalClass, PsiModifierListOwner.class);
+      if (owner != null && owner.hasModifierProperty(PsiModifier.STATIC) || myMakeStatic) {
+        PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
+      }
+    } else {
+      PsiUtil.setModifierProperty(aClass, PsiModifier.PACKAGE_LOCAL, true);
+    }
+  }
+
+  private void updateSelfReferences(@NotNull PsiClass aClass, String name) {
+    if (aClass instanceof PsiAnonymousClass) return;
+    if (name.equals(aClass.getName()) && myTypeParametersToCreate.isEmpty()) return;
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
+    int origCount = aClass.getTypeParameters().length;
+    for (PsiReference reference : ReferencesSearch.search(aClass, aClass.getUseScope()).findAll()) {
+      reference.handleElementRename(name);
+      if (!myTypeParametersToCreate.isEmpty()) {
+        if (reference.getElement() instanceof PsiJavaCodeReferenceElement refElement &&
+            !(refElement.getParent() instanceof PsiTypeElement typeElement && 
+              typeElement.getParent() instanceof PsiClassObjectAccessExpression)) {
+          PsiReferenceParameterList list = PsiTreeUtil.getChildOfType(refElement, PsiReferenceParameterList.class);
+          // Do not modify broken or already raw parameter lists
+          if (list != null && list.getTypeArgumentCount() == origCount) {
+            for (PsiTypeParameter parameter : myTypeParametersToCreate) {
+              PsiTypeElement element = factory.createTypeElement(factory.createType(parameter));
+              list.add(element);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private void updateLocalClassConstructors(PsiClass aClass) {
+    if (aClass instanceof PsiAnonymousClass || myVariableInfos.length == 0) return;
+    PsiMethod[] constructors = aClass.getConstructors();
+    if (constructors.length == 0) {
+      constructors = new PsiMethod[]{AddDefaultConstructorFix.addDefaultConstructor(aClass)};
+    }
+    Map<PsiMethod, List<PsiNewExpression>> newExpressions = new HashMap<>();
+    for (PsiMethod constructor : constructors) {
+      newExpressions.put(constructor, new ArrayList<>());
+      if (constructor.isVarArgs()) {
+        VarargParameterInspection.convertVarargMethodToArray(constructor);
+      }
+    }
+    for (PsiReference reference : ReferencesSearch.search(aClass, aClass.getUseScope()).findAll()) {
+      if (reference.getElement().getParent() instanceof PsiMethodReferenceExpression methodRef && methodRef.isConstructor()) {
+        LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, false, true);
+      }      
+    }
+    for (PsiReference reference : ReferencesSearch.search(aClass, aClass.getUseScope()).findAll()) {
+      PsiElement parent = reference.getElement().getParent();
+      if (parent instanceof PsiAnonymousClass cls) {
+        parent = cls.getParent();
+      }
+      if (parent instanceof PsiNewExpression newExpression) {
+        PsiMethod method = newExpression.resolveConstructor();
+        List<PsiNewExpression> newList = newExpressions.get(method);
+        if (newList != null) {
+          newList.add(newExpression);
+        }
+      }
+    }
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
+    newExpressions.forEach((constructor, callSites) -> {
+      fillParameterList(constructor);
+      createAssignmentStatements(constructor);
+
+      appendInitializers(constructor);
+      for (PsiNewExpression callSite : callSites) {
+        PsiExpressionList arguments = callSite.getArgumentList();
+        if (arguments != null) {
+          for (VariableInfo info : myVariableInfos) {
+            arguments.add(factory.createExpressionFromText(Objects.requireNonNull(info.variable.getName()), arguments));
+          }
+        }
+      }
+    });
+  }
+
+  private void createAnonymousClassConstructor(@NotNull PsiClass aClass) {
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(myProject);
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myProject);
+    final PsiNewExpression newExpression = (PsiNewExpression) myAnonOrLocalClass.getParent();
     PsiExpressionList argList = newExpression.getArgumentList();
     assert argList != null;
     PsiExpression[] originalExpressions = argList.getExpressions();
+    final PsiMethod superConstructor = newExpression.resolveConstructor();
     final PsiReferenceList superConstructorThrowsList =
             superConstructor != null && superConstructor.getThrowsList().getReferencedTypes().length > 0
             ? superConstructor.getThrowsList()
@@ -367,16 +549,6 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
       constructor = (PsiMethod) codeStyleManager.reformat(constructor);
       aClass.add(constructor);
     }
-
-    if (!needsThis() && myMakeStatic && !myTargetClass.isInterface()) {
-      PsiUtil.setModifierProperty(aClass, PsiModifier.STATIC, true);
-    }
-    PsiElement lastChild = aClass.getLastChild();
-    if (PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON)) {
-      lastChild.delete();
-    }
-
-    return aClass;
   }
 
   private void appendInitializers(final PsiMethod constructor) throws IncorrectOperationException {
@@ -384,12 +556,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     assert constructorBody != null;
 
     List<PsiElement> toAdd = new ArrayList<>();
-    for (PsiClassInitializer initializer : myAnonClass.getInitializers()) {
+    for (PsiClassInitializer initializer : myAnonOrLocalClass.getInitializers()) {
       if (!initializer.hasModifierProperty(PsiModifier.STATIC)) {
         toAdd.add(initializer);
       }
     }
-    for (PsiField field : myAnonClass.getFields()) {
+    for (PsiField field : myAnonOrLocalClass.getFields()) {
       if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() != null) {
         toAdd.add(field);
       }
@@ -418,25 +590,16 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     }
   }
 
-  private static void copyClassBody(PsiClass sourceClass,
-                                    PsiClass targetClass,
-                                    boolean appendInitializersToConstructor) throws IncorrectOperationException {
-    PsiElement lbrace = sourceClass.getLBrace();
-    PsiElement rbrace = sourceClass.getRBrace();
-    if (lbrace != null) {
-      targetClass.addRange(lbrace.getNextSibling(), rbrace != null ? rbrace.getPrevSibling() : sourceClass.getLastChild());
-      if (appendInitializersToConstructor) {  //see SCR 41692
-        final PsiClassInitializer[] initializers = targetClass.getInitializers();
-        for (PsiClassInitializer initializer : initializers) {
-          if (!initializer.hasModifierProperty(PsiModifier.STATIC)) initializer.delete();
-        }
-        final PsiField[] fields = targetClass.getFields();
-        for (PsiField field : fields) {
-          PsiExpression initializer = field.getInitializer();
-          if (!field.hasModifierProperty(PsiModifier.STATIC) && initializer != null) {
-            initializer.delete();
-          }
-        }
+  private static void removeInitializers(PsiClass targetClass) {
+    final PsiClassInitializer[] initializers = targetClass.getInitializers();
+    for (PsiClassInitializer initializer : initializers) {
+      if (!initializer.hasModifierProperty(PsiModifier.STATIC)) initializer.delete();
+    }
+    final PsiField[] fields = targetClass.getFields();
+    for (PsiField field : fields) {
+      PsiExpression initializer = field.getInitializer();
+      if (!field.hasModifierProperty(PsiModifier.STATIC) && initializer != null) {
+        initializer.delete();
       }
     }
   }
@@ -566,23 +729,27 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
   }
 
   private void calculateTypeParametersToCreate () {
-    myAnonClass.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
+    JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
         final PsiElement resolved = reference.resolve();
-        if (resolved instanceof PsiTypeParameter) {
-          final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
-          if (owner != null && !PsiTreeUtil.isAncestor(myAnonClass, owner, false) && 
+        if (resolved instanceof PsiTypeParameter typeParameter) {
+          final PsiTypeParameterListOwner owner = typeParameter.getOwner();
+          if (owner != null && !PsiTreeUtil.isAncestor(myAnonOrLocalClass, owner, false) &&
               (CommonJavaRefactoringUtil.isInStaticContext(owner, myTargetClass) || myMakeStatic)) {
-            myTypeParametersToCreate.add((PsiTypeParameter)resolved);
+            myTypeParametersToCreate.add(typeParameter);
           }
         }
       }
-    });
-  }
-
-  static @NlsContexts.DialogTitle String getRefactoringName() {
-    return JavaRefactoringBundle.message("anonymousToInner.refactoring.name");
+    };
+    myAnonOrLocalClass.accept(visitor);
+    for (VariableInfo info : myVariableInfos) {
+      PsiTypeElement typeElement = info.variable.getTypeElement();
+      if (typeElement != null) {
+        typeElement.accept(visitor);
+      }
+    }
   }
 
   @Override
@@ -590,9 +757,9 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
     if (element instanceof PsiAnonymousClass anonymousClass) {
       myProject = project;
       myManager = PsiManager.getInstance(myProject);
-      myAnonClass = anonymousClass;
+      myAnonOrLocalClass = anonymousClass;
       myNewClassName = AnonymousToInnerDialog.suggestNewClassNames(anonymousClass)[0];
-      PsiElement targetContainer = findTargetContainer(myAnonClass);
+      PsiElement targetContainer = findTargetContainer(myAnonOrLocalClass);
       if (targetContainer instanceof PsiClass) {
         myTargetClass = (PsiClass)targetContainer;
       }
@@ -601,7 +768,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
       }
       myMakeStatic = !needsThis() && !myTargetClass.isInterface();
       Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<>();
-      collectUsedVariables(variableInfoMap, myAnonClass);
+      collectUsedVariables(variableInfoMap, myAnonOrLocalClass);
       myVariableInfos = variableInfoMap.values().toArray(new VariableInfo[0]);
       VariableData [] variableData = new VariableData[myVariableInfos.length];
       AnonymousToInnerDialog.fillVariableData(myProject, myVariableInfos, variableData);

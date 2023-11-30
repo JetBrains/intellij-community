@@ -1,7 +1,7 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.highlighter
 
 import com.intellij.cce.core.Session
-import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.report.ReportColors.Companion.getColor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import java.awt.Font
 
-class Highlighter(private val project: Project, private val suggestionsComparator: SuggestionsComparator) {
+class Highlighter(private val project: Project) {
   companion object {
     private val listenerKey = Key<HighlightersClickListener>("com.intellij.cce.highlighter.listener")
   }
@@ -38,7 +38,7 @@ class Highlighter(private val project: Project, private val suggestionsComparato
   }
 
   private fun addHighlight(editor: Editor, session: Session, begin: Int, end: Int) {
-    val color = getColor(session, HighlightColors, session.lookups.lastIndex, suggestionsComparator)
+    val color = getColor(session, HighlightColors, session.lookups.lastIndex)
     editor.markupModel.addRangeHighlighter(begin, end, HighlighterLayer.LAST,
                                            TextAttributes(null, color, null, EffectType.BOXED, Font.PLAIN),
                                            HighlighterTargetArea.EXACT_RANGE)

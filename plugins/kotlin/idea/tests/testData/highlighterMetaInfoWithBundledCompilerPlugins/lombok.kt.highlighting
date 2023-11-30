@@ -1,10 +1,12 @@
 // COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR/lombok_fake_plugin.jar
 // FILE: main.kt
+// CHECK_SYMBOL_NAMES
+// HIGHLIGHTER_ATTRIBUTES_KEY
 package test
 
-<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'")!>import<!> <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>JavaValueClass<!>
+<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>JavaValueClass<!>
 
-fun <!HIGHLIGHTING("textAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>(<!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>JavaValueClass<!>) {
-    val <!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>saved<!>: <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'")!>String<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_SYNTHETIC_EXTENSION_PROPERTY'")!>foo<!>
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_PARAMETER'")!>value<!>.<!HIGHLIGHTING("textAttributesKey='KOTLIN_SYNTHETIC_EXTENSION_PROPERTY'")!>bar<!> = <!HIGHLIGHTING("textAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>saved<!>
+fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_DECLARATION'")!>test<!>(<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>value<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>JavaValueClass<!>) {
+    val <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>saved<!>: <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>String<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>value<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_SYNTHETIC_EXTENSION_PROPERTY'")!>foo<!>
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_PARAMETER'")!>value<!>.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_MUTABLE_VARIABLE'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_SYNTHETIC_EXTENSION_PROPERTY'")!>bar<!> = <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LOCAL_VARIABLE'")!>saved<!>
 }

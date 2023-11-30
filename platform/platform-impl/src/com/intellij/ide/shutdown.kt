@@ -5,13 +5,15 @@ import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ModalTaskOwner
-import com.intellij.openapi.progress.TaskCancellation
 import com.intellij.openapi.progress.impl.pumpEventsForHierarchy
-import com.intellij.openapi.progress.runBlockingModal
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.io.blockingDispatcher
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import javax.swing.SwingUtilities
@@ -48,7 +50,7 @@ internal fun cancelAndJoinBlocking(application: ApplicationImpl) {
 
 internal fun cancelAndJoinBlocking(project: ProjectImpl) {
   cancelAndJoinBlocking(project.coroutineScope, debugString = "Project $project") { job, _ ->
-    runBlockingModal(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.closing.project"), TaskCancellation.nonCancellable()) {
       job.join()
     }
   }
@@ -71,9 +73,9 @@ internal fun cancelAndJoinBlocking(
   }
   LOG.trace("$debugString: waiting for scope completion")
   @OptIn(DelicateCoroutinesApi::class)
-  val dumpJob = GlobalScope.launch {
+  val dumpJob = GlobalScope.launch(@OptIn(IntellijInternalApi::class) blockingDispatcher) {
     delay(delayUntilCoroutineDump)
-    LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope)}")
+    LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope, stripDump = false)}")
   }
   try {
     joinBlocking(containerJob, dumpJob)

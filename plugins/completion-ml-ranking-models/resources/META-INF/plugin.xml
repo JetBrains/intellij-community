@@ -2,7 +2,7 @@
   <id>com.intellij.completion.ml.ranking.models</id>
   <name>Machine Learning Code Completion Models</name>
   <vendor>JetBrains</vendor>
-  <category>Other Tools</category>
+  <category>AI-Powered</category>
 
   <description><![CDATA[
       <p>The plugin contains experimental models for code completion based on machine learning.
@@ -28,5 +28,7 @@
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentDartMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentSwiftMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentCidrMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentalHTMLMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentalCSSMLRankingProvider"/>
   </extensions>
 </idea-plugin>

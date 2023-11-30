@@ -14,11 +14,13 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.DependencyScope
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.*
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
@@ -34,6 +36,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 abstract class AbstractSource {
     protected val body = StringBuilder()
@@ -197,6 +201,7 @@ class FunSource(val name: String) : AbstractSource() {
 
 class ModuleDescription(val moduleName: String) {
     private val modules = mutableListOf<ModuleDescription>()
+    private val moduleNameDependencies = mutableListOf<String>()
     private val libraries = mutableListOf<LibraryDescription>()
     private val kotlinFiles = mutableListOf<Pair<String, KotlinFileSource>>()
 
@@ -207,6 +212,10 @@ class ModuleDescription(val moduleName: String) {
     fun module(moduleName: String, moduleDescription: ModuleDescription.() -> Unit) {
         val description = ModuleDescription(moduleName).apply(moduleDescription)
         modules.add(description)
+    }
+
+    fun moduleDependency(moduleName: String) {
+        moduleNameDependencies.add(moduleName)
     }
 
     fun jdk(jdk: Sdk) {
@@ -276,6 +285,16 @@ class ModuleDescription(val moduleName: String) {
 
             for (library in libraries) {
                 library.addToModule(project, module)
+            }
+
+            with(ModuleRootManager.getInstance(module).modifiableModel) {
+                moduleNameDependencies.forEach { moduleNameDependency ->
+                    val moduleDependency =
+                        moduleManager.findModuleByName(moduleNameDependency) ?: error("no module '$moduleNameDependency'")
+                    println("adding $moduleNameDependency to ${module.name}")
+                    addModuleOrderEntry(moduleDependency)
+                }
+                commit()
             }
 
         }
@@ -396,7 +415,7 @@ class ProjectBuilder {
         val buildGradleKtsPath = buildGradleKts?.let { Paths.get(it) }
         buildGradleKtsPath?.let { buildGradlePath ->
             when {
-                buildGradlePath.isFile() -> buildGradlePath.copy(projectPath)
+                buildGradlePath.isRegularFile() -> buildGradlePath.copy(projectPath)
                 buildGradlePath.isDirectory() -> {
                     val buildGradleFile = listOf("build.gradle.kts", "build.gradle").map { buildGradlePath.resolve(it) }
                         .firstOrNull { it.exists() }
@@ -404,6 +423,7 @@ class ProjectBuilder {
 
                     buildGradleFile.copy(projectPath.resolve(buildGradleFile.fileName))
                 }
+
                 else -> error("illegal type of build gradle path: $buildGradlePath")
             }
         }
@@ -430,8 +450,10 @@ class ProjectBuilder {
 
     private fun createModules(project: Project) {
         if (buildGradleKts != null) return
-        for (module in modules) {
-            module.createModule(project)
+        runInEdtAndWait {
+            for (module in modules) {
+                module.createModule(project)
+            }
         }
     }
 

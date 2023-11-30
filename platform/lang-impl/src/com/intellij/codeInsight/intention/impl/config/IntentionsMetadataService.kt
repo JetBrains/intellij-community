@@ -26,14 +26,13 @@ internal class IntentionsMetadataService {
   }
 
   // guarded by this
-  private val extensionMetaMap: MutableMap<IntentionActionBean, IntentionActionMetaData>
+  private val extensionMetaMap: MutableMap<IntentionActionBean, IntentionActionMetaData> =
+    LinkedHashMap(IntentionManagerImpl.EP_INTENTION_ACTIONS.point.size())
 
   // guarded by this, used only for legacy programmatically registered intentions
-  private val dynamicRegistrationMeta: MutableList<IntentionActionMetaData>
+  private val dynamicRegistrationMeta: MutableList<IntentionActionMetaData> = ArrayList()
 
   init {
-    dynamicRegistrationMeta = ArrayList()
-    extensionMetaMap = LinkedHashMap(IntentionManagerImpl.EP_INTENTION_ACTIONS.point.size())
     IntentionManagerImpl.EP_INTENTION_ACTIONS.forEachExtensionSafe { registerMetaDataForEp(it) }
     IntentionManagerImpl.EP_INTENTION_ACTIONS.addExtensionPointListener(object : ExtensionPointListener<IntentionActionBean> {
       override fun extensionAdded(extension: IntentionActionBean, pluginDescriptor: PluginDescriptor) {
@@ -56,7 +55,7 @@ internal class IntentionsMetadataService {
     val instance = IntentionActionWrapper(extension)
     val descriptionDirectoryName = extension.getDescriptionDirectoryName() ?: instance.descriptionDirectoryName
     val metadata = try {
-      IntentionActionMetaData(instance, extension.loaderForClass, categories, descriptionDirectoryName)
+      IntentionActionMetaData(instance, extension.loaderForClass, categories, descriptionDirectoryName, extension.skipBeforeAfter)
     }
     catch (ignore: ExtensionNotApplicableException) {
       return
@@ -77,7 +76,7 @@ internal class IntentionsMetadataService {
     else {
       intentionAction.javaClass.classLoader
     }
-    val metadata = IntentionActionMetaData(intentionAction, classLoader, category, descriptionDirectoryName)
+    val metadata = IntentionActionMetaData(intentionAction, classLoader, category, descriptionDirectoryName, false)
     synchronized(this) {
       // not added as searchable option - this method is deprecated and intentionAction extension point must be used instead
       dynamicRegistrationMeta.add(metadata)

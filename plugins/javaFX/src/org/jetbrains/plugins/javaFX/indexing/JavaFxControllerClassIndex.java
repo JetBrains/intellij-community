@@ -29,8 +29,8 @@ import java.util.*;
 
 public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
   @NonNls public static final ID<String, Void> NAME = ID.create("JavaFxControllerClassIndex");
-  private final MyInputFilter myInputFilter = new MyInputFilter();
-  private final MyDataIndexer myDataIndexer = new MyDataIndexer();
+  private static final MyInputFilter myInputFilter = new MyInputFilter();
+  private static final MyDataIndexer myDataIndexer = new MyDataIndexer();
 
   @Override
   @NotNull
@@ -66,7 +66,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
     return 1;
   }
 
-  private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
+  private static final class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
     @Override
     @NotNull
     public Map<String, Void> map(@NotNull final FileContent inputData) {
@@ -109,7 +109,7 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
     }
   }
 
-  public static class MyInputFilter extends DefaultFileTypeSpecificInputFilter {
+  public static final class MyInputFilter extends DefaultFileTypeSpecificInputFilter {
     public MyInputFilter() {
       super(XmlFileType.INSTANCE);
     }

@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
@@ -11,13 +12,25 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.TracerLevel;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import static com.intellij.openapi.progress.impl.ProgressManagerScopeKt.ProgressManagerScope;
+
 public class BackgroundableProcessIndicator extends ProgressWindow {
+  private static final Logger LOG = Logger.getInstance(BackgroundableProcessIndicator.class);
+
+  private static final IJTracer myProgressManagerTracer = TelemetryManager.getInstance().getTracer(ProgressManagerScope);
+
+  private Span mySpan;
+
   private StatusBarEx myStatusBar;
 
   private TaskInfo myInfo;
@@ -52,7 +65,7 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
     myInfo = info;
     myStatusBar = statusBarOverride;
     myBackgrounded = true;
-    UIUtil.invokeLaterIfNeeded(() -> initializeStatusBar());
+    EdtInvocationManager.invokeLaterIfNeeded(this::initializeStatusBar);
   }
 
   @RequiresEdt
@@ -73,6 +86,10 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
       Project nonDefaultProject = myProject == null || myProject.isDisposed() || myProject.isDefault() ? null : myProject;
       IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject);
       myStatusBar = frame != null ? (StatusBarEx)frame.getStatusBar() : null;
+      if (myStatusBar == null && LOG.isDebugEnabled()) {
+        LOG.debug("No status bar for [" + this + "], progress will be displayed in a popup\nproject:" + myProject + "\nframe:" + frame,
+                  new Throwable());
+      }
     }
     doBackground(myStatusBar);
   }
@@ -82,24 +99,23 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
    */
   @Deprecated
   public BackgroundableProcessIndicator(@Nullable Project project,
-                                        @NlsContexts.ProgressTitle final String progressTitle,
+                                        final @NlsContexts.ProgressTitle String progressTitle,
                                         @NotNull PerformInBackgroundOption option,
-                                        @Nullable @NlsContexts.Button final String cancelButtonText,
-                                        @NlsContexts.Tooltip final String backgroundStopTooltip,
+                                        final @Nullable @NlsContexts.Button String cancelButtonText,
+                                        final @NlsContexts.Tooltip String backgroundStopTooltip,
                                         final boolean cancellable) {
     this(project, progressTitle, cancelButtonText, backgroundStopTooltip, cancellable);
   }
 
   public BackgroundableProcessIndicator(@Nullable Project project,
-                                        @NlsContexts.ProgressTitle final String progressTitle,
-                                        @Nullable @NlsContexts.Button final String cancelButtonText,
-                                        @NlsContexts.Tooltip final String backgroundStopTooltip,
+                                        final @NlsContexts.ProgressTitle String progressTitle,
+                                        final @Nullable @NlsContexts.Button String cancelButtonText,
+                                        final @NlsContexts.Tooltip String backgroundStopTooltip,
                                         final boolean cancellable) {
     this(project, new TaskInfo() {
 
       @Override
-      @NotNull
-      public String getTitle() {
+      public @NotNull String getTitle() {
         return progressTitle;
       }
 
@@ -118,6 +134,20 @@ public class BackgroundableProcessIndicator extends ProgressWindow {
         return cancellable;
       }
     });
+  }
+
+  @Override
+  public void start() {
+    mySpan = myProgressManagerTracer.spanBuilder("Progress: " + this.myInfo.getTitle(), TracerLevel.DEFAULT).startSpan();
+    super.start();
+  }
+
+  @Override
+  public void finish(@NotNull TaskInfo task) {
+    super.finish(task);
+    if(mySpan != null) {
+      mySpan.end();
+    }
   }
 
   @Override

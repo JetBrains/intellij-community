@@ -7,3 +7,4 @@ class A {
     }
     fun test(x: Any) = x is B.C<caret>.D
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddStartProjectionsForInnerClass

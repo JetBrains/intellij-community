@@ -10,3 +10,5 @@ fun <T> newFun(){}
 fun foo() {
     <caret>oldFun<kotlin.Int>()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

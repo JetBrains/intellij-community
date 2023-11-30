@@ -6,6 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -33,6 +34,8 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
                                                      PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                      PyElementTypes.LIST_COMP_EXPRESSION,
                                                      PyElementTypes.TUPLE_EXPRESSION);
+
+  public static final String PYTHON_TYPE_ANNOTATION_GROUP_NAME = "Python type annotation";
 
   @Override
   protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
@@ -64,6 +67,13 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     }
     else if (elementType == PyTokenTypes.END_OF_LINE_COMMENT) {
       foldSequentialComments(node, descriptors);
+    }
+    else if (elementType == PyElementTypes.ANNOTATION) {
+      var annotation = node.getPsi();
+      if (annotation instanceof PyAnnotation pyAnnotation && pyAnnotation.getValue() != null) {
+        descriptors.add(new FoldingDescriptor(node, pyAnnotation.getValue().getTextRange(),
+                                              FoldingGroup.newGroup(PYTHON_TYPE_ANNOTATION_GROUP_NAME)));
+      }
     }
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
@@ -220,7 +230,8 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
     if (isImport(node)) {
       return CodeFoldingSettings.getInstance().COLLAPSE_IMPORTS;
     }
-    if (node.getElementType() == PyElementTypes.STRING_LITERAL_EXPRESSION) {
+    var elementType = node.getElementType();
+    if (elementType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
       if (getDocStringOwnerType(node) == PyElementTypes.FUNCTION_DECLARATION && CodeFoldingSettings.getInstance().COLLAPSE_METHODS) {
         // method will be collapsed, no need to also collapse docstring
         return false;
@@ -230,13 +241,16 @@ public class PythonFoldingBuilder extends CustomFoldingBuilder implements DumbAw
       }
       return PythonFoldingSettings.getInstance().isCollapseLongStrings();
     }
-    if (node.getElementType() == PyTokenTypes.END_OF_LINE_COMMENT) {
+    if (elementType == PyTokenTypes.END_OF_LINE_COMMENT) {
       return PythonFoldingSettings.getInstance().isCollapseSequentialComments();
     }
-    if (node.getElementType() == PyElementTypes.STATEMENT_LIST && node.getTreeParent().getElementType() == PyElementTypes.FUNCTION_DECLARATION) {
+    if (elementType == PyElementTypes.ANNOTATION) {
+      return PythonFoldingSettings.getInstance().isCollapseTypeAnnotations();
+    }
+    if (elementType == PyElementTypes.STATEMENT_LIST && node.getTreeParent().getElementType() == PyElementTypes.FUNCTION_DECLARATION) {
       return CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
     }
-    if (FOLDABLE_COLLECTIONS_LITERALS.contains(node.getElementType())) {
+    if (FOLDABLE_COLLECTIONS_LITERALS.contains(elementType)) {
       return PythonFoldingSettings.getInstance().isCollapseLongCollections();
     }
     return false;

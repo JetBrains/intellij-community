@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.execution.actions.*;
@@ -23,6 +23,7 @@ import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointListener;
@@ -33,7 +34,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,6 +60,8 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static java.util.Collections.emptyList;
 
 public final class ExecutorRegistryImpl extends ExecutorRegistry {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
@@ -112,7 +114,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     if (executor instanceof ExecutorGroup<?> executorGroup) {
       ActionGroup toolbarActionGroup = new SplitButtonAction(new ExecutorGroupActionGroup(executorGroup, ExecutorAction::new));
       Presentation presentation = toolbarActionGroup.getTemplatePresentation();
-      presentation.setIcon(executor.getIcon());
+      presentation.setIconSupplier(executor::getIcon);
       presentation.setText(executor.getStartActionText());
       presentation.setDescription(executor.getDescription());
       toolbarAction = toolbarActionGroup;
@@ -272,6 +274,13 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       if (executorId.equals(executor.getId())) {
         return executor;
       }
+      else if (executor instanceof ExecutorGroup<?> && executorId.startsWith(executor.getId())) {
+        for (Executor child : ((ExecutorGroup<?>)executor).childExecutors()) {
+          if (executorId.equals(child.getId())) {
+            return child;
+          }
+        }
+      }
     }
     return null;
   }
@@ -288,21 +297,15 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  public enum ExecutorActionStatus {
-    NORMAL,
-    LOADING,
-    RUNNING
-  }
-
-  public static final Key<ExecutorActionStatus> EXECUTOR_ACTION_STATUS = Key.create("EXECUTOR_ACTION_STATUS");
-
-  public static class ExecutorAction extends AnAction implements DumbAware {
+  public static class ExecutorAction extends AnAction implements DumbAware,
+                                                                 ActionRemotePermissionRequirements.RunAccess {
     private static final Key<RunCurrentFileInfo> CURRENT_FILE_RUN_CONFIGS_KEY = Key.create("CURRENT_FILE_RUN_CONFIGS");
 
     protected final Executor myExecutor;
 
     protected ExecutorAction(@NotNull Executor executor) {
-      super(executor.getStartActionText(), executor.getDescription(), IconLoader.createLazy(() -> executor.getIcon()));
+      super(executor::getStartActionText, executor::getDescription, executor::getIcon);
+
       myExecutor = executor;
     }
 
@@ -314,6 +317,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
+      presentation.putClientProperty(ExecutorActionStatus.KEY, null); // by default
       Project project = e.getProject();
       if (project == null || !project.isInitialized() || project.isDisposed()) {
         presentation.setEnabled(false);
@@ -322,6 +326,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
       RunnerAndConfigurationSettings selectedSettings = getSelectedConfiguration(e);
       boolean enabled = false;
+      ExecutorActionStatus actionStatus = null;
       boolean runConfigAsksToHideDisabledExecutorButtons = false;
       String text;
       if (selectedSettings != null) {
@@ -330,34 +335,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
           return;
         }
 
-        // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
-        if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
-          RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
-
-          boolean isLoading = startHistory.firstOrNull(selectedSettings, it ->
-            (it.getExecutorId().equals(myExecutor.getId()) && it.getState() == RunState.SCHEDULED)
-          ) != null;
-          if (isLoading) {
-            presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.LOADING);
-            SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
-            if (spinningIcon == null) {
-              spinningIcon = new SpinningProgressIcon();
-              spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.ICON_COLOR);
-              presentation.putClientProperty(spinningIconKey, spinningIcon);
-            }
-            presentation.setDisabledIcon(spinningIcon);
-          } else {
-            if (!getRunningDescriptors(project, selectedSettings).isEmpty()) {
-              presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.RUNNING);
-            }
-            else {
-              presentation.putClientProperty(EXECUTOR_ACTION_STATUS, ExecutorActionStatus.NORMAL);
-            }
-            presentation.putClientProperty(spinningIconKey, null);
-            presentation.setDisabledIcon(null);
-          }
-        }
-
+        actionStatus = setupActionStatus(e, project, selectedSettings, presentation);
         presentation.setIcon(getInformativeIcon(project, selectedSettings, e));
         RunConfiguration configuration = selectedSettings.getConfiguration();
         if (!isSuppressed(project)) {
@@ -386,6 +364,12 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       else {
         if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
           RunCurrentFileActionStatus status = getRunCurrentFileActionStatus(e, false);
+          for (RunnerAndConfigurationSettings config : status.myRunConfigs) {
+            actionStatus = setupActionStatus(e, project, config, presentation);
+            if (actionStatus != ExecutorActionStatus.NORMAL) {
+              break;
+            }
+          }
           enabled = status.myEnabled;
           text = status.myTooltip;
           presentation.setIcon(status.myIcon);
@@ -395,7 +379,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       }
 
-      if (runConfigAsksToHideDisabledExecutorButtons || hideDisabledExecutorButtons()) {
+      if (actionStatus != ExecutorActionStatus.LOADING && (runConfigAsksToHideDisabledExecutorButtons || hideDisabledExecutorButtons())) {
         presentation.setEnabledAndVisible(enabled);
       }
       else {
@@ -405,7 +389,39 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       if (presentation.isVisible()) {
         presentation.setVisible(myExecutor.isApplicable(project));
       }
+      presentation.putClientProperty(ExecutorActionStatus.KEY, actionStatus);
       presentation.setText(text);
+    }
+
+    private ExecutorActionStatus setupActionStatus(@NotNull AnActionEvent e,
+                                                   Project project,
+                                                   RunnerAndConfigurationSettings selectedSettings,
+                                                   Presentation presentation) {
+      // We can consider to add spinning to the inlined run actions. But there is a problem with redrawing
+      ExecutorActionStatus status = ExecutorActionStatus.NORMAL;
+      if (ActionPlaces.NEW_UI_RUN_TOOLBAR.equals(e.getPlace())) {
+        RunStatusHistory startHistory = RunStatusHistory.getInstance(project);
+
+        boolean isLoading = startHistory.firstOrNull(selectedSettings, it -> (it.getExecutorId().equals(myExecutor.getId()) &&
+                                                                              it.getState() == RunState.SCHEDULED)) != null;
+        if (isLoading) {
+          status = ExecutorActionStatus.LOADING;
+          SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
+          if (spinningIcon == null) {
+            spinningIcon = new SpinningProgressIcon();
+            spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.ICON_COLOR);
+            presentation.putClientProperty(spinningIconKey, spinningIcon);
+          }
+          presentation.setDisabledIcon(spinningIcon);
+        } else {
+          if (!getRunningDescriptors(project, selectedSettings).isEmpty()) {
+            status = ExecutorActionStatus.RUNNING;
+          }
+          presentation.putClientProperty(spinningIconKey, null);
+          presentation.setDisabledIcon(null);
+        }
+      }
+      return status;
     }
 
     protected boolean hideDisabledExecutorButtons() {
@@ -414,9 +430,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
     private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull AnActionEvent e, boolean resetCache) {
       Project project = Objects.requireNonNull(e.getProject());
-      if (DumbService.isDumb(project)) {
-        return RunCurrentFileActionStatus.createDisabled(myExecutor.getStartActionText(), myExecutor.getIcon());
-      }
 
       VirtualFile[] files = FileEditorManager.getInstance(project).getSelectedFiles();
       if (files.length == 1) {
@@ -509,7 +522,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         List<RunnerAndConfigurationSettings> runConfigs =
           configurationsFromContext != null
           ? ContainerUtil.map(configurationsFromContext, ConfigurationFromContext::getConfigurationSettings)
-          : Collections.emptyList();
+          : emptyList();
 
         VirtualFile vFile = psiFile.getVirtualFile();
         String filePath = vFile != null ? vFile.getPath() : null;
@@ -571,10 +584,11 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       return !configuration.isAllowRunningInParallel() && !runningDescriptors.isEmpty();
     }
 
-    @NotNull
-    private List<RunContentDescriptor> getRunningDescriptors(@NotNull Project project,
-                                                      @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
-      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(project);
+    private @NotNull List<RunContentDescriptor> getRunningDescriptors(@NotNull Project project,
+                                                                      @NotNull RunnerAndConfigurationSettings selectedConfiguration) {
+      ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstanceIfCreated(project);
+      if (executionManager == null) return emptyList();
+
       List<RunContentDescriptor> runningDescriptors =
         executionManager.getRunningDescriptors(s -> ExecutionManagerImplKt.isOfSameType(s, selectedConfiguration));
       runningDescriptors = ContainerUtil.filter(runningDescriptors, descriptor -> executionManager.getExecutors(descriptor).contains(myExecutor));
@@ -659,7 +673,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  public static class RunSpecifiedConfigExecutorAction extends ExecutorAction {
+  public static final class RunSpecifiedConfigExecutorAction extends ExecutorAction {
     private final RunnerAndConfigurationSettings myRunConfig;
     private final boolean myEditConfigBeforeRun;
 
@@ -739,7 +753,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  public static class EditRunConfigAndRunCurrentFileExecutorAction extends RunCurrentFileExecutorAction {
+  public static final class EditRunConfigAndRunCurrentFileExecutorAction extends RunCurrentFileExecutorAction {
     public EditRunConfigAndRunCurrentFileExecutorAction(@NotNull Executor executor) {
       super(executor);
     }
@@ -772,7 +786,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  private static class RunCurrentFileInfo {
+  private static final class RunCurrentFileInfo {
     private final long myPsiModCount;
     private final @NotNull List<RunnerAndConfigurationSettings> myRunConfigs;
 
@@ -791,6 +805,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                                        @NotNull Function<? super Executor, ? extends AnAction> childConverter) {
       myExecutorGroup = executorGroup;
       myChildConverter = childConverter;
+      Presentation presentation = getTemplatePresentation();
+      presentation.setText(executorGroup.getStartActionText());
+      presentation.setIconSupplier(executorGroup::getIcon);
     }
 
     @Override
@@ -905,7 +922,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
-  private static class RunCurrentFileActionStatus {
+  private static final class RunCurrentFileActionStatus {
     private final boolean myEnabled;
     private final @Nls @NotNull String myTooltip;
     private final @NotNull Icon myIcon;
@@ -913,7 +930,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
     private final @NotNull List<RunnerAndConfigurationSettings> myRunConfigs;
 
     private static RunCurrentFileActionStatus createDisabled(@Nls @NotNull String tooltip, @NotNull Icon icon) {
-      return new RunCurrentFileActionStatus(false, tooltip, icon, Collections.emptyList());
+      return new RunCurrentFileActionStatus(false, tooltip, icon, emptyList());
     }
 
     private static RunCurrentFileActionStatus createEnabled(@Nls @NotNull String tooltip,

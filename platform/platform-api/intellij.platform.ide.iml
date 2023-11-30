@@ -31,5 +31,9 @@
     <orderEntry type="module" module-name="intellij.platform.remote.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" exported="" />
   </component>
 </module>

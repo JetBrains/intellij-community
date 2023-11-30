@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationScript.inspection
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl
@@ -32,7 +33,7 @@ internal class ExternallyConfigurableProjectInspectionProfileManager(project: Pr
     val profile = InspectionProfileImpl("intellij configuration file", InspectionToolRegistrar.getInstance(), this)
     if (disableAll) {
       for (entry in profile.getInspectionTools(null)) {
-        profile.setToolEnabled(entry.shortName, false, project, fireEvents = false)
+        profile.setToolEnabled(entry.shortName, false, project, /*fireEvents =*/ false)
       }
       profile.disableAllTools(project)
     }
@@ -54,17 +55,15 @@ internal class ExternallyConfigurableProjectInspectionProfileManager(project: Pr
   private fun updateTools(list: List<Node>, value: Boolean, profile: InspectionProfileImpl, project: Project) {
     for (node in list) {
       if (node is ScalarNode) {
-        profile.setToolEnabled(node.value, value, project, fireEvents = false)
+        profile.setToolEnabled(node.value, value, project, /*fireEvents =*/ false)
       }
     }
   }
 
-  override fun getProfiles(): Collection<InspectionProfileImpl> {
-    profileFromFile.value?.let {
-      return listOf(it)
-    }
-    return super.getProfiles()
-  }
+  override fun getProfiles(): Collection<InspectionProfileImpl> =
+    profileFromFile.value?.let { listOf(it) }
+    ?: super.getProfiles()
 
-  override fun getCurrentProfile(): InspectionProfileImpl = profileFromFile.value ?: super.getCurrentProfile()
+  override fun getCurrentProfile(): InspectionProfileImpl =
+    profileFromFile.value ?: super.getCurrentProfile()
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.statistics;
 
 import org.jetbrains.annotations.NonNls;
@@ -27,7 +13,7 @@ import java.util.List;
  * Each info consists of "context" and "value", and the manager tracks per each "context", how many times a "value"
  * has occurred in that context and in which order.
  */
-public class StatisticsInfo {
+public final class StatisticsInfo {
   /**
    * A special value meaning that no statistics should be tracked.
    */
@@ -37,7 +23,7 @@ public class StatisticsInfo {
   private final String myValue;
   private final List<StatisticsInfo> myConjuncts;
 
-  public StatisticsInfo(@NonNls @NotNull final String context, @NonNls @NotNull final String value) {
+  public StatisticsInfo(final @NonNls @NotNull String context, final @NonNls @NotNull String value) {
     myContext = context;
     myValue = value;
     myConjuncts = Collections.singletonList(this);
@@ -61,13 +47,11 @@ public class StatisticsInfo {
     return new StatisticsInfo(conjuncts.get(0).getContext(), conjuncts.get(0).getValue(), flattened);
   }
 
-  @NotNull
-  public String getContext() {
+  public @NotNull String getContext() {
     return myContext;
   }
 
-  @NotNull
-  public String getValue() {
+  public @NotNull String getValue() {
     return myValue;
   }
 

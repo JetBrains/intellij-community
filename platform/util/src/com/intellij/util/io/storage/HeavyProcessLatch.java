@@ -3,8 +3,6 @@ package com.intellij.util.io.storage;
 
 import com.intellij.UtilBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
@@ -12,22 +10,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.EventListener;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Allows tracking some operations as "heavy" and querying their execution status.
  * Typically, some threads call {@link #performOperation} to execute heavy operation (heavy operations can be arbitrarily interleaved).
- * Some other threads then call {@link #isRunning()} and others to query for heavy operations running in background.
+ * Some other threads then call {@link #isRunning()} and others to query for heavy operations running in a background.
  */
 public final class HeavyProcessLatch {
-  private static final Logger LOG = Logger.getInstance(HeavyProcessLatch.class);
-
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
   private final List<Operation> myHeavyProcesses = ContainerUtil.createLockFreeCopyOnWriteList();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
-  private final Queue<Runnable> myExecuteOutOfHeavyActivity = new ConcurrentLinkedQueue<>();
 
   private HeavyProcessLatch() { }
 
@@ -51,22 +47,6 @@ public final class HeavyProcessLatch {
     }
   }
 
-  /** @deprecated use {@link #performOperation} instead */
-  @Deprecated
-  public @NotNull AccessToken processStarted(@NotNull @Nls String displayName) {
-    Op op = new Op(Type.Processing, displayName);
-    myHeavyProcesses.add(op);
-    myEventDispatcher.getMulticaster().processStarted(op);
-    return new AccessToken() {
-      @Override
-      public void finish() {
-        myEventDispatcher.getMulticaster().processFinished(op);
-        myHeavyProcesses.remove(op);
-        executeHandlers();
-      }
-    };
-  }
-
   /**
    * Executes {@code runnable} as a heavy operation. E.g., during this method execution, {@link #isRunning()} returns true.
    */
@@ -80,21 +60,6 @@ public final class HeavyProcessLatch {
     finally {
       myHeavyProcesses.remove(op);
       myEventDispatcher.getMulticaster().processFinished(op);
-      executeHandlers();
-    }
-  }
-
-  private void executeHandlers() {
-    if (!isRunning()) {
-      Runnable runnable;
-      while ((runnable = myExecuteOutOfHeavyActivity.poll()) != null) {
-        try {
-          runnable.run();
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
     }
   }
 
@@ -155,18 +120,6 @@ public final class HeavyProcessLatch {
 
   public void addListener(@NotNull Disposable parentDisposable, @NotNull HeavyProcessListener listener) {
     myEventDispatcher.addListener(listener, parentDisposable);
-  }
-
-  /**
-   * schedules {@code runnable} to be executed when all heavy operations are finished (i.e., when {@link #isRunning()} returned false)
-   */
-  public void queueExecuteOutOfHeavyProcess(@NotNull Runnable runnable) {
-    if (isRunning()) {
-      myExecuteOutOfHeavyActivity.add(runnable);
-    }
-    else {
-      runnable.run();
-    }
   }
 
   private static final class Op implements Operation {

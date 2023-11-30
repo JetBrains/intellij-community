@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.renderer.render
 
 /**
  * Add a new annotation to the declaration or expression, or modify an existing annotation. Uses [analyze].
@@ -34,40 +33,41 @@ fun KtModifierListOwner.addAnnotation(
     whiteSpaceText: String = "\n",
     addToExistingAnnotation: ((KtAnnotationEntry) -> Boolean)? = null
 ): Boolean {
-    val annotationText = buildString {
-        append('@')
-        if (useSiteTarget != null) append("${useSiteTarget.renderName}:")
-        append(annotationClassId.asSingleFqName().render())
-        if (annotationInnerText != null) append("($annotationInnerText)")
-    }
+    val searchForExistingEntryFn: (KtAnnotated) -> KtAnnotationEntry? =
+        { annotated -> if (searchForExistingEntry) annotated.findAnnotation(annotationClassId, useSiteTarget) else null }
 
-    val psiFactory = KtPsiFactory(project)
-    val modifierList = modifierList
-
-    if (modifierList == null) {
-        val addedAnnotation = addAnnotationEntry(psiFactory.createAnnotationEntry(annotationText))
-        ShortenReferencesFacility.getInstance().shorten(addedAnnotation)
-        return true
-    }
-
-    val entry = if (searchForExistingEntry) findAnnotation(annotationClassId, useSiteTarget) else null
-    if (entry == null) {
-        // no annotation
-        val newAnnotation = psiFactory.createAnnotationEntry(annotationText)
-        val addedAnnotation = modifierList.addBefore(newAnnotation, modifierList.firstChild) as KtElement
-        val whiteSpace = psiFactory.createWhiteSpace(whiteSpaceText)
-        modifierList.addAfter(whiteSpace, addedAnnotation)
-
-        ShortenReferencesFacility.getInstance().shorten(addedAnnotation)
-        return true
-    }
-
-    if (addToExistingAnnotation != null) {
-        return addToExistingAnnotation(entry)
-    }
-
-    return false
+    return AnnotationModificationHelper.addAnnotation(
+        this,
+        annotationClassId.asSingleFqName(),
+        annotationInnerText,
+        useSiteTarget,
+        searchForExistingEntryFn,
+        whiteSpaceText,
+        addToExistingAnnotation
+    )
 }
+
+fun KtElement.addAnnotation(annotationClassId: ClassId, annotationInnerText: String? = null, searchForExistingEntry: Boolean) {
+    when (this) {
+        is KtModifierListOwner -> addAnnotation(annotationClassId, annotationInnerText, searchForExistingEntry = searchForExistingEntry)
+        else -> {
+            val annotationText = AnnotationModificationHelper.buildAnnotationText(annotationClassId.asSingleFqName(), annotationInnerText)
+
+            val placeholderText = "ORIGINAL_ELEMENT_WILL_BE_INSERTED_HERE"
+            val annotatedExpression = KtPsiFactory(project).createExpression(annotationText + "\n" + placeholderText)
+
+            val copy = this.copy()
+
+            val afterReplace = this.replace(annotatedExpression) as KtAnnotatedExpression
+            val annotationEntry = afterReplace.annotationEntries.first()
+            val toReplace = afterReplace.findElementAt(afterReplace.textLength)!!
+            check(toReplace.text == placeholderText)
+            toReplace.replace(copy)
+            ShortenReferencesFacility.getInstance().shorten(annotationEntry)
+        }
+    }
+}
+
 
 fun KtAnnotated.findAnnotation(
     annotationClassId: ClassId,

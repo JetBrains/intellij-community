@@ -40,7 +40,7 @@ public final class JUnit4TestRunnerUtil {
             if (packageName == null) return null;
 
             final String categoryName = reader.readLine();
-            final Class<?> category = categoryName != null && categoryName.length() > 0 ? loadTestClass(categoryName) : null;
+            final Class<?> category = categoryName != null && !categoryName.isEmpty() ? loadTestClass(categoryName) : null;
             final String filters = reader.readLine();
 
             String line;
@@ -59,7 +59,7 @@ public final class JUnit4TestRunnerUtil {
               }
               appendTestClass(result, className);
             }
-            String suiteName = packageName.length() == 0 ? "<default package>" : packageName;
+            String suiteName = packageName.isEmpty() ? "<default package>" : packageName;
             Class<?>[] classes = getArrayOfClasses(result);
             if (classes.length == 0) {
               System.out.println(TestRunnerUtil.testsFoundInPackageMessage(0, suiteName));

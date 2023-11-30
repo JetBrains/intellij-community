@@ -1,21 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements
 
+import com.intellij.java.workspace.entities.ModuleSourcePackagingElementEntity
 import com.intellij.openapi.module.ModulePointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.elements.PackagingElementOutputKind
 import com.intellij.packaging.elements.PackagingElementResolvingContext
-import com.intellij.packaging.impl.artifacts.workspacemodel.mutableElements
+import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.mutableElements
 import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation
 import com.intellij.packaging.impl.ui.ModuleElementPresentation
 import com.intellij.packaging.ui.ArtifactEditorContext
 import com.intellij.packaging.ui.PackagingElementPresentation
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleSourcePackagingElementEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
@@ -46,10 +46,12 @@ class ProductionModuleSourcePackagingElement : ModulePackagingElementBase {
 
     val moduleName = this.moduleName
     val addedEntity = if (moduleName != null) {
-      diff.addModuleSourcePackagingElementEntity(ModuleId(moduleName), source)
+      diff addEntity ModuleSourcePackagingElementEntity(source) {
+        module = ModuleId(moduleName)
+      }
     }
     else {
-      diff.addModuleSourcePackagingElementEntity(null, source)
+      diff addEntity ModuleSourcePackagingElementEntity(source)
     }
     diff.mutableElements.addMapping(addedEntity, this)
     return addedEntity

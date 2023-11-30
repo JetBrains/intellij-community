@@ -8,6 +8,7 @@ import com.intellij.codeInspection.htmlInspections.HtmlLocalInspectionTool;
 import com.intellij.htmltools.HtmlToolsBundle;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.XmlCustomElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -17,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class HtmlRequiredAltAttributeInspection extends HtmlLocalInspectionTool {
-  @NonNls private static final Set<String> htmlTagsWithRequiredAltAttribute;
+public final class HtmlRequiredAltAttributeInspection extends HtmlLocalInspectionTool {
+  private static final @NonNls Set<String> htmlTagsWithRequiredAltAttribute;
   private static final String ALT = "alt";
 
   static {
@@ -30,6 +31,7 @@ public class HtmlRequiredAltAttributeInspection extends HtmlLocalInspectionTool 
     if (!HtmlUtil.isHtmlTagContainingFile(tag)) return;
     if (tag.getAttribute(ALT) != null) return;
     if (XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, ALT)) return;
+    if (XmlCustomElementDescriptor.isCustomElement(tag)) return;
     if (!htmlTagsWithRequiredAltAttribute.contains(tag.getName())) return;
     //H36
     if (tag.getName().equalsIgnoreCase("input")) {
@@ -48,9 +50,8 @@ public class HtmlRequiredAltAttributeInspection extends HtmlLocalInspectionTool 
                                     ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  @NotNull
   @Override
-  public String getShortName() {
+  public @NotNull String getShortName() {
     return "HtmlRequiredAltAttribute";
   }
 }

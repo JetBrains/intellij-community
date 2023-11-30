@@ -82,7 +82,7 @@ class CallExpressionConstraintCollector : ConstraintsCollector() {
                     ?: return@run
             receiverExpressionBoundType.isSubtypeOf(
                 receiverBoundType,
-                org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.RECEIVER_PARAMETER
+                ConstraintPriority.RECEIVER_PARAMETER
             )
         }
 
@@ -109,7 +109,7 @@ class CallExpressionConstraintCollector : ConstraintsCollector() {
             val argumentExpression = argument.getArgumentExpression() ?: continue
             argumentExpression.isSubtypeOf(
                 parameter,
-                org.jetbrains.kotlin.idea.j2k.post.processing.inference.common.ConstraintPriority.PARAMETER
+                ConstraintPriority.PARAMETER
             )
         }
     }

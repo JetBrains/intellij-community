@@ -30,7 +30,13 @@
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-web</artifactId>
       <version>${context.getProperty("javafx.version")}</version>
-    </dependency>#end
+    </dependency>
+      <dependency>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-swing</artifactId>
+        <version>${context.getProperty("javafx.version")}</version>
+      </dependency>
+    #end
     #if ($context.hasLibrary("fxgl"))<dependency>
       <groupId>org.openjfx</groupId>
       <artifactId>javafx-media</artifactId>

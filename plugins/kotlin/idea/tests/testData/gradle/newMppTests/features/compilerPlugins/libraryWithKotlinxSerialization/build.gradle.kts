@@ -12,9 +12,7 @@ kotlin {
     linuxX64()
     linuxArm64()
 
-    targetHierarchy.default()
-
-    sourceSets.commonMain.get().dependencies {
+    sourceSets.commonMain.dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
     }
 }

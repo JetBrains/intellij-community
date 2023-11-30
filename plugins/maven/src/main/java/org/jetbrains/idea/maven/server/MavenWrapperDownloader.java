@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
+import org.jetbrains.idea.maven.project.BundledMaven3;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
@@ -48,7 +49,6 @@ public final class MavenWrapperDownloader {
     MavenLog.LOG.info("start install wrapper " + distributionUrl);
 
     if (syncConsole != null) syncConsole.startWrapperResolving();
-    MavenWrapperEventLogNotification.informationEvent(project, SyncBundle.message("maven.wrapper.notification.downloading.start"));
 
     Task.Backgroundable task = getTaskInfo();
     BackgroundableProcessIndicator indicator = new WrapperProgressIndicator(project, task, syncConsole);
@@ -59,7 +59,6 @@ public final class MavenWrapperDownloader {
       }
       distributionsCache.addWrapper(multiModuleDir, distribution);
       if (syncConsole != null) syncConsole.finishWrapperResolving(null);
-      MavenWrapperEventLogNotification.informationEvent(project, SyncBundle.message("maven.wrapper.notification.downloading.finish"));
     }
     catch (Exception e) {
       MavenLog.LOG.warn("error install wrapper", e);
@@ -67,7 +66,7 @@ public final class MavenWrapperDownloader {
       MavenWrapperEventLogNotification.errorDownloading(project, e.getLocalizedMessage());
       if (syncConsole != null) {
         MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-        settings.getGeneralSettings().setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+        settings.getGeneralSettings().setMavenHomeType(BundledMaven3.INSTANCE);
       }
     }
     finally {

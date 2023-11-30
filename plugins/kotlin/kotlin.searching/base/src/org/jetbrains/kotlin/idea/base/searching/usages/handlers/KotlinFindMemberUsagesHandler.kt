@@ -10,6 +10,7 @@ import com.intellij.find.impl.FindManagerImpl
 import com.intellij.icons.AllIcons.Actions
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -146,26 +147,31 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
         override fun getPrimaryElements(): Array<PsiElement> {
             val element = psiElement as KtNamedDeclaration
             if (element is KtParameter && !element.hasValOrVar() && factory.findPropertyOptions.isSearchInOverridingMethods) {
-                val function = element.ownerFunction
-                if (function != null && function.isOverridable()) {
-                    function.toLightMethods().singleOrNull()?.let { method ->
-                        if (OverridingMethodsSearch.search(method).any()) {
-                            val parametersCount = method.parameterList.parametersCount
-                            val parameterIndex = element.parameterIndex()
-
-                            assert(parameterIndex < parametersCount)
-                            return OverridingMethodsSearch.search(method, true)
-                                .filter { method.parameterList.parametersCount == parametersCount }
-                                .mapNotNull { method.parameterList.parameters[parameterIndex].unwrapped }
-                                .toTypedArray()
-                        }
-                    }
-                }
+                return ActionUtil.underModalProgress(project, KotlinBundle.message("find.usages.progress.text.declaration.superMethods")) { getPrimaryElementsUnderProgress(element) }
             } else if (factory.findPropertyOptions.isSearchForBaseAccessors) {
                 val supers = KotlinFindUsagesSupport.getSuperMethods(element, null)
                 return if (supers.contains(psiElement)) supers.toTypedArray() else (supers + psiElement).toTypedArray()
             }
 
+            return super.getPrimaryElements()
+        }
+
+        private fun getPrimaryElementsUnderProgress(element: KtParameter): Array<PsiElement> {
+            val function = element.ownerFunction
+            if (function != null && function.isOverridable()) {
+                function.toLightMethods().singleOrNull()?.let { method ->
+                    if (OverridingMethodsSearch.search(method).any()) {
+                        val parametersCount = method.parameterList.parametersCount
+                        val parameterIndex = element.parameterIndex()
+
+                        assert(parameterIndex < parametersCount)
+                        return super.getPrimaryElements() + OverridingMethodsSearch.search(method, true)
+                            .filter { it.parameterList.parametersCount == parametersCount }
+                            .mapNotNull { it.parameterList.parameters[parameterIndex].unwrapped }
+                            .toTypedArray()
+                    }
+                }
+            }
             return super.getPrimaryElements()
         }
 

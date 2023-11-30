@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveClassToSeparateFileFix;
@@ -17,11 +17,12 @@ import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+import org.jetbrains.plugins.groovy.refactoring.convertToJava.git.RenameTrackingKt;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -83,6 +84,9 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
       String fileName = getNewFileName(file);
       PsiElement newFile;
       try {
+        String filePathBeforeConvert = file.getVirtualFile().getPath();
+        file.getVirtualFile().putUserData(RenameTrackingKt.getPathBeforeGroovyToJavaConversion(), filePathBeforeConvert);
+
         newFile = file.setName(fileName);
       }
       catch (final IncorrectOperationException e) {
@@ -108,7 +112,7 @@ public class ConvertToJavaProcessor extends BaseRefactoringProcessor {
     newFile = CodeStyleManager.getInstance(myProject).reformat(newFile);
     PsiClass[] inner = ((PsiJavaFile)newFile).getClasses();
     for (PsiClass psiClass : inner) {
-      MoveClassToSeparateFileFix fix = new MoveClassToSeparateFileFix(psiClass);
+      var fix = new MoveClassToSeparateFileFix(psiClass).asIntention();
       if (fix.isAvailable(myProject, null, (PsiFile)newFile)) {
         fix.invoke(myProject, null, (PsiFile)newFile);
       }

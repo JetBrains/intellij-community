@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -12,11 +12,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -25,7 +26,7 @@ import java.util.Objects;
 /**
  * @author Alexander Lobas
  */
-public class MergeAllWindowsAction extends IdeDependentAction {
+public final class MergeAllWindowsAction extends IdeDependentAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -64,7 +65,8 @@ public class MergeAllWindowsAction extends IdeDependentAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Window window = Objects.requireNonNull(UIUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)));
+    @Nullable Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    Window window = Objects.requireNonNull(ComponentUtil.getWindow(component));
 
     mergeAllWindows(window, true);
   }
@@ -82,7 +84,7 @@ public class MergeAllWindowsAction extends IdeDependentAction {
     });
   }
 
-  private static class RecentProjectsFullScreenTabSupport implements AppLifecycleListener {
+  private static final class RecentProjectsFullScreenTabSupport implements AppLifecycleListener {
     @Override
     public void appStarted() {
       if (JdkEx.isTabbingModeAvailable()) {

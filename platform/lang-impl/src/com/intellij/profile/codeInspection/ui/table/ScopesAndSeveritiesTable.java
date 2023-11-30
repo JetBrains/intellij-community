@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.table;
 
 import com.intellij.application.options.colors.ColorAndFontOptions;
@@ -57,7 +57,7 @@ import static com.intellij.profile.codeInspection.ui.table.SeverityRenderer.EDIT
 /**
  * @author Dmitry Batkovich
  */
-public class ScopesAndSeveritiesTable extends JBTable {
+public final class ScopesAndSeveritiesTable extends JBTable {
   private static final Logger LOG = Logger.getInstance(ScopesAndSeveritiesTable.class);
 
   public static final HighlightSeverity MIXED_FAKE_SEVERITY = new HighlightSeverity("Mixed", -1);
@@ -276,7 +276,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     return textAttributes;
   }
 
-  private static class MyTableModel extends AbstractTableModel implements EditableModel {
+  private static final class MyTableModel extends AbstractTableModel implements EditableModel {
     @NotNull
     private final InspectionProfileImpl myInspectionProfile;
     private final List<String> myKeyNames;
@@ -567,7 +567,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
     }
   }
 
-  private static class ExistedScopesStatesAndNonExistNames {
+  private static final class ExistedScopesStatesAndNonExistNames {
 
     private final List<ScopeToolState> myExistedStates;
     private final List<String> myNonExistNames;

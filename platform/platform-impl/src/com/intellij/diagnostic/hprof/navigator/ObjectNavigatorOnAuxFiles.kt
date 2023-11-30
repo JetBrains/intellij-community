@@ -32,7 +32,7 @@ class ObjectNavigatorOnAuxFiles(
   instanceCount: Long,
   private val idSize: Int
 ) : ObjectNavigator(classStore, instanceCount) {
-  override fun getClass() = currentClass!!
+  override fun getClass(): ClassDefinition = currentClass!!
 
   override fun getClassForObjectId(id: Long): ClassDefinition {
     auxOffsets.position((id * 4).toInt())
@@ -71,7 +71,7 @@ class ObjectNavigatorOnAuxFiles(
     }
   }
 
-  override fun getReferencesCopy() = LongArrayList(references)
+  override fun getReferencesCopy(): LongArrayList = LongArrayList(references)
 
   override fun isNull(): Boolean {
     return id == 0L

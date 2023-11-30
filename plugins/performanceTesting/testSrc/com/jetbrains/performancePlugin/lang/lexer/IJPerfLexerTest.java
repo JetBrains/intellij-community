@@ -4,6 +4,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.LexerTestCase;
 import com.jetbrains.performancePlugin.TestUtil;
 import com.jetbrains.performancePlugin.lang.IJPerfFileType;
+import org.jetbrains.annotations.NotNull;
 
 public class IJPerfLexerTest extends LexerTestCase {
 
@@ -60,12 +61,12 @@ public class IJPerfLexerTest extends LexerTestCase {
   }
 
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return new IJPerfLexerAdapter();
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return TestUtil.getDataSubPath("lexer");
   }
 }

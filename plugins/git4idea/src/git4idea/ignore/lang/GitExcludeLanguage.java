@@ -44,9 +44,8 @@ public final class GitExcludeLanguage extends IgnoreLanguage {
     super("GitExclude", "exclude");
   }
 
-  @NotNull
   @Override
-  public String getFilename() {
+  public @NotNull String getFilename() {
     return super.getExtension();
   }
 
@@ -55,15 +54,13 @@ public final class GitExcludeLanguage extends IgnoreLanguage {
    *
    * @return {@link GitExcludeFileType} instance
    */
-  @NotNull
   @Override
-  public IgnoreFileType getFileType() {
+  public @NotNull IgnoreFileType getFileType() {
     return GitExcludeFileType.INSTANCE;
   }
 
-  @Nullable
   @Override
-  public VirtualFile getAffectedRoot(@NotNull Project project, @NotNull VirtualFile ignoreFile) {
+  public @Nullable VirtualFile getAffectedRoot(@NotNull Project project, @NotNull VirtualFile ignoreFile) {
     //ignoreFile = .git/info/exclude
     GitRepository repository = findRepository(project, ignoreFile);
     if (repository == null) return null;
@@ -71,8 +68,7 @@ public final class GitExcludeLanguage extends IgnoreLanguage {
     return repository.getRoot();
   }
 
-  @Nullable
-  private static GitRepository findRepository(@NotNull Project project, @NotNull VirtualFile excludeFile) {
+  private static @Nullable GitRepository findRepository(@NotNull Project project, @NotNull VirtualFile excludeFile) {
     String excludeFilePath = excludeFile.getPath();
     for (GitRepository repository : GitRepositoryManager.getInstance(project).getRepositories()) {
       if (repository.getRepositoryFiles().isExclude(excludeFilePath)) {

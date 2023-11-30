@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
@@ -32,8 +33,8 @@ public class AddLineBreakpointAction extends DumbAwareAction {
     XSourcePosition position = getLineBreakpointPosition(e);
     assert position != null;
     XBreakpointUtil.toggleLineBreakpoint(project, position, editor, false, true, true)
-      .onSuccess((bp) -> {
-        if (isConditional()) {
+      .onSuccess(bp -> {
+        if (bp != null && isConditional()) {
           EditorGutterComponentEx gutter = (EditorGutterComponentEx)editor.getGutter();
           int x = -gutter.getWidth() + gutter.getLineNumberAreaOffset() + gutter.getLineNumberAreaWidth() / 2;
           int y = editor.offsetToXY(position.getOffset()).y + editor.getLineHeight() / 2;
@@ -60,7 +61,10 @@ public class AddLineBreakpointAction extends DumbAwareAction {
       EditorGutter gutter = editor.getGutter();
       if (gutter instanceof EditorGutterComponentEx) {
         Object lineNumber = ((EditorGutterComponentEx)gutter).getClientProperty("active.line.number");
-        if (lineNumber instanceof Integer) {
+        if (!(lineNumber instanceof Integer)) {
+          lineNumber = e.getData(XDebuggerManagerImpl.ACTIVE_LINE_NUMBER);
+        }
+        if (lineNumber != null) {
           LogicalPosition pos = new LogicalPosition((Integer)lineNumber, 0);
           return XSourcePositionImpl.createByOffset(file, editor.logicalPositionToOffset(pos));
         }

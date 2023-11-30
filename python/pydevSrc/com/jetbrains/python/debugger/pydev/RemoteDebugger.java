@@ -490,7 +490,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   @Override
   public void removeTempBreakpoint(@NotNull String file, int line) {
-    String type = myTempBreakpoints.get(Pair.create(file, line));
+    String type = myTempBreakpoints.remove(Pair.create(file, line));
     if (type != null) {
       final RemoveBreakpointCommand command = new RemoveBreakpointCommand(this, type, file, line);
       execute(command);  // remove temp. breakpoint

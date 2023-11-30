@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.ProjectIconsAccessor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,9 +23,7 @@ import org.jetbrains.uast.evaluation.UEvaluationContextKt;
 import org.jetbrains.uast.values.*;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * Shows small (16x16 or less) icons as gutters.
@@ -34,17 +33,24 @@ import java.util.stream.Collectors;
  *
  * @author Konstantin Bulenkov
  */
-public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
+final class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
+  @Override
+  public @NotNull String getName() {
+    return JavaBundle.message("icon.preview");
+  }
+
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     return null;
   }
 
   @Override
-  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
-                                     @NotNull Collection<? super LineMarkerInfo<?>> result) {
-    for (PsiElement element : elements) {
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements, @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    if (!hasIconTypeExpressions(elements)) {
+      return;
+    }
 
+    for (PsiElement element : elements) {
       UCallExpression expression = UastContextKt.toUElement(element, UCallExpression.class);
       if (expression == null) {
         continue;
@@ -55,21 +61,25 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
 
       UValue uValue = UEvaluationContextKt.uValueOf(expression);
-      if (uValue instanceof UCallResultValue) {
-        List<UValue> arguments = ((UCallResultValue)uValue).getArguments();
-        if (!arguments.isEmpty()) {
-          Collection<UExpression> constants = UValueKt.toPossibleConstants(arguments.get(0))
-            .stream()
-            .filter(constant -> constant instanceof UStringConstant)
-            .map(UConstant::getSource)
-            .toList();
-          if (!constants.isEmpty()) {
-            UIdentifier identifier = expression.getMethodIdentifier();
-            if (identifier != null) {
-              LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getPsi());
-              if (marker != null) {
-                result.add(marker);
-              }
+      if (!(uValue instanceof UCallResultValue)) {
+        continue;
+      }
+
+      List<UValue> arguments = ((UCallResultValue)uValue).getArguments();
+      if (!arguments.isEmpty()) {
+        Collection<UExpression> constants = new ArrayList<>();
+        for (UConstant constant : UValueKt.toPossibleConstants(arguments.get(0))) {
+          if (constant instanceof UStringConstant) {
+            UExpression source = constant.getSource();
+            constants.add(source);
+          }
+        }
+        if (!constants.isEmpty()) {
+          UIdentifier identifier = expression.getMethodIdentifier();
+          if (identifier != null && identifier.getSourcePsi() != null) {
+            LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getSourcePsi());
+            if (marker != null) {
+              result.add(marker);
             }
           }
         }
@@ -77,31 +87,42 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
     }
   }
 
-  @Nullable
-  private static LineMarkerInfo<PsiElement> createIconLineMarker(@Nullable UExpression initializer,
-                                                                 PsiElement bindingElement) {
-    if (initializer == null) return null;
+  private static boolean hasIconTypeExpressions(@NotNull List<? extends PsiElement> elements) {
+    Set<PsiType> uniqueValues = new HashSet<>();
+    for (PsiElement e : elements) {
+      UCallExpression element = UastContextKt.toUElement(e, UCallExpression.class);
+      if (element != null) {
+        PsiType type = element.getExpressionType();
+        if (uniqueValues.add(type)) {
+          if (ProjectIconsAccessor.isIconClassType(type)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
 
-    final Project project = bindingElement.getProject();
+  private static @Nullable LineMarkerInfo<PsiElement> createIconLineMarker(@Nullable UExpression initializer, PsiElement bindingElement) {
+    if (initializer == null) {
+      return null;
+    }
 
-    final ProjectIconsAccessor iconsAccessor = ProjectIconsAccessor.getInstance(project);
+    Project project = bindingElement.getProject();
+    ProjectIconsAccessor iconsAccessor = ProjectIconsAccessor.getInstance(project);
+    VirtualFile file = iconsAccessor.resolveIconFile(initializer);
+    if (file == null) {
+      return null;
+    }
 
-    final VirtualFile file = iconsAccessor.resolveIconFile(initializer);
-    if (file == null) return null;
+    Icon icon = iconsAccessor.getIcon(file);
+    if (icon == null) {
+      return null;
+    }
 
-    final Icon icon = iconsAccessor.getIcon(file);
-    if (icon == null) return null;
-
-    final GutterIconNavigationHandler<PsiElement> navHandler = (e, elt) -> FileEditorManager.getInstance(project).openFile(file, true);
-
+    GutterIconNavigationHandler<PsiElement> navHandler = (e, elt) -> FileEditorManager.getInstance(project).openFile(file, true);
     return new LineMarkerInfo<>(bindingElement, bindingElement.getTextRange(), icon,
                                 null, navHandler,
                                 GutterIconRenderer.Alignment.LEFT);
-  }
-
-  @NotNull
-  @Override
-  public String getName() {
-    return JavaBundle.message("icon.preview");
   }
 }

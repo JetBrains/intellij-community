@@ -5,6 +5,6 @@ import com.intellij.testFramework.LightPlatformTestCase
 
 class InlayHintsDumpTest : LightPlatformTestCase() {
   fun testExtractEntries() {
-    assertEquals(listOf(5 to "foo", 8 to "bar"), InlayDumpUtil.extractEntries("01234<# foo #>567<# bar #>"))
+    assertEquals(listOf(5 to "foo", 8 to "bar"), InlayDumpUtil.extractEntries("01234/*<# foo #>*/567/*<# bar #>*/"))
   }
 }

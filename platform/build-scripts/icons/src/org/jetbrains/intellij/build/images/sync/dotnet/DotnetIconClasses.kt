@@ -12,7 +12,7 @@ import java.nio.file.Path
 internal class DotnetIconClasses(override val homePath: String) : IconClasses() {
   override val modules: List<JpsModule>
     get() = super.modules.filter {
-      it.name == "rider-icons"
+      it.name == "intellij.rider.icons"
     }
 
   override fun generator(home: Path, modules: List<JpsModule>): IconsClassGenerator {
@@ -20,6 +20,7 @@ internal class DotnetIconClasses(override val homePath: String) : IconClasses() 
       override fun getIconClassInfo(module: JpsModule, moduleConfig: IntellijIconClassGeneratorModuleConfig?): List<IconClassInfo> {
         val info = super.getIconClassInfo(module, moduleConfig)
         return splitRiderAndReSharper(info.single())
+          .removeExpUi()
       }
 
       override fun isInlineClass(name: CharSequence): Boolean {
@@ -41,4 +42,12 @@ internal class DotnetIconClasses(override val homePath: String) : IconClasses() 
       className, info.outFile.parent.resolve("$className.java"),
       info.images.filter { it.id.startsWith(imageIdPrefix) }
     )
+
+  private fun Iterable<IconClassInfo>.removeExpUi() = map { info ->
+    IconClassInfo(customLoad = info.customLoad,
+                  packageName = info.packageName,
+                  className = info.className,
+                  outFile = info.outFile,
+                  images = info.images.filterNot { it.id.contains("/expui/", true) || it.id.contains("\\expui\\", true) })
+  }
 }

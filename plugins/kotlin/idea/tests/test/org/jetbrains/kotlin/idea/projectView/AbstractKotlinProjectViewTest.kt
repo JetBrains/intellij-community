@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.projectView
 
+import com.intellij.ide.projectView.impl.ProjectViewFileNestingService
+import com.intellij.ide.projectView.impl.ProjectViewFileNestingService.NestingRule
 import com.intellij.ide.projectView.impl.nodes.AbstractPsiBasedNode
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectView.TestProjectTreeStructure
@@ -25,6 +28,9 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
     override fun setUp() {
         super.setUp()
         treeStructure = TestProjectTreeStructure(project, testRootDisposable)
+
+        val initialNestingRules = ProjectViewFileNestingService.getInstance().rules
+        Disposer.register(testRootDisposable) { ProjectViewFileNestingService.getInstance().rules = initialNestingRules }
     }
 
     override fun doMultiFileTest(testDataPath: String, globalDirectives: Directives) {
@@ -33,6 +39,15 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
             override fun accept(t: VirtualFile): Boolean = Path(t.path).endsWith(path)
         }
         treeStructure.isShowMembers = globalDirectives.getBooleanValue("SHOW_MEMBERS")
+
+        globalDirectives.listValues("NESTING_RULE")?.forEach { rule ->
+            rule.split("->").let {
+                val parentSuffix = it[0]
+                val childSuffix = it[1]
+                val nestingService = ProjectViewFileNestingService.getInstance()
+                nestingService.setRules(nestingService.rules + NestingRule(parentSuffix, childSuffix))
+            }
+        }
 
         FilenameIndex.processFilesByName(path.name, true, GlobalSearchScope.allScope(project), processor)
         val resultFile = processor.foundValue ?: error("$path file is not found")
@@ -43,6 +58,10 @@ abstract class AbstractKotlinProjectViewTest : KotlinMultiFileHeavyProjectTestCa
 
         val tree = pane.tree
         PlatformTestUtil.waitWhileBusy(tree)
+
+        globalDirectives.listValues("EXPAND_ROW")?.forEach {
+            PlatformTestUtil.expand(tree, it.toInt())
+        }
 
         val node = TreeUtil.findNode(tree.model.root as DefaultMutableTreeNode) {
             val userObject = it.userObject

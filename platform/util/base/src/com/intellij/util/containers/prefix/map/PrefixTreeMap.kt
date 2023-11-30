@@ -13,7 +13,7 @@ interface PrefixTreeMap<Key, Value> : Map<Key, Value> {
    * Returns descendant keys for [key].
    *
    * For example, we have a map of `[a,b,c]`, `[a,b,c,d]`, `[a,b,c,e]` and `[a,f,g]`.
-   * Then ancestor keys for [key]`=[a,b]` are `[a,b,c]`, `[a,b,c,d]` and `[a,b,c,e]`.
+   * Then descendant keys for [key]`=[a,b]` are `[a,b,c]`, `[a,b,c,d]` and `[a,b,c,e]`.
    */
   fun getDescendantKeys(key: Key): Set<Key>
 
@@ -25,7 +25,7 @@ interface PrefixTreeMap<Key, Value> : Map<Key, Value> {
    * Returns ancestor elements for [key].
    *
    * For example, we have a map of `[a,b,c]`, `[a,b,c,d]`, `[a,b,c,e]` and `[a,f,g]`.
-   * Then descendant keys for [key]`=[a,b,c,d,e]` are `[a,b,c]` and `[a,b,c,d]`.
+   * Then ancestor keys for [key]`=[a,b,c,d,e]` are `[a,b,c]` and `[a,b,c,d]`.
    */
   fun getAncestorKeys(key: Key): Set<Key>
 

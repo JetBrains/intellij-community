@@ -6,3 +6,5 @@ fun foo(n: Any?) {
 fun <T> bar(t: T) {
     foo(t)
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
+/* IGNORE_K2 */

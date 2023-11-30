@@ -37,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 public final class PyDataView implements DumbAware {
-  public static final String DATA_VIEWER_ID = "SciView";
+  public static final String DATA_VIEWER_ID = "Plots";
   public static final String COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault";
   public static final String AUTO_RESIZE = "python.debugger.dataview.autoresize";
   private static final Logger LOG = Logger.getInstance(PyDataView.class);
@@ -267,6 +267,11 @@ public final class PyDataView implements DumbAware {
       if (getVisibleTabs().isEmpty()) {
         addTab(myFrameAccessor);
       }
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
   }
 

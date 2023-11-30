@@ -3,9 +3,7 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.JarUtil
 import com.intellij.openapi.vfs.JarFileSystem
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.FsRoot
 import com.intellij.util.text.VersionComparatorUtil
@@ -84,12 +82,12 @@ class IdeKotlinVersion private constructor(
             return opt(rawVersion)
         }
 
-        private fun parseKind(kindSuffix: String, prefix: String, factory: (Int) -> Kind): Kind? {
+        private fun parseKind(kindSuffix: String, prefix: String, factory: (Int?) -> Kind): Kind? {
             check(kindSuffix.startsWith(prefix)) { "Prefix \"$prefix\" not found in kind suffix \"$kindSuffix\"" }
 
             val numberString = kindSuffix.drop(prefix.length).removeSuffix("-release")
             if (numberString.isEmpty()) {
-                return factory(1)
+                return factory(null)
             } else {
                 val number = numberString.toIntOrNull() ?: return null
                 return factory(number)
@@ -143,10 +141,11 @@ class IdeKotlinVersion private constructor(
 
     sealed class Kind(val artifactSuffix: String?) {
         object Release : Kind(artifactSuffix = null)
-        data class ReleaseCandidate(val number: Int) : Kind(artifactSuffix = if (number == 1) "RC" else "RC$number")
-        data class Beta(val number: Int) : Kind(artifactSuffix = if (number == 1) "Beta" else "Beta$number")
-        data class Milestone(val number: Int) : Kind(artifactSuffix = "M$number")
-        data class Eap(val number: Int) : Kind(artifactSuffix = if (number == 1) "eap" else "eap$number")
+        data class ReleaseCandidate(val number: Int?) : Kind(artifactSuffix = if (number == null) "RC" else "RC$number")
+        data class Beta(val number: Int?) : Kind(artifactSuffix = if (number == null) "Beta" else "Beta$number")
+        // M should always have a number, so default to M1
+        data class Milestone(val number: Int?) : Kind(artifactSuffix = if (number == null) "M1" else "M$number")
+        data class Eap(val number: Int?) : Kind(artifactSuffix = if (number == null) "eap" else "eap$number")
         object Dev : Kind(artifactSuffix = "dev")
         object Snapshot : Kind(artifactSuffix = "SNAPSHOT")
 
@@ -183,6 +182,12 @@ class IdeKotlinVersion private constructor(
 
     val languageVersionSettings: LanguageVersionSettings
         get() = LanguageVersionSettingsImpl(languageVersion, apiVersion)
+
+    fun withoutBuildNumber(): IdeKotlinVersion {
+        return if (buildNumber != null) {
+            parse(rawVersion.substringBeforeLast('-')).getOrDefault(this)
+        } else this
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

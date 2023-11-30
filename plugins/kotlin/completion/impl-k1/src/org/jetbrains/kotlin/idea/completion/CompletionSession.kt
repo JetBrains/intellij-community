@@ -15,25 +15,38 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.base.analysis.isExcludedFromAutoImport
+import org.jetbrains.kotlin.base.fe10.analysis.classId
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleOrigin
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.OriginCapability
+import org.jetbrains.kotlin.idea.base.psi.isInsideAnnotationEntryArgumentList
+import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.util.getResolveScope
 import org.jetbrains.kotlin.idea.codeInsight.ReferenceVariantsHelper
 import org.jetbrains.kotlin.idea.core.*
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.imports.importableFqName
+import org.jetbrains.kotlin.idea.kdoc.resolveKDocLink
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.*
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.ImportPath
+import org.jetbrains.kotlin.resolve.descriptorUtil.denotedClassDescriptor
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.receivers.ExpressionReceiver
@@ -91,6 +104,8 @@ abstract class CompletionSession(
     protected val nameExpression: KtSimpleNameExpression?
     protected val expression: KtExpression?
 
+    protected val applicabilityFilter: (DeclarationDescriptor) -> Boolean
+
     init {
         val reference = (position.parent as? KtSimpleNameExpression)?.mainReference
         if (reference != null) {
@@ -104,6 +119,12 @@ abstract class CompletionSession(
         } else {
             this.nameExpression = null
             this.expression = null
+        }
+
+        if (position.isInsideAnnotationEntryArgumentList()) {
+            applicabilityFilter = { suggestDescriptorInsideAnnotationEntryArgumentList(it, expectedInfos) }
+        } else {
+            applicabilityFilter = { true }
         }
     }
 
@@ -159,7 +180,10 @@ abstract class CompletionSession(
 
     protected val callTypeAndReceiver =
         if (nameExpression == null) CallTypeAndReceiver.UNKNOWN else CallTypeAndReceiver.detect(nameExpression)
-    protected val receiverTypes = nameExpression?.let { detectReceiverTypes(bindingContext, nameExpression, callTypeAndReceiver) }
+
+    protected val receiverTypes: List<ReceiverType>? =
+        nameExpression?.let { detectReceiverTypes(bindingContext, nameExpression, callTypeAndReceiver) }
+            ?: (position.parent as? KDocName)?.let { detectReceiverTypesForKDocName(bindingContext, it) }
 
 
     protected val basicLookupElementFactory =
@@ -179,11 +203,12 @@ abstract class CompletionSession(
         getResolveScope(originalParameters.originalFile as KtFile)
 
     protected fun indicesHelper(mayIncludeInaccessible: Boolean): KotlinIndicesHelper {
-        val filter = if (mayIncludeInaccessible) isVisibleFilter else isVisibleFilterCheckAlways
+        val visibilityFilter = if (mayIncludeInaccessible) isVisibleFilter else isVisibleFilterCheckAlways
         return KotlinIndicesHelper(
             resolutionFacade,
             searchScope,
-            filter,
+            visibilityFilter,
+            applicabilityFilter = applicabilityFilter,
             filterOutPrivate = !mayIncludeInaccessible,
             declarationTranslator = { toFromOriginalFileMapper.toSyntheticFile(it) },
             file = file
@@ -204,9 +229,7 @@ abstract class CompletionSession(
         }
 
         val fqName = descriptor.importableFqName
-        if (fqName != null && fqName.isExcludedFromAutoImport(project, file)) return false
-
-        return true
+        return fqName == null || !fqName.isExcludedFromAutoImport(project, file)
     }
 
     private fun DeclarationDescriptor.isFromLibrary(): Boolean {
@@ -343,6 +366,7 @@ abstract class CompletionSession(
             referenceVariantsHelper = referenceVariantsHelper,
             indicesHelper = indicesHelper(true),
             prefixMatcher = prefixMatcher,
+            applicabilityFilter = applicabilityFilter,
             nameExpression = nameExpression,
             callTypeAndReceiver = callTypeAndReceiver,
             resolutionFacade = resolutionFacade,
@@ -383,6 +407,7 @@ abstract class CompletionSession(
             referenceVariantsHelper = referenceVariantsHelper,
             indicesHelper = indicesHelper(true),
             prefixMatcher = prefixMatcher,
+            applicabilityFilter = applicabilityFilter,
             nameExpression = nameExpression!!,
             callTypeAndReceiver = callTypeAndReceiver,
             resolutionFacade = resolutionFacade,
@@ -464,5 +489,43 @@ abstract class CompletionSession(
         }
 
         return receiverTypes
+    }
+
+    private fun detectReceiverTypesForKDocName(
+        context: BindingContext,
+        kDocName: KDocName,
+    ): List<ReceiverType>? {
+        val kDocLink = kDocName.getStrictParentOfType<KDocLink>() ?: return null
+        val kDocOwner = kDocName.getContainingDoc().getOwner()
+        val kDocOwnerDescriptor = kDocOwner?.resolveToDescriptorIfAny() ?: return null
+
+        return resolveKDocLink(context, resolutionFacade, kDocOwnerDescriptor, kDocLink, kDocLink.getTagIfSubject(), kDocLink.qualifier)
+            .filterIsInstance<ClassifierDescriptorWithTypeParameters>()
+            .mapNotNull { it.denotedClassDescriptor }
+            .flatMap { listOfNotNull(it, it.companionObjectDescriptor) }
+            .map { ReceiverType(it.defaultType, receiverIndex = 0) }
+    }
+
+    companion object {
+        private fun suggestDescriptorInsideAnnotationEntryArgumentList(
+            descriptor: DeclarationDescriptor,
+            expectedInfos: Collection<ExpectedInfo>,
+        ): Boolean {
+            if (descriptor.annotations.any { it.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation }) return true
+
+            if (descriptor !is CallableDescriptor) return true
+
+            return when (descriptor) {
+                is VariableDescriptor -> descriptor.isConst
+                is FunctionDescriptor -> {
+                    if (descriptor.fqNameOrNull() !in ArrayFqNames.ARRAY_CALL_FQ_NAMES) return false
+
+                    val fuzzyType = descriptor.returnType?.toFuzzyType(descriptor.typeParameters) ?: return false
+                    expectedInfos.isEmpty() || expectedInfos.any { it.fuzzyType?.checkIsSubtypeOf(fuzzyType) != null }
+                }
+
+                else -> false
+            }
+        }
     }
 }

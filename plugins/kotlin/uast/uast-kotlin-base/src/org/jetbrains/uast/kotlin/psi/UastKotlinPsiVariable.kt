@@ -11,7 +11,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.*
+import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
+import org.jetbrains.uast.kotlin.KotlinUDeclarationsExpression
+import org.jetbrains.uast.kotlin.orAnonymous
 
 @ApiStatus.Internal
 class UastKotlinPsiVariable private constructor(
@@ -29,17 +31,27 @@ class UastKotlinPsiVariable private constructor(
     KotlinLanguage.INSTANCE
 ), PsiLocalVariable {
 
-    private val psiParent by lz(psiParentProducer)
+    private var psiTypeElementPart: Any? = UNINITIALIZED_UAST_PART
+    private var psiInitializerPart: Any? = UNINITIALIZED_UAST_PART
 
-    private val psiType: PsiType by lz(typeProducer)
+    private val psiParent: PsiElement? by lazy(LazyThreadSafetyMode.NONE, psiParentProducer)
+    private val psiType: PsiType by lazy(LazyThreadSafetyMode.NONE, typeProducer)
 
-    private val psiTypeElement: PsiTypeElement by lz {
-        LightTypeElement(manager, psiType)
-    }
+    private val psiTypeElement: PsiTypeElement
+        get() {
+            if (psiTypeElementPart == UNINITIALIZED_UAST_PART) {
+                psiTypeElementPart = LightTypeElement(manager, psiType)
+            }
+            return psiTypeElementPart as PsiTypeElement
+        }
 
-    private val psiInitializer: PsiExpression? by lz {
-        ktInitializer?.let { KotlinUastPsiExpression(it, containingElement) }
-    }
+    private val psiInitializer: PsiExpression?
+        get() {
+            if (psiInitializerPart == UNINITIALIZED_UAST_PART) {
+                psiInitializerPart = ktInitializer?.let { KotlinUastPsiExpression(it, containingElement) }
+            }
+            return psiInitializerPart as PsiExpression?
+        }
 
     override fun getType(): PsiType = psiType
 
@@ -119,7 +131,7 @@ class UastKotlinPsiVariable private constructor(
                 typeProducer = {
                     val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
                     service.getType(initializer, containingElement) ?: UastErrorType
-               },
+                },
                 ktInitializer = initializer,
                 psiParentProducer = { containingElement.getParentOfType<UDeclaration>()?.psi ?: parent },
                 containingElement = containingElement,

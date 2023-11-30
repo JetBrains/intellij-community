@@ -1,4 +1,4 @@
-// IGNORE_FIR
+// IGNORE_K2
 
 interface ApplicationFeature<in P : Pipeline<*>, B : Any, V>
 open class Pipeline<TSubject : Any>()

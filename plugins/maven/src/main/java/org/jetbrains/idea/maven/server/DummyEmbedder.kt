@@ -13,35 +13,36 @@ import java.io.File
 
 abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun evaluateEffectivePom(file: File,
-                                    activeProfiles: List<String>,
-                                    inactiveProfiles: List<String>,
+                                    activeProfiles: ArrayList<String>,
+                                    inactiveProfiles: ArrayList<String>,
                                     token: MavenToken?): String? {
     return null
   }
 
   override fun resolveArtifacts(longRunningTaskId: String,
-                                requests: Collection<MavenArtifactResolutionRequest>,
-                                token: MavenToken?): List<MavenArtifact> {
-    return listOf()
+                                requests: ArrayList<MavenArtifactResolutionRequest>,
+                                token: MavenToken?): MavenServerResponse<ArrayList<MavenArtifact>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
-  override fun resolveArtifactsTransitively(artifacts: MutableList<MavenArtifactInfo>,
-                                            remoteRepositories: MutableList<MavenRemoteRepository>,
+  override fun resolveArtifactsTransitively(artifacts: ArrayList<MavenArtifactInfo>,
+                                            remoteRepositories: ArrayList<MavenRemoteRepository>,
                                             token: MavenToken?): MavenArtifactResolveResult {
     return MavenArtifactResolveResult(emptyList(), null)
   }
 
   override fun resolvePlugins(longRunningTaskId: String,
-                              pluginResolutionRequests: Collection<PluginResolutionRequest>,
-                              token: MavenToken?): List<PluginResolutionResponse> {
-    return emptyList()
+                              pluginResolutionRequests: ArrayList<PluginResolutionRequest>,
+                              forceUpdateSnapshots: Boolean,
+                              token: MavenToken?): MavenServerResponse<ArrayList<PluginResolutionResponse>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun executeGoal(longRunningTaskId: String,
-                           requests: Collection<MavenGoalExecutionRequest>,
+                           requests: ArrayList<MavenGoalExecutionRequest>,
                            goal: String,
-                           token: MavenToken?): List<MavenGoalExecutionResult> {
-    return emptyList()
+                           token: MavenToken?): MavenServerResponse<ArrayList<MavenGoalExecutionResult>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun release(token: MavenToken?) {
@@ -51,23 +52,23 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return null
   }
 
-  override fun resolveRepositories(repositories: MutableCollection<MavenRemoteRepository>,
-                                   token: MavenToken?): MutableSet<MavenRemoteRepository> {
-    return mutableSetOf()
+  override fun resolveRepositories(repositories: ArrayList<MavenRemoteRepository>,
+                                   token: MavenToken?): HashSet<MavenRemoteRepository> {
+    return HashSet()
   }
 
-  override fun getLocalArchetypes(token: MavenToken?, path: String): MutableCollection<MavenArchetype> {
-    return mutableSetOf()
+  override fun getLocalArchetypes(token: MavenToken?, path: String): ArrayList<MavenArchetype> {
+    return ArrayList()
   }
 
-  override fun getRemoteArchetypes(token: MavenToken?, url: String): MutableCollection<MavenArchetype> {
-    return mutableSetOf()
+  override fun getRemoteArchetypes(token: MavenToken?, url: String): ArrayList<MavenArchetype> {
+    return ArrayList()
   }
 
   override fun resolveAndGetArchetypeDescriptor(groupId: String, artifactId: String, version: String,
-                                                repositories: MutableList<MavenRemoteRepository>, url: String?,
-                                                token: MavenToken?): MutableMap<String, String> {
-    return mutableMapOf()
+                                                repositories: ArrayList<MavenRemoteRepository>, url: String?,
+                                                token: MavenToken?): HashMap<String, String> {
+    return HashMap()
   }
 
   override fun getLongRunningTaskStatus(longRunningTaskId: String, token: MavenToken?): LongRunningTaskStatus = LongRunningTaskStatus.EMPTY
@@ -80,21 +81,12 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
 class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
                                request: ProjectResolutionRequest,
-                               token: MavenToken?): Collection<MavenServerExecutionResult> {
-    MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
-      object : BuildIssue {
-        override val title = SyncBundle.message("maven.sync.not.trusted.title")
-        override val description = SyncBundle.message("maven.sync.not.trusted.description") +
-                                   "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
-        override val quickFixes: List<BuildIssueQuickFix> = listOf(TrustProjectQuickFix())
-
-        override fun getNavigatable(project: Project) = null
-
-      },
-      MessageEvent.Kind.WARNING
-    )
-    return emptyList()
+                               token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
+    showUntrustedProjectNotification(myProject)
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
+
+
 }
 
 class MisconfiguredPlexusDummyEmbedder(myProject: Project,
@@ -104,7 +96,7 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
                                        private val myUnresolvedId: MavenId?) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
                                request: ProjectResolutionRequest,
-                               token: MavenToken?): Collection<MavenServerExecutionResult> {
+                               token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
 
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       MavenCoreInitializationFailureIssue(myExceptionMessage,
@@ -114,7 +106,22 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
       ),
       MessageEvent.Kind.ERROR
     )
-    return emptyList()
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
+}
+
+fun showUntrustedProjectNotification(project: Project) {
+  MavenProjectsManager.getInstance(project).syncConsole.addBuildIssue(
+    object : BuildIssue {
+      override val title = SyncBundle.message("maven.sync.not.trusted.title")
+      override val description = SyncBundle.message("maven.sync.not.trusted.description") +
+                                 "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
+      override val quickFixes: List<BuildIssueQuickFix> = listOf(TrustProjectQuickFix())
+
+      override fun getNavigatable(project: Project) = null
+
+    },
+    MessageEvent.Kind.WARNING
+  )
 }

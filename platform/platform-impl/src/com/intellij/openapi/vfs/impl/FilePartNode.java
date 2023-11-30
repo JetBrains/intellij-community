@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -11,8 +11,8 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -41,8 +41,7 @@ class FilePartNode {
   // file pointers for this exact path (i.e., concatenation of all getName() down from the root).
   // Either VirtualFilePointerImpl or VirtualFilePointerImpl[] (when it so happened that several pointers merged into one node - e.g., after file rename onto existing pointer)
   private Object leaves;
-  @NotNull
-  volatile Object myFileOrUrl;
+  volatile @NotNull Object myFileOrUrl;
   final NewVirtualFileSystem myFS; // the file system of this particular component. E.g. for path "/x.jar!/foo.txt" the node "x.jar" fs is LocalFileSystem, the node "foo.txt" fs is JarFileSystem
 
   FilePartNode(int nameId, @NotNull Object fileOrUrl, @NotNull NewVirtualFileSystem fs) {
@@ -99,13 +98,11 @@ class FilePartNode {
     return fileOrUrl instanceof VirtualFile ? (VirtualFile)fileOrUrl : null;
   }
 
-  @NotNull
-  private String myUrl() {
+  private @NotNull String myUrl() {
     return myUrl(myFileOrUrl);
   }
 
-  @NotNull
-  static String myUrl(@NotNull Object fileOrUrl) {
+  static @NotNull String myUrl(@NotNull Object fileOrUrl) {
     return fileOrUrl instanceof VirtualFile ? ((VirtualFile)fileOrUrl).getUrl() : (String)fileOrUrl;
   }
 
@@ -120,9 +117,8 @@ class FilePartNode {
     myFS = fs;
   }
 
-  @NotNull
-  static CharSequence fromNameId(int nameId) {
-    return nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : FileNameCache.getVFileName(nameId);
+  static @NotNull CharSequence fromNameId(int nameId) {
+    return nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : FSRecords.getInstance().getNameByNameId(nameId);
   }
 
   @NotNull
@@ -394,8 +390,7 @@ class FilePartNode {
     children = ContainerUtil.map(children, n -> n.replaceWithUPN(this), EMPTY_ARRAY);
   }
 
-  @NotNull
-  private UrlPartNode replaceWithUPN(@NotNull FilePartNode parent) {
+  private @NotNull UrlPartNode replaceWithUPN(@NotNull FilePartNode parent) {
     if (this instanceof UrlPartNode) return (UrlPartNode)this;
     if (this instanceof FilePartNodeRoot) throw new IllegalArgumentException("invalid argument node: " + this);
 
@@ -423,8 +418,7 @@ class FilePartNode {
     return newNode;
   }
 
-  @NotNull
-  static String childUrl(@NotNull String parentUrl, @NotNull CharSequence childName, @NotNull NewVirtualFileSystem fs) {
+  static @NotNull String childUrl(@NotNull String parentUrl, @NotNull CharSequence childName, @NotNull NewVirtualFileSystem fs) {
     if (childName.equals(JarFileSystem.JAR_SEPARATOR) && fs instanceof ArchiveFileSystem) {
       return VirtualFileManager.constructUrl(fs.getProtocol(), StringUtil.trimEnd(VfsUtilCore.urlToPath(parentUrl), '/')) + childName;
     }

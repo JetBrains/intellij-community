@@ -65,9 +65,7 @@ public final class NotificationGroupEP implements PluginAware {
    *
    * @see #bundle
    */
-  @Attribute("key")
-  @NlsContexts.NotificationTitle
-  public String key;
+  @Attribute("key") public @NlsContexts.NotificationTitle String key;
 
   /**
    * Semicolon-separated list of notificationIds which should be recorded in feature usage statistics.
@@ -102,9 +100,8 @@ public final class NotificationGroupEP implements PluginAware {
       return result;
     }
 
-    @NotNull
     @Override
-    public String toString(@NotNull List<String> ids) {
+    public @NotNull String toString(@NotNull List<String> ids) {
       return String.join(",", ids);
     }
   }

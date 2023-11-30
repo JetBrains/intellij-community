@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeInsight.daemon.HighlightingPassesCache;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -13,7 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.ui.*;
@@ -21,7 +24,9 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -39,6 +44,7 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -208,13 +214,6 @@ public final class XFramesView extends XDebugView {
         }
       }
     });
-    ComboboxSpeedSearch search = new ComboboxSpeedSearch(myThreadComboBox, null) {
-      @Override
-      protected String getElementText(Object element) {
-        return ((XExecutionStack)element).getDisplayName();
-      }
-    };
-    search.setupListeners();
 
     ActionToolbarImpl toolbar = createToolbar();
     myThreadsPanel = new Wrapper();
@@ -223,20 +222,7 @@ public final class XFramesView extends XDebugView {
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
     myMainPanel.setFocusCycleRoot(true);
     myMainPanel.setFocusTraversalPolicy(new MyFocusPolicy());
-    if (myMainPanel.getLayout() instanceof BorderLayout) {
-      String prev = getShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE);
-      String next = getShortcutText(IdeActions.ACTION_NEXT_OCCURENCE);
-      String propKey = "XFramesView.AdPanel.SwitchFrames.enabled";
-      if (PropertiesComponent.getInstance().getBoolean(propKey, true) && prev != null && next != null) {
-        String message = XDebuggerBundle.message("debugger.switch.frames.from.anywhere.hint", prev, next);
-        var hint = new MyAdPanel(message, p -> {
-          myMainPanel.remove(p);
-          myMainPanel.revalidate();
-          PropertiesComponent.getInstance().setValue(propKey, false, true);
-        });
-        myMainPanel.add(hint, BorderLayout.SOUTH);
-      }
-    }
+    addFramesNavigationAd(myMainPanel);
   }
 
   public void onFrameSelectionKeyPressed(@NotNull Consumer<? super XStackFrame> handler) {
@@ -367,7 +353,7 @@ public final class XFramesView extends XDebugView {
     XSuspendContext suspendContext = session.getSuspendContext();
 
     if (event == SessionEvent.FRAME_CHANGED && Objects.equals(mySelectedStack, currentExecutionStack)) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       if (currentStackFrame != null) {
         myFramesList.setSelectedValue(currentStackFrame, true);
         mySelectedFrameIndex = myFramesList.getSelectedIndex();
@@ -519,6 +505,7 @@ public final class XFramesView extends XDebugView {
     private String myErrorMessage;
     private int myNextFrameIndex;
     private volatile boolean myRunning;
+    private long myStartTimeMs;
     private boolean myAllFramesLoaded;
     private final XDebugSession mySession;
     private Object myToSelect;
@@ -564,6 +551,7 @@ public final class XFramesView extends XDebugView {
           if (myVisibleRect != null) {
             myFramesList.scrollRectToVisible(myVisibleRect);
           }
+          XDebuggerActionsCollector.logFramesUpdated(System.currentTimeMillis() - myStartTimeMs, myStackFrames);
           myRunning = false;
           myListenersEnabled = true;
         }
@@ -594,6 +582,9 @@ public final class XFramesView extends XDebugView {
         }
         //noinspection unchecked
         model.addAll(insertIndex, values);
+
+        scheduleFilesHighlighting(values, myProject);
+
         if (last) {
           if (loadingPresent) {
             model.remove(model.getSize() - 1);
@@ -607,6 +598,17 @@ public final class XFramesView extends XDebugView {
       }
     }
 
+    private static void scheduleFilesHighlighting(@NotNull List<?> values, @NotNull Project project) {
+      if (!Registry.is("highlighting.passes.cache")) return;
+
+      List<VirtualFile> files = StreamEx.of(values).select(XStackFrame.class)
+        .map(it -> ObjectUtils.doIfNotNull(it.getSourcePosition(), XSourcePosition::getFile))
+        .filter(Objects::nonNull)
+        .toList();
+
+      HighlightingPassesCache.getInstance(project).schedule(files, true);
+    }
+
     @Override
     public boolean isObsolete() {
       return !myRunning;
@@ -614,6 +616,7 @@ public final class XFramesView extends XDebugView {
 
     public void dispose() {
       myRunning = false;
+      myStartTimeMs = 0;
       myExecutionStack = null;
     }
 
@@ -622,6 +625,7 @@ public final class XFramesView extends XDebugView {
         return false;
       }
       myRunning = true;
+      myStartTimeMs = System.currentTimeMillis();
       myExecutionStack.computeStackFrames(myNextFrameIndex, this);
       return true;
     }
@@ -662,6 +666,24 @@ public final class XFramesView extends XDebugView {
         model.add((Object)null);
       }
       return selectCurrentFrame();
+    }
+  }
+
+  static void addFramesNavigationAd(JPanel parent) {
+    if (!(parent.getLayout() instanceof BorderLayout)) {
+      return;
+    }
+    String prev = getShortcutText(IdeActions.ACTION_PREVIOUS_OCCURENCE);
+    String next = getShortcutText(IdeActions.ACTION_NEXT_OCCURENCE);
+    String propKey = "XFramesView.AdPanel.SwitchFrames.enabled";
+    if (PropertiesComponent.getInstance().getBoolean(propKey, true) && prev != null && next != null) {
+      String message = XDebuggerBundle.message("debugger.switch.frames.from.anywhere.hint", prev, next);
+      var hint = new MyAdPanel(message, p -> {
+        parent.remove(p);
+        parent.revalidate();
+        PropertiesComponent.getInstance().setValue(propKey, false, true);
+      });
+      parent.add(hint, BorderLayout.SOUTH);
     }
   }
 

@@ -2,10 +2,10 @@
 package com.intellij.psi.impl;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.lang.java.parser.BasicReferenceParser;
 import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.lang.java.parser.ReferenceParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,7 +38,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
   private static final JavaParserUtil.ParserWrapper RESOURCE = builder -> JavaParser.INSTANCE.getDeclarationParser().parseResource(builder);
 
   private static final JavaParserUtil.ParserWrapper TYPE = builder -> {
-    int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.ELLIPSIS | ReferenceParser.WILDCARD | ReferenceParser.DISJUNCTIONS | ReferenceParser.VAR_TYPE;
+    int flags = BasicReferenceParser.EAT_LAST_DOT | BasicReferenceParser.ELLIPSIS | BasicReferenceParser.WILDCARD | BasicReferenceParser.DISJUNCTIONS | BasicReferenceParser.VAR_TYPE;
     JavaParser.INSTANCE.getReferenceParser().parseType(builder, flags);
   };
 

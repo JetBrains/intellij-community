@@ -30,7 +30,7 @@ internal class IdeScaleIndicatorManager(private val project: Project) {
     setupLafListener()
   }
 
-  fun showIndicator() {
+  private fun showIndicator() {
     cancelCurrentPopup()
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)?.component ?: return
     val indicator = IdeScaleIndicator(UISettingsUtils.getInstance().currentIdeScale.percentValue)

@@ -15,6 +15,7 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.Url;
 import com.intellij.util.Urls;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -33,6 +34,8 @@ import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
  */
 public final class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
+  /** Duplicates VmOptionsGenerator.CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY */
+  private static final String CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins.custom.built.in.repository.url";
 
   @SuppressWarnings("SpellCheckingInspection") private static final String PLUGIN_LIST_FILE = "availables.xml";
   private static final String MARKETPLACE_PLUGIN_ID = "com.intellij.marketplace";
@@ -42,12 +45,13 @@ public final class RepositoryHelper {
    * Returns a list of configured plugin hosts.
    * Note that the list always ends with {@code null} element denoting a main plugin repository.
    */
-  public static @NotNull List<String> getPluginHosts() {
+  public static @NotNull List<@Nullable String> getPluginHosts() {
     List<String> hosts = new ArrayList<>(UpdateSettings.getInstance().getPluginHosts());
     String pluginsUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
     if (pluginsUrl != null && !"__BUILTIN_PLUGINS_URL__".equals(pluginsUrl)) {
       hosts.add(pluginsUrl);
     }
+    ContainerUtil.addIfNotNull(hosts, System.getProperty(CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY));
     List<CustomPluginRepoContributor> repoContributors = CustomPluginRepoContributor.EP_NAME.getExtensionsIfPointIsRegistered();
     for (CustomPluginRepoContributor contributor : repoContributors) {
       hosts.addAll(contributor.getRepoUrls());
@@ -89,7 +93,7 @@ public final class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(Map.of("build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(build)));
+      url = url.addParameters(Map.of("build", ApplicationInfoImpl.orFromPluginCompatibleBuild(build)));
     }
 
     if (indicator != null) {
@@ -191,5 +195,41 @@ public final class RepositoryHelper {
     }
 
     return compatiblePluginMap.values();
+  }
+
+  /**
+   * Returns a list of plugins compatible with the current build, loaded from all configured custom repositories.
+   */
+  @ApiStatus.Internal
+  public static @NotNull List<PluginNode> loadPluginsFromCustomRepositories(@Nullable ProgressIndicator indicator) {
+    var ids = new HashSet<PluginId>();
+    var result = new ArrayList<PluginNode>();
+
+    for (var host : getPluginHosts()) {
+      if (host == null) continue;
+      try {
+        var plugins = loadPlugins(host, null, indicator);
+        for (var plugin : plugins) {
+          if (ids.add(plugin.getPluginId())) {
+            result.add(plugin);
+          }
+        }
+      }
+      catch (IOException e) {
+        LOG.info("Couldn't load plugins from " + host + ": " + e);
+        LOG.debug(e);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Looks for the given plugins in the Marketplace and custom repositories. Only compatible plugins are returned.
+   */
+  public static @NotNull Collection<PluginNode> loadPlugins(@NotNull Set<PluginId> pluginIds) {
+    var mpPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds);
+    var customPlugins = loadPluginsFromCustomRepositories(null).stream().filter(p -> pluginIds.contains(p.getPluginId())).toList();
+    return mergePluginsFromRepositories(mpPlugins, customPlugins, true);
   }
 }

@@ -2,17 +2,18 @@
 package org.jetbrains.plugins.gradle.jvmcompat
 
 class GradleCompatibilityState() : IdeVersionedDataState() {
-  constructor(
-    initialVersionMappings: List<VersionMapping>,
-    initialSupportedJavaVersions: List<String>,
-    initialSupportedGradleVersions: List<String>
-  ) : this() {
-    versionMappings.addAll(initialVersionMappings)
-    supportedJavaVersions.addAll(initialSupportedJavaVersions)
-    supportedGradleVersions.addAll(initialSupportedGradleVersions)
-  }
 
-  var versionMappings by list<VersionMapping>()
+  var compatibility by list<VersionMapping>()
   var supportedJavaVersions by list<String>()
   var supportedGradleVersions by list<String>()
+
+  constructor(
+    compatibility: List<VersionMapping>,
+    supportedJavaVersions: List<String>,
+    supportedGradleVersions: List<String>
+  ) : this() {
+    this.compatibility.addAll(compatibility)
+    this.supportedJavaVersions.addAll(supportedJavaVersions)
+    this.supportedGradleVersions.addAll(supportedGradleVersions)
+  }
 }

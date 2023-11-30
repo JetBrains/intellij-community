@@ -12,10 +12,10 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.DescriptorMemberChooserObject
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -197,5 +197,5 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
     }
 
     private fun suggestSafeNameByName(originalName: String, validator: CollectingNameValidator): String =
-        Fe10KotlinNameSuggester.suggestNameByName(originalName, validator).quoteIfNeeded()
+        KotlinNameSuggester.suggestNameByName(originalName, validator).quoteIfNeeded()
 }

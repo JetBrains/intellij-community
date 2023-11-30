@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.util.containers.PeekableIterator;
@@ -53,10 +39,9 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
     }
   };
 
-  @NotNull
-  static <T> MarkupIterator<T> mergeIterators(@NotNull final MarkupIterator<T> iterator1,
-                                              @NotNull final MarkupIterator<T> iterator2,
-                                              @NotNull final Comparator<? super T> comparator) {
+  static @NotNull <T> MarkupIterator<T> mergeIterators(final @NotNull MarkupIterator<T> iterator1,
+                                                       final @NotNull MarkupIterator<T> iterator2,
+                                                       final @NotNull Comparator<? super T> comparator) {
     return new MarkupIterator<T>() {
       @Override
       public void dispose() {
@@ -74,8 +59,7 @@ public interface MarkupIterator<T> extends PeekableIterator<T> {
         return choose().next();
       }
 
-      @NotNull
-      private MarkupIterator<T> choose() {
+      private @NotNull MarkupIterator<T> choose() {
         T t1 = iterator1.hasNext() ? iterator1.peek() : null;
         T t2 = iterator2.hasNext() ? iterator2.peek() : null;
         if (t1 == null) {

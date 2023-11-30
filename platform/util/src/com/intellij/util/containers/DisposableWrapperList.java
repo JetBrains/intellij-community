@@ -267,7 +267,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
     return unwrapped;
   }
 
-  private class DisposableWrapper extends AtomicBoolean implements Disposable {
+  private final class DisposableWrapper extends AtomicBoolean implements Disposable {
     private final @NotNull E delegate;
     private boolean removeFromContainer;
 
@@ -342,7 +342,7 @@ public final class DisposableWrapperList<E> extends AbstractList<E> {
     }
   }
 
-  private class DisposableWrapperListIterator implements ListIterator<E> {
+  private final class DisposableWrapperListIterator implements ListIterator<E> {
     private final @NotNull ListIterator<DisposableWrapper> myDelegate;
     private @Nullable DisposableWrapper myLastReturned;
 

@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.2.60-dev-286"
+    kotlin("jvm")
 }
 group = "testgroup"
 version = "1.0-SNAPSHOT"

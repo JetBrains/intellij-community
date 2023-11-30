@@ -29,7 +29,7 @@ import java.util.Set;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
-public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
+public final class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P extends ParameterInfo, C extends IntroduceParameterObjectClassDescriptor<M, P>>
   extends FixableUsagesRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(IntroduceParameterObjectProcessor.class);
   private final C myClassDescriptor;
@@ -174,7 +174,7 @@ public class IntroduceParameterObjectProcessor<M extends PsiNamedElement, P exte
       .message("refactoring.introduce.parameter.object.command.name", myClassDescriptor.getClassName(), myMethod.getName());
   }
 
-  public static class ChangeSignatureUsageWrapper extends FixableUsageInfo {
+  public static final class ChangeSignatureUsageWrapper extends FixableUsageInfo {
     private final UsageInfo myInfo;
 
     public ChangeSignatureUsageWrapper(UsageInfo info) {

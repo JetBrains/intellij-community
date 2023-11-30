@@ -6,3 +6,5 @@ var x: String
     set(v: String) {
         // test
     }
+
+// IGNORE_K2

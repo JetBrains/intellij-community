@@ -3,6 +3,7 @@ package com.jetbrains.python.testing
 
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.ThreeState
@@ -11,7 +12,7 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-class PyTestLineMarkerContributor : RunLineMarkerContributor() {
+class PyTestLineMarkerContributor : RunLineMarkerContributor(), DumbAware {
   override fun getInfo(element: PsiElement): Info? {
     if ((element !is LeafPsiElement) || element.elementType != PyTokenTypes.IDENTIFIER) {
       return null

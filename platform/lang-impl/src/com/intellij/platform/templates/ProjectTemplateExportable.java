@@ -1,36 +1,41 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.components.ExportableComponent;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 
-public class ProjectTemplateExportable implements ExportableComponent {
-
+@State(name = "ProjectTemplates",
+  storages = @Storage(value = "ProjectTemplates.xml", exportable = true),//no non-default state, so won't ever be created
+  additionalExportDirectory = "projectTemplates",
+  presentableName = ProjectTemplateExportable.NameGetter.class,
+  category = SettingsCategory.CODE)
+public final class ProjectTemplateExportable implements PersistentStateComponent<ProjectTemplateExportable.ProjectTemplateExportableState> {
   @Override
-  public File @NotNull [] getExportFiles() {
-    return new File[]{new File(ArchivedTemplatesFactory.getCustomTemplatesPath())};
+  public @Nullable ProjectTemplateExportable.ProjectTemplateExportableState getState() {
+    return null;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
-    return LangBundle.message("project.template.presentable.name");
+  public void loadState(@NotNull ProjectTemplateExportableState state) {
+    //ignore
+  }
+
+  public static class ProjectTemplateExportableState {
+  }
+
+  public static class NameGetter extends State.NameGetter {
+
+    @Nls
+    @Override
+    public String get() {
+      return LangBundle.message("project.template.presentable.name");
+    }
   }
 }

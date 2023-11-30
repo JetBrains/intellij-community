@@ -1,84 +1,22 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
-import com.intellij.util.indexing.diagnostic.ScanningType;
-import com.intellij.util.indexing.roots.IndexableFilesIterator;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
-public class UnindexedFilesUpdater {
-  // should be used only for test debugging purpose
-  private static final Logger LOG = Logger.getInstance(UnindexedFilesUpdater.class);
-
+public final class UnindexedFilesUpdater {
   private static final boolean useConservativeThreadCountPolicy =
     SystemProperties.getBooleanProperty("idea.indexing.use.conservative.thread.count.policy", false);
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
   // Allows to specify number of indexing threads. -1 means the default value (currently, 4).
   private static final int INDEXER_THREAD_COUNT = SystemProperties.getIntProperty("caches.indexerThreadsCount", -1);
+  private static final boolean IS_HT_SMT_ENABLED = SystemProperties.getBooleanProperty("intellij.system.ht.smt.enabled", false);
 
-  private final @NotNull Project myProject;
-  private final boolean myStartSuspended;
-  private final boolean myOnProjectOpen;
-  private final @Nullable String myIndexingReason;
-  private final @NotNull ScanningType myScanningType;
-  private final @Nullable DependenciesIndexedStatusService.StatusMark myMark;
-  private final @Nullable List<IndexableFilesIterator> myPredefinedIndexableFilesIterators;
+  private UnindexedFilesUpdater() {
 
-  public UnindexedFilesUpdater(@NotNull Project project,
-                               boolean startSuspended,
-                               boolean onProjectOpen,
-                               @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
-                               @Nullable DependenciesIndexedStatusService.StatusMark mark,
-                               @Nullable @NonNls String indexingReason,
-                               @NotNull ScanningType scanningType) {
-    myProject = project;
-    myStartSuspended = startSuspended;
-    myOnProjectOpen = onProjectOpen;
-    myIndexingReason = indexingReason;
-    myScanningType = scanningType;
-    myMark = mark;
-    myPredefinedIndexableFilesIterators = predefinedIndexableFilesIterators;
-    LOG.assertTrue(myPredefinedIndexableFilesIterators == null || !myPredefinedIndexableFilesIterators.isEmpty());
-    if (indexingReason == null) LOG.warn("Please provide an indexing reason (was provided 'null')");
-  }
-
-  /**
-   * @deprecated please use {@link #UnindexedFilesUpdater(Project, String)} and provide a non-null reason
-   */
-  @Deprecated
-  public UnindexedFilesUpdater(@NotNull Project project) {
-    // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
-    // file based index extensions for all project files until at least one of UnindexedFilesScanner-s finishes without cancellation.
-    // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
-    this(project, false, false, null, null, null, ScanningType.FULL);
-  }
-
-  public UnindexedFilesUpdater(@NotNull Project project, @Nullable @NonNls String indexingReason) {
-    this(project, false, false, null, null, indexingReason, ScanningType.FULL);
-  }
-
-  public UnindexedFilesUpdater(@NotNull Project project,
-                               @Nullable List<IndexableFilesIterator> predefinedIndexableFilesIterators,
-                               @Nullable DependenciesIndexedStatusService.StatusMark mark,
-                               @Nullable @NonNls String indexingReason) {
-    this(project, false, false, predefinedIndexableFilesIterators, mark, indexingReason,
-         predefinedIndexableFilesIterators == null ? ScanningType.FULL : ScanningType.PARTIAL);
-  }
-
-  public void queue() {
-    new UnindexedFilesScanner(myProject, myStartSuspended, myOnProjectOpen, myPredefinedIndexableFilesIterators, myMark, myIndexingReason,
-                              myScanningType)
-      .queue(myProject);
   }
 
   /**
@@ -90,7 +28,7 @@ public class UnindexedFilesUpdater {
     if (threadCount <= 0) {
       threadCount =
         Math.max(1, Math.min(useConservativeThreadCountPolicy
-                             ? DEFAULT_MAX_INDEXER_THREADS : getMaxBackgroundThreadCount(), getMaxBackgroundThreadCount()));
+                             ? DEFAULT_MAX_INDEXER_THREADS : getMaxNumberOfIndexingThreads(), getMaxNumberOfIndexingThreads()));
     }
     return threadCount;
   }
@@ -101,9 +39,17 @@ public class UnindexedFilesUpdater {
   public static int getMaxNumberOfIndexingThreads() {
     // Change of the registry option requires IDE restart.
     int threadCount = INDEXER_THREAD_COUNT;
-    return Math.max(1, threadCount <= 0 ? getMaxBackgroundThreadCount() : threadCount);
+    if (threadCount > 0) {
+      return threadCount;
+    }
+
+    return Math.max(1, getAvailablePhysicalCoresNumber() - getCoresToLeaveForOtherActivitiesCount());
   }
 
+  public static int getAvailablePhysicalCoresNumber() {
+    var availableCores = Runtime.getRuntime().availableProcessors();
+    return IS_HT_SMT_ENABLED ? availableCores / 2 : availableCores;
+  }
   /**
    * Scanning activity can be scaled well across number of threads, so we're trying to use all available resources to do it faster.
    */
@@ -115,9 +61,12 @@ public class UnindexedFilesUpdater {
   }
 
   private static int getMaxBackgroundThreadCount() {
-    int coresToLeaveForOtherActivity = DumbServiceImpl.ALWAYS_SMART
-                                       ? getMaxNumberOfIndexingThreads() : ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
-    return Runtime.getRuntime().availableProcessors() - coresToLeaveForOtherActivity;
+    // note that getMaxBackgroundThreadCount is used to calculate threads count is FilesScanExecutor, which is also used for "FindInFiles"
+    return Runtime.getRuntime().availableProcessors() - getCoresToLeaveForOtherActivitiesCount();
+  }
+
+  private static int getCoresToLeaveForOtherActivitiesCount() {
+    return ApplicationManager.getApplication().isCommandLine() ? 0 : 1;
   }
 
   public static boolean isIndexUpdateInProgress(@NotNull Project project) {

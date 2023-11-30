@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.IncorrectOperationException;
@@ -22,6 +23,7 @@ import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCa
  * Makes a {@link ScheduledExecutorService} from the supplied plain non-scheduling {@link ExecutorService} by awaiting scheduled tasks in a separate thread
  * and then passing them for execution to the {@code backendExecutorService}.
  * Unlike the standard {@link ScheduledThreadPoolExecutor}, this pool can be unbounded if the {@code backendExecutorService} is.
+ * Used for reducing the number of always-running threads, because it reuses the threads from the supplied pool.
  */
 class SchedulingWrapper implements ScheduledExecutorService {
   private static final Logger LOG = Logger.getInstance(SchedulingWrapper.class);
@@ -154,7 +156,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     return backendExecutorService.awaitTermination(deadline - System.nanoTime(), TimeUnit.NANOSECONDS);
   }
 
-  class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V> {
+  class MyScheduledFutureTask<V> extends FutureTask<V> implements RunnableScheduledFuture<V>, ContextAwareRunnable {
     /**
      * Sequence number to break ties FIFO
      */

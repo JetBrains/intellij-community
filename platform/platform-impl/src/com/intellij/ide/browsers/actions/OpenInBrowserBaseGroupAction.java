@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions;
 
 import com.intellij.icons.AllIcons;
@@ -6,10 +6,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.ide.browsers.WebBrowserXmlService;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValue;
@@ -30,7 +32,13 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     p.setHideGroupIfEmpty(true);
     p.setText(IdeBundle.messagePointer("open.in.browser"));
     p.setDescription(IdeBundle.messagePointer("open.selected.file.in.browser"));
-    p.setIcon(AllIcons.Nodes.PpWeb);
+    p.setIconSupplier(() -> AllIcons.Nodes.PpWeb);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    e.getPresentation().setEnabledAndVisible(project != null && TrustedProjects.isTrusted(project));
   }
 
   @Override
@@ -62,7 +70,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
     if (addDefaultBrowser) {
       OpenFileInDefaultBrowserAction defaultBrowserAction = new OpenFileInDefaultBrowserAction();
       defaultBrowserAction.getTemplatePresentation().setText(IdeBundle.messagePointer("default"));
-      defaultBrowserAction.getTemplatePresentation().setIcon(AllIcons.Nodes.PpWeb);
+      defaultBrowserAction.getTemplatePresentation().setIconSupplier(() -> AllIcons.Nodes.PpWeb);
       actions[hasLocalBrowser ? 1 : 0] = defaultBrowserAction;
     }
 
@@ -78,7 +86,7 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
   }
 
   private static boolean hasLocalBrowser() {
-    return JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled");
+    return JBCefApp.isSupported() && Registry.is("ide.web.preview.enabled", true);
   }
 
   public static final class OpenInBrowserGroupAction extends OpenInBrowserBaseGroupAction {
@@ -100,9 +108,10 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
       boolean needShowOnHover = psiFile != null && WebBrowserXmlService.getInstance().isXmlLanguage(psiFile.getViewProvider().getBaseLanguage())
               ? browserManager.isShowBrowserHoverXml()
               : browserManager.isShowBrowserHover();
-      e.getPresentation().setVisible(needShowOnHover &&
-                                     (!browserManager.getActiveBrowsers().isEmpty() || OpenInBrowserBaseGroupAction.hasLocalBrowser())
-                                     && editor != null && !DiffUtil.isDiffEditor(editor));
+      boolean enabled = needShowOnHover &&
+                        (!browserManager.getActiveBrowsers().isEmpty() || OpenInBrowserBaseGroupAction.hasLocalBrowser())
+                        && editor != null && !DiffUtil.isDiffEditor(editor);
+      e.getPresentation().setEnabledAndVisible(enabled);
     }
   }
 }

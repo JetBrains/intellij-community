@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.semantic;
 
 import com.intellij.openapi.project.Project;
@@ -26,12 +26,10 @@ public abstract class SemService {
     return project.getService(SemService.class);
   }
 
-  @Nullable
-  public <T extends SemElement> T getSemElement(@NotNull SemKey<T> key, @NotNull PsiElement psi) {
+  public @Nullable <T extends SemElement> T getSemElement(@NotNull SemKey<T> key, @NotNull PsiElement psi) {
     List<T> list = getSemElements(key, psi);
     return list.isEmpty() ? null : list.get(0);
   }
 
-  @NotNull
-  public abstract <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi);
+  public abstract @NotNull <T extends SemElement> List<T> getSemElements(SemKey<T> key, @NotNull PsiElement psi);
 }

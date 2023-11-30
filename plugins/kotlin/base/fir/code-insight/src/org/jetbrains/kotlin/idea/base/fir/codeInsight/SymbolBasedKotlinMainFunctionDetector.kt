@@ -12,9 +12,10 @@ import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.getJvmName
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.parameterInfo.getJvmName
+import org.jetbrains.kotlin.name.JvmStandardClassIds
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.types.Variance
@@ -69,7 +70,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
 
                 if (!isTopLevel) {
                     val containingClass = functionSymbol.originalContainingClassForOverride ?: return false
-                    val annotationJvmStatic = StandardClassIds.Annotations.JvmStatic
+                    val annotationJvmStatic = JvmStandardClassIds.Annotations.JvmStatic
                     return containingClass.classKind.isObject
                             && (!configuration.checkJvmStaticAnnotation || functionSymbol.hasAnnotation(annotationJvmStatic))
 
@@ -92,7 +93,8 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
         return true
     }
 
-    private fun KtAnalysisSession.buildMainParameterType(): KtType {
+    context(KtAnalysisSession)
+    private fun buildMainParameterType(): KtType {
         return buildClassType(StandardClassIds.Array) {
             val argumentType = buildClassType(StandardClassIds.String) {
                 nullability = KtTypeNullability.NON_NULLABLE

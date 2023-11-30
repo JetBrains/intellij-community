@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +26,7 @@ import java.util.function.BiFunction;
 
 public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiElement> {
   @Override
-  public boolean execute(@NotNull final PsiElement queryParameters, @NotNull final Processor<? super PsiElement> consumer) {
+  public boolean execute(final @NotNull PsiElement queryParameters, final @NotNull Processor<? super PsiElement> consumer) {
     if (queryParameters instanceof XmlTag xml) {
       if (ReadAction.compute(() -> isTypeElement(xml))) {
         final Collection<SchemaTypeInfo> infos = ReadAction.compute(() -> gatherInheritors(xml));
@@ -122,7 +122,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return false;
   }
 
-  private boolean isCertainTypeElement(XmlTag xml, final String typeName, final String nsPrefix) {
+  private static boolean isCertainTypeElement(XmlTag xml, final String typeName, final String nsPrefix) {
     if (! isTypeElement(xml)) return false;
     final XmlAttribute name = getNameAttr(xml);
     if (name == null) return false;
@@ -137,7 +137,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return XmlUtil.XML_SCHEMA_URI.equals(xml.getNamespace()) && ("complexType".equals(localName) || "simpleType".equals(localName));
   }
 
-  private Collection<SchemaTypeInfo> gatherInheritors(XmlTag xml) {
+  private static Collection<SchemaTypeInfo> gatherInheritors(XmlTag xml) {
     XmlAttribute name = getNameAttr(xml);
     if (name == null || StringUtil.isEmptyOrSpaces(name.getValue())) return null;
     String localName = name.getValue();
@@ -185,7 +185,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return name;
   }
 
-  private String getDefaultNs(final XmlFile file) {
+  private static String getDefaultNs(final XmlFile file) {
     return ReadAction.compute(() -> {
       String nsUri;
       final XmlTag tag = file.getDocument().getRootTag();

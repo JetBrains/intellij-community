@@ -4,6 +4,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThreadLocalCachedValue;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.text.ByteArrayCharSequence;
@@ -25,6 +26,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.IntFunction;
+
+import static java.nio.charset.StandardCharsets.US_ASCII;
 
 public final class IOUtil {
   public static final int KiB = 1024;
@@ -81,6 +84,14 @@ public final class IOUtil {
       throw new IOException(e);
     }
   }
+
+  /** reads all bytes from the buffer, and creates UTF8 string from them */
+  public static @NotNull String readString(@NotNull ByteBuffer buffer) {
+    byte[] bytes = new byte[buffer.remaining()];
+    buffer.get(bytes);
+    return new String(bytes, StandardCharsets.UTF_8);
+  }
+
 
   public static void writeString(@Nullable String s, @NotNull DataOutput stream) throws IOException {
     writeCharSequence(s, stream);
@@ -225,6 +236,10 @@ public final class IOUtil {
     return c < 128;
   }
 
+  /**
+   * @return true if _there are no files with such prefix exist_ -- e.g. if we delete nothing,
+   * because there were no such files beforehand.
+   */
   public static boolean deleteAllFilesStartingWith(@NotNull Path file) {
     String baseName = file.getFileName().toString();
     Path parentFile = file.getParent();
@@ -250,7 +265,7 @@ public final class IOUtil {
     boolean ok = true;
     for (Path f : files) {
       try {
-        Files.deleteIfExists(f);
+        FileUtil.delete(f);
       }
       catch (IOException ignore) {
         ok = false;
@@ -310,7 +325,7 @@ public final class IOUtil {
    * Consider to use {@link com.intellij.util.io.externalizer.StringCollectionExternalizer}.
    */
   public static @NotNull <C extends Collection<String>> C readStringCollection(@NotNull DataInput in,
-                                                                      @NotNull IntFunction<? extends C> collectionGenerator)
+                                                                               @NotNull IntFunction<? extends C> collectionGenerator)
     throws IOException {
     int size = DataInputOutputUtil.readINT(in);
     C strings = collectionGenerator.apply(size);
@@ -327,7 +342,8 @@ public final class IOUtil {
     return readStringCollection(in, ArrayList::new);
   }
 
-  public static void closeSafe(@NotNull Logger log, Closeable... closeables) {
+  public static void closeSafe(@NotNull Logger log,
+                               Closeable... closeables) {
     for (Closeable closeable : closeables) {
       if (closeable != null) {
         try {
@@ -340,26 +356,37 @@ public final class IOUtil {
     }
   }
 
+  public static void closeSafe(@NotNull Logger log,
+                               AutoCloseable... closeables) {
+    for (AutoCloseable closeable : closeables) {
+      if (closeable != null) {
+        try {
+          closeable.close();
+        }
+        catch (Exception e) {
+          log.error(e);
+        }
+      }
+    }
+  }
 
 
-  private static final ByteBuffer ZEROES = ByteBuffer.allocateDirect(1);
+  private static final byte[] ZEROES = new byte[1024];
 
   /**
-   * Imitates 'fallocate' linux call: ensures file region [offsetInFile..offsetInFile+size) is allocated on disk.
-   * We can't call 'fallocate' directly, hence just write zeros into the channel.
+   * Imitates 'fallocate' linux call: ensures file region [channel.size()..upUntilSize) is allocated on disk,
+   * and zeroed. We can't call 'fallocate' directly, hence just write zeros into the channel.
    */
-  public static void allocateFileRegion(final FileChannel channel,
-                                        final long offsetInFile,
-                                        final int size) throws IOException {
-    final long channelSize = channel.size();
-    if (channelSize < offsetInFile + size) {
-      //Assumes OS file cache page >= 1024, so writes land on each page at least once, and the write forces each
-      // page to be allocated (consume disk space):
-      final int stride = 1024;
-      for (long pos = Math.max(offsetInFile, channelSize);
-           pos < offsetInFile + size;
-           pos += stride) {
-        channel.write(ZEROES, pos);
+  public static void allocateFileRegion(@NotNull FileChannel channel,
+                                        long upUntilSize) throws IOException {
+    long channelSize = channel.size();
+    if (channelSize < upUntilSize) {
+      int stride = ZEROES.length;
+      ByteBuffer zeros = ByteBuffer.wrap(ZEROES);
+      for (long pos = channelSize; pos < upUntilSize; pos += stride) {
+        int remainsToZero = Math.toIntExact(Math.min(stride, upUntilSize - pos));
+        zeros.clear().limit(remainsToZero);
+        channel.write(zeros, pos);
       }
     }
   }
@@ -382,7 +409,10 @@ public final class IOUtil {
     }
   }
 
-  /** @return string with buffer content, as-if it is byte[], formatted by Arrays.toString(byte[]) */
+  /**
+   * @return string with buffer content (full: [0..capacity)), as-if it is byte[], formatted by Arrays.toString(byte[])
+   * Method is for debug view, for reading string from bytebuffer use {@link #readString(ByteBuffer)}
+   */
   public static String toString(final @NotNull ByteBuffer buffer) {
     final byte[] bytes = new byte[buffer.capacity()];
     final ByteBuffer slice = buffer.duplicate();
@@ -420,15 +450,62 @@ public final class IOUtil {
         sb.append("0");
       }
       sb.append(Integer.toHexString(unsignedByte));
-      if (pageSize > 0 && i % pageSize == pageSize - 1) {
-        sb.append('\n');
-      }
-      else {
-        sb.append(' ');
+      if (i < bytes.length - 1) {
+        if (pageSize > 0 && i % pageSize == pageSize - 1) {
+          sb.append('\n');
+        }
+        else {
+          sb.append(' ');
+        }
       }
     }
     return sb.toString();
   }
 
+  /** Convert 4-chars ascii string into an int32 'magicWord' -- i.e. reserved header value used to identify a file format. */
+  public static int asciiToMagicWord(@NotNull String ascii) {
+    if (ascii.length() != 4) {
+      throw new IllegalArgumentException("ascii[" + ascii + "] must be 4 ASCII chars long");
+    }
+    byte[] bytes = ascii.getBytes(US_ASCII);
+    if (bytes.length != 4) {
+      throw new IllegalArgumentException("ascii bytes [" + toHexString(bytes) + "].length must be 4");
+    }
 
+    return (Byte.toUnsignedInt(bytes[0]) << 24)
+           | (Byte.toUnsignedInt(bytes[1]) << 16)
+           | (Byte.toUnsignedInt(bytes[2]) << 8)
+           | Byte.toUnsignedInt(bytes[3]);
+  }
+
+  public static String magicWordToASCII(int magicWord) {
+    byte[] ascii = new byte[4];
+    ascii[0] = (byte)((magicWord >> 24) & 0xFF);
+    ascii[1] = (byte)((magicWord >> 16) & 0xFF);
+    ascii[2] = (byte)((magicWord >> 8) & 0xFF);
+    ascii[3] = (byte)((magicWord) & 0xFF);
+    return new String(ascii, US_ASCII);
+  }
+
+  /**
+   * Tries to wrap storageToWrap into another storage Out with the wrapperer.
+   * If the wrapperer call fails -- close storageToWrap before propagating exception up the callstack.
+   * (If the wrapperer call succeeded -- wrapping storage (Out) is now responsible for the closing of wrapped storage)
+   */
+  public static <Out extends AutoCloseable, In extends AutoCloseable, E extends Throwable>
+  Out wrapSafely(@NotNull In storageToWrap,
+                 @NotNull ThrowableNotNullFunction<In, Out, E> wrapperer) throws E {
+    try {
+      return wrapperer.fun(storageToWrap);
+    }
+    catch (Throwable mainEx) {
+      try {
+        storageToWrap.close();
+      }
+      catch (Throwable closeEx) {
+        mainEx.addSuppressed(closeEx);
+      }
+      throw mainEx;
+    }
+  }
 }

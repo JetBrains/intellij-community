@@ -17,12 +17,12 @@ private val EP_NAME: ExtensionPointName<ExtensionClassShouldNotBePublicProvider>
 
 internal object ExtensionClassShouldNotBePublicProviders : LanguageExtension<ExtensionClassShouldNotBePublicProvider>(EP_NAME.name)
 
-interface ExtensionClassShouldNotBePublicProvider {
+interface ExtensionClassShouldNotBePublicProvider : JvmProvider {
   fun isPublic(aClass: PsiClass): Boolean
   fun provideQuickFix(clazz: JvmClass, file: PsiFile): Array<out LocalQuickFix>
 }
 
-private class ExtensionClassShouldNotBePublicProviderForJava : ExtensionClassShouldNotBePublicProvider {
+internal class ExtensionClassShouldNotBePublicProviderForJVM : ExtensionClassShouldNotBePublicProvider {
   override fun isPublic(aClass: PsiClass): Boolean {
     return aClass.hasModifier(JvmModifier.PUBLIC)
   }
@@ -30,5 +30,9 @@ private class ExtensionClassShouldNotBePublicProviderForJava : ExtensionClassSho
   override fun provideQuickFix(clazz: JvmClass, file: PsiFile): Array<out LocalQuickFix> {
     val actions = createModifierActions(clazz, modifierRequest(JvmModifier.PUBLIC, false))
     return IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)
+  }
+
+  override fun isApplicableForKotlin(): Boolean {
+    return false
   }
 }

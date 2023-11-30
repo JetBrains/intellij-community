@@ -41,6 +41,7 @@ public class JUnit4Framework extends JUnitTestFramework {
   @Override
   public boolean isTestClass(PsiClass clazz, boolean canBePotential) {
     if (canBePotential) return isUnderTestSources(clazz);
+    if (!isFrameworkAvailable(clazz)) return false;
     return JUnitUtil.isJUnit4TestClass(clazz, false);
   }
 
@@ -124,8 +125,11 @@ public class JUnit4Framework extends JUnitTestFramework {
 
   @Override
   public boolean isIgnoredMethod(PsiElement element) {
-    final PsiMethod testMethod = element instanceof PsiMethod ? JUnitUtil.getTestMethod(element) : null;
-    return testMethod != null && AnnotationUtil.isAnnotated(testMethod, "org.junit.Ignore", 0);
+    if (element instanceof PsiMethod method) {
+      final PsiMethod ignoredTestMethod = AnnotationUtil.isAnnotated(method, "org.junit.Ignore", 0) ? JUnitUtil.getTestMethod(element) : null;
+      return ignoredTestMethod != null;
+    }
+    return false;
   }
 
   @Override

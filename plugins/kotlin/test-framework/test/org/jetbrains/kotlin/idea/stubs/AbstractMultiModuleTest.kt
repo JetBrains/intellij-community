@@ -5,11 +5,13 @@ package org.jetbrains.kotlin.idea.stubs
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
+import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
@@ -18,23 +20,27 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.config.CompilerSettings
-import org.jetbrains.kotlin.config.KotlinFacetSettings
+import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.allowProjectRootAccess
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.disposeVfsRootAccess
 import org.jetbrains.kotlin.idea.test.util.slashedPath
+import org.jetbrains.kotlin.idea.util.sourceRoots
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.*
 
@@ -98,7 +104,6 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
     }
 
     protected data class FileWithText(val name: String, val text: String)
-
 
     override fun tearDown() {
         runAll(
@@ -169,6 +174,31 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
         }
     }
 
+    fun Module.addLibrary(
+        file: VirtualFile,
+        name: String = KotlinJdkAndLibraryProjectDescriptor.LIBRARY_NAME,
+        kind: PersistentLibraryKind<*>? = null,
+    ) {
+        ConfigLibraryUtil.addLibrary(this, name, kind) {
+            addRoot(file, OrderRootType.CLASSES)
+        }
+    }
+
+    fun Module.addKotlinStdlib() = runWriteAction {
+        val modifiableModel = rootManager.modifiableModel
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.JDK_AND_RUNTIME_LIGHT_PROJECT_DESCRIPTOR.configureModule(
+            this,
+            modifiableModel,
+        )
+        modifiableModel.commit()
+    }
+
+    fun Module.findSourceKtFile(fileName: String): KtFile {
+        val file = "${sourceRoots.first().url}/$fileName"
+        val virtualFile = VirtualFileManager.getInstance().findFileByUrl(file)!!
+        return PsiManager.getInstance(myProject).findFile(virtualFile) as KtFile
+    }
+
     fun Module.enableMultiPlatform(additionalCompilerArguments: String = "") {
         createFacet()
         val facetSettings = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)
@@ -176,7 +206,7 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
 
         facetSettings.useProjectSettings = false
         facetSettings.compilerSettings = CompilerSettings().apply {
-            additionalArguments += " -Xmulti-platform $additionalCompilerArguments"
+            additionalArguments += " -Xmulti-platform -Xexpect-actual-classes $additionalCompilerArguments"
         }
     }
 
@@ -186,6 +216,20 @@ abstract class AbstractMultiModuleTest : DaemonAnalyzerTestCase() {
             ?: error("Facet settings are not found")
 
         facetSettings.useProjectSettings = false
+    }
+
+    protected fun createKtFileUnderNewContentRoot(fileWithText: FileWithText): KtFile {
+        val tmpDir = createTempDirectory().toPath()
+
+        // We need to add the script to a module so that it's part of the project's content root.
+        val containingModule = createModule(tmpDir, moduleType)
+        PsiTestUtil.addContentRoot(containingModule, getVirtualFile(tmpDir.toFile()))
+
+        val filePath = tmpDir / fileWithText.name
+        filePath.writeText(fileWithText.text)
+
+        val file = getVirtualFile(filePath.toFile())
+        return file.toPsiFile(project)!! as KtFile
     }
 
     protected fun checkFiles(
@@ -241,7 +285,7 @@ fun Module.createMultiplatformFacetM3(
 private fun Module.createFacetWithAdditionalSetup(
     platformKind: TargetPlatform?,
     useProjectSettings: Boolean,
-    additionalSetup: KotlinFacetSettings.() -> Unit
+    additionalSetup: IKotlinFacetSettings.() -> Unit
 ) {
     WriteAction.run<Throwable> {
         val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)

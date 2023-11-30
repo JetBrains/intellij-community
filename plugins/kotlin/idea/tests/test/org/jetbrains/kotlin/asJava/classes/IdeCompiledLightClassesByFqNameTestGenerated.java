@@ -186,6 +186,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/Trait.kt"));
         }
 
+        @TestMetadata("typeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/typeAlias.kt"));
+        }
+
         @TestMetadata("UnitAsGenericArgument.kt")
         public void testUnitAsGenericArgument() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/UnitAsGenericArgument.kt"));
@@ -228,6 +233,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         @TestMetadata("AnnotatedPropertyWithSites.kt")
         public void testAnnotatedPropertyWithSites() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/AnnotatedPropertyWithSites.kt"));
+        }
+
+        @TestMetadata("annotationBinaryRetention.kt")
+        public void testAnnotationBinaryRetention() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/annotationBinaryRetention.kt"));
         }
 
         @TestMetadata("AnnotationClass.kt")
@@ -278,6 +288,11 @@ public abstract class IdeCompiledLightClassesByFqNameTestGenerated extends Abstr
         @TestMetadata("DataClassWithCustomImplementedMembers.kt")
         public void testDataClassWithCustomImplementedMembers() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DataClassWithCustomImplementedMembers.kt"));
+        }
+
+        @TestMetadata("DefaultImplsWithTypeParameters.kt")
+        public void testDefaultImplsWithTypeParameters() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DefaultImplsWithTypeParameters.kt"));
         }
 
         @TestMetadata("DelegatedNested.kt")

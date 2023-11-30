@@ -5,5 +5,7 @@ fun bar(): String? {
 
 fun foo() {
     val s: String? = bar()
-    s?.let { zoo(it) }
+    if (s != null) {
+        zoo(s)
+    }
 }

@@ -41,8 +41,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
   }
 
   public abstract static class ForContent extends TabbedContentAction {
-    @NotNull
-    protected final Content myContent;
+    protected final @NotNull Content myContent;
 
     public ForContent(@NotNull Content content, @NotNull AnAction shortcutTemplate, final @NlsActions.ActionText String text) {
       super(content.getManager(), shortcutTemplate, text, content);
@@ -57,7 +56,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setEnabled(myManager.getIndexOfContent(myContent) >= 0);
     }
@@ -86,7 +85,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
   }
 
-  public static class CloseAllButThisAction extends ForContent {
+  public static final class CloseAllButThisAction extends ForContent {
     public CloseAllButThisAction(@NotNull Content content) {
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS_BUT_THIS),
             UIBundle.message("tabbed.pane.close.all.but.this.action.name"));
@@ -139,7 +138,9 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setEnabledAndVisible(myManager.getContentCount() > 1 && myManager.canCloseAllContents());
+      Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+      boolean notForTheOnlyContent = myManager.getContentCount() > 1 || !(component instanceof ContentTabLabel);
+      presentation.setEnabledAndVisible(notForTheOnlyContent && myManager.canCloseAllContents());
     }
 
     @Override
@@ -170,7 +171,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
   }
 
-  public static class MyPreviousTabAction extends TabbedContentAction {
+  public static final class MyPreviousTabAction extends TabbedContentAction {
     public MyPreviousTabAction(ContentManager manager) {
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB), manager);
     }
@@ -193,7 +194,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
   }
 
   @ApiStatus.Experimental
-  public static class SplitTabAction extends TabbedContentAction {
+  public static final class SplitTabAction extends TabbedContentAction {
     private final boolean myHorizontal;
 
     public SplitTabAction(@NotNull ContentManager manager, boolean horizontal) {
@@ -229,7 +230,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
   }
 
   @ApiStatus.Experimental
-  public static class UnsplitTabAction extends TabbedContentAction {
+  public static final class UnsplitTabAction extends TabbedContentAction {
     public UnsplitTabAction(@NotNull ContentManager manager) {
       super(manager, ActionManager.getInstance().getAction("Unsplit"), manager);
     }

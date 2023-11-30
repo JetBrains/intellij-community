@@ -2,6 +2,7 @@
 package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
@@ -10,8 +11,12 @@ import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.uast.*
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
-import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.test.util.joinToArrayString
+import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtSecondaryConstructor
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 // NB: Similar to [UastResolveApiFixtureTestBase], but focusing on light classes, not `resolve`
@@ -102,6 +107,71 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         TestCase.assertEquals(fooMethodJavaPsiModifierList.textRange, fooMethodSourcePsiModifierList.textRange)
     }
 
+    fun checkLocalClassCaching(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "test.kt",
+            """
+            fun foo() {
+              class Bar() {
+                fun baz() {}
+                val property = 43
+                constructor(i: Int): this()
+                
+                init {
+                  42
+                }
+              }
+            }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        fun findDeclaration(): Set<KtNamedDeclaration> {
+            val clazz = uFile.findElementByTextFromPsi<UClass>("Bar", strict = false).orFail("can't find class Bar")
+            return clazz.uastDeclarations.map { it.javaPsi?.unwrapped as KtNamedDeclaration }.toSet()
+        }
+
+        val declarationsBefore = findDeclaration()
+        val lightElementsBefore = mutableSetOf<PsiElement>()
+        for (namedDeclaration in declarationsBefore) {
+            val lightElements = namedDeclaration.toLightElements()
+            if (lightElements.isEmpty()) error("Light elements for ${namedDeclaration.name} is not found")
+
+            lightElementsBefore += lightElements
+            for (lightElement in lightElements) {
+                TestCase.assertTrue(lightElement.isValid)
+            }
+
+            runUndoTransparentWriteAction {
+                val ktPsiFactory = KtPsiFactory(myFixture.project)
+                val text = namedDeclaration.text
+                val newDeclaration = when (namedDeclaration) {
+                    is KtPrimaryConstructor -> ktPsiFactory.createPrimaryConstructor(text)
+                    is KtSecondaryConstructor -> ktPsiFactory.createSecondaryConstructor(text)
+                    else -> ktPsiFactory.createDeclaration<KtNamedDeclaration>(text)
+                }
+
+                namedDeclaration.replace(newDeclaration)
+            }
+
+            for (namedElement in lightElements) {
+                TestCase.assertFalse(namedElement.isValid)
+            }
+        }
+
+        val recreatedDeclarations = findDeclaration()
+        for (namedDeclaration in recreatedDeclarations) {
+            TestCase.assertTrue(namedDeclaration.name, namedDeclaration !in declarationsBefore)
+
+            val lightElements = namedDeclaration.toLightElements()
+            if (lightElements.isEmpty()) error("Light elements for ${namedDeclaration.name} is not found")
+            for (lightElement in lightElements) {
+                TestCase.assertTrue(lightElement.isValid)
+                TestCase.assertTrue(lightElement !in lightElementsBefore)
+            }
+        }
+    }
+
     fun checkPropertyAccessorModifierListOffsets(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "test.kt", """
@@ -170,20 +240,24 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
         val upTo = uFile.findElementByTextFromPsi<UMethod>("upTo", strict = false)
             .orFail("can't find fun upTo")
         TestCase.assertTrue(upTo.javaPsi.hasModifier(JvmModifier.FINAL))
+        TestCase.assertTrue(upTo.javaPsi.containingClass!!.hasModifier(JvmModifier.FINAL))
         TestCase.assertTrue(upTo.javaPsi.parameterList.parameters[0].annotations.any { it.isNotNull })
 
         val isFinished = uFile.findElementByTextFromPsi<UMethod>("isFinished", strict = false)
             .orFail("can't find accessor isFinished")
         TestCase.assertTrue(isFinished.javaPsi.hasModifier(JvmModifier.FINAL))
+        TestCase.assertTrue(isFinished.javaPsi.containingClass!!.hasModifier(JvmModifier.FINAL))
 
         val isAtLeast = uFile.findElementByTextFromPsi<UMethod>("isAtLeast", strict = false)
             .orFail("can't find fun isAtLeast")
         TestCase.assertTrue(isAtLeast.javaPsi.hasModifier(JvmModifier.FINAL))
+        TestCase.assertTrue(isAtLeast.javaPsi.containingClass!!.hasModifier(JvmModifier.FINAL))
         TestCase.assertTrue(isAtLeast.javaPsi.parameterList.parameters[0].annotations.any { it.isNotNull })
 
         val done = uFile.findElementByTextFromPsi<UMethod>("done", strict = false)
             .orFail("can't find fun done")
         TestCase.assertTrue(done.javaPsi.hasModifier(JvmModifier.FINAL))
+        TestCase.assertTrue(done.javaPsi.containingClass!!.hasModifier(JvmModifier.FINAL))
         TestCase.assertTrue(done.javaPsi.parameterList.parameters[0].annotations.any { it.isNotNull })
     }
 
@@ -473,6 +547,52 @@ interface LightClassBehaviorTestBase : UastPluginSelection {
             .orFail("can't find val sum")
         val sum = top.javaPsi as? PsiField
         TestCase.assertEquals("kotlin.jvm.functions.Function1<java.lang.Integer,java.lang.Integer>", sum?.type?.canonicalText)
+    }
+
+    fun checkUpperBoundForRecursiveTypeParameter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                interface Alarm {
+                  interface Builder<Self : Builder<Self>> {
+                    fun build(): Alarm
+                  }
+                }
+
+                abstract class AbstractAlarm<
+                    Self : AbstractAlarm<Self, Builder>, Builder : AbstractAlarm.Builder<Builder, Self>>
+                internal constructor(
+                    val identifier: String,
+                ) : Alarm {
+                  abstract class Builder<Self : Builder<Self, Built>, Built : AbstractAlarm<Built, Self>> : Alarm.Builder<Self> {
+                    private var identifier: String = ""
+
+                    fun setIdentifier(text: String): Self {
+                      this.identifier = text
+                      return this as Self
+                    }
+
+                    final override fun build(): Built = TODO()
+                  }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val abstractAlarm = uFile.findElementByTextFromPsi<UClass>("AbstractAlarm", strict = false)
+            .orFail("cant find AbstractAlarm")
+        val builder = abstractAlarm.innerClasses.find { it.name == "Builder" }
+            .orFail("cant find AbstractAlarm.Builder")
+        TestCase.assertEquals(2, builder.javaPsi.typeParameters.size)
+        val self = builder.javaPsi.typeParameters[0]
+        TestCase.assertEquals(
+            "AbstractAlarm.Builder<Self,Built>",
+            self.bounds.joinToString { (it as? PsiType)?.canonicalText ?: "??" }
+        )
+        val built = builder.javaPsi.typeParameters[1]
+        TestCase.assertEquals(
+            "AbstractAlarm<Built,Self>",
+            built.bounds.joinToString { (it as? PsiType)?.canonicalText ?: "??" }
+        )
     }
 
     fun checkDefaultValueOfAnnotation(myFixture: JavaCodeInsightTestFixture) {

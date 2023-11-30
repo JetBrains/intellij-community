@@ -2,10 +2,10 @@
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleGroupPathEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-public class ModuleGroupPathIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleGroupPathEntity> {
+public final class ModuleGroupPathIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleGroupPathEntity> {
 
   @Override
   public @NotNull Class<ModuleGroupPathEntity> getEntityClass() {
@@ -30,6 +30,12 @@ public class ModuleGroupPathIndexableEntityProvider implements IndexableEntityPr
   public @NotNull Collection<? extends IndexableIteratorBuilder> getAddedEntityIteratorBuilders(@NotNull ModuleGroupPathEntity entity,
                                                                                                 @NotNull Project project) {
     return IndexableIteratorBuilders.INSTANCE.forModuleContent(entity.getModule().getSymbolicId());
+  }
+
+  @Override
+  public @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull ModuleGroupPathEntity entity,
+                                                                                                  @NotNull Project project) {
+    return getAddedEntityIteratorBuilders(entity, project);
   }
 
   @Override

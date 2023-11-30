@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.builders;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -136,7 +136,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private class RootElementBuilder extends LayoutElementBuilderService<JpsArtifactRootElement> {
+  private final class RootElementBuilder extends LayoutElementBuilderService<JpsArtifactRootElement> {
     RootElementBuilder() {
       super(JpsArtifactRootElement.class);
     }
@@ -147,7 +147,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private class DirectoryElementBuilder extends LayoutElementBuilderService<JpsDirectoryPackagingElement> {
+  private final class DirectoryElementBuilder extends LayoutElementBuilderService<JpsDirectoryPackagingElement> {
     DirectoryElementBuilder() {
       super(JpsDirectoryPackagingElement.class);
     }
@@ -160,7 +160,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private class ArchiveElementBuilder extends LayoutElementBuilderService<JpsArchivePackagingElement> {
+  private final class ArchiveElementBuilder extends LayoutElementBuilderService<JpsArchivePackagingElement> {
     ArchiveElementBuilder() {
       super(JpsArchivePackagingElement.class);
     }
@@ -172,7 +172,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class DirectoryCopyElementBuilder extends LayoutElementBuilderService<JpsDirectoryCopyPackagingElement> {
+  private static final class DirectoryCopyElementBuilder extends LayoutElementBuilderService<JpsDirectoryCopyPackagingElement> {
     DirectoryCopyElementBuilder() {
       super(JpsDirectoryCopyPackagingElement.class);
     }
@@ -198,7 +198,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class FileCopyElementBuilder extends LayoutElementBuilderService<JpsFileCopyPackagingElement> {
+  private static final class FileCopyElementBuilder extends LayoutElementBuilderService<JpsFileCopyPackagingElement> {
     FileCopyElementBuilder() {
       super(JpsFileCopyPackagingElement.class);
     }
@@ -227,7 +227,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class ExtractedDirectoryElementBuilder extends LayoutElementBuilderService<JpsExtractedDirectoryPackagingElement> {
+  private static final class ExtractedDirectoryElementBuilder extends LayoutElementBuilderService<JpsExtractedDirectoryPackagingElement> {
     ExtractedDirectoryElementBuilder() {
       super(JpsExtractedDirectoryPackagingElement.class);
     }
@@ -242,7 +242,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class ModuleOutputElementBuilder extends LayoutElementBuilderService<JpsProductionModuleOutputPackagingElement> {
+  private static final class ModuleOutputElementBuilder extends LayoutElementBuilderService<JpsProductionModuleOutputPackagingElement> {
     ModuleOutputElementBuilder() {
       super(JpsProductionModuleOutputPackagingElement.class);
     }
@@ -265,7 +265,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class ModuleSourceElementBuilder extends LayoutElementBuilderService<JpsProductionModuleSourcePackagingElement> {
+  private static final class ModuleSourceElementBuilder extends LayoutElementBuilderService<JpsProductionModuleSourcePackagingElement> {
     ModuleSourceElementBuilder() {
       super(JpsProductionModuleSourcePackagingElement.class);
     }
@@ -282,7 +282,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class ModuleTestOutputElementBuilder extends LayoutElementBuilderService<JpsTestModuleOutputPackagingElement> {
+  private static final class ModuleTestOutputElementBuilder extends LayoutElementBuilderService<JpsTestModuleOutputPackagingElement> {
     ModuleTestOutputElementBuilder() {
       super(JpsTestModuleOutputPackagingElement.class);
     }
@@ -305,7 +305,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private class ComplexElementBuilder extends LayoutElementBuilderService<JpsComplexPackagingElement> {
+  private final class ComplexElementBuilder extends LayoutElementBuilderService<JpsComplexPackagingElement> {
     ComplexElementBuilder() {
       super(JpsComplexPackagingElement.class);
     }
@@ -318,7 +318,7 @@ public final class LayoutElementBuildersRegistry {
     }
   }
 
-  private class ArtifactOutputElementBuilder extends LayoutElementBuilderService<JpsArtifactOutputPackagingElement> {
+  private final class ArtifactOutputElementBuilder extends LayoutElementBuilderService<JpsArtifactOutputPackagingElement> {
     ArtifactOutputElementBuilder() {
       super(JpsArtifactOutputPackagingElement.class);
     }
@@ -362,8 +362,7 @@ public final class LayoutElementBuildersRegistry {
       }
     }
 
-    @Nullable
-    private List<JpsPackagingElement> getCustomArtifactLayout(@NotNull JpsArtifact artifact, @NotNull Set<JpsArtifact> parentArtifacts) {
+    private @Nullable List<JpsPackagingElement> getCustomArtifactLayout(@NotNull JpsArtifact artifact, @NotNull Set<JpsArtifact> parentArtifacts) {
       for (ArtifactLayoutCustomizationService service : JpsServiceManager.getInstance().getExtensions(ArtifactLayoutCustomizationService.class)) {
         List<JpsPackagingElement> elements = service.getCustomizedLayout(artifact, parentArtifacts);
         if (elements != null) {

@@ -450,6 +450,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotationOnTypeParameter.kt"));
             }
 
+            @TestMetadata("AnnotationWithVarargParam.kt")
+            public void testAnnotationWithVarargParam() throws Exception {
+                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotationWithVarargParam.kt"));
+            }
+
             @TestMetadata("ClassLiteralArguments.kt")
             public void testClassLiteralArguments() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/ClassLiteralArguments.kt"));
@@ -463,6 +468,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
             @TestMetadata("PrimitiveArrayArguments.kt")
             public void testPrimitiveArrayArguments() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/PrimitiveArrayArguments.kt"));
+            }
+
+            @TestMetadata("SelfReferentialAnnotation.kt")
+            public void testSelfReferentialAnnotation() throws Exception {
+                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/SelfReferentialAnnotation.kt"));
             }
 
             @TestMetadata("SimpleAnnotation.kt")
@@ -2918,6 +2928,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @TestMetadata("PropertyInConstructorExplicitVisibility.kt")
         public void testPropertyInConstructorExplicitVisibility() throws Exception {
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/visibility/PropertyInConstructorExplicitVisibility.kt"));
+        }
+
+        @TestMetadata("PublishedApi.kt")
+        public void testPublishedApi() throws Exception {
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/visibility/PublishedApi.kt"));
         }
 
         @TestMetadata("TopLevelVarWithPrivateSetter.kt")

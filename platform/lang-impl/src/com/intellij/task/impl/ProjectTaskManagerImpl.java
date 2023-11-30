@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectModelBuildableElement;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,6 +56,8 @@ import static java.util.stream.Collectors.groupingBy;
  */
 public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   private static final Logger LOG = Logger.getInstance(ProjectTaskManager.class);
+  private static final Key<Class<?>> BUILD_ORIGINATOR_KEY = Key.create("project task build originator");
+
   private final ProjectTaskRunner myDummyTaskRunner = new DummyTaskRunner();
   private final ProjectTaskListener myEventPublisher;
   private final List<ProjectTaskManagerListener> myListeners = new CopyOnWriteArrayList<>();
@@ -169,7 +172,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
   public Promise<Result> run(@NotNull ProjectTaskContext context, @NotNull ProjectTask projectTask) {
     Tracer.Span buildSpan = Tracer.start("build");
     AsyncPromise<Result> promiseResult = new AsyncPromise<>();
-    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask);
+    List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = groupByRunner(projectTask, context);
 
     buildSpan.complete();
     context.putUserData(ProjectTaskScope.KEY, new ProjectTaskScope() {
@@ -183,7 +186,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
 
 
-    StructuredIdeActivity activity = reportBuildStart(projectTask, toRun);
+    Pair<StructuredIdeActivity, List<EventPair<?>>> activity = reportBuildStart(projectTask, toRun);
     myEventPublisher.started(context);
 
     Runnable runnable = () -> {
@@ -193,14 +196,14 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
         }
         catch (ExecutionException e) {
           sendAbortedEmptyResult(context, new ResultConsumer(promiseResult));
-          activity.finished();
+          activity.first.finished(() -> activity.second);
           return;
         }
       }
 
       if (toRun.isEmpty()) {
         sendSuccessEmptyResult(context, new ResultConsumer(promiseResult));
-        activity.finished();
+        activity.first.finished(() -> activity.second);
         return;
       }
 
@@ -239,9 +242,8 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return promiseResult;
   }
 
-  @NotNull
-  private StructuredIdeActivity reportBuildStart(@NotNull ProjectTask projectTask,
-                                                 List<? extends Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
+  private Pair<StructuredIdeActivity, List<EventPair<?>>> reportBuildStart(@NotNull ProjectTask projectTask,
+                                                                           List<? extends Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun) {
     Ref<Boolean> incremental = new Ref<>(null);
     AtomicInteger modules = new AtomicInteger(0);
     visitTask(projectTask, tasks -> {
@@ -264,24 +266,34 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     });
 
     List<EventPair<?>> fields = new SmartList<>();
-    fields.add(TASK_RUNNER.with(map(toRun, it -> it.first.getClass().getName())));
+    fields.add(TASK_RUNNER.with(map(toRun, it -> it.first.getClass())));
     if (incremental.get() != null) {
       fields.add(INCREMENTAL.with(incremental.get()));
     }
     if (modules.get() > 0) {
       fields.add(MODULES.with(modules.get()));
     }
-    return BUILD_ACTIVITY.started(myProject, () -> fields);
+    Class<?> buildOriginator = BUILD_ORIGINATOR_KEY.get(myProject);
+    if (buildOriginator != null) {
+      myProject.putUserData(BUILD_ORIGINATOR_KEY, null);
+      fields.add(BUILD_ORIGINATOR.with(buildOriginator));
+    }
+    return Pair.create(BUILD_ACTIVITY.started(myProject, () -> fields), fields);
   }
 
   private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask) {
+    return groupByRunner(projectTask, null);
+  }
+
+  private List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> groupByRunner(@NotNull ProjectTask projectTask,
+                                                                                         @Nullable ProjectTaskContext context) {
     List<Pair<ProjectTaskRunner, Collection<? extends ProjectTask>>> toRun = new SmartList<>();
     Consumer<Collection<? extends ProjectTask>> taskClassifier = tasks -> {
       Map<ProjectTaskRunner, ? extends List<? extends ProjectTask>> toBuild = tasks.stream().collect(
         groupingBy(aTask -> stream(ProjectTaskRunner.EP_NAME.getExtensions())
           .filter(runner -> {
             try {
-              return runner.canRun(myProject, aTask);
+              return runner.canRun(myProject, aTask, context);
             }
             catch (ProcessCanceledException e) {
               throw e;
@@ -304,6 +316,12 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
 
   private static void visitTask(@NotNull ProjectTask projectTask, Consumer<? super Collection<? extends ProjectTask>> taskClassifier) {
     visitTasks(projectTask instanceof ProjectTaskList ? (ProjectTaskList)projectTask : Collections.singleton(projectTask), taskClassifier);
+  }
+
+  public static void putBuildOriginator(@Nullable Project project, @NotNull Class<?> clazz) {
+    if (BUILD_ORIGINATOR_KEY.get(project) == null) {
+      BUILD_ORIGINATOR_KEY.set(project, clazz);
+    }
   }
 
   @ApiStatus.Experimental
@@ -366,7 +384,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     return run(createBuildTask(isIncrementalBuild, buildableElements));
   }
 
-  private static class DummyTaskRunner extends ProjectTaskRunner {
+  private static final class DummyTaskRunner extends ProjectTaskRunner {
     @Override
     public Promise<Result> run(@NotNull Project project,
                                @NotNull ProjectTaskContext context,
@@ -428,7 +446,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private final ProjectTaskContext myContext;
     private final ResultConsumer myResultConsumer;
     private final AtomicInteger myProgressCounter;
-    private final StructuredIdeActivity myActivity;
+    private final Pair<StructuredIdeActivity, List<EventPair<?>>> myActivity;
     private final AtomicBoolean myErrorsFlag;
     private final AtomicBoolean myAbortedFlag;
     private final Map<ProjectTask, ProjectTaskState> myTasksState = new ConcurrentHashMap<>();
@@ -436,7 +454,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     private ProjectTaskResultsAggregator(@NotNull ProjectTaskContext context,
                                          @NotNull ResultConsumer resultConsumer,
                                          int expectedResults,
-                                         @NotNull StructuredIdeActivity activity) {
+                                         Pair<StructuredIdeActivity, List<EventPair<?>>> activity) {
       myContext = context;
       myResultConsumer = resultConsumer;
       myProgressCounter = new AtomicInteger(expectedResults);
@@ -473,7 +491,9 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
           myResultConsumer.accept(new MyResult(myContext, myTasksState, myAbortedFlag.get(), myErrorsFlag.get()));
         }
         finally {
-          myActivity.finished(() -> List.of(HAS_ERRORS.with(myErrorsFlag.get())));
+          List<EventPair<?>> events = new ArrayList<>(myActivity.second);
+          events.add(HAS_ERRORS.with(myErrorsFlag.get()));
+          myActivity.first.finished(() -> events);
         }
       }
     }

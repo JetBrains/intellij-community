@@ -20,7 +20,7 @@ import javax.swing.tree.DefaultTreeModel
 class CodeReviewChangesTreeFactory(private val project: Project,
                                    private val changesModel: SingleValueModel<out Collection<Change>>) {
 
-  fun create(emptyTextText: @Nls String): AsyncChangesTree {
+  fun create(emptyTextText: @Nls String, preselectFirstChange: Boolean = true): AsyncChangesTree {
     val tree = object : AsyncChangesTree(project, false, false) {
       override val changesTreeModel: AsyncChangesTreeModel = SimpleAsyncChangesTreeModel.create { grouping ->
         TreeModelBuilder.buildFromChanges(project, grouping, changesModel.value, null)
@@ -29,12 +29,12 @@ class CodeReviewChangesTreeFactory(private val project: Project,
       override fun updateTreeModel(model: DefaultTreeModel, treeStateStrategy: TreeStateStrategy<*>) {
         super.updateTreeModel(model, treeStateStrategy)
 
-        if (isSelectionEmpty && !isEmpty) {
+        if (preselectFirstChange && isSelectionEmpty && !isEmpty) {
           TreeUtil.selectFirstNode(this)
         }
       }
 
-      override fun getData(dataId: String) = super.getData(dataId) ?: VcsTreeModelData.getData(project, this, dataId)
+      override fun getData(dataId: String) = VcsTreeModelData.getDataOrSuper(project, this, dataId, super.getData(dataId))
 
     }.apply {
       emptyText.text = emptyTextText

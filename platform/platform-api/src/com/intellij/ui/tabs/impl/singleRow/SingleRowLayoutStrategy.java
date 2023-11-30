@@ -236,8 +236,10 @@ public abstract class SingleRowLayoutStrategy {
           final Rectangle compBounds = myTabs.layoutComp(x, y, comp, 0, 0);
           if (myTabs.isSideComponentOnTabs()) {
             int toolbarX = (!data.moreRect.isEmpty() ? (int)data.moreRect.getMaxX() : data.position) + myTabs.getToolbarInset();
-            final Rectangle rec =
-              new Rectangle(toolbarX, data.insets.top, myTabs.getSize().width - data.insets.left - toolbarX, myTabs.getHeaderFitSize().height);
+            final Rectangle rec = new Rectangle(toolbarX, data.insets.top,
+                                                myTabs.getSize().width - data.insets.left - toolbarX,
+                                                // reduce toolbar height by 1 pixel to properly paint the border between tabs and the content
+                                                myTabs.getHeaderFitSize().height - JBUI.scale(1));
             myTabs.layout(hToolbar, rec);
           } else {
             final int toolbarHeight = hToolbar.getPreferredSize().height;

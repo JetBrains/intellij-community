@@ -1,11 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.images.sync.dotnet
 
+import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import org.jetbrains.intellij.build.images.generateIconClasses
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.shutdownAppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.*
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
 import kotlin.io.path.name
 
 object DotnetIconSync {
@@ -15,11 +18,11 @@ object DotnetIconSync {
 
   private class SyncPath(val iconsPath: String, val devPath: String)
 
-  private const val riderIconsRelativePath = "Rider/Frontend/rider/icons"
+  private const val RIDER_ICONS_RELATIVE_PATH = "Rider/Frontend/rider/icons"
 
   private val syncPaths = listOf(
-    SyncPath("rider", "$riderIconsRelativePath/resources/rider"),
-    SyncPath("net", "$riderIconsRelativePath/resources/resharper")
+    SyncPath("rider", "$RIDER_ICONS_RELATIVE_PATH/resources/rider"),
+    SyncPath("net", "$RIDER_ICONS_RELATIVE_PATH/resources/resharper")
   )
 
   private val committer by lazy(::triggeredBy)
@@ -48,12 +51,35 @@ object DotnetIconSync {
 
   private fun step(msg: String) = println("\n** $msg")
 
+  private fun checkCaseConflicts() {
+    val riderIconRoot = context.devRepoRoot.resolve("Rider").resolve("Frontend").resolve("rider")
+      .resolve("icons").resolve("resources").resolve("rider")
+    val ideaIconRoot = context.devRepoRoot.resolve("Rider").resolve("ultimate").resolve("community")
+      .resolve("platform").resolve("icons").resolve("src")
+    val ideaIconIndex = mutableMapOf<String, String>()
+    for(file in ideaIconRoot.toFile().walkTopDown().filter { it.isFile }) {
+      val relPath = toSystemIndependentName(file.relativeTo(ideaIconRoot.toFile()).toString())
+      ideaIconIndex[relPath.lowercase()] = relPath
+    }
+    val errors = mutableListOf<String>()
+    for(file in riderIconRoot.toFile().walkTopDown().filter { it.isFile }) {
+      val relPath = toSystemIndependentName(file.relativeTo(riderIconRoot.toFile()).toString())
+      if (ideaIconIndex.containsKey(relPath.lowercase()) && relPath != ideaIconIndex[relPath.lowercase()]) {
+        errors.add("$file->${ideaIconIndex[relPath.lowercase()]}")
+      }
+    }
+    if (errors.isNotEmpty()) {
+      error("Found case conflicts in repository: \n\t${errors.joinToString(separator = "\n\t")}")
+    }
+  }
+
   fun sync() {
     try {
       transformIconsToIdeaFormat()
       syncPaths.forEach(this::sync)
       generateClasses()
-      RiderIconsJsonGenerator.generate(context.devRepoRoot.resolve(riderIconsRelativePath))
+      RiderIconsJsonGenerator.generate(context.devRepoRoot.resolve(RIDER_ICONS_RELATIVE_PATH))
+      checkCaseConflicts()
       if (stageChanges().isEmpty()) {
         println("Nothing to commit")
       }
@@ -96,9 +122,20 @@ object DotnetIconSync {
     }
   }
 
+  private fun findProjectHomePath(devRepoDir: Path): String {
+    var currentPath = devRepoDir
+    while (currentPath.parent != null) {
+      if (currentPath.resolve("Frontend").resolve(".idea").exists()) {
+        return currentPath.resolve("Frontend").toAbsolutePath().toString()
+      }
+      currentPath = currentPath.parent
+    }
+    error("can't find project home path for devRepoDir: $devRepoDir")
+  }
+
   private fun generateClasses() {
     step("Generating classes..")
-    generateIconClasses(config = DotnetIconClasses(context.devRepoDir.toAbsolutePath().toString()))
+    generateIconClasses(config = DotnetIconClasses(findProjectHomePath(context.devRepoDir)))
   }
 
   private fun stageChanges(): Collection<String> {

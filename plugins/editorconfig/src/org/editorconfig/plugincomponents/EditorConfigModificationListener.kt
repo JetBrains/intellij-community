@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.editorconfig.EditorConfigRegistry
 
@@ -23,9 +25,11 @@ internal class EditorConfigModificationListener : BulkFileListener {
       for (project in ProjectManager.getInstance().openProjects) {
         if (ProjectRootManager.getInstance(project).fileIndex.isInContent(file) ||
             !EditorConfigRegistry.shouldStopAtProjectRoot()) {
-          SettingsProviderComponent.getInstance(project).resourceCache.clear()
+          when (event) {
+            is VFileCopyEvent, is VFileCreateEvent -> {}
+            else -> EditorConfigPropertiesService.getInstance(project).clearCache()
+          }
           ApplicationManager.getApplication().invokeLater {
-            SettingsProviderComponent.getInstance(project).incModificationCount()
             for (editor in EditorFactory.getInstance().allEditors) {
               if (editor.isDisposed) continue
               (editor as EditorEx).reinitSettings()

@@ -122,7 +122,7 @@ public class CustomMaven3ArtifactResolver
     return LegacyLocalRepositoryManager.overlay( localRepository, legacySupport.getRepositorySession(), repoSystem );
   }
 
-  private void injectSession1( RepositoryRequest request, MavenSession session )
+  private static void injectSession1(RepositoryRequest request, MavenSession session)
   {
     if ( session != null )
     {
@@ -131,7 +131,7 @@ public class CustomMaven3ArtifactResolver
     }
   }
 
-  private void injectSession2( ArtifactResolutionRequest request, MavenSession session )
+  private static void injectSession2(ArtifactResolutionRequest request, MavenSession session)
   {
     injectSession1( request, session );
 

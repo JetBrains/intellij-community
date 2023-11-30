@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.psi.PsiManager;
@@ -23,14 +23,12 @@ public final class PsiCachedValueImpl<T> extends PsiCachedValue<T> implements Ca
   }
 
   @Override
-  @Nullable
-  public T getValue() {
+  public @Nullable T getValue() {
     return getValueWithLock(null);
   }
 
-  @NotNull
   @Override
-  public CachedValueProvider<T> getValueProvider() {
+  public @NotNull CachedValueProvider<T> getValueProvider() {
     return myProvider;
   }
 

@@ -16,15 +16,15 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListUtil;
-import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.*;
+import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.countBindLibraries;
+import static com.intellij.jarRepository.settings.JarRepositoryLibraryBindUtils.updateLibrariesRepositoryId;
 import static com.intellij.ui.ListUtil.removeSelectedItems;
 
 public class RemoteRepositoriesConfigurable implements SearchableConfigurable, Configurable.NoScroll {
@@ -209,7 +210,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
                                                   final @NlsContexts.StatusText String emptyListHint, DataAdapter<T, String> adapter) {
     list.setModel(model);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(SimpleListCellRenderer.create("", adapter::toPresentation));
+    list.setCellRenderer(BuilderKt.textListCellRenderer(adapter::toPresentation));
     addButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.ui.IdeUICustomization
@@ -10,16 +11,16 @@ import com.intellij.ui.IdeUICustomization
 /**
  * @author Konstantin Bulenkov
  */
-class CloseAllProjectsAction : CloseProjectsActionBase() {
+class CloseAllProjectsAction : CloseProjectsActionBase(), ActionRemoteBehaviorSpecification.Frontend {
   init {
     val uiCustomization = IdeUICustomization.getInstance()
     templatePresentation.setText(uiCustomization.projectMessagePointer("action.close.all.projects.text"))
     templatePresentation.setDescription(uiCustomization.projectMessage("action.close.all.projects.description"))
   }
 
-  override fun canClose(project: Project, currentProject: Project) = true
+  override fun canClose(project: Project, currentProject: Project): Boolean = true
 
-  override fun shouldShow(e: AnActionEvent) = ProjectManager.getInstance().openProjects.size > 1
+  override fun shouldShow(e: AnActionEvent): Boolean = ProjectManager.getInstance().openProjects.size > 1
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

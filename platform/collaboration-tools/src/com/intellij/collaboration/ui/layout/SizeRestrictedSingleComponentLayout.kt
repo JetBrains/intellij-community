@@ -7,11 +7,12 @@ import java.awt.*
 import kotlin.math.min
 
 /**
- * Wraps a single component limiting its size to [maxSize]
+ * Wraps a single component limiting its size to [maxSize] aor overriding the preferred size with [prefSize]
  */
 class SizeRestrictedSingleComponentLayout : LayoutManager2 {
 
   var maxSize: DimensionRestrictions = DimensionRestrictions.None
+  var prefSize: DimensionRestrictions = DimensionRestrictions.None
 
   private var component: Component? = null
 
@@ -36,6 +37,8 @@ class SizeRestrictedSingleComponentLayout : LayoutManager2 {
 
   override fun preferredLayoutSize(parent: Container): Dimension =
     component?.takeIf { it.isVisible }?.preferredSize?.let {
+      it.width = prefSize.getWidth() ?: it.width
+      it.height = prefSize.getHeight() ?: it.height
       maxSize.limitMax(it)
     }?.also {
       JBInsets.addTo(it, parent.insets)

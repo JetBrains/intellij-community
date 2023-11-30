@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.target
 
 import com.intellij.execution.CantRunException
@@ -11,6 +11,8 @@ import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
@@ -108,7 +110,7 @@ class MavenCommandLineSetup(private val project: Project,
   private fun setupMavenExtClassPath() {
     val mavenEventListener = MavenServerManager.getInstance().mavenEventListener
     val uploadPath = Paths.get(toSystemDependentName(mavenEventListener.path))
-    val uploadRoot = createUploadRoot(MavenRuntimeType.MAVEN_EXT_CLASS_PATH_VOLUME, uploadPath.parent)
+    val uploadRoot = createUploadRoot(MavenRuntimeTypeConstants.MAVEN_EXT_CLASS_PATH_VOLUME, uploadPath.parent)
     request.uploadVolumes += uploadRoot
     val targetValue = upload(uploadRoot, uploadPath.toString(), uploadPath.fileName.toString())
     commandLine.addParameter(TargetValue.map(targetValue) { "-D" + MavenServerEmbedder.MAVEN_EXT_CLASS_PATH + "=" + it })
@@ -216,8 +218,9 @@ class MavenCommandLineSetup(private val project: Project,
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
     val file = settings.myRunnerParameters?.let { VfsUtil.findFileByIoFile(it.workingDirFile, false) } ?: throw CantRunException(
       message("maven.target.message.unable.to.use.working.directory", name))
-    val module = ProjectFileIndex.getInstance(project).getModuleForFile(file) ?: throw CantRunException(
-      message("maven.target.message.unable.to.find.maven.project.for.working.directory", name))
+    val module = ReadAction.compute<Module?, Throwable> { ProjectFileIndex.getInstance(project).getModuleForFile(file) }
+                 ?: throw CantRunException(
+                   message("maven.target.message.unable.to.find.maven.project.for.working.directory", name))
     val mavenProject: MavenProject = mavenProjectsManager.findProject(module) ?: throw CantRunException(
       message("maven.target.message.unable.to.find.maven.project.for.working.directory", name))
 
@@ -225,7 +228,7 @@ class MavenCommandLineSetup(private val project: Project,
     val pathsToUpload = findPathsToUpload(mavenProjectsManager, mavenProject)
     val commonAncestor = findCommonAncestor(pathsToUpload)
     val uploadPath = Paths.get(toSystemDependentName(commonAncestor!!))
-    val uploadRoot = createUploadRoot(MavenRuntimeType.PROJECT_FOLDER_VOLUME, uploadPath)
+    val uploadRoot = createUploadRoot(MavenRuntimeTypeConstants.PROJECT_FOLDER_VOLUME, uploadPath)
     request.uploadVolumes += uploadRoot
     val targetFileSeparator = request.targetPlatform.platform.fileSeparator
 

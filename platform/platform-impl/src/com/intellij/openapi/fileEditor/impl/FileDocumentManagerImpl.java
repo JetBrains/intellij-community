@@ -1,15 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.model.ModelBranch;
-import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
@@ -59,6 +56,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -173,7 +171,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @SuppressWarnings("OverlyBroadCatchBlock")
   private void multiCast(@NotNull Method method, Object[] args) {
     try {
-      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(AppTopics.FILE_DOCUMENT_SYNC), args);
+      method.invoke(ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentManagerListener.TOPIC), args);
     }
     catch (ClassCastException e) {
       LOG.error("Arguments: "+ Arrays.toString(args), e);
@@ -275,7 +273,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   private void saveDocuments(@Nullable Predicate<? super Document> filter, boolean isExplicit) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     myMultiCaster.beforeAllDocumentsSaving();
@@ -316,7 +314,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   public void saveDocument(@NotNull Document document, boolean explicit) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
     myMultiCaster.beforeAnyDocumentSaving(document, explicit);
@@ -350,7 +348,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     }
   }
 
-  private static class SaveVetoException extends Exception {}
+  private static final class SaveVetoException extends Exception {}
 
   private void doSaveDocument(@NotNull Document document, boolean isExplicit) throws IOException, SaveVetoException {
     VirtualFile file = getFile(document);
@@ -555,10 +553,6 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public boolean isFileModified(@NotNull VirtualFile file) {
-    ModelBranch branch = ModelBranch.getFileBranch(file);
-    if (branch != null && ((ModelBranchImpl)branch).hasModifications(file)) {
-      return true;
-    }
     Document doc = getCachedDocument(file);
     return doc != null && isDocumentUnsaved(doc) && doc.getModificationStamp() != file.getModificationStamp();
   }
@@ -713,7 +707,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
     try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       VirtualFile file = getFile(document);
       assert file != null;

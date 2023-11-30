@@ -47,4 +47,14 @@ final class HighlightersRecycler {
   Collection<? extends RangeHighlighter> forAllInGarbageBin() {
     return incinerator.values();
   }
+
+  // mark all remaining highlighters as not "recycled", to avoid double creation
+  void releaseHighlighters() {
+    for (RangeHighlighter highlighter : forAllInGarbageBin()) {
+      ((UserDataHolderEx)highlighter).replace(BEING_RECYCLED_KEY, Boolean.TRUE, null);
+    }
+  }
+  static boolean isBeingRecycled(RangeHighlighter highlighter) {
+    return highlighter.getUserData(BEING_RECYCLED_KEY) != null;
+  }
 }

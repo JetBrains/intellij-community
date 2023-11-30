@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
+public final class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
 
   @Override
   public @NotNull List<IntentionActionWithTextCaching> getSortedIntentions(@NotNull CachedIntentions context,
@@ -61,6 +61,7 @@ public class DefaultIntentionsOrderProvider implements IntentionsOrderProvider {
       case TOP -> 20;
       case HIGH -> 3;
       case LOW -> -3;
+      case BOTTOM -> -20;
       default -> 0;
     };
   }

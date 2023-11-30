@@ -5,3 +5,4 @@ fun <T> foo() {
 }
 
 val x = String::class
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

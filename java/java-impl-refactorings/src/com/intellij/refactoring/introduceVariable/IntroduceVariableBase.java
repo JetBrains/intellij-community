@@ -203,16 +203,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  /**
-   * @deprecated use CommonJavaRefactoringUtil.collectExpressions
-   */
-  @Deprecated
-  public static List<PsiExpression> collectExpressions(final PsiFile file,
-                                                       final Editor editor,
-                                                       final int offset) {
-    return CommonJavaRefactoringUtil.collectExpressions(file, editor, offset);
-  }
-
   private boolean invoke(final Project project, final Editor editor, PsiFile file, int startOffset, int endOffset) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(ProductivityFeatureNames.REFACTORING_INTRODUCE_VARIABLE);
     PsiDocumentManager.getInstance(project).commitAllDocuments();

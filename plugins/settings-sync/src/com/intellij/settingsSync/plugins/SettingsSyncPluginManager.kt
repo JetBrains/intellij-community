@@ -1,9 +1,13 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginEnableStateChangedListener
+import com.intellij.ide.plugins.PluginStateListener
+import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -16,8 +20,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import java.time.Instant
 
+@Service
 internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Disposable {
-
   private val pluginInstallationStateListener = PluginInstallationStateListener()
   private val pluginEnabledStateListener = PluginEnabledStateListener()
   private val LOCK = Object()
@@ -40,18 +44,37 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
       val oldPlugins = lastSavedPluginsState?.plugins ?: emptyMap()
       val newPlugins = oldPlugins.toMutableMap()
       val removedPluginIds = newPlugins.keys - currentIdePluginIds
+      val removed2disable = arrayListOf<PluginId>()
+      val removed2ignore = arrayListOf<PluginId>()
       if (removedPluginIds.isNotEmpty()) {
-        LOG.info("Plugins ${removedPluginIds.joinToString()} have been deleted from disk. Will mark them as disabled in setting sync")
+        LOG.info("Plugins ${removedPluginIds.joinToString()} have been deleted from disk")
         for (pluginId in removedPluginIds) {
-          newPlugins.computeIfPresent(pluginId) { _, data -> PluginData(enabled = false, data.category, data.dependencies) }
+          val pluginData = newPlugins[pluginId] ?: continue
+          if (checkDependencies(pluginId, pluginData)) {
+            newPlugins.computeIfPresent(pluginId) { _, data -> PluginData(enabled = false, data.category, data.dependencies) }
+            removed2disable.add(pluginId)
+          } else {
+            removed2ignore.add(pluginId)
+
+          }
+        }
+        if (removed2disable.isNotEmpty()) {
+          LOG.info("Will mark compatible plugin(s) ${removed2disable.joinToString()} as disabled in setting sync")
+        }
+        if (removed2ignore.isNotEmpty()) {
+          LOG.info("Plugins ${removed2ignore.joinToString()} are incompatible with current IDE/version. " +
+                   "Won't change their sync status in plugins.json")
         }
       }
 
+
       for (plugin in currentIdePlugins) {
         val id = plugin.pluginId
-        if (PluginManagerProxy.getInstance().isEssential(id)) {
+        if (PluginManagerProxy.getInstance().isEssential(id)
+            || PluginManagerProxy.getInstance().isIncompatible(plugin)) {
           // don't change state of essential plugin (it will be enabled in the current IDE anyway)
-          // other IDEs will manage it themselves
+          // also, don't take into account incompatible plugins (makes no sense to deal with them)
+          // other IDEs will manage such plugins themselves
         }
         else if (shouldSaveState(plugin)) {
           newPlugins[id] = getPluginData(plugin)
@@ -186,16 +209,28 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
     }
 
     invokeAndWaitIfNeeded {
-      val actionName = if (enable) "enabling" else "disabling"
+      val actionName = if (enable) "enable" else "disable"
       try {
-        LOG.info("$actionName plugins: $plugins")
-        if (enable)
+        LOG.info("Going to ${actionName} plugins: $plugins")
+        val result = if (enable)
           PluginManagerProxy.getInstance().enablePlugins(plugins)
         else
           PluginManagerProxy.getInstance().disablePlugins(plugins)
+        if (!result) {
+          val pluginsReqRestart = mutableListOf<String>()
+          for (pluginId in plugins) {
+            val plugin = PluginManagerProxy.getInstance().findPlugin(pluginId) ?: continue
+            if (plugin.isEnabled != enable) {
+              pluginsReqRestart.add(plugin.name)
+            }
+          }
+          LOG.warn("The $actionName for the following plugins require restart: " + pluginsReqRestart.joinToString())
+          val restartReason = if (enable) RestartForPluginEnable(pluginsReqRestart) else RestartForPluginDisable(pluginsReqRestart)
+          SettingsSyncEvents.getInstance().fireRestartRequired(restartReason)
+        }
       }
       catch (ex: Exception) {
-        LOG.warn("An exception occurred while processing $actionName plugins: $plugins", ex)
+        LOG.warn("An exception occurred while $actionName plugins: $plugins", ex)
       }
     }
   }
@@ -275,7 +310,6 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
     private fun ed(b: Boolean) = if (b) "enable" else "disable"
 
     override fun stateChanged(pluginDescriptors: Collection<IdeaPluginDescriptor>, enable: Boolean) {
-      println("Will call ${ed(enable)} for $pluginDescriptors")
       cs.launch {
         synchronized(LOCK) {
           val oldPlugins = state.plugins

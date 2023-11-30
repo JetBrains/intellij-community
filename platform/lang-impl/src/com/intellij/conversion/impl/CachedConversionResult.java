@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion.impl;
 
 import com.intellij.conversion.CannotConvertException;
 import com.intellij.conversion.ConverterProvider;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
+import com.intellij.openapi.extensions.LazyExtension;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.PathUtilRt;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
@@ -20,11 +20,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @ApiStatus.Internal
@@ -43,7 +39,7 @@ final class CachedConversionResult {
     // https://youtrack.jetbrains.com/issue/IDEA-256011
     Path projectFileFileName = projectFile.getFileName();
     String dirName = PathUtilRt.suggestFileName((projectFileFileName == null ? "" : projectFileFileName.toString()) + Integer.toHexString(projectFile.toAbsolutePath().hashCode()));
-    return Paths.get(PathManager.getSystemPath(), "conversion", dirName + ".xml");
+    return Path.of(PathManager.getSystemPath(), "conversion", dirName + ".xml");
   }
 
   static void saveConversionResult(@NotNull Object2LongMap<String> projectFilesMap, @NotNull Path outFile, @NotNull Path baseDir)
@@ -51,18 +47,13 @@ final class CachedConversionResult {
     Element root = new Element("conversion");
     Element appliedConverters = new Element("applied-converters");
     root.addContent(appliedConverters);
-    ExtensionPointImpl<ConverterProvider> point = (ExtensionPointImpl<ConverterProvider>)ConverterProvider.EP_NAME.getPoint();
-    point.processIdentifiableImplementations((supplier, id) -> {
-      String providerId = id;
-      if (providerId == null) {
-        ConverterProvider provider = supplier.get();
-        providerId = provider == null ? null : provider.getDeprecatedId();
-      }
-
+    Iterator<LazyExtension<ConverterProvider>> extensionIterator = ConverterProvider.EP_NAME.filterableLazySequence().iterator();
+    while (extensionIterator.hasNext()) {
+      String providerId = extensionIterator.next().getId();
       if (providerId != null) {
         appliedConverters.addContent(new Element("converter").setAttribute("id", providerId));
       }
-    });
+    }
 
     Element projectFiles = new Element("project-files");
     root.addContent(projectFiles);

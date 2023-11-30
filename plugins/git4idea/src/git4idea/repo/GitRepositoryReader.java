@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -39,11 +39,11 @@ public class GitRepositoryReader {
 
   private static final Logger LOG = Logger.getInstance(GitRepositoryReader.class);
 
-  @NotNull private final File myHeadFile;       // .git/HEAD
-  @NotNull private final File myRefsHeadsDir;   // .git/refs/heads/
-  @NotNull private final File myRefsRemotesDir; // .git/refs/remotes/
-  @NotNull private final File myPackedRefsFile; // .git/packed-refs
-  @NotNull private final GitRepositoryFiles myGitFiles;
+  private final @NotNull File myHeadFile;       // .git/HEAD
+  private final @NotNull File myRefsHeadsDir;   // .git/refs/heads/
+  private final @NotNull File myRefsRemotesDir; // .git/refs/remotes/
+  private final @NotNull File myPackedRefsFile; // .git/packed-refs
+  private final @NotNull GitRepositoryFiles myGitFiles;
 
   GitRepositoryReader(@NotNull GitRepositoryFiles gitFiles) {
     myGitFiles = gitFiles;
@@ -134,8 +134,7 @@ public class GitRepositoryReader {
     return shallowFile.length() > 0;
   }
 
-  @Nullable
-  private static String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable Hash currentBranchHash) {
+  private static @Nullable String getCurrentRevision(@NotNull HeadInfo headInfo, @Nullable Hash currentBranchHash) {
     String currentRevision;
     if (!headInfo.isBranch) {
       currentRevision = headInfo.content;
@@ -149,10 +148,9 @@ public class GitRepositoryReader {
     return currentRevision;
   }
 
-  @Nullable
-  private GitLocalBranch findCurrentBranch(@NotNull HeadInfo headInfo,
-                                           @NotNull Repository.State state,
-                                           @NotNull Set<? extends GitLocalBranch> localBranches) {
+  private @Nullable GitLocalBranch findCurrentBranch(@NotNull HeadInfo headInfo,
+                                                     @NotNull Repository.State state,
+                                                     @NotNull Set<? extends GitLocalBranch> localBranches) {
     final String currentBranchName = findCurrentBranchName(state, headInfo);
     if (currentBranchName == null) {
       return null;
@@ -160,8 +158,7 @@ public class GitRepositoryReader {
     return ContainerUtil.find(localBranches, branch -> BRANCH_NAME_HASHING_STRATEGY.equals(branch.getFullName(), currentBranchName));
   }
 
-  @NotNull
-  private Repository.State readRepositoryState(@NotNull HeadInfo headInfo) {
+  private @NotNull Repository.State readRepositoryState(@NotNull HeadInfo headInfo) {
     if (isMergeInProgress()) {
       return Repository.State.MERGING;
     }
@@ -180,8 +177,7 @@ public class GitRepositoryReader {
     return Repository.State.NORMAL;
   }
 
-  @Nullable
-  private String findCurrentBranchName(@NotNull Repository.State state, @NotNull HeadInfo headInfo) {
+  private @Nullable String findCurrentBranchName(@NotNull Repository.State state, @NotNull HeadInfo headInfo) {
     String currentBranch = null;
     if (headInfo.isBranch) {
       currentBranch = headInfo.content;
@@ -195,8 +191,7 @@ public class GitRepositoryReader {
     return addRefsHeadsPrefixIfNeeded(currentBranch);
   }
 
-  @Nullable
-  private static String readRebaseDirBranchFile(@NonNls File rebaseDir) {
+  private static @Nullable String readRebaseDirBranchFile(@NonNls File rebaseDir) {
     if (rebaseDir.exists()) {
       File headName = new File(rebaseDir, "head-name");
       if (headName.exists()) {
@@ -222,8 +217,7 @@ public class GitRepositoryReader {
     return myGitFiles.getRevertHead().exists();
   }
 
-  @NotNull
-  private Map<String, String> readPackedBranches() {
+  private @NotNull Map<String, String> readPackedBranches() {
     if (!myPackedRefsFile.exists()) {
       return emptyMap();
     }
@@ -236,15 +230,13 @@ public class GitRepositoryReader {
     }
   }
 
-  @NotNull
-  private Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> readBranches(@NotNull Collection<GitRemote> remotes) {
+  private @NotNull Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> readBranches(@NotNull Collection<GitRemote> remotes) {
     Map<String, String> data = readBranchRefsFromFiles();
     Map<String, Hash> resolvedRefs = resolveRefs(data);
     return createBranchesFromData(remotes, resolvedRefs);
   }
 
-  @NotNull
-  private Map<String, String> readBranchRefsFromFiles() {
+  private @NotNull Map<String, String> readBranchRefsFromFiles() {
     try {
       // reading from packed-refs first to overwrite values by values from unpacked refs
       Map<String, String> result = new HashMap<>(readPackedBranches());
@@ -260,9 +252,8 @@ public class GitRepositoryReader {
     }
   }
 
-  @NotNull
-  private static Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> createBranchesFromData(@NotNull Collection<GitRemote> remotes,
-                                                                                                    @NotNull Map<String, Hash> data) {
+  private static @NotNull Pair<Map<GitLocalBranch, Hash>, Map<GitRemoteBranch, Hash>> createBranchesFromData(@NotNull Collection<GitRemote> remotes,
+                                                                                                             @NotNull Map<String, Hash> data) {
     Map<GitLocalBranch, Hash> localBranches = new HashMap<>();
     Map<GitRemoteBranch, Hash> remoteBranches = new HashMap<>();
     for (Map.Entry<String, Hash> entry : data.entrySet()) {
@@ -283,8 +274,7 @@ public class GitRepositoryReader {
     return Pair.create(localBranches, remoteBranches);
   }
 
-  @Nullable
-  public static GitBranch parseBranchRef(@NotNull Collection<GitRemote> remotes, String refName) {
+  public static @Nullable GitBranch parseBranchRef(@NotNull Collection<GitRemote> remotes, String refName) {
     if (refName.startsWith(REFS_HEADS_PREFIX)) {
       return new GitLocalBranch(refName);
     }
@@ -296,13 +286,11 @@ public class GitRepositoryReader {
     }
   }
 
-  @Nullable
-  private static String loadHashFromBranchFile(@NotNull File branchFile) {
+  private static @Nullable String loadHashFromBranchFile(@NotNull File branchFile) {
     return DvcsUtil.tryLoadFileOrReturn(branchFile, null);
   }
 
-  @NotNull
-  private Map<String, String> readFromBranchFiles(@NotNull final File refsRootDir, @NotNull final String prefix) {
+  private @NotNull Map<String, String> readFromBranchFiles(final @NotNull File refsRootDir, final @NotNull String prefix) {
     if (!refsRootDir.exists()) {
       return emptyMap();
     }
@@ -337,9 +325,8 @@ public class GitRepositoryReader {
     return file.getName().startsWith(".");
   }
 
-  @NotNull
-  private static GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName,
-                                                   @NotNull Collection<GitRemote> remotes) {
+  private static @NotNull GitRemoteBranch parseRemoteBranch(@NotNull String fullBranchName,
+                                                            @NotNull Collection<GitRemote> remotes) {
     String stdName = GitBranchUtil.stripRefsPrefix(fullBranchName);
 
     int slash = stdName.indexOf('/');
@@ -368,8 +355,7 @@ public class GitRepositoryReader {
     }
   }
 
-  @NotNull
-  private HeadInfo readHead() {
+  private @NotNull HeadInfo readHead() {
     String headContent;
     try {
       headContent = DvcsUtil.tryLoadFile(myHeadFile, CharsetToolkit.UTF8);
@@ -395,7 +381,7 @@ public class GitRepositoryReader {
    * Container to hold two information items: current .git/HEAD value and is Git on branch.
    */
   private static class HeadInfo {
-    @Nullable private final String content;
+    private final @Nullable String content;
     private final boolean isBranch;
 
     HeadInfo(boolean branch, @Nullable String content) {

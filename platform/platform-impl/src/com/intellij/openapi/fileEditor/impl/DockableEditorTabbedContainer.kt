@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.actions.DragEditorTabsFusEventFields
@@ -30,10 +30,7 @@ import com.intellij.ui.tabs.impl.TabLayout
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.Activatable
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DisposableHandle
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.job
+import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jdom.Element
 import java.awt.Component
@@ -42,7 +39,6 @@ import java.awt.Image
 import java.awt.Shape
 import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
-import java.util.*
 import java.util.concurrent.CopyOnWriteArraySet
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -61,6 +57,7 @@ class DockableEditorTabbedContainer internal constructor(
   private var currentPainter: AbstractPainter? = null
   private var glassPaneListenerDisposable: DisposableHandle? = null
   private var wasEverShown = false
+  internal var focusOnShowing = true
 
   override fun dispose() {
     coroutineScope.cancel()
@@ -130,16 +127,21 @@ class DockableEditorTabbedContainer internal constructor(
       }
       if (window != null && dropSide != -1 && dropSide != SwingConstants.CENTER) {
         window.split(
-          if (dropSide == SwingConstants.BOTTOM || dropSide == SwingConstants.TOP) JSplitPane.VERTICAL_SPLIT else JSplitPane.HORIZONTAL_SPLIT,
-          true, file, true, dropSide != SwingConstants.LEFT && dropSide != SwingConstants.TOP)
-        recordDragStats(dropSide, false)
+          orientation = if (dropSide == SwingConstants.BOTTOM || dropSide == SwingConstants.TOP) JSplitPane.VERTICAL_SPLIT else JSplitPane.HORIZONTAL_SPLIT,
+          forceSplit = true,
+          virtualFile = file,
+          focusNew = true,
+          fileIsSecondaryComponent = dropSide != SwingConstants.LEFT && dropSide != SwingConstants.TOP,
+        )
+        recordDragStats(dropSide = dropSide, sameWindow = false)
         return
       }
     }
     var dropIntoNewlyCreatedWindow = false
     if (window == null || window.isDisposed) {
       dropIntoNewlyCreatedWindow = true
-      window = splitters.getOrCreateCurrentWindow(file) //drag outside
+      // drag outside
+      window = splitters.getOrCreateCurrentWindow(file)
     }
     var dropInBetweenPinnedTabs: Boolean? = null
     var dropInPinnedRow = false
@@ -159,10 +161,13 @@ class DockableEditorTabbedContainer internal constructor(
           val previousLabel = currentOver!!.getTabLabel(previousInfo)
           val bounds = previousLabel.bounds
           val dropPoint = dropTarget!!.getPoint(previousLabel)
-          dropInPinnedRow = (currentOver is JBTabsImpl
-                             && TabLayout.showPinnedTabsSeparately() && (currentOver as JBTabsImpl).tabsPosition == JBTabsPosition.top) && bounds.y < dropPoint.y && bounds.maxY > dropPoint.y
+          dropInPinnedRow = (currentOver is JBTabsImpl &&
+                             TabLayout.showPinnedTabsSeparately() &&
+                             (currentOver as JBTabsImpl).tabsPosition == JBTabsPosition.top) &&
+                            bounds.y < dropPoint.y && bounds.maxY > dropPoint.y
         }
       }
+
       val dragStartIndex = file.getUserData(DRAG_START_INDEX_KEY)
       val isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && sameWindow
       if (!isDroppedToOriginalPlace) {
@@ -175,10 +180,12 @@ class DockableEditorTabbedContainer internal constructor(
       }
     }
     recordDragStats(if (dropIntoNewlyCreatedWindow) -1 else SwingConstants.CENTER, sameWindow)
-    val openOptions = FileEditorOpenOptions(index = index,
-                                            requestFocus = true,
-                                            pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
-    splitters.manager.openFileImpl2(window, file, openOptions)
+    coroutineScope.launch {
+      val openOptions = FileEditorOpenOptions(index = index,
+                                              requestFocus = true,
+                                              pin = dropInBetweenPinnedTabs ?: dockableEditor.isPinned)
+      splitters.manager.checkForbidSplitAndOpenFile(window, file, openOptions)
+    }
   }
 
   private fun recordDragStats(dropSide: Int, sameWindow: Boolean) {
@@ -255,7 +262,6 @@ class DockableEditorTabbedContainer internal constructor(
       currentOver = null
       currentOverInfo = null
       currentOverImg = null
-      @Suppress("SSBasedInspection")
       glassPaneListenerDisposable?.dispose()
       currentPainter = null
     }
@@ -285,7 +291,7 @@ class DockableEditorTabbedContainer internal constructor(
   override fun showNotify() {
     if (!wasEverShown) {
       wasEverShown = true
-      splitters.openFilesAsync()
+      splitters.openFilesAsync(focusOnShowing)
     }
   }
 

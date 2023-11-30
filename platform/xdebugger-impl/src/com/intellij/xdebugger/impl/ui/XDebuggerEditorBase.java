@@ -61,9 +61,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.lang.ref.WeakReference;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 public abstract class XDebuggerEditorBase implements Expandable {
@@ -153,7 +151,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   protected JComponent addChooser(JComponent component) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(component);
-    panel.setBackground(JBColor.lazy(() -> component.getBackground()));
+    panel.setBackground(JBColor.lazy(() -> Objects.requireNonNullElse(component.getBackground(), UIUtil.getPanelBackground())));
     panel.addToRight(myLanguageChooser);
     return panel;
   }
@@ -335,7 +333,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
     }
   }
 
-  protected static void foldNewLines(EditorEx editor) {
+  public static void foldNewLines(EditorEx editor) {
     editor.getColorsScheme().setAttributes(EditorColors.FOLDED_TEXT_ATTRIBUTES, null);
     editor.reinitSettings();
     FoldingModelEx foldingModel = editor.getFoldingModel();
@@ -382,7 +380,9 @@ public abstract class XDebuggerEditorBase implements Expandable {
     editorTextField.setFont(editorTextField.getFont().deriveFont((float)getEditor().getColorsScheme().getEditorFontSize()));
 
     JComponent component = expressionEditor.getComponent();
-    component.setPreferredSize(new Dimension(getComponent().getWidth(), 100));
+    // Don't set custom width here to support expand popup in RD/CWM
+    // Component will be stretched with `setStretchToOwnerWidth`
+    component.setPreferredSize(new Dimension(0, 100));
 
     myExpandedPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(component, expressionEditor.getPreferredFocusedComponent())
@@ -391,6 +391,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setResizable(true)
       .setRequestFocus(true)
       .setLocateByContent(true)
+      .setStretchToOwnerWidth(true)
       .setCancelOnWindowDeactivation(false)
       .setAdText(getAdText())
       .setKeyboardActions(Collections.singletonList(Pair.create(event -> {
@@ -512,8 +513,8 @@ public abstract class XDebuggerEditorBase implements Expandable {
 
   private class LanguageChooser extends JLabel {
     @SuppressWarnings("UseJBColor")
-    final Color ENABLED_COLOR = new Color(0x787878);
-    final Color DISABLED_COLOR = new JBColor(0xB2B2B2, 0x5C5D5F);
+    static final Color ENABLED_COLOR = new Color(0x787878);
+    static final Color DISABLED_COLOR = new JBColor(0xB2B2B2, 0x5C5D5F);
 
     private Collection<Language> myLanguages = Collections.emptyList();
     private WeakReference<ListPopup> myPopup;

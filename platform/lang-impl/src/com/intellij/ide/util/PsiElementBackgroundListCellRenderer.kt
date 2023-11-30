@@ -34,7 +34,7 @@ internal class PsiElementBackgroundListCellRenderer(
 
   private val myComponent = PsiElementListCellRendererComponent()
 
-  var usedInPopup = false
+  var usedInPopup: Boolean = false
     set(value) {
       if (ExperimentalUI.isNewUI()) {
         PopupUtil.configListRendererFixedHeight(myComponent)

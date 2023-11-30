@@ -2,18 +2,20 @@
 package com.intellij.compiler.artifacts.workspaceModel
 
 import com.intellij.compiler.artifacts.ArtifactsTestCase
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactRootElementEntity
+import com.intellij.java.workspace.entities.FileCopyPackagingElementEntity
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.FileCopyPackagingElement
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.workspaceModel.updateProjectModel
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.storage.EntitySource
-import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -31,9 +33,14 @@ class ArtifactWatchRootsTest : ArtifactsTestCase() {
     val fileVirtualUrl = VirtualFileUrlManager.getInstance(project).fromPath(file.path)
     runWriteAction {
       WorkspaceModel.getInstance(project).updateProjectModel {
-        val fileCopy = it.addFileCopyPackagingElementEntity(fileVirtualUrl, null, MySource)
-        val rootElement = it.addArtifactRootElementEntity(listOf(fileCopy), MySource)
-        it.addArtifactEntity("MyArtifact", PlainArtifactType.ID, false, outputVirtualUrl, rootElement, MySource)
+        val fileCopy = it addEntity FileCopyPackagingElementEntity(fileVirtualUrl, MySource)
+        val rootElement = it addEntity ArtifactRootElementEntity(MySource) {
+          children = listOf(fileCopy)
+        }
+        it addEntity ArtifactEntity("MyArtifact", PlainArtifactType.ID, false, MySource) {
+          outputUrl = outputVirtualUrl
+          this.rootElement = rootElement
+        }
       }
     }
     runWriteAction {

@@ -11,3 +11,6 @@ fun usage() {
     val ten = 10
     ten.<caret>ext()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

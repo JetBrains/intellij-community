@@ -10,27 +10,38 @@ import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
+import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.types.Variance
 
 internal object CompletionShortNamesRenderer {
-    fun KtAnalysisSession.renderFunctionParameters(function: KtFunctionLikeSignature<*>): String {
+    context(KtAnalysisSession)
+    fun renderFunctionParameters(function: KtFunctionLikeSignature<*>): String {
         return function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it) }
     }
 
-    fun KtAnalysisSession.renderVariable(variable: KtVariableLikeSignature<*>): String {
+    context(KtAnalysisSession)
+    fun renderFunctionalTypeParameters(functionalType: KtFunctionalType): String =
+        functionalType.parameterTypes.joinToString(separator = ", ", prefix = "(", postfix = ")") {
+            it.render(rendererVerbose, position = Variance.INVARIANT)
+        }
+
+    context(KtAnalysisSession)
+    fun renderVariable(variable: KtVariableLikeSignature<*>): String {
         return renderReceiver(variable)
     }
 
-    private fun KtAnalysisSession.renderReceiver(variable: KtVariableLikeSignature<*>): String {
+    context(KtAnalysisSession)
+    private fun renderReceiver(variable: KtVariableLikeSignature<*>): String {
         val receiverType = variable.receiverType ?: return ""
         return receiverType.render(rendererVerbose, position = Variance.INVARIANT) + "."
     }
 
-    private fun KtAnalysisSession.renderFunctionParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): String =
+    context(KtAnalysisSession)
+    private fun renderFunctionParameter(parameter: KtVariableLikeSignature<KtValueParameterSymbol>): String =
         "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
             parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
-        }"
+        }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"
 
     val renderer = KtTypeRendererForSource.WITH_SHORT_NAMES
     val rendererVerbose = renderer.with {

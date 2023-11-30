@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -20,12 +20,9 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor;
 
 import java.util.*;
 
-public class MissingAccessibleContextInspection extends DevKitUastInspectionBase {
+final class MissingAccessibleContextInspection extends DevKitUastInspectionBase {
 
   public static final int MAX_EXPRESSIONS_TO_PROCESS = 16;
-
-  public MissingAccessibleContextInspection() {
-  }
 
   @Override
   protected PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -77,7 +74,8 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       return true;
     }
 
-    private void processBody(UExpression body, UElement context) {
+    private void processBody(@Nullable UExpression body, UElement context) {
+      if (body == null) return;
       List<PsiElement> anchors = new ArrayList<>();
       for (UExpression expression : findReturnedExpressions(body, context)) {
         PsiClass panelClass = findReturnedClass(expression);
@@ -95,7 +93,7 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       var visitor = new AbstractUastVisitor() {
         boolean myHasAccessibilityMethodCall = false;
         
-        private boolean isAccessibilityMethod(@NotNull UCallExpression call) {
+        private static boolean isAccessibilityMethod(@NotNull UCallExpression call) {
           if (call.isMethodNameOneOf(List.of("setAccessibleName", "setAccessibleDescription"))) {
             return true;
           }

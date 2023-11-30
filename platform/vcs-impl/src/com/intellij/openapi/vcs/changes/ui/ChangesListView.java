@@ -5,7 +5,6 @@ import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.dnd.DnDAware;
 import com.intellij.ide.util.PsiNavigationSupport;
-import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -37,7 +37,6 @@ import java.util.Objects;
 
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
-import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
 public abstract class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
@@ -85,11 +84,18 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
 
   @Override
   protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
-    Object subtreeRootObject = subtreeRootObject(node);
+    ChangesBrowserNode<?> subtreeRoot = getSubtreeRoot(node);
+    Object subtreeRootObject = subtreeRoot != null ? subtreeRoot.getUserObject() : null;
 
-    if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
-    if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
+    if (subtreeRootObject instanceof LocalChangeList localChangeList) return !localChangeList.getChanges().isEmpty();
+    if (subtreeRootObject == UNVERSIONED_FILES_TAG && subtreeRoot.getChildCount() > 0) return true;
     return false;
+  }
+
+  private static @Nullable ChangesBrowserNode<?> getSubtreeRoot(@NotNull ChangesBrowserNode<?> node) {
+    TreeNode[] path = node.getPath();
+    if (path.length < 2) return null;
+    return (ChangesBrowserNode<?>)path[1];
   }
 
   @Override
@@ -97,44 +103,10 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
     return (DefaultTreeModel)super.getModel();
   }
 
-  public void updateModel(@NotNull DefaultTreeModel newModel) {
-    TreeState state = TreeState.createOn(this, getRoot());
-    state.setScrollToSelection(false);
-    ChangesBrowserNode<?> oldRoot = getRoot();
-    setModel(newModel);
-    ChangesBrowserNode<?> newRoot = getRoot();
-    state.applyTo(this, newRoot);
-
-    initTreeStateIfNeeded(oldRoot, newRoot);
-  }
-
   @Override
   public void rebuildTree() {
     // currently not used in ChangesListView code flow
     LOG.warn("rebuildTree() not implemented in " + this, new Throwable());
-  }
-
-  private void initTreeStateIfNeeded(ChangesBrowserNode<?> oldRoot, ChangesBrowserNode<?> newRoot) {
-    ChangesBrowserNode<?> defaultListNode = getDefaultChangelistNode(newRoot);
-    if (defaultListNode == null) return;
-
-    if (getSelectionCount() == 0) {
-      TreeUtil.selectNode(this, defaultListNode);
-    }
-
-    if (oldRoot.getFileCount() == 0 && TreeUtil.collectExpandedPaths(this).size() == 0) {
-      expandSafe(defaultListNode);
-    }
-  }
-
-  @Nullable
-  private static ChangesBrowserNode<?> getDefaultChangelistNode(@NotNull ChangesBrowserNode<?> root) {
-    return root.iterateNodeChildren()
-      .filter(ChangesBrowserChangeListNode.class)
-      .find(node -> {
-        ChangeList list = node.getUserObject();
-        return list instanceof LocalChangeList && ((LocalChangeList)list).isDefault();
-      });
   }
 
   @Nullable
@@ -191,9 +163,10 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
       return HELP_ID;
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      DataProvider superProvider = (DataProvider)super.getData(dataId);
       VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
       VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
-      return (DataProvider)slowId -> getSlowData(myProject, treeSelection, exactSelection, slowId);
+      return CompositeDataProvider.compose(slowId -> getSlowData(myProject, treeSelection, exactSelection, slowId), superProvider);
     }
     return super.getData(dataId);
   }
@@ -350,15 +323,7 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
   }
 
   @Override
-  public void processMouseEvent(final MouseEvent e) {
-    if (MouseEvent.MOUSE_RELEASED == e.getID() && !isSelectionEmpty() && !e.isShiftDown() && !e.isControlDown() &&
-        !e.isMetaDown() && !e.isPopupTrigger()) {
-      if (isOverSelection(e.getPoint())) {
-        TreePath path = getPathForLocation(e.getPoint().x, e.getPoint().y);
-        setSelectionPath(path);
-      }
-    }
-
+  public void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
   }
 

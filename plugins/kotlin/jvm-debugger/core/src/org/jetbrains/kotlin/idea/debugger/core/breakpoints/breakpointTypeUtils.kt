@@ -140,8 +140,7 @@ inline fun <reified T : PsiElement> getElementsAtLineIfAny(file: KtFile, line: I
 }
 
 fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
-    return getElementsAtLineIfAny<KtFunction>(file, line)
-        .filter { (it is KtFunctionLiteral || it.name == null) && it.getLineNumber() == line }
+    return getLambdasAtLine(file, line).filter { it.getLineNumber() == line }
 }
 
 internal fun getLambdasAtLine(file: KtFile, line: Int): List<KtFunction> {

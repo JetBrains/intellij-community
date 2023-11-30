@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.html.RelaxedHtmlNSDescriptor;
@@ -60,8 +60,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     myCaseSensitive = caseSensitive;
   }
 
-  @Nullable
-  public static XmlAttributeDescriptor getCommonAttributeDescriptor(@NotNull final String attributeName, @Nullable final XmlTag context) {
+  public static @Nullable XmlAttributeDescriptor getCommonAttributeDescriptor(final @NotNull String attributeName, final @Nullable XmlTag context) {
     final XmlElementDescriptor descriptor = guessTagForCommonAttributes(context);
     if (descriptor != null) {
       return descriptor.getAttributeDescriptor(attributeName, context);
@@ -77,8 +76,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  @Nullable
-  public static XmlElementDescriptor guessTagForCommonAttributes(@Nullable final XmlTag context) {
+  public static @Nullable XmlElementDescriptor guessTagForCommonAttributes(final @Nullable XmlTag context) {
     if (context == null) return null;
     final XmlNSDescriptor nsDescriptor = context.getNSDescriptor(context.getNamespace(), false);
     if (nsDescriptor instanceof HtmlNSDescriptorImpl) {
@@ -100,15 +98,14 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
 
     for (XmlElementDescriptor element : elements) {
       decls.put(
-        element.getName(),
+        myCaseSensitive ? element.getName() : StringUtil.toLowerCase(element.getName()),
         createHtmlElementDescriptor(element)
       );
     }
     return decls;
   }
 
-  @NotNull
-  protected HtmlElementDescriptorImpl createHtmlElementDescriptor(XmlElementDescriptor element) {
+  protected @NotNull HtmlElementDescriptorImpl createHtmlElementDescriptor(XmlElementDescriptor element) {
     return new HtmlElementDescriptorImpl(element, myRelaxed, myCaseSensitive);
   }
 
@@ -129,7 +126,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   @Override
-  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(@Nullable final XmlDocument document) {
+  public XmlElementDescriptor @NotNull [] getRootElementsDescriptors(final @Nullable XmlDocument document) {
     if (myDelegate == null) return XmlElementDescriptor.EMPTY_ARRAY;
     if (document != null) return myDelegate.getRootElementsDescriptors(document);
 
@@ -141,8 +138,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   }
 
   @Override
-  @Nullable
-  public XmlFile getDescriptorFile() {
+  public @Nullable XmlFile getDescriptorFile() {
     return myDelegate == null ? null : myDelegate.getDescriptorFile();
   }
 

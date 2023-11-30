@@ -1,8 +1,8 @@
 3 open class A(<bold>var n: Int</bold>) { (in A)
-3 	super(<bold>n</bold>);
-2 		D(int <bold>n</bold>) {
-7 	A a = new A(<bold>3</bold>);
-9 	a.setN(<bold>4</bold>);
+3 	JAVA: super(<bold>n</bold>); (in D.D(int))
+2 		JAVA: D(int <bold>n</bold>) { (in D.D(int))
+7 	JAVA: A a = new A(<bold>3</bold>); (in D.test())
+9 	JAVA: a.setN(<bold>4</bold>); (in D.test())
 16 	n = <bold>1</bold> (in A.bar(Int))
 20 	class B : A(<bold>1</bold>) (in B)
 23 	val z = A(<bold>2</bold>).n (in test())

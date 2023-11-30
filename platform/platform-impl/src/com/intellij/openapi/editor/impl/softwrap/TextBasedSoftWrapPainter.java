@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2010 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.softwrap;
 
 import com.intellij.openapi.editor.Editor;
@@ -32,12 +18,11 @@ import java.util.Map;
  * <p/>
  * Not thread-safe.
  */
-public class TextBasedSoftWrapPainter implements SoftWrapPainter {
-
+public final class TextBasedSoftWrapPainter implements SoftWrapPainter {
   private final Map<SoftWrapDrawingType, char[]> mySymbols = new EnumMap<>(SoftWrapDrawingType.class);
   private final Map<SoftWrapDrawingType, FontInfo> myFonts = new EnumMap<>(SoftWrapDrawingType.class);
 
-  /** Use array here because profiling indicates that using EnumMap here gives significant performance degradation. */
+  /** Use an array here because profiling indicates that using EnumMap here gives significant performance degradation. */
   private final int[] myWidths = new int[SoftWrapDrawingType.values().length];
   private final Map<SoftWrapDrawingType, Integer> myVGaps = new EnumMap<>(SoftWrapDrawingType.class);
 
@@ -96,7 +81,7 @@ public class TextBasedSoftWrapPainter implements SoftWrapPainter {
    */
   @Override
   public void reinit() {
-    // We use dummy component here in order to being able to work with font metrics.
+    // We use dummy component here in order to be able to work with font metrics.
     JLabel component = new JLabel();
 
     myCanUse = true;

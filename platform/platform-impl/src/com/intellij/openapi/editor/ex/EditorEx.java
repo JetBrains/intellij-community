@@ -54,6 +54,8 @@ public interface EditorEx extends Editor {
   @NonNls String PROP_FONT_SIZE_2D = "fontSize2D";
   @NonNls String PROP_ONE_LINE_MODE = "oneLineMode";
   @NonNls String PROP_HIGHLIGHTER = "highlighter";
+  @NonNls String PROP_HEADER_COMPONENT = "headerComponent";
+
   Key<TextRange> LAST_PASTED_REGION = Key.create("LAST_PASTED_REGION");
 
   @NotNull
@@ -151,7 +153,7 @@ public interface EditorEx extends Editor {
 
   void setRendererMode(boolean isRendererMode);
 
-  void setFile(VirtualFile vFile);
+  void setFile(@NotNull VirtualFile vFile);
 
   @NotNull
   DataContext getDataContext();

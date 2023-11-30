@@ -7,7 +7,7 @@ internal class Foo {
 }
 
 internal class Bar {
-    var fooNotNull = Foo()
+    var fooNotNull: Foo = Foo()
     var fooNullable: Foo? = null
 }
 

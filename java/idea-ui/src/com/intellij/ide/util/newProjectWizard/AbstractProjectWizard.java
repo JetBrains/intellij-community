@@ -215,9 +215,7 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   private void handleCommitException(CommitStepException e) {
     String message = e.getMessage();
-    if (message != null) {
-      Messages.showErrorDialog(getCurrentStepComponent(), message);
-    }
+    Messages.showErrorDialog(getCurrentStepComponent(), message);
   }
 
   protected boolean commitStepData(final ModuleWizardStep step) {

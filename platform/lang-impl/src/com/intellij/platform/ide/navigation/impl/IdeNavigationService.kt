@@ -1,20 +1,20 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation.impl
 
-import com.intellij.codeInsight.navigation.NavigationUtil.activateFileIfOpen
-import com.intellij.codeInsight.navigation.NavigationUtil.shouldOpenAsNative
+import com.intellij.codeInsight.navigation.activateFileIfOpen
+import com.intellij.codeInsight.navigation.shouldOpenAsNative
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.impl.Utils.isAsyncDataContext
-import com.intellij.openapi.actionSystem.impl.Utils.wrapToAsyncDataContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.openapi.progress.mapWithProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
@@ -23,6 +23,7 @@ import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
 import com.intellij.util.OverflowSemaphore
 import com.intellij.util.ui.EDT
@@ -45,7 +46,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
       LOG.error("Expected async context, got: $ctx")
       val asyncContext = withContext(Dispatchers.EDT) {
         // hope that context component is still available
-        wrapToAsyncDataContext(ctx)
+        Utils.createAsyncDataContext(ctx)
       }
       navigate(asyncContext, options)
     }
@@ -71,11 +72,7 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
         it.navigationRequest()
       }
     }.filterNotNull()
-    return withContext(Dispatchers.EDT) {
-      blockingContext {
-        navigate(project, requests, options)
-      }
-    }
+    return navigate(project = project, requests = requests, options = options)
   }
 
   override suspend fun navigate(navigatable: Navigatable, options: NavigationOptions): Boolean {
@@ -87,24 +84,18 @@ internal class IdeNavigationService(private val project: Project) : NavigationSe
         false
       }
       else {
-        withContext(Dispatchers.EDT) {
-          blockingContext {
-            navigateToSource(project, request, options as NavigationOptions.Impl)
-          }
-        }
+        navigateToSource(project = project, request = request, options = options as NavigationOptions.Impl)
       }
     }
   }
 }
 
-internal val LOG = Logger.getInstance("#com.intellij.platform.ide.navigation.impl")
+internal val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.navigation.impl")
 
 /**
  * Navigates to all sources from [requests], or navigates to first non-source request.
  */
-private fun navigate(project: Project, requests: List<NavigationRequest>, options: NavigationOptions): Boolean {
-  EDT.assertIsEdt()
-
+private suspend fun navigate(project: Project, requests: List<NavigationRequest>, options: NavigationOptions): Boolean {
   val maxSourceRequests = Registry.intValue("ide.source.file.navigation.limit", 100)
   var nonSourceRequest: NavigationRequest? = null
 
@@ -114,7 +105,7 @@ private fun navigate(project: Project, requests: List<NavigationRequest>, option
     if (maxSourceRequests in 1..navigatedSourcesCounter) {
       break
     }
-    if (navigateToSource(project, requestFromNavigatable, options)) {
+    if (navigateToSource(project = project, request = requestFromNavigatable, options = options)) {
       navigatedSourcesCounter++
     }
     else if (nonSourceRequest == null) {
@@ -127,13 +118,14 @@ private fun navigate(project: Project, requests: List<NavigationRequest>, option
   if (nonSourceRequest == null) {
     return false
   }
-  navigateNonSource(nonSourceRequest, options)
+
+  withContext(Dispatchers.EDT) {
+    navigateNonSource(project = project, request = nonSourceRequest, options = options)
+  }
   return true
 }
 
-private fun navigateToSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl): Boolean {
-  EDT.assertIsEdt()
-
+private suspend fun navigateToSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl): Boolean {
   when (request) {
     is SourceNavigationRequest -> {
       navigateToSource(project, request, options)
@@ -144,7 +136,9 @@ private fun navigateToSource(project: Project, request: NavigationRequest, optio
     }
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
-        request.navigatable.navigate(options.requestFocus)
+        withContext(Dispatchers.EDT) {
+          IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
+        }
         return true
       }
       else {
@@ -157,51 +151,53 @@ private fun navigateToSource(project: Project, request: NavigationRequest, optio
   }
 }
 
-private fun navigateToSource(project: Project, request: SourceNavigationRequest, options: NavigationOptions.Impl) {
-  EDT.assertIsEdt()
-
-  if (tryActivateOpenFile(project, request, options)) {
+private suspend fun navigateToSource(project: Project, request: SourceNavigationRequest, options: NavigationOptions.Impl) {
+  if (tryActivateOpenFile(project = project, request = request, options = options)) {
     return
   }
+
   // TODO support pure source request without OpenFileDescriptor
-  val offset = request.elementRangeMarker?.takeIf { it.isValid }?.startOffset ?: -1
+  val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
   val openFileDescriptor = OpenFileDescriptor(project, request.file, offset)
   openFileDescriptor.isUseCurrentWindow = true
   if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
     openFileDescriptor.isUsePreviewTab = true
   }
-  openFileDescriptor.navigate(options.requestFocus)
+
+  withContext(Dispatchers.EDT) {
+    blockingContext {
+      openFileDescriptor.navigate(options.requestFocus)
+    }
+  }
 }
 
-private fun tryActivateOpenFile(
-  project: Project,
-  request: SourceNavigationRequest,
-  options: NavigationOptions.Impl,
-): Boolean {
+private suspend fun tryActivateOpenFile(project: Project, request: SourceNavigationRequest, options: NavigationOptions.Impl): Boolean {
   if (!options.preserveCaret && !options.requestFocus) {
     return false
   }
   if (shouldOpenAsNative(request.file)) {
     return false
   }
-  val elementRangeMarker = request.elementRangeMarker
-  if (elementRangeMarker == null || !elementRangeMarker.isValid) {
-    return false
-  }
-  val elementRange = elementRangeMarker.textRange
-  return activateFileIfOpen(project, request.file, elementRange, options.requestFocus, options.requestFocus)
+
+  val elementRange = request.elementRangeMarker?.takeIf { it.isValid }?.textRange  ?: return false
+  return activateFileIfOpen(project = project,
+                            vFile = request.file,
+                            range = elementRange,
+                            openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus))
 }
 
-private fun navigateNonSource(request: NavigationRequest, options: NavigationOptions.Impl) {
+private suspend fun navigateNonSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl) {
   EDT.assertIsEdt()
 
   return when (request) {
     is DirectoryNavigationRequest -> {
-      PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, options.requestFocus)
+      blockingContext {
+        PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, options.requestFocus)
+      }
     }
     is RawNavigationRequest -> {
       check(!request.canNavigateToSource)
-      request.navigatable.navigate(options.requestFocus)
+      IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
     }
     else -> {
       error("Non-source request expected here, got: $request")

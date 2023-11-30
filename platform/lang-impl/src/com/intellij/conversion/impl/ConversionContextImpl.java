@@ -4,9 +4,6 @@ package com.intellij.conversion.impl;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.application.options.ReplacePathToMacroMap;
 import com.intellij.conversion.*;
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.ide.impl.convert.JDomConvertingUtil;
@@ -117,8 +114,6 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   public @NotNull Object2LongMap<String> getAllProjectFiles() throws CannotConvertException {
-    Activity activity = StartUpMeasurer.startActivity("conversion: project files collecting", ActivityCategory.DEFAULT);
-
     if (myStorageScheme == StorageScheme.DEFAULT) {
       List<Path> moduleFiles = getModulePaths();
       Object2LongMap<String> totalResult = new Object2LongOpenHashMap<>(moduleFiles.size() + 2);
@@ -169,8 +164,6 @@ public final class ConversionContextImpl implements ConversionContext {
     catch (ExecutionException | InterruptedException e) {
       throw new CannotConvertException(e);
     }
-
-    activity.end();
     return totalResult;
   }
 
@@ -335,7 +328,7 @@ public final class ConversionContextImpl implements ConversionContext {
   }
 
   public @NotNull Stream<String> getClassRootUrls(Element libraryElement, @Nullable ModuleSettings moduleSettings) {
-    //todo[nik] support jar directories
+    //todo support jar directories
     Element classesChild = libraryElement.getChild("CLASSES");
     if (classesChild == null) {
       return Stream.empty();
@@ -493,6 +486,12 @@ public final class ConversionContextImpl implements ConversionContext {
       if (xmlFile != null) {
         xmlFile.save();
       }
+    }
+    if (files.contains(myWorkspaceFile.getPath())) {
+      myWorkspaceFile.save();
+    }
+    if (files.contains(myProjectFile.getPath())) {
+      myProjectFile.save();
     }
   }
 

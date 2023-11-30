@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui;
 
@@ -37,6 +37,7 @@ import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.TreeTraversal;
@@ -63,7 +64,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
 
-public class InspectionTree extends Tree {
+public final class InspectionTree extends Tree {
   private static final Logger LOG = Logger.getInstance(InspectionTree.class);
 
   private final InspectionTreeModel myModel;
@@ -335,7 +336,7 @@ public class InspectionTree extends Tree {
                                                                     boolean allowResolved,
                                                                     TreePath[] paths) {
     if (paths == null) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
       paths = getSelectionPaths();
     }
     if (paths == null) return Collections.emptyList();
@@ -387,7 +388,7 @@ public class InspectionTree extends Tree {
 
   @Override
   public TreePath @Nullable [] getSelectionPaths() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     return super.getSelectionPaths();
   }
 
@@ -463,7 +464,7 @@ public class InspectionTree extends Tree {
   }
 
   public void removeSelectedProblems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     TreePath[] selected = getSelectionPaths();
     if (selected == null) return;
     if (!getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {
@@ -610,7 +611,7 @@ public class InspectionTree extends Tree {
     return RefEntity.EMPTY_ELEMENTS_ARRAY;
   }
 
-  private class MyOccurrenceNavigator implements OccurenceNavigator {
+  private final class MyOccurrenceNavigator implements OccurenceNavigator {
     @Override
     public boolean hasNextOccurence() {
       return getNextNode(true) != null;

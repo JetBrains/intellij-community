@@ -121,9 +121,8 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
 
     myChangesBrowser = new VcsLogChangesBrowser(logData.getProject(), myUiProperties, (commitId) -> {
       int index = myLogData.getCommitIndex(commitId.getHash(), commitId.getRoot());
-      return myLogData.getMiniDetailsGetter().getCommitData(index);
+      return myLogData.getMiniDetailsGetter().getCachedDataOrPlaceholder(index);
     }, withEditorDiffPreview, this);
-    myChangesBrowser.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.changes.accessible.name"));
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), getGraphTable());
     JBLoadingPanel changesLoadingPane = new JBLoadingPanel(new BorderLayout(), this,
                                                            ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS) {
@@ -221,7 +220,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     ActionToolbar toolbar = actionManager.createActionToolbar(ActionPlaces.VCS_LOG_TOOLBAR_PLACE, mainGroup, true);
     toolbar.setTargetComponent(this);
 
-    Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent());
+    Wrapper textFilter = new Wrapper(myFilterUi.getTextFilterComponent().getComponent());
     textFilter.setVerticalSizeReferent(toolbar.getComponent());
     String vcsDisplayName = VcsLogUtil.getVcsDisplayName(myLogData.getProject(), myLogData.getLogProviders().values());
     textFilter.getAccessibleContext().setAccessibleName(VcsLogBundle.message("vcs.log.text.filter.accessible.name", vcsDisplayName));
@@ -281,7 +280,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return new QuickActionProvider() {
         @Override
         public @NotNull List<AnAction> getActions(boolean originalProvider) {
-          AnAction textFilterAction = EmptyAction.wrap(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER));
+          AnAction textFilterAction = ActionUtil.wrap(VcsLogActionIds.VCS_LOG_FOCUS_TEXT_FILTER);
           textFilterAction.getTemplatePresentation().setText(VcsLogBundle.message("vcs.log.text.filter.action.text"));
           List<AnAction> actions = new ArrayList<>();
           actions.add(textFilterAction);
@@ -414,7 +413,7 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
       return List.of(myGraphTable,
                      myChangesBrowser.getPreferredFocusedComponent(),
                      myDiffPreview.getPreviewDiff().getPreferredFocusedComponent(),
-                     myFilterUi.getTextFilterComponent());
+                     myFilterUi.getTextFilterComponent().getFocusedComponent());
     }
   }
 

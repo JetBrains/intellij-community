@@ -7,19 +7,20 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler
-import com.intellij.openapi.util.UserDataHolder
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.isPromptEditor
+import org.jetbrains.plugins.terminal.exp.TerminalDataContextUtils.promptController
 
 
 class TerminalCaretUpHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
-  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val promptPanel = editor.getUserData(TerminalPromptPanel.KEY)
-    if (promptPanel != null) {
+  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
+    val promptController = dataContext.promptController
+    if (promptController != null) {
       val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
       if (lookup?.isAvailableToUser == true) {
         originalHandler.execute(editor, caret, dataContext)
       }
       else if (editor.offsetToLogicalPosition(editor.caretModel.offset).line == 0) {
-        promptPanel.showCommandHistory()
+        promptController.showCommandHistory()
       }
       else originalHandler.execute(editor, caret, dataContext)
     }
@@ -27,13 +28,13 @@ class TerminalCaretUpHandler(private val originalHandler: EditorActionHandler) :
   }
 
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
-    return editor.getUserData(TerminalPromptPanel.KEY) != null || originalHandler.isEnabled(editor, caret, dataContext)
+    return editor.isPromptEditor || originalHandler.isEnabled(editor, caret, dataContext)
   }
 }
 
 class TerminalCaretDownHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
-  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val promptController = editor.getUserData(TerminalPromptPanel.KEY)
+  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext) {
+    val promptController = dataContext.promptController
     if (promptController != null) {
       val lookup = LookupManager.getActiveLookup(editor) as? LookupImpl
       if (lookup != null && lookup.isAvailableToUser
@@ -49,28 +50,6 @@ class TerminalCaretDownHandler(private val originalHandler: EditorActionHandler)
   }
 
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
-    return editor.getUserData(TerminalPromptPanel.KEY) != null || originalHandler.isEnabled(editor, caret, dataContext)
-  }
-}
-
-
-class TerminalEscapeHandler(private val originalHandler: EditorActionHandler) : EditorActionHandler() {
-  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val promptPanel = editor.getUserData(TerminalPromptPanel.KEY)
-    if (promptPanel != null) {
-      val lookup = LookupManager.getActiveLookup(editor) as? UserDataHolder
-      if (lookup?.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true) {
-        promptPanel.onCommandHistoryClosed()
-      }
-    }
-    originalHandler.execute(editor, caret, dataContext)
-  }
-
-  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
-    if (editor.getUserData(TerminalPromptPanel.KEY) != null) {
-      val lookup = LookupManager.getActiveLookup(editor) as? UserDataHolder
-      return lookup?.getUserData(CommandHistoryPresenter.IS_COMMAND_HISTORY_LOOKUP_KEY) == true
-    }
-    else return originalHandler.isEnabled(editor, caret, dataContext)
+    return editor.isPromptEditor || originalHandler.isEnabled(editor, caret, dataContext)
   }
 }

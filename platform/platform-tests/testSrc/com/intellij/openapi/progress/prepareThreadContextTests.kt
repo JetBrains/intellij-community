@@ -23,7 +23,7 @@ fun testExceptions(): Nothing {
   val ce = assertThrows<CancellationException> {
     requireNotNull(Cancellation.currentJob()).ensureActive()
   }
-  val jce = assertThrows<JobCanceledException> {
+  val jce = assertThrows<CeProcessCanceledException> {
     ProgressManager.checkCanceled()
   }
   assertSame(ce, jce.cause)
@@ -32,7 +32,7 @@ fun testExceptions(): Nothing {
 
 private fun testNonCancellableSection() {
   ProgressManager.getInstance().executeNonCancelableSection {
-    assertThrows<JobCanceledException> {
+    assertThrows<CeProcessCanceledException> {
       Cancellation.checkCancelled()
     }
     assertDoesNotThrow {
@@ -42,11 +42,11 @@ private fun testNonCancellableSection() {
 }
 
 fun testExceptionsAndNonCancellableSection(): Nothing {
-  assertThrows<JobCanceledException> {
+  assertThrows<CeProcessCanceledException> {
     testExceptions()
   }
   testNonCancellableSection()
-  throw assertThrows<JobCanceledException> {
+  throw assertThrows<CeProcessCanceledException> {
     testExceptions()
   }
 }

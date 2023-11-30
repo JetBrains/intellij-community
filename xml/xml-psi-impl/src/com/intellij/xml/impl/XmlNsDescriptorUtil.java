@@ -55,7 +55,7 @@ public final class XmlNsDescriptorUtil {
     });
   }
 
-  public static boolean isGeneratedFromDtd(@NotNull final XmlDocument document,
+  public static boolean isGeneratedFromDtd(final @NotNull XmlDocument document,
                                            XmlNSDescriptor defaultNSDescriptorInner) {
     if (defaultNSDescriptorInner == null) {
       return false;
@@ -68,8 +68,8 @@ public final class XmlNsDescriptorUtil {
     return descriptorFile.getName().equals(otherName);
   }
 
-  public static @Nullable XmlNSDescriptor getDefaultNSDescriptor(@NotNull final XmlDocument document,
-                                                                 @Nullable final String namespace,
+  public static @Nullable XmlNSDescriptor getDefaultNSDescriptor(final @NotNull XmlDocument document,
+                                                                 final @Nullable String namespace,
                                                                  final boolean strict) {
     final XmlFile containingFile = XmlUtil.getContainingFile(document);
     if (containingFile == null) return null;

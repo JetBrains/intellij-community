@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.jna.JnaLoader;
@@ -69,7 +69,7 @@ public final class NioFiles {
 
   /**
    * A drop-in replacement for {@link Files#createDirectories} that doesn't stumble upon symlinks - unlike the original.
-   * I.e. this method accepts "/path/.../dir_link" (where "dir_link" is a symlink to a directory), while the original fails.
+   * I.e., this method accepts "/path/.../dir_link" (where "dir_link" is a symlink to a directory), while the original fails.
    */
   public static @NotNull Path createDirectories(@NotNull Path path) throws IOException {
     try {
@@ -98,6 +98,16 @@ public final class NioFiles {
         throw e;
       }
     }
+  }
+
+  /**
+   * Creates all parent directories of the given path; returns the argument.
+   * Example: {@code Files.newOutputStream(NioFiles.createParentDirectories(file))}.
+   */
+  public static @NotNull Path createParentDirectories(@NotNull Path path) throws IOException {
+    Path parent = path.getParent();
+    if (parent != null) createDirectories(parent);
+    return path;
   }
 
   /**

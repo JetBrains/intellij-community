@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.scale;
 
 import com.intellij.testFramework.PlatformTestUtil;
@@ -45,8 +45,7 @@ public class SvgIconPaintTest {
     JBUIScale.setUserScaleFactor((float)2);
     overrideJreHiDPIEnabled(false);
 
-    var icon = new CachedImageIcon(new File(getSvgIconPath()).toURI().toURL(), false);
-    icon.updateScaleContext(ScaleContext.create(SYS_SCALE.of(1)));
+    var icon = new CachedImageIcon(new File(getSvgIconPath()).toURI().toURL(), ScaleContext.create(SYS_SCALE.of(1)));
     BufferedImage iconImage = ImageUtil.toBufferedImage(IconUtil.toImage(icon));
 
     //saveImage(iconImage, getGoldImagePath().toString()); // uncomment to save gold image

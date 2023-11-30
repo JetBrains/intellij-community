@@ -1,19 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.java.JavaBundle;
-import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
+public class SplitDeclarationAction extends PsiUpdateModCommandAction<PsiDeclarationStatement> {
+  public SplitDeclarationAction() {
+    super(PsiDeclarationStatement.class);
+  }
+  
   @Override
   @NotNull
   public String getFamilyName() {
@@ -21,14 +26,13 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    if (element instanceof PsiCompiledElement) return false;
-    if (!canModify(element)) return false;
-    if (!element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) return false;
-
-    final PsiDeclarationStatement
-      context = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class, false, PsiClass.class, PsiCodeBlock.class);
-    return context != null && isAvailableOnDeclarationStatement(context);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiDeclarationStatement element) {
+    if (PsiTreeUtil.getParentOfType(context.findLeaf(), PsiDeclarationStatement.class, false, PsiClass.class, PsiCodeBlock.class)
+        != element) {
+      return null;
+    }
+    return isAvailableOnDeclarationStatement(element) ?
+           Presentation.of(JavaBundle.message("intention.split.declaration.assignment.text")) : null;
   }
 
   private boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement decl) {
@@ -65,16 +69,11 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         parent = parent.getNextSibling();
       }
     }
-    setText(JavaBundle.message("intention.split.declaration.assignment.text"));
     return true;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-    final PsiDeclarationStatement decl = PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class);
-
-    if (decl != null) {
-      ExpressionUtils.splitDeclaration(decl, project);
-    }
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiDeclarationStatement decl, @NotNull ModPsiUpdater updater) {
+    ExpressionUtils.splitDeclaration(decl, context.project());
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -79,8 +79,7 @@ public interface CachedValueProvider<T> {
      * Creates a result
      * @see #getDependencyItems()
      */
-    @NotNull
-    public static <T> Result<T> createSingleDependency(@Nullable T value, @NotNull Object dependency) {
+    public static @NotNull <T> Result<T> createSingleDependency(@Nullable T value, @NotNull Object dependency) {
       return create(value, dependency);
     }
 
@@ -88,8 +87,7 @@ public interface CachedValueProvider<T> {
      * Creates a result
      * @see #getDependencyItems()
      */
-    @NotNull
-    public static <T> Result<T> create(@Nullable T value, Object @NotNull ... dependencies) {
+    public static @NotNull <T> Result<T> create(@Nullable T value, Object @NotNull ... dependencies) {
       return new Result<>(value, dependencies);
     }
 
@@ -97,8 +95,7 @@ public interface CachedValueProvider<T> {
      * Creates a result
      * @see #getDependencyItems()
      */
-    @NotNull
-    public static <T> Result<T> create(@Nullable T value, @NotNull Collection<?> dependencies) {
+    public static @NotNull <T> Result<T> create(@Nullable T value, @NotNull Collection<?> dependencies) {
       return new Result<>(value, ArrayUtil.toObjectArray(dependencies));
     }
 

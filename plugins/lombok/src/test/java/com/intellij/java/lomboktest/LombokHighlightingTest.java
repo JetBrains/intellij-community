@@ -22,32 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    enableInspectionTool(new UnusedDeclarationInspection(true));
-    setWarningLevel(new ObjectEqualityInspection());
-  }
-
-  private void setWarningLevel(LocalInspectionTool inspection) {
-    final HighlightDisplayKey displayKey = HighlightDisplayKey.find(inspection.getShortName());
-    final InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(getProject()).getCurrentProfile();
-    currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, getProject());
-  }
-
-  @Override
-  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{
-      new ObjectToStringInspection(),
-      new ObjectEqualityInspection(),
-      new DataFlowInspection(),
-      new DefUseInspection(),
-      new FieldMayBeFinalInspection(),
-      new FieldCanBeLocalInspection(),
-      new DefaultAnnotationParamInspection()
-    };
-  }
-
   public void testLombokBasics() { doTest(); }
 
   public void testLombokStaticVars() {
@@ -74,10 +48,49 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testValueSealedInterface() {
+    doTest();
+  }
+
+  public void testBuilderJacksonized() {
+    // shouldn't throw any exceptions (like StackOverflowError)
+    doTest();
+  }
+
+  public void testBuilderWithPredefinedBuilderClassMethods() {
+    doTest();
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    enableInspectionTool(new UnusedDeclarationInspection(true));
+    setWarningLevel(new ObjectEqualityInspection());
+  }
+
+  private void setWarningLevel(LocalInspectionTool inspection) {
+    final HighlightDisplayKey displayKey = HighlightDisplayKey.find(inspection.getShortName());
+    final InspectionProfileImpl currentProfile = ProjectInspectionProfileManager.getInstance(getProject()).getCurrentProfile();
+    currentProfile.setErrorLevel(displayKey, HighlightDisplayLevel.WARNING, getProject());
+  }
+
+  @Override
+  protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
+    return new LocalInspectionTool[]{
+      new ObjectToStringInspection(),
+      new ObjectEqualityInspection(),
+      new DataFlowInspection(),
+      new DefUseInspection(),
+      new FieldMayBeFinalInspection(),
+      new FieldCanBeLocalInspection(),
+      new DefaultAnnotationParamInspection()
+    };
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LombokTestUtil.LOMBOK_DESCRIPTOR;
+    return LombokTestUtil.LOMBOK_NEW_DESCRIPTOR;
   }
 
   private void doTest() {

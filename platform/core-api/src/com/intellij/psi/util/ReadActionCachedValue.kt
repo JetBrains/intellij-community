@@ -35,6 +35,7 @@ import org.jetbrains.annotations.ApiStatus
  * @param provider a lambda for computing the cached value. Is called once per read-action.
  */
 @ApiStatus.Experimental
+@ApiStatus.Internal
 class ReadActionCachedValue<T>(private val provider: () -> T) {
   
   fun getCachedOrEvaluate(): T {

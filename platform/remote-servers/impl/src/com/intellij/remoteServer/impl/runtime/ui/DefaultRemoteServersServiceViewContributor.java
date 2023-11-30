@@ -3,11 +3,13 @@ package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.services.ServiceViewDescriptor;
 import com.intellij.execution.services.ServiceViewManager;
+import com.intellij.execution.services.ServiceViewToolWindowDescriptor;
 import com.intellij.execution.services.SimpleServiceViewDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerBase;
@@ -19,26 +21,16 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Objects;
 
 public class DefaultRemoteServersServiceViewContributor extends RemoteServersServiceViewContributor {
-  private static final ServiceViewDescriptor CONTRIBUTOR_DESCRIPTOR =
-    new SimpleServiceViewDescriptor("Clouds", AllIcons.General.Balloon) {
-      @Override
-      public ActionGroup getToolbarActions() {
-        return RemoteServersServiceViewContributor.getToolbarActions(RemoteServersServiceViewContributor.ActionGroups.SHARED_ACTION_GROUPS);
-      }
-
-      @Override
-      public ActionGroup getPopupActions() {
-        return RemoteServersServiceViewContributor.getPopupActions(RemoteServersServiceViewContributor.ActionGroups.SHARED_ACTION_GROUPS);
-      }
-    };
+  private final ServiceViewDescriptor myContributorDescriptor = new DefaultRemoteServersServiceViewDescriptor();
 
   @NotNull
   @Override
   public ServiceViewDescriptor getViewDescriptor(@NotNull Project project) {
-    return CONTRIBUTOR_DESCRIPTOR;
+    return myContributorDescriptor;
   }
 
   @Override
@@ -85,5 +77,44 @@ public class DefaultRemoteServersServiceViewContributor extends RemoteServersSer
       toolWindowId = server.getType().getCustomToolWindowId();
     }
     return toolWindowId == null;
+  }
+
+  private static class DefaultRemoteServersServiceViewDescriptor extends SimpleServiceViewDescriptor
+    implements ServiceViewToolWindowDescriptor {
+
+    DefaultRemoteServersServiceViewDescriptor() {
+      super("Clouds", AllIcons.General.Balloon);
+    }
+
+    @Override
+    public ActionGroup getToolbarActions() {
+      return RemoteServersServiceViewContributor.getToolbarActions(RemoteServersServiceViewContributor.ActionGroups.SHARED_ACTION_GROUPS);
+    }
+
+    @Override
+    public ActionGroup getPopupActions() {
+      return RemoteServersServiceViewContributor.getPopupActions(RemoteServersServiceViewContributor.ActionGroups.SHARED_ACTION_GROUPS);
+    }
+
+    @Override
+    public @NotNull String getToolWindowId() {
+      return getId();
+    }
+
+    @Override
+    public @NotNull Icon getToolWindowIcon() {
+      return AllIcons.Toolwindows.ToolWindowServices;
+    }
+
+    @Override
+    public @NotNull String getStripeTitle() {
+      @NlsSafe String title = getToolWindowId();
+      return title;
+    }
+
+    @Override
+    public boolean isExclusionAllowed() {
+      return false;
+    }
   }
 }

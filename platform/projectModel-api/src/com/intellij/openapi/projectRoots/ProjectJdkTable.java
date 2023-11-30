@@ -72,5 +72,6 @@ public abstract class ProjectJdkTable {
   public void preconfigure() {
   }
 
+  @Topic.AppLevel
   public static final Topic<Listener> JDK_TABLE_TOPIC = new Topic<>(Listener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 }

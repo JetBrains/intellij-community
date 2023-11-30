@@ -6,9 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UParameter
-import org.jetbrains.uast.UParameterEx
+import org.jetbrains.uast.*
 
 @ApiStatus.Internal
 open class KotlinUParameter(
@@ -17,13 +15,20 @@ open class KotlinUParameter(
     givenParent: UElement?
 ) : AbstractKotlinUVariable(givenParent), UParameterEx, PsiParameter by psi {
 
+    private val isLightConstructorParamLazy = UastLazyPart<Boolean?>()
+    private val isKtConstructorParamLazy = UastLazyPart<Boolean?>()
+
     final override val javaPsi = unwrap<UParameter, PsiParameter>(psi)
 
     override val psi = javaPsi
 
-    private val isLightConstructorParam by lz { psi.getParentOfType<PsiMethod>(true)?.isConstructor }
+    private val isLightConstructorParam: Boolean?
+        get() = isLightConstructorParamLazy.getOrBuild { psi.getParentOfType<PsiMethod>(true)?.isConstructor }
 
-    private val isKtConstructorParam by lz { sourcePsi?.getParentOfType<KtCallableDeclaration>(true)?.let { it is KtConstructor<*> } }
+    private val isKtConstructorParam: Boolean?
+        get() = isKtConstructorParamLazy.getOrBuild {
+            sourcePsi?.getParentOfType<KtCallableDeclaration>(true)?.let { it is KtConstructor<*> }
+        }
 
     override fun acceptsAnnotationTarget(target: AnnotationUseSiteTarget?): Boolean {
         if (sourcePsi !is KtParameter) return false

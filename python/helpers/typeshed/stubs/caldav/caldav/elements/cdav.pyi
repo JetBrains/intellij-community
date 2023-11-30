@@ -35,11 +35,11 @@ class ParamFilter(NamedBaseElement):
 
 class TextMatch(ValuedBaseElement):
     tag: ClassVar[str]
-    def __init__(self, value, collation: str = ..., negate: bool = ...) -> None: ...
+    def __init__(self, value, collation: str = "i;octet", negate: bool = False) -> None: ...
 
 class TimeRange(BaseElement):
     tag: ClassVar[str]
-    def __init__(self, start: datetime.datetime | None = ..., end: datetime.datetime | None = ...) -> None: ...
+    def __init__(self, start: datetime.datetime | None = None, end: datetime.datetime | None = None) -> None: ...
 
 class NotDefined(BaseElement):
     tag: ClassVar[str]
@@ -49,7 +49,7 @@ class CalendarData(BaseElement):
 
 class Expand(BaseElement):
     tag: ClassVar[str]
-    def __init__(self, start: datetime.datetime | None, end: datetime.datetime | None = ...) -> None: ...
+    def __init__(self, start: datetime.datetime | None, end: datetime.datetime | None = None) -> None: ...
 
 class Comp(NamedBaseElement):
     tag: ClassVar[str]

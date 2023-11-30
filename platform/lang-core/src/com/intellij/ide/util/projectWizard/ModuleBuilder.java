@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ModalityUiUtil;
+import kotlin.Unit;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -89,12 +90,13 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
       }
       catch (Exception e) {
         LOG.error(e);
-        return;
+        return Unit.INSTANCE;
       }
 
       if (builder.isAvailable()) {
         result.add(builder);
       }
+      return Unit.INSTANCE;
     });
     return result;
   }
@@ -314,7 +316,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
     if (runFromProjectWizard) {
       StartupManager.getInstance(module.getProject()).runAfterOpened(() -> {
-        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, module.getDisposed(), () -> {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.nonModal(), module.getDisposed(), () -> {
           ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module));
         });
       });

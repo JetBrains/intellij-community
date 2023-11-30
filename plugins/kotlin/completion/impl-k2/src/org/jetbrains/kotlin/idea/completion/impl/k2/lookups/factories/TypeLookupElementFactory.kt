@@ -24,7 +24,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
 class TypeLookupElementFactory {
-    fun KtAnalysisSession.createLookup(type: KtType): LookupElement? {
+    context(KtAnalysisSession)
+fun createLookup(type: KtType): LookupElement? {
         val renderedType = type.render(TYPE_RENDERING_OPTIONS_SHORT_NAMES, position = Variance.INVARIANT)
         val lookupObject = TypeLookupObject(type.render(TYPE_RENDERING_OPTIONS, position = Variance.INVARIANT))
 
@@ -48,7 +49,8 @@ class TypeLookupElementFactory {
         }
     }
 
-    fun KtAnalysisSession.createLookup(symbol: KtClassifierSymbol): LookupElement? {
+    context(KtAnalysisSession)
+fun createLookup(symbol: KtClassifierSymbol): LookupElement? {
         val (relativeNameAsString, fqNameAsString) = when (symbol) {
             is KtTypeParameterSymbol -> symbol.name.asString().let { it to it }
 

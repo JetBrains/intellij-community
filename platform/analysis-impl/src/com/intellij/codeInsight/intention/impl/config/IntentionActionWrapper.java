@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.config;
 
-import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionBean;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ex.ToolLanguageUtil;
 import com.intellij.modcommand.ModCommandAction;
@@ -111,7 +114,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     if (instance == null) {
       CommonIntentionAction base = extension.getInstance();
       instance = base instanceof IntentionAction action ? action :
-                 ((ModCommandAction)base).asIntention();
+                 base.asIntention();
     }
     return instance;
   }
@@ -134,7 +137,9 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     catch (PsiInvalidElementAccessException e) {
       text = e.getMessage();
     }
-    return "Intention: (" + getDelegate().getClass() + "): '" + text + "'";
+    ModCommandAction modCommand = asModCommandAction();
+    Class<?> cls = modCommand == null ? getDelegate().getClass() : modCommand.getClass();
+    return "Intention: (" + cls.getName() + "): '" + text + "'";
   }
 
   @Override

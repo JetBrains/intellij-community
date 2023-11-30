@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="kotlin.util.compiler-dependencies" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="intellij.devkit.jps" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.trove" scope="RUNTIME" />
   </component>
 </module>

@@ -5,7 +5,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import java.io.File
 
 @ApiStatus.NonExtendable
 interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : GradleBuildScriptBuilderCore<BSB> {
@@ -48,7 +47,6 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
 
   fun addBuildScriptClasspath(dependency: String): BSB
   fun addBuildScriptClasspath(dependency: Expression): BSB
-  fun addBuildScriptClasspath(vararg dependencies: File): BSB
 
   fun withMavenCentral(): BSB
   fun withBuildScriptMavenCentral(): BSB
@@ -62,8 +60,14 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun withJavaLibraryPlugin(): BSB
   fun withIdeaPlugin(): BSB
   fun withKotlinJvmPlugin(): BSB
+
+  /**
+   * Adds the Kotlin JVM plugin using the [version], or omitting the version call if [version] is null.
+   */
+  fun withKotlinJvmPlugin(version: String?): BSB
   fun withKotlinJsPlugin(): BSB
   fun withKotlinMultiplatformPlugin(): BSB
+  fun withKotlinJvmToolchain(jvmTarget: Int): BSB
   fun withGroovyPlugin(): BSB
   fun withGroovyPlugin(version: String): BSB
   fun withApplicationPlugin(
@@ -73,9 +77,16 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
     defaultJvmArgs: List<String>? = null
   ): BSB
 
+  fun withKotlinTest(): BSB
   fun withJUnit(): BSB
   fun withJUnit4(): BSB
   fun withJUnit5(): BSB
+  fun targetCompatibility(level: String): BSB
+  fun sourceCompatibility(level: String): BSB
+
+  // Note: These are Element building functions
+  fun project(name: String): Expression
+  fun project(name: String, configuration: String): Expression
 
   companion object {
 

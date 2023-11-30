@@ -3,10 +3,10 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -28,6 +27,8 @@ import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch
+import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -111,9 +112,8 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     if (target.isTopLevelCallable()) return@any false
                     if (target === declaration) return@any false
                     analyze(target) {
-                        if (!declaration.canBeAnalysed()) return@any false
                         val targetSymbol = target.getSymbol() as? KtCallableSymbol ?: return@any false
-                        declaration.getSymbol() in targetSymbol.getAllOverriddenSymbols()
+                        declaration.originalElement in targetSymbol.getAllOverriddenSymbols().mapNotNull { it.psi?.originalElement }
                     }
                 }
                 is PsiMethod -> {
@@ -124,34 +124,45 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         }
     }
 
+    context(KtAnalysisSession)
+    private fun containerSymbol(symbol: KtCallableSymbol): KtDeclarationSymbol? {
+        return symbol.getContainingSymbol() ?: symbol.receiverType?.expandedClassSymbol
+    }
+
     override fun isUsageInContainingDeclaration(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
-        analyze(declaration) {
-            val symbol = declaration.getSymbol()
-            val containerSymbol = symbol.getContainingSymbol() ?: return false
-            return reference.unwrappedTargets.filterIsInstance(KtDeclaration::class.java).any { candidateDeclaration ->
+        val container = analyze(declaration) {
+            val symbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
+             containerSymbol(symbol)?.psi?.originalElement ?: return false
+        }
+        return reference.unwrappedTargets.filterIsInstance<KtFunction>().any { candidateDeclaration ->
+            if (candidateDeclaration == declaration) return@any false
+            if (candidateDeclaration.receiverTypeReference == null && candidateDeclaration.containingFile != container.containingFile) {
+                return@any false
+            }
+            analyze(candidateDeclaration) {
                 val candidateSymbol = candidateDeclaration.getSymbol()
-                candidateSymbol != symbol && candidateSymbol.getContainingSymbol() == containerSymbol
+                candidateSymbol is KtCallableSymbol && candidateDeclaration != declaration && containerSymbol(candidateSymbol)?.psi == container
             }
         }
     }
 
-
     override fun isExtensionOfDeclarationClassUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
         if (declaration !is KtCallableDeclaration) return false
-        analyze(declaration) {
-            fun KtClassOrObjectSymbol.isContainerReceiverFor(
-                candidateSymbol: KtDeclarationSymbol
-            ): Boolean {
-                val receiverType = (candidateSymbol as? KtCallableSymbol)?.receiverType ?: return false
-                val expandedClassSymbol = receiverType.expandedClassSymbol ?: return false
-                return expandedClassSymbol == this || this.isSubClassOf(expandedClassSymbol)
-            }
+        val container = analyze(declaration) {
+            (declaration.getSymbol().getContainingSymbol() as? KtClassOrObjectSymbol)?.psi?.originalElement as? KtClassOrObject ?: return false
+        }
 
-            val symbol = declaration.getSymbol()
-            val containerSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return false
-            return reference.unwrappedTargets.filterIsInstance(KtDeclaration::class.java).any { candidateDeclaration ->
-                val candidateSymbol = candidateDeclaration.getSymbol()
-                candidateSymbol != symbol && containerSymbol.isContainerReceiverFor(candidateSymbol)
+        return reference.unwrappedTargets.filterIsInstance<KtDeclaration>().any { candidateDeclaration ->
+            if (candidateDeclaration == declaration) return@any false
+            if (candidateDeclaration !is KtCallableDeclaration || candidateDeclaration.receiverTypeReference == null) return@any false
+            analyze(candidateDeclaration) {
+                if (!container.canBeAnalysed()) return@any false
+                val containerSymbol = container.getSymbol() as? KtClassOrObjectSymbol ?: return@any false
+
+                val receiverType = (candidateDeclaration.getSymbol() as? KtCallableSymbol)?.receiverType ?: return@any false
+                val expandedClassSymbol = receiverType.expandedClassSymbol ?: return@any false
+
+                expandedClassSymbol == containerSymbol || containerSymbol.isSubClassOf(expandedClassSymbol)
             }
         }
     }
@@ -159,31 +170,33 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun getReceiverTypeSearcherInfo(psiElement: PsiElement, isDestructionDeclarationSearch: Boolean): ReceiverTypeSearcherInfo? {
         return when (psiElement) {
             is KtCallableDeclaration -> {
-                analyzeWithReadAction(psiElement) {
+                analyze(psiElement) {
                     fun getPsiClassOfKtType(ktType: KtType): PsiClass? {
-                        val psi = ktType.asPsiType(psiElement, allowErrorTypes = false, KtTypeMappingMode.DEFAULT, isAnnotationMethod = false)
-                        return (psi as? PsiClassReferenceType)?.resolve()
+                        return (ktType as? KtNonErrorClassType)?.classSymbol?.psiSafe<KtClassOrObject>()?.toLightClass()
                     }
+
                     when (val elementSymbol = psiElement.getSymbol()) {
                         is KtValueParameterSymbol -> {
                             // TODO: The following code handles only constructors. Handle other cases e.g.,
                             //       look for uses of component functions cf [isDestructionDeclarationSearch]
-                            val psiClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java)?.toLightClass() ?: return@analyzeWithReadAction null
+                            val psiClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java)?.toLightClass() ?: return@analyze null
 
                             val classPointer = psiClass.createSmartPointer()
                             ReceiverTypeSearcherInfo(psiClass) { declaration ->
-                                analyzeWithReadAction(declaration) {
-                                    fun KtType.containsClassType(clazz: PsiClass?): Boolean {
-                                        if (clazz == null) return false
-                                        return this is KtNonErrorClassType && (clazz.unwrapped?.isEquivalentTo(classSymbol.psi) == true || ownTypeArguments.any { arg ->
-                                            when (arg) {
-                                                is KtStarTypeProjection -> false
-                                                is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
-                                            }
-                                        })
-                                    }
+                                runReadAction {
+                                    analyze(declaration) {
+                                        fun KtType.containsClassType(clazz: PsiClass?): Boolean {
+                                            if (clazz == null) return false
+                                            return this is KtNonErrorClassType && (clazz.unwrapped?.isEquivalentTo(classSymbol.psi) == true || ownTypeArguments.any { arg ->
+                                                when (arg) {
+                                                    is KtStarTypeProjection -> false
+                                                    is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
+                                                }
+                                            })
+                                        }
 
-                                    declaration.getReturnKtType().containsClassType(classPointer.element)
+                                        declaration.getReturnKtType().containsClassType(classPointer.element)
+                                    }
                                 }
                             }
                         }
@@ -219,7 +232,8 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         }
     }
 
-    private fun KtAnalysisSession.getContainingClassType(symbol: KtCallableSymbol): KtType? {
+    context(KtAnalysisSession)
+    private fun getContainingClassType(symbol: KtCallableSymbol): KtType? {
         val containingSymbol = symbol.getContainingSymbol() ?: return null
         val classSymbol = containingSymbol as? KtNamedClassOrObjectSymbol ?: return null
         return classSymbol.buildSelfClassType()
@@ -244,16 +258,32 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         searchDeeply: Boolean,
         processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
     ): Boolean {
-        TODO()
+        for (member in members) {
+            if (member is KtCallableDeclaration) {
+                val iterator = if (searchDeeply) {
+                    member.findAllOverridings().filterIsInstance<KtElement>().iterator()
+                } else {
+                    DirectKotlinOverridingCallableSearch.search(member).iterator()
+                }
+                for (psiElement in iterator) {
+                    if (!processor(member, psiElement)) return false
+                }
+            }
+        }
+        return true
     }
 
-    override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
+    override fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement> {
         return when (val element = method.unwrapped) {
-            is PsiMethod -> element.findDeepestSuperMethods().toList()
+            is PsiMethod -> (if (deepest) element.findDeepestSuperMethods() else element.findSuperMethods()).toList()
             is KtCallableDeclaration -> analyze(element) {
+                // it's not possible to create symbol for function type parameter, so we need to process this case separately
+                // see KTIJ-25760 and KTIJ-25653
+                if (method is KtParameter && method.isFunctionTypeParameter) return emptyList()
+
                 val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
 
-                val allSuperMethods = symbol.getAllOverriddenSymbols()
+                val allSuperMethods = if (deepest) symbol.getAllOverriddenSymbols() else symbol.getDirectlyOverriddenSymbols()
                 val deepestSuperMethods = allSuperMethods.filter {
                     when (it) {
                         is KtFunctionSymbol -> !it.isOverride
@@ -281,7 +311,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun isInheritable(ktClass: KtClass): Boolean {
         if (ApplicationManager.getApplication().isDispatchThread) {
             return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-                Runnable { isOverridableBySymbol(ktClass) },
+                Runnable { runReadAction { isOverridableBySymbol(ktClass) } },
                 KotlinBundle.message("dialog.title.resolving.inheritable.status"),
                 true,
                 ktClass.project
@@ -290,12 +320,12 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return isOverridableBySymbol(ktClass)
     }
 
-    private fun isOverridableBySymbol(declaration: KtDeclaration) = analyzeWithReadAction(declaration) {
+    private fun isOverridableBySymbol(declaration: KtDeclaration) = analyze(declaration) {
         var declarationSymbol : KtSymbol? = declaration.getSymbol()
         if (declarationSymbol is KtValueParameterSymbol) {
             declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
         }
-        val symbol = declarationSymbol as? KtSymbolWithModality ?: return@analyzeWithReadAction false
+        val symbol = declarationSymbol as? KtSymbolWithModality ?: return@analyze false
         when (symbol.modality) {
             Modality.OPEN, Modality.SEALED, Modality.ABSTRACT -> true
             Modality.FINAL -> false
@@ -313,7 +343,11 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 val callExpression = element.getNonStrictParentOfType<KtCallElement>() ?: return false
                 return withResolvedCall(callExpression) { call ->
                     when (call) {
-                        is KtDelegatedConstructorCall -> call.symbol == ktDeclaration.getSymbol()
+                        is KtDelegatedConstructorCall -> {
+                            val constructorSymbol = call.symbol
+                            val declarationSymbol = ktDeclaration.getSymbol()
+                            constructorSymbol == declarationSymbol || constructorSymbol.getContainingSymbol() == declarationSymbol
+                        }
                         else -> false
                     }
                 } ?: false

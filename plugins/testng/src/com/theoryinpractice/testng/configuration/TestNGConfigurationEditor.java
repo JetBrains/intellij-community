@@ -108,7 +108,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
         protected void onClassChoosen(PsiClass psiClass) {
           final JTextField textField = myPatternTextField.getTextField();
           final String text = textField.getText();
-          textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
+          textField.setText(text + (!text.isEmpty() ? "||" : "") + psiClass.getQualifiedName());
         }
 
         @Override

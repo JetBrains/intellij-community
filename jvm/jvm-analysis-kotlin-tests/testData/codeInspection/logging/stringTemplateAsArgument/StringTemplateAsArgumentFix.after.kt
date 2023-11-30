@@ -13,7 +13,7 @@ class StringTemplateAsArgumentFix {
       loggerSlf4J.info("variable1: {}", variable1)
       loggerSlf4J.info("variable1: {}", variable1)
       loggerSlf4J.info("variable1: {}", variable1)
-      loggerSlf4J.info("variable1: {}", variable1, RuntimeException())
+      loggerSlf4J.info("variable1: $variable1", RuntimeException())
       loggerSlf4J.info("{} variable1: {}", 1, variable1)
       loggerSlf4J.info("{} variable1: {} {} variable1: {}", 1, variable1, 2, variable1)
       loggerSlf4J.info("{} variable1: {} {} variable1: {} {}", 1, variable1, 2, variable1, 3)

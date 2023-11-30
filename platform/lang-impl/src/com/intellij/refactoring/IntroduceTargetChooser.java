@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInsight.unwrap.ScopeHighlighter;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -17,7 +16,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduce.IntroduceTarget;
 import com.intellij.refactoring.introduce.PsiIntroduceTarget;
-import com.intellij.ui.JBColor;
 import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -74,7 +72,7 @@ public final class IntroduceTargetChooser {
     }
     else {
       ReadAction.nonBlocking(() -> ContainerUtil.map(expressions, t -> new MyIntroduceTarget<>(t, ranger.fun(t), renderer.fun(t))))
-        .finishOnUiThread(ModalityState.NON_MODAL, targets ->
+        .finishOnUiThread(ModalityState.nonModal(), targets ->
           showIntroduceTargetChooser(editor, targets, target -> callback.accept(target.getPlace()), title, selection))
         .expireWhen(() -> editor.isDisposed())
         .submit(AppExecutorUtil.getAppExecutorService());
@@ -135,18 +133,11 @@ public final class IntroduceTargetChooser {
           Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
           //noinspection unchecked
           IntroduceTarget expr = (T)value;
-          if (expr.isValid()) {
-            String text = expr.render();
-            int firstNewLinePos = text.indexOf('\n');
-            String trimmedText =
-              text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
-            if (trimmedText.length() != text.length()) trimmedText += " ...";
-            setText(trimmedText);
-          }
-          else {
-            setForeground(JBColor.RED);
-            setText(IdeBundle.message("invalid.node.text"));
-          }
+          String text = expr.render();
+          int firstNewLinePos = text.indexOf('\n');
+          String trimmedText = text.substring(0, firstNewLinePos != -1 ? firstNewLinePos : Math.min(100, text.length()));
+          if (trimmedText.length() != text.length()) trimmedText += " ...";
+          setText(trimmedText);
           return rendererComponent;
         }
       });
@@ -161,13 +152,11 @@ public final class IntroduceTargetChooser {
     }
   }
 
-  private static class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {
+  private static final class MyIntroduceTarget<T extends PsiElement> extends PsiIntroduceTarget<T> {
     private final TextRange myTextRange;
     private final String myText;
 
-    MyIntroduceTarget(@NotNull T psi,
-                      @NotNull TextRange range,
-                      @NotNull String text) {
+    MyIntroduceTarget(@NotNull T psi, @NotNull TextRange range, @NotNull String text) {
       super(psi);
       myTextRange = range;
       myText = text;
@@ -187,7 +176,7 @@ public final class IntroduceTargetChooser {
 
     @Override
     public String toString() {
-      return isValid() ? myText : "invalid";
+      return myText;
     }
   }
 }

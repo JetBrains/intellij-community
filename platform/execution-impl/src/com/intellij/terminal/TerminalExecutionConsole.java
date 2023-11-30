@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal;
 
 import com.google.common.base.Ascii;
@@ -32,6 +32,7 @@ import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
+import com.jediterm.terminal.util.CharUtils;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleView {
   private static final Logger LOG = Logger.getInstance(TerminalExecutionConsole.class);
+  private static final String MAKE_CURSOR_INVISIBLE = "\u001b[?25l";
+  private static final String MAKE_CURSOR_VISIBLE = "\u001b[?25h";
   private static final String CLEAR_SCREEN = "\u001b[2J";
 
   private final JBTerminalWidget myTerminalWidget;
@@ -85,8 +88,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
   }
 
-  @NotNull
-  private static JBTerminalSystemSettingsProviderBase getProvider() {
+  private static @NotNull JBTerminalSystemSettingsProviderBase getProvider() {
     return new JBTerminalSystemSettingsProviderBase() {
       @Override
       public HyperlinkStyle.HighlightMode getHyperlinkHighlightingMode() {
@@ -100,13 +102,17 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   }
 
   private void printText(@NotNull String text, @Nullable ConsoleViewContentType contentType) throws IOException {
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("[" + Thread.currentThread().getName() + "] Print request received: " + CharUtils.toHumanReadableText(text));
+    }
     Color foregroundColor = contentType != null ? contentType.getAttributes().getForegroundColor() : null;
     if (foregroundColor != null) {
       myDataStream.append(encodeColor(foregroundColor));
     }
 
-    if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT && myFirstOutput.compareAndSet(false, true) && text.startsWith(CLEAR_SCREEN)) {
-      // Windows ConPTY generates the 'clear screen' escape sequence (ESC[2J) before the process output.
+    if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT && myFirstOutput.compareAndSet(false, true) && startsWithClearScreen(text)) {
+      LOG.trace("Clear Screen request detected at the beginning of the output, scheduling a scroll command.");
+      // Windows ConPTY generates the 'clear screen' escape sequence (ESC[2J) optionally preceded by a "make cursor invisible" (ESC?25l) before the process output.
       // It pushes the already printed command line into the scrollback buffer which is not displayed by default.
       // In such cases, let's scroll up to display the printed command line.
       BoundedRangeModel verticalScrollModel = myTerminalWidget.getTerminalPanel().getVerticalScrollModel();
@@ -133,14 +139,22 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     myContentHelper.addChangeListener(listener, parent);
   }
 
-  @NotNull
-  private static String encodeColor(@NotNull Color color) {
+  private static @NotNull String encodeColor(@NotNull Color color) {
     return ((char)Ascii.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
            color.getBlue() + "m";
   }
 
-  @NotNull
-  public TerminalExecutionConsole withEnterKeyDefaultCodeEnabled(boolean enterKeyDefaultCodeEnabled) {
+  private static boolean startsWithClearScreen(@NotNull String text) {
+    // ConPTY will randomly send these commands at any time, so we should skip them:
+    int offset = 0;
+    while (text.startsWith(MAKE_CURSOR_INVISIBLE, offset) || text.startsWith(MAKE_CURSOR_VISIBLE, offset)) {
+      offset += MAKE_CURSOR_INVISIBLE.length();
+    }
+
+    return text.startsWith(CLEAR_SCREEN, offset);
+  }
+
+  public @NotNull TerminalExecutionConsole withEnterKeyDefaultCodeEnabled(boolean enterKeyDefaultCodeEnabled) {
     myEnterKeyDefaultCodeEnabled = enterKeyDefaultCodeEnabled;
     return this;
   }
@@ -164,8 +178,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
     }
   }
 
-  @NotNull
-  private String convertTextToCRLF(@NotNull String text) {
+  private @NotNull String convertTextToCRLF(@NotNull String text) {
     if (text.isEmpty()) return text;
     // Handle the case when \r and \n are in different chunks: "text1 \r" and "\n text2"
     boolean preserveFirstLF = text.startsWith(LineSeparator.LF.getSeparatorString()) && myLastCR;
@@ -327,9 +340,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
   public void allowHeavyFilters() {
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myTerminalWidget.getComponent();
   }
 
@@ -373,7 +385,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     @Override
     protected TerminalStarter createTerminalStarter(@NotNull JediTerminal terminal, @NotNull TtyConnector connector) {
-      return new TerminalStarter(terminal, connector, myDataStream, myTerminalWidget.getTypeAheadManager()) {
+      return new TerminalStarter(terminal, connector, myDataStream, myTerminalWidget.getTypeAheadManager(), getExecutorServiceManager()) {
         @Override
         public byte[] getCode(int key, int modifiers) {
           if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
@@ -385,9 +397,8 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
       };
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
+    public @Nullable Object getData(@NotNull String dataId) {
       if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
         return TerminalExecutionConsole.this;
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.paint;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -254,8 +254,7 @@ public final class PaintUtil {
    * @param alignY should the y-translate be aligned
    * @return the original graphics transform when aligned, otherwise null
    */
-  @Nullable
-  public static AffineTransform alignTxToInt(@NotNull Graphics2D g, @Nullable Point2D offset, boolean alignX, boolean alignY, RoundingMode rm) {
+  public static @Nullable AffineTransform alignTxToInt(@NotNull Graphics2D g, @Nullable Point2D offset, boolean alignX, boolean alignY, RoundingMode rm) {
     try {
       AffineTransform tx = g.getTransform();
       if (isFractionalScale(tx) && (tx.getType() & AffineTransform.TYPE_MASK_ROTATION) == 0) {
@@ -295,8 +294,7 @@ public final class PaintUtil {
    * @param whRM the rounding mode to apply to the clip's width/height
    * @return the original graphics clip when aligned, otherwise null
    */
-  @Nullable
-  public static Shape alignClipToInt(@NotNull Graphics2D g, boolean alignH, boolean alignV, RoundingMode xyRM, RoundingMode whRM) {
+  public static @Nullable Shape alignClipToInt(@NotNull Graphics2D g, boolean alignH, boolean alignV, RoundingMode xyRM, RoundingMode whRM) {
     AffineTransform transform = g.getTransform();
     double scaleX = transform.getScaleX();
     double scaleY = transform.getScaleY();
@@ -356,8 +354,7 @@ public final class PaintUtil {
    * }
    * </pre>
    */
-  @NotNull
-  public static Point2D getFractOffsetInRootPane(@NotNull JComponent comp) {
+  public static @NotNull Point2D getFractOffsetInRootPane(@NotNull JComponent comp) {
     if (!comp.isShowing() || !isFractionalScale(comp.getGraphicsConfiguration().getDefaultTransform())) return new Point2D.Double();
     int x = 0;
     int y = 0;
@@ -375,8 +372,7 @@ public final class PaintUtil {
   /**
    * Returns negated Point2D instance.
    */
-  @NotNull
-  public static Point2D negate(@NotNull Point2D pt) {
+  public static @NotNull Point2D negate(@NotNull Point2D pt) {
     return new Point2D.Double(-pt.getX(), -pt.getY());
   }
 
@@ -410,8 +406,7 @@ public final class PaintUtil {
     }
   }
 
-  @NotNull
-  public static Point2D insets2offset(@Nullable Insets in) {
+  public static @NotNull Point2D insets2offset(@Nullable Insets in) {
     return in == null ? new Point2D.Double(0, 0) : new Point2D.Double(in.left, in.top);
   }
 }

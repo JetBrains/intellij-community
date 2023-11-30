@@ -10,10 +10,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 private val logger = logger<KeymapFlagsStorage>()
 
 class KeymapFlagsStorageListener : KeymapManagerListener {
-  private val mgr get() = service<KeymapFlagsStorage>()
+  private val mgr get() = KeymapFlagsStorage.getInstance()
 
-  override fun shortcutChanged(keymap: Keymap, actionId: String, fromSettings: Boolean) = mgr.removeOutdatedFlags(keymap, actionId, fromSettings)
-  override fun keymapRemoved(keymap: Keymap) = mgr.removeFlagsForKeymap(keymap)
+  override fun shortcutChanged(keymap: Keymap, actionId: String, fromSettings: Boolean): Unit = mgr.removeOutdatedFlags(keymap, actionId, fromSettings)
+  override fun keymapRemoved(keymap: Keymap): Unit = mgr.removeFlagsForKeymap(keymap)
 }
 
 @Internal
@@ -22,9 +22,9 @@ class KeymapFlagsStorageListener : KeymapManagerListener {
 class KeymapFlagsStorage : SimplePersistentStateComponent<KeymapFlagsStorage.State>(State()) {
   companion object {
     @JvmStatic
-    fun getInstance() = service<KeymapFlagsStorage>()
+    fun getInstance(): KeymapFlagsStorage = service<KeymapFlagsStorage>()
 
-    const val FLAG_MIGRATED_SHORTCUT = "MIGRATED_SHORTCUT"
+    const val FLAG_MIGRATED_SHORTCUT: String = "MIGRATED_SHORTCUT"
   }
 
   data class FlagDescriptor(
@@ -34,7 +34,7 @@ class KeymapFlagsStorage : SimplePersistentStateComponent<KeymapFlagsStorage.Sta
     var lifetime: KeymapFlagLifetimeKind?
   )
   class State internal constructor(): BaseState() {
-    var keymapToDescriptor by map<String, MutableList<FlagDescriptor>>() // keymapName to descriptor
+    var keymapToDescriptor: MutableMap<String, MutableList<FlagDescriptor>> by map() // keymapName to descriptor
   }
 
   fun addFlag(keymap: Keymap, actionId: String, shortcut: Shortcut, flag: String, lifetime: KeymapFlagLifetimeKind) {
@@ -45,19 +45,19 @@ class KeymapFlagsStorage : SimplePersistentStateComponent<KeymapFlagsStorage.Sta
     state.addModificationCount(1)
   }
 
-  fun getFlags(keymap: Keymap) =
+  fun getFlags(keymap: Keymap): Set<String?> =
     forKeymap(keymap).map { it.flag }.toSet()
 
-  fun getFlags(keymap: Keymap, actionId: String) =
+  fun getFlags(keymap: Keymap, actionId: String): List<String?> =
     forKeymap(keymap).forAction(actionId).map { it.flag }
 
-  fun getFlags(keymap: Keymap, actionId: String, shortcut: Shortcut) =
+  fun getFlags(keymap: Keymap, actionId: String, shortcut: Shortcut): List<String?> =
     forKeymap(keymap).forAction(actionId).forShortcut(shortcut).map { it.flag }
 
-  fun hasFlag(keymap: Keymap, actionId: String, flag: String) =
+  fun hasFlag(keymap: Keymap, actionId: String, flag: String): Boolean =
     getFlags(keymap, actionId).contains(flag)
 
-  fun hasFlag(keymap: Keymap, actionId: String, shortcut: Shortcut, flag: String) =
+  fun hasFlag(keymap: Keymap, actionId: String, shortcut: Shortcut, flag: String): Boolean =
     getFlags(keymap, actionId, shortcut).contains(flag)
 
 

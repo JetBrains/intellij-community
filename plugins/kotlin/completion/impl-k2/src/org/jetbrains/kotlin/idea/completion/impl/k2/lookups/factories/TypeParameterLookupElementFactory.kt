@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.symbols.KtTypeParameterSymbol
 
 internal class TypeParameterLookupElementFactory {
-    fun KtAnalysisSession.createLookup(symbol: KtTypeParameterSymbol): LookupElementBuilder {
+    context(KtAnalysisSession)
+fun createLookup(symbol: KtTypeParameterSymbol): LookupElementBuilder {
         return LookupElementBuilder.create(UniqueLookupObject(), symbol.name.asString())
             .let { withClassifierSymbolInfo(symbol, it) }
     }

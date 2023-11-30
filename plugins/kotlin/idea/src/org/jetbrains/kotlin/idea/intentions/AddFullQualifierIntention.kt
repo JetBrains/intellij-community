@@ -32,19 +32,19 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
     KtNameReferenceExpression::class.java,
     KotlinBundle.lazyMessage("add.full.qualifier")
 ), LowPriorityAction {
-    override fun isApplicableTo(element: KtNameReferenceExpression, caretOffset: Int): Boolean = isApplicableTo(
+    override fun isApplicableTo(element: KtNameReferenceExpression, caretOffset: Int): Boolean = Holder.isApplicableTo(
         referenceExpression = element,
         contextDescriptor = null,
     )
 
     override fun applyTo(element: KtNameReferenceExpression, editor: Editor?) {
         val fqName = element.findSingleDescriptor()?.importableFqName ?: return
-        applyTo(element, fqName)
+        Holder.applyTo(element, fqName)
     }
 
     override fun startInWriteAction(): Boolean = false
 
-    companion object {
+    object Holder {
         fun isApplicableTo(referenceExpression: KtNameReferenceExpression, contextDescriptor: DeclarationDescriptor?): Boolean {
             if (referenceExpression.parent is KtInstanceExpressionWithLabel) return false
 
@@ -61,9 +61,7 @@ class AddFullQualifierIntention : SelfTargetingIntention<KtNameReferenceExpressi
             val file = referenceExpression.containingKtFile
             val identifier = referenceExpression.getIdentifier()?.text
             val fqName = resultDescriptor.importableFqName
-            if (file.importDirectives.any { it.aliasName == identifier && it.importedFqName == fqName }) return false
-
-            return true
+            return !file.hasImportAlias() || file.importDirectives.none { it.aliasName == identifier && it.importedFqName == fqName }
         }
 
         fun applyTo(referenceExpression: KtNameReferenceExpression, fqName: FqName): KtElement {

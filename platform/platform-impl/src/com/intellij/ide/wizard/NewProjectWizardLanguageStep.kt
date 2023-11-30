@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -29,6 +30,7 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.components.SegmentedButtonBorder
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 class NewProjectWizardLanguageStep(
@@ -37,19 +39,18 @@ class NewProjectWizardLanguageStep(
     LanguageNewProjectWizardData,
     NewProjectWizardBaseData by parent.baseData!! {
 
-  override val self = this
+  override val self: NewProjectWizardLanguageStep = this
 
-  override val label = UIBundle.message("label.project.wizard.new.project.language")
+  override val label: @Nls String = UIBundle.message("label.project.wizard.new.project.language")
 
-  override val languageProperty by ::stepProperty
-  override var language by ::step
+  override val languageProperty: GraphProperty<String> by ::stepProperty
+  override var language: String by ::step
 
   private var additionalStepPlugins =
     if (PlatformUtils.isIdeaCommunity())
       mapOf(
         Language.PYTHON to "PythonCore",
-        Language.SCALA to "org.intellij.scala",
-        Language.RUST to "org.rust.lang"
+        Language.SCALA to "org.intellij.scala"
       )
     else
       mapOf(
@@ -58,7 +59,7 @@ class NewProjectWizardLanguageStep(
         Language.PHP to "com.jetbrains.php",
         Language.PYTHON to "Pythonid",
         Language.SCALA to "org.intellij.scala",
-        Language.RUST to "org.rust.lang"
+        Language.RUST to "com.jetbrains.rust"
       )
 
   override fun createAndSetupSwitcher(builder: Row): SegmentedButton<String> {

@@ -14,9 +14,7 @@ import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 public class TextMateHighlighter extends SyntaxHighlighterBase {
@@ -54,16 +52,20 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
   }
 
   private static TextMateScope trimEmbeddedScope(TextMateElementType tokenType) {
-    TextMateScope result = TextMateScope.EMPTY;
     TextMateScope current = tokenType.getScope();
+    List<CharSequence> trail = new ArrayList<>();
     while (current != null) {
       CharSequence scopeName = current.getScopeName();
-      result = result.add(scopeName);
       if (scopeName != null && Strings.contains(scopeName, ".embedded.")) {
-        break;
+        TextMateScope result = TextMateScope.EMPTY;
+        for (int i = trail.size() - 1; i >= 0; i--) {
+          result = result.add(trail.get(i));
+        }
+        return result;
       }
+      trail.add(scopeName);
       current = current.getParent();
     }
-    return result;
+    return tokenType.getScope();
   }
 }

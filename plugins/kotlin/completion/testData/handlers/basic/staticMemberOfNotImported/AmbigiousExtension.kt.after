@@ -6,4 +6,5 @@ fun foo() {
     FooBar.foobarbuz()
 }
 
+// IGNORE_K2
 // ELEMENT: foobarbuz

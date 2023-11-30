@@ -18,8 +18,8 @@ import java.util.Map;
  * {@code ElementPattern#save} to put matched objects into processing contexts and then retrieve those objects inside extension implementation
  * after the matching is complete.</li>
  * </ul>
- * 
- * Simple processing context can contain a shared processing context inside, which should be used when iterating over several patterns 
+ * <p>
+ * Simple processing context can contain a shared processing context inside, which should be used when iterating over several patterns
  * or extensions, possibly from different plugins. They may still wish to reuse some cached information that a previous extension has already calculated.
  * <p>
  * In this case, a separate ProcessingContext object is created for each of those extensions, but the same {@link SharedProcessingContext}
@@ -27,12 +27,15 @@ import java.util.Map;
  * </p>
  * Not thread-safe.
  *
- * @see #get(Key) 
+ * @see #get(Key)
  * @see #put(Key, Object)
- * @see #ProcessingContext(SharedProcessingContext) 
+ * @see #ProcessingContext(SharedProcessingContext)
  */
-public class ProcessingContext {
+public final class ProcessingContext {
+  private Object singleKey;
+  private Object singleValue;
   private Map<Object, Object> myMap;
+
   private SharedProcessingContext mySharedContext;
 
   public ProcessingContext() {
@@ -50,27 +53,43 @@ public class ProcessingContext {
     return context;
   }
 
-  public Object get(final @NotNull @NonNls Object key) {
-    Map<Object, Object> map = myMap;
-    return map == null ? null : map.get(key);
-  }
-
-  public void put(final @NotNull @NonNls Object key, final @NotNull Object value) {
-    ensureMapInitialized().put(key, value);
+  public void put(@NotNull @NonNls Object key, @NotNull Object value) {
+    putInternal(key, value);
   }
 
   public <T> void put(@NotNull Key<T> key, T value) {
-    ensureMapInitialized().put(key, value);
+    putInternal(key, value);
   }
 
+  @SuppressWarnings("unchecked")
   public <T> T get(@NotNull Key<T> key) {
     return (T)get((Object)key);
   }
 
-  private @NotNull Map<Object, Object> ensureMapInitialized() {
+  public Object get(@NotNull @NonNls Object key) {
+    if (key.equals(singleKey)) {
+      return singleValue;
+    }
+
     Map<Object, Object> map = myMap;
-    if (map == null) myMap = map = new HashMap<>(1);
-    return map;
+    return map == null ? null : map.get(key);
   }
 
+  private void putInternal(@NonNls @NotNull Object key, Object value) {
+    if (singleKey == null && myMap == null) {
+      singleKey = key;
+      singleValue = value;
+    }
+    else {
+      if (myMap == null) {
+        myMap = new HashMap<>(1);
+        myMap.put(singleKey, singleValue);
+
+        singleKey = null;
+        singleValue = null;
+      }
+
+      myMap.put(key, value);
+    }
+  }
 }

@@ -32,7 +32,8 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.CEIL;
+import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
 
 /**
  * A render handler for an off-screen browser.
@@ -167,7 +168,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     { // notify fps-meter
       long pixCount = 0;
       for (Rectangle r : dirtyRects)
-        pixCount += r.width * r.height;
+        pixCount += (long)r.width * r.height;
       myFpsMeter.onPaintFinished(pixCount);
     }
   }
@@ -256,7 +257,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     return myLocationOnScreenRef.get().getLocation();
   }
 
-  static private @NotNull Dimension getRealImageSize(JBHiDPIScaledImage image) {
+  private static @NotNull Dimension getRealImageSize(JBHiDPIScaledImage image) {
     if (image == null) return new Dimension(0, 0);
     BufferedImage bi = (BufferedImage)image.getDelegate();
     assert bi != null;

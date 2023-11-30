@@ -27,6 +27,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,6 +61,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     dropCached();
   }
 
+  @MustBeInvokedByOverriders
   protected void dropCached() {
     myCachedType = null;
     myCachedName = null;

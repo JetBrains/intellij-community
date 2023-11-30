@@ -1,5 +1,6 @@
 {
   "mainFile": "a/main.kt",
   "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
-  "targetFile": "a/dependency.kt"
+  "targetFile": "a/dependency.kt",
+  "enabledInK2": "true"
 }

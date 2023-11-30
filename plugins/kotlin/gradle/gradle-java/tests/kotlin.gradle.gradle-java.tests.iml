@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" name="kotlinc.kotlin-jps-common" level="project" />
@@ -60,5 +60,11 @@
     <orderEntry type="module" module-name="kotlin.completion.tests-k1" scope="TEST" />
     <orderEntry type="library" exported="" name="kotlin-gradle-plugin-idea" level="project" />
     <orderEntry type="module" module-name="kotlin.base.resources" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.indices" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" scope="TEST" />
+    <orderEntry type="library" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" />
+    <orderEntry type="module" module-name="kotlin.base.psi" scope="TEST" />
   </component>
 </module>

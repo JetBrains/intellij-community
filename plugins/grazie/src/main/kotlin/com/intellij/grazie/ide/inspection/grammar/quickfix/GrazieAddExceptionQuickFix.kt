@@ -13,6 +13,7 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiFileRange
 import javax.swing.Icon
@@ -29,10 +30,11 @@ open class GrazieAddExceptionQuickFix(
   override fun getFamilyName(): String = msg("grazie.grammar.quickfix.ignore.family")
 
   override fun getName(): String {
-    return msg(
-      if (suppressionPattern.sentenceText == null) "grazie.grammar.quickfix.ignore.text.no.context"
-      else "grazie.grammar.quickfix.ignore.text.with.context",
-      suppressionPattern.errorText)
+    val errorText = StringUtil.shortenTextWithEllipsis(suppressionPattern.errorText, 50, 20)
+    return when (suppressionPattern.sentenceText) {
+      null -> msg("grazie.grammar.quickfix.ignore.text.no.context", errorText)
+      else -> msg("grazie.grammar.quickfix.ignore.text.with.context", errorText)
+    }
   }
 
   override fun compareTo(other: IntentionAction): Int {

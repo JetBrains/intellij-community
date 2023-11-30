@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-public class CustomFoldRegionImpl extends FoldRegionImpl implements CustomFoldRegion {
+public final class CustomFoldRegionImpl extends FoldRegionImpl implements CustomFoldRegion {
   private final CustomFoldRegionRenderer myRenderer;
 
   private int myWidthInPixels;
@@ -64,7 +64,7 @@ public class CustomFoldRegionImpl extends FoldRegionImpl implements CustomFoldRe
 
   @Override
   public void update() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     if (myEditor.isDisposed() || !isValid()) return;
     if (myEditor.myDocumentChangeInProgress) {
       throw new IllegalStateException("Custom fold region shouldn't be updated during document change");

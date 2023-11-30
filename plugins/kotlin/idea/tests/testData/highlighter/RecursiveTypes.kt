@@ -1,23 +1,23 @@
-// IGNORE_FIR
+// IGNORE_K2
 // EXPECTED_DUPLICATED_HIGHLIGHTING
 // ISSUE: KT-42263
 
-interface <info descr="null">TestModule</info>
-<info descr="null">sealed</info> class <info descr="null">ResultingArtifact</info> {
-    <info descr="null">abstract</info> class <info descr="null">Source</info><<info descr="null">R</info> : <info descr="null">Source</info><<info descr="null">R</info>>> : <info descr="null">ResultingArtifact</info>() {
-        <info descr="null">abstract</info> val <info descr="null">frontendKind</info>: <info descr="null">FrontendKind</info><<info descr="null">R</info>>
+interface <symbolName descr="null">TestModule</symbolName>
+<symbolName descr="null">sealed</symbolName> class <symbolName descr="null">ResultingArtifact</symbolName> {
+    <symbolName descr="null">abstract</symbolName> class <symbolName descr="null">Source</symbolName><<symbolName descr="null">R</symbolName> : <symbolName descr="null">Source</symbolName><<symbolName descr="null">R</symbolName>>> : <symbolName descr="null">ResultingArtifact</symbolName>() {
+        <symbolName descr="null">abstract</symbolName> val <symbolName descr="null">frontendKind</symbolName>: <symbolName descr="null">FrontendKind</symbolName><<symbolName descr="null">R</symbolName>>
     }
 }
-class <info descr="null">ClassicFrontendSourceArtifacts</info> : <info descr="null">ResultingArtifact</info>.<info descr="null">Source</info><<info descr="null">ClassicFrontendSourceArtifacts</info>>() {
-    <info descr="null">override</info> val <info descr="null"><info descr="null">frontendKind</info></info>: <info descr="null">FrontendKind</info><<info descr="null">ClassicFrontendSourceArtifacts</info>>
-        <info descr="null">get</info>() = <info descr="null">FrontendKind</info>.<info descr="null">ClassicFrontend</info>
+class <symbolName descr="null">ClassicFrontendSourceArtifacts</symbolName> : <symbolName descr="null">ResultingArtifact</symbolName>.<symbolName descr="null">Source</symbolName><<symbolName descr="null">ClassicFrontendSourceArtifacts</symbolName>>() {
+    <symbolName descr="null">override</symbolName> val <symbolName descr="null"><symbolName descr="null">frontendKind</symbolName></symbolName>: <symbolName descr="null">FrontendKind</symbolName><<symbolName descr="null">ClassicFrontendSourceArtifacts</symbolName>>
+        <symbolName descr="null">get</symbolName>() = <symbolName descr="null">FrontendKind</symbolName>.<symbolName descr="null">ClassicFrontend</symbolName>
 }
-<info descr="null">sealed</info> class <info descr="null">FrontendKind</info><<info descr="null">R</info> : <info descr="null">ResultingArtifact</info>.<info descr="null">Source</info><<info descr="null">R</info>>> {
-    object <info descr="null">ClassicFrontend</info> : <info descr="null">FrontendKind</info><<info descr="null">ClassicFrontendSourceArtifacts</info>>()
+<symbolName descr="null">sealed</symbolName> class <symbolName descr="null">FrontendKind</symbolName><<symbolName descr="null">R</symbolName> : <symbolName descr="null">ResultingArtifact</symbolName>.<symbolName descr="null">Source</symbolName><<symbolName descr="null">R</symbolName>>> {
+    object <symbolName descr="null">ClassicFrontend</symbolName> : <symbolName descr="null">FrontendKind</symbolName><<symbolName descr="null">ClassicFrontendSourceArtifacts</symbolName>>()
 }
-<info descr="null">abstract</info> class <info descr="null">DependencyProvider</info> {
-    <info descr="null">abstract</info> fun <<info descr="null">R</info> : <info descr="null">ResultingArtifact</info>.<info descr="null">Source</info><<info descr="null">R</info>>> <info descr="null">registerSourceArtifact</info>(<info descr="null">artifact</info>: <info descr="null">R</info>)
+<symbolName descr="null">abstract</symbolName> class <symbolName descr="null">DependencyProvider</symbolName> {
+    <symbolName descr="null">abstract</symbolName> fun <<symbolName descr="null">R</symbolName> : <symbolName descr="null">ResultingArtifact</symbolName>.<symbolName descr="null">Source</symbolName><<symbolName descr="null">R</symbolName>>> <symbolName descr="null">registerSourceArtifact</symbolName>(<symbolName descr="null">artifact</symbolName>: <symbolName descr="null">R</symbolName>)
 }
-fun <info descr="null">test</info>(<info descr="null">dependencyProvider</info>: <info descr="null">DependencyProvider</info>, <info descr="null">artifact</info>: <info descr="null">ResultingArtifact</info>.<info descr="null">Source</info><*>) {
-    <info descr="null">dependencyProvider</info>.<info descr="null">registerSourceArtifact</info>(<error descr="[TYPE_MISMATCH] Type mismatch: inferred type is ResultingArtifact.Source<*> but CapturedType(*) was expected">artifact</error>) // <- uncomment this and see exception
+fun <symbolName descr="null">test</symbolName>(<symbolName descr="null">dependencyProvider</symbolName>: <symbolName descr="null">DependencyProvider</symbolName>, <symbolName descr="null">artifact</symbolName>: <symbolName descr="null">ResultingArtifact</symbolName>.<symbolName descr="null">Source</symbolName><*>) {
+    <symbolName descr="null">dependencyProvider</symbolName>.<symbolName descr="null">registerSourceArtifact</symbolName>(<error descr="[TYPE_MISMATCH] Type mismatch: inferred type is ResultingArtifact.Source<*> but CapturedType(*) was expected"><symbolName descr="null">artifact</symbolName></error>) // <- uncomment this and see exception
 }

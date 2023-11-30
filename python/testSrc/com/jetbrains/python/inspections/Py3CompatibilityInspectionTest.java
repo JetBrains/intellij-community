@@ -28,7 +28,7 @@ public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
   // PY-44974
   public void testBitwiseOrUnionOnReturnType() {
     doTestByText("""
-                   def foo() -> <warning descr="Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y">int | str</warning>:
+                   def foo() -> <warning descr="Python versions 2.7, 3.7, 3.8, 3.9 do not allow writing union types as X | Y">int | str</warning>:
                        return 42
                    """);
   }
@@ -48,13 +48,13 @@ public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
                    class A:
                        pass
 
-                   assert isinstance(A(), <warning descr="Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y">int | str</warning>)
+                   assert isinstance(A(), <warning descr="Python versions 2.7, 3.7, 3.8, 3.9 do not allow writing union types as X | Y">int | str</warning>)
                    """);
   }
 
   // PY-44974
   public void testBitwiseOrUnionInPrint() {
-    doTestByText("print(<warning descr=\"Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y\">int | str | dict</warning>)");
+    doTestByText("print(<warning descr=\"Python versions 2.7, 3.7, 3.8, 3.9 do not allow writing union types as X | Y\">int | str | dict</warning>)");
   }
 
   // PY-44974
@@ -69,7 +69,7 @@ public class Py3CompatibilityInspectionTest extends PyInspectionTestCase {
   // PY-44974
   public void testBitwiseOrUnionInParenthesizedUnionOfUnions() {
     doTestByText("""
-                   def foo() -> <warning descr="Python versions 2.7, 3.5, 3.6, 3.7, 3.8, 3.9 do not allow writing union types as X | Y">int | ((list | dict) | (float | str))</warning>:
+                   def foo() -> <warning descr="Python versions 2.7, 3.7, 3.8, 3.9 do not allow writing union types as X | Y">int | ((list | dict) | (float | str))</warning>:
                        pass
                    """);
   }

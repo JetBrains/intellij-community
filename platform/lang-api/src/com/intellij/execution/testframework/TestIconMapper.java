@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -15,7 +15,7 @@ import java.util.function.BooleanSupplier;
  * @author Dmitry Avdeev
  */
 public final class TestIconMapper implements PoolOfTestIcons {
-  private final static IntObjectMap<TestStateInfo.Magnitude> magnitudes = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private static final IntObjectMap<TestStateInfo.Magnitude> magnitudes = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   static {
     for (TestStateInfo.Magnitude value : TestStateInfo.Magnitude.values()) {
@@ -27,8 +27,7 @@ public final class TestIconMapper implements PoolOfTestIcons {
     return magnitudes.get(value);
   }
 
-  @Nullable
-  public static Icon getIcon(@NotNull TestStateInfo.Magnitude magnitude) {
+  public static @Nullable Icon getIcon(@NotNull TestStateInfo.Magnitude magnitude) {
     return switch (magnitude) {
       case SKIPPED_INDEX -> SKIPPED_ICON;
       case COMPLETE_INDEX, PASSED_INDEX -> PASSED_ICON;
@@ -41,10 +40,9 @@ public final class TestIconMapper implements PoolOfTestIcons {
     };
   }
 
-  @Nullable
-  public static Icon getToolbarIcon(@NotNull TestStateInfo.Magnitude magnitude,
-                                    boolean hasErrors,
-                                    BooleanSupplier hasPassedTest) {
+  public static @Nullable Icon getToolbarIcon(@NotNull TestStateInfo.Magnitude magnitude,
+                                              boolean hasErrors,
+                                              BooleanSupplier hasPassedTest) {
     return switch (magnitude) {
       case SKIPPED_INDEX -> AllIcons.RunConfigurations.ToolbarSkipped;
       case COMPLETE_INDEX, PASSED_INDEX -> AllIcons.RunConfigurations.ToolbarPassed;

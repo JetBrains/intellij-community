@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * References should not implement this interface since they don't usually introduce a new entity.
  *
  * @see com.intellij.model.psi.PsiSymbolDeclaration
+ * @see PsiNameIdentifierOwner
  */
 public interface PsiNamedElement extends PsiElement {
   /**

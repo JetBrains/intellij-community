@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class IncludeToProjectAction extends DumbAwareAction {
+public final class IncludeToProjectAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {

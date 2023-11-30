@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,16 +52,14 @@ public abstract class TemplateContextType {
   /**
    * @return context presentable name for templates editor
    */
-  @NotNull
-  public @Label String getPresentableName() {
+  public @NotNull @Label String getPresentableName() {
     return myPresentableName;
   }
 
   /**
    * @return unique ID to be used on configuration files to flag if this context is enabled for particular template
    */
-  @NotNull
-  public final String getContextId() {
+  public final @NotNull String getContextId() {
     if (myContextId == null) {
       throw new AssertionError("contextId must be set for liveTemplateContext " + this);
     }
@@ -95,8 +93,7 @@ public abstract class TemplateContextType {
    * @return syntax highlighter that going to be used in live template editor for template with context type enabled. If several context
    * types are enabled - first registered wins.
    */
-  @Nullable
-  public SyntaxHighlighter createHighlighter() {
+  public @Nullable SyntaxHighlighter createHighlighter() {
     return null;
   }
 

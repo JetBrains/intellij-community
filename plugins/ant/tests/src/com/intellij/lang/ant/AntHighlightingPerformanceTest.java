@@ -5,12 +5,12 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+import java.util.Collection;
 
 @HardwareAgentRequired
 public class AntHighlightingPerformanceTest extends DaemonAnalyzerTestCase {
@@ -30,9 +30,8 @@ public class AntHighlightingPerformanceTest extends DaemonAnalyzerTestCase {
       .assertTiming();
   }
 
-  @NotNull
   @Override
-  protected List<HighlightInfo> doHighlighting() {
-    return Collections.emptyList();
+  protected void doCheckResult(@NotNull ExpectedHighlightingData data, @NotNull Collection<? extends HighlightInfo> infos, @NotNull String text) {
+    // ignore warnings
   }
 }

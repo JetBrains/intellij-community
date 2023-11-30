@@ -1,5 +1,6 @@
 // "Add missing actual declarations" "true"
 // TOOL: org.jetbrains.kotlin.idea.inspections.OptionalExpectationInspection
+// IGNORE_K2
 
 package kotlin
 

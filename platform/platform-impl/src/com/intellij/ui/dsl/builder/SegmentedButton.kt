@@ -7,6 +7,8 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.validation.CellValidation
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 /**
  * Represents segmented button or combobox depending on number of buttons and screen reader mode. Screen reader mode always uses combobox
@@ -18,7 +20,19 @@ import org.jetbrains.annotations.ApiStatus
 interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   companion object {
-    const val DEFAULT_MAX_BUTTONS_COUNT = 6
+    const val DEFAULT_MAX_BUTTONS_COUNT: Int = 6
+  }
+
+  @LayoutDslMarker
+  interface ItemPresentation {
+
+    var text: @Nls String?
+
+    var toolTipText: @Nls String?
+
+    var icon: Icon?
+
+    var enabled: Boolean
   }
 
   override fun visible(isVisible: Boolean): SegmentedButton<T>
@@ -37,9 +51,14 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   override fun customize(customGaps: UnscaledGaps): SegmentedButton<T>
 
-  fun items(items: Collection<T>): SegmentedButton<T>
+  var items: Collection<T>
 
   var selectedItem: T?
+
+  /**
+   * Updates presentations of provided [items]
+   */
+  fun update(vararg items: T)
 
   fun bind(property: ObservableMutableProperty<T>): SegmentedButton<T>
 

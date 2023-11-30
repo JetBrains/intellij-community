@@ -103,6 +103,7 @@
   <technology name="jetbrains-annotations" class="org.jetbrains.annotations.Contract"/>
   <technology name="jetbrains-compose" class="androidx.compose.ui.ComposeScene"/>
   <technology name="jhipster" class="io.github.jhipster.config.JHipsterProperties"/>
+  <technology name="jhipster" class="tech.jhipster.config.JHipsterConfiguration"/>
   <technology name="jmockit" class="mockit.Mock"/>
   <technology name="jodd-db" class="jodd.db.DbQuery"/>
   <technology name="jooby" class="org.jooby.Jooby"/>
@@ -120,7 +121,9 @@
   <technology name="kotlinx-coroutines" class="kotlinx.coroutines.CoroutineDispatcher"/>
   <technology name="kotlinx-datetime" class="kotlinx.datetime.Instant"/>
   <technology name="kotlinx-serialization" class="kotlinx.serialization.KSerializer"/>
-  <technology name="ktor" class="io.ktor.application.Application"/>
+  <technology name="ktor-server" class="io.ktor.application.Application"/>
+  <technology name="ktor-server" class="io.ktor.server.application.Application"/>
+  <technology name="ktor-client" class="io.ktor.client.HttpClient"/>
   <technology name="ktorm" class="org.ktorm.entity.Entity"/>
   <technology name="lagom-java" class="com.lightbend.lagom.javadsl.api.Service"/>
   <technology name="lagom-scala" class="com.lightbend.lagom.scaladsl.api.Service"/>
@@ -203,6 +206,7 @@
   <technology name="spring-integration" class="org.springframework.integration.channel.DirectChannel"/>
   <technology name="spring-integration-amqp" class="org.springframework.integration.amqp.channel.AbstractAmqpChannel"/>
   <technology name="spring-kafka" class="org.springframework.kafka.core.KafkaTemplate"/>
+  <technology name="spring-modulith" class="org.springframework.modulith.core.ApplicationModule"/>
   <technology name="spring-mvc" class="org.springframework.web.context.WebApplicationContext"/>
   <technology name="spring-osgi" class="org.springframework.osgi.OsgiException"/>
   <technology name="spring-rabbitmq" class="org.springframework.amqp.rabbit.core.RabbitTemplate"/>

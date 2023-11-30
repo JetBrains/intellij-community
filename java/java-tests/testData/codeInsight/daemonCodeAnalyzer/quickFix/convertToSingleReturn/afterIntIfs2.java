@@ -2,7 +2,7 @@
 class Test {
     int test(String s) {
         int result = 1;
-        if (s == null) {
+        if(s == null) {
             if (Math.random() > 0.5) {
                 result = 2;
             } else {
@@ -10,7 +10,7 @@ class Test {
             }
         }
         if (result == 1) {
-            if (s.isEmpty()) {
+            if(s.isEmpty()) {
                 result = 3;
             } else {
                 System.out.println(s);

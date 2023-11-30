@@ -119,7 +119,7 @@ class DeclarativeHintsTogglingIntentionMenuContributor : IntentionMenuContributo
           if (element != null) {
             for (parent in element.parents(true)) {
               for ((collector, sink, providerId, providerName, providerEnabled) in sharedBypassCollectors) {
-                collector.collectFromElement(parent, sink)
+                collector.collectFromElementForActions(parent, sink)
                 if (sink.attemptedToAddWithoutOptions) {
                   providersToToggle.add(ProviderInfo(providerId, providerName, providerEnabled))
                 }

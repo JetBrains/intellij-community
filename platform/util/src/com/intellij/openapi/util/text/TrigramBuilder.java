@@ -156,7 +156,7 @@ public final class TrigramBuilder {
     return set;
   }
 
-  private static class AddonlyIntSet extends AbstractIntSet {
+  private static final class AddonlyIntSet extends AbstractIntSet {
     private int size;
     private int[] data;
     private int mask;

@@ -62,7 +62,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
         return super.getTooltipText(member);
       }
 
-      private boolean hasSuperMethods(final MemberInfo member) {
+      private static boolean hasSuperMethods(final MemberInfo member) {
         if (member.isChecked() && member.isToAbstract()) {
           final PsiMember psiMember = member.getMember();
           if (psiMember instanceof PsiMethod && ((PsiMethod)psiMember).findDeepestSuperMethods().length > 0) {

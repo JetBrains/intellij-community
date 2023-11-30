@@ -62,6 +62,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testJavaInterfaceMethodInCorrectOrder()
     }
 
+    override fun testJavaInterfaceMethodWithTypeParameters() {
+        super.testJavaInterfaceMethodWithTypeParameters()
+    }
+
     override fun testJavaParameters() {
         super.testJavaParameters()
     }
@@ -100,6 +104,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testInterfaceNullableFunction() {
         super.testInterfaceNullableFunction()
+    }
+
+    override fun testKtij16175() {
+        super.testKtij16175()
     }
 
     override fun testOverrideUnitFunction() {
@@ -160,6 +168,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testJavaMethodWithPackageVisibility() {
         super.testJavaMethodWithPackageVisibility()
+    }
+
+    override fun testJavaMethodWithPackageVisibilityFromOtherPackage() {
+        super.testJavaMethodWithPackageVisibilityFromOtherPackage()
     }
 
     override fun testJavaMethodWithPackageProtectedVisibility() {
@@ -224,6 +236,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testEscapeIdentifiers() {
         super.testEscapeIdentifiers()
+    }
+
+    override fun testValueClass() {
+        super.testValueClass()
     }
 
     override fun testVarArgs() {
@@ -384,6 +400,14 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testImplementWithComment4() {
         super.testImplementWithComment4()
+    }
+
+    override fun testGenericClass() {
+        super.testGenericClass()
+    }
+
+    override fun testDoNotRenderRedundantModifiers() {
+        super.testDoNotRenderRedundantModifiers()
     }
 }
 

@@ -3,7 +3,7 @@
 package com.intellij.codeInsight.documentation.actions
 
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
-import com.intellij.lang.documentation.ide.impl.DocumentationManager.Companion.instance
+import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
@@ -20,7 +20,7 @@ open class ShowQuickDocInfoAction : AnAction(),
     setInjectedContext(true)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = e.dataContext.getData(DOCUMENTATION_TARGETS)?.isNotEmpty() ?: false
@@ -29,13 +29,13 @@ open class ShowQuickDocInfoAction : AnAction(),
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
     val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
-    instance(project).actionPerformed(dataContext)
+    DocumentationManager.getInstance(project).actionPerformed(dataContext)
   }
 
   @Suppress("SpellCheckingInspection")
   companion object {
-    const val CODEASSISTS_QUICKJAVADOC_FEATURE = "codeassists.quickjavadoc"
-    const val CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE = "codeassists.quickjavadoc.lookup"
-    const val CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE = "codeassists.quickjavadoc.ctrln"
+    const val CODEASSISTS_QUICKJAVADOC_FEATURE: String = "codeassists.quickjavadoc"
+    const val CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE: String = "codeassists.quickjavadoc.lookup"
+    const val CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE: String = "codeassists.quickjavadoc.ctrln"
   }
 }

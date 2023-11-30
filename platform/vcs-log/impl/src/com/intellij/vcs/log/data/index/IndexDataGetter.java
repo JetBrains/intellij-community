@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
@@ -32,6 +33,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -67,6 +69,10 @@ public final class IndexDataGetter {
       .containsAll(myProviders.keySet());
   }
 
+  void iterateIndexedCommits(int limit, @NotNull IntFunction<Boolean> processor) {
+    executeAndCatch(() -> myIndexStorageBackend.iterateIndexedCommits(limit, processor));
+  }
+
   //
   // Getters from forward index
   //
@@ -81,7 +87,7 @@ public final class IndexDataGetter {
 
   public @Nullable VcsUser getCommitter(int commit) {
     return executeAndCatch(() -> {
-      return myIndexStorageBackend.getCommitterOrAuthorForCommit(commit);
+      return myIndexStorageBackend.getCommitterForCommit(commit);
     });
   }
 
@@ -191,6 +197,7 @@ public final class IndexDataGetter {
       IntSet result = new IntOpenHashSet();
       for (FilePath path : paths) {
         result.addAll(createFileHistoryData(path).build().getCommits());
+        ProgressManager.checkCanceled();
       }
       return result;
     }, new IntOpenHashSet());
@@ -400,7 +407,11 @@ public final class IndexDataGetter {
     return myLogStorage;
   }
 
-  private @Nullable VirtualFile getRoot(@NotNull FilePath path) {
+  @NotNull VcsLogStorageBackend getIndexStorageBackend() {
+    return myIndexStorageBackend;
+  }
+
+  @Nullable VirtualFile getRoot(@NotNull FilePath path) {
     if (myIsProjectLog) return VcsLogUtil.getActualRoot(myProject, path);
     return VcsLogUtil.getActualRoot(myProject, myProviders, path);
   }

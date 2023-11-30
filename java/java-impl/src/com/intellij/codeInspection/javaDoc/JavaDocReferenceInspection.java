@@ -7,24 +7,15 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.quickFix.CreateFilePathFix;
 import com.intellij.codeInsight.daemon.quickFix.NewFileLocation;
 import com.intellij.codeInsight.daemon.quickFix.TargetDirectory;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.*;
 import com.intellij.model.Symbol;
 import com.intellij.model.psi.PsiSymbolReference;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.PsiFileReference;
@@ -35,6 +26,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,7 +173,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
                 int startOffsetInDocComment = refHolder.getTextOffset() - docComment.getTextOffset();
                 int endOffsetInDocComment =
                   refHolder.getTextOffset() + refText.length() + adjacent.getTextLength() - docComment.getTextOffset();
-                fix = new UrlToHtmlFix(docComment, startOffsetInDocComment, endOffsetInDocComment);
+                fix = LocalQuickFix.from(new UrlToHtmlFix(docComment, startOffsetInDocComment, endOffsetInDocComment));
               }
             }
           }
@@ -248,7 +240,8 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     fixes.add(new RemoveTagFix(tagName, paramName));
 
     if (isOnTheFly && element != null && REPORT_INACCESSIBLE) {
-      fixes.add(new SetInspectionOptionFix(this, "REPORT_INACCESSIBLE", JavaBundle.message("disable.report.inaccessible.symbols.fix"), false));
+      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+        this, "REPORT_INACCESSIBLE", JavaBundle.message("disable.report.inaccessible.symbols.fix"), false)));
     }
 
     holder.registerProblem(holder.getManager().createProblemDescriptor(
@@ -292,7 +285,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     return file == null || context.getResolveScope().contains(file);
   }
 
-  private static class RenameReferenceQuickFix implements LocalQuickFix {
+  private static class RenameReferenceQuickFix extends PsiUpdateModCommandQuickFix {
     private final Set<String> myUnboundParams;
 
     RenameReferenceQuickFix(Set<String> unboundParams) {
@@ -305,51 +298,17 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(dataContext -> {
-        Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-        assert editor != null;
-
-        TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
-        if (textRange != null) {
-          editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
-        }
-
-        String word = editor.getSelectionModel().getSelectedText();
-        if (word != null && !word.isBlank()) {
-          List<LookupElement> items = new ArrayList<>();
-          for (String variant : myUnboundParams) {
-            items.add(LookupElementBuilder.create(variant));
-          }
-          LookupManager.getInstance(project).showLookup(editor, items.toArray(LookupElement.EMPTY_ARRAY));
-        }
-      });
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      String firstUnbound = myUnboundParams.stream().findFirst().orElse(null);
-      if (firstUnbound == null) return IntentionPreviewInfo.EMPTY;
-      PsiElement reference = previewDescriptor.getPsiElement();
-      PsiElement firstUnboundReference = PsiElementFactory.getInstance(project)
-        .createDocTagFromText("@param " + firstUnbound)
-        .getValueElement();
-      if (firstUnboundReference == null) return IntentionPreviewInfo.EMPTY;
-      reference.replace(firstUnboundReference);
-      return IntentionPreviewInfo.DIFF;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      String first = myUnboundParams.iterator().next();
+      updater.templateBuilder().field(element, new ConstantNode(first).withLookupStrings(myUnboundParams));
     }
   }
 
-  private static class AddQualifierFix implements LocalQuickFix {
-    private final List<? extends PsiClass> originalClasses;
+  private static class AddQualifierFix extends ModCommandQuickFix {
+    private final List<? extends SmartPsiElementPointer<PsiClass>> originalClasses;
 
     AddQualifierFix(List<? extends PsiClass> originalClasses) {
-      this.originalClasses = originalClasses;
+      this.originalClasses = ContainerUtil.map(originalClasses, SmartPointerManager::createPointer);
     }
 
     @Override
@@ -358,36 +317,49 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiJavaCodeReferenceElement ref = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
+      if (ref == null) return ModCommand.nop();
+      List<ModCommandAction> actions = StreamEx.of(originalClasses).map(SmartPsiElementPointer::getElement)
+        .nonNull().sorted(new PsiProximityComparator(ref.getElement()))
+        .<ModCommandAction>map(cls -> new BindClassAction(ref, cls))
+        .toList();
+      return ModCommand.chooseAction(QuickFixBundle.message("add.qualifier.original.class.chooser.title"), actions);
+    }
+  }
+  
+  private static final class BindClassAction extends PsiUpdateModCommandAction<PsiJavaCodeReferenceElement> {
+    private final SmartPsiElementPointer<PsiClass> myClass;
+    
+    BindClassAction(@NotNull PsiJavaCodeReferenceElement ref, @NotNull PsiClass psiClass) {
+      super(ref);
+      myClass = SmartPointerManager.createPointer(psiClass);
+    }
+    
+    @Override
+    public @NotNull String getFamilyName() {
+      return "";
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiJavaCodeReferenceElement ref = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiJavaCodeReferenceElement.class);
-      if (ref != null) {
-        originalClasses.sort(new PsiProximityComparator(ref.getElement()));
-        DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(dataContext ->
-          JBPopupFactory.getInstance()
-            .createPopupChooserBuilder(originalClasses)
-            .setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title"))
-            .setItemChosenCallback(psiClass -> {
-              if (!ref.isValid()) return;
-              WriteCommandAction.writeCommandAction(project, ref.getContainingFile()).run(() -> {
-                if (psiClass.isValid()) {
-                  PsiDocumentManager.getInstance(project).commitAllDocuments();
-                  ref.bindToElement(psiClass);
-                }
-              });
-            })
-            .setRenderer(new FQNameCellRenderer())
-            .createPopup()
-            .showInBestPositionFor(dataContext));
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiJavaCodeReferenceElement element) {
+      PsiClass cls = myClass.getElement();
+      if (cls == null) return null;
+      String name = cls.getQualifiedName();
+      if (name == null) return null;
+      return Presentation.of(name).withIcon(cls.getIcon(0));
+    }
+
+    @Override
+    protected void invoke(@NotNull ActionContext context, @NotNull PsiJavaCodeReferenceElement ref, @NotNull ModPsiUpdater updater) {
+      PsiClass element = myClass.getElement();
+      if (element != null) {
+        ref.bindToElement(element);
       }
     }
   }
 
-  private static class RemoveTagFix implements LocalQuickFix {
+  private static class RemoveTagFix extends PsiUpdateModCommandQuickFix {
     private final String myTagName;
     private final String myParamName;
 
@@ -407,8 +379,8 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiDocTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiDocTag.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiDocTag myTag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
       if (myTag != null) {
         myTag.delete();
       }

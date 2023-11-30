@@ -6,6 +6,7 @@ open class Base {
 
 class Derived : Base() {
     override fun doStuff(s: String?) {
-        if (s == null) println("null") else println("not null: $s")
+        if (s == null) println("null")
+        else println("not null: $s")
     }
 }

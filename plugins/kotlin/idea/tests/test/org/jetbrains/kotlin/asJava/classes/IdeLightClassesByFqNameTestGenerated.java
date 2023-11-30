@@ -83,6 +83,21 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/ExpectedNestedClassInObject.kt"));
         }
 
+        @TestMetadata("FieldWithoutName.kt")
+        public void testFieldWithoutName() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/FieldWithoutName.kt"));
+        }
+
+        @TestMetadata("FieldWithoutName2.kt")
+        public void testFieldWithoutName2() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/FieldWithoutName2.kt"));
+        }
+
+        @TestMetadata("FieldWithoutName3.kt")
+        public void testFieldWithoutName3() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/FieldWithoutName3.kt"));
+        }
+
         @TestMetadata("FunctionWithoutName.kt")
         public void testFunctionWithoutName() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/FunctionWithoutName.kt"));
@@ -131,6 +146,16 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("TwoOverrides.kt")
         public void testTwoOverrides() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/TwoOverrides.kt"));
+        }
+
+        @TestMetadata("typeAliasActualization.kt")
+        public void testTypeAliasActualization() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/typeAliasActualization.kt"));
+        }
+
+        @TestMetadata("typeAliasActualization2.kt")
+        public void testTypeAliasActualization2() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/compilationErrors/typeAliasActualization2.kt"));
         }
 
         @TestMetadata("unresolvedQuialifierInAnnotation.kt")
@@ -364,6 +389,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/Trait.kt"));
         }
 
+        @TestMetadata("typeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/typeAlias.kt"));
+        }
+
         @TestMetadata("UnitAsGenericArgument.kt")
         public void testUnitAsGenericArgument() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/nullabilityAnnotations/UnitAsGenericArgument.kt"));
@@ -432,6 +462,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/AnnotatedPropertyWithSites.kt"));
         }
 
+        @TestMetadata("annotationBinaryRetention.kt")
+        public void testAnnotationBinaryRetention() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/annotationBinaryRetention.kt"));
+        }
+
         @TestMetadata("AnnotationClass.kt")
         public void testAnnotationClass() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/AnnotationClass.kt"));
@@ -480,6 +515,11 @@ public abstract class IdeLightClassesByFqNameTestGenerated extends AbstractIdeLi
         @TestMetadata("DataClassWithCustomImplementedMembers.kt")
         public void testDataClassWithCustomImplementedMembers() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DataClassWithCustomImplementedMembers.kt"));
+        }
+
+        @TestMetadata("DefaultImplsWithTypeParameters.kt")
+        public void testDefaultImplsWithTypeParameters() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByFqName/DefaultImplsWithTypeParameters.kt"));
         }
 
         @TestMetadata("DelegatedNested.kt")

@@ -4,10 +4,8 @@ package org.jetbrains.plugins.gradle.settings;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.execution.ParametersListUtil;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 
 import java.util.Objects;
@@ -15,8 +13,6 @@ import java.util.Objects;
 public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final boolean USE_VERBOSE_GRADLE_API_BY_DEFAULT = Boolean.parseBoolean(System.getProperty("gradle.api.verbose"));
-
-  private static final long serialVersionUID = 1L;
 
   @NotNull private final GradleExecutionWorkspace myExecutionWorkspace = new GradleExecutionWorkspace();
 
@@ -34,6 +30,10 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   private boolean resolveModulePerSourceSet = true;
   private boolean useQualifiedModuleNames = false;
   private boolean delegatedBuild = true;
+  private boolean downloadSources = false;
+  private boolean isParallelModelFetch = true;
+
+  private boolean myBuiltInTestEventsUsed = false;
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
@@ -73,14 +73,6 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable
   public String getGradleHome() {
     return myGradleHome;
-  }
-
-  public @Nullable GradleVersion getGradleVersion() {
-    var versionString = GradleInstallationManager.getGradleVersion(myGradleHome);
-    if (versionString == null) {
-      return null;
-    }
-    return GradleInstallationManager.getGradleVersionSafe(versionString);
   }
 
   @Nullable
@@ -156,6 +148,35 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setRunAsTest(boolean isRunAsTest) {
     putUserData(GradleRunConfiguration.RUN_AS_TEST_KEY, isRunAsTest);
+  }
+
+  public boolean isTestTaskRerun() {
+    var value = getUserData(GradleRunConfiguration.IS_TEST_TASK_RERUN_KEY);
+    return ObjectUtils.chooseNotNull(value, false);
+  }
+
+  public boolean isBuiltInTestEventsUsed() {
+    return myBuiltInTestEventsUsed;
+  }
+
+  public void setBuiltInTestEventsUsed(boolean isBuiltInTestEventsUsed) {
+    myBuiltInTestEventsUsed = isBuiltInTestEventsUsed;
+  }
+
+  public boolean isDownloadSources() {
+    return downloadSources;
+  }
+
+  public void setDownloadSources(boolean downloadSources) {
+    this.downloadSources = downloadSources;
+  }
+
+  public boolean isParallelModelFetch() {
+    return isParallelModelFetch;
+  }
+
+  public void setParallelModelFetch(boolean parallelModelFetch) {
+    isParallelModelFetch = parallelModelFetch;
   }
 
   @Override

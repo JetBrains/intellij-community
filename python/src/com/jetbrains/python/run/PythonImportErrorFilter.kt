@@ -115,7 +115,7 @@ class PythonImportErrorFilter(val project: Project) : Filter {
     private val virtualFile: VirtualFile,
   ) : Filter.Result(highlightStartOffset, highlightEndOffset, null), InlayProvider {
     override fun createInlayRenderer(editor: Editor): EditorCustomElementRenderer {
-      val factory = PresentationFactory(editor as EditorImpl)
+      val factory = PresentationFactory(editor)
       val inlayText = PyBundle.message("run.debug.shadowing.name.import.error.title", virtualFile.name)
       val presentation = factory.referenceOnHover(factory.roundWithBackground(factory.withReferenceAttributes(factory.text(inlayText)))
       ) { event: MouseEvent?, _: Point? ->

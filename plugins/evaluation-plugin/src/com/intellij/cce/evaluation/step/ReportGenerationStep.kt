@@ -1,14 +1,12 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluation.step
 
-import com.intellij.cce.actions.CompletionStrategy
-import com.intellij.cce.core.Language
+
+import com.intellij.cce.evaluable.EvaluableFeature
+import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluation.FilteredSessionsStorage
 import com.intellij.cce.metric.MetricsEvaluator
-import com.intellij.cce.metric.SuggestionsComparator
-import com.intellij.cce.report.FullReportGenerator
-import com.intellij.cce.report.HtmlReportGenerator
-import com.intellij.cce.report.JsonReportGenerator
-import com.intellij.cce.report.PlainTextReportGenerator
+import com.intellij.cce.report.*
 import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.cce.workspace.filter.CompareSessionsFilter
@@ -23,12 +21,13 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import java.nio.file.Path
 
-class ReportGenerationStep(
+class ReportGenerationStep<T : EvaluationStrategy>(
   private val inputWorkspaces: List<EvaluationWorkspace>?,
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,
   project: Project,
-  isHeadless: Boolean) : BackgroundEvaluationStep(project, isHeadless) {
+  private val feature: EvaluableFeature<T>
+) : BackgroundEvaluationStep(project) {
   override val name: String = "Report generation"
 
   override val description: String = "Generation of HTML-report"
@@ -42,14 +41,11 @@ class ReportGenerationStep(
 
   override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
     val workspaces = inputWorkspaces ?: listOf(workspace)
-    val configs = workspaces.map { it.readConfig() }
+    val configs = workspaces.map { it.readConfig(feature.getStrategySerializer()) }
     val evaluationTitles = configs.map { it.reports.evaluationTitle }
-    val suggestionsComparators = configs.map { SuggestionsComparator.create(Language.resolve(it.language), it.interpret.completionType) }
-    val strategies = configs.map { it.actions.strategy }
     val featuresStorages = workspaces.map { it.featuresStorage }
     val fullLineStorages = workspaces.map { it.fullLineLogsStorage }
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
-    val completionGolfSettings = configs.firstOrNull { it.actions.strategy.completionGolf != null }?.interpret?.completionGolfSettings
     val defaultMetrics = configs.firstOrNull()?.reports?.defaultMetrics
     var iteration = 0
     for (filter in sessionsFilters) {
@@ -64,16 +60,13 @@ class ReportGenerationStep(
         progress.setProgress(filter.name, "${filter.name} ${comparisonStorage.reportName} filter ($iteration/${iterationsCount})",
                              (iteration.toDouble() + 1) / iterationsCount)
 
+        val dirs = GeneratorDirectories.create(workspace.reportsDirectory(), "html", filter.name, comparisonStorage.reportName)
         val reportGenerators = mutableListOf(
           HtmlReportGenerator(
-            workspace.reportsDirectory(),
-            filter.name,
-            comparisonStorage.reportName,
+            dirs,
             defaultMetrics,
-            suggestionsComparators,
-            featuresStorages,
-            fullLineStorages,
-            completionGolfSettings
+            feature.getFileReportGenerator(filter.name, comparisonStorage.reportName, featuresStorages, fullLineStorages,
+                                           dirs)
           ),
           JsonReportGenerator(
             workspace.reportsDirectory(),
@@ -89,9 +82,7 @@ class ReportGenerationStep(
           sessionStorages,
           workspaces.map { it.errorsStorage },
           evaluationTitles,
-          suggestionsComparators,
-          comparisonStorage,
-          strategies
+          comparisonStorage
         )
         for (report in reports) {
           workspace.addReport(report.type, filter.name, comparisonStorage.reportName, report.path)
@@ -124,12 +115,10 @@ class ReportGenerationStep(
     sessionStorages: List<SessionsStorage>,
     errorStorages: List<FileErrorsStorage>,
     evaluationTitles: List<String>,
-    suggestionsComparators: List<SuggestionsComparator>,
     comparisonStorage: CompareSessionsStorage,
-    strategies: List<CompletionStrategy>,
   ): List<ReportInfo> {
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
-      title to MetricsEvaluator.withDefaultMetrics(title, strategies[index])
+      title to MetricsEvaluator.withMetrics(title, feature.getMetrics())
     }.toMap()
     for (sessionFile in sessionFiles.filter { it.value.size == sessionStorages.size }) {
       val fileEvaluations = mutableListOf<FileEvaluationInfo>()
@@ -141,10 +130,10 @@ class ReportGenerationStep(
         fileText = sessionsInfo.text
         comparisonStorage.add(file.evaluationType, sessionsInfo.sessions)
       }
-      for ((index, file) in sessionFile.value.withIndex()) {
+      for (file in sessionFile.value) {
         val sessionsEvaluation = FileSessionsInfo(filePath, fileText, comparisonStorage.get(file.evaluationType))
         val metricsEvaluation = title2evaluator.getValue(file.evaluationType).evaluate(
-          sessionsEvaluation.sessions, suggestionsComparators[index])
+          sessionsEvaluation.sessions)
         fileEvaluations.add(FileEvaluationInfo(sessionsEvaluation, metricsEvaluation, file.evaluationType))
       }
       comparisonStorage.clear()

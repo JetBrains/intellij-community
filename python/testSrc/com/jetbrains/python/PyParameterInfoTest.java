@@ -978,10 +978,12 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   public void testInitializingTypeVar() {
     final int offset = loadTest(1).get("<arg1>").getTextOffset();
 
-    feignCtrlP(offset).check("self: TypeVar, name: str, *constraints, bound: Any | None = ..., " +
-                             "covariant: bool = ..., contravariant: bool = ...",
-                             new String[]{"name: str, "},
-                             new String[]{"self: TypeVar, "});
+    feignCtrlP(offset).check(Arrays.asList("self: TypeVar, name: str, *constraints, bound: Any | None = None, covariant: bool = False, " +
+                                           "contravariant: bool = False, infer_variance: bool = False",
+                                           "self: TypeVar, name: str, *constraints, bound: Any | None = None, covariant: bool = False, " +
+                                           "contravariant: bool = False"),
+                             Arrays.asList(new String[]{"name: str, "}, new String[]{"name: str, "}),
+                             Arrays.asList(new String[]{"self: TypeVar, "}, new String[]{"self: TypeVar, "}));
   }
 
   // PY-36008
@@ -1158,6 +1160,13 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int", new String[]{"a: int"});
     feignCtrlP(marks.get("<arg2>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
     feignCtrlP(marks.get("<arg3>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
+  }
+
+  // PY-61139
+  public void testDoNotInferLiteralStringForParametersWithStrLiteralDefaultValue() {
+    final Map<String, PsiElement> marks = loadTest(1);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("s: str = 'foo'", new String[]{"s: str = 'foo'"});
   }
 
   @NotNull

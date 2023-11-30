@@ -13,7 +13,7 @@ kotlin {
         attributes.attribute(attr, "v2")
     }
 
-    targetHierarchy.custom {
+    applyHierarchyTemplate {
         common {
             group("sharedNative") {
                 withIosArm64()

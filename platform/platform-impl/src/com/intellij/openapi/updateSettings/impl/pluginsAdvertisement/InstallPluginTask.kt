@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests.Companion.loadLastCompatiblePluginDescriptors
-import com.intellij.ide.plugins.org.PluginManagerFilters
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.extensions.PluginId
@@ -20,11 +19,11 @@ internal class InstallPluginTask(private val pluginIds: Set<PluginId>, val modal
 
   override fun run(indicator: ProgressIndicator) {
     val marketplacePlugins = loadLastCompatiblePluginDescriptors(pluginIds)
-    customPlugins = loadPluginsFromCustomRepositories(indicator)
+    customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator)
     val descriptors: MutableList<IdeaPluginDescriptor> = ArrayList(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins,
                                                                                                                  customPlugins, true))
-    PluginManagerCore.getPlugins().filterTo(descriptors) {
-      !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagerFilters.getInstance().allowInstallingPlugin(it)
+    PluginManagerCore.plugins.filterTo(descriptors) {
+      !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagementPolicy.getInstance().canInstallPlugin(it)
     }
     descriptors
       .filter { pluginIds.contains(it.pluginId) }

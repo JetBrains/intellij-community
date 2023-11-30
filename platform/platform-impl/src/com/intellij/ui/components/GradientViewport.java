@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -22,8 +22,7 @@ public class GradientViewport extends JBViewport {
     return null;
   }
 
-  @Nullable
-  protected Color getViewColor() {
+  protected @Nullable Color getViewColor() {
     Component view = getView();
     return view == null ? null : view.getBackground();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.JpsBuildBundle;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -38,6 +39,7 @@ final class OutputFilesSink implements OutputFileConsumer {
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
   private final String myChunkName;
+  private final String myChunkOutputRootName;
   private final Set<File> mySuccessfullyCompiled = FileCollectionFactory.createCanonicalFileSet();
 
   OutputFilesSink(CompileContext context,
@@ -48,6 +50,7 @@ final class OutputFilesSink implements OutputFileConsumer {
     myOutputConsumer = outputConsumer;
     myMappingsCallback = callback;
     myChunkName = "[" +chunkName + "]";
+    myChunkOutputRootName = "$" + chunkName.replaceAll("\\\\s", "_");
   }
 
   @Override
@@ -96,7 +99,10 @@ final class OutputFilesSink implements OutputFileConsumer {
         // register in mappings any non-temp class file
         try {
           final ClassReader reader = new FailSafeClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-          myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePaths, reader, fileObject.isGenerated());
+          String fileName = JavaBuilderUtil.isDepGraphEnabled()?
+            myChunkOutputRootName + "/" + FileUtil.toSystemIndependentName(fileObject.getRelativePath()) :
+            FileUtil.toSystemIndependentName(fileObject.getFile().getPath());
+          myMappingsCallback.associate(fileName, sourcePaths, reader, fileObject.isGenerated());
         }
         catch (Throwable e) {
           // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation
@@ -125,10 +131,10 @@ final class OutputFilesSink implements OutputFileConsumer {
     return Collections.unmodifiableSet(mySuccessfullyCompiled);
   }
 
-  public void markError(@NotNull final File sourceFile) {
+  public void markError(final @NotNull File sourceFile) {
     mySuccessfullyCompiled.remove(sourceFile);
   }
-  public void markError(@NotNull final Set<File> problematic) {
+  public void markError(final @NotNull Set<File> problematic) {
     mySuccessfullyCompiled.removeAll(problematic);
   }
 }

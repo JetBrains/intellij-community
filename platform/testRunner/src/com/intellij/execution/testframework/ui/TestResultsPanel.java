@@ -27,7 +27,7 @@ import java.awt.*;
 
 
 public abstract class TestResultsPanel extends JPanel implements Disposable, DataProvider  {
-  protected JScrollPane myLeftPane;
+  private JScrollPane myLeftPane;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
   private final String mySplitterProportionProperty;
@@ -60,6 +60,10 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
   @NotNull
   public TestStatusLine getStatusLine() {
     return myStatusLine;
+  }
+
+  protected void hideToolbar() {
+    myLeftPane.setBorder(JBUI.Borders.empty());
   }
 
   public void initUI() {

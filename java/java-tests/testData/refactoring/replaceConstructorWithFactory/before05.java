@@ -1,5 +1,5 @@
 class A {
-    A(int i) {<caret>
+    A<caret>(int i) {
     }
 }
 

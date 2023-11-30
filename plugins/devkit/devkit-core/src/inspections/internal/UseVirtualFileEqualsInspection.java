@@ -3,7 +3,9 @@ package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
+@VisibleForTesting
 public final class UseVirtualFileEqualsInspection extends UseEqualsInspectionBase {
 
   @Override

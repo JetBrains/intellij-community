@@ -29,6 +29,7 @@ public class PsiAnnotationMethodImpl extends PsiMethodImpl implements PsiAnnotat
 
   @Override
   protected void dropCached() {
+    super.dropCached();
     myCachedDefaultValue = null;
   }
 

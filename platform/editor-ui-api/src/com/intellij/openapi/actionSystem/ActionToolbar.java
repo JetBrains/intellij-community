@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ComponentUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.Future;
 
 /**
  * A toolbar containing action buttons.
@@ -83,6 +85,12 @@ public interface ActionToolbar {
   @NotNull JComponent getComponent();
 
   /**
+   * Returns the "action place" of this toolbar.
+   * @see ActionManager#createActionToolbar
+   * */
+  @NotNull String getPlace();
+
+  /**
    * @return the current layout policy
    * @see #NOWRAP_LAYOUT_POLICY
    * @see #WRAP_LAYOUT_POLICY
@@ -116,14 +124,27 @@ public interface ActionToolbar {
   void setOrientation(@MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL}) int orientation);
 
   /**
+   * Returns the toolbar orientation.
+   * */
+  @MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL})
+  int getOrientation();
+
+  /**
    * @return the maximum button height
    */
   int getMaxButtonHeight();
 
   /**
-   * Forces an update of all actions in the toolbars. Actions, however, are normally updated automatically every 500 ms.
+   * Async toolbars are not updated immediately despite the name of the method.
+   * Toolbars are updated automatically on showing and every 500 ms if activity count is changed.
+   *
+   * @deprecated Use {@link #updateActionsAsync()} instead
    */
+  @Deprecated
   void updateActionsImmediately();
+
+  @RequiresEdt
+  @NotNull Future<?> updateActionsAsync();
 
   boolean hasVisibleActions();
 

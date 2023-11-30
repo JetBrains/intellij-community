@@ -20,9 +20,9 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -37,9 +37,7 @@ public class SelectUnselectOccurrenceActionsTest extends BasePlatformTestCase {
     super.setUp();
     EditorHintListener listener = new EditorHintListener() {
       @Override
-      public void hintShown(Project project,
-                            @NotNull LightweightHint hint,
-                            int flags) {
+      public void hintShown(@NotNull Editor editor, @NotNull LightweightHint hint, int flags, @NotNull HintHint hintInfo) {
         hintCount++;
       }
     };

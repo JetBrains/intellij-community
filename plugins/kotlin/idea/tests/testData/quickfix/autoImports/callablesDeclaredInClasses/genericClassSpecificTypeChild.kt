@@ -10,3 +10,6 @@ object Obj : Base<String>()
 fun usage() {
     "hello".<caret>genericExt()
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ImportFix
+/* IGNORE_K2 */

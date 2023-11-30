@@ -1,4 +1,5 @@
 // "Propagate 'SubclassOptInRequired(UnstableApi::class)' opt-in requirement to 'SomeImplementation'" "false"
+// IGNORE_K2
 // ERROR: This declaration needs opt-in. Its usage must be marked with '@UnstableApi' or '@OptIn(UnstableApi::class)'
 // ACTION: Add '-opt-in=UnstableApi' to module light_idea_test_case compiler arguments
 // ACTION: Introduce import alias

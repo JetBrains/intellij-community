@@ -1,5 +1,5 @@
 4 <bold>val x</bold> = 1
-3 	int x = TopLevelPropertyUsagesKt.<bold>getX</bold>();
+3 	JAVA: int x = TopLevelPropertyUsagesKt.<bold>getX</bold>(); (in J.test())
 6 	val y = <bold>x</bold> (in y)
 6 		<bold>val y</bold> = x
 9 	val y = <bold>x</bold> (in test())

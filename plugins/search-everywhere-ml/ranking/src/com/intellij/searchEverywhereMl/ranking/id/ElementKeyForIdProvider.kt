@@ -2,9 +2,9 @@ package com.intellij.searchEverywhereMl.ranking.id
 
 import com.intellij.openapi.extensions.ExtensionPointName
 
-internal abstract class ElementKeyForIdProvider {
+internal interface ElementKeyForIdProvider {
   companion object {
-    private val EP_NAME = ExtensionPointName.create<ElementKeyForIdProvider>("com.intellij.searcheverywhere.ml.elementKeyForIdProvider")
+    internal val EP_NAME = ExtensionPointName.create<ElementKeyForIdProvider>("com.intellij.searcheverywhere.ml.elementKeyForIdProvider")
 
     /**
      * Returns key that will be used by [SearchEverywhereMlOrderedItemIdProvider].
@@ -30,5 +30,5 @@ internal abstract class ElementKeyForIdProvider {
    * If the element type is not supported by the provider, it will return null.
    * @return Unique key based on the [element] or null if not supported
    */
-  protected abstract fun getKey(element: Any): Any?
+  fun getKey(element: Any): Any?
 }

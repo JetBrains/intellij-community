@@ -17,7 +17,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,11 +96,11 @@ public final class SetupTaskIntrospector {
     return result;
   }
 
-  private static SetupTask createTaskFromFile(PyFile file, @NotNull @NlsSafe String name, boolean setuptools) {
+  private static SetupTask createTaskFromFile(@NotNull PyFile file, @NotNull @NlsSafe String name, boolean setuptools) {
     SetupTask task = new SetupTask(name);
     // setuptools wraps the build_ext command class in a way that we cannot understand; use the distutils class which it delegates to
     final PyClass taskClass = (name.equals("build_ext") && setuptools)
-                              ? PyClassNameIndex.findClass("distutils.command.build_ext.build_ext", file.getProject())
+                              ? PyPsiFacade.getInstance(file.getProject()).createClassByQName("distutils.command.build_ext.build_ext", file)
                               : file.findTopLevelClass(name);
     if (taskClass != null) {
       final PyTargetExpression description = taskClass.findClassAttribute("description", true, null);

@@ -43,17 +43,17 @@ import com.intellij.packaging.elements.ArtifactRootElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.ArchivePackagingElement
+import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
+import com.intellij.platform.workspace.jps.entities.ExternalSystemModuleOptionsEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.MutableEntityStorage.Companion.from
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
-import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
-import com.intellij.workspaceModel.storage.MutableEntityStorage.Companion.from
-import com.intellij.workspaceModel.storage.bridgeEntities.ExternalSystemModuleOptionsEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -241,7 +241,7 @@ class ExternalSystemStorageTest {
       for (module in moduleManager.modules) {
         val modulePropertyManager = ExternalSystemModulePropertyManager.getInstance(module)
         modulePropertyManager as ExternalSystemModulePropertyManagerBridge
-        modulePropertyManager.setMavenized(true, storageBuilder)
+        modulePropertyManager.setMavenized(true, null, storageBuilder)
       }
       val externalSystemModuleOptionsEntity = initialStorage.entities(ExternalSystemModuleOptionsEntity::class.java).singleOrNull()
       assertNull(externalSystemModuleOptionsEntity)

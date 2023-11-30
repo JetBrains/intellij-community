@@ -9,7 +9,6 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
@@ -30,20 +29,10 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
    */
   @Deprecated
-  @NotNull
   @Override
-  public RunResult<T> execute() {
+  public @NotNull RunResult<T> execute() {
     final RunResult<T> result = new RunResult<>(this);
     return compute(() -> result.run());
-  }
-
-  /**
-   * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static AccessToken start() {
-    return ApplicationManager.getApplication().acquireReadActionLock();
   }
 
   /**
@@ -88,10 +77,9 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * which greatly lowers its probability of being idempotent,
    * which in turn may cause delayed bugs in unrelated places and races.
    */
-  @NotNull
   @Contract(pure = true)
   @Deprecated
-  public static NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
+  public static @NotNull NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
     return nonBlocking(new RunnableCallable(task));
   }
 
@@ -101,9 +89,8 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * @see CoroutinesKt#readAction
    * @see CoroutinesKt#constrainedReadAction
    */
-  @NotNull
   @Contract(pure = true)
-  public static <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<? extends T> task) {
+  public static @NotNull <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<? extends T> task) {
     return AsyncExecutionService.getService().buildNonBlockingReadAction(task);
   }
 
@@ -124,7 +111,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   public static <T, E extends Throwable> T computeCancellable(
     @RequiresReadLock ThrowableComputable<T, E> computable
   ) throws E, CannotReadException {
-    return ApplicationManager.getApplication().getService(ReadActionSupport.class).computeCancellable(computable);
+    return ApplicationManager.getApplication().getService(ReadWriteActionSupport.class).computeCancellable(computable);
   }
 
   public static final class CannotReadException extends ProcessCanceledException {

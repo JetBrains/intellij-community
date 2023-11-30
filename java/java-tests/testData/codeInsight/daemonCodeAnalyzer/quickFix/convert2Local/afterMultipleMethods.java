@@ -2,8 +2,8 @@
 class Test {
 
     int getFoo1() {
-      //c1
-      int myFoo = 1;
+        //c1
+        int myFoo = 1;
     return myFoo;
   }
 

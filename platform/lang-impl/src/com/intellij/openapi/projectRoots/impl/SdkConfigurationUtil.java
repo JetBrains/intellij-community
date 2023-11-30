@@ -27,10 +27,15 @@ import com.intellij.util.NullableConsumer;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 
@@ -290,20 +295,20 @@ public final class SdkConfigurationUtil {
     if (selectSdkHomeForTests(sdkType, consumer)) return;
 
     final FileChooserDescriptor descriptor = sdkType.getHomeChooserDescriptor();
+
+    Future<VirtualFile> sdkRootFuture = PooledThreadExecutor.INSTANCE.submit(() -> getSuggestedSdkRoot(sdkType));
+    VirtualFile suggestedSdkRoot = null;
+    try {
+      suggestedSdkRoot = sdkRootFuture.get(200, TimeUnit.MILLISECONDS);
+    }
+    catch (InterruptedException | ExecutionException | TimeoutException ignored) {}
+
     // passing project instance here seems to be the right idea, but it would make the dialog
     // selecting the last opened project path, instead of the suggested detected JDK home (one of many).
     // The behaviour may also depend on the FileChooser implementations which does not reuse that code
-    FileChooser.chooseFiles(descriptor, null, component, getSuggestedSdkRoot(sdkType), chosen -> {
+    FileChooser.chooseFiles(descriptor, null, component, suggestedSdkRoot, chosen -> {
       final String path = chosen.get(0).getPath();
-      if (sdkType.isValidSdkHome(path)) {
-        consumer.consume(path);
-        return;
-      }
-
-      final String adjustedPath = sdkType.adjustSelectedSdkHome(path);
-      if (sdkType.isValidSdkHome(adjustedPath)) {
-        consumer.consume(adjustedPath);
-      }
+      consumer.consume(path);
     });
   }
 

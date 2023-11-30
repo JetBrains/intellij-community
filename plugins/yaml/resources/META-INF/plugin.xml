@@ -19,6 +19,8 @@
     <lang.formatter language="yaml" implementationClass="org.jetbrains.yaml.formatter.YAMLFormattingModelBuilder"/>
     <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLEnterAtIndentHandler" order="first"/>
     <enterHandlerDelegate implementation="org.jetbrains.yaml.smart.YAMLInjectedElementEnterHandler" order="last"/>
+    <registryKey key="yaml.injection.async.indent" defaultValue="true"
+                 description="Performs asynchronous indent when typing 'enter' in code injected into YAML"/>
     <typedHandler implementation="org.jetbrains.yaml.formatter.YAMLHyphenTypedHandler"/>
     <quoteHandler fileType="YAML" className="org.jetbrains.yaml.smart.YamlQuoteHandler"/>
     <copyPastePreProcessor implementation="org.jetbrains.yaml.smart.YAMLCopyPasteProcessor"/>
@@ -45,7 +47,7 @@
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 
-    <completion.contributor order="first" language="yaml" id="YamlJsonSchema"
+    <completion.contributor order="after InplaceRename" language="yaml" id="YamlJsonSchema"
                             implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="yaml" implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDocumentationProvider"
                                 id="YamlJsonSchemaDocumentationProvider"/>
@@ -71,6 +73,8 @@
                                  bundle="messages.YAMLBundle"
                                  key="yaml.smartkeys.option.title"/>
 
+    <inspection.basicVisitor class="org.jetbrains.yaml.psi.YamlPsiElementVisitor"/>
+
     <localInspection language="yaml" bundle="messages.YAMLBundle"
                      shortName="YAMLUnresolvedAlias"
                      key="inspections.unresolved.alias.name" level="ERROR"
@@ -93,6 +97,12 @@
                      implementationClass="org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection"/>
 
     <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLIncompatibleTypes"
+                     key="inspections.types.mismatch.name" level="WARNING"
+                     groupKey="inspections.group.name" enabledByDefault="true"
+                     implementationClass="org.jetbrains.yaml.inspections.YAMLIncompatibleTypesInspection"/>
+
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
                      shortName="YAMLSchemaValidation"
                      key="inspections.schema.validation.name"
                      groupKey="inspections.group.name"
@@ -108,8 +118,16 @@
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
 
     <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLWebReferenceContributor"/>
+    <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLJsonSchemaIdReferenceContributor"/>
+    <completion.contributor language="yaml" implementationClass="org.jetbrains.yaml.YAMLJsonSchemaInCommentCompletionContributor"/>
 
     <pluginSuggestionProvider implementation="org.jetbrains.yaml.swagger.OpenApiSuggestionProvider"/>
+    <intentionAction>
+      <language>yaml</language>
+      <className>org.jetbrains.yaml.intentions.YAMLAddOptionalPropertiesIntention</className>
+      <bundleName>messages.YAMLBundle</bundleName>
+      <categoryKey>yaml.intention.category.name</categoryKey>
+    </intentionAction>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

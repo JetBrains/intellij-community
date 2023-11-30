@@ -33,6 +33,7 @@ public class JarApplicationCommandLineState extends BaseJavaApplicationCommandLi
     final JavaParameters params = new JavaParameters();
     final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
     params.setJdk(JavaParametersUtil.createProjectJdk(myConfiguration.getProject(), jreHome));
+    JavaParametersUtil.configureConfiguration(params, myConfiguration);
     setupJavaParameters(params);
     params.setJarPath(FileUtil.toSystemDependentName(myConfiguration.getJarPath()));
     return params;

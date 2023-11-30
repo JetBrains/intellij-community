@@ -2,7 +2,9 @@
 package com.intellij.openapi.application
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.ide.CliResult
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ProtocolHandler
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import io.netty.handler.codec.http.QueryStringDecoder
@@ -14,15 +16,20 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
+class JBProtocolCommandResult(
+  @DialogMessage val dialogMessage: String?,
+  val focusIdeWindow: Boolean = true
+)
+
 abstract class JBProtocolCommand(private val command: String) {
   companion object {
-    const val SCHEME = "jetbrains"
-    const val FRAGMENT_PARAM_NAME = "__fragment"
+    const val SCHEME: String = "jetbrains"
+    const val FRAGMENT_PARAM_NAME: String = "__fragment"
 
     private val EP_NAME = ExtensionPointName<JBProtocolCommand>("com.intellij.jbProtocolCommand")
 
     @ApiStatus.Internal
-    suspend fun execute(query: String): @DialogMessage String? {
+    suspend fun execute(query: String): @DialogMessage CliResult {
       val decoder = QueryStringDecoder(query)
       val parts = decoder.path().split('/').dropLastWhile { it.isEmpty() }
       require(parts.size >= 2) { query }  // expected: at least a platform prefix and a command name
@@ -36,10 +43,12 @@ abstract class JBProtocolCommand(private val command: String) {
         }
         val fragmentStart = query.lastIndexOf('#')
         val fragment = if (fragmentStart > 0) query.substring(fragmentStart + 1) else null
-        command.execute(target, parameters, fragment)
+        command.executeAndGetResult(target, parameters, fragment)?.let {
+          CliResult(if (!it.focusIdeWindow) ProtocolHandler.PLEASE_DO_NOT_FOCUS else 0, it.dialogMessage)
+        } ?: CliResult(0, null)
       }
       else {
-        IdeBundle.message("jb.protocol.unknown.command", commandName)
+        CliResult(0, IdeBundle.message("jb.protocol.unknown.command", commandName))
       }
     }
   }
@@ -65,6 +74,10 @@ abstract class JBProtocolCommand(private val command: String) {
   protected open suspend fun execute(target: String?, parameters: Map<String, String>, fragment: String?): String? {
     val result = withContext(Dispatchers.EDT) { perform(target, parameters, fragment) }
     return if (result is CompletableFuture) result.asDeferred().await() else withContext(Dispatchers.IO) { result.get() }
+  }
+
+  protected open suspend fun executeAndGetResult(target: String?, parameters: Map<String, String>, fragment: String?): JBProtocolCommandResult? {
+    return JBProtocolCommandResult(execute(target, parameters, fragment))
   }
 
   protected fun parameter(parameters: Map<String, String>, name: String): String {

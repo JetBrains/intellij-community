@@ -1,3 +1,4 @@
+// HIGHLIGHT: INFORMATION
 fun test(){
     /* aaa */
     val <caret>foo = 1 /* bbb */ /* ccc */

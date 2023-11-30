@@ -16,8 +16,8 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
 
   private val lazyConfigurables: Lazy<List<T>> = lazy { createConfigurables() }
 
-  val configurables get() = lazyConfigurables.value
-  private val plainConfigurables get() = lazyConfigurables.value.filter { it !is UiDslConfigurable && it !is UiDslUnnamedConfigurable }
+  val configurables: List<T> get() = lazyConfigurables.value
+  private val plainConfigurables get() = lazyConfigurables.value.filter { it !is UiDslUnnamedConfigurable }
 
   override fun isModified(): Boolean {
     return super.isModified() || plainConfigurables.any { it.isModified }

@@ -27,7 +27,10 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.*;
+import org.jetbrains.uast.UDeclarationKt;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -116,16 +119,15 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     if (message != null) {
       final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
       fixes.add(getFix(processor, needToDeleteHierarchy));
-      if (globalContext instanceof GlobalInspectionContextBase &&
-          ((GlobalInspectionContextBase)globalContext).getCurrentProfile().getSingleTool() == null) {
+      if (globalContext instanceof GlobalInspectionContextBase globalInspectionContextBase &&
+          globalInspectionContextBase.getCurrentProfile().getSingleTool() == null) {
         PsiElement psi = refMethod.getPsiElement();
-        if (psi instanceof PsiModifierListOwner) {
-          SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)psi, qualifiedName -> {
-            fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
+        if (psi instanceof PsiModifierListOwner owner) {
+          SpecialAnnotationsUtilBase.processUnknownAnnotations(owner, qualifiedName -> {
+            fixes.add(new AddToInspectionOptionListFix<>(
+              this, 
               QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
-              QuickFixBundle.message("fix.add.special.annotation.family"),
-              JavaBundle.message("special.annotations.annotations.list"), EXCLUDE_ANNOS, qualifiedName
-            ));
+              qualifiedName, insp -> insp.EXCLUDE_ANNOS));
             return true;
           });
         }
@@ -144,10 +146,9 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
   }
 
   private static PsiModifierListOwner getAsJavaPsi(RefMethod refMethod) {
-    UDeclaration uDeclaration = refMethod.getUastElement();
-    if (uDeclaration == null) return null;
-    PsiElement psi = uDeclaration.getJavaPsi();
-    return psi instanceof PsiModifierListOwner ? (PsiModifierListOwner)psi : null;
+    UMethod uMethod = refMethod.getUastElement();
+    if (uMethod == null) return null;
+    return uMethod.getJavaPsi();
   }
 
   private boolean isBodyEmpty(final RefMethod refMethod) {
@@ -208,24 +209,20 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
                                                 final @NotNull GlobalJavaInspectionContext context,
                                                 final @NotNull ProblemDescriptionsProcessor descriptionsProcessor) {
      manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(final @NotNull RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
-                UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
-                if (uDerivedMethod == null) return true;
-                UExpression body = uDerivedMethod.getUastBody();
-                if (RefMethodImpl.isEmptyExpression(body)) return true;
-                if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(uDerivedMethod)) return true;
-                descriptionsProcessor.ignoreElement(refMethod);
-                return false;
-              });
-            }
-          });
-        }
-      }
+       @Override
+       public void visitMethod(final @NotNull RefMethod refMethod) {
+         if (descriptionsProcessor.getDescriptions(refMethod) == null) return;
+         if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+         context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+           UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
+           if (uDerivedMethod == null) return true;
+           UExpression body = uDerivedMethod.getUastBody();
+           if (RefMethodImpl.isEmptyExpression(body)) return true;
+           if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(uDerivedMethod)) return true;
+           descriptionsProcessor.ignoreElement(refMethod);
+           return false;
+         });
+       }
     });
 
     return false;

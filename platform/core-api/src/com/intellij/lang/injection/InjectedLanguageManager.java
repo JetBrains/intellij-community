@@ -36,23 +36,20 @@ public abstract class InjectedLanguageManager {
 
   public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull FileViewProvider injectedProvider);
 
-  @Nullable
-  public abstract PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement injectedElement);
+  public abstract @Nullable PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement injectedElement);
 
   /**
    * @return range in the top level file if {@code injectedContext} is inside injection
    *         unchanged {@code injectedTextRange} otherwise
    */
-  @NotNull
-  public abstract TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange);
+  public abstract @NotNull TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange);
   public abstract int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset);
   public abstract int injectedToHost(@NotNull PsiElement injectedContext, int injectedOffset, boolean minHostOffset);
 
   @TestOnly
   public abstract void registerMultiHostInjector(@NotNull MultiHostInjector injector, @NotNull Disposable parentDisposable);
 
-  @NotNull
-  public abstract String getUnescapedText(@NotNull PsiElement injectedNode);
+  public abstract @NotNull String getUnescapedText(@NotNull PsiElement injectedNode);
 
   /**
    * @param injectedFile injected file
@@ -69,10 +66,13 @@ public abstract class InjectedLanguageManager {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  public abstract List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
+  public abstract @NotNull List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit);
 
-  public abstract boolean isInjectedFragment(@NotNull PsiFile injectedFile);
+  public boolean isInjectedFragment(@NotNull PsiFile injectedFile) {
+    return isInjectedViewProvider(injectedFile.getViewProvider());
+  }
+
+  public abstract boolean isInjectedViewProvider(@NotNull FileViewProvider viewProvider);
 
   /**
    * Finds PSI element in injected fragment (if any) at the given offset in the host file.<p/>
@@ -80,18 +80,19 @@ public abstract class InjectedLanguageManager {
    * this method will return XmlToken(XML_TAG_START) with the text {@code "xxx"}.<br/>
    * Invocation of this method on uncommitted {@code hostFile} can lead to unexpected results, including throwing an exception!
    */
-  @Nullable
-  public abstract PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset);
+  public abstract @Nullable PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset);
 
-  @Nullable
-  public abstract List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host);
+  public abstract @Nullable List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host);
+
+  public boolean hasInjections(@NotNull PsiElement host) {
+    return getInjectedPsiFiles(host) != null;
+  }
 
   public abstract void dropFileCaches(@NotNull PsiFile file);
 
   public abstract PsiFile getTopLevelFile(@NotNull PsiElement element);
 
-  @NotNull
-  public abstract List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range);
+  public abstract @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range);
 
   public abstract void enumerate(@NotNull PsiElement host, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
   public abstract void enumerateEx(@NotNull PsiElement host, @NotNull PsiFile containingFile, boolean probeUp, @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor);
@@ -99,14 +100,12 @@ public abstract class InjectedLanguageManager {
   /**
    * @return the ranges in this document window that correspond to prefix/suffix injected text fragments and thus can't be edited and are not visible in the editor.
    */
-  @NotNull
-  public abstract List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window);
+  public abstract @NotNull List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window);
 
   /**
    * This method can be invoked on an uncommitted document, before performing commit and using other methods here
    * (which don't work for uncommitted document).
    */
   public abstract boolean mightHaveInjectedFragmentAtOffset(@NotNull Document hostDocument, int hostOffset);
-  @NotNull
-  public abstract DocumentWindow freezeWindow(@NotNull DocumentWindow document);
+  public abstract @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager;
@@ -924,6 +924,24 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertDefaultGradleJavaProjectFolders("project");
     final String testSourceSetModuleName = "project.integrationTest";
     assertContentRoots(testSourceSetModuleName, getProjectPath() + "/src/integrationTest");
+    assertTestSources(testSourceSetModuleName, "java");
+    assertTestResources(testSourceSetModuleName, "resources");
+  }
+
+  @Test
+  @TargetVersions("5.6+")
+  public void testJvmTestFixturesImported() throws Exception {
+    createDefaultDirs();
+    createProjectSubFile("src/testFixtures/java/A.java", "class A {}");
+    createProjectSubFile("src/testFixtures/resources/file.txt", "test data");
+    final GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
+      .withPlugin("java", null)
+      .withPlugin("java-test-fixtures", null);
+
+    importProject(buildScript.generate());
+    assertDefaultGradleJavaProjectFolders("project");
+    final String testSourceSetModuleName = "project.testFixtures";
+    assertContentRoots(testSourceSetModuleName, getProjectPath() + "/src/testFixtures");
     assertTestSources(testSourceSetModuleName, "java");
     assertTestResources(testSourceSetModuleName, "resources");
   }

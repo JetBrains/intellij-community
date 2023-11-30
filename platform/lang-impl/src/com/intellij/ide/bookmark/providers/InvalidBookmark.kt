@@ -9,13 +9,13 @@ internal class InvalidBookmark(override val provider: LineBookmarkProvider, val 
   override val attributes: Map<String, String>
     get() = mapOf("url" to url, "line" to line.toString())
 
-  override fun createNode() = UrlNode(provider.project, this)
+  override fun createNode(): UrlNode = UrlNode(provider.project, this)
 
-  override fun hashCode() = Objects.hash(provider, url, line)
-  override fun equals(other: Any?) = other === this || other is InvalidBookmark
-                                     && other.provider == provider
-                                     && other.url == url
-                                     && other.line == line
+  override fun hashCode(): Int = Objects.hash(provider, url, line)
+  override fun equals(other: Any?): Boolean = other === this || other is InvalidBookmark
+                                              && other.provider == provider
+                                              && other.url == url
+                                              && other.line == line
 
-  override fun toString() = "InvalidBookmark(line=$line,url=$url,provider=$provider)"
+  override fun toString(): String = "InvalidBookmark(line=$line,url=$url,provider=$provider)"
 }

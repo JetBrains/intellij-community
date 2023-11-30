@@ -278,7 +278,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     init(20, text);
 
     List<SoftWrap> softWrapsBeforeModification = new ArrayList<>(getSoftWrapModel().getRegisteredSoftWraps());
-    assertTrue(softWrapsBeforeModification.size() > 0);
+    assertFalse(softWrapsBeforeModification.isEmpty());
     
     backspace();
     assertEquals(softWrapsBeforeModification, getSoftWrapModel().getRegisteredSoftWraps());
@@ -292,7 +292,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     init(20, text);
 
     List<SoftWrap> softWrapsBeforeModification = new ArrayList<>(getSoftWrapModel().getRegisteredSoftWraps());
-    assertTrue(softWrapsBeforeModification.size() > 0);
+    assertFalse(softWrapsBeforeModification.isEmpty());
 
     int offset = getEditor().getCaretModel().getOffset();
     VisualPosition positionBeforeModification = getEditor().offsetToVisualPosition(offset);

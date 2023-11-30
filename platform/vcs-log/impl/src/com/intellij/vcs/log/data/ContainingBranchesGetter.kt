@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -8,9 +8,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsScope
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.platform.diagnostic.telemetry.impl.computeWithSpan
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.*
@@ -31,17 +32,17 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
   private val cache = Caffeine.newBuilder()
     .maximumSize(2000)
     .build<CommitId, List<String>>()
-  private val conditionsCache: CurrentBranchConditionCache
+  private val conditionsCache = CurrentBranchConditionCache(logData, parentDisposable)
   private var currentBranchesChecksum = 0
 
   init {
-    conditionsCache = CurrentBranchConditionCache(logData, parentDisposable)
     taskExecutor = SequentialLimitedLifoExecutor(parentDisposable, 10, CachingTask::run)
-    logData.addDataPackChangeListener { dataPack: DataPack ->
-      val checksum = dataPack.refsModel.branches.hashCode()
+    logData.addDataPackChangeListener {
+      val checksum = logData.dataPack.refsModel.branches.hashCode()
       if (currentBranchesChecksum != checksum) { // clear cache if branches set changed after refresh
         clearCache()
       }
+      //do not cache transient small data pack branches checksum as it will be substituted by regular data pack
       currentBranchesChecksum = checksum
     }
   }
@@ -146,15 +147,17 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
 
     @Throws(VcsException::class)
     fun getContainingBranches(): List<String> {
-      return computeWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), "get containing branches") {
-        try {
-          getContainingBranches(myProvider, myRoot, myHash)
+      return TelemetryManager.getInstance().getTracer(VcsScope)
+        .spanBuilder(LogData.GettingContainingBranches.getName())
+        .useWithScopeBlocking {
+          try {
+            getContainingBranches(myProvider, myRoot, myHash)
+          }
+          catch (e: VcsException) {
+            LOG.warn(e)
+            emptyList()
+          }
         }
-        catch (e: VcsException) {
-          LOG.warn(e)
-          emptyList()
-        }
-      }
     }
 
     @Throws(VcsException::class)
@@ -162,7 +165,7 @@ class ContainingBranchesGetter internal constructor(private val logData: VcsLogD
                                                  root: VirtualFile, hash: Hash): List<String>
   }
 
-  private inner class GraphTask constructor(provider: VcsLogProvider, root: VirtualFile, hash: Hash, dataPack: DataPack) :
+  private inner class GraphTask(provider: VcsLogProvider, root: VirtualFile, hash: Hash, dataPack: DataPack) :
     Task(provider, root, hash) {
 
     private val graph = dataPack.permanentGraph

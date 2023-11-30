@@ -1,56 +1,146 @@
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.example.SubclassOfProcessCanceledException;
 
 class IncorrectPceHandlingWhenMultipleCatchClausesTests {
   private static final Logger LOG = Logger.getInstance(IncorrectPceHandlingWhenMultipleCatchClausesTests.class);
 
-  void test1() {
+  void testPceSwallowed() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
       // exception swallowed
     } catch (Exception e) {
       // exception swallowed
     }
   }
 
-  void test2() {
+  void testPceLogged() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
-      <warning descr="'ProcessCanceledException' must not be logged">LOG.info("Error occured", e)</warning>;
+    } catch (ProcessCanceledException e) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error(e)</error>;
+      throw e;
+    } catch (Exception e) {
+      // exception swallowed
+    }
+  }
+
+  void testSwallowedAndLoggedWithMessageOnInfoLevel() {
+    try {
+      // anything
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.info("Error occured", e)</error>;
     } catch (Exception e) {
       LOG.info("Error occured", e);
     }
   }
 
-  void test3() {
+  void testSwallowedAndLoggedOnInfoLevel() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
-      <warning descr="'ProcessCanceledException' must not be logged">LOG.info(e)</warning>;
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.info(e)</error>;
     } catch (Exception e) {
       LOG.info(e);
     }
   }
 
-  void test4() {
+  void testSwallowedAndLoggedOnErrorLevel() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
-      <warning descr="'ProcessCanceledException' must not be logged">LOG.error(e)</warning>;
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error(e)</error>;
     } catch (Exception e) {
       LOG.error(e);
     }
   }
 
-  void test5() {
+  void testSwallowedAndOnlyExceptionMessageLogged() {
     try {
       // anything
-    } catch (ProcessCanceledException <warning descr="'ProcessCanceledException' must be rethrown">e</warning>) {
-      <warning descr="'ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</warning>;
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error("Error occurred: " + e.getMessage())</error>;
     } catch (Exception e) {
       LOG.error("Error occurred: " + e.getMessage());
+    }
+  }
+
+  void testPceSwallowedAndMultipleGenericCatchClauses() {
+    try {
+      // anything
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      // exception swallowed
+    } catch (RuntimeException e) {
+      // exception swallowed
+    } catch (Exception e) {
+      // exception swallowed
+    } catch (Throwable e) {
+      // exception swallowed
+    }
+  }
+
+  void testPceLoggedAndMultipleGenericCatchClauses() {
+    try {
+      // anything
+    } catch (ProcessCanceledException e) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error(e)</error>;
+      throw e;
+    } catch (RuntimeException e) {
+      LOG.error(e);
+    } catch (Exception e) {
+      LOG.error(e);
+    } catch (Throwable e) {
+      LOG.error(e);
+    }
+  }
+
+  void testPceInheritorSwallowedAndMultipleGenericCatchClauses() {
+    try {
+      // anything
+    } catch (SubclassOfProcessCanceledException <error descr="'ProcessCanceledException' inheritor must be rethrown">e</error>) {
+      // exception swallowed
+    } catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+      // exception swallowed
+    } catch (RuntimeException e) {
+      // exception swallowed
+    } catch (Exception e) {
+      // exception swallowed
+    } catch (Throwable e) {
+      // exception swallowed
+    }
+  }
+
+  void testPceInheritorLoggedAndMultipleGenericCatchClauses() {
+    try {
+      // anything
+    } catch (SubclassOfProcessCanceledException e) {
+      <error descr="'ProcessCanceledException' inheritor must not be logged">LOG.error(e)</error>;
+      throw e;
+    } catch (ProcessCanceledException e) {
+      <error descr="'ProcessCanceledException' must not be logged">LOG.error(e)</error>;
+      throw e;
+    } catch (RuntimeException e) {
+      LOG.error(e);
+    } catch (Exception e) {
+      LOG.error(e);
+    } catch (Throwable e) {
+      LOG.error(e);
+    }
+  }
+
+  void testNotHandlingOuterTryIfNestedCatchesPce() {
+    try {
+      // anything
+      try {
+        // anything
+      }
+      catch (ProcessCanceledException <error descr="'ProcessCanceledException' must be rethrown">e</error>) {
+        <error descr="'ProcessCanceledException' must not be logged">LOG.error(e)</error>;
+      }
+    }
+    catch (Throwable e) {
+      LOG.error(e);
     }
   }
 

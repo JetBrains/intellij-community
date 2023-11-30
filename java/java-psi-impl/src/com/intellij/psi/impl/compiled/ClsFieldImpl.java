@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -92,11 +92,6 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
       return null;
     }
 
-    PsiExpression initializer = getInitializer();
-    if (initializer == null) {
-      return null;
-    }
-
     PsiClass containingClass = getContainingClass();
     if (containingClass != null) {
       String qName = containingClass.getQualifiedName();
@@ -112,6 +107,43 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
         if ("NEGATIVE_INFINITY".equals(name)) return Double.NEGATIVE_INFINITY;
         if ("NaN".equals(name)) return Double.NaN;
       }
+      // Wrapper classes have a TYPE field holding the Class object of the primitive type
+      if (qName != null && "TYPE".equals(getName())) {
+        switch (qName) {
+          case "java.lang.Byte": {
+            return PsiTypes.byteType();
+          }
+          case "java.lang.Character": {
+            return PsiTypes.charType();
+          }
+          case "java.lang.Double": {
+            return PsiTypes.doubleType();
+          }
+          case "java.lang.Float": {
+            return PsiTypes.floatType();
+          }
+          case "java.lang.Integer": {
+            return PsiTypes.intType();
+          }
+          case "java.lang.Long": {
+            return PsiTypes.longType();
+          }
+          case "java.lang.Short": {
+            return PsiTypes.shortType();
+          }
+          case "java.lang.Boolean": {
+            return PsiTypes.booleanType();
+          }
+          case "java.lang.Void": {
+            return PsiTypes.voidType();
+          }
+        }
+      }
+    }
+
+    PsiExpression initializer = getInitializer();
+    if (initializer == null) {
+      return null;
     }
 
     return PsiConstantEvaluationHelperImpl.computeCastTo(initializer, getType(), visitedVars);
@@ -142,7 +174,7 @@ public class ClsFieldImpl extends ClsMemberImpl<PsiFieldStub> implements PsiFiel
   }
 
   @Override
-  public void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
+  protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, null);
 
     PsiField mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -32,15 +32,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
-  final static class Factory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+  static final class Factory implements MainHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
     @Override
     public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
       registrar.registerTextEditorHighlightingPass(this, null, new int[]{Pass.UPDATE_ALL}, false, -1);
     }
 
-    @NotNull
     @Override
-    public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+    public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
       Project project = file.getProject();
       TextRange restrict = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL);
       if (restrict == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(project, editor.getDocument());
@@ -49,11 +48,10 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
                                                  priority, editor, new DefaultHighlightInfoProcessor());
     }
 
-    @NotNull
     @Override
-    public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
-                                                                 @NotNull Document document,
-                                                                 @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+    public @NotNull TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+                                                                          @NotNull Document document,
+                                                                          @NotNull HighlightInfoProcessor highlightInfoProcessor) {
       ProperTextRange range = ProperTextRange.from(0, document.getTextLength());
       return new ChameleonSyntaxHighlightingPass(file, document, range, range, null, highlightInfoProcessor);
     }
@@ -83,8 +81,8 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
     for (PsiElement e : s) {
       (e.getTextRange().intersects(myPriorityRange) ? lazyInside : lazyOutside).add(e);
     }
-    HighlightInfoHolder holderInside = new HighlightInfoHolder(myFile);
-    HighlightInfoHolder holderOutside = new HighlightInfoHolder(myFile);
+    HighlightInfoHolder holderInside = new HighlightInfoHolder(myFile, List.of());
+    HighlightInfoHolder holderOutside = new HighlightInfoHolder(myFile, List.of());
     for (PsiElement e : lazyInside) {
       collectHighlights(e, holderInside, holderOutside, myPriorityRange);
     }
@@ -129,9 +127,8 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
   protected void applyInformationWithProgress() {
   }
 
-  @Nullable
   @Override
-  protected String getPresentableName() {
+  protected @Nullable String getPresentableName() {
     return null; // do not show progress for
   }
 }

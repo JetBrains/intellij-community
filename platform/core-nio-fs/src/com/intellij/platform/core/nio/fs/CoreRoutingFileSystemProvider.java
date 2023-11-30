@@ -4,6 +4,7 @@ package com.intellij.platform.core.nio.fs;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.FileChannel;
@@ -33,16 +34,25 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
   private final Object myLock = new Object();
   private final FileSystemProvider    myLocalProvider;
   private final CoreRoutingFileSystem myFileSystem;
+  private final boolean myUseContextClassLoader;
 
   private volatile FileSystemProvider myProvider;
   private volatile String myProviderClassName;
 
   public CoreRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
+    this(localFSProvider, true);
+  }
+
+  /**
+   * @param useContextClassLoader Force {@link #createInstance(String, Class[], Object...)} use system class loader which is required when this class is used as default system provider
+   */
+  public CoreRoutingFileSystemProvider(FileSystemProvider localFSProvider, boolean useContextClassLoader) {
     FileSystem fileSystem = localFSProvider.getFileSystem(URI.create("file:///"));
     myLocalProvider = fileSystem.supportedFileAttributeViews().contains("posix")
                       ? localFSProvider
                       : new CorePosixFilteringFileSystemProvider(localFSProvider);
     myFileSystem = new CoreRoutingFileSystem(this, fileSystem);
+    myUseContextClassLoader = useContextClassLoader;
   }
 
   @Override
@@ -81,9 +91,10 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
 
   /**
    * Initializes the passed {@link CoreRoutingFileSystemProvider} using the current context class loader.
-   * @param provider The {@link CoreRoutingFileSystemProvider}, which may have been loaded by a different class loader.
+   *
+   * @param provider                    The {@link CoreRoutingFileSystemProvider}, which may have been loaded by a different class loader.
    * @param initializeMountedFSProvider Specifies whether to eagerly initialize the mounted FS provider under lock as well,
-   *                              e.g. in order to ensure the same class loader is used.
+   *                                    e.g., in order to ensure the same class loader is used.
    * @see CoreRoutingFileSystemProvider#INITIALIZATION_KEY
    * @see CoreRoutingFileSystemProvider#INITIALIZATION_MOUNTED_FS_PROVIDER_KEY
    */
@@ -94,8 +105,8 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
                                 String filesystemClassName,
                                 @Nullable Class<? extends CoreRoutingFileSystemDelegate> routingFilesystemDelegateClass,
                                 boolean initializeMountedFSProvider) throws IOException {
-    // now we can use our provider. Initializing in such hacky way because of different classloader
-    Map<String,Object> map = new HashMap<>();
+    // Now we can use our provider. Initializing in such a hacky way because of different classloaders.
+    Map<String, Object> map = new HashMap<>();
     map.put(INITIALIZATION_KEY, true);
     map.put(INITIALIZATION_MOUNTED_FS_PROVIDER_KEY, initializeMountedFSProvider);
     map.put(PROVIDER_CLASS_NAME, providerClassName);
@@ -103,6 +114,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
     map.put(MOUNTED_FS_PREFIX, mountedFSPrefix);
     map.put(FILESYSTEM_CLASS_NAME, filesystemClassName);
     map.put(ROUTING_FILESYSTEM_DELEGATE_CLASS, routingFilesystemDelegateClass);
+    //noinspection resource
     provider.newFileSystem(URI.create("file:///"), map);
   }
 
@@ -125,7 +137,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
   @Override
   public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
     DirectoryStream.Filter<? super Path> wrappedFilter = filter != null ? path -> filter.accept(path(path)) : null;
-    DirectoryStream<Path> stream = getProvider(dir).newDirectoryStream(unwrap(dir), wrappedFilter);
+    @SuppressWarnings("resource") DirectoryStream<Path> stream = getProvider(dir).newDirectoryStream(unwrap(dir), wrappedFilter);
     return stream == null ? null : new DirectoryStream<Path>() {
       @Override
       public void close() throws IOException {
@@ -233,6 +245,21 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
     return getProvider(path).newFileChannel(unwrap(path), options, attrs);
   }
 
+  /** Used in {@link sun.nio.ch.UnixDomainSockets#getPathBytes}. */
+  @SuppressWarnings("unused")
+  public byte[] getSunPathForSocketFile(Path path) {
+    if (isMountedFSPath(path)) {
+      throw new IllegalArgumentException(path.toString());
+    }
+    String jnuEncoding = System.getProperty("sun.jnu.encoding");
+    try {
+      return path.toString().getBytes(jnuEncoding);
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new IllegalStateException("sun.jnu.encoding=" + jnuEncoding, e);
+    }
+  }
+
   private boolean isInitialized() {
     return myFileSystem.isInitialized();
   }
@@ -271,7 +298,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
     if (myProvider == null) {
       synchronized (myLock) {
         if (myProvider == null) {
-          myProvider = createInstanceWithContextClassLoader(
+          myProvider = createInstance(
             myProviderClassName,
             new Class[]{FileSystem.class},
             myFileSystem);
@@ -301,11 +328,12 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
     return path == null ? null : ((CorePath)path).getDelegate();
   }
 
-  public static <T> T createInstanceWithContextClassLoader(String className,
-                                                           Class<?>[] paramClasses,
-                                                           Object... params) {
+  public <T> T createInstance(String className,
+                              Class<?>[] paramClasses,
+                              Object... params) {
     try {
-      ClassLoader loader = Thread.currentThread().getContextClassLoader();
+      ClassLoader loader = (myUseContextClassLoader ? Thread.currentThread().getContextClassLoader()
+                                                    : CoreRoutingFileSystemProvider.class.getClassLoader());
       String loaderName = loader.getClass().getName();
       if (!("com.intellij.util.lang.PathClassLoader").equals(loaderName) &&
           !("com.intellij.util.lang.UrlClassLoader").equals(loaderName) &&
@@ -322,9 +350,6 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
   }
 
   public static String normalizePath(String path) {
-    if (CoreRoutingFileSystem.matchesPrefixNoSlash(path)) {
-      path = '/' + path;
-    }
     return path.replace("\\", SEPARATOR);
   }
 }

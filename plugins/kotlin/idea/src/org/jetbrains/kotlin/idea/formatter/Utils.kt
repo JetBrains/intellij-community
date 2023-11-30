@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument as _
 
 @Deprecated(
     "Please use `org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument` instead",
-    ReplaceWith("commitAndUnblockDocument()", "org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument")
+    ReplaceWith("commitAndUnblockDocument()", "org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument"),
+    level = DeprecationLevel.ERROR
 )
 fun PsiFile.commitAndUnblockDocument(): Boolean = _commitAndUnblockDocument()

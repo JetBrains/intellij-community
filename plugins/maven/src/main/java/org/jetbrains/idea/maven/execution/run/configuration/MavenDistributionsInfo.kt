@@ -7,12 +7,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.roots.ui.distribution.AbstractDistributionInfo
 import com.intellij.openapi.roots.ui.distribution.DistributionInfo
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension
-import org.jetbrains.idea.maven.project.MavenConfigurableBundle
-import org.jetbrains.idea.maven.project.MavenProjectBundle
-import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.maven3.Bundled3DistributionInfo
+import org.jetbrains.idea.maven.maven4.Bundled4DistributionInfo
+import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenDistributionsInfo : DistributionsInfo {
@@ -29,13 +28,8 @@ class MavenDistributionsInfo : DistributionsInfo {
 
   override val distributions: List<DistributionInfo> by lazy {
     ArrayList<DistributionInfo>().apply {
-      addIfNotNull(asDistributionInfo(MavenServerManager.BUNDLED_MAVEN_3))
-      addIfNotNull(asDistributionInfo(MavenServerManager.WRAPPED_MAVEN))
-      val mavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(null)
-      val bundledMavenHomeDirectory = MavenUtil.resolveMavenHomeDirectory(MavenServerManager.BUNDLED_MAVEN_3)
-      if (mavenHomeDirectory != null && !FileUtil.filesEqual(mavenHomeDirectory, bundledMavenHomeDirectory)) {
-        addIfNotNull(asDistributionInfo(mavenHomeDirectory.path))
-      }
+      addIfNotNull(asDistributionInfo(MavenWrapper))
+      addAll(MavenUtil.getSystemMavenHomeVariants().map(::asDistributionInfo))
     }
   }
 
@@ -45,28 +39,25 @@ class MavenDistributionsInfo : DistributionsInfo {
   }
 
   companion object {
-    fun asDistributionInfo(mavenHome: String): DistributionInfo {
-      val info = MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.extensionList.map {
-        it.asDistributionInfo(mavenHome)
-      }.firstOrNull();
+    fun asDistributionInfo(mavenHomeType: MavenHomeType): DistributionInfo {
+      val version = (mavenHomeType as? StaticResolvedMavenHomeType)
+        ?.let { MavenUtil.getMavenVersion(MavenUtil.getMavenHomeFile(it)) }
 
-      if (info != null) return info;
-      val version = MavenUtil.getMavenVersionByMavenHome(mavenHome)
-      return when (mavenHome) {
-        MavenServerManager.WRAPPED_MAVEN -> WrappedDistributionInfo()
-        else -> LocalDistributionInfo(mavenHome)
+      return when (mavenHomeType) {
+        is BundledMaven3 -> Bundled3DistributionInfo(version)
+        is BundledMaven4 -> Bundled4DistributionInfo(version)
+        is MavenWrapper -> WrappedDistributionInfo()
+        is MavenInSpecificPath -> LocalDistributionInfo(mavenHomeType.mavenHome)
+        else -> throw NoWhenBranchMatchedException(mavenHomeType.javaClass.toString())
       }
     }
 
-    fun asMavenHome(distribution: DistributionInfo): String {
-
-      val home = MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.extensionList.map {
-        it.asMavenHome(distribution)
-      }.firstOrNull();
-      if (home != null) return home
+    fun asMavenHome(distribution: DistributionInfo): MavenHomeType {
       return when (distribution) {
-        is WrappedDistributionInfo -> MavenServerManager.WRAPPED_MAVEN
-        is LocalDistributionInfo -> distribution.path
+        is Bundled3DistributionInfo -> BundledMaven3
+        is Bundled4DistributionInfo -> BundledMaven4
+        is WrappedDistributionInfo -> MavenWrapper
+        is LocalDistributionInfo -> MavenInSpecificPath(distribution.path)
         else -> throw NoWhenBranchMatchedException(distribution.javaClass.toString())
       }
     }

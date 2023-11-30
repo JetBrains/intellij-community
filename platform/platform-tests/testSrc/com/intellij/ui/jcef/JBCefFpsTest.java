@@ -95,7 +95,7 @@ public class JBCefFpsTest {
   }
   private void _testImpl(int w, int h, Consumer<JFrame> testActor, String url, String outFilename) {
     final CountDownLatch loaded = new CountDownLatch(1);
-    JFrame f[] = new JFrame[]{null};
+    JFrame[] f = new JFrame[]{null};
     invokeAndWaitForLatch(loaded, () -> {
       JFrame frame = f[0] = new JFrame(String.format("Test fps %dx%d (%s)", w, h, url));
       frame.setSize(w, h);

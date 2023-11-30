@@ -6,6 +6,7 @@
     <extensionPoint name="spellchecker.bundledDictionaryProvider" interface="com.intellij.spellchecker.BundledDictionaryProvider" dynamic="true"/>
     <extensionPoint name="spellchecker.dictionary.customDictionaryProvider" interface="com.intellij.spellchecker.dictionary.CustomDictionaryProvider" dynamic="true"/>
     <extensionPoint name="spellchecker.dictionary.runtimeDictionaryProvider" interface="com.intellij.spellchecker.dictionary.RuntimeDictionaryProvider" dynamic="true"/>
+    <extensionPoint name="spellchecker.dictionary.checker" interface="com.intellij.spellchecker.dictionary.DictionaryChecker" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -38,5 +39,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.spellchecker.statistics.SpellcheckerActionStatistics"/>
 
     <notificationGroup id="Spellchecker" displayType="BALLOON" bundle="messages.SpellCheckerBundle" key="notification.group.spellchecker"/>
+
+    <iconMapper mappingFile="SpellcheckerIconMappings.json"/>
   </extensions>
 </idea-plugin>

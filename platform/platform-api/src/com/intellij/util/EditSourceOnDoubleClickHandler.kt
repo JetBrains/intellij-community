@@ -23,7 +23,7 @@ import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 
 object EditSourceOnDoubleClickHandler {
-  private val INSTALLED = Key.create<Boolean>("EditSourceOnDoubleClickHandlerInstalled")
+  val INSTALLED: Key<Boolean> = Key.create("EditSourceOnDoubleClickHandlerInstalled")
 
   @JvmOverloads
   @JvmStatic
@@ -35,7 +35,7 @@ object EditSourceOnDoubleClickHandler {
   fun install(treeTable: TreeTable) {
     object : DoubleClickListener() {
       override fun onDoubleClick(e: MouseEvent): Boolean {
-        if (ModalityState.current().dominates(ModalityState.NON_MODAL) || treeTable.tree.getPathForLocation(e.x, e.y) == null) {
+        if (ModalityState.current().dominates(ModalityState.nonModal()) || treeTable.tree.getPathForLocation(e.x, e.y) == null) {
           return false
         }
 
@@ -51,7 +51,7 @@ object EditSourceOnDoubleClickHandler {
   fun install(table: JTable) {
     object : DoubleClickListener() {
       override fun onDoubleClick(e: MouseEvent): Boolean {
-        if (ModalityState.current().dominates(ModalityState.NON_MODAL) ||
+        if (ModalityState.current().dominates(ModalityState.nonModal()) ||
             table.columnAtPoint(e.point) < 0 ||
             table.rowAtPoint(e.point) < 0) {
           return false

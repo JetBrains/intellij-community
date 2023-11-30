@@ -16,6 +16,7 @@
 package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.DiffContext;
+import com.intellij.diff.DiffToolType;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer;
@@ -42,5 +43,10 @@ public class UnifiedDiffTool implements FrameDiffTool {
   @Override
   public String getName() {
     return DiffBundle.message("unified.viewer");
+  }
+
+  @Override
+  public @NotNull DiffToolType getToolType() {
+    return DiffToolType.Unified.INSTANCE;
   }
 }

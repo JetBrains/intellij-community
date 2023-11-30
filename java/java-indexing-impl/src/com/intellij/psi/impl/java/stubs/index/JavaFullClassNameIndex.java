@@ -29,8 +29,16 @@ public class JavaFullClassNameIndex extends CharSequenceHashStubIndexExtension<P
     return JavaStubIndexKeys.CLASS_FQN;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getClasses(CharSequence, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiClass> get(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return getClasses(name, project, scope);
+  }
+
+  public Collection<PsiClass> getClasses(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope), PsiClass.class);
   }
 

@@ -18,7 +18,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowManager;
 /**
  * An action that activates the terminal window for file, selected by user.
  */
-public class RevealFileInTerminalAction extends DumbAwareAction {
+public final class RevealFileInTerminalAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import org.jetbrains.kotlin.builtins.functions.FunctionInvokeDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.isInlineClass
@@ -12,6 +13,7 @@ data class CallableMemberInfo(
     val isInvoke: Boolean,
     val isInlineClassMember: Boolean,
     val hasInlineClassInValueParameters: Boolean,
+    val isInternalMethod: Boolean,
     val isExtension: Boolean,
     val isInline: Boolean,
     val name: String
@@ -23,6 +25,7 @@ data class CallableMemberInfo(
                 descriptor is FunctionInvokeDescriptor,
                 descriptor.containingDeclaration.isInlineClass(),
                 descriptor.containsInlineClassInValueArguments(),
+                descriptor.visibility === DescriptorVisibilities.INTERNAL,
                 descriptor.isExtension,
                 InlineUtil.isInline(descriptor),
                 descriptor.getMethodName()

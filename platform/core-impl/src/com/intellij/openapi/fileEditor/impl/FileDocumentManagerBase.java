@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.editor.Document;
@@ -17,6 +17,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -131,6 +132,19 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     }
   }
 
+  /**
+   * Rebinds a document to a different virtualFile instance. This can be helpful in case when a virtual file has become invalid
+   * and then a new virtualFile appeared at the same path.
+   */
+  @ApiStatus.Internal
+  public static void rebindDocument(@NotNull Document document, @NotNull VirtualFile oldFile, @NotNull VirtualFile newFile) {
+    synchronized (lock) {
+      oldFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
+      document.putUserData(FILE_KEY, newFile);
+      newFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
+    }
+  }
+
   @Override
   public @Nullable VirtualFile getFile(@NotNull Document document) {
     return document instanceof FrozenDocument ? null : document.getUserData(FILE_KEY);
@@ -164,7 +178,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
   }
 
-  private final Map<VirtualFile, Document> myDocumentCache = ContainerUtil.createConcurrentWeakValueMap();
+  private final Map<VirtualFile, Document> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
 
   private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {
     myDocumentCache.put(file, document);

@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
 import org.jetbrains.kotlin.idea.base.util.letIf
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbolAndInvokeCompletion
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -38,7 +38,7 @@ private object PackagePartInsertionHandler : InsertHandler<LookupElement> {
         val name = lookupElement.shortName.render()
         context.document.replaceString(context.startOffset, context.tailOffset, name)
         context.commitDocument()
-        context.insertSymbolAndInvokeCompletion(symbol = ".")
+        context.insertStringAndInvokeCompletion(stringToInsert = ".")
     }
 }
 

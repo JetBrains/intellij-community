@@ -15,6 +15,7 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
+import java.awt.Color
 import java.awt.Component
 import java.awt.GridBagLayout
 import java.awt.Point
@@ -58,7 +59,7 @@ class AccountMenuPopupStep(items: List<AccountMenuItem>) : BaseListPopupStep<Acc
     is AccountMenuItem.Group -> AccountMenuPopupStep(selectedValue.actions)
   }
 
-  override fun getBackgroundFor(value: AccountMenuItem?) = UIUtil.getListBackground()
+  override fun getBackgroundFor(value: AccountMenuItem?): Color = UIUtil.getListBackground()
 }
 
 class AccountsMenuListPopup(
@@ -71,9 +72,9 @@ class AccountsMenuListPopup(
                   accountMenuPopupStep,
                   parentObject
 ) {
-  override fun getListElementRenderer() = AccountMenuItemRenderer()
+  override fun getListElementRenderer(): AccountMenuItemRenderer = AccountMenuItemRenderer()
 
-  override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?) = AccountsMenuListPopup(
+  override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): AccountsMenuListPopup = AccountsMenuListPopup(
     parent?.project,
     step as AccountMenuPopupStep,
     parent,
@@ -92,9 +93,15 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
 
   private val listSelectionBackground = UIUtil.getListSelectionBackground(true)
 
-  private val accountRenderer = AccountItemRenderer()
-  private val actionRenderer = ActionItemRenderer()
-  private val groupRenderer = GroupItemRenderer()
+  private val accountRenderer = AccountItemRenderer().apply {
+    isOpaque = false
+  }
+  private val actionRenderer = ActionItemRenderer().apply {
+    isOpaque = false
+  }
+  private val groupRenderer = GroupItemRenderer().apply {
+    isOpaque = false
+  }
 
   override fun getListCellRendererComponent(list: JList<out AccountMenuItem>?,
                                             value: AccountMenuItem,
@@ -115,10 +122,15 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
     private val listSelectionForeground = NamedColorUtil.getListSelectionForeground(true)
 
     val avatarLabel = JLabel()
-    val titleComponent = SimpleColoredComponent()
-    val link = SimpleColoredComponent()
-
-    val nextStepIconLabel = SimpleColoredComponent()
+    val titleComponent = SimpleColoredComponent().apply {
+      isOpaque = false
+    }
+    val link = SimpleColoredComponent().apply {
+      isOpaque = false
+    }
+    val nextStepIconLabel = SimpleColoredComponent().apply {
+      isOpaque = false
+    }
 
     init {
       val insets = JBUI.insets(innerInset, leftInset, innerInset, innerInset)
@@ -172,7 +184,9 @@ class AccountMenuItemRenderer : ListCellRenderer<AccountMenuItem> {
   }
 
   private inner class ActionItemRenderer : JPanel(GridBagLayout()), ListCellRenderer<AccountMenuItem.Action> {
-    val actionTextLabel = SimpleColoredComponent()
+    val actionTextLabel = SimpleColoredComponent().apply {
+      isOpaque = false
+    }
     val rightIconLabel = JLabel()
 
     init {

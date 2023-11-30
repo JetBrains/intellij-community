@@ -15,17 +15,17 @@ import java.io.IOException;
 
 public class XmlLexerTest extends LexerTestCase {
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return new XmlLexer();
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return "/xml/tests/testData/lexer/xml";
   }
 
   @Override
-  protected @NotNull String getPathToTestDataFile(String extension) {
+  protected @NotNull String getPathToTestDataFile(@NotNull String extension) {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/" + getDirPath() + "/" + getTestName(true) + extension;
   }
 

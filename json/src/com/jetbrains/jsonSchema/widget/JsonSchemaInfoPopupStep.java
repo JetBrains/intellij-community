@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.icons.AllIcons;
@@ -36,8 +36,8 @@ import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.*;
 
 public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> implements ListPopupStepEx<JsonSchemaInfo> {
   private final Project myProject;
-  @Nullable private final VirtualFile myVirtualFile;
-  @NotNull private final JsonSchemaService myService;
+  private final @Nullable VirtualFile myVirtualFile;
+  private final @NotNull JsonSchemaService myService;
   private static final Icon EMPTY_ICON = JBUIScale.scaleIcon(EmptyIcon.create(AllIcons.General.Add.getIconWidth()));
 
   public JsonSchemaInfoPopupStep(@NotNull List<JsonSchemaInfo> allSchemas, @NotNull Project project, @Nullable VirtualFile virtualFile,
@@ -48,9 +48,8 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
     myService = service;
   }
 
-  @NotNull
   @Override
-  public String getTextFor(JsonSchemaInfo value) {
+  public @NotNull String getTextFor(JsonSchemaInfo value) {
     return value == null ? "" : value.getDescription();
   }
 
@@ -75,12 +74,12 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
     if (value == STOP_IGNORE_FILE) {
       return AllIcons.Actions.AddFile;
     }
-    return EMPTY_ICON;
+
+    return AllIcons.FileTypes.JsonSchema;
   }
 
-  @Nullable
   @Override
-  public ListSeparator getSeparatorAbove(JsonSchemaInfo value) {
+  public @Nullable ListSeparator getSeparatorAbove(JsonSchemaInfo value) {
     List<JsonSchemaInfo> values = getValues();
     int index = values.indexOf(value);
     if (index - 1 >= 0) {
@@ -144,14 +143,12 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
     return true;
   }
 
-  @Nullable
   @Override
-  public @Tooltip String getTooltipTextFor(JsonSchemaInfo value) {
+  public @Nullable @Tooltip String getTooltipTextFor(JsonSchemaInfo value) {
     return getDoc(value);
   }
 
-  @Nullable
-  private static @Tooltip String getDoc(JsonSchemaInfo schema) {
+  private static @Nullable @Tooltip String getDoc(JsonSchemaInfo schema) {
     if (schema == null) return null;
     if (schema.getName() == null) return schema.getDocumentation();
     if (schema.getDocumentation() == null) return schema.getName();

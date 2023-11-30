@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
@@ -36,9 +37,9 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     return oldSquareVisible != visible
   }
 
-  override fun initMoreButton() {
-    left.initMoreButton()
-    right.initMoreButton()
+  override fun initMoreButton(project: Project) {
+    left.initMoreButton(project)
+    right.initMoreButton(project)
   }
 
   override fun layout(size: Dimension, layeredPane: JComponent) {
@@ -51,7 +52,7 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
   override fun revalidateNotEmptyStripes() {
   }
 
-  override fun getBottomHeight() = 0
+  override fun getBottomHeight(): Int = 0
 
   override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): AbstractDroppableStripe {
     return when (anchor) {
@@ -168,13 +169,14 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
 
       override fun getComponent() = squareStripeButton
 
-      override fun toString(): String {
-        return "SquareStripeButtonManager(windowInfo=${toolWindow.windowInfo})"
-      }
+      override fun toString() = "SquareStripeButtonManager(windowInfo=${toolWindow.windowInfo})"
     }
-    findToolbar(toolWindow.anchor, toolWindow.isSplitMode).getStripeFor(toolWindow.windowInfo.anchor).addButton(manager)
+
+    findToolbar(anchor = toolWindow.anchor, isSplit = toolWindow.isSplitMode)
+      .getStripeFor(toolWindow.windowInfo.anchor)
+      .addButton(manager)
     return manager
   }
 
-  override fun hasButtons() = left.hasButtons() || right.hasButtons()
+  override fun hasButtons(): Boolean = left.hasButtons() || right.hasButtons()
 }

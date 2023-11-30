@@ -16,7 +16,7 @@ object JLabelUtil {
    */
   @JvmField
   @ApiStatus.Internal
-  val TRIM_OVERFLOW_KEY = Key.create<Any>("JLabel.trimOverflow")
+  val TRIM_OVERFLOW_KEY: Key<Any> = Key.create("JLabel.trimOverflow")
 
   @JvmStatic
   fun setTrimOverflow(label: JLabel, trim: Boolean) {

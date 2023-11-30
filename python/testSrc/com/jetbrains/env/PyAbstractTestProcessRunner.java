@@ -1,12 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.env;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.impl.ConsoleViewImpl;
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.actions.RerunFailedActionsTestTools;
@@ -19,7 +16,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.EdtTestUtil;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -72,6 +68,10 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     mySkipExitCodeAssertion = skipExitCodeAssertion;
   }
 
+  protected void assertExitCodeForSkippedTests(int code) {
+    Assert.assertEquals("Exit code must be 0 if all tests are ignored", 0, code);
+  }
+
   @Override
   public final void assertExitCodeIsCorrect(int code) {
     if (mySkipExitCodeAssertion) {
@@ -79,8 +79,11 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     }
     // If test framework doesn't support exit codes, overwrite this method
     SMRootTestProxy proxy = getTestProxy();
-    if (proxy.isPassed() || proxy.isIgnored()) {
-      Assert.assertEquals("Exit code must be 0 if all tests are passed or ignored", 0, code);
+    if (proxy.isPassed()) {
+      Assert.assertEquals("Exit code must be 0 if all tests are passed", 0, code);
+    }
+    else if (proxy.isIgnored()) {
+      assertExitCodeForSkippedTests(code);
     }
     else {
       Assert.assertNotEquals("Exit code must NOT be 0 if some tests failed", 0, code);
@@ -103,7 +106,7 @@ public class PyAbstractTestProcessRunner<CONF_T extends AbstractPythonRunConfigu
     ApplicationManager.getApplication().invokeAndWait(() -> {
       // Print output of tests to console (because console may be scrolled)
       myProxyManager.getProxy().getAllTests().get(0).printOn(myExecutionConsole.getPrinter());
-    }, ModalityState.NON_MODAL);
+    }, ModalityState.nonModal());
   }
 
   /**

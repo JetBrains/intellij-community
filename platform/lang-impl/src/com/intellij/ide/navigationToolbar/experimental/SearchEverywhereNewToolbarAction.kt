@@ -46,7 +46,7 @@ import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
   companion object {
-    const val SHOW_HOT_KEY_TIP = "com.intellij.ide.navigationToolbar.experimental.showSearchEverywhereHotKeyTip"
+    const val SHOW_HOT_KEY_TIP: String = "com.intellij.ide.navigationToolbar.experimental.showSearchEverywhereHotKeyTip"
   }
 
   private val logger = logger<SearchEverywhereNewToolbarAction>()

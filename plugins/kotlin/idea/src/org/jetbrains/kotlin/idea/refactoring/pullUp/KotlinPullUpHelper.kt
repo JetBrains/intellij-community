@@ -23,10 +23,7 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addToShorteningWaitSet
 import org.jetbrains.kotlin.idea.core.dropDefaultValue
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.CONSTRUCTOR_VAL_VAR_MODIFIERS
-import org.jetbrains.kotlin.idea.refactoring.createJavaField
-import org.jetbrains.kotlin.idea.refactoring.dropOverrideKeywordIfNecessary
-import org.jetbrains.kotlin.idea.refactoring.isAbstract
-import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
+import org.jetbrains.kotlin.idea.refactoring.*
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KtPsiClassWrapper
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.toKtDeclarationWrapperAware
 import org.jetbrains.kotlin.idea.refactoring.safeDelete.removeOverrideModifier
@@ -649,19 +646,6 @@ class KotlinPullUpHelper(
 
     override fun updateUsage(element: PsiElement) {
 
-    }
-}
-
-internal fun KtNamedDeclaration.deleteWithCompanion() {
-    val containingClass = this.containingClassOrObject
-    if (containingClass is KtObjectDeclaration &&
-        containingClass.isCompanion() &&
-        containingClass.declarations.size == 1 &&
-        containingClass.getSuperTypeList() == null
-    ) {
-        containingClass.delete()
-    } else {
-        this.delete()
     }
 }
 

@@ -49,10 +49,10 @@ public abstract class TextMateService {
   public abstract ShellVariablesRegistry getShellVariableRegistry();
 
   @NotNull
-  public abstract SnippetsRegistry getSnippetsRegistry();
+  public abstract SnippetsRegistry getSnippetRegistry();
 
   @NotNull
-  public abstract PreferencesRegistry getPreferencesRegistry();
+  public abstract PreferencesRegistry getPreferenceRegistry();
 
   @Nullable
   public abstract TextMateLanguageDescriptor getLanguageDescriptorByFileName(@NotNull CharSequence fileName);

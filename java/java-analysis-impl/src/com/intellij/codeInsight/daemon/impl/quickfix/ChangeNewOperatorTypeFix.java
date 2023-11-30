@@ -3,38 +3,31 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
-import com.intellij.psi.util.*;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class ChangeNewOperatorTypeFix implements IntentionAction {
+public final class ChangeNewOperatorTypeFix extends PsiUpdateModCommandAction<PsiNewExpression> {
   private final PsiType myType;
-  private final PsiNewExpression myExpression;
 
   private ChangeNewOperatorTypeFix(PsiType type, PsiNewExpression expression) {
+    super(expression);
     myType = type;
-    myExpression = expression;
-  }
-
-  @Override
-  @NotNull
-  public String getText() {
-    return QuickFixBundle.message("change.new.operator.type.text", PsiExpressionTrimRenderer.render(myExpression),
-                                  myType.getPresentableText(), myType instanceof PsiArrayType ? "" : "()");
   }
 
   @Override
@@ -44,28 +37,24 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return myType.isValid()
-           && myExpression.isValid()
-           && BaseIntentionAction.canModify(myExpression)
-           && !TypeConversionUtil.isPrimitiveAndNotNull(myType);
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiNewExpression expression) {
+    if (!myType.isValid() || TypeConversionUtil.isPrimitiveAndNotNull(myType)) return null;
+    String message = QuickFixBundle.message("change.new.operator.type.text", PsiExpressionTrimRenderer.render(expression),
+                                            myType.getPresentableText(), myType instanceof PsiArrayType ? "" : "()");
+    return Presentation.of(message);
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    changeNewOperatorType(myExpression, myType, editor);
-  }
-
-  private static void changeNewOperatorType(PsiNewExpression originalExpression, PsiType toType, Editor editor) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiNewExpression element, @NotNull ModPsiUpdater updater) {
     PsiNewExpression newExpression;
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(originalExpression.getProject());
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
     int caretOffset;
     TextRange selection;
     CommentTracker commentTracker = new CommentTracker();
-    if (toType instanceof PsiArrayType) {
-      final PsiExpression[] originalExpressionArrayDimensions = originalExpression.getArrayDimensions();
+    if (myType instanceof PsiArrayType) {
+      final PsiExpression[] originalExpressionArrayDimensions = element.getArrayDimensions();
       caretOffset = 0;
-      @NonNls StringBuilder text = new StringBuilder("new " + toType.getDeepComponentType().getCanonicalText() + "[");
+      @NonNls StringBuilder text = new StringBuilder("new " + myType.getDeepComponentType().getCanonicalText() + "[");
       if (originalExpressionArrayDimensions.length > 0) {
         text.append(commentTracker.text(originalExpressionArrayDimensions[0]));
       }
@@ -74,7 +63,7 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
         caretOffset = -2;
       }
       text.append("]");
-      for (int i = 1; i < toType.getArrayDimensions(); i++) {
+      for (int i = 1; i < myType.getArrayDimensions(); i++) {
         text.append("[");
         if (originalExpressionArrayDimensions.length > i) {
           text.append(commentTracker.text(originalExpressionArrayDimensions[i]));
@@ -85,13 +74,14 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
         }
       }
 
-      newExpression = (PsiNewExpression)factory.createExpressionFromText(text.toString(), originalExpression);
+      newExpression = (PsiNewExpression)factory.createExpressionFromText(text.toString(), element);
       selection = caretOffset < 0 ? new UnfairTextRange(caretOffset, caretOffset + 1) : null;
     }
     else {
-      final PsiAnonymousClass anonymousClass = originalExpression.getAnonymousClass();
-      newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + toType.getCanonicalText() + "()" + (anonymousClass != null ? "{}" : ""), originalExpression);
-      PsiExpressionList argumentList = originalExpression.getArgumentList();
+      final PsiAnonymousClass anonymousClass = element.getAnonymousClass();
+      newExpression = (PsiNewExpression)factory.createExpressionFromText("new " + myType.getCanonicalText() + "()" + (anonymousClass != null ? "{}" : ""),
+                                                                         element);
+      PsiExpressionList argumentList = element.getArgumentList();
       if (argumentList != null) {
         final PsiExpressionList newArgumentList = newExpression.getArgumentList();
         assert newArgumentList != null;
@@ -105,11 +95,11 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
         assert lBrace != null;
         final PsiElement childInside = lBrace.getNextSibling();
         if (childInside != null) {
-          PsiElement element = childInside;
+          PsiElement element1 = childInside;
           do {
-            commentTracker.markUnchanged(element);
+            commentTracker.markUnchanged(element1);
           }
-          while ((element = element.getNextSibling()) != null);
+          while ((element1 = element1.getNextSibling()) != null);
 
           final PsiElement rBrace = anonymousClass.getRBrace();
           assert rBrace != null;
@@ -119,23 +109,17 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
       selection = null;
       caretOffset = -1;
     }
-    PsiNewExpression element = (PsiNewExpression)commentTracker.replaceAndRestoreComments(originalExpression, newExpression);
-    if (PsiDiamondTypeUtil.canCollapseToDiamond(element, element, toType)) {
-      final PsiJavaCodeReferenceElement reference = element.getClassOrAnonymousClassReference();
+    newExpression = (PsiNewExpression)commentTracker.replaceAndRestoreComments(element, newExpression);
+    if (PsiDiamondTypeUtil.canCollapseToDiamond(newExpression, newExpression, myType)) {
+      final PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();
       assert reference != null;
       RemoveRedundantTypeArgumentsUtil.replaceExplicitWithDiamond(reference.getParameterList());
     }
-    editor.getCaretModel().moveToOffset(element.getTextRange().getEndOffset() + caretOffset);
-    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
     if (selection != null) {
-      selection = selection.shiftRight(element.getTextRange().getEndOffset());
-      editor.getSelectionModel().setSelection(selection.getStartOffset(), selection.getEndOffset());
+      selection = selection.shiftRight(newExpression.getTextRange().getEndOffset());
+      updater.select(selection);
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+    updater.moveTo(newExpression.getTextRange().getEndOffset() + caretOffset);
   }
 
   public static void register(@NotNull HighlightInfo.Builder highlightInfo, PsiExpression expression, PsiType lType) {
@@ -143,14 +127,14 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
     if (!(expression instanceof PsiNewExpression newExpression)) return;
     final PsiType rType = expression.getType();
     PsiType newType = lType;
-    if (rType instanceof PsiClassType && newType instanceof PsiClassType) {
-      final PsiClassType.ClassResolveResult rResolveResult = ((PsiClassType)rType).resolveGenerics();
+    if (rType instanceof PsiClassType rClassType && newType instanceof PsiClassType newClassType) {
+      final PsiClassType.ClassResolveResult rResolveResult = rClassType.resolveGenerics();
       PsiClass rClass = rResolveResult.getElement();
       if (rClass instanceof PsiAnonymousClass) {
         rClass = ((PsiAnonymousClass)rClass).getBaseClassType().resolve();
       }
       if (rClass != null) {
-        final PsiClassType.ClassResolveResult lResolveResult = ((PsiClassType)newType).resolveGenerics();
+        final PsiClassType.ClassResolveResult lResolveResult = newClassType.resolveGenerics();
         final PsiClass lClass = lResolveResult.getElement();
         if (lClass != null) {
           PsiSubstitutor substitutor = getInheritorSubstitutorForNewExpression(lClass, rClass, lResolveResult.getSubstitutor(), expression);
@@ -181,7 +165,7 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
       for (PsiTypeParameter baseParameter : PsiUtil.typeParametersIterable(baseClass)) {
         final PsiType substituted = superSubstitutor.substitute(baseParameter);
         PsiType arg = baseSubstitutor.substitute(baseParameter);
-        if (arg instanceof PsiWildcardType) arg = ((PsiWildcardType)arg).getBound();
+        if (arg instanceof PsiWildcardType wildcardType) arg = wildcardType.getBound();
         PsiType substitution =
           resolveHelper.getSubstitutionForTypeParameter(inheritorParameter, substituted, arg, true, PsiUtil.getLanguageLevel(context));
         if (PsiTypes.nullType().equals(substitution)) continue;
@@ -194,10 +178,5 @@ public final class ChangeNewOperatorTypeFix implements IntentionAction {
     }
 
     return inheritorSubstitutor;
-  }
-
-  @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new ChangeNewOperatorTypeFix(myType, PsiTreeUtil.findSameElementInCopy(myExpression, target));
   }
 }

@@ -1,11 +1,16 @@
-from typing import Any
+from typing import ClassVar
+from typing_extensions import Literal
 
-from openpyxl.descriptors.serialisable import Serialisable as Serialisable
+from openpyxl.descriptors.base import Bool, String, Typed, _ConvertibleToBool
+from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.styles.colors import Color
 
 class ChartsheetProperties(Serialisable):
-    tagname: str
-    published: Any
-    codeName: Any
-    tabColor: Any
-    __elements__: Any
-    def __init__(self, published: Any | None = ..., codeName: Any | None = ..., tabColor: Any | None = ...) -> None: ...
+    tagname: ClassVar[str]
+    published: Bool[Literal[True]]
+    codeName: String[Literal[True]]
+    tabColor: Typed[Color, Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(
+        self, published: _ConvertibleToBool | None = None, codeName: str | None = None, tabColor: Color | None = None
+    ) -> None: ...

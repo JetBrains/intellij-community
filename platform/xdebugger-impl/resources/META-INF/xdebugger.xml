@@ -19,6 +19,7 @@
     <extensionPoint name="xdebugger.attachHostSettingsProvider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachHostSettingsProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.dialog.item.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogItemPresentationProvider" dynamic="true"/>
     <extensionPoint name="xdebugger.dialog.presentation.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachDialogPresentationProvider" dynamic="true"/>
+    <extensionPoint name="xdebugger.dialog.process.view.provider" interface="com.intellij.xdebugger.impl.ui.attach.dialog.extensions.XAttachToProcessViewProvider" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -30,11 +31,14 @@
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
+
+    <projectService overrides="true" serviceInterface="com.intellij.execution.InlineResumeCreator" serviceImplementation="com.intellij.xdebugger.impl.runToolbar.XDebuggerInlineResumeCreator"/>
     <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
                     preload="notLightEdit"/>
     <projectService serviceImplementation="com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager"/>
     <projectService serviceImplementation="com.intellij.xdebugger.impl.inline.DebuggerInlayListener"/>
+    <projectService serviceImplementation="com.intellij.xdebugger.impl.XDebuggerLineChangeIconProvider"/>
 
     <projectService serviceImplementation="com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory"/>
 
@@ -45,8 +49,6 @@
                              id="project.propDebugger" provider="com.intellij.xdebugger.impl.settings.DebuggerConfigurableProvider"/>
 
     <customizableActionGroupProvider implementation="com.intellij.xdebugger.impl.ui.XDebugTabCustomizableActionGroupProvider"/>
-
-    <intentionMenuContributor implementation="com.intellij.xdebugger.impl.ui.DebuggerIntentionMenuContributor"/>
 
     <xdebugger.debuggerSupport implementation="com.intellij.xdebugger.impl.XDebuggerSupport" order="first" id="XDebuggerSupport"/>
 
@@ -68,6 +70,8 @@
     <virtualFileSystem key="lazyAttachVfs" implementationClass="com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS"/>
 
     <statistics.validation.customValidationRule implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.xdebugger.impl.FrameTypeValidator"/>
+
     <statistics.projectUsagesCollector implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.evaluate.DebuggerEvaluationStatisticsCollector"/>
@@ -101,6 +105,8 @@
     <xdebugger.dialog.item.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultItemPresentationProvider"/>
     <xdebugger.dialog.presentation.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogDefaultPresentationProvider"/>
 
+    <xdebugger.dialog.process.view.provider implementation="com.intellij.xdebugger.impl.ui.attach.dialog.AttachToRemoteProcessViewProvider" />
+
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
@@ -110,15 +116,25 @@
 
     <advancedSetting id="debugger.max.recent.expressions" default="50"
                      groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
+    <advancedSetting id="debugger.inlay.run.to.cursor" default="true"
+                     groupKey="group.advanced.settings.debugger" bundle="messages.XDebuggerBundle"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerActionsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.xdebugger.impl.XDebuggerPerformanceCollector"/>
 
     <applicationService serviceInterface="com.intellij.xdebugger.attach.XAttachRecentItemsMatcher"
                         serviceImplementation="com.intellij.xdebugger.impl.actions.DefaultAttachRecentItemsMatcher"/>
+
+    <gutterMarkPreprocessor implementation="com.intellij.xdebugger.impl.breakpoints.XBreakpointBase$BreakpointGutterIconMerge"/>
   </extensions>
 
   <actions>
+    <action class="com.intellij.xdebugger.impl.runToolbar.ConfigurationXDebuggerResumeAction">
+      <add-to-group group-id="compositeResumeGroup"/>
+    </action>
+    <action class="com.intellij.xdebugger.impl.runToolbar.CurrentSessionXDebuggerResumeAction">
+      <add-to-group group-id="compositeResumeGroup"/>
+    </action>
     <group id="XDebugger.AttachGroup">
       <action id="XDebugger.AttachToProcess" class="com.intellij.xdebugger.impl.actions.AttachToProcessAction"/>
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
@@ -171,5 +187,8 @@
             class="com.intellij.xdebugger.impl.ui.attach.dialog.AttachShowOnlyMyProcessesToggleAction">
       <add-to-group group-id="XDebugger.Attach.Dialog.Settings"/>
     </action>
+
+    <group id="XDebugger.RunToCursorInlayExtraActions">
+    </group>
   </actions>
 </idea-plugin>

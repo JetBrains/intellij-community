@@ -5,3 +5,4 @@ fun test() {
     val list: MutableList<Int> = mutableListOf(1)<caret>
     list += 2
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix

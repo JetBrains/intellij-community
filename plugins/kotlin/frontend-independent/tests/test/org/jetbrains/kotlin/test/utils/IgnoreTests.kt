@@ -21,7 +21,7 @@ object IgnoreTests {
         enableTestDirective: String,
         vararg additionalFilesExtensions: String,
         directivePosition: DirectivePosition = DirectivePosition.FIRST_LINE_IN_FILE,
-        test: () -> Unit,
+        test: (isTestEnabled: Boolean) -> Unit,
     ) {
         runTestIfEnabledByDirective(
             testFile,
@@ -35,7 +35,7 @@ object IgnoreTests {
     fun runTestWithFixMeSupport(
         testFile: Path,
         directivePosition: DirectivePosition = DirectivePosition.FIRST_LINE_IN_FILE,
-        test: () -> Unit
+        test: (isTestEnabled: Boolean) -> Unit
     ) {
         runTestIfEnabledByDirective(
             testFile,
@@ -51,7 +51,7 @@ object IgnoreTests {
         disableTestDirective: String,
         vararg additionalFilesExtensions: String,
         directivePosition: DirectivePosition = DirectivePosition.FIRST_LINE_IN_FILE,
-        test: () -> Unit
+        test: (isTestEnabled: Boolean) -> Unit
     ) {
         runTestIfNotDisabledByFileDirective(
             testFile,
@@ -67,7 +67,7 @@ object IgnoreTests {
         disableTestDirective: String,
         computeAdditionalFiles: (mainTestFile: Path) -> List<Path>,
         directivePosition: DirectivePosition = DirectivePosition.FIRST_LINE_IN_FILE,
-        test: () -> Unit
+        test: (isTestEnabled: Boolean) -> Unit
     ) {
         runTestIfEnabledByDirective(
             testFile,
@@ -83,16 +83,21 @@ object IgnoreTests {
         directive: EnableOrDisableTestDirective,
         directivePosition: DirectivePosition,
         additionalFiles: List<Path>,
-        test: () -> Unit
+        test: (isTestEnabled: Boolean) -> Unit
     ) {
+        check(!
+              (directive is EnableOrDisableTestDirective.Enable && (
+                     directive.directiveText == DIRECTIVES.FIR_IDENTICAL || directive.directiveText == DIRECTIVES.FIR_COMPARISON))) {
+            "It's not allowed to run runTestIfEnabledByDirective with FIR_IDENTICAL or FIR_COMPARISON"
+        }
         if (ALWAYS_CONSIDER_TEST_AS_PASSING) {
-            test()
+            test(true)
             return
         }
         val testIsEnabled = directive.isEnabledInFile(testFile)
 
         try {
-            test()
+            test(testIsEnabled)
         } catch (e: Throwable) {
             if (testIsEnabled) {
                 if (directive is EnableOrDisableTestDirective.Disable) {
@@ -200,7 +205,8 @@ object IgnoreTests {
 
     private fun containsDirective(file: Path, directive: EnableOrDisableTestDirective): Boolean {
         if (file.notExists()) return false
-        return file.useLines { lines -> lines.any { it.isLineWithDirective(directive) } }
+        if (file.useLines { lines -> lines.any { it.isLineWithDirective(directive) } }) return true
+        return InTextDirectivesUtils.textWithDirectives(file.parent.toFile()).lineSequence().any { it.isLineWithDirective(directive) }
     }
 
     private fun String.isLineWithDirective(directive: EnableOrDisableTestDirective): Boolean =
@@ -229,20 +235,27 @@ object IgnoreTests {
     }
 
     object DIRECTIVES {
+        @Deprecated(message = "use IGNORE_K2 instead")
         const val FIR_COMPARISON = "// FIR_COMPARISON"
+        @Deprecated(message = "use IGNORE_K2 instead")
         const val FIR_COMPARISON_MULTILINE_COMMENT = "/* FIR_COMPARISON */"
 
-        const val IGNORE_FIR_LOG = "// IGNORE_FIR_LOG"
-
-        const val IGNORE_FIR = "// IGNORE_FIR"
         const val IGNORE_K2 = "// IGNORE_K2"
+        const val IGNORE_K2_MULTILINE_COMMENT = "/* IGNORE_K2 */"
+        const val IGNORE_K2_LOG = "// IGNORE_K2_LOG"
+
+        @Deprecated(message = "use IGNORE_K2 instead")
+        const val IGNORE_FIR = "// IGNORE_FIR"
+        @Deprecated(message = "use IGNORE_K2_MULTILINE_COMMENT instead")
         const val IGNORE_FIR_MULTILINE_COMMENT = "/* IGNORE_FIR */"
 
         const val FIX_ME = "// FIX_ME: "
+
         const val FIR_IDENTICAL = "// FIR_IDENTICAL"
 
         const val IGNORE_FE10_BINDING_BY_FIR = "// IGNORE_FE10_BINDING_BY_FIR"
-        const val IGNORE_FE10 = "// IGNORE_FE10"
+
+        const val IGNORE_K1 = "// IGNORE_K1"
     }
 
     enum class DirectivePosition {
@@ -327,6 +340,8 @@ object IgnoreTests {
 
     private fun deriveFirTestFile(originalTestFile: File): File {
         val name = originalTestFile.name
-        return originalTestFile.parentFile.resolve(name.substringBeforeLast('.') + ".fir." + name.substringAfterLast('.'))
+        return originalTestFile.parentFile.resolve(deriveFirFileName(name))
     }
+
+    fun deriveFirFileName(fileName: String): String = fileName.substringBeforeLast('.') + ".fir." + fileName.substringAfterLast('.')
 }

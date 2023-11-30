@@ -108,7 +108,7 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
     }
   }
 
-  private static class NewFolderValidator implements InputValidatorEx {
+  private static final class NewFolderValidator implements InputValidatorEx {
     private final VirtualFile myDirectory;
     private @NlsContexts.DetailedDescription String myErrorText;
 

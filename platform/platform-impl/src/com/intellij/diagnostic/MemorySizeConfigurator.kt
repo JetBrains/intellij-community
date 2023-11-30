@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
@@ -11,7 +11,13 @@ import com.sun.management.OperatingSystemMXBean
 import java.lang.management.ManagementFactory
 import kotlin.math.max
 
+private const val DEFAULT_XMX = 2048  // must be the same as `VmOptionsGenerator.DEFAULT_XMX`
+private const val MAXIMUM_SUGGESTED_XMX = 2 * DEFAULT_XMX
+
 private class MemorySizeConfigurator : ProjectActivity {
+  @Suppress("SSBasedInspection")
+  private val LOG = Logger.getInstance(MemorySizeConfigurator::class.java)
+
   override suspend fun execute(project: Project) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return
@@ -27,15 +33,15 @@ private class MemorySizeConfigurator : ProjectActivity {
       LOG.info("Memory size configurator skipped: Unable to determine current -Xmx. VM options file is ${System.getProperty("jb.vmOptionsFile")}")
       return
     }
-    if (currentXmx > 750) {
-      // Memory has already been adjusted by the user manually
+    if (currentXmx > DEFAULT_XMX) {
+      // The user has already manually adjusted memory settings
       return
     }
 
     val osMxBean = ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
-    val totalPhysicalMemory = osMxBean.totalPhysicalMemorySize shr 20
+    val totalPhysicalMemory = osMxBean.totalMemorySize shr 20
 
-    val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(currentXmx, totalPhysicalMemory.toInt())
+    val newXmx = MemorySizeConfiguratorService.getInstance().getSuggestedMemorySize(totalPhysicalMemory.toInt())
 
     val currentXms = max(VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, true),
                          VMOptions.readOption(VMOptions.MemoryKind.MIN_HEAP, false))
@@ -54,10 +60,6 @@ private class MemorySizeConfigurator : ProjectActivity {
     }
     PropertiesComponent.getInstance().setValue("ide.memory.adjusted", true)
   }
-
-  companion object {
-    val LOG = Logger.getInstance(MemorySizeConfigurator::class.java)
-  }
 }
 
 // Allow overriding in other IDEs
@@ -66,7 +68,7 @@ open class MemorySizeConfiguratorService {
     fun getInstance(): MemorySizeConfiguratorService = service()
   }
 
-  open fun getSuggestedMemorySize(currentXmx: Int, totalPhysicalMemory: Int): Int {
-    return (totalPhysicalMemory / 8).coerceIn(750, 2048)
-  }
+  open fun getSuggestedMemorySize(totalPhysicalMemory: Int): Int =
+    if (DEFAULT_XMX > totalPhysicalMemory) 750.coerceAtMost(totalPhysicalMemory) // 750 is the old default
+    else (totalPhysicalMemory / 8).coerceIn(DEFAULT_XMX, MAXIMUM_SUGGESTED_XMX)
 }

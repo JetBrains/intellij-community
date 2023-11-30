@@ -1,20 +1,29 @@
 <component name="libraryTable">
   <library name="jna" type="repository">
-    <properties maven-id="net.java.dev.jna:jna-platform:5.12.1" />
+    <properties maven-id="net.java.dev.jna:jna-platform:5.13.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar">
+          <sha256sum>474d7b88f6e97009b6ec1d98c3024dd95c23187c65dabfbc35331bcac3d173dd</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar">
+          <sha256sum>66d4f819a062a51a1d5627bffc23fac55d1677f0e0a1feba144aabdd670a64bb</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <ANNOTATIONS>
       <root url="file://$PROJECT_DIR$/lib/annotations/jna" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.12.1/jna-platform-5.12.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.12.1/jna-5.12.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.12.1/jna-platform-5.12.1-javadoc.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.12.1/jna-5.12.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.13.0/jna-5.13.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.12.1/jna-platform-5.12.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.12.1/jna-5.12.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna-platform/5.13.0/jna-platform-5.13.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/java/dev/jna/jna/5.13.0/jna-5.13.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

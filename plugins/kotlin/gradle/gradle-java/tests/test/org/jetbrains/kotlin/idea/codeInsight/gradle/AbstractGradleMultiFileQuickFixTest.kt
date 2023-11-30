@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.io.readText
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
 import org.jetbrains.kotlin.idea.test.waitIndexingComplete
@@ -16,6 +15,7 @@ import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.pathString
+import kotlin.io.path.readText
 import kotlin.streams.asSequence
 
 abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradleImportingCodeInsightTestCase() {
@@ -65,7 +65,7 @@ abstract class AbstractGradleMultiFileQuickFixTest : MultiplePluginVersionGradle
                     fun(vFile: VirtualFile): Boolean {
                         if (vFile.parent == projectVFile) {
                             when (vFile.name) {
-                                ".gradle", "gradle", "build", "gradle.properties" -> return false
+                                ".gradle", "gradle", "build", "gradle.properties", ".kotlin" -> return false
                             }
                         }
 

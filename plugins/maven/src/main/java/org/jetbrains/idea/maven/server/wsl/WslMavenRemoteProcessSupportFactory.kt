@@ -30,7 +30,7 @@ class WslMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
   private fun toWslMavenDistribution(mavenDistribution: MavenDistribution, wslDistribution: WSLDistribution): WslMavenDistribution {
     if (mavenDistribution is WslMavenDistribution) return mavenDistribution
     if (mavenDistribution is LocalMavenDistribution) {
-      return wslDistribution.getWslPath(mavenDistribution.mavenHome.absolutePathString())?.let {
+      return wslDistribution.getWslPath(mavenDistribution.mavenHome.toAbsolutePath())?.let {
         WslMavenDistribution(wslDistribution, it, it)
       } ?: throw IllegalArgumentException("Cannot use mavenDistribution ${mavenDistribution}")
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -22,7 +22,7 @@ public abstract class ConvertIndentsActionBase extends EditorAction {
 
   protected abstract int performAction(Editor editor, TextRange textRange);
 
-  private class Handler extends EditorWriteActionHandler {
+  private final class Handler extends EditorWriteActionHandler {
     @Override
     public void executeWriteAction(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final SelectionModel selectionModel = editor.getSelectionModel();

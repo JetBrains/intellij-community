@@ -1,11 +1,11 @@
 //file
-import kotlinApi.KotlinTrait;
+import kotlinApi.KotlinInterface;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class C {
     void foo() {
-        KotlinTrait t = new KotlinTrait() {
+        KotlinInterface t = new KotlinInterface() {
             @Nullable
             @Override
             public String nullableFun() {

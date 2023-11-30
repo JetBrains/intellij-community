@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.unwrap.LanguageUnwrappers;
@@ -20,9 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XmlUnwrapDescriptor implements UnwrapDescriptor {
-  @NotNull
   @Override
-  public List<Pair<PsiElement, Unwrapper>> collectUnwrappers(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull List<Pair<PsiElement, Unwrapper>> collectUnwrappers(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
 
     PsiElement e1 = file.findElementAt(offset);

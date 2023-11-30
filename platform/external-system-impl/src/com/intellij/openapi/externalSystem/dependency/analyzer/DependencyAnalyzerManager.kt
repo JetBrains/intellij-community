@@ -23,9 +23,7 @@ class DependencyAnalyzerManager(private val project: Project) {
         }
       }
     }
-    if (file.getViews().isEmpty()) {
-      fileEditorManager.openFile(file, true)
-    }
+    fileEditorManager.openFile(file, true, true)
     return requireNotNull(file.getViews().firstOrNull()) {
       "DependencyAnalyzerView should be created during file open"
     }

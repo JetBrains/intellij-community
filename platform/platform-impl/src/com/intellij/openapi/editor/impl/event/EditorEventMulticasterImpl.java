@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.Disposable;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.beans.PropertyChangeListener;
 import java.util.*;
 
-public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
+public final class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private static final ExtensionPointName<EditorMouseListener> MOUSE_EP = new ExtensionPointName<>("com.intellij.editorFactoryMouseListener");
   private static final ExtensionPointName<EditorMouseMotionListener> MOUSE_MOTION_EP = new ExtensionPointName<>("com.intellij.editorFactoryMouseMotionListener");
   private static final ExtensionPointName<DocumentListener> DOCUMENT_EP = new ExtensionPointName<>("com.intellij.editorFactoryDocumentListener");
@@ -121,8 +121,9 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   /**
-   * Dangerous method. When high priority listener fires the underlying subsystems (e.g. folding,caret, etc) may not be ready yet.
-   * So all requests to the e.g. caret offset might generate exceptions.
+   * Dangerous method.
+   * When high-priority listener fires, the underlying subsystems (e.g., folding, caret, etc.) may not be ready yet.
+   * So all requests to the e.g., caret offset might generate exceptions.
    * Use for internal purposes only.
    * @see EditorDocumentPriorities
    */

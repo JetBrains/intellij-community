@@ -43,8 +43,16 @@ public class PropertyKeyIndex extends StringStubIndexExtension<Property> {
     return KEY;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getProperties(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<Property> get(@NotNull String key, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return getProperties(key, project, scope);
+  }
+
+  public Collection<Property> getProperties(@NotNull String key, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), key, project, scope, Property.class);
   }
 }

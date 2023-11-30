@@ -10,13 +10,14 @@ repositories {
     mavenLocal()
     mavenCentral()
     maven("KOTLIN_BOOTSTRAP_REPO")
+    maven("KOTLIN_IDE_PLUGIN_DEPENDENCIES_REPO")
     maven("KOTLIN_REPO")
     maven("https://maven.pkg.jetbrains.space/public/p/kotlinx-html/maven")
 }
 
 kotlin {
     jvm {
-        jvmToolchain(11)
+        jvmToolchain(8)
         withJava()
         testRuns.named("test") {
             executionTask.configure {
@@ -43,8 +44,8 @@ kotlin {
         }
         val jvmMain by getting {
             dependencies {
-                implementation("io.ktor:ktor-server-netty:2.0.2")
-                implementation("io.ktor:ktor-server-html-builder-jvm:2.0.2")
+                implementation("io.ktor:ktor-server-netty:2.3.2")
+                implementation("io.ktor:ktor-server-html-builder-jvm:2.3.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.7.2")
             }
         }

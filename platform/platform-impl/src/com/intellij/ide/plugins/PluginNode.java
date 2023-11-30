@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
@@ -32,6 +32,9 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String version;
   private String vendor;
   private String organization;
+  private String verifiedName;
+  private boolean verified;
+  private boolean trader;
   private @NlsSafe String description;
   private String sinceBuild;
   private String untilBuild;
@@ -66,6 +69,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private String externalPluginIdForScreenShots;
   private String mySuggestedCommercialIde = null;
   private Collection<String> mySuggestedFeatures;
+  private boolean myConverted;
 
   private Collection<String> dependencyNames;
 
@@ -199,6 +203,30 @@ public final class PluginNode implements IdeaPluginDescriptor {
 
   public void setOrganization(@Nullable String organization) {
     this.organization = organization;
+  }
+
+  public String getVerifiedName() {
+    return verifiedName;
+  }
+
+  public void setVerifiedName(String verifiedName) {
+    this.verifiedName = verifiedName;
+  }
+
+  public boolean isVerified() {
+    return verified;
+  }
+
+  public void setVerified(boolean verified) {
+    this.verified = verified;
+  }
+
+  public boolean isTrader() {
+    return trader;
+  }
+
+  public void setTrader(boolean trader) {
+    this.trader = trader;
   }
 
   @Override
@@ -604,6 +632,14 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.dependencyNames = dependencyNames;
   }
 
+  public boolean isConverted() {
+    return myConverted;
+  }
+
+  public void setConverted(boolean converted) {
+    myConverted = converted;
+  }
+
   @Override
   public boolean equals(Object o) {
     return this == o ||
@@ -620,7 +656,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return String.format("PluginNode{id=%s, name='%s'}", id, name);
   }
 
-  private static class PluginNodeDependency implements IdeaPluginDependency {
+  private static final class PluginNodeDependency implements IdeaPluginDependency {
     private final @NotNull PluginId myPluginId;
     private final boolean myOptional;
 

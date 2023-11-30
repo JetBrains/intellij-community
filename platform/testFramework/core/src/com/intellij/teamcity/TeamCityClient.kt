@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.teamcity
 
 import com.fasterxml.jackson.databind.JsonNode
@@ -5,8 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.TestCaseLoader
 import com.intellij.nastradamus.model.ChangeEntity
-import com.intellij.tool.Cache
+import com.intellij.openapi.application.PathManager
 import com.intellij.tool.HttpClient
+import com.intellij.tool.NastradamusCache
 import com.intellij.tool.withErrorThreshold
 import com.intellij.tool.withRetry
 import org.apache.http.HttpRequest
@@ -16,16 +18,21 @@ import org.apache.http.impl.auth.BasicScheme
 import java.io.ByteArrayOutputStream
 import java.io.InputStreamReader
 import java.net.URI
+import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.Path
-import kotlin.io.path.bufferedReader
+import kotlin.io.path.*
 
-
+/** Clone of the com.intellij.ide.starter.ci.teamcity.TeamCityClient */
 class TeamCityClient(
   val baseUri: URI = URI("https://buildserver.labs.intellij.net").normalize(),
   private val systemPropertiesFilePath: Path = Path(System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE"))
 ) {
+  // temporary directory, where artifact will be moved for preparation for publishing
+  val artifactForPublishingDir: Path by lazy {
+    PathManager.getLogDir().parent.resolve("teamcity-artifacts-for-publish").createDirectories()
+  }
+
   private fun loadProperties(propertiesPath: Path) =
     try {
       propertiesPath.bufferedReader().use {
@@ -57,7 +64,7 @@ class TeamCityClient(
 
   val configurationName by lazy { systemProperties["teamcity.buildConfName"] }
 
-  val buildParams by lazy {
+  private val buildParams by lazy {
     val configurationPropertiesFile = systemProperties["teamcity.configuration.properties.file"]
 
     if (configurationPropertiesFile.isNullOrBlank()) return@lazy emptyMap()
@@ -80,6 +87,10 @@ class TeamCityClient(
   val buildId: String by lazy { getExistingParameter("teamcity.build.id") }
   val buildTypeId: String by lazy { getExistingParameter("teamcity.buildType.id") }
   val os: String by lazy { getExistingParameter("teamcity.agent.jvm.os.name") }
+  val branchName by lazy { systemProperties.plus(buildParams)["teamcity.build.branch"] ?: "" }
+  val isPersonalBuild by lazy {
+    systemProperties.plus(buildParams)["teamcity.build.branch"].equals("true", ignoreCase = true)
+  }
 
   private val userName: String by lazy { getExistingParameter("teamcity.auth.userId") }
   private val password: String by lazy { getExistingParameter("teamcity.auth.password") }
@@ -128,7 +139,7 @@ class TeamCityClient(
   private fun downloadChangesPatch(buildTypeId: String, modificationId: String, isPersonal: Boolean): String {
     val uri = baseUri.resolve("/downloadPatch.html?buildTypeId=${buildTypeId}&modId=${modificationId}&personal=$isPersonal")
 
-    return Cache.get(uri) {
+    return NastradamusCache.get(uri) {
       val outputStream = ByteArrayOutputStream()
 
       if (!HttpClient.download(request = HttpGet(uri).withAuth(), outStream = outputStream, retries = 3)) {
@@ -147,7 +158,7 @@ class TeamCityClient(
   fun getChanges(buildId: String): List<JsonNode> {
     val fullUrl = restUri.resolve("changes?locator=build:(id:$buildId)")
 
-    val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
+    val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
 
     return jacksonMapper.readTree(rawData).fields().asSequence()
       .filter { it.key == "change" }
@@ -183,11 +194,11 @@ class TeamCityClient(
       }
     }
 
-    val rawChange = Cache.get(fullUrl) { get(fullUrl).toString() }
+    val rawChange = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
     return processData(jacksonMapper.readTree(rawChange))
   }
 
-  fun getTestRunInfo(buildId: String): List<JsonNode> {
+  private fun getTestRunInfo(buildId: String): List<JsonNode> {
     val countOfTestsOnPage = 200
     var startPosition = 0
     val accumulatedTests: MutableList<JsonNode> = mutableListOf()
@@ -202,7 +213,7 @@ class TeamCityClient(
                  "includePersonal:true&fields=nextHref," +
                  "testOccurrence(id,name,status,duration,currentlyInvestigated,currentlyMuted,muted,test(id,parsedTestName),newFailure,metadata(count),nextFixed(id),runOrder)")
 
-      val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
+      val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
 
       currentTests = jacksonMapper.readTree(rawData).fields().asSequence()
         .filter { it.key == "testOccurrence" }
@@ -225,7 +236,7 @@ class TeamCityClient(
   private fun getBuildInfo(buildId: String): JsonNode {
     val fullUrl = restUri.resolve("builds/$buildId")
 
-    val rawData = Cache.get(fullUrl) { get(fullUrl).toString() }
+    val rawData = NastradamusCache.get(fullUrl) { get(fullUrl).toString() }
     return jacksonMapper.readTree(rawData)
   }
 
@@ -234,5 +245,64 @@ class TeamCityClient(
   private fun getTriggeredByInfo(buildId: String): JsonNode = getBuildInfo(buildId).findValue("triggered")
 
   fun getTriggeredByInfo(): JsonNode = getTriggeredByInfo(buildId)
+
+  /**
+   * [source] - source path of artifact
+   * [artifactPath] - new path (relative, where artifact will be present)
+   * [artifactName] - name of artifact
+   */
+  fun publishTeamCityArtifacts(
+    source: Path,
+    artifactPath: String,
+    artifactName: String = source.fileName.toString(),
+    zipContent: Boolean = true,
+  ) {
+    if (!source.exists()) {
+      System.err.println("TeamCity artifact $source does not exist")
+      return
+    }
+
+    fun printTcArtifactsPublishMessage(spec: String) {
+      println(" !!teamcity[publishArtifacts '$spec'] ") //we need this to see in the usual IDEA log
+      println(" ##teamcity[publishArtifacts '$spec'] ")
+    }
+
+    var suffix: String
+    var nextSuffix = 0
+    var artifactDir: Path
+    do {
+      suffix = if (nextSuffix == 0) "" else "-$nextSuffix"
+      artifactDir = (artifactForPublishingDir / artifactPath / (artifactName + suffix)).normalize().toAbsolutePath()
+      nextSuffix++
+    }
+    while (artifactDir.exists())
+
+    artifactDir.toFile().deleteRecursively()
+    artifactDir.createDirectories()
+
+    if (source.isDirectory()) {
+      Files.walk(source).use { files ->
+        for (path in files) {
+          path.copyTo(target = artifactDir.resolve(source.relativize(path)), overwrite = true)
+        }
+      }
+      if (zipContent) {
+        printTcArtifactsPublishMessage("${artifactDir.toRealPath()}/** => $artifactPath/$artifactName$suffix.zip")
+      }
+      else {
+        printTcArtifactsPublishMessage("${artifactDir.toRealPath()}/** => $artifactPath$suffix")
+      }
+    }
+    else {
+      val tempFile = artifactDir
+      source.copyTo(tempFile, overwrite = true)
+      if (zipContent) {
+        printTcArtifactsPublishMessage("${tempFile.toRealPath()} => $artifactPath/${artifactName + suffix}.zip")
+      }
+      else {
+        printTcArtifactsPublishMessage("${tempFile.toRealPath()} => $artifactPath")
+      }
+    }
+  }
 }
 

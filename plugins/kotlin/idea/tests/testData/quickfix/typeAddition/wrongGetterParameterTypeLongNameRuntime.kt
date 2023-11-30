@@ -4,4 +4,6 @@ class A() {
     val i: java.util.HashSet<Int>
         get(): <caret>Any = java.util.LinkedHashSet<Int>()
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix

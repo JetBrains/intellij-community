@@ -19,10 +19,6 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 internal class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
-    private companion object {
-        private val COROUTINE_CONTEXT_CALLABLE_ID = CallableId(FqName("kotlin.coroutines"), Name.identifier("coroutineContext"))
-    }
-
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
     override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
@@ -69,3 +65,5 @@ internal class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
         override fun getCommonIcon(infos: List<MergeableLineMarkerInfo<*>>) = infos.firstNotNullOf { it.icon }
     }
 }
+
+private val COROUTINE_CONTEXT_CALLABLE_ID = CallableId(FqName("kotlin.coroutines"), Name.identifier("coroutineContext"))

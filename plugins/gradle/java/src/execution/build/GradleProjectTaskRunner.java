@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunConfigurationModule;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.scratch.JavaScratchConfiguration;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -21,7 +22,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.util.GradleVersion;
@@ -31,18 +31,22 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScript;
+import org.jetbrains.plugins.gradle.service.task.LazyVersionSpecificInitScript;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.*;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
 import static com.intellij.openapi.util.text.StringUtil.*;
 
 /**
@@ -200,20 +204,20 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
         String outputFilePath = FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath());
         GradleVersion v68 = GradleVersion.version("6.8");
 
-        String initScript;
-        String initScriptUsingService;
+        Supplier<String> initScriptSupplier;
+        Supplier<String> initScriptUsingServiceSupplier;
 
         if (GradleImprovedHotswapDetection.isEnabled()) {
-          initScript = GradleImprovedHotswapDetection.getInitScript(outputPathsFile);
-          initScriptUsingService = GradleImprovedHotswapDetection.getInitScriptUsingService(outputPathsFile);
+          initScriptSupplier = () -> GradleImprovedHotswapDetection.getInitScript(outputPathsFile);
+          initScriptUsingServiceSupplier = () -> GradleImprovedHotswapDetection.getInitScriptUsingService(outputPathsFile);
         }
         else {
-          initScript = String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath);
-          initScriptUsingService = String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath);
+          initScriptSupplier = () -> String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath);
+          initScriptUsingServiceSupplier = () -> String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath);
         }
-
-        var simple = new VersionSpecificInitScript(initScript, "ijpathcollect", v -> v.compareTo(v68) < 0);
-        var services = new VersionSpecificInitScript(initScriptUsingService, "ijpathcollect", v -> v.compareTo(v68) >= 0);
+        var simple = new LazyVersionSpecificInitScript(initScriptSupplier, "ijpathcollect", v -> v.compareTo(v68) < 0);
+        var services =
+          new LazyVersionSpecificInitScript(initScriptUsingServiceSupplier, "ijpathcollect", v -> v.compareTo(v68) >= 0);
         executionSettingsBuilder.addInitScripts(rootProjectPath, simple, services);
       }
 
@@ -226,7 +230,7 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, settings.getExecutionName());
 
       ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, project, GradleConstants.SYSTEM_ID,
-                                 taskCallback, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false, userData);
+                                 taskCallback, ProgressExecutionMode.NO_PROGRESS_ASYNC, false, userData);
     }
     return resultPromise;
   }
@@ -268,6 +272,14 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
   }
 
   @Override
+  public boolean canRun(@NotNull Project project, @NotNull ProjectTask projectTask, @Nullable ProjectTaskContext context) {
+    if (context != null && context.getRunConfiguration() instanceof JavaScratchConfiguration) {
+      return false;
+    }
+    return canRun(projectTask);
+  }
+
+  @Override
   public boolean canRun(@NotNull ProjectTask projectTask) {
     if (projectTask instanceof ModuleBuildTask) {
       Module module = ((ModuleBuildTask)projectTask).getModule();
@@ -282,6 +294,9 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
     if (projectTask instanceof ExecuteRunConfigurationTask) {
       RunProfile runProfile = ((ExecuteRunConfigurationTask)projectTask).getRunProfile();
+      if (runProfile instanceof JavaScratchConfiguration) {
+        return false;
+      }
       if (runProfile instanceof ModuleBasedConfiguration) {
         RunConfigurationModule module = ((ModuleBasedConfiguration<?, ?>)runProfile).getConfigurationModule();
         if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module.getModule()) ||

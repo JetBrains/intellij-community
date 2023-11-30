@@ -1,23 +1,27 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction
-import com.intellij.find.FindSettings
 import com.intellij.find.actions.ShowUsagesAction
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiNamedElement
 import com.intellij.usages.Usage
+import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.sampullara.cli.Args
+import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
+import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 
 /**
  * Command to execute find usages with popup
@@ -27,25 +31,31 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
   companion object {
     const val PREFIX: @NonNls String = CMD_PREFIX + "findUsages"
     const val SPAN_NAME: @NonNls String = "findUsages"
-    private val LOG = Logger.getInstance(FindUsagesCommand::class.java)
+    const val PARENT_SPAN_NAME: @NonNls String = SPAN_NAME + "Parent"
+    private val LOG = logger<FindUsagesCommand>()
   }
 
   @Suppress("TestOnlyProblems")
   override suspend fun doExecute(context: PlaybackContext) {
     val options = FindUsagesArguments()
-    Args.parse(options, extractCommandArgument(PREFIX).split(" ").toTypedArray())
+    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split(" ", limit= 2) }.toTypedArray())
 
     val position = options.position
     val elementName = options.expectedName
     if (position != null) {
       val result = GoToNamedElementCommand(GoToNamedElementCommand.PREFIX + " $position $elementName", -1).execute(context)
-      result.onError {
-        throw Exception("fail to go to element $elementName")
+      result.exceptionally { e ->
+        throw Exception("fail to go to element $elementName", e)
       }
+      result.get(30, TimeUnit.SECONDS)
     }
 
     val currentOTContext = Context.current()
     var findUsagesFuture: Future<Collection<Usage>>
+    val storedPageSize = AdvancedSettings.getInt("ide.usages.page.size")
+    val spanBuilder = PerformanceTestSpan.getTracer(isWarmupMode).spanBuilder(PARENT_SPAN_NAME).setParent(PerformanceTestSpan.getContext())
+    var spanRef: Span? = null
+    var scopeRef: Scope? = null
     withContext(Dispatchers.EDT) {
       currentOTContext.makeCurrent().use {
         val editor = FileEditorManager.getInstance(context.project).selectedTextEditor
@@ -53,11 +63,13 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
           throw Exception("No editor is opened")
         }
         val offset = editor.caretModel.offset
-        val element = if (GotoDeclarationAction.findElementToShowUsagesOf(editor, offset) == null) {
-          GotoDeclarationAction.findTargetElement(context.project, editor, offset)
-        }
-        else {
-          GotoDeclarationAction.findElementToShowUsagesOf(editor, offset)
+        val element = smartReadAction(context.project) {
+          if (GotoDeclarationAction.findElementToShowUsagesOf(editor, offset) == null) {
+            GotoDeclarationAction.findTargetElement(context.project, editor, offset)
+          }
+          else {
+            GotoDeclarationAction.findElementToShowUsagesOf(editor, offset)
+          }
         }
         if (element == null) {
           throw Exception("Can't find an element under $offset offset.")
@@ -73,13 +85,18 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
         val popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor)
 
         //configuration for find usages
-        AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100, we need to find all usages to compare
+        AdvancedSettings.setInt("ide.usages.page.size", Int.MAX_VALUE) //by default, it's 100; we need to find all usages to compare
         val scope = FindUsagesOptions.findScopeByName(context.project, null, options.scope)
+        spanRef = spanBuilder.startSpan()
+        scopeRef = spanRef!!.makeCurrent()
         findUsagesFuture = ShowUsagesAction.startFindUsagesWithResult(element, popupPosition, editor, scope)
       }
 
     }
     val results = findUsagesFuture.get()
+    spanRef!!.end()
+    scopeRef!!.close()
+    AdvancedSettings.setInt("ide.usages.page.size", storedPageSize)
     FindUsagesDumper.storeMetricsDumpFoundUsages(results.toMutableList(), context.project)
   }
 

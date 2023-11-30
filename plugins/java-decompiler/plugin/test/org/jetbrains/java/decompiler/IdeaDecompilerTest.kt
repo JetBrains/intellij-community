@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler
 
 import com.intellij.JavaTestUtil
@@ -55,7 +55,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
   fun testSimple() {
     val file = getTestFile("${IdeaTestUtil.getMockJdk18Path().path}/jre/lib/rt.jar!/java/lang/String.class")
     val decompiled = IdeaDecompiler().getText(file).toString()
-    assertTrue(decompiled, decompiled.startsWith("${IdeaDecompiler.BANNER}package java.lang;\n"))
+    assertTrue(decompiled, decompiled.startsWith("${IDEA_DECOMPILER_BANNER}package java.lang;\n"))
     assertTrue(decompiled, decompiled.contains("public final class String"))
     assertTrue(decompiled, decompiled.contains("@deprecated"))
     assertTrue(decompiled, decompiled.contains("private static class CaseInsensitiveComparator"))
@@ -222,7 +222,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         }
 
         val decompiled = psiFile.mirror.text
-        assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name.endsWith("-info.class"))
+        assertTrue(file.path, decompiled.startsWith(IDEA_DECOMPILER_BANNER) || file.name.endsWith("-info.class"))
 
         // check that no mapped line number is on an empty line
         val prefix = "// "

@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.uploader
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.annotation.JsonView
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
@@ -21,6 +24,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.reflect.full.IllegalCallableAccessException
 
 object EventLogExternalUploader {
   private val LOG = Logger.getInstance(EventLogExternalUploader.javaClass)
@@ -73,7 +77,7 @@ object EventLogExternalUploader {
     }
   }
 
-  fun startExternalUpload(recordersProviders: List<StatisticsEventLoggerProvider>, isTest: Boolean) {
+  fun startExternalUpload(recordersProviders: List<StatisticsEventLoggerProvider>, isTestConfig: Boolean, isTestSendEndpoint: Boolean) {
     val enabledRecordersProviders = recordersProviders.filter { it.isSendEnabled() }
     if (enabledRecordersProviders.isEmpty()) {
       LOG.info("Don't start external process because sending logs is disabled for all recorders")
@@ -82,7 +86,7 @@ object EventLogExternalUploader {
 
     val recorderIds = enabledRecordersProviders.map { it.recorderId }
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderIds)
-    val application = EventLogInternalApplicationInfo(isTest)
+    val application = EventLogInternalApplicationInfo(isTestConfig, isTestSendEndpoint)
     try {
       val command = prepareUploadCommand(enabledRecordersProviders, application)
       EventLogSystemLogger.logFinishedCreatingExternalSendCommand(recorderIds, null)
@@ -111,7 +115,11 @@ object EventLogExternalUploader {
     val libPaths = setOf(
       findLibraryByClass(kotlin.coroutines.Continuation::class.java), // add kotlin-std to classpath
       findLibraryByClass(NotNull::class.java), // annotations
-      findLibraryByClass(Gson::class.java), // serializer library
+      findLibraryByClass(JsonParser::class.java), //add jackson-core
+      findLibraryByClass(JsonNode::class.java), //add jackson-databind
+      findLibraryByClass(JsonView::class.java), //add jackson-annotations
+      findLibraryByClass(KotlinFeature::class.java), // add jackson-kotlin-module
+      findLibraryByClass(IllegalCallableAccessException::class.java), // add kotlin-reflect
       findLibraryByClass(EventGroupsFilterRules::class.java), // validation library
       findLibraryByClass(EventGroupRemoteDescriptors::class.java) // model library
     )
@@ -142,6 +150,7 @@ object EventLogExternalUploader {
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
+    addArgument(args, BASELINE_VERSION, applicationInfo.baselineVersion.toString())
     addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
     addArgument(args, EXTRA_HEADERS, ExtraHTTPHeadersParser.serialize(applicationInfo.connectionSettings.getExtraHeaders()))
 
@@ -149,8 +158,12 @@ object EventLogExternalUploader {
       args += INTERNAL_OPTION
     }
 
-    if (applicationInfo.isTest) {
-      args += TEST_OPTION
+    if (applicationInfo.isTestSendEndpoint) {
+      args += TEST_SEND_ENDPOINT
+    }
+
+    if (applicationInfo.isTestConfig) {
+      args += TEST_CONFIG
     }
 
     if (applicationInfo.isEAP) {

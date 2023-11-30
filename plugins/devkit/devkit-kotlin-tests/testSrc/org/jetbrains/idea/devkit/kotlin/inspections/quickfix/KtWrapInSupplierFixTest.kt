@@ -3,11 +3,11 @@ package org.jetbrains.idea.devkit.kotlin.inspections.quickfix
 
 import com.intellij.testFramework.TestDataPath
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldInspectionTestBase
+import org.jetbrains.idea.devkit.inspections.ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase
 import org.jetbrains.idea.devkit.kotlin.DevkitKtTestsUtil
 
 @TestDataPath("\$CONTENT_ROOT/testData/inspections/wrapInSupplierFix")
-class KtWrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldInspectionTestBase() {
+class KtWrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldOrPropertyInspectionTestBase() {
 
   override fun getBasePath() = DevkitKtTestsUtil.TESTDATA_PATH + "inspections/wrapInSupplierFix"
 
@@ -16,17 +16,6 @@ class KtWrapInSupplierFixTest : ApplicationServiceAsStaticFinalFieldInspectionTe
 
   private val fixName = DevKitBundle.message("inspections.wrap.application.service.in.supplier.quick.fix.message")
 
-  override fun setUp() {
-    super.setUp()
-    myFixture.addClass(
-      """
-      package kotlin.reflect;
-
-      public class KClass<T> {
-        public Class<T> java;
-      }
-      """)
-  }
 
   fun testWrapTopLevelPropertyInSupplier() {
     doFixTest(fixName)

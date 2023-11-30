@@ -16,9 +16,11 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-public class MissingActionUpdateThread extends DevKitJvmInspection {
+@VisibleForTesting
+public final class MissingActionUpdateThread extends DevKitJvmInspection {
 
   @Override
   protected boolean isAllowed(@NotNull ProblemsHolder holder) {

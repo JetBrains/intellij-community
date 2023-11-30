@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.caches.resolve.ResolutionUtils;
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator;
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings;
-import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRefactoringSupport;
 import org.jetbrains.kotlin.idea.refactoring.move.MoveUtilKt;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.KtClass;
@@ -112,8 +111,7 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
     }
 
     private boolean isThisNeeded() {
-        return innerClass instanceof KtClass && KotlinMoveRefactoringSupport.getInstance()
-                .traverseOuterInstanceReferences(innerClass, true);
+        return innerClass instanceof KtClass && MoveUtilKt.traverseOuterInstanceReferences(innerClass, true);
     }
 
     @Nullable
@@ -271,7 +269,7 @@ public class MoveKotlinNestedClassesToUpperLevelDialog extends MoveDialogBase {
             modelResult = getModel().computeModelResult();
         }
         catch (ConfigurationException e) {
-            setErrorText(e.getMessage());
+            setErrorHtml(e.getMessageHtml());
             return;
         }
 

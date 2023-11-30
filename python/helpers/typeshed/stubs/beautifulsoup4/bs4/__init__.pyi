@@ -1,6 +1,7 @@
-from _typeshed import Self, SupportsRead
-from collections.abc import Sequence
+from _typeshed import Incomplete, SupportsRead
+from collections.abc import Iterator, Sequence
 from typing import Any
+from typing_extensions import Self
 
 from .builder import ParserRejectedMarkup as ParserRejectedMarkup, TreeBuilder, XMLParsedAsHTMLWarning as XMLParsedAsHTMLWarning
 from .element import (
@@ -31,21 +32,21 @@ class BeautifulSoup(Tag):
     element_classes: Any
     builder: TreeBuilder
     is_xml: bool
-    known_xml: bool
+    known_xml: bool | None
     parse_only: SoupStrainer | None
     markup: str
     def __init__(
         self,
-        markup: str | bytes | SupportsRead[str] | SupportsRead[bytes] = ...,
-        features: str | Sequence[str] | None = ...,
-        builder: TreeBuilder | type[TreeBuilder] | None = ...,
-        parse_only: SoupStrainer | None = ...,
-        from_encoding: str | None = ...,
-        exclude_encodings: Sequence[str] | None = ...,
-        element_classes: dict[type[PageElement], type[Any]] | None = ...,
+        markup: str | bytes | SupportsRead[str] | SupportsRead[bytes] = "",
+        features: str | Sequence[str] | None = None,
+        builder: TreeBuilder | type[TreeBuilder] | None = None,
+        parse_only: SoupStrainer | None = None,
+        from_encoding: str | None = None,
+        exclude_encodings: Sequence[str] | None = None,
+        element_classes: dict[type[PageElement], type[Any]] | None = None,
         **kwargs,
     ) -> None: ...
-    def __copy__(self: Self) -> Self: ...
+    def __copy__(self) -> Self: ...
     hidden: bool
     current_data: Any
     currentTag: Any
@@ -57,35 +58,39 @@ class BeautifulSoup(Tag):
     def new_tag(
         self,
         name,
-        namespace: Any | None = ...,
-        nsprefix: Any | None = ...,
-        attrs=...,
-        sourceline: Any | None = ...,
-        sourcepos: Any | None = ...,
+        namespace: Incomplete | None = None,
+        nsprefix: Incomplete | None = None,
+        attrs={},
+        sourceline: Incomplete | None = None,
+        sourcepos: Incomplete | None = None,
         **kwattrs,
     ) -> Tag: ...
-    def string_container(self, base_class: Any | None = ...): ...
-    def new_string(self, s, subclass: Any | None = ...): ...
+    def string_container(self, base_class: Incomplete | None = None): ...
+    def new_string(self, s, subclass: Incomplete | None = None): ...
     def insert_before(self, *args) -> None: ...
     def insert_after(self, *args) -> None: ...
     def popTag(self): ...
     def pushTag(self, tag) -> None: ...
-    def endData(self, containerClass: Any | None = ...) -> None: ...
-    def object_was_parsed(self, o, parent: Any | None = ..., most_recent_element: Any | None = ...) -> None: ...
+    def endData(self, containerClass: Incomplete | None = None) -> None: ...
+    def object_was_parsed(self, o, parent: Incomplete | None = None, most_recent_element: Incomplete | None = None) -> None: ...
     def handle_starttag(
         self,
         name,
         namespace,
         nsprefix,
         attrs,
-        sourceline: Any | None = ...,
-        sourcepos: Any | None = ...,
-        namespaces: dict[str, str] | None = ...,
+        sourceline: Incomplete | None = None,
+        sourcepos: Incomplete | None = None,
+        namespaces: dict[str, str] | None = None,
     ): ...
-    def handle_endtag(self, name, nsprefix: Any | None = ...) -> None: ...
+    def handle_endtag(self, name, nsprefix: Incomplete | None = None) -> None: ...
     def handle_data(self, data) -> None: ...
     def decode(  # type: ignore[override]
-        self, pretty_print: bool = ..., eventual_encoding: str = ..., formatter: str | Formatter = ...
+        self,
+        pretty_print: bool = False,
+        eventual_encoding: str = "utf-8",
+        formatter: str | Formatter = "minimal",
+        iterator: Iterator[PageElement] | None = None,
     ): ...  # missing some arguments
 
 class BeautifulStoneSoup(BeautifulSoup): ...

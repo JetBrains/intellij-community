@@ -13,6 +13,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import java.awt.Color
@@ -36,7 +37,7 @@ open class DescriptionEditorPane : JEditorPane(UIUtil.HTML_MIME, EMPTY_HTML) {
   override fun getBackground(): Color = JBColor.PanelBackground
 
   companion object {
-    const val EMPTY_HTML = "<html><body></body></html>"
+    const val EMPTY_HTML: String = "<html><body></body></html>"
   }
 
 }
@@ -87,11 +88,8 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
     val psiFileFactory = PsiFileFactory.getInstance(defaultProject)
 
     val defaultFile = psiFileFactory.createFileFromText(PlainTextLanguage.INSTANCE, "")
-    val content = codeSnippet.text().let { text ->
-      val beforeFirstNewline = text.substringBefore("\n")
-      val afterFirstNewline = text.substringAfter("\n", "").trimIndent()
-      if (afterFirstNewline.isEmpty()) beforeFirstNewline else "$beforeFirstNewline\n$afterFirstNewline"
-    }
+    val content = codeSnippet.wholeText()
+      .trimIndent()
       .trimEnd()
       .replaceIndent("  ")
     var snippet: String
@@ -118,6 +116,7 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "HTMl conversion is handled in JEditorPane.readHTML")
 fun JEditorPane.toHTML(text: @Nls String?, miniFontSize: Boolean): String {
   val hintHint = HintHint(this, Point(0, 0))

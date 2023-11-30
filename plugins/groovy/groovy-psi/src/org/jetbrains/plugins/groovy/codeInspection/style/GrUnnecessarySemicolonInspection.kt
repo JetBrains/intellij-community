@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.codeInspection.style
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.LocalInspectionTool
-import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -31,14 +30,12 @@ class GrUnnecessarySemicolonInspection : LocalInspectionTool(), CleanupLocalInsp
       holder.registerProblem(
         element,
         GroovyBundle.message("unnecessary.semicolon.description"),
-        Holder.fix
+        RemoveElementWithoutFormatterFix(GroovyBundle.message("unnecessary.semicolon.fix"))
       )
     }
   }
 
   private object Holder {
-    val fix: LocalQuickFix = RemoveElementWithoutFormatterFix(GroovyBundle.message("unnecessary.semicolon.fix"))
-
     private val nlSet = TokenSet(NL)
     private val forwardSet = WHITE_SPACES_OR_COMMENTS + TokenSet(T_SEMI) - nlSet
     private val backwardSet = WHITE_SPACES_OR_COMMENTS - nlSet

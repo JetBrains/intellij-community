@@ -27,6 +27,7 @@ import com.intellij.task.ProjectTask;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskManager;
 import com.intellij.task.impl.EmptyCompileScopeBuildTaskImpl;
+import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -172,6 +173,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
             }).expireWith(myProject).executeSynchronously();
 
+            ProjectTaskManagerImpl.putBuildOriginator(myProject, CompileStepBeforeRun.class);
             projectTaskManager.run(pair.first, pair.second).onSuccess(taskResult -> {
               if ((!taskResult.hasErrors() || ignoreErrors) && !taskResult.isAborted()) {
                  result.set(Boolean.TRUE);

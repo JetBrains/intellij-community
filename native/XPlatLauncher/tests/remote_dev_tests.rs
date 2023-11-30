@@ -4,6 +4,8 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+    use std::path::Path;
     use crate::utils::*;
 
     #[test]
@@ -42,7 +44,7 @@ mod tests {
         let remote_dev_command = &["run", &project_dir];
         let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command)).stdout;
 
-        assert!(output.contains("cwmHostNoLobby"), "output:\n{}", output);
+        assert!(output.contains("remoteDevHost"), "output:\n{}", output);
         assert!(output.contains(project_dir), "output:\n{}", output);
         assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"), "output:\n{}", output);
     }
@@ -66,5 +68,56 @@ mod tests {
         assert!(output.contains("warmup"), "output:\n{}", output);
         assert!(output.contains(project_dir_arg), "'{}' is not in the output:\n{}", project_dir_arg, output);
         assert!(!output.contains("Usage: ./remote-dev-server [ij_command_name] [/path/to/project] [arguments...]"), "output:\n{}", output);
+    }
+
+    #[test]
+    fn remote_dev_new_ui_test() {
+        let test = prepare_test_env(LauncherLocation::RemoteDev);
+        let project_dir = &test.project_dir.to_string_lossy().to_string();
+
+        // When starting the Launcher, we set this variable always with the value projectDir. For the test, we overwrite it with a non-existent directory
+        let fake_config_dir_path: &Path = &test.project_dir.join("fakeDir");
+
+        let env = HashMap::from([("IJ_HOST_CONFIG_DIR", fake_config_dir_path.to_str().unwrap())]);
+        let remote_dev_command = &["run", &project_dir];
+        let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
+
+        assert!(output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
+    }
+
+    #[test]
+    fn remote_dev_new_ui_test1() {
+        let test = prepare_test_env(LauncherLocation::RemoteDev);
+        let project_dir = &test.project_dir.to_string_lossy().to_string();
+
+        let env = HashMap::from([("REMOTE_DEV_NEW_UI_ENABLED", "1")]);
+        let remote_dev_command = &["run", &project_dir];
+        let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
+
+        assert!(!output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
+    }
+
+    #[test]
+    fn remote_dev_new_ui_test_shared_configs() {
+        let test = prepare_test_env(LauncherLocation::RemoteDev);
+        let project_dir = &test.project_dir.to_string_lossy().to_string();
+
+        let env = HashMap::from([("REMOTE_DEV_LEGACY_PER_PROJECT_CONFIGS", "0")]);
+        let remote_dev_command = &["run", &project_dir];
+        let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
+
+        assert!(!output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
+    }
+
+    #[test]
+    fn remote_dev_jcef_enabled_test() {
+        let test = prepare_test_env(LauncherLocation::RemoteDev);
+        let project_dir = &test.project_dir.to_string_lossy().to_string();
+
+        let env = HashMap::from([("REMOTE_DEV_SERVER_JCEF_ENABLED", "0"), ("REMOTE_DEV_SERVER_TRACE", "1")]);
+        let remote_dev_command = &["run", &project_dir];
+        let output = run_launcher_ext(&test, &LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
+
+        assert!(output.contains("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable"));
     }
 }

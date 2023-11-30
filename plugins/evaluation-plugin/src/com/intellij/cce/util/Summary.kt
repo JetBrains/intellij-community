@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.util
 
 interface Summary {
@@ -57,7 +58,8 @@ private class LimitedSummary(val limit: Int, private val delegate: Summary = Sum
     for ((key, value) in defaultNumbers.entries) {
       if (value is Int) {
         counters[key] = value
-      } else {
+      }
+      else {
         result[key] = value
       }
     }

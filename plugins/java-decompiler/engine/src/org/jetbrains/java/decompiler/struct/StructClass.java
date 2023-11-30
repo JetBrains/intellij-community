@@ -220,6 +220,9 @@ public class StructClass extends StructMember {
   public boolean isVersion17() {
     return majorVersion >= CodeConstants.BYTECODE_JAVA_17;
   }
+  public boolean isVersion21() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_21;
+  }
 
   public boolean isPreviewVersion() {
     return minorVersion == 0xFFFF;
@@ -231,6 +234,12 @@ public class StructClass extends StructMember {
 
   public boolean hasPatternsInInstanceofSupport() {
     return isVersion16() || (isVersion14() && isPreviewVersion());
+  }
+  public boolean hasEnhancedSwitchSupport() {
+    return isVersion14();
+  }
+  public boolean hasRecordPatternSupport() {
+    return isVersion21();
   }
 
   @Override

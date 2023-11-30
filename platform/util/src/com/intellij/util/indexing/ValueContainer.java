@@ -48,7 +48,7 @@ public abstract class ValueContainer<Value> {
     boolean process(int id, V value) throws T;
   }
 
-  public final boolean forEach(@NotNull ContainerAction<? super Value> action) {
+  public synchronized final boolean forEach(@NotNull ContainerAction<? super Value> action) {
     for (ValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext();) {
       Value value = valueIterator.next();
       for (IntIterator intIterator = valueIterator.getInputIdsIterator(); intIterator.hasNext();) {

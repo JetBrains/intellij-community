@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.PropertiesFileType;
@@ -23,10 +23,16 @@ import org.jetbrains.annotations.NotNull;
 public final class ResourceBundleEditorProvider implements FileEditorProvider, DumbAware {
   @Override
   public boolean accept(final @NotNull Project project, final @NotNull VirtualFile file){
-    if (file instanceof ResourceBundleAsVirtualFile) return true;
-    if (!file.isValid()) return false;
-    final FileType type = file.getFileType();
-    if (type != PropertiesFileType.INSTANCE && type != StdFileTypes.XML) return false;
+    if (file instanceof ResourceBundleAsVirtualFile) {
+      return true;
+    }
+    if (!file.isValid()) {
+      return false;
+    }
+    FileType type = file.getFileType();
+    if (type != PropertiesFileType.INSTANCE && type != StdFileTypes.XML) {
+      return false;
+    }
 
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return Boolean.FALSE;
@@ -34,6 +40,11 @@ public final class ResourceBundleEditorProvider implements FileEditorProvider, D
       PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
       return propertiesFile != null &&  propertiesFile.getResourceBundle().getPropertiesFiles().size() > 1;
     });
+  }
+
+  @Override
+  public boolean acceptRequiresReadAction() {
+    return false;
   }
 
   @Override

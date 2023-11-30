@@ -141,7 +141,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
     return myFocusTrackerSupport.getCurrentSide();
   }
 
-  protected void setCurrentSide(@NotNull Side side) {
+  public void setCurrentSide(@NotNull Side side) {
     myFocusTrackerSupport.setCurrentSide(side);
   }
 

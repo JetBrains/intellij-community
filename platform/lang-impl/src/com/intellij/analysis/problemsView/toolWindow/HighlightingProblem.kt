@@ -91,9 +91,9 @@ internal class HighlightingProblem(
   val severity: Int
     get() = info?.severity?.myVal ?: -1
 
-  override fun hashCode() = highlighter.hashCode()
+  override fun hashCode(): Int = highlighter.hashCode()
 
-  override fun equals(other: Any?) = other is HighlightingProblem && other.highlighter == highlighter
+  override fun equals(other: Any?): Boolean = other is HighlightingProblem && other.highlighter == highlighter
 
   override val line: Int
     get() = position?.line ?: -1

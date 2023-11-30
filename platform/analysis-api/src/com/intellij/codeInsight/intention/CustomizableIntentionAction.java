@@ -7,7 +7,9 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -61,7 +63,7 @@ public interface CustomizableIntentionAction extends IntentionAction {
   }
 
   /** The highlighting request to be returned from {@link #getRangesToHighlight} */
-  class RangeToHighlight {
+  final class RangeToHighlight {
     private final PsiElement psi;
     private final TextRange rangeInPsi;
     private final TextAttributesKey highlightKey;
@@ -87,6 +89,11 @@ public interface CustomizableIntentionAction extends IntentionAction {
 
     public TextAttributesKey getHighlightKey() {
       return highlightKey;
+    }
+
+    @Contract("null, _ -> null; !null, _ -> !null")
+    public static RangeToHighlight from(@Nullable PsiElement psi, @NotNull TextAttributesKey highlightKey) {
+      return psi == null ? null : new RangeToHighlight(psi, TextRange.create(0, psi.getTextLength()), highlightKey);
     }
   }
 }

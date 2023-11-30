@@ -9,14 +9,15 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsConfiguration
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.ex.WindowManagerEx
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.io.awaitExit
 import kotlinx.coroutines.CancellationException
@@ -37,7 +38,7 @@ private var IS_NOTIFICATION_REGISTERED = false
 // TODO: consider to detect IM-freezes and then notify user (offer to disable IM)
 
 internal suspend fun disableInputMethodsIfPossible() {
-  if (!SystemInfo.isXWindow || !SystemInfo.isJetBrainsJvm) {
+  if (SystemInfo.isWindows || SystemInfo.isMac || !SystemInfo.isJetBrainsJvm) {
     return
   }
 
@@ -94,8 +95,7 @@ private fun disableInputMethodsImpl() {
 
     val frames = WindowManagerEx.getInstanceEx().projectFrameHelpers.mapNotNull { fh -> SwingUtilities.getRoot(fh.frame) }
 
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       val startMs = System.currentTimeMillis()
       for (frameRoot in frames) {
         freeIMRecursively(frameRoot)
@@ -110,7 +110,7 @@ private fun disableInputMethodsImpl() {
 
 @Suppress("SSBasedInspection")
 private val LOG: Logger
-  get() = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
+  get() = Logger.getInstance("#com.intellij.platform.ide.bootstrap.ApplicationLoader")
 
 // releases resources of input-methods support
 private fun freeIMRecursively(c: Component) {

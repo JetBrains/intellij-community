@@ -15,6 +15,7 @@ open class Open2<T>
 class D<T> : Open2<T>()
 
 fun main(args: Array<String>) {
+    println(args)
     Interface::class
     Interface2::class
     A::class

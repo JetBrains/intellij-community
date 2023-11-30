@@ -25,3 +25,5 @@ fun main() {
 
 // EXPRESSION: l1()
 // RESULT: Cannot find local variable 'x' with type int
+
+// IGNORE_K2

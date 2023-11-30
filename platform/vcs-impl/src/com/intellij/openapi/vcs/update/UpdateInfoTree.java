@@ -34,6 +34,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -211,8 +212,8 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return getVirtualFileArray();
     }
-    else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {
-      return getFileArray();
+    else if (VcsDataKeys.FILE_PATHS.is(dataId)) {
+      return getFilePathIterable();
     } else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       if (myGroupByChangeList) {
         return myTreeBrowser != null ? myTreeBrowser.getTreeExpander() : null;
@@ -286,7 +287,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
 
     @Nullable
-    private GroupTreeNode findParentGroupTreeNode(@NotNull TreeNode treeNode) {
+    private static GroupTreeNode findParentGroupTreeNode(@NotNull TreeNode treeNode) {
       TreeNode currentNode = treeNode;
       while (currentNode != null && !(currentNode instanceof GroupTreeNode)) {
         currentNode = currentNode.getParent();
@@ -327,17 +328,17 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  private File @Nullable [] getFileArray() {
-    ArrayList<File> result = new ArrayList<>();
+  private @Nullable Iterable<FilePath> getFilePathIterable() {
     TreePath[] selectionPaths = myTree.getSelectionPaths();
-    if (selectionPaths != null) {
-      for (TreePath selectionPath : selectionPaths) {
-        AbstractTreeNode treeNode = (AbstractTreeNode)selectionPath.getLastPathComponent();
-        result.addAll(treeNode.getFiles());
-      }
+    if (selectionPaths == null) return null;
+
+    List<File> result = new ArrayList<>();
+    for (TreePath selectionPath : selectionPaths) {
+      AbstractTreeNode treeNode = (AbstractTreeNode)selectionPath.getLastPathComponent();
+      result.addAll(treeNode.getFiles());
     }
     if (result.isEmpty()) return null;
-    return result.toArray(new File[0]);
+    return ContainerUtil.map(result, ioFile -> VcsUtil.getFilePath(ioFile));
   }
 
   int getFilteredFilesCount() {

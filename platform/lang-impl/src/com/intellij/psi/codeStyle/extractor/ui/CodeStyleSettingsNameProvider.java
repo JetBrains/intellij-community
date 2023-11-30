@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.extractor.ui;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -19,9 +19,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
+public final class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomizable {
 
-  protected Map<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> mySettings =
+  Map<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> mySettings =
     new HashMap<>();
   private final Map<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> standardSettings =
     new HashMap<>();
@@ -32,8 +32,8 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
     }
   }
 
-  protected void addSetting(@NotNull SettingsGroup group, @NotNull CodeStyleSettingPresentation setting, @Nullable OptionAnchor anchor,
-                            @Nullable @Nls String anchorFieldName) {
+  private void addSetting(@NotNull SettingsGroup group, @NotNull CodeStyleSettingPresentation setting, @Nullable OptionAnchor anchor,
+                          @Nullable @Nls String anchorFieldName) {
     for (Map.Entry<SettingsType, Map<SettingsGroup, List<CodeStyleSettingPresentation>>> entry: mySettings.entrySet()) {
       if (entry.getValue().containsKey(group)) {
         addSetting(entry.getKey(), group, setting, anchor, anchorFieldName);
@@ -43,8 +43,8 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
     addSetting(SettingsType.LANGUAGE_SPECIFIC, group, setting, anchor, anchorFieldName);
   }
 
-  protected void addSetting(@NotNull SettingsType settingsType, @NotNull SettingsGroup group, @NotNull CodeStyleSettingPresentation setting,
-                            @Nullable OptionAnchor anchor, @Nullable @Nls String anchorFieldName) {
+  private void addSetting(@NotNull SettingsType settingsType, @NotNull SettingsGroup group, @NotNull CodeStyleSettingPresentation setting,
+                          @Nullable OptionAnchor anchor, @Nullable @Nls String anchorFieldName) {
     Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> groups = mySettings.get(settingsType);
     if (groups == null) {
       groups = new LinkedHashMap<>();
@@ -60,15 +60,11 @@ public class CodeStyleSettingsNameProvider implements CodeStyleSettingsCustomiza
       if (insertIndex < 0) {
         insertIndex = settingsList.size();
       } else {
-        switch (anchor) {
-          case BEFORE:
-            break;
-          case AFTER:
-            insertIndex++;
-            break;
-          case NONE:
-            insertIndex = settingsList.size();
-        }
+        insertIndex = switch (anchor) {
+          case BEFORE -> insertIndex;
+          case AFTER -> insertIndex + 1;
+          case NONE -> settingsList.size();
+        };
       }
       settingsList.add(insertIndex, setting);
     } else {

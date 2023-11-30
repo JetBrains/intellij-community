@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -65,13 +65,11 @@ public class CoreProjectEnvironment {
     project.registerService(InjectedLanguageManager.class, new CoreInjectedLanguageManager());
   }
 
-  @NotNull
-  protected MockProject createProject(@NotNull PicoContainer parent, @NotNull Disposable parentDisposable) {
+  protected @NotNull MockProject createProject(@NotNull PicoContainer parent, @NotNull Disposable parentDisposable) {
     return new MockProject(parent, parentDisposable);
   }
 
-  @NotNull
-  protected ProjectScopeBuilder createProjectScopeBuilder() {
+  protected @NotNull ProjectScopeBuilder createProjectScopeBuilder() {
     return new CoreProjectScopeBuilder(project, myFileIndexFacade);
   }
 
@@ -79,17 +77,15 @@ public class CoreProjectEnvironment {
 
   }
 
-  @NotNull
-  protected FileIndexFacade createFileIndexFacade() {
+  protected @NotNull FileIndexFacade createFileIndexFacade() {
     return new MockFileIndexFacade(project);
   }
 
-  @NotNull
-  protected ResolveScopeManager createResolveScopeManager(@NotNull PsiManager psiManager) {
+  protected @NotNull ResolveScopeManager createResolveScopeManager(@NotNull PsiManager psiManager) {
     return new MockResolveScopeManager(psiManager.getProject());
   }
 
-  public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {
+  public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, final @NotNull T extension) {
     //noinspection TestOnlyProblems
     name.getPoint(project).registerExtension(extension, myParentDisposable);
   }
@@ -101,18 +97,15 @@ public class CoreProjectEnvironment {
     }
   }
 
-  @NotNull
-  public Disposable getParentDisposable() {
+  public @NotNull Disposable getParentDisposable() {
     return myParentDisposable;
   }
 
-  @NotNull
-  public CoreApplicationEnvironment getEnvironment() {
+  public @NotNull CoreApplicationEnvironment getEnvironment() {
     return myEnvironment;
   }
 
-  @NotNull
-  public MockProject getProject() {
+  public @NotNull MockProject getProject() {
     return project;
   }
 }

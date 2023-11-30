@@ -10,4 +10,3 @@ interface H
 fun f(h: H) {
     h foo h
 }
-/* IGNORE_FIR */

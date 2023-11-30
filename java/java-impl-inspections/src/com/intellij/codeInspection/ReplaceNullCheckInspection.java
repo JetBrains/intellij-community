@@ -6,6 +6,8 @@ import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -119,7 +121,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       PsiElement element = myIsTernary ? startElement : startElement.getParent();
       final PsiElement result;
       if(element instanceof PsiIfStatement) {

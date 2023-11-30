@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.config
 
+import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.OrderRootType
@@ -9,10 +11,13 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.platform.workspaceModel.jps.serialization.impl.LibraryNameGenerator
-import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.WorkspaceEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerator
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.eclipse.IdeaXml.*

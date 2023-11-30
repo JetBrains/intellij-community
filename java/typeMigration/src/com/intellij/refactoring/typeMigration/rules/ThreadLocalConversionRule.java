@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
@@ -95,10 +96,9 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                        : (PsiExpression)context;
       return new TypeConversionDescriptor("$qualifier$", toPrimitive("$qualifier$.get()", from, context), expression);
     }
-    else if (context instanceof PsiBinaryExpression binaryExpression) {
-      final String sign = binaryExpression.getOperationSign().getText();
-      return new TypeConversionDescriptor("$qualifier$" + sign + "$val$",
-                                          toPrimitive("$qualifier$.get()", from, context) + " " + sign + " $val$");
+    if (context instanceof PsiPrefixExpression prefixExpression &&
+        prefixExpression.getOperationSign().getTokenType() == JavaTokenType.EXCL) {
+      return new TypeConversionDescriptor("!$qualifier$", "!$qualifier$.get()");
     }
     if (parent instanceof PsiExpressionStatement) {
       if (context instanceof PsiPostfixExpression postfixExpression) {
@@ -115,11 +115,7 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
                                             ")");
       }
       else if (context instanceof PsiPrefixExpression prefixExpression) {
-        final PsiJavaToken operationSign = ((PsiPrefixExpression)context).getOperationSign();
-        if (operationSign.getTokenType() == JavaTokenType.EXCL) {
-          return new TypeConversionDescriptor("!$qualifier$", "!$qualifier$.get()");
-        }
-        final String sign = operationSign.getText();
+        final String sign = prefixExpression.getOperationSign().getText();
         final PsiExpression operand = prefixExpression.getOperand();
         return new TypeConversionDescriptor(sign + "$qualifier$",
                                             "$qualifier$.set(" +
@@ -176,10 +172,10 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     final StringBuilder result = new StringBuilder("new ");
     result.append(to.getCanonicalText()).append("() {\n");
     if (PsiUtil.isLanguageLevel5OrHigher(context)) {
-      result.append("  @java.lang.Override\n");
+      result.append("  @").append(CommonClassNames.JAVA_LANG_OVERRIDE).append("\n");
     }
     result.append("  protected ")
-      .append(PsiUtil.isLanguageLevel5OrHigher(context) ? to.getParameters()[0].getCanonicalText() : "java.lang.Object")
+      .append(PsiUtil.isLanguageLevel5OrHigher(context) ? to.getParameters()[0].getCanonicalText() : CommonClassNames.JAVA_LANG_OBJECT)
       .append(" initialValue() {\n")
       .append("    return ")
       .append(coerceType("$qualifier$", from, to, context)).append(";\n")
@@ -202,8 +198,13 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
       if (from instanceof PsiPrimitiveType) {
         final PsiPrimitiveType unboxed = PsiPrimitiveType.getUnboxedType(to.getParameters()[0]);
         if (unboxed != null && !from.equals(unboxed)) {
-          return context instanceof PsiLiteralExpression && PsiTypes.longType().equals(unboxed)
-                 ? replaceByArg + "L"
+          if (PsiTypes.longType().equals(unboxed)) {
+            String result = longLiteralText(context, replaceByArg);
+            if (result != null) return result;
+          }
+          return context instanceof PsiExpression expression &&
+                 PsiPrecedenceUtil.getPrecedence(expression) > PsiPrecedenceUtil.TYPE_CAST_PRECEDENCE
+                 ? "(" + unboxed.getCanonicalText() + ")(" + replaceByArg + ")"
                  : "(" + unboxed.getCanonicalText() + ")" + replaceByArg;
         }
       }
@@ -212,6 +213,16 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
     return from instanceof PsiPrimitiveType
            ? "new " + ((PsiPrimitiveType)from).getBoxedTypeName() + "(" + replaceByArg + ")"
            : replaceByArg;
+  }
+
+  private static String longLiteralText(PsiElement context, String text) {
+    if (context instanceof PsiLiteralExpression) {
+      return text + "L";
+    }
+    else if (context instanceof PsiPrefixExpression expression) {
+      return longLiteralText(expression.getOperand(), text);
+    }
+    return null;
   }
 
   private static @NonNls String getBoxedWrapper(PsiType from,
@@ -236,7 +247,9 @@ public class ThreadLocalConversionRule extends TypeConversionRule {
               return coerceType(arg, from, to, context);
             }
           }
-          return "new " + initial.getCanonicalText() + "((" + unboxedInitialType.getCanonicalText() + ")(" + arg + "))";
+          return PsiUtil.isLanguageLevel5OrHigher(context)
+                 ? "(" + unboxedInitialType.getCanonicalText() + ")(" + arg + ")"
+                 : "new " + initial.getCanonicalText() + "((" + unboxedInitialType.getCanonicalText() + ")(" + arg + "))";
         }
       }
     }

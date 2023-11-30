@@ -68,6 +68,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
         runTest("testData/quickDoc/ConstructorVarParameter.kt");
     }
 
+    @TestMetadata("DecompiledSuper.kt")
+    public void testDecompiledSuper() throws Exception {
+        runTest("testData/quickDoc/DecompiledSuper.kt");
+    }
+
     @TestMetadata("DefinitelyNonNullType.kt")
     public void testDefinitelyNonNullType() throws Exception {
         runTest("testData/quickDoc/DefinitelyNonNullType.kt");
@@ -96,6 +101,11 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
     @TestMetadata("Formatting.kt")
     public void testFormatting() throws Exception {
         runTest("testData/quickDoc/Formatting.kt");
+    }
+
+    @TestMetadata("FunctionTypeParameter.kt")
+    public void testFunctionTypeParameter() throws Exception {
+        runTest("testData/quickDoc/FunctionTypeParameter.kt");
     }
 
     @TestMetadata("IndentedCodeBlock.kt")
@@ -146,6 +156,21 @@ public class FirQuickDocTestGenerated extends AbstractFirQuickDocTest {
     @TestMetadata("MethodFromStdLib.kt")
     public void testMethodFromStdLib() throws Exception {
         runTest("testData/quickDoc/MethodFromStdLib.kt");
+    }
+
+    @TestMetadata("OnActualDeclaration.kt")
+    public void testOnActualDeclaration() throws Exception {
+        runTest("testData/quickDoc/OnActualDeclaration.kt");
+    }
+
+    @TestMetadata("OnActualDeclarationWithInheritedDoc.kt")
+    public void testOnActualDeclarationWithInheritedDoc() throws Exception {
+        runTest("testData/quickDoc/OnActualDeclarationWithInheritedDoc.kt");
+    }
+
+    @TestMetadata("OnActualValueParameterDeclaration.kt")
+    public void testOnActualValueParameterDeclaration() throws Exception {
+        runTest("testData/quickDoc/OnActualValueParameterDeclaration.kt");
     }
 
     @TestMetadata("OnClassDeclarationWithComplexKDoc.kt")

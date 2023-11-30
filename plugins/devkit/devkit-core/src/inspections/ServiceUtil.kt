@@ -10,6 +10,7 @@ import com.intellij.lang.jvm.annotation.JvmAnnotationArrayValue
 import com.intellij.lang.jvm.annotation.JvmAnnotationEnumFieldValue
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiField
 import com.intellij.util.xml.DomManager
@@ -17,8 +18,22 @@ import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.locateExtensionsByPsiClass
 import org.jetbrains.uast.*
 
-internal enum class LevelType {
-  APP, PROJECT, APP_AND_PROJECT, NOT_SPECIFIED;
+@IntellijInternalApi
+enum class LevelType {
+  APP,
+  PROJECT,
+  MODULE,
+  APP_AND_PROJECT,
+
+  /**
+   * An example of a service with no specified level:
+   *
+   * // MyService.kt
+   * @Service(value = [])
+   * class MyService
+   */
+  NOT_SPECIFIED,
+  NOT_REGISTERED;
 
   fun isApp(): Boolean {
     return this == APP || this == APP_AND_PROJECT
@@ -29,23 +44,26 @@ internal enum class LevelType {
   }
 }
 
-internal fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
+@IntellijInternalApi
+fun getLevelType(annotation: JvmAnnotation, language: Language): LevelType {
   val levels = when (val attributeValue = annotation.findAttribute(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)?.attributeValue) {
     is JvmAnnotationArrayValue -> {
-      val serviceLevelExtractor = ServiceLevelExtractors.forLanguage(language) ?: return LevelType.NOT_SPECIFIED
+      val serviceLevelExtractor = getProvider(ServiceLevelExtractors, language) ?: return LevelType.NOT_SPECIFIED
       serviceLevelExtractor.extractLevels(attributeValue)
     }
     is JvmAnnotationEnumFieldValue -> getLevels(attributeValue)
-    else -> emptySet()
+    else -> setOf(Service.Level.APP)
   }
   return toLevelType(levels)
 }
 
-internal fun getLevelType(project: Project, uClass: UClass): LevelType {
+@IntellijInternalApi
+fun getLevelType(project: Project, uClass: UClass): LevelType {
   val serviceAnnotation = uClass.findAnnotation(Service::class.java.canonicalName)
   if (serviceAnnotation != null) return getLevelType(serviceAnnotation)
   val javaPsi = uClass.javaPsi
   val domManager = DomManager.getDomManager(project)
+  var isModuleService = false
   val levels = HashSet<Service.Level>()
   for (candidate in locateExtensionsByPsiClass(javaPsi)) {
     val tag = candidate.pointer.element ?: continue
@@ -54,14 +72,19 @@ internal fun getLevelType(project: Project, uClass: UClass): LevelType {
       when (element.extensionPoint?.effectiveQualifiedName) {
         "com.intellij.applicationService" -> levels.add(Service.Level.APP)
         "com.intellij.projectService" -> levels.add(Service.Level.PROJECT)
+        "com.intellij.moduleService" -> isModuleService = true
         else -> {}
       }
     }
   }
+  if (levels.isEmpty()) {
+    return if (isModuleService) LevelType.MODULE else LevelType.NOT_REGISTERED
+  }
   return toLevelType(levels)
 }
 
-internal fun getLevels(attributeValue: JvmAnnotationEnumFieldValue): Collection<Service.Level> {
+@IntellijInternalApi
+fun getLevels(attributeValue: JvmAnnotationEnumFieldValue): Collection<Service.Level> {
   if (attributeValue.containingClassName != Service.Level::class.java.canonicalName) return emptySet()
   val fieldName = attributeValue.fieldName ?: return emptySet()
   val level = toLevel(fieldName) ?: return emptySet()
@@ -102,6 +125,7 @@ private fun toLevelType(levels: Collection<Service.Level>): LevelType {
   }
 }
 
+@IntellijInternalApi
 fun toLevel(name: String): Service.Level? {
   return try {
     Service.Level.valueOf(name)
@@ -109,4 +133,8 @@ fun toLevel(name: String): Service.Level? {
   catch (_: IllegalArgumentException) {
     null
   }
+}
+
+internal fun isLightService(uClass: UClass): Boolean {
+  return uClass.findAnnotation(Service::class.java.canonicalName) != null
 }

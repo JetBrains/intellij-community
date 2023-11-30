@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.util.Pair;
@@ -83,6 +83,12 @@ public final class ExceptionUtil {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
         // do not go inside class declaration
+      }
+
+      @Override
+      public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+        addExceptions(result, getUnhandledProcessorExceptions(expression, element));
+        super.visitTemplateExpression(expression);
       }
 
       @Override
@@ -266,6 +272,9 @@ public final class ExceptionUtil {
       PsiCallExpression expression = (PsiCallExpression)element;
       unhandledExceptions = getUnhandledExceptions(expression, topElement, callFilter);
     }
+    else if (element instanceof PsiTemplateExpression) {
+      unhandledExceptions = getUnhandledProcessorExceptions((PsiTemplateExpression)element, topElement);
+    }
     else if (element instanceof PsiMethodReferenceExpression) {
       PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
       return qualifierExpression != null ? collectUnhandledExceptions(qualifierExpression, topElement, null, callFilter)
@@ -423,6 +432,9 @@ public final class ExceptionUtil {
     }
     if (element instanceof PsiResourceListElement) {
       return getUnhandledCloserExceptions((PsiResourceListElement)element, null);
+    }
+    if (element instanceof PsiTemplateExpression) {
+      return getUnhandledProcessorExceptions((PsiTemplateExpression)element, null);
     }
     return Collections.emptyList();
   }
@@ -598,6 +610,37 @@ public final class ExceptionUtil {
     return ex;
   }
 
+  /**
+   * Returns all checked exceptions that are thrown by the specified {@code templateExpression}
+   * and not handled inside the specified {@code topElement}.
+   *
+   * @param templateExpression  the template expression to check
+   * @param topElement ancestor element which may handle exceptions in e.g. try-catch statements.
+   */
+  @NotNull
+  public static List<PsiClassType> getUnhandledProcessorExceptions(@NotNull PsiTemplateExpression templateExpression,
+                                                                   @Nullable PsiElement topElement) {
+    PsiExpression processor = templateExpression.getProcessor();
+    if (processor == null) return Collections.emptyList();
+    PsiType type = processor.getType();
+    List<PsiClassType> result = new ArrayList<>();
+    for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      // Currently, generic parameter type is considered as unhandled exception; not actual exceptions declared by 'process' method
+      PsiType substituted = PsiUtil.substituteTypeParameter(classType, CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, 1, false);
+      if (substituted instanceof PsiCapturedWildcardType) {
+        PsiCapturedWildcardType wildcardType = (PsiCapturedWildcardType)substituted;
+        substituted = wildcardType.getUpperBound();
+      }
+      if (!(substituted instanceof PsiClassType)) continue;
+      PsiClassType exceptionType = (PsiClassType)substituted;
+      if (!isUncheckedException(exceptionType) &&
+          getHandlePlace(templateExpression, exceptionType, topElement) == HandlePlace.UNHANDLED) {
+        result.add(exceptionType);
+      }
+    }
+    return result;
+  }
+
   @NotNull
   public static List<PsiClassType> getUnhandledExceptions(@NotNull PsiThrowStatement throwStatement, @Nullable PsiElement topElement) {
     List<PsiClassType> unhandled = new SmartList<>();
@@ -756,13 +799,13 @@ public final class ExceptionUtil {
   public static HandlePlace getHandlePlace(@Nullable PsiElement element,
                                            @NotNull PsiClassType exceptionType,
                                            @Nullable PsiElement topElement) {
-    if (element == null || element.getParent() == topElement || element.getParent() == null) return HandlePlace.UNHANDLED;
+    if (element == null || element == topElement) return HandlePlace.UNHANDLED;
+    PsiElement parent = element.getParent();
+    if (parent == null || parent == topElement) return HandlePlace.UNHANDLED;
 
     for (CustomExceptionHandler exceptionHandler : CustomExceptionHandler.KEY.getExtensionList()) {
       if (exceptionHandler.isHandled(element, exceptionType, topElement)) return HandlePlace.UNKNOWN;
     }
-
-    final PsiElement parent = element.getParent();
 
     if (parent instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)parent;

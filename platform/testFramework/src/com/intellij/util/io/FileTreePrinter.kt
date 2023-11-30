@@ -4,6 +4,7 @@ package com.intellij.util.io
 import com.intellij.util.containers.nullize
 import java.nio.charset.MalformedInputException
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 
 @JvmOverloads
 fun Path.getDirectoryTree(excluded: Set<String> = emptySet(), printContent: Boolean = true, printRootName: Boolean = true): String {

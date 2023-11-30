@@ -12,7 +12,7 @@ import org.junit.runners.JUnit4
 @RunWith(JUnit4::class)
 class TableInsideBlockQuoteTypingTest: LightPlatformCodeInsightTestCase() {
   @get:Rule
-  val rule = MarkdownCodeInsightSettingsRule { it.copy(insertHtmlLineBreakInsideTables = false) }
+  val rule = MarkdownCodeInsightSettingsRule { it.insertHtmlLineBreakInsideTables = false }
 
   @Test
   fun `test table inside quote without last pipe`() {

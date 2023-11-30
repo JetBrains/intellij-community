@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.FillingLineMarkerRenderer;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -41,7 +41,6 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +53,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
 
-public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMarkerRendererWithErrorStripe {
+public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, FillingLineMarkerRenderer, LineMarkerRendererWithErrorStripe {
   private static final int THICKNESS = 8;
   private final TextAttributesKey myKey;
   private final String myClassName;
@@ -82,26 +81,28 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     mySubCoverageActive = subCoverageActive;
   }
 
-  private int getCurrentLineNumber(@NotNull Editor editor, Point mousePosition) {
-    if (myLineNumber > -1) return myLineNumber;
-    return editor.xyToLogicalPosition(mousePosition).line;
+  private int getLineNumber() {
+    return myLineNumber;
   }
 
   @Override
-  public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-    final TextAttributes color = editor.getColorsScheme().getAttributes(myKey);
-    Color bgColor = color.getBackgroundColor();
-    if (bgColor == null) {
-      bgColor = color.getForegroundColor();
-    }
-    if (bgColor != null) {
-      g.setColor(bgColor);
-      g.fillRect(r.x, r.y, Math.min(r.width, JBUI.scale(8)), r.height);
-    }
-    final LineData lineData = getLineData(getCurrentLineNumber(editor, new Point(0, r.y)));
+  public @Nullable Icon getIcon() {
+    final LineData lineData = getLineData(getLineNumber());
     if (lineData != null && lineData.isCoveredByOneTest()) {
-      AllIcons.Gutter.Unique.paintIcon(editor.getComponent(), g, r.x, r.y);
+      return AllIcons.Gutter.Unique;
     }
+    return null;
+  }
+
+  @Override
+  public @NotNull TextAttributesKey getTextAttributesKey() {
+    return myKey;
+  }
+
+  @Nullable
+  @Override
+  public Integer getMaxWidth() {
+    return THICKNESS;
   }
 
   public static CoverageLineMarkerRenderer getRenderer(int lineNumber,
@@ -142,14 +143,10 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
   @Override
   public void doAction(@NotNull final Editor editor, @NotNull final MouseEvent e) {
     e.consume();
-    final JComponent comp = (JComponent)e.getComponent();
-    final JRootPane rootPane = comp.getRootPane();
-    final JLayeredPane layeredPane = rootPane.getLayeredPane();
-    final Point point = SwingUtilities.convertPoint(comp, THICKNESS, e.getY(), layeredPane);
-    showHint(editor, point, getCurrentLineNumber(editor, e.getPoint()));
+    showHint(editor, getLineNumber());
   }
 
-  private void showHint(final Editor editor, final Point mousePosition, final int lineNumber) {
+  private void showHint(final Editor editor, final int lineNumber) {
     final JPanel panel = new JPanel(new BorderLayout());
     Disposable unregisterActionsDisposable = Disposer.newDisposable();
     panel.add(createActionsToolbar(editor, lineNumber, unregisterActionsDisposable), BorderLayout.NORTH);
@@ -178,19 +175,9 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
       }
     };
-    Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(lineNumber, 0), HintManager.UNDER);
-    if (mousePosition != null) {
-      point.x = mousePosition.x;
-      point.y = mousePosition.y + Math.abs(point.y - mousePosition.y) % editor.getLineHeight() ;
-    }
-    else {
-      Point p = editor.visualPositionToXY(editor.offsetToVisualPosition(0));
-      EditorGutterComponentEx editorComponent = (EditorGutterComponentEx)editor.getGutter();
-      JLayeredPane layeredPane = editorComponent.getRootPane().getLayeredPane();
-      point.x = SwingUtilities.convertPoint(editorComponent, THICKNESS, p.y, layeredPane).x;
-    }
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point,
-                                                     HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_SCROLLING, -1, false, new HintHint(editor, point));
+    int hideFlags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_OTHER_HINT | HintManager.HIDE_BY_SCROLLING;
+    HintHint hintInfo = new HintHint(editor, new Point());
+    HintManagerImpl.getInstanceImpl().showGutterHint(hint, editor, lineNumber, THICKNESS, hideFlags, -1, false, hintInfo);
   }
 
   @Nullable
@@ -230,7 +217,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
 
     final LineData lineData = getLineData(lineNumber);
     if (myCoverageByTestApplicable) {
-      group.add(new ShowCoveringTestsAction(editor.getProject(), myClassName, lineData));
+      group.add(new ShowCoveringTestsAction(editor.getProject(), myCoverageSuite, myClassName, lineData));
     }
     final AnAction byteCodeViewAction = ActionManager.getInstance().getAction("ByteCodeViewer");
     if (byteCodeViewAction != null) {
@@ -255,7 +242,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     editor.getCaretModel().moveToOffset(firstOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
-    editor.getScrollingModel().runActionOnScrollingFinished(() -> showHint(editor, null, lineNumber));
+    editor.getScrollingModel().runActionOnScrollingFinished(() -> showHint(editor, lineNumber));
   }
 
   @Nullable

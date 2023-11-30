@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 
@@ -20,7 +20,7 @@ public interface RedundantSuppressionDetector {
   /**
    * @return quickfix to remove {@code toolId} suppression from list of suppressions
    */
-  @Nullable
+  @NotNull
   LocalQuickFix createRemoveRedundantSuppressionFix(@NotNull String toolId);
 
   /**
@@ -33,8 +33,7 @@ public interface RedundantSuppressionDetector {
   /**
    * @return range with {@code toolId} to highlight in the editor
    */
-  @Nullable
-  default TextRange getHighlightingRange(@NotNull PsiElement elementWithSuppression, @NotNull String toolId) {
+  default @Nullable TextRange getHighlightingRange(@NotNull PsiElement elementWithSuppression, @NotNull String toolId) {
     String suppressionElementText = elementWithSuppression.getText();
     int idx = StringUtil.indexOfIgnoreCase(suppressionElementText, toolId, 0);
     return idx > 0

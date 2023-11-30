@@ -7,5 +7,6 @@ val foo: O
         if (true) return O() else return P()<caret>
     }
 
-/* IGNORE_FIR */
 
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

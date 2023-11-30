@@ -39,6 +39,7 @@ public class GradleRunConfiguration
 
   public static final Key<Boolean> DEBUG_ALL_KEY = Key.create("DEBUG_ALL_TASKS");
   public static final Key<Boolean> RUN_AS_TEST_KEY = Key.create("RUN_AS_TEST");
+  public static final Key<Boolean> IS_TEST_TASK_RERUN_KEY = Key.create("IS_TEST_TASK_RERUN");
 
   private boolean isDebugAllEnabled = false;
   private boolean isRunAsTest = false;
@@ -65,6 +66,7 @@ public class GradleRunConfiguration
   public void setRunAsTest(boolean runAsTest) {
     isRunAsTest = runAsTest;
     putUserData(RUN_AS_TEST_KEY, runAsTest);
+    putUserData(IS_TEST_TASK_RERUN_KEY, runAsTest);
   }
 
   public @NotNull String getRawCommandLine() {

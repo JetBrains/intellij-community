@@ -3,12 +3,12 @@
 Reports <code>ProcessCanceledException</code>s handled in an incorrect way.
 
 <p>
-  <code>ProcessCanceledException</code> must not be caught, swallowed, logged, or handled in any way.
+  <code>ProcessCanceledException</code> and its inheritors must not be caught, swallowed, logged, or handled in any way.
   Instead, it must be rethrown so that the infrastructure can handle it correctly.
 </p>
 
 <p>
-  Inspection reports both explicit <code>ProcessCanceledException</code> catching,
+  Inspection reports both explicit <code>ProcessCanceledException</code> or its inheritors catching,
   as well as catching <code>RuntimeException</code>, <code>Exception</code> and <code>Throwable</code> covering <code>ProcessCanceledException</code>.
 </p>
 
@@ -18,9 +18,7 @@ Reports <code>ProcessCanceledException</code>s handled in an incorrect way.
 // bad:
 try {
   // ...
-} catch (ProcessCanceledException e) {
-  // ...
-  // exception should not be swallowed
+} catch (ProcessCanceledException e) { // exception should not be swallowed
 }
 
 // bad:

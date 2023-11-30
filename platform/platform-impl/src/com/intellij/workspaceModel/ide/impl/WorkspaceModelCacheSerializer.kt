@@ -7,16 +7,16 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.url.UrlRelativizer
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModelCacheVersion
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
@@ -25,18 +25,23 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
 
-class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
-  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, vfuManager,
-                                                                                ::collectExternalCacheVersions)
+class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelativizer: UrlRelativizer?) {
+  private val serializer: EntityStorageSerializer =
+    EntityStorageSerializerImpl(
+      PluginAwareEntityTypesResolver,
+      vfuManager,
+      urlRelativizer
+    )
 
-  internal fun loadCacheFromFile(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): EntityStorage? {
+  internal fun loadCacheFromFile(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): MutableEntityStorage? {
     val start = System.currentTimeMillis()
     val cacheFileAttributes = file.basicAttributesIfExists() ?: return null
 
     val invalidateCachesMarkerFileAttributes = invalidateGlobalCachesMarkerFile.basicAttributesIfExists()
     if ((invalidateCachesMarkerFileAttributes != null && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFileAttributes.lastModifiedTime()) ||
-        invalidateCachesMarkerFile.exists() && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFile.lastModified()) {
+        invalidateCachesMarkerFile.exists() && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFile.getLastModifiedTime()) {
       LOG.info("Skipping cache loading since '${invalidateGlobalCachesMarkerFile}' is present and newer than cache file '$file'")
       runCatching { Files.deleteIfExists(file) }
       return null
@@ -60,17 +65,19 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  internal fun saveCacheToFile(storage: EntityStorageSnapshot, file: Path, userPreProcessor: Boolean = false) {
+  internal fun saveCacheToFile(storage: EntityStorageSnapshot, file: Path, userPreProcessor: Boolean = false): SaveInfo {
     val start = System.currentTimeMillis()
 
     LOG.debug("Saving Workspace model cache to $file")
     val dir = file.parent
     Files.createDirectories(dir)
+    var cacheSize: Long? = null
     val tmpFile = Files.createTempFile(dir, "cache", ".tmp")
     try {
       val serializationResult = serializer.serializeCache(tmpFile, if (userPreProcessor) cachePreProcess(storage) else storage)
-      if (serializationResult is SerializationResult.Fail<*>) {
-        LOG.warn("Workspace model cache was not serialized: ${serializationResult.info}")
+      when (serializationResult) {
+        is SerializationResult.Fail -> LOG.warn("Workspace model cache was not serialized", serializationResult.problem)
+        is SerializationResult.Success -> cacheSize = serializationResult.size
       }
 
       try {
@@ -85,9 +92,15 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
       Files.deleteIfExists(tmpFile)
     }
     saveCacheToFileTimeMs.addElapsedTimeMs(start)
+    return SaveInfo(System.currentTimeMillis() - start, cacheSize)
   }
 
-  private fun cachePreProcess(storage: EntityStorage): EntityStorageSnapshot {
+  data class SaveInfo(
+    val loadingTime: Long,
+    val loadedSize: Long?,
+  )
+
+  private fun cachePreProcess(storage: EntityStorageSnapshot): EntityStorageSnapshot {
     val builder = MutableEntityStorage.from(storage)
     val nonPersistentModules = builder.entities(ModuleEntity::class.java)
       .filter { it.entitySource == NonPersistentEntitySource }
@@ -104,18 +117,23 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
     }
 
     override fun resolveClass(name: String, pluginId: String?): Class<*> {
+      val classLoader = getClassLoader(pluginId) ?:
+        error("Could not resolve class loader for plugin '$pluginId' with type: $name")
+
+      if (name.startsWith("[")) return Class.forName(name, true, classLoader)
+      return classLoader.loadClass(name)
+    }
+
+    override fun getClassLoader(pluginId: String?): ClassLoader? {
       val id = pluginId?.let { PluginId.getId(it) }
-      val classloader = if (id == null) {
-        ApplicationManager::class.java.classLoader
-      }
-      else {
-        val plugin = PluginManagerCore.getPlugin(id) ?: error("Could not resolve plugin by id '$pluginId' for type: $name")
-        plugin.pluginClassLoader ?: ApplicationManager::class.java.classLoader
+      if (id != null && !PluginManagerCore.isPluginInstalled(id)) {
+         return null
       }
 
-      if (name.startsWith("[")) return Class.forName(name, true, classloader)
-      return classloader.loadClass(name)
+      val plugin = PluginManagerCore.getPlugin(id)
+      return plugin?.pluginClassLoader ?: ApplicationManager::class.java.classLoader
     }
+
   }
 
   companion object {
@@ -128,7 +146,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager) {
     private val loadCacheFromFileTimeMs: AtomicLong = AtomicLong()
     private val saveCacheToFileTimeMs: AtomicLong = AtomicLong()
 
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+    private fun setupOpenTelemetryReporting(meter: Meter) {
       val loadCacheFromFileTimeGauge = meter.gaugeBuilder("workspaceModel.load.cache.from.file.ms")
         .ofLongs().setDescription("Total time spent in method").buildObserver()
 

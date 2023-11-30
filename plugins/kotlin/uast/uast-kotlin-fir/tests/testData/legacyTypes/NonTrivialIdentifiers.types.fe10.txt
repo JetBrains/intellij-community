@@ -17,14 +17,16 @@ UFile (package = ) [public final class NonTrivialIdentifiersKt {...]
                     USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
                     ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                         UBlockExpression [{...}]
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [invoke({ ...})] : PsiType:Unit
-                                UIdentifier (Identifier (p)) [UIdentifier (Identifier (p))]
-                                USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
-                                ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
-                                    UBlockExpression [{...}]
-                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
-                                            UIdentifier (Identifier (()) [UIdentifier (Identifier (())]
-                                            USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
+                            UReturnExpression [return invoke({ ...})]
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [invoke({ ...})] : PsiType:Unit
+                                    UIdentifier (Identifier (p)) [UIdentifier (Identifier (p))]
+                                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
+                                    ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
+                                        UBlockExpression [{...}]
+                                            UReturnExpression [return invoke()]
+                                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : PsiType:Unit
+                                                    UIdentifier (Identifier (()) [UIdentifier (Identifier (())]
+                                                    USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] : PsiType:Unit
     UClass (name = A) [public final class A {...}]
         UMethod (name = invoke) [public final fun invoke() : void {...}]
             UBlockExpression [{...}] : PsiType:void

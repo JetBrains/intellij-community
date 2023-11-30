@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Nls
   JsonSubTypes.Type(name = "Organization", value = GHOrganization::class)
 )
 interface GHActor {
+  val id: String
   val login: String
   val url: String
   val avatarUrl: String

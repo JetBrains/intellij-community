@@ -20,6 +20,7 @@ import com.intellij.ui.BadgeIcon
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.BitUtil
@@ -44,7 +45,9 @@ internal class CloseTab(component: JComponent,
 
   override fun update(e: AnActionEvent) {
     val pinned = isPinned()
-    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || (ExperimentalUI.isNewUI() && isModified())
+    val modified = isModified()
+    e.presentation.putClientProperty(JBEditorTabs.MARK_MODIFIED_KEY, modified)
+    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || (ExperimentalUI.isNewUI() && modified)
     e.presentation.icon = getIcon(isHovered = false)
     e.presentation.hoveredIcon = getIcon(isHovered = true)
 
@@ -129,13 +132,8 @@ internal class CloseTab(component: JComponent,
           showModifiedIcon -> {
             if (pinned) {
               val pinIcon = AllIcons.Actions.PinTab
-              BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, object : BadgeDotProvider() {
-                override fun getX(): Double = 0.7
-
-                override fun getY(): Double = 0.2
-
-                override fun getRadius(): Double = 3.0 / pinIcon.iconWidth
-              })
+              val provider = BadgeDotProvider(x = 0.7, y = 0.2, radius = 3.0 / pinIcon.iconWidth)
+              BadgeIcon(pinIcon, JBUI.CurrentTheme.IconBadge.INFORMATION, provider)
             }
             else {
               DotIcon(JBUI.CurrentTheme.IconBadge.INFORMATION)

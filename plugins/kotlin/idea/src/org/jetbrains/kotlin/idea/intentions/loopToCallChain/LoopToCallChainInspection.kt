@@ -128,9 +128,9 @@ abstract class AbstractLoopToCallChainIntention(
         return result!!
     }
 
-    override fun applyTo(element: KtForExpression, editor: Editor?) = LoopToCallChainInspection.Fix(lazy).applyFix(element, editor)
-
-    companion object {
-        const val MAX = 3
+    override fun applyTo(element: KtForExpression, editor: Editor?) {
+        LoopToCallChainInspection.Fix(lazy).applyFix(element, editor)
     }
 }
+
+private const val MAX: Int = 3

@@ -3,4 +3,6 @@ class A() {
     var i: Int = 0
         set(v: <caret>Any) {}
 }
-/* IGNORE_FIR */
+/* IGNORE_K2 */
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeAccessorTypeFix

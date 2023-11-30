@@ -142,6 +142,7 @@ public final class TypeConversionUtil {
               return true;
             }
           }
+          //unboxing and widening with type parameters
           if (fromTypeRank == UNKNOWN_RANK &&
               isUnboxable((PsiPrimitiveType)toType, (PsiClassType)fromType, new HashSet<>())) {
             return true;

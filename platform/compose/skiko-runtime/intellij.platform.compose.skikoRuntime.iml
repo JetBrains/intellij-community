@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="jetbrains.skiko.awt.runtime.all" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.skiko:skiko-awt-runtime-all:0.7.81">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.7.81/skiko-awt-runtime-all-0.7.81.jar">
+              <sha256sum>c2465a4afd2bc230dd09df7926b4af60472a1b349fdfa43eccb26a0008aeab37</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.7.81/skiko-awt-runtime-all-0.7.81.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/skiko/skiko-awt-runtime-all/0.7.81/skiko-awt-runtime-all-0.7.81-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

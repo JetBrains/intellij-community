@@ -140,7 +140,7 @@ public class PyEnvTaskRunner {
                                  " was not executed.\n" +
                                  joinStrings(myRoots, "All roots: ") +
                                  "\n" +
-                                 joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
+                                 joinStrings(requiredTags, "Required tags in tags.txt in root: "));
     }
   }
 

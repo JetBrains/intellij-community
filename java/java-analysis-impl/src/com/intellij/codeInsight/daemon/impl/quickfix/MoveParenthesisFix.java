@@ -1,73 +1,52 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.FileModifier;
-import com.intellij.codeInsight.intention.HighPriorityAction;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.Objects;
 
-public final class MoveParenthesisFix implements IntentionAction, HighPriorityAction {
-  private final PsiCallExpression myCall;
+public final class MoveParenthesisFix extends PsiUpdateModCommandAction<PsiCallExpression> {
   private final int myPos;
   private final int myShiftSize;
 
   public MoveParenthesisFix(PsiCallExpression call, int pos, int shiftSize) {
-    myCall = call;
+    super(call);
     myPos = pos;
     myShiftSize = shiftSize;
   }
 
   @Override
-  public @IntentionName @NotNull String getText() {
+  public @NotNull @IntentionFamilyName String getFamilyName() {
     return QuickFixBundle.message("intention.move.parenthesis.name");
   }
 
   @Override
-  public @NotNull @IntentionFamilyName String getFamilyName() {
-    return getText();
+  protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiCallExpression element) {
+    return Presentation.of(getFamilyName()).withPriority(PriorityAction.Priority.HIGH);
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !project.isDisposed() && myCall.isValid() && BaseIntentionAction.canModify(myCall);
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiCallExpression copy = copyWithShift(myCall, myPos, myShiftSize);
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiCallExpression call, @NotNull ModPsiUpdater updater) {
+    PsiCallExpression copy = copyWithShift(call, myPos, myShiftSize);
     if (copy != null) {
-      new CommentTracker().replaceAndRestoreComments(myCall, copy);
+      new CommentTracker().replaceAndRestoreComments(call, copy);
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Override
-  public @NotNull FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-    return new MoveParenthesisFix(PsiTreeUtil.findSameElementInCopy(myCall, target), myPos, myShiftSize);
   }
   
   private static PsiCallExpression copyWithShift(PsiCallExpression parentCall, int pos, int shift) {

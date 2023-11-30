@@ -18,7 +18,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
@@ -150,10 +150,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         for (overriddenFunction in overridden) {
             if (ReferencesSearch.search(overriddenFunction).forEach(Processor {
                     val place = it.element
-                    if (!isInside(place)) {
-                        return@Processor false
-                    }
-                    return@Processor true
+                    return@Processor isInside(place)
                 })) {
                 additionalElementsToDelete.add(overriddenFunction)
                 result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, element, true))

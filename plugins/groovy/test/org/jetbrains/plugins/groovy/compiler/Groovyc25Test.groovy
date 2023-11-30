@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -64,7 +64,7 @@ class Groovyc25Test extends GroovycTestBase {
   @Override
   void "test extend groovy classes with additional dependencies"() {
     ModuleRootModificationUtil.updateModel(module) { model ->
-      MavenDependencyUtil.addFromMaven(model, "org.codehaus.groovy:groovy-test:2.5.17", false)
+      MavenDependencyUtil.addFromMaven(model, "org.codehaus.groovy:groovy-test:2.5.23", false)
     }
     super.'test extend groovy classes with additional dependencies'()
   }

@@ -43,6 +43,10 @@ public class HardwareCollector implements TroubleInfoCollector {
 
   @Override
   public @NotNull String collectInfo(@NotNull Project project) {
+    return collectHardwareInfo();
+  }
+
+  public String collectHardwareInfo(){
     SystemInfo si = new SystemInfo();
 
     HardwareAbstractionLayer hal = si.getHardware();

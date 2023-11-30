@@ -15,12 +15,12 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.SequencesKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -340,7 +340,7 @@ public class MavenAnnotationProcessorConfigurator extends MavenImporter implemen
 
     try {
       MavenArtifactResolveResult annotationProcessors = embedder
-        .resolveArtifactTransitively(externalArtifacts, mavenProject.getRemoteRepositories());
+        .resolveArtifactTransitively(new ArrayList<>(externalArtifacts), new ArrayList<>(mavenProject.getRemoteRepositories()));
       if (annotationProcessors.problem != null) {
         MavenResolveResultProblemProcessor.notifySyncForProblem(project, annotationProcessors.problem);
       }

@@ -2,8 +2,10 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.PsiCopyPasteManager;
+import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.ui.customization.CustomizationUtil;
+import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.lang.LangBundle;
@@ -92,6 +94,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     }
     myTreeStructure = createStructure();
     myAsyncSupport = new AsyncProjectViewSupport(this, myProject, myTreeStructure, createComparator());
+    configureAsyncSupport(myAsyncSupport);
     myAsyncSupport.setModelTo(myTree);
 
     initTree();
@@ -118,6 +121,10 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
     return myComponent;
   }
 
+  @ApiStatus.Internal
+  protected void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
+  }
+
   @Override
   public void installComparator(@NotNull Comparator<? super NodeDescriptor<?>> comparator) {
     if (myAsyncSupport != null) {
@@ -126,7 +133,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   @Override
-  public final void dispose() {
+  public void dispose() {
     myAsyncSupport = null;
     myComponent = null;
     super.dispose();
@@ -180,7 +187,7 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
 
   @NotNull
   @Override
-  public final ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
+  public ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     Runnable afterUpdate;
     final ActionCallback cb = new ActionCallback();
     afterUpdate = cb.createSetDoneRunnable();
@@ -209,10 +216,10 @@ public abstract class AbstractProjectViewPaneWithAsyncSupport extends AbstractPr
   }
 
   @NotNull
-  protected abstract ProjectAbstractTreeStructureBase createStructure();
+  protected abstract AbstractTreeStructureBase createStructure();
 
   @NotNull
-  protected abstract ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel);
+  protected abstract DnDAwareTree createTree(@NotNull DefaultTreeModel treeModel);
 
   @ApiStatus.Internal
   @Nullable

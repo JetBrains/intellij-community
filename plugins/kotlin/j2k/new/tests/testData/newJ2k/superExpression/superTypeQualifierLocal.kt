@@ -3,11 +3,13 @@
 class J {
     fun foo() {
         interface A {
-            fun foo() {}
+            fun foo() {
+            }
         }
 
         interface B {
-            fun foo() {}
+            fun foo() {
+            }
         }
 
         class C : A, B {

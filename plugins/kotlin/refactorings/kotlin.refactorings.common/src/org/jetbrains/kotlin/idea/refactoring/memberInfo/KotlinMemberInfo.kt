@@ -30,7 +30,7 @@ class KotlinMemberInfo @JvmOverloads constructor(
                 overrides = true
             }
         } else {
-            displayName = member.presentation?.presentableText
+            displayName = KotlinMemberInfoSupport.getInstance().renderMemberInfo(member)
             if (member.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
                 displayName = KotlinBundle.message("member.info.abstract.0", displayName)
             }

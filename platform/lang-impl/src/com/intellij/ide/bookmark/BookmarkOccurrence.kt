@@ -13,8 +13,8 @@ class BookmarkOccurrence internal constructor(
 ) {
   constructor(group: BookmarkGroup, bookmark: Bookmark) : this(group, bookmark, -1, null)
 
-  fun nextFileBookmark() = next { it.bookmark is FileBookmark }
-  fun nextLineBookmark() = next { it.bookmark is LineBookmark }
+  fun nextFileBookmark(): BookmarkOccurrence? = next { it.bookmark is FileBookmark }
+  fun nextLineBookmark(): BookmarkOccurrence? = next { it.bookmark is LineBookmark }
   fun next(predicate: (BookmarkOccurrence) -> Boolean): BookmarkOccurrence? {
     val list = snapshot ?: manager(bookmark.provider.project)?.snapshot ?: return null
     var index = current
@@ -28,8 +28,8 @@ class BookmarkOccurrence internal constructor(
     }
   }
 
-  fun previousFileBookmark() = previous { it.bookmark is FileBookmark }
-  fun previousLineBookmark() = previous { it.bookmark is LineBookmark }
+  fun previousFileBookmark(): BookmarkOccurrence? = previous { it.bookmark is FileBookmark }
+  fun previousLineBookmark(): BookmarkOccurrence? = previous { it.bookmark is LineBookmark }
   fun previous(predicate: (BookmarkOccurrence) -> Boolean): BookmarkOccurrence? {
     val list = snapshot ?: manager(bookmark.provider.project)?.snapshot ?: return null
     var index = current
@@ -44,25 +44,25 @@ class BookmarkOccurrence internal constructor(
     }
   }
 
-  override fun hashCode() = Objects.hash(group, bookmark)
-  override fun equals(other: Any?) = other === this || other is BookmarkOccurrence
-                                     && other.group == group
-                                     && other.bookmark == bookmark
+  override fun hashCode(): Int = Objects.hash(group, bookmark)
+  override fun equals(other: Any?): Boolean = other === this || other is BookmarkOccurrence
+                                              && other.group == group
+                                              && other.bookmark == bookmark
 
   companion object {
     private fun manager(project: Project) = BookmarksManager.getInstance(project) as? BookmarksManagerImpl
 
-    val cyclic
+    val cyclic: Boolean
       get() = Registry.`is`("ide.bookmark.occurrence.cyclic.iteration.allowed", false)
 
-    fun firstFileBookmark(project: Project) = first(project) { it.bookmark is FileBookmark }
-    fun firstLineBookmark(project: Project) = first(project) { it.bookmark is LineBookmark }
-    fun first(project: Project, predicate: (BookmarkOccurrence) -> Boolean) =
+    fun firstFileBookmark(project: Project): BookmarkOccurrence? = first(project) { it.bookmark is FileBookmark }
+    fun firstLineBookmark(project: Project): BookmarkOccurrence? = first(project) { it.bookmark is LineBookmark }
+    fun first(project: Project, predicate: (BookmarkOccurrence) -> Boolean): BookmarkOccurrence? =
       manager(project)?.snapshot?.firstOrNull(predicate)
 
-    fun lastFileBookmark(project: Project) = last(project) { it.bookmark is FileBookmark }
-    fun lastLineBookmark(project: Project) = last(project) { it.bookmark is LineBookmark }
-    fun last(project: Project, predicate: (BookmarkOccurrence) -> Boolean) =
+    fun lastFileBookmark(project: Project): BookmarkOccurrence? = last(project) { it.bookmark is FileBookmark }
+    fun lastLineBookmark(project: Project): BookmarkOccurrence? = last(project) { it.bookmark is LineBookmark }
+    fun last(project: Project, predicate: (BookmarkOccurrence) -> Boolean): BookmarkOccurrence? =
       manager(project)?.snapshot?.lastOrNull(predicate)
   }
 }

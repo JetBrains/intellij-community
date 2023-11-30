@@ -19,8 +19,9 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
   public IntentionActionMetaData(@NotNull IntentionAction action,
                                  @Nullable ClassLoader loader,
                                  String @NotNull [] category,
-                                 @NotNull String descriptionDirectoryName) {
-    super(loader, descriptionDirectoryName);
+                                 @NotNull String descriptionDirectoryName,
+                                 boolean skipBeforeAfter) {
+    super(loader, descriptionDirectoryName, skipBeforeAfter);
 
     myAction = action;
     myCategory = category;

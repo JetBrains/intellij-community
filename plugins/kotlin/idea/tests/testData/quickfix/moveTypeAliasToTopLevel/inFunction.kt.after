@@ -8,3 +8,4 @@ fun bar() {
 typealias Foo = String
 
 fun qux() {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MoveTypeAliasToTopLevelFix

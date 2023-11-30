@@ -1,0 +1,12 @@
+// BIND_TO B
+class A {
+    fun foo() { }
+}
+
+class B {
+    fun foo() { }
+}
+
+fun foo() {
+    val x = <caret>B::foo
+}

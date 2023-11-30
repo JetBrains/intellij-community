@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.textarea;
 
 import com.intellij.openapi.editor.*;
@@ -25,7 +25,6 @@ import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
-
 
 public class TextComponentEditorImpl extends UserDataHolderBase implements TextComponentEditor {
   private final Project myProject;
@@ -55,8 +54,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  @NotNull
-  public Document getDocument() {
+  public @NotNull Document getDocument() {
     return myDocument;
   }
 
@@ -66,14 +64,12 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  @NotNull
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myTextComponent;
   }
 
   @Override
-  @NotNull
-  public JTextComponent getContentComponent() {
+  public @NotNull JTextComponent getContentComponent() {
     return myTextComponent;
   }
 
@@ -87,56 +83,47 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  @NotNull
-  public TextComponentSelectionModel getSelectionModel() {
+  public @NotNull TextComponentSelectionModel getSelectionModel() {
     return mySelectionModel;
   }
 
   @Override
-  @NotNull
-  public MarkupModel getMarkupModel() {
+  public @NotNull MarkupModel getMarkupModel() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  @NotNull
-  public FoldingModel getFoldingModel() {
+  public @NotNull FoldingModel getFoldingModel() {
     return myFoldingModel;
   }
 
   @Override
-  @NotNull
-  public ScrollingModel getScrollingModel() {
+  public @NotNull ScrollingModel getScrollingModel() {
     return myScrollingModel;
   }
 
   @Override
-  @NotNull
-  public CaretModel getCaretModel() {
+  public @NotNull CaretModel getCaretModel() {
     return myCaretModel;
   }
 
   @Override
-  @NotNull
-  public SoftWrapModel getSoftWrapModel() {
+  public @NotNull SoftWrapModel getSoftWrapModel() {
     return mySoftWrapModel;
   }
 
-  @NotNull
   @Override
-  public InlayModel getInlayModel() {
+  public @NotNull InlayModel getInlayModel() {
     return new EmptyInlayModel();
   }
 
-  @NotNull
   @Override
-  public EditorKind getEditorKind() {
+  public @NotNull EditorKind getEditorKind() {
     return EditorKind.UNTYPED;
   }
 
   @Override
-  @NotNull
-  public EditorSettings getSettings() {
+  public @NotNull EditorSettings getSettings() {
     if (mySettings == null) {
       mySettings = new SettingsImpl();
     }
@@ -144,8 +131,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  @NotNull
-  public EditorColorsScheme getColorsScheme() {
+  public @NotNull EditorColorsScheme getColorsScheme() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -155,13 +141,12 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  @NotNull
-  public Point logicalPositionToXY(@NotNull final LogicalPosition pos) {
+  public @NotNull Point logicalPositionToXY(final @NotNull LogicalPosition pos) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public int logicalPositionToOffset(@NotNull final LogicalPosition pos) {
+  public int logicalPositionToOffset(final @NotNull LogicalPosition pos) {
     if (pos.line >= myDocument.getLineCount()) {
       return myDocument.getTextLength();
     }
@@ -169,86 +154,76 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  @NotNull
-  public VisualPosition logicalToVisualPosition(@NotNull final LogicalPosition logicalPos) {
+  public @NotNull VisualPosition logicalToVisualPosition(final @NotNull LogicalPosition logicalPos) {
     return new VisualPosition(logicalPos.line, logicalPos.column);
   }
 
   @Override
-  @NotNull
-  public Point visualPositionToXY(@NotNull final VisualPosition visible) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @NotNull
-  @Override
-  public Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+  public @NotNull Point visualPositionToXY(final @NotNull VisualPosition visible) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  @NotNull
-  public LogicalPosition visualToLogicalPosition(@NotNull final VisualPosition visiblePos) {
+  public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public @NotNull LogicalPosition visualToLogicalPosition(final @NotNull VisualPosition visiblePos) {
     return new LogicalPosition(visiblePos.line, visiblePos.column);
   }
 
   @Override
-  @NotNull
-  public LogicalPosition offsetToLogicalPosition(final int offset) {
+  public @NotNull LogicalPosition offsetToLogicalPosition(final int offset) {
     int line = myDocument.getLineNumber(offset);
     final int lineStartOffset = myDocument.getLineStartOffset(line);
     return new LogicalPosition(line, offset - lineStartOffset);
   }
 
   @Override
-  @NotNull
-  public VisualPosition offsetToVisualPosition(final int offset) {
+  public @NotNull VisualPosition offsetToVisualPosition(final int offset) {
     int line = myDocument.getLineNumber(offset);
     final int lineStartOffset = myDocument.getLineStartOffset(line);
     return new VisualPosition(line, offset - lineStartOffset);
   }
 
-  @NotNull
   @Override
-  public VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
+  public @NotNull VisualPosition offsetToVisualPosition(int offset, boolean leanForward, boolean beforeSoftWrap) {
     return offsetToVisualPosition(offset);
   }
 
   @Override
-  @NotNull
-  public LogicalPosition xyToLogicalPosition(@NotNull final Point p) {
+  public @NotNull LogicalPosition xyToLogicalPosition(final @NotNull Point p) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  @NotNull
-  public VisualPosition xyToVisualPosition(@NotNull final Point p) {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-  @NotNull
-  @Override
-  public VisualPosition xyToVisualPosition(@NotNull Point2D p) {
+  public @NotNull VisualPosition xyToVisualPosition(final @NotNull Point p) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void addEditorMouseListener(@NotNull final EditorMouseListener listener) {
+  public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void removeEditorMouseListener(@NotNull final EditorMouseListener listener) {
+  public void addEditorMouseListener(final @NotNull EditorMouseListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void addEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
+  public void removeEditorMouseListener(final @NotNull EditorMouseListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void removeEditorMouseMotionListener(@NotNull final EditorMouseMotionListener listener) {
+  public void addEditorMouseMotionListener(final @NotNull EditorMouseMotionListener listener) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public void removeEditorMouseMotionListener(final @NotNull EditorMouseMotionListener listener) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -258,8 +233,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  @Nullable
-  public Project getProject() {
+  public @Nullable Project getProject() {
     return myProject;
   }
 
@@ -279,19 +253,17 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  @NotNull
-  public EditorGutter getGutter() {
+  public @NotNull EditorGutter getGutter() {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  @Nullable
-  public EditorMouseEventArea getMouseEventArea(@NotNull final MouseEvent e) {
+  public @Nullable EditorMouseEventArea getMouseEventArea(final @NotNull MouseEvent e) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
   @Override
-  public void setHeaderComponent(@Nullable final JComponent header) {
+  public void setHeaderComponent(final @Nullable JComponent header) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -301,14 +273,12 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   }
 
   @Override
-  @Nullable
-  public JComponent getHeaderComponent() {
+  public @Nullable JComponent getHeaderComponent() {
     return null;
   }
 
-  @NotNull
   @Override
-  public IndentsModel getIndentsModel() {
+  public @NotNull IndentsModel getIndentsModel() {
     return new EmptyIndentsModel();
   }
 

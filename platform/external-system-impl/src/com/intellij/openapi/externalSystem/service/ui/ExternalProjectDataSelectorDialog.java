@@ -1,11 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer;
@@ -24,6 +23,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
@@ -40,7 +40,6 @@ import com.intellij.util.CachedValueImpl;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -187,14 +186,14 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         projectStructure.setIgnored(notIgnoredNode == null);
 
         // execute when current dialog is closed
-        ExternalSystemUtil.invokeLater(myProject, ModalityState.NON_MODAL, () -> {
+        ExternalSystemUtil.invokeLater(myProject, ModalityState.nonModal(), () -> {
           final ProjectData projectData = projectStructure.getData();
           String title = ExternalSystemBundle.message(
             "progress.refresh.text", projectData.getExternalName(), projectData.getOwner().getReadableName());
           new Task.Backgroundable(myProject, title, true, PerformInBackgroundOption.DEAF) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              ApplicationManager.getApplication().getService(ProjectDataManager.class).importData(projectStructure, myProject);
+              ProjectDataManager.getInstance().importData(projectStructure, myProject);
             }
           }.queue();
         });

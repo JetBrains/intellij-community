@@ -44,12 +44,12 @@ public final class SAMKt {
     }
     public static final fun test1() : void {
         var thread1: java.lang.Thread = <init>({
-            println("hello1")
+            return println("hello1")
         })
     }
     public static final fun test2() : void {
         var thread2: java.lang.Thread = <init>(Runnable({
-            println("hello2")
+            return println("hello2")
         }))
     }
     public static final fun test3() : void {

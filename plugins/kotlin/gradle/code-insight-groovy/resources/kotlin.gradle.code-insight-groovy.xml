@@ -5,6 +5,7 @@
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.code-insight-common"/>
+    <module name="kotlin.project-wizard.idea"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -35,9 +36,10 @@
 
     <localInspection
             implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection"
-            groupPath="Kotlin,Migration"
+            groupPathKey="group.path.kotlin.migration"
             groupBundle="messages.KotlinBundle" groupKey="group.names.gradle"
             enabledByDefault="false"
+            cleanupTool="true"
             language="Groovy"
             hasStaticDescription="true"
             level="ERROR" key="inspection.gradle.kotlinx.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>

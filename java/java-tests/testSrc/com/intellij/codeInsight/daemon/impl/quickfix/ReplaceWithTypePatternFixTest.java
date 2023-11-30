@@ -16,6 +16,6 @@ public class ReplaceWithTypePatternFixTest extends LightQuickFixParameterizedTes
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_17;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
   }
 }

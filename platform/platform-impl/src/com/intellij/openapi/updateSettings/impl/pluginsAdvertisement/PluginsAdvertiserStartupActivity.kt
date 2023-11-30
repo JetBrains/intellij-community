@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.RepositoryHelper
 import com.intellij.ide.plugins.advertiser.PluginDataSet
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
@@ -17,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -26,47 +28,13 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.coroutineContext
 
 internal class PluginsAdvertiserStartupActivity : ProjectActivity {
-  companion object {
-    @JvmStatic
-    fun getSuggestedPlugins(project: Project, customMap: Map<String, List<PluginNode>>): List<IdeaPluginDescriptor> = runBlockingMaybeCancellable {
-      val application = ApplicationManager.getApplication()
-      if (application.isUnitTestMode || application.isHeadlessEnvironment) {
-        return@runBlockingMaybeCancellable emptyList()
-      }
-
-      val customPlugins = ArrayList<PluginNode>()
-      for (value in customMap.values) {
-        customPlugins.addAll(value)
-      }
-
-      val pluginAdvertiserService = PluginAdvertiserService.getInstance(project)
-      pluginAdvertiserService.collectDependencyUnknownFeatures(true)
-
-      val customPluginIds = customPlugins.map { it.pluginId.idString }.toSet()
-      val extensionsService = PluginFeatureCacheService.getInstance()
-      val oldDependencies = extensionsService.dependencies
-      extensionsService.dependencies = PluginFeatureMap(
-        getFeatureMapFromMarketPlace(customPluginIds, DEPENDENCY_SUPPORT_FEATURE),
-        if (oldDependencies != null) System.currentTimeMillis() else 0L,
-      )
-
-      val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
-
-      if (unknownFeatures.isNotEmpty()) {
-        return@runBlockingMaybeCancellable pluginAdvertiserService.fetch(customPlugins, unknownFeatures, true)
-      }
-
-      return@runBlockingMaybeCancellable emptyList()
-    }
-  }
-
   suspend fun checkSuggestedPlugins(project: Project, includeIgnored: Boolean) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode || application.isHeadlessEnvironment) {
       return
     }
 
-    val customPlugins = loadPluginsFromCustomRepositories()
+    val customPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(null)
 
     coroutineContext.ensureActive()
 
@@ -121,6 +89,8 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
           includeIgnored = includeIgnored
         )
       }
+
+      notifyUnbundledPlugins(project)
     }
     catch (e: CancellationException) {
       throw e
@@ -133,7 +103,44 @@ internal class PluginsAdvertiserStartupActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
+    if (!Registry.`is`("ide.show.plugin.suggestions.on.open", true)) {
+      return
+    }
+
     checkSuggestedPlugins(project = project, includeIgnored = false)
+  }
+}
+
+internal fun findSuggestedPlugins(project: Project, customRepositories: Map<String, List<PluginNode>>): List<IdeaPluginDescriptor> {
+  return runBlockingMaybeCancellable {
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode || application.isHeadlessEnvironment) {
+      return@runBlockingMaybeCancellable emptyList()
+    }
+
+    val customPlugins = ArrayList<PluginNode>()
+    for (value in customRepositories.values) {
+      customPlugins.addAll(value)
+    }
+
+    val pluginAdvertiserService = PluginAdvertiserService.getInstance(project)
+    pluginAdvertiserService.collectDependencyUnknownFeatures(true)
+
+    val customPluginIds = customPlugins.map { it.pluginId.idString }.toSet()
+    val extensionsService = PluginFeatureCacheService.getInstance()
+    val oldDependencies = extensionsService.dependencies
+    extensionsService.dependencies = PluginFeatureMap(
+      getFeatureMapFromMarketPlace(customPluginIds, DEPENDENCY_SUPPORT_FEATURE),
+      if (oldDependencies != null) System.currentTimeMillis() else 0L,
+    )
+
+    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
+
+    if (unknownFeatures.isNotEmpty()) {
+      return@runBlockingMaybeCancellable pluginAdvertiserService.fetch(customPlugins, unknownFeatures, true)
+    }
+
+    return@runBlockingMaybeCancellable emptyList()
   }
 }
 
@@ -147,6 +154,10 @@ private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureTy
     ).mapValues {
       PluginDataSet(it.value.filterNotNull().toSet())
     }
+}
+
+private fun notifyUnbundledPlugins(project: Project) {
+  // stub for future plugins
 }
 
 private val PluginFeatureMap.isOutdated: Boolean

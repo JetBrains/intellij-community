@@ -51,21 +51,58 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
     return element == null ? null : getPresentation(context, element);
   }
 
-  @Nullable
-  private E getElement(@NotNull ActionContext context) {
+  private @Nullable E getElement(@NotNull ActionContext context) {
     if (myPointer != null) {
-      return myPointer.getElement();
+      E element = myPointer.getElement();
+      if (element != null && !BaseIntentionAction.canModify(element)) return null;
+      return element;
     }
     int offset = context.offset();
     PsiFile file = context.file();
     if (!BaseIntentionAction.canModify(file)) return null;
-    PsiElement element = file.findElementAt(offset);
-    E target = PsiTreeUtil.getNonStrictParentOfType(element, Objects.requireNonNull(myClass));
-    if (target == null && offset > 0) {
-      element = file.findElementAt(offset - 1);
-      target = PsiTreeUtil.getNonStrictParentOfType(element, Objects.requireNonNull(myClass));
+    if (context.element() != null && context.element().isValid()) {
+      return getIfSatisfied(context.element(), context);
     }
-    return target;
+    PsiElement right = file.findElementAt(offset);
+    PsiElement left = offset > 0 ? file.findElementAt(offset - 1) : right;
+    if (left == null && right == null) return null;
+    if (left == null) left = right;
+    if (right == null) right = left;
+    PsiElement commonParent = PsiTreeUtil.findCommonParent(left, right);
+
+    if (left != right) {
+      while (right != commonParent) {
+        E result = getIfSatisfied(right, context);
+        if (result != null) return result;
+        right = right.getParent();
+      }
+    }
+
+    while (left != commonParent) {
+      E result = getIfSatisfied(left, context);
+      if (result != null) return result;
+      left = left.getParent();
+    }
+
+    while (true) {
+      if (commonParent == null) return null;
+      E satisfied = getIfSatisfied(commonParent, context);
+      if (satisfied != null) return satisfied;
+      if (commonParent instanceof PsiFile) return null;
+      commonParent = commonParent.getParent();
+    }
+  }
+
+  private E getIfSatisfied(@NotNull PsiElement element, @NotNull ActionContext context) {
+    Class<E> cls = Objects.requireNonNull(myClass);
+    if (!cls.isInstance(element)) return null;
+    E e = cls.cast(element);
+    return isElementApplicable(e, context) ? e : null;
+  }
+
+  @SuppressWarnings("unused")
+  protected boolean isElementApplicable(@NotNull E element, @NotNull ActionContext context) {
+    return true;
   }
 
   @Override
@@ -90,7 +127,7 @@ public abstract class PsiBasedModCommandAction<E extends PsiElement> implements 
    */
   protected @NotNull IntentionPreviewInfo generatePreview(ActionContext context, E element) {
     ModCommand command = perform(context, element);
-    return IntentionPreviewUtils.getModCommandPreview(command, context.file());
+    return IntentionPreviewUtils.getModCommandPreview(command, context);
   }
 
   /**

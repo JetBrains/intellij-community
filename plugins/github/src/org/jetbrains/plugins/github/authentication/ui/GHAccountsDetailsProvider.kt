@@ -3,8 +3,10 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.collaboration.auth.ui.LazyLoadingAccountsDetailsProvider
 import com.intellij.collaboration.auth.ui.cancelOnRemoval
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.ExceptionUtil
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.coroutineToIndicator
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
@@ -12,13 +14,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
-import org.jetbrains.plugins.github.authentication.util.GHSecurityUtil
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
-import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
 import java.awt.Image
 
@@ -44,7 +45,7 @@ internal class GHAccountsDetailsProvider(
     catch (e: Exception) {
       null
     }
-    if (executor == null) return Result.Error(GithubBundle.message("account.token.missing"), true)
+    if (executor == null) return Result.Error(CollaborationToolsBundle.message("account.token.missing"), true)
     return withContext(Dispatchers.IO) {
       coroutineToIndicator {
         doLoadDetails(executor, account)
@@ -55,16 +56,14 @@ internal class GHAccountsDetailsProvider(
   private fun doLoadDetails(executor: GithubApiRequestExecutor, account: GithubAccount)
     : Result<GithubAuthenticatedUser> {
 
-    val (details, scopes) = try {
-      GHSecurityUtil.loadCurrentUserWithScopes(executor, account.server)
+    val details = try {
+      executor.execute(ProgressManager.getInstance().progressIndicator,
+                       GithubApiRequests.CurrentUser.get(account.server))
     }
     catch (e: Throwable) {
       val errorMessage = ExceptionUtil.getPresentableMessage(e)
       val needReLogin = e is GithubAuthenticationException
       return Result.Error(errorMessage, needReLogin)
-    }
-    if (!GHSecurityUtil.isEnoughScopes(scopes.orEmpty())) {
-      return Result.Error(GithubBundle.message("account.scopes.insufficient"), true)
     }
 
     return Result.Success(details)

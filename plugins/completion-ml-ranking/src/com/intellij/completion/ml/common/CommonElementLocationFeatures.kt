@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.ml.ContextFeatures
 import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapi.util.Key
 
 class CommonElementLocationFeatures : ElementFeatureProvider {
   override fun getName(): String = "common"
@@ -34,9 +35,14 @@ class CommonElementLocationFeatures : ElementFeatureProvider {
     }
 
     element.getUserData(BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR)?.let {
-      result["contributor"] = MLFeatureValue.className(it::class.java)
+      val actualCompletionContributor: Class<*>? = element.getUserData(LOOKUP_ORIGINAL_ELEMENT_CONTRIBUTOR_TYPE)
+      result["contributor"] = MLFeatureValue.className(actualCompletionContributor ?: it::class.java)
     }
 
     return result
   }
+
 }
+
+// For the TurboComplete plugin, to not confuse the ML model with new unknown contributors
+val LOOKUP_ORIGINAL_ELEMENT_CONTRIBUTOR_TYPE = Key<Class<*>>("original contributor of the element")

@@ -13,17 +13,15 @@ public class StaticFilePath {
   private final String myKey;
   private final String myPath;
   private final boolean myIsDirectory;
-  private final VirtualFile myVf;
 
-  public StaticFilePath(boolean isDirectory, @NotNull String path, @Nullable VirtualFile vf) {
-    this(isDirectory, path, FilePathsHelper.convertPath(path), vf);
+  public StaticFilePath(boolean isDirectory, @NotNull String path) {
+    this(isDirectory, path, FilePathsHelper.convertPath(path));
   }
 
-  private StaticFilePath(boolean isDirectory, @NotNull String path, @NotNull String key, @Nullable VirtualFile vf) {
+  private StaticFilePath(boolean isDirectory, @NotNull String path, @NotNull String key) {
     myIsDirectory = isDirectory;
     myPath = path;
     myKey = key;
-    myVf = vf;
   }
 
   public boolean isDirectory() {
@@ -40,9 +38,13 @@ public class StaticFilePath {
     return myKey;
   }
 
+  /**
+   * @deprecated Use {@link #resolve()} or {@link com.intellij.vcsUtil.VcsImplUtil#findValidParentAccurately}
+   */
   @Nullable
+  @Deprecated
   public VirtualFile getVf() {
-    return myVf;
+    return null;
   }
 
   @NotNull
@@ -54,13 +56,11 @@ public class StaticFilePath {
   public StaticFilePath getParent() {
     final int idx = myKey.lastIndexOf('/');
     if (idx == -1 || idx == 0) return null;
-    return new StaticFilePath(true, myPath.substring(0, idx), myKey.substring(0, idx), myVf == null ? null : myVf.getParent());
+    return new StaticFilePath(true, myPath.substring(0, idx), myKey.substring(0, idx));
   }
 
   @Nullable
   public VirtualFile resolve() {
-    VirtualFile result = getVf();
-    if (result != null) return result;
     return LocalFileSystem.getInstance().findFileByPath(getPath());
   }
 }

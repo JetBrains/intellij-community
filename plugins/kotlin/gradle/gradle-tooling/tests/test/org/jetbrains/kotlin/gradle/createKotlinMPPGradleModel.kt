@@ -69,7 +69,6 @@ internal fun createKotlinSourceSet(
     extras = IdeaKotlinExtras.wrap(extras)
 )
 
-@Suppress("DEPRECATION_ERROR")
 internal fun createKotlinCompilation(
     name: String = "main",
     defaultSourceSets: Set<KotlinSourceSet> = emptySet(),
@@ -92,7 +91,9 @@ internal fun createKotlinCompilation(
         kotlinTaskProperties = kotlinTaskProperties,
         nativeExtensions = nativeExtensions,
         associateCompilations = associateCompilations,
-        extras = IdeaKotlinExtras.wrap(extras)
+        extras = IdeaKotlinExtras.wrap(extras),
+        isTestComponent = associateCompilations.isNotEmpty(),
+        archiveFile = null,
     )
 }
 

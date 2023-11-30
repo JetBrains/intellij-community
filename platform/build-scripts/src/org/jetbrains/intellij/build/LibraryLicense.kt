@@ -3,6 +3,9 @@
 
 package org.jetbrains.intellij.build
 
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.intellij.build.LibraryLicense.Companion.PREDEFINED_LICENSE_URLS
+
 /**
  * Describes a library which is included into distribution of an IntelliJ-based IDE. This information is used to show list of Third-party
  * software in About popup and on the product download page.
@@ -19,7 +22,7 @@ data class LibraryLicense(
   val url: String? = null,
 
   /**
-   * Version of the library. If [libraryName] points to a Maven library version is taken from the library configuration so it must
+   * Version of the library. If [libraryName] points to a Maven library version is taken from the library configuration, so it must
    * not be specified explicitly.
    */
   val version: String? = null,
@@ -51,7 +54,7 @@ data class LibraryLicense(
   val transitiveDependency: Boolean = false,
 
   /**
-   * Type of a license (e.g. `"Apache 2.0"`)
+   * Type of license (e.g. `"Apache 2.0"`)
    */
   val license: String? = null,
 
@@ -61,6 +64,39 @@ data class LibraryLicense(
    */
   val licenseUrl: String? = null,
 ) {
+  /**
+   * See [org.spdx.library.SpdxConstants.LISTED_LICENSE_URL]
+   */
+  @Internal
+  var spdxIdentifier: String? = null
+
+  /**
+   * See:
+   * * https://spdx.github.io/spdx-spec/v2.3/package-information/#75-package-supplier-field
+   * * https://package-search.jetbrains.com/
+   */
+  internal var supplier: String? = null
+    set(value) {
+      require(value == null || value.startsWith("Organization: ") || value.startsWith("Person: ")) {
+        "$value should start either with 'Organization: ' or with 'Person: ' prefix"
+      }
+      field = value
+    }
+
+  @Internal
+  fun suppliedByOrganizations(vararg organizations: String): LibraryLicense {
+    require(organizations.any())
+    supplier = organizations.joinToString(prefix = "Organization: ")
+    return this
+  }
+
+  @Internal
+  fun suppliedByPersons(vararg persons: String): LibraryLicense {
+    require(persons.any())
+    supplier = persons.joinToString(prefix = "Person: ")
+    return this
+  }
+
   init {
     require(name != null || libraryName != null) { "name or libraryName must be set" }
   }
@@ -78,7 +114,7 @@ data class LibraryLicense(
     const val CUSTOM_REVISION = "custom revision"
 
     /**
-     * Use this method only for JetBrains's own libraries which are available as part of IntelliJ-based IDEs only so there is no way to
+     * Use this method only for JetBrains own libraries which are available as part of IntelliJ-based IDEs only so there is no way to
      * give link to their sites. For other libraries please fill all necessary fields of [LibraryLicense] instead of using this method.
      */
     @JvmStatic
@@ -104,7 +140,9 @@ data class LibraryLicense(
     return copy(
       license = "Apache 2.0",
       licenseUrl = licenseUrl ?: APACHE_LICENSE_URL,
-    )
+    ).apply {
+      spdxIdentifier = "Apache-2.0"
+    }
   }
 
   fun apache(licenseUrl: String): LibraryLicense {
@@ -112,7 +150,9 @@ data class LibraryLicense(
     return copy(
       license = "Apache 2.0",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "Apache-2.0"
+    }
   }
 
   @Deprecated("Please specify exact URL for the BSD license, pointing to the repo of the dependency")
@@ -122,7 +162,9 @@ data class LibraryLicense(
     return copy(
       license = "BSD 2-Clause",
       licenseUrl = licenseUrl ?: "https://opensource.org/licenses/BSD-2-Clause",
-    )
+    ).apply {
+      spdxIdentifier = "BSD-2-Clause"
+    }
   }
 
   fun simplifiedBsd(licenseUrl: String): LibraryLicense {
@@ -130,7 +172,9 @@ data class LibraryLicense(
     return copy(
       license = "BSD 2-Clause",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "BSD-2-Clause"
+    }
   }
   @Deprecated("Please specify exact URL for the BSD license, pointing to the repo or Web site of the dependency")
   fun newBsd(): LibraryLicense {
@@ -139,7 +183,9 @@ data class LibraryLicense(
     return copy(
       license = "BSD 3-Clause",
       licenseUrl = licenseUrl ?: "https://opensource.org/licenses/BSD-3-Clause",
-    )
+    ).apply {
+      spdxIdentifier = "BSD-3-Clause"
+    }
   }
 
   fun newBsd(licenseUrl: String): LibraryLicense {
@@ -147,7 +193,9 @@ data class LibraryLicense(
     return copy(
       license = "BSD 3-Clause",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "BSD-3-Clause"
+    }
   }
 
   @Deprecated("Please specify exact URL for the MIT license, pointing to the repo or Web site of the dependency")
@@ -157,7 +205,9 @@ data class LibraryLicense(
     return copy(
       license = "MIT",
       licenseUrl = licenseUrl ?: "https://opensource.org/licenses/MIT",
-    )
+    ).apply {
+      spdxIdentifier = "MIT"
+    }
   }
 
   fun mit(licenseUrl: String): LibraryLicense {
@@ -165,7 +215,9 @@ data class LibraryLicense(
     return copy(
       license = "MIT",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "MIT"
+    }
   }
 
   fun eplV1(): LibraryLicense = epl(1)
@@ -178,7 +230,9 @@ data class LibraryLicense(
     return copy(
       license = "Eclipse Public License ${v}.0",
       licenseUrl = licenseUrl
-    )
+    ).apply {
+      spdxIdentifier = "EPL-$v.0"
+    }
   }
 
   private fun epl(v: Int): LibraryLicense {
@@ -189,6 +243,37 @@ data class LibraryLicense(
       license = "Eclipse Public License ${v}.0",
       licenseUrl = licenseUrl
                    ?: (if (v == 1) "https://www.eclipse.org/org/documents/epl-v10.html" else "https://www.eclipse.org/legal/epl-2.0")
-    )
+    ).apply {
+      spdxIdentifier = "EPL-$v.0"
+    }
+  }
+
+  internal var forkedFrom: LibraryUpstream? = null
+
+  /**
+   * See [org.jetbrains.intellij.build.LibraryUpstream]
+   */
+  @Internal
+  fun forkedFrom(groupId: String, artifactId: String,
+                 version: String? = null, revision: String? = null,
+                 mavenRepositoryUrl: String? = null,
+                 sourceCodeUrl: String? = null,
+                 authors: String? = null): LibraryLicense {
+    return copy().apply {
+      forkedFrom = LibraryUpstream(
+        mavenRepositoryUrl = mavenRepositoryUrl,
+        sourceCodeUrl = sourceCodeUrl,
+        groupId = groupId, artifactId = artifactId,
+        version = version, revision = revision,
+        LibraryLicense(
+          libraryName = "$groupId:$artifactId",
+          version = version, url = sourceCodeUrl,
+          licenseUrl = this.licenseUrl,
+          license = this.license,
+        ).let {
+          it.suppliedByPersons(authors ?: return@let it)
+        }
+      )
+    }
   }
 }

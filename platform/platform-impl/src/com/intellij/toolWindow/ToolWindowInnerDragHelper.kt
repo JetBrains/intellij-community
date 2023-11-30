@@ -4,7 +4,6 @@ package com.intellij.toolWindow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeGlassPaneUtil
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.openapi.wm.impl.content.ContentTabLabel
 import com.intellij.openapi.wm.impl.content.SingleContentLayout
@@ -19,6 +18,8 @@ import com.intellij.ui.content.Content.TEMPORARY_REMOVED_KEY
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.tabs.TabsUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.UIUtil
+import java.awt.Component
 import java.awt.Image
 import java.awt.Point
 import java.awt.Rectangle
@@ -29,6 +30,7 @@ import javax.swing.*
 
 internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindowPane) : MouseDragHelper<ToolWindowPane>(parent, pane) {
   private var sourceDecorator = null as InternalDecoratorImpl?
+  private var sourceTopDecorator: InternalDecoratorImpl? = null
   private var myInitialIndex = -1
   private var myCurrentDecorator = null as InternalDecoratorImpl?
   private var myDraggingTab = null as ContentTabLabel?
@@ -69,12 +71,14 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
     val contentTabLabel = getTab(relativePoint)
     if (contentTabLabel == null) {
       sourceDecorator = null
+      sourceTopDecorator = null
       myDraggingTab = null
       return
     }
     myInitialOffset.location = relativePoint.getPoint(contentTabLabel)
     myDraggingTab = contentTabLabel
     sourceDecorator = InternalDecoratorImpl.findNearestDecorator(contentTabLabel)
+    sourceTopDecorator = sourceDecorator?.let { findTopDecorator(it) }
     myInitialIndex = getInitialIndex(contentTabLabel)
     myCurrentDecorator = sourceDecorator
     myDialog = MyDialog(pane, this, createThumbnailDragImage(contentTabLabel, -1))
@@ -221,6 +225,7 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
     (myDraggingTab!!.content as ContentImpl).putUserData(TEMPORARY_REMOVED_KEY, null)
     sourceDecorator?.isSplitUnsplitInProgress = false
     sourceDecorator = null
+    sourceTopDecorator = null
     myDraggingTab = null
     myCurrentDecorator?.setDropInfoIndex(-1, 0)
     myCurrentDecorator = null
@@ -308,13 +313,14 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindo
   }
 
   private fun getDecorator(relativePoint: RelativePoint): InternalDecoratorImpl? {
-    val rootPane = pane.rootPane
-    if (rootPane is IdeRootPane) {
-      val point = relativePoint.getPoint(rootPane.getToolWindowPane())
-      val component = SwingUtilities.getDeepestComponentAt(rootPane.getToolWindowPane(), point.x, point.y)
-      return InternalDecoratorImpl.findNearestDecorator(component)
-    }
-    return null
+    val topDecorator = sourceTopDecorator ?: return null
+    val point = relativePoint.getPoint(topDecorator)
+    val component = SwingUtilities.getDeepestComponentAt(topDecorator, point.x, point.y)
+    return InternalDecoratorImpl.findNearestDecorator(component)
+  }
+
+  private fun findTopDecorator(component: Component): InternalDecoratorImpl? {
+    return UIUtil.uiParents(component, false).lastOrNull { it is InternalDecoratorImpl } as? InternalDecoratorImpl
   }
 
   private fun InternalDecoratorImpl.isSingleContentLayout(): Boolean {

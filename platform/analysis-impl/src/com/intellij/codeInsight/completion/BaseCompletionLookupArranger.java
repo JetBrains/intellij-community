@@ -1,11 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -17,6 +16,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StandardPatterns;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInsight.util.CodeCompletionKt.*;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.computeWithSpan;
+import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
 
 public class BaseCompletionLookupArranger extends LookupArranger implements CompletionLookupArranger {
   private static final Logger LOG = Logger.getInstance(BaseCompletionLookupArranger.class);
@@ -81,16 +81,14 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return inputBySorter;
   }
 
-  @NotNull
-  private CompletionSorterImpl obtainSorter(LookupElement element) {
+  private @NotNull CompletionSorterImpl obtainSorter(LookupElement element) {
     //noinspection ConstantConditions
     return element.getUserData(mySorterKey);
   }
 
-  @NotNull
   @Override
-  public synchronized Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items,
-                                                                            boolean hideSingleValued) {
+  public synchronized @NotNull Map<LookupElement, List<Pair<String, Object>>> getRelevanceObjects(@NotNull Iterable<? extends LookupElement> items,
+                                                                                                  boolean hideSingleValued) {
     Map<LookupElement, List<Pair<String, Object>>> map = new IdentityHashMap<>();
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupItemsBySorter(items);
     int sorterNumber = 0;
@@ -328,9 +326,8 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
         return 0;
       }
 
-      @NotNull
       @Override
-      public LookupFocusDegree getLookupFocusDegree() {
+      public @NotNull LookupFocusDegree getLookupFocusDegree() {
         return LookupFocusDegree.FOCUSED;
       }
 
@@ -347,10 +344,9 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return doArrangeItems((LookupElementListPresenter)lookup, onExplicitAction);
   }
 
-  @NotNull
-  private synchronized Pair<List<LookupElement>, Integer> doArrangeItems(@NotNull LookupElementListPresenter lookup,
-                                                                         boolean onExplicitAction) {
-    return computeWithSpan(TelemetryTracer.getInstance().getTracer(CodeCompletion), "arrangeItems", span -> {
+  private synchronized @NotNull Pair<List<LookupElement>, Integer> doArrangeItems(@NotNull LookupElementListPresenter lookup,
+                                                                                  boolean onExplicitAction) {
+    return computeWithSpan(TelemetryManager.getInstance().getTracer(CodeCompletion), "arrangeItems", span -> {
       List<LookupElement> items = getMatchingItems();
       Iterable<? extends LookupElement> sortedByRelevance = sortByRelevance(groupItemsBySorter(items));
 
@@ -369,8 +365,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   }
 
   // visible for plugins, see https://intellij-support.jetbrains.com/hc/en-us/community/posts/360008625980-Sorting-completions-in-provider
-  @NotNull
-  protected Iterable<? extends LookupElement> applyFinalSorter(Iterable<? extends LookupElement> sortedByRelevance) {
+  protected @NotNull Iterable<? extends LookupElement> applyFinalSorter(Iterable<? extends LookupElement> sortedByRelevance) {
     if (sortedByRelevance.iterator().hasNext()) {
       return myFinalSorter.sort(sortedByRelevance, Objects.requireNonNull(myProcess.getParameters()));
     }
@@ -403,7 +398,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
 
   private static void ensureItemAdded(Set<? extends LookupElement> items,
                                       LinkedHashSet<? super LookupElement> model,
-                                      Iterator<? extends LookupElement> byRelevance, @Nullable final LookupElement item) {
+                                      Iterator<? extends LookupElement> byRelevance, final @Nullable LookupElement item) {
     if (item != null && items.contains(item) && !model.contains(item)) {
       addSomeItems(model, byRelevance, lastAdded -> lastAdded == item);
     }
@@ -532,8 +527,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return exactMatches;
   }
 
-  @Nullable
-  private LookupElement getBestExactMatch(List<? extends LookupElement> items) {
+  private @Nullable LookupElement getBestExactMatch(List<? extends LookupElement> items) {
     List<LookupElement> exactMatches = getExactMatches(items);
     if (exactMatches.isEmpty()) return null;
 
@@ -544,8 +538,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return sortByRelevance(groupItemsBySorter(exactMatches)).iterator().next();
   }
 
-  @Nullable
-  private LookupElement findMostRelevantItem(Iterable<? extends LookupElement> sorted) {
+  private @Nullable LookupElement findMostRelevantItem(Iterable<? extends LookupElement> sorted) {
     for (LookupElement element : sorted) {
       if (!mySkippedItems.contains(element)) {
         return element;
@@ -568,8 +561,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     return false;
   }
 
-  @NotNull
-  private CompletionLocation getLocation() {
+  private @NotNull CompletionLocation getLocation() {
     if (myLocation == null) {
       synchronized (this) {
         if (myLocation == null) {
@@ -608,15 +600,13 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
       super(null, "empty");
     }
 
-    @NotNull
     @Override
-    public List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
+    public @NotNull List<Pair<LookupElement, Object>> getSortingWeights(@NotNull Iterable<? extends LookupElement> items, @NotNull ProcessingContext context) {
       return Collections.emptyList();
     }
 
-    @NotNull
     @Override
-    public Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull ProcessingContext context) {
+    public @NotNull Iterable<LookupElement> classify(@NotNull Iterable<? extends LookupElement> source, @NotNull ProcessingContext context) {
       //noinspection unchecked
       return (Iterable<LookupElement>)source;
     }

@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
     "since",
     "deprecated",
     "deprecated-since",
+    "obsolete",
+    "obsolete-since",
     "experimental",
     "priority",
     "proximity",
@@ -89,11 +91,11 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonPropertyDescription("Version since this symbol is available.")
     private String since;
     /**
-     * Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
      * 
      */
     @JsonProperty("deprecated")
-    @JsonPropertyDescription("Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.")
+    @JsonPropertyDescription("Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.")
     private Deprecated deprecated = null;
     /**
      * Version in which this symbol was first deprecated.
@@ -102,6 +104,20 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("deprecated-since")
     @JsonPropertyDescription("Version in which this symbol was first deprecated.")
     private String deprecatedSince;
+    /**
+     * Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
+    @JsonProperty("obsolete")
+    @JsonPropertyDescription("Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.")
+    private Obsolete obsolete = null;
+    /**
+     * Version in which this symbol was first made obsolete.
+     * 
+     */
+    @JsonProperty("obsolete-since")
+    @JsonPropertyDescription("Version in which this symbol was first made obsolete.")
+    private String obsoleteSince;
     /**
      * Specifies whether the symbol is experimental. Value can be a boolean or a string message with explanation. Experimental symbols should be used with caution as the API might change.
      * 
@@ -292,7 +308,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
      * 
      */
     @JsonProperty("deprecated")
@@ -301,7 +317,7 @@ public abstract class BaseContribution implements GenericContributionsHost
     }
 
     /**
-     * Specifies whether the symbol is deprecated. Value can be a boolean or a string message with explanation and migration information.
+     * Specifies whether the symbol is deprecated. Deprecated symbol usage is discouraged, but still supported. Value can be a boolean or a string message with explanation and migration information.
      * 
      */
     @JsonProperty("deprecated")
@@ -325,6 +341,42 @@ public abstract class BaseContribution implements GenericContributionsHost
     @JsonProperty("deprecated-since")
     public void setDeprecatedSince(String deprecatedSince) {
         this.deprecatedSince = deprecatedSince;
+    }
+
+    /**
+     * Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
+    @JsonProperty("obsolete")
+    public Obsolete getObsolete() {
+        return obsolete;
+    }
+
+    /**
+     * Specifies whether the symbol is obsolete. Obsolete symbols are no longer supported. Value can be a boolean or a string message with explanation and migration information.
+     * 
+     */
+    @JsonProperty("obsolete")
+    public void setObsolete(Obsolete obsolete) {
+        this.obsolete = obsolete;
+    }
+
+    /**
+     * Version in which this symbol was first made obsolete.
+     * 
+     */
+    @JsonProperty("obsolete-since")
+    public String getObsoleteSince() {
+        return obsoleteSince;
+    }
+
+    /**
+     * Version in which this symbol was first made obsolete.
+     * 
+     */
+    @JsonProperty("obsolete-since")
+    public void setObsoleteSince(String obsoleteSince) {
+        this.obsoleteSince = obsoleteSince;
     }
 
     /**

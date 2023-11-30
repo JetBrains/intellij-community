@@ -8,10 +8,9 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.testFramework.replaceService
-import com.intellij.workspaceModel.ide.WorkspaceModel
 import junit.framework.AssertionFailedError
-import junit.framework.TestCase.*
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.applySuggestedScriptConfiguration
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager

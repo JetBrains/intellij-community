@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.psi.KtFile
 
-class KotlinCompletionCharFilter() : CharFilter() {
+class KotlinCompletionCharFilter : CharFilter() {
     companion object {
         val ACCEPT_OPENING_BRACE: Key<Unit> = Key("KotlinCompletionCharFilter.ACCEPT_OPENING_BRACE")
 

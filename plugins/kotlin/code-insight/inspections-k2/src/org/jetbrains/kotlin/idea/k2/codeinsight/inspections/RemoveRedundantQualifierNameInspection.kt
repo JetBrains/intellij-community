@@ -10,14 +10,14 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
-import org.jetbrains.kotlin.analysis.api.components.ShortenOption
+import org.jetbrains.kotlin.analysis.api.components.ShortenStrategy
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.*
 
-class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
+internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
         if (file !is KtFile) return null
 
@@ -33,10 +33,10 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
             collectShortenings(file)
         }
 
-        val qualifiersToShorten = shortenings.getQualifiersToShorten()
-        val typesToShorten = shortenings.getTypesToShorten()
+        val qualifiersToShorten = shortenings.listOfQualifierToShortenInfo.mapNotNull { it.qualifierToShorten.element }
+        val typesToShorten = shortenings.listOfTypeToShortenInfo.mapNotNull { it.typeToShorten.element }
 
-        return (qualifiersToShorten + typesToShorten).mapNotNull { it.element }.toList()
+        return qualifiersToShorten + typesToShorten
     }
 
     /**
@@ -47,20 +47,20 @@ class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection() {
     private fun collectShortenings(declaration: KtElement): ShortenCommand =
         collectPossibleReferenceShorteningsInElement(
             declaration,
-            classShortenOption = { classSymbol ->
+            classShortenStrategy = { classSymbol ->
                 if (classSymbol.isEnumCompanionObject()) {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 } else {
-                    ShortenOption.SHORTEN_IF_ALREADY_IMPORTED
+                    ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
                 }
             },
-            callableShortenOption = { callableSymbol ->
+            callableShortenStrategy = { callableSymbol ->
                 val containingSymbol = callableSymbol.getContainingSymbol()
 
                 if (callableSymbol !is KtEnumEntrySymbol && (containingSymbol.isEnumClass() || containingSymbol.isEnumCompanionObject())) {
-                    ShortenOption.DO_NOT_SHORTEN
+                    ShortenStrategy.DO_NOT_SHORTEN
                 } else {
-                    ShortenOption.SHORTEN_IF_ALREADY_IMPORTED
+                    ShortenStrategy.SHORTEN_IF_ALREADY_IMPORTED
                 }
             },
         )

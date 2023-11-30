@@ -23,9 +23,11 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
@@ -157,7 +159,7 @@ public final class JavaLibraryUtil {
   public static @Nullable String getLibraryVersion(@NotNull Module module, @NotNull String mavenCoords,
                                                    @Nullable Attributes.Name versionAttribute) {
     String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
-    if (externalSystemId == null) {
+    if (isUnsupportedBuildSystem(externalSystemId)) {
       return getJpsLibraryVersion(module, mavenCoords, versionAttribute);
     }
     else {
@@ -165,7 +167,8 @@ public final class JavaLibraryUtil {
     }
   }
 
-  private static @Nullable String getJpsLibraryVersion(@NotNull Module module, @NotNull String mavenCoords,
+  private static @Nullable String getJpsLibraryVersion(@NotNull Module module,
+                                                       @NotNull String mavenCoords,
                                                        @Nullable Attributes.Name versionAttribute) {
     String name = StringUtil.substringAfter(mavenCoords, ":");
     if (name == null) return null;
@@ -175,7 +178,7 @@ public final class JavaLibraryUtil {
       .forEachLibrary(library -> {
         VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
         for (VirtualFile libraryFile : libraryFiles) {
-          if (matchLibraryName(libraryFile.getNameWithoutExtension(), name)) {
+          if (matchLibraryName(sanitizeLibraryName(libraryFile.getNameWithoutExtension()), name)) {
             VirtualFile jarFile = JarFileSystem.getInstance().getVirtualFileForJar(libraryFile);
             if (jarFile == null) continue;
 
@@ -221,9 +224,14 @@ public final class JavaLibraryUtil {
   private static @NotNull Libraries getModuleLibraries(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject()).getCachedValue(module, MAVEN_LIBRARY_PRESENCE_KEY, () -> {
       String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
-      return Result.create(fillLibraries(OrderEnumerator.orderEntries(module), externalSystemId == null),
-                           ProjectRootManager.getInstance(module.getProject()));
+      Libraries libraries = fillLibraries(OrderEnumerator.orderEntries(module),
+                                          isUnsupportedBuildSystem(externalSystemId));
+      return Result.create(libraries, ProjectRootManager.getInstance(module.getProject()));
     }, false);
+  }
+
+  private static boolean isUnsupportedBuildSystem(@Nullable String externalSystemId) {
+    return externalSystemId == null || "Blaze".equals(externalSystemId);
   }
 
   private static @NotNull Libraries fillLibraries(OrderEnumerator orderEnumerator, boolean collectFiles) {
@@ -233,46 +241,14 @@ public final class JavaLibraryUtil {
     orderEnumerator.recursively()
       .forEachLibrary(library -> {
         MavenCoordinates coordinates = getMavenCoordinates(library);
-        if (!collectFiles) {
-          if (coordinates != null) {
-            allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
-          }
-          return true;
-        }
-
-        VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
-        if (coordinates != null && libraryFiles.length <= 1) {
+        if (coordinates != null) {
           allMavenCoords.add(coordinates.getGroupId() + ":" + coordinates.getArtifactId());
         }
-        else {
-          JarFileSystem jarFileSystem = JarFileSystem.getInstance();
 
-          for (VirtualFile libraryFile : libraryFiles) {
-            if (libraryFile.getFileSystem() != jarFileSystem) continue;
-
-            String nameWithoutExtension = libraryFile.getNameWithoutExtension();
-
-            jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
-
-            String[] nameParts = nameWithoutExtension.split("-");
-            StringBuilder nameBuilder = new StringBuilder();
-
-            for (int i = 0; i < nameParts.length; i++) {
-              String part = nameParts[i];
-              if (!part.isEmpty() && isDecimalDigit(part.charAt(0))) {
-                break;
-              }
-
-              if (i > 0) {
-                nameBuilder.append("-");
-              }
-              nameBuilder.append(part);
-            }
-
-            String indexNamePart = nameBuilder.toString();
-            if (!indexNamePart.equals(nameWithoutExtension)) {
-              jarLibrariesIndex.put(indexNamePart, nameWithoutExtension);
-            }
+        if (collectFiles && library instanceof LibraryEx) {
+          LibraryProperties<?> libraryProperties = ((LibraryEx)library).getProperties();
+          if (libraryProperties == null || libraryProperties instanceof RepositoryLibraryProperties) {
+            collectFiles(library, coordinates, jarLibrariesIndex);
           }
         }
 
@@ -280,6 +256,56 @@ public final class JavaLibraryUtil {
       });
 
     return new Libraries(Set.copyOf(allMavenCoords), Map.copyOf(jarLibrariesIndex));
+  }
+
+  private static void collectFiles(@NotNull Library library,
+                                   @Nullable MavenCoordinates coordinates,
+                                   @NotNull Map<String, String> jarLibrariesIndex) {
+    VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
+    if (coordinates == null || libraryFiles.length > 1) {
+      JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+
+      for (VirtualFile libraryFile : libraryFiles) {
+        if (libraryFile.getFileSystem() != jarFileSystem) continue;
+
+        String nameWithoutExtension = libraryFile.getNameWithoutExtension();
+
+        // Drop prefix of Bazel processed libraries IDEA-324807
+        nameWithoutExtension = sanitizeLibraryName(nameWithoutExtension);
+
+        jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
+
+        String[] nameParts = nameWithoutExtension.split("-");
+        StringBuilder nameBuilder = new StringBuilder();
+
+        for (int i = 0; i < nameParts.length; i++) {
+          String part = nameParts[i];
+          if (!part.isEmpty() && isDecimalDigit(part.charAt(0))) {
+            break;
+          }
+
+          if (i > 0) {
+            nameBuilder.append("-");
+          }
+          nameBuilder.append(part);
+        }
+
+        String indexNamePart = nameBuilder.toString();
+        if (!indexNamePart.equals(nameWithoutExtension)) {
+          jarLibrariesIndex.put(indexNamePart, nameWithoutExtension);
+        }
+      }
+    }
+  }
+
+  private static final List<String> BAZEL_PREFIXES = List.of("processed_", "header_");
+
+  private static @NotNull String sanitizeLibraryName(@NotNull String nameWithoutExtension) {
+    var name = nameWithoutExtension;
+    for (String prefix : BAZEL_PREFIXES) {
+      name = StringsKt.removePrefix(name, prefix);
+    }
+    return name; // omit this prefix for Bazel
   }
 
   private record Libraries(Set<String> mavenLibraries,

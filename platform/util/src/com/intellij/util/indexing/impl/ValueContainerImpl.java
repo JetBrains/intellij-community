@@ -4,6 +4,7 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IntIdsIterator;
@@ -23,10 +24,12 @@ import java.util.*;
 import java.util.function.IntPredicate;
 
 @ApiStatus.Internal
-public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
+public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   static final Logger LOG = Logger.getInstance(ValueContainerImpl.class);
   private static final boolean DO_EXPENSIVE_CHECKS = (IndexDebugProperties.IS_UNIT_TEST_MODE ||
                                                      IndexDebugProperties.EXTRA_SANITY_CHECKS) && !IndexDebugProperties.IS_IN_STRESS_TESTS;
+  private static final boolean USE_SYNCHRONIZED_VALUE_CONTAINER =
+    SystemProperties.getBooleanProperty("idea.use.synchronized.value.container", false);
 
   // there is no volatile as we modify under write lock and read under read lock
   // Most often (80%) we store 0 or one mapping, then we store them in two fields: myInputIdMapping, myInputIdMappingValue
@@ -36,16 +39,28 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
   private Int2ObjectMap<Object> myPresentInputIds;
   private List<UpdateOp> myUpdateOps;
 
-  public ValueContainerImpl() {
+  public static <Value> ValueContainerImpl<Value> createNewValueContainer() {
+    return USE_SYNCHRONIZED_VALUE_CONTAINER
+           ? new SynchronizedValueContainerImpl<>()
+           : new ValueContainerImpl<>();
+  }
+
+  public static <Value> ValueContainerImpl<Value> createNewValueContainer(boolean doExpensiveChecks) {
+    return USE_SYNCHRONIZED_VALUE_CONTAINER
+           ? new SynchronizedValueContainerImpl<>(doExpensiveChecks)
+           : new ValueContainerImpl<>(doExpensiveChecks);
+  }
+
+  ValueContainerImpl() {
     this(DO_EXPENSIVE_CHECKS);
   }
 
-  public ValueContainerImpl(boolean doExpensiveChecks) {
+  ValueContainerImpl(boolean doExpensiveChecks) {
     myPresentInputIds = doExpensiveChecks ? new Int2ObjectOpenHashMap<>() : null;
     myUpdateOps = doExpensiveChecks ? new SmartList<>() : null;
   }
 
-  private static class UpdateOp {
+  private static final class UpdateOp {
     private UpdateOp(Type type, int id, Object value) {
       myType = type;
       myInputId = id;
@@ -262,7 +277,7 @@ public final class ValueContainerImpl<Value> extends UpdatableValueContainer<Val
     };
   }
 
-  private static class EmptyValueIterator<Value> implements InvertedIndexValueIterator<Value> {
+  private static final class EmptyValueIterator<Value> implements InvertedIndexValueIterator<Value> {
     private static final EmptyValueIterator<Object> INSTANCE = new EmptyValueIterator<>();
 
     @Override

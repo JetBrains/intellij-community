@@ -1,7 +1,8 @@
-from _typeshed import Self
+from _typeshed import Incomplete
 from collections.abc import Mapping
 from socket import socket as _socket
 from typing import Any, AnyStr, Generic, TypeVar, overload
+from typing_extensions import Self
 
 from .charset import charset_by_id as charset_by_id, charset_by_name as charset_by_name
 from .constants import CLIENT as CLIENT, COMMAND as COMMAND, FIELD_TYPE as FIELD_TYPE, SERVER_STATUS as SERVER_STATUS
@@ -27,8 +28,8 @@ class MysqlPacket:
     def read(self, size): ...
     def read_all(self): ...
     def advance(self, length): ...
-    def rewind(self, position: int = ...): ...
-    def get_bytes(self, position, length: int = ...): ...
+    def rewind(self, position: int = 0): ...
+    def get_bytes(self, position, length: int = 1): ...
     def read_string(self) -> bytes: ...
     def read_uint8(self) -> Any: ...
     def read_uint16(self) -> Any: ...
@@ -62,8 +63,9 @@ class Connection(Generic[_C]):
     password: Any
     db: Any
     unix_socket: Any
+    charset: str
+    collation: str | None
     bind_address: Any
-    charset: Any
     use_unicode: Any
     client_flag: Any
     cursorclass: Any
@@ -80,88 +82,90 @@ class Connection(Generic[_C]):
     def __init__(
         self: Connection[Cursor],  # different between overloads
         *,
-        host: str | None = ...,
-        user: Any | None = ...,
-        password: str = ...,
-        database: Any | None = ...,
-        port: int = ...,
-        unix_socket: Any | None = ...,
-        charset: str = ...,
-        sql_mode: Any | None = ...,
-        read_default_file: Any | None = ...,
-        conv=...,
-        use_unicode: bool | None = ...,
-        client_flag: int = ...,
-        cursorclass: None = ...,  # different between overloads
-        init_command: Any | None = ...,
-        connect_timeout: int | None = ...,
-        ssl: Mapping[Any, Any] | None = ...,
-        ssl_ca=...,
-        ssl_cert=...,
-        ssl_disabled=...,
-        ssl_key=...,
-        ssl_verify_cert=...,
-        ssl_verify_identity=...,
-        read_default_group: Any | None = ...,
-        compress: Any | None = ...,
-        named_pipe: Any | None = ...,
-        autocommit: bool | None = ...,
-        db: Any | None = ...,
-        passwd: Any | None = ...,
-        local_infile: Any | None = ...,
-        max_allowed_packet: int = ...,
-        defer_connect: bool | None = ...,
-        auth_plugin_map: Mapping[Any, Any] | None = ...,
-        read_timeout: float | None = ...,
-        write_timeout: float | None = ...,
-        bind_address: Any | None = ...,
-        binary_prefix: bool | None = ...,
-        program_name: Any | None = ...,
-        server_public_key: bytes | None = ...,
-    ): ...
+        host: str | None = None,
+        user: Incomplete | None = None,
+        password: str = "",
+        database: Incomplete | None = None,
+        port: int = 0,
+        unix_socket: Incomplete | None = None,
+        charset: str = "",
+        collation: str | None = None,
+        sql_mode: Incomplete | None = None,
+        read_default_file: Incomplete | None = None,
+        conv=None,
+        use_unicode: bool | None = True,
+        client_flag: int = 0,
+        cursorclass: None = None,  # different between overloads
+        init_command: Incomplete | None = None,
+        connect_timeout: int | None = 10,
+        ssl: Mapping[Any, Any] | None = None,
+        ssl_ca=None,
+        ssl_cert=None,
+        ssl_disabled=None,
+        ssl_key=None,
+        ssl_verify_cert=None,
+        ssl_verify_identity=None,
+        read_default_group: Incomplete | None = None,
+        compress: Incomplete | None = None,
+        named_pipe: Incomplete | None = None,
+        autocommit: bool | None = False,
+        db: Incomplete | None = None,
+        passwd: Incomplete | None = None,
+        local_infile: Incomplete | None = False,
+        max_allowed_packet: int = 16777216,
+        defer_connect: bool | None = False,
+        auth_plugin_map: Mapping[Any, Any] | None = None,
+        read_timeout: float | None = None,
+        write_timeout: float | None = None,
+        bind_address: Incomplete | None = None,
+        binary_prefix: bool | None = False,
+        program_name: Incomplete | None = None,
+        server_public_key: bytes | None = None,
+    ) -> None: ...
     @overload
     def __init__(
         self: Connection[_C],  # different between overloads
         *,
-        host: str | None = ...,
-        user: Any | None = ...,
-        password: str = ...,
-        database: Any | None = ...,
-        port: int = ...,
-        unix_socket: Any | None = ...,
-        charset: str = ...,
-        sql_mode: Any | None = ...,
-        read_default_file: Any | None = ...,
-        conv=...,
-        use_unicode: bool | None = ...,
-        client_flag: int = ...,
+        host: str | None = None,
+        user: Incomplete | None = None,
+        password: str = "",
+        database: Incomplete | None = None,
+        port: int = 0,
+        unix_socket: Incomplete | None = None,
+        charset: str = "",
+        collation: str | None = None,
+        sql_mode: Incomplete | None = None,
+        read_default_file: Incomplete | None = None,
+        conv=None,
+        use_unicode: bool | None = True,
+        client_flag: int = 0,
         cursorclass: type[_C] = ...,  # different between overloads
-        init_command: Any | None = ...,
-        connect_timeout: int | None = ...,
-        ssl: Mapping[Any, Any] | None = ...,
-        ssl_ca=...,
-        ssl_cert=...,
-        ssl_disabled=...,
-        ssl_key=...,
-        ssl_verify_cert=...,
-        ssl_verify_identity=...,
-        read_default_group: Any | None = ...,
-        compress: Any | None = ...,
-        named_pipe: Any | None = ...,
-        autocommit: bool | None = ...,
-        db: Any | None = ...,
-        passwd: Any | None = ...,
-        local_infile: Any | None = ...,
-        max_allowed_packet: int = ...,
-        defer_connect: bool | None = ...,
-        auth_plugin_map: Mapping[Any, Any] | None = ...,
-        read_timeout: float | None = ...,
-        write_timeout: float | None = ...,
-        bind_address: Any | None = ...,
-        binary_prefix: bool | None = ...,
-        program_name: Any | None = ...,
-        server_public_key: bytes | None = ...,
-    ): ...
+        init_command: Incomplete | None = None,
+        connect_timeout: int | None = 10,
+        ssl: Mapping[Any, Any] | None = None,
+        ssl_ca=None,
+        ssl_cert=None,
+        ssl_disabled=None,
+        ssl_key=None,
+        ssl_verify_cert=None,
+        ssl_verify_identity=None,
+        read_default_group: Incomplete | None = None,
+        compress: Incomplete | None = None,
+        named_pipe: Incomplete | None = None,
+        autocommit: bool | None = False,
+        db: Incomplete | None = None,
+        passwd: Incomplete | None = None,
+        local_infile: Incomplete | None = False,
+        max_allowed_packet: int = 16777216,
+        defer_connect: bool | None = False,
+        auth_plugin_map: Mapping[Any, Any] | None = None,
+        read_timeout: float | None = None,
+        write_timeout: float | None = None,
+        bind_address: Incomplete | None = None,
+        binary_prefix: bool | None = False,
+        program_name: Incomplete | None = None,
+        server_public_key: bytes | None = None,
+    ) -> None: ...
     socket: Any
     rfile: Any
     wfile: Any
@@ -174,20 +178,20 @@ class Connection(Generic[_C]):
     def begin(self) -> None: ...
     def rollback(self) -> None: ...
     def select_db(self, db) -> None: ...
-    def escape(self, obj, mapping: Mapping[Any, Any] | None = ...): ...
+    def escape(self, obj, mapping: Mapping[Any, Any] | None = None): ...
     def literal(self, obj): ...
     def escape_string(self, s: AnyStr) -> AnyStr: ...
     @overload
-    def cursor(self, cursor: None = ...) -> _C: ...
+    def cursor(self, cursor: None = None) -> _C: ...
     @overload
     def cursor(self, cursor: type[_C2]) -> _C2: ...
-    def query(self, sql, unbuffered: bool = ...) -> int: ...
-    def next_result(self, unbuffered: bool = ...) -> int: ...
+    def query(self, sql, unbuffered: bool = False) -> int: ...
+    def next_result(self, unbuffered: bool = False) -> int: ...
     def affected_rows(self): ...
     def kill(self, thread_id): ...
-    def ping(self, reconnect: bool = ...) -> None: ...
+    def ping(self, reconnect: bool = True) -> None: ...
     def set_charset(self, charset) -> None: ...
-    def connect(self, sock: _socket | None = ...) -> None: ...
+    def connect(self, sock: _socket | None = None) -> None: ...
     def write_packet(self, payload) -> None: ...
     def _read_packet(self, packet_type=...): ...
     def insert_id(self): ...
@@ -197,7 +201,7 @@ class Connection(Generic[_C]):
     def get_proto_info(self): ...
     def get_server_info(self): ...
     def show_warnings(self): ...
-    def __enter__(self: Self) -> Self: ...
+    def __enter__(self) -> Self: ...
     def __exit__(self, *exc_info: object) -> None: ...
     Warning: Any
     Error: Any

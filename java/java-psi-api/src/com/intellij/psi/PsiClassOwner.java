@@ -34,5 +34,5 @@ public interface PsiClassOwner extends PsiFile {
    */
   @NlsSafe String getPackageName();
 
-  void setPackageName(String packageName) throws IncorrectOperationException;
+  void setPackageName(@NotNull String packageName) throws IncorrectOperationException;
 }

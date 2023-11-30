@@ -97,5 +97,8 @@ class TinyTree<T>(rootPayload: Byte, rootData: T) {
     }
   }
 
+  val size: Int
+    get() = payload.size
+
   class TooManyElementsException : Exception()
 }

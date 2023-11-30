@@ -1,0 +1,13 @@
+// FIR_IDENTICAL
+
+interface Runnable {
+    fun run()
+}
+
+@JvmInline
+value class B(private val property: Int) : Runnable {
+    override fun run() {
+        TODO("Not yet implemented")
+    }
+
+}

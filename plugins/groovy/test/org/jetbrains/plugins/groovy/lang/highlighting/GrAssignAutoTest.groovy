@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInspection.InspectionProfileEntry
@@ -15,6 +15,7 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.util.Slow
 
 import static org.assertj.core.api.Assertions.assertThat
+
 /**
  * Character and char are skipped intentionally.
  * Double and Double[] are skipped intentionally.
@@ -90,27 +91,24 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         }
         ''',
            typesXTypes,
-           [],
-           ["boolean -> int", "boolean -> double", "boolean -> short", "boolean -> byte",
-            "List -> boolean[]", "List -> int[]", "List -> double[]", "List -> String[]", "List -> Integer[]", "List -> List[]", "List -> Object[]", "List -> Thread[]",
-            "List<BigDecimal> -> int[]", "List<BigDecimal> -> Integer[]", "List<BigDecimal> -> List[]", "List<BigDecimal> -> Thread[]",
-            "List<BigInteger> -> int[]", "List<BigInteger> -> double[]", "List<BigInteger> -> Integer[]", "List<BigInteger> -> List[]", "List<BigInteger> -> Thread[]",
-            "List<Integer> -> List[]", "List<Integer> -> Thread[]",
-            "List<String> -> int[]", "List<String> -> double[]", "List<String> -> Integer[]", "List<String> -> List[]", "List<String> -> Thread[]",
-            "List<Object> -> int[]", "List<Object> -> double[]", "List<Object> -> Integer[]", "List<Object> -> List[]", "List<Object> -> Thread[]",
-            "List<Thread> -> int[]", "List<Thread> -> double[]", "List<Thread> -> Integer[]", "List<Thread> -> List[]",
+           ['List<BigDecimal> -> boolean[]', 'List<BigDecimal> -> double[]', 'List<BigDecimal> -> String[]', 'List<BigDecimal> -> Object[]', 'List<BigInteger> -> boolean[]', 'List<BigInteger> -> String[]','List<BigInteger> -> Object[]',
+            'List<Integer> -> boolean[]', 'List<Integer> -> int[]', 'List<Integer> -> double[]', 'List<Integer> -> String[]', 'List<Integer> -> Integer[]', 'List<Integer> -> Object[]',
+            'List<String> -> boolean[]', 'List<String> -> String[]', 'List<String> -> Object[]',
+            'List<Object> -> boolean[]', 'List<Object> -> String[]', 'List<Object> -> Object[]', 'List<Thread> -> boolean[]',
+            'List<Thread> -> String[]','List<Thread> -> Object[]', 'List<Thread> -> Thread[]',
+            'Set<String> -> boolean[]', 'Set<String> -> String[]', 'Set<String> -> Object[]',
+            'Set<Integer> -> boolean[]', 'Set<Integer> -> int[]', 'Set<Integer> -> double[]', 'Set<Integer> -> String[]', 'Set<Integer> -> Integer[]', 'Set<Integer> -> Object[]',
+            'Set<Object> -> boolean[]', 'Set<Object> -> String[]', 'Set<Object> -> Object[]',
+            'Set<Thread> -> boolean[]', 'Set<Thread> -> String[]', 'Set<Thread> -> Object[]', 'Set<Thread> -> Thread[]'],
+           ["boolean -> int", "boolean -> double", "boolean -> short", "boolean -> byte", "boolean[] -> String[]", "boolean[] -> Object[]",
             "boolean[] -> int[]", "boolean[] -> double[]",
-            "int[] -> boolean[]",
-            "double[] -> boolean[]",
-            "Integer[] -> String[]",
-            "List[] -> String[]",
-            "Object[] -> String[]",
-            "Thread[] -> String[]",
-            "Set -> boolean[]", "Set -> int[]", "Set -> double[]", "Set -> String[]", "Set -> Integer[]", "Set -> List[]", "Set -> Object[]", "Set -> Thread[]",
-            "Set<String> -> int[]", "Set<String> -> double[]", "Set<String> -> Integer[]", "Set<String> -> List[]", "Set<String> -> Thread[]",
-            "Set<Integer> -> List[]", "Set<Integer> -> Thread[]",
-            "Set<Object> -> int[]", "Set<Object> -> double[]", "Set<Object> -> Integer[]", "Set<Object> -> List[]", "Set<Object> -> Thread[]",
-            "Set<Thread> -> int[]", "Set<Thread> -> double[]", "Set<Thread> -> Integer[]", "Set<Thread> -> List[]"]
+            "int[] -> boolean[]", "int[] -> String[]", "int[] -> Integer[]", "int[] -> Object[]",
+            "double[] -> boolean[]", "double[] -> Integer[]", "double[] -> Object[]", "double[] -> String[]",
+            "Integer[] -> String[]", "Integer[] -> boolean[]", "Integer[] -> int[]", "Integer[] -> double[]",
+            "String[] -> boolean[]",
+            "List[] -> String[]", "List[] -> boolean[]",
+            "Object[] -> String[]", "Object[] -> boolean[]",
+            "Thread[] -> String[]", "Thread[] -> boolean[]"]
   }
 
 
@@ -123,14 +121,33 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         ''',
            typesXTypes,
            [],
-           ['boolean -> int', 'boolean -> double', 'boolean -> short', 'boolean -> byte',
-            'boolean[] -> int[]', 'boolean[] -> double[]',
-            'int[] -> boolean[]',
-            'double[] -> boolean[]',
-            'Integer[] -> String[]',
-            'List[] -> String[]',
-            'Object[] -> String[]',
-            'Thread[] -> String[]']
+           ["boolean -> int",
+            "boolean -> double",
+            "boolean -> short",
+            "boolean -> byte",
+            "boolean[] -> int[]",
+            "boolean[] -> double[]",
+            "boolean[] -> String[]",
+            "boolean[] -> Object[]",
+            "int[] -> boolean[]",
+            "int[] -> String[]",
+            "int[] -> Integer[]",
+            "int[] -> Object[]",
+            "double[] -> boolean[]",
+            "double[] -> String[]",
+            "double[] -> Integer[]",
+            "double[] -> Object[]",
+            "String[] -> boolean[]",
+            "Integer[] -> boolean[]",
+            "Integer[] -> int[]",
+            "Integer[] -> double[]",
+            "Integer[] -> String[]",
+            "List[] -> boolean[]",
+            "List[] -> String[]",
+            "Object[] -> boolean[]",
+            "Object[] -> String[]",
+            "Thread[] -> boolean[]",
+            "Thread[] -> String[]"]
   }
 
   void testParameterMethodCall() {
@@ -145,7 +162,7 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         ''',
            typesXTypes,
            ['int -> double[]', 'short -> int[]', 'short -> double[]', 'byte -> int[]', 'byte -> double[]', 'short -> Integer[]', 'byte -> Integer[]'],
-           ['int[] -> double[]']
+           []
   }
 
   void testReturnAssignValue() {
@@ -175,10 +192,28 @@ class GrAssignAutoTest extends GrHighlightingTestBase {
         }
         ''',
            valuesXTypes,
-           ['[0L] -> BigInteger', '(Void)null -> Object'],
+           ['[0L] -> BigInteger', '(Void)null -> Object', '[1] -> int', '[1] -> double', '[0L] -> double', '[1.2f] -> double', '["str"] -> int', '["str"] -> double', '["str"] -> short', '["str"] -> byte', 'new ArrayList<>() -> boolean[]', 'new ArrayList<>() -> String[]', 'new ArrayList<>() -> Object[]'],
            [
-             '[] -> int', '[] -> double', '[] -> short', '[] -> byte',
-             'new ArrayList<>() -> int[]', 'new ArrayList<>() -> double[]', 'new ArrayList<>() -> Integer[]', 'new ArrayList<>() -> List[]', 'new ArrayList<>() -> Thread[]'
+             "[1] -> List<Object>", "[1] -> Set", "[1] -> Set<Integer>", "[1] -> Set<Object>",
+             "[0L] -> List<Object>",
+             "[0L] -> Set",
+             "[0L] -> Set<Object>",
+             "[1.1] -> List<Object>",
+             "[1.1] -> Set",
+             "[1.1] -> Set<Object>",
+             "[1.2f] -> List<Object>",
+             "[1.2f] -> Set",
+             "[1.2f] -> Set<Object>",
+             "[\"str\"] -> List<Object>",
+             "[\"str\"] -> Set",
+             "[\"str\"] -> Set<String>",
+             "[\"str\"] -> Set<Object>",
+             "[new Object()] -> Set",
+             "[new Object()] -> Set<Object>",
+             "[new Thread()] -> List<Object>",
+             "[new Thread()] -> Set",
+             "[new Thread()] -> Set<Object>",
+             "[new Thread()] -> Set<Thread>"
            ]
   }
 

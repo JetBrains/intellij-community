@@ -26,7 +26,7 @@ public class CapturingCleaner18InspectionTest extends LightJavaCodeInsightFixtur
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_18;
+    return JAVA_20;
   }
 
   @NotNull

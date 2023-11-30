@@ -7,10 +7,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.DEFAULT_COMMENT_WIDTH
-import com.intellij.ui.dsl.builder.HyperlinkEventAction
-import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_NO_WRAP
-import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.ExtendableHTMLViewFactory
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
@@ -19,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
+import javax.swing.Icon
 import javax.swing.JEditorPane
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.DefaultCaret
@@ -54,7 +52,7 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
       updateEditorPaneText()
     }
 
-  var limitPreferredSize = false
+  var limitPreferredSize: Boolean = false
 
   @Nls
   private var userText: String? = null
@@ -62,11 +60,16 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
   init {
     contentType = UIUtil.HTML_MIME
     editorKit = HTMLEditorKitBuilder()
-      .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP)
+      .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP, ExtendableHTMLViewFactory.Extensions.icons(::existingIconsProvider))
       .build()
 
     // JEditorPane.setText updates cursor and requests scrolling to cursor position if scrollable is used. Disable it
     (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
+
+    // BasicTextUI adds caret width to the preferred size of the component (see usages of 'caretMargin' field in BasicTextUI),
+    // so the resulting width is 1px greater than the width specified inside updateEditorPaneText() if line length is limited.
+    // Set caret width to 0, to make the width of the component equal to the specified width.
+    putClientProperty("caretWidth", 0)
 
     foreground = when (type) {
       DslLabelType.COMMENT -> JBUI.CurrentTheme.ContextHelp.FOREGROUND
@@ -201,5 +204,10 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
 
   private fun getSupposedWidth(charCount: Int): Int {
     return getFontMetrics(font).charWidth('0') * charCount
+  }
+
+  private fun existingIconsProvider(key: String): Icon? {
+    val iconsProvider = getClientProperty(DslComponentProperty.ICONS_PROVIDER) as IconsProvider?
+    return iconsProvider?.getIcon(key)
   }
 }

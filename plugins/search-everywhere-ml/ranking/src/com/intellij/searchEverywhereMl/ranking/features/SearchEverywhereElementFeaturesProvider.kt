@@ -29,6 +29,8 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
     }
 
     internal val NAME_LENGTH = EventFields.RoundedInt("nameLength")
+    internal val ML_SCORE_KEY = EventFields.Double("mlScore")
+
 
     internal val nameFeatureToField = hashMapOf<String, EventField<*>>(
       "prefix_same_start_count" to EventFields.Int("${PrefixMatchingUtil.baseName}SameStartCount"),
@@ -45,6 +47,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       "prefix_exact" to EventFields.Boolean("${PrefixMatchingUtil.baseName}Exact"),
       "prefix_matched_last_word" to EventFields.Boolean("${PrefixMatchingUtil.baseName}MatchedLastWord"),
     )
+
 
     internal fun roundDouble(value: Double): Double {
       if (!value.isFinite()) return -1.0
@@ -72,15 +75,6 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101
     return value
-  }
-
-  /**
-   * Associates the specified key with the value, only if the value is not null.
-   */
-  protected fun <T> MutableList<EventPair<*>>.putIfValueNotNull(key: EventField<T>, value: T?) {
-    value?.let {
-      add(key.with(it))
-    }
   }
 
   protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Collection<EventPair<*>> {
@@ -113,6 +107,12 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedCont
       return field.with(matchValue.toString())
     }
     return null
+  }
+}
+@ApiStatus.Internal
+fun <T> MutableList<EventPair<*>>.putIfValueNotNull(key: EventField<T>, value: T?) {
+  value?.let {
+    add(key.with(it))
   }
 }
 

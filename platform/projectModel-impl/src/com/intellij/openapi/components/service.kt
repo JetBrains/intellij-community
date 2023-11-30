@@ -38,7 +38,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *   - Using the method keeps `MyApplicationService.getInstance()` consistent with `MyProjectService.getInstance(project)`,
  *     both on the declaration and call sites.
  */
-@RequiresBlockingContext
+//@RequiresBlockingContext
 inline fun <reified T : Any> service(): T {
   val serviceClass = T::class.java
   return ApplicationManager.getApplication().getService(serviceClass)

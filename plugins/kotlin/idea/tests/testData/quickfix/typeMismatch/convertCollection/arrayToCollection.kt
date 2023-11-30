@@ -6,3 +6,4 @@ fun foo(a: Array<String>) {
 }
 
 fun bar(a: Collection<String>) {}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ConvertCollectionFix

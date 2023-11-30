@@ -15,10 +15,13 @@ import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 @ApiStatus.Internal
 class KotlinNullabilityUAnnotation(
-  private val baseKotlinUastResolveProviderService: BaseKotlinUastResolveProviderService,
-  private val annotatedElement: PsiElement,
-  override val uastParent: UElement?
+    private val baseKotlinUastResolveProviderService: BaseKotlinUastResolveProviderService,
+    private val annotatedElement: PsiElement,
+    override val uastParent: UElement?
 ) : UAnnotationEx, UAnchorOwner, DelegatedMultiResolve {
+
+    private val resolvedPart = UastLazyPart<PsiClass?>()
+    private val nullabilityPart = UastLazyPart<KtTypeNullability?>()
 
     override val uastAnchor: UIdentifier? = null
 
@@ -31,9 +34,10 @@ class KotlinNullabilityUAnnotation(
     override val sourcePsi: PsiElement?
         get() = null
 
-    private val nullability : KtTypeNullability? by lz {
-        baseKotlinUastResolveProviderService.nullability(annotatedElement)
-    }
+    private val nullability: KtTypeNullability?
+        get() = nullabilityPart.getOrBuild {
+            baseKotlinUastResolveProviderService.nullability(annotatedElement)
+        }
 
     override val qualifiedName: String?
         get() = when (nullability) {
@@ -47,12 +51,13 @@ class KotlinNullabilityUAnnotation(
 
     override fun findDeclaredAttributeValue(name: String?): UExpression? = null
 
-    private val _resolved: PsiClass? by lz {
-        qualifiedName?.let {
-            val project = annotatedElement.project
-            JavaPsiFacade.getInstance(project).findClass(it, GlobalSearchScope.allScope(project))
+    private val _resolved: PsiClass?
+        get() = resolvedPart.getOrBuild {
+            qualifiedName?.let {
+                val project = annotatedElement.project
+                JavaPsiFacade.getInstance(project).findClass(it, GlobalSearchScope.allScope(project))
+            }
         }
-    }
 
     override fun resolve(): PsiClass? = _resolved
 }

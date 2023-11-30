@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
@@ -101,8 +101,7 @@ public class NewItemSimplePopupPanel extends JBPanel implements Disposable {
     return myTextField;
   }
 
-  @NotNull
-  protected ExtendableTextField createTextField(boolean liveErrorValidation) {
+  protected @NotNull ExtendableTextField createTextField(boolean liveErrorValidation) {
     ExtendableTextField res = createNonCustomizedTextField();
 
     Dimension minSize = res.getMinimumSize();

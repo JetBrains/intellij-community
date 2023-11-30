@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.*;
@@ -18,10 +18,20 @@ import java.util.Collections;
 import java.util.List;
 
 public final class GenericValueReferenceProvider extends PsiReferenceProvider {
-  private final static Logger LOG = Logger.getInstance(GenericValueReferenceProvider.class);
+  private static final Logger LOG = Logger.getInstance(GenericValueReferenceProvider.class);
 
   @Override
-  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull final ProcessingContext context) {
+  public boolean acceptsHints(@NotNull PsiElement element, PsiReferenceService.@NotNull Hints hints) {
+    if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) {
+      // DOM model does not provide underlined references in literals
+      return false;
+    }
+
+    return super.acceptsHints(element, hints);
+  }
+
+  @Override
+  public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement psiElement, @NotNull ProcessingContext context) {
     final DomManagerImpl domManager = DomManagerImpl.getDomManager(psiElement.getProject());
 
     final DomInvocationHandler handler;
@@ -39,14 +49,16 @@ public final class GenericValueReferenceProvider extends PsiReferenceProvider {
       return PsiReference.EMPTY_ARRAY;
     }
 
+    InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiElement.getProject());
+
     if (psiElement instanceof XmlTag) {
       for (XmlText text : ((XmlTag)psiElement).getValue().getTextElements()) {
-        if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)text)) {
+        if (injectedLanguageManager.hasInjections(text)) {
           return PsiReference.EMPTY_ARRAY;
         }
       }
     }
-    else if (InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)psiElement)) {
+    else if (injectedLanguageManager.hasInjections(psiElement)) {
       return PsiReference.EMPTY_ARRAY;
     }
 
@@ -111,7 +123,10 @@ public final class GenericValueReferenceProvider extends PsiReferenceProvider {
     return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
-  private static PsiReference @NotNull [] doCreateReferences(GenericDomValue domValue, XmlElement psiElement, Object converter, ConvertContext context) {
+  private static PsiReference @NotNull [] doCreateReferences(GenericDomValue<?> domValue,
+                                                             XmlElement psiElement,
+                                                             Object converter,
+                                                             ConvertContext context) {
     if (converter instanceof CustomReferenceConverter) {
       //noinspection unchecked
       final PsiReference[] references = ((CustomReferenceConverter)converter).createReferences(domValue, psiElement, context);

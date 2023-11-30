@@ -80,6 +80,7 @@ public class JBCefInputMethodTest {
 
       @Override
       public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
+        browser.setFocus(true);
         latch.countDown();
         super.onLoadEnd(browser, frame, httpStatusCode);
       }
@@ -118,30 +119,30 @@ public class JBCefInputMethodTest {
     SwingUtilities.invokeLater(() -> {
       browser.getCefBrowser().getUIComponent().dispatchEvent(makeEvent("a", false));
     });
-    assertTrue(stringWaiter.wait("a", CALLBACK_TIMEOUT_MS * 100));
+    assertTrue(stringWaiter.wait("a", CALLBACK_TIMEOUT_MS));
 
     // Compose AB
     SwingUtilities.invokeLater(() -> {
       browser.getCefBrowser().getUIComponent().dispatchEvent(makeEvent("ab", false));
     });
-    assertTrue(stringWaiter.wait("ab", CALLBACK_TIMEOUT_MS * 100));
+    assertTrue(stringWaiter.wait("ab", CALLBACK_TIMEOUT_MS));
 
     // Commit
     SwingUtilities.invokeLater(() -> {
       browser.getCefBrowser().getUIComponent().dispatchEvent(makeEvent("committed_", true));
     });
-    assertTrue(stringWaiter.wait("committed_", CALLBACK_TIMEOUT_MS * 100));
+    assertTrue(stringWaiter.wait("committed_", CALLBACK_TIMEOUT_MS));
 
     // Compose another
     SwingUtilities.invokeLater(() -> {
       browser.getCefBrowser().getUIComponent().dispatchEvent(makeEvent("ab", false));
     });
-    assertTrue(stringWaiter.wait("committed_ab", CALLBACK_TIMEOUT_MS * 100));
+    assertTrue(stringWaiter.wait("committed_ab", CALLBACK_TIMEOUT_MS));
     // Commit
     SwingUtilities.invokeLater(() -> {
       browser.getCefBrowser().getUIComponent().dispatchEvent(makeEvent("committed2", true));
     });
-    assertTrue(stringWaiter.wait("committed_committed2", CALLBACK_TIMEOUT_MS * 100));
+    assertTrue(stringWaiter.wait("committed_committed2", CALLBACK_TIMEOUT_MS));
   }
 
   private InputMethodEvent makeEvent(String text, boolean commit) {

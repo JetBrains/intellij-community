@@ -8,6 +8,8 @@ import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.codeInspection.util.OptionalRefactoringUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -97,7 +99,7 @@ public class ConditionalCanBeOptionalInspection extends AbstractBaseJavaLocalIns
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiConditionalExpression ternary = PsiTreeUtil.getNonStrictParentOfType(element, PsiConditionalExpression.class);
       TernaryNullCheck ternaryNullCheck = TernaryNullCheck.from(ternary);
       if (ternaryNullCheck == null) return;

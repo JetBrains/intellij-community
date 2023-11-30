@@ -73,6 +73,16 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
         runTest("testData/projectView/FacadeInternalWithNameClashAndSources2.test");
     }
 
+    @TestMetadata("FileNestingWithMembers.test")
+    public void testFileNestingWithMembers() throws Exception {
+        runTest("testData/projectView/FileNestingWithMembers.test");
+    }
+
+    @TestMetadata("FileNestingWithoutMembers.test")
+    public void testFileNestingWithoutMembers() throws Exception {
+        runTest("testData/projectView/FileNestingWithoutMembers.test");
+    }
+
     @TestMetadata("MultifileFacadeInternalClass.test")
     public void testMultifileFacadeInternalClass() throws Exception {
         runTest("testData/projectView/MultifileFacadeInternalClass.test");
@@ -136,6 +146,11 @@ public class KotlinProjectViewTestGenerated extends AbstractKotlinProjectViewTes
     @TestMetadata("ScriptMembers2.test")
     public void testScriptMembers2() throws Exception {
         runTest("testData/projectView/ScriptMembers2.test");
+    }
+
+    @TestMetadata("SimpleKotlinClass.test")
+    public void testSimpleKotlinClass() throws Exception {
+        runTest("testData/projectView/SimpleKotlinClass.test");
     }
 
     @TestMetadata("_Arrays.test")

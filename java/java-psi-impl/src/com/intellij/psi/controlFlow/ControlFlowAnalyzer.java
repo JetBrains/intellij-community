@@ -9,10 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.JavaPsiPatternUtil;
-import com.intellij.psi.util.JavaPsiRecordUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -898,6 +895,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
   public void visitSwitchLabelStatement(@NotNull PsiSwitchLabelStatement statement) {
     startElement(statement);
     generateCaseValueInstructions(statement.getCaseLabelElementList());
+    generateExpressionInstructions(statement.getGuardExpression());
     finishElement(statement);
   }
 
@@ -906,6 +904,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     startElement(statement);
 
     generateCaseValueInstructions(statement.getCaseLabelElementList());
+    generateExpressionInstructions(statement.getGuardExpression());
 
     PsiStatement body = statement.getBody();
     if (body != null) {
@@ -929,11 +928,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         ProgressManager.checkCanceled();
         if (caseValue instanceof PsiExpression) {
           generateExpressionInstructions((PsiExpression)caseValue);
-        }
-        else if (caseValue instanceof PsiPatternGuard) {
-          PsiPatternGuard patternGuard = (PsiPatternGuard)caseValue;
-          processPattern(patternGuard.getPattern());
-          generateExpressionInstructions(patternGuard.getGuardingExpression());
         }
         else if (caseValue instanceof PsiPattern) {
           processPattern((PsiPattern)caseValue);
@@ -963,7 +957,8 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiCodeBlock body = statement.getBody();
     if (body != null) {
       PsiStatement[] statements = body.getStatements();
-      boolean needToCreateDefault = false;
+      //16.2.9 (for statements) and 16.1.6 (for expressions)
+      boolean needToCreateDefault = JavaPsiSwitchUtil.isEnhancedSwitch(statement);
       PsiType exprType = expr == null ? null : expr.getType();
       for (PsiStatement aStatement : statements) {
         ProgressManager.checkCanceled();
@@ -973,7 +968,7 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
           needToCreateDefault = true;
         }
         PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
-        if (labelElementList != null) {
+        if (!needToCreateDefault && labelElementList != null) {
           for (PsiCaseLabelElement element : labelElementList.getElements()) {
             if (element instanceof PsiDefaultCaseLabelElement ||
                 exprType != null && JavaPsiPatternUtil.isUnconditionalForType(element, exprType)) {
@@ -1655,9 +1650,6 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
         processPattern(deconstructionComponent);
       }
     }
-    else if (pattern instanceof PsiGuardedPattern) {
-      generateExpressionInstructions(((PsiGuardedPattern)pattern).getGuardingExpression());
-    }
   }
 
   @Override
@@ -1709,6 +1701,25 @@ final class ControlFlowAnalyzer extends JavaElementVisitor {
 
       finishElement(call);
     }
+  }
+
+  @Override
+  public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+    startElement(expression);
+    PsiExpression processor = expression.getProcessor();
+    if (processor != null) processor.accept(this);
+
+    PsiTemplate template = expression.getTemplate();
+    if (template != null) {
+      List<@NotNull PsiExpression> expressions = template.getEmbeddedExpressions();
+      for (PsiExpression embeddedExpression : expressions) {
+        ProgressManager.checkCanceled();
+        embeddedExpression.accept(this);
+      }
+    }
+    generateExceptionJumps(expression, ExceptionUtil.getUnhandledProcessorExceptions(expression, expression.getParent()));
+
+    finishElement(expression);
   }
 
   @Override

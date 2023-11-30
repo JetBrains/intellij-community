@@ -2,15 +2,15 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
-import com.intellij.execution.configurations.ConfigurationPerRunnerSettings;
-import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.RunnerSettings;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.target.*;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.ui.IdeUiService;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CustomizedDataContext;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Aggregates all the settings, information, target, and program runner required to execute a process.
  *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/run-configuration-execution.html">Run Configurations / Execution (IntelliJ Platform Docs)</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/execution.html">Execution (IntelliJ Platform Docs)</a>
  */
 public final class ExecutionEnvironment extends UserDataHolderBase implements Disposable {
   private static final AtomicLong myIdHolder = new AtomicLong(1L);
@@ -261,8 +261,19 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     isHeadless = true;
   }
 
-  void setDataContext(@NotNull DataContext dataContext) {
-    myDataContext = IdeUiService.getInstance().createAsyncDataContext(dataContext);
+  @ApiStatus.Internal
+  public void setDataContext(@NotNull DataContext dataContext) {
+    myDataContext = CustomizedDataContext.create(IdeUiService.getInstance().createAsyncDataContext(dataContext), dataId -> {
+      if (PlatformCoreDataKeys.MODULE.is(dataId)) {
+        Module module = null;
+        if (myRunnerAndConfigurationSettings != null &&
+            myRunnerAndConfigurationSettings.getConfiguration() instanceof ModuleBasedConfiguration<?, ?> configuration) {
+          module = configuration.getConfigurationModule().getModule();
+        }
+        return module == null ? CustomizedDataContext.EXPLICIT_NULL : module;
+      }
+      return null;
+    });
   }
 
   @Nullable

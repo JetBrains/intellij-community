@@ -48,7 +48,7 @@ class DataFrameCSVAdapter {
       val columnsInfo = ArrayList<ColumnInfo>()
 
       var previous = 0
-      for (i in 0 until data.length) {
+      for (i in data.indices) {
         if (data[i] != '\n' && data[i] != '\t') {
           continue
         }
@@ -112,8 +112,8 @@ class DataFrameCSVAdapter {
 
       val columns = ArrayList<ArrayList<*>>(columnsInfo.size)
 
-      for (i in 0 until columnsInfo.size) {
-        columns.add(columnsInfo[i].type!!.createDataArray())
+      for (info in columnsInfo) {
+        columns.add(info.type!!.createDataArray())
       }
 
       // Skip first line (header).
@@ -144,7 +144,7 @@ class DataFrameCSVAdapter {
       }
 
       val realColumns = ArrayList<Column<*>>(columnsInfo.size)
-      for (i in 0 until columnsInfo.size) {
+      for (i in columnsInfo.indices) {
         realColumns.add(columnsInfo[i].type!!.createDataColumn(columnsInfo[i].name, columns[i]))
       }
 

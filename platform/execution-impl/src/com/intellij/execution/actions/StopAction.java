@@ -12,6 +12,7 @@ import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunToolbarPopupKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -38,7 +39,7 @@ import java.util.List;
 
 import static com.intellij.execution.StoppableRunDescriptorsKt.getStoppableDescriptors;
 
-public class StopAction extends DumbAwareAction {
+public class StopAction extends DumbAwareAction implements ActionRemotePermissionRequirements.RunAccess {
 
   private WeakReference<JBPopup> myActivePopupRef = null;
 
@@ -210,7 +211,7 @@ public class StopAction extends DumbAwareAction {
     }
   }
 
-  private void showStopPopup(@NotNull AnActionEvent e, DataContext dataContext, Project project, JBPopup popup) {
+  private static void showStopPopup(@NotNull AnActionEvent e, DataContext dataContext, Project project, JBPopup popup) {
     InputEvent inputEvent = e.getInputEvent();
     Component component = inputEvent != null ? inputEvent.getComponent() : null;
     if (component != null && (ActionPlaces.MAIN_TOOLBAR.equals(e.getPlace())

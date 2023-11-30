@@ -41,9 +41,8 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
 
   private static Reference<Map<String, Map<String, String>>> ourDefaultPropertyValues;
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (!JavaFxFileTypeFactory.isFxml(session.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new XmlElementVisitor() {
@@ -105,8 +104,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
     };
   }
 
-  @Nullable
-  private static String getDefaultValue(@NotNull String propertyName, @Nullable PsiClass containingClass) {
+  private static @Nullable String getDefaultValue(@NotNull String propertyName, @Nullable PsiClass containingClass) {
     for (PsiClass psiClass = containingClass; psiClass != null; psiClass = psiClass.getSuperClass()) {
       final String qualifiedName = psiClass.getQualifiedName();
       if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName)) break;
@@ -144,8 +142,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
     }
   }
 
-  @Nullable
-  private static String getDefaultPropertyValue(String classQualifiedName, String propertyName) {
+  private static @Nullable String getDefaultPropertyValue(String classQualifiedName, String propertyName) {
     final Map<String, String> values = getDefaultPropertyValues(classQualifiedName);
     return values != null ? values.get(propertyName) : null;
   }
@@ -153,8 +150,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
   /**
    * Load property values resource. The resource is produced with the script JavaFxGenerateDefaultPropertyValuesScript (can be found in tests)
    */
-  @Nullable
-  private static Map<String, String> getDefaultPropertyValues(String classQualifiedName) {
+  private static @Nullable Map<String, String> getDefaultPropertyValues(String classQualifiedName) {
     Map<String, Map<String, String>> values = dereference(ourDefaultPropertyValues);
     if (values == null) {
       values = loadDefaultPropertyValues(JavaFxRedundantPropertyValueInspection.class.getSimpleName() + "8.txt");
@@ -166,8 +162,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
   /**
    * The file format is {@code ClassName#propertyName:type=value} per line, line with leading double dash (--) is commented out
    */
-  @NotNull
-  private static Map<String, Map<String, String>> loadDefaultPropertyValues(@NotNull String resourceName) {
+  private static @NotNull Map<String, Map<String, String>> loadDefaultPropertyValues(@NotNull String resourceName) {
     final URL resource = JavaFxRedundantPropertyValueInspection.class.getResource(resourceName);
     if (resource == null) {
       LOG.warn("Resource not found: " + resourceName);

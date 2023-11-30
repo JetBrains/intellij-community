@@ -59,7 +59,8 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Changes in the file copy should be displayed as intention preview
+   * Changes in the file copy should be displayed as intention preview. Differences in leading/trailing 
+   * whitespaces will be shown only if there are no other differences. Otherwise, whitespaces will be trimmed before shown the diff.
    */
   IntentionPreviewInfo DIFF = new IntentionPreviewInfo() {
     @Override
@@ -69,7 +70,7 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Changes in the file copy should be displayed as intention preview, without trimming any whitespaces
+   * Changes in the file copy should be displayed as intention preview, without trimming any whitespaces.
    */
   IntentionPreviewInfo DIFF_NO_TRIM = new IntentionPreviewInfo() {
     @Override
@@ -79,48 +80,37 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Diff preview applied to the current file when new text is not actually written.
-   * Could be used as an alternative to {@link #DIFF} when we can generate the target text
-   * without actual PSI changes.
+   * Diff preview for multiple files. UI may show only some of them if there are too many.
    */
-  class Diff implements IntentionPreviewInfo {
-    private final @NotNull String myOrigText;
-    private final @NotNull String myModifiedText;
+  final class MultiFileDiff implements IntentionPreviewInfo {
+    private final @NotNull List<@NotNull CustomDiff> myDiffs;
 
-    /**
-     * @param origText old text of the current file
-     * @param modifiedText new text for the current file
-     */
-    public Diff(@NotNull String origText, @NotNull String modifiedText) {
-      myOrigText = origText;
-      myModifiedText = modifiedText;
+    public MultiFileDiff(@NotNull List<@NotNull CustomDiff> diffs) {
+      myDiffs = diffs;
     }
 
     /**
-     * @return new text for the current file
+     * @return list of individual CustomDiff objects to display
      */
-    public @NotNull String modifiedText() {
-      return myModifiedText;
-    }
-
-    public @NotNull String originalText() {
-      return myOrigText;
+    public @NotNull List<@NotNull CustomDiff> getDiffs() {
+      return myDiffs;
     }
   }
   
   /**
-   * Diff preview where original text and new text are explicitly displayed.
+   * Diff preview where original text and new text are explicitly specified.
    * Could be used to generate custom diff previews (e.g. when changes are to be applied to another file).
    * <p>
    * In most of the cases, original text could be empty, so simply the new text will be displayed.
    * However, sometimes you may provide carefully crafted original and new text, in order to get some diff highlighting
    * (added/removed parts).
    */
-  class CustomDiff implements IntentionPreviewInfo {
+  final class CustomDiff implements IntentionPreviewInfo {
     private final @NotNull FileType myFileType;
     private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
     private final @Nullable String myFileName;
+    private final boolean myLineNumbers;
 
     /**
      * Construct a custom diff. Please prefer another constructor and specify a file name if it's applicable.
@@ -140,10 +130,30 @@ public interface IntentionPreviewInfo {
      * @param modifiedText changed file text
      */
     public CustomDiff(@NotNull FileType type, @Nullable String name, @NotNull String origText, @NotNull String modifiedText) {
+      this(type, name, origText, modifiedText, false);
+    }
+
+    /**
+     * @param type         file type, used for highlighting
+     * @param name         file name, can be displayed to user if specified
+     * @param origText     original file text
+     * @param modifiedText changed file text
+     * @param lineNumbers  if true then diff will display line numbers
+     */
+    public CustomDiff(@NotNull FileType type,
+                      @Nullable String name,
+                      @NotNull String origText,
+                      @NotNull String modifiedText,
+                      boolean lineNumbers) {
       myFileType = type;
       myFileName = name;
       myOrigText = origText;
       myModifiedText = modifiedText;
+      myLineNumbers = lineNumbers;
+    }
+
+    public boolean showLineNumbers() {
+      return myLineNumbers;
     }
 
     public @Nullable String fileName() {
@@ -164,6 +174,20 @@ public interface IntentionPreviewInfo {
   }
 
   /**
+   * Kind of information displayed in HTML preview
+   */
+  enum InfoKind {
+    /**
+     * Informational preview (default)
+     */
+    INFORMATION,
+    /**
+     * Error
+     */
+    ERROR
+  }
+
+  /**
    * HTML description. Here are some advices:
    * <ul>
    *   <li>If you want to display icon, use {@link HtmlChunk#icon(String, Icon)}. Though be careful, as converting it to text
@@ -180,8 +204,9 @@ public interface IntentionPreviewInfo {
    *   preview for common cases. Ask if you think that you need a new common method.</li>
    * </ul>
    */
-  class Html implements IntentionPreviewInfo {
+  final class Html implements IntentionPreviewInfo {
     private final @NotNull HtmlChunk myContent;
+    private final @NotNull InfoKind myInfoKind;
 
     /**
      * Construct description from HtmlChunk
@@ -189,7 +214,18 @@ public interface IntentionPreviewInfo {
      * @param content description content
      */
     public Html(@NotNull HtmlChunk content) {
+      this(content, InfoKind.INFORMATION);
+    }
+
+    /**
+     * Construct description from HtmlChunk
+     *
+     * @param content  description content
+     * @param infoKind kind of description box (may affect visual representation)
+     */
+    public Html(@NotNull HtmlChunk content, @NotNull InfoKind infoKind) {
       myContent = content;
+      myInfoKind = infoKind;
     }
 
     /**
@@ -206,6 +242,10 @@ public interface IntentionPreviewInfo {
      */
     public @NotNull HtmlChunk content() {
       return myContent;
+    }
+
+    public @NotNull InfoKind infoKind() {
+      return myInfoKind;
     }
   }
 
@@ -319,11 +359,10 @@ public interface IntentionPreviewInfo {
     return icon;
   }
 
-  @NotNull
-  private static HtmlChunk getHtmlMoveFragment(@Nullable Icon sourceIcon,
-                                               @Nullable Icon targetIcon,
-                                               @Nullable @Nls String sourceName,
-                                               @Nullable @Nls String targetName) {
+  private static @NotNull HtmlChunk getHtmlMoveFragment(@Nullable Icon sourceIcon,
+                                                        @Nullable Icon targetIcon,
+                                                        @Nullable @Nls String sourceName,
+                                                        @Nullable @Nls String targetName) {
     return new HtmlBuilder()
       .append(getIconChunk(sourceIcon, "source_" + sourceName))
       .append(Objects.requireNonNull(sourceName))
@@ -381,7 +420,7 @@ public interface IntentionPreviewInfo {
    * @param toSelect    predicate, which returns true if the option should be selected in preview
    * @return a presentation describing that the action will add the specified option to the options list
    */
-  static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
+  static IntentionPreviewInfo.Html addListOption(@NotNull List<@NlsSafe String> updatedList,
                                             @NotNull @Nls String title,
                                             @NotNull Predicate<String> toSelect) {
     int maxToList = Math.min(7, updatedList.size() + 2);

@@ -173,7 +173,7 @@ data class PluginReviewComment(
   val author: ReviewCommentAuthor = ReviewCommentAuthor(),
   val plugin: ReviewCommentPlugin = ReviewCommentPlugin()
 ) {
-  fun getDate() = parseLong(cdate, 0)
+  fun getDate(): Long = parseLong(cdate, 0)
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -189,6 +189,7 @@ data class ReviewCommentPlugin(
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class IntellijPluginMetadata(
   val screenshots: List<String>? = null,
+  val vendor: PluginVendorMetadata? = null,
   val forumUrl: String? = null,
   val licenseUrl: String? = null,
   val bugtrackerUrl: String? = null,
@@ -196,6 +197,11 @@ data class IntellijPluginMetadata(
   val sourceCodeUrl: String? = null) {
 
   fun toPluginNode(pluginNode: PluginNode) {
+    if (vendor != null) {
+      pluginNode.verifiedName = vendor.name
+      pluginNode.isVerified = vendor.verified
+      pluginNode.isTrader = vendor.trader
+    }
     pluginNode.forumUrl = forumUrl
     pluginNode.licenseUrl = licenseUrl
     pluginNode.bugtrackerUrl = bugtrackerUrl
@@ -203,3 +209,12 @@ data class IntellijPluginMetadata(
     pluginNode.sourceCodeUrl = sourceCodeUrl
   }
 }
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class PluginVendorMetadata(
+  val name: String = "",
+  @get:JsonProperty("isTrader")
+  val trader: Boolean = false,
+  @get:JsonProperty("isVerified")
+  val verified: Boolean = false
+)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -45,7 +45,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
   public void actionPerformed(@NotNull AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
-    UndoManager undoManager = getUndoManager(editor, dataContext);
+    UndoManager undoManager = getUndoManager(editor, dataContext, true);
 
     myActionInProgress = true;
     try {
@@ -61,7 +61,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
-    UndoManager undoManager = getUndoManager(editor, dataContext);
+    UndoManager undoManager = getUndoManager(editor, dataContext, false);
     if (undoManager == null) {
       presentation.setEnabled(false);
       return;
@@ -74,7 +74,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     presentation.setDescription(pair.second);
   }
 
-  private UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
+  private UndoManager getUndoManager(FileEditor editor, DataContext dataContext, boolean isActionPerformed) {
     Component component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext);
     if (component instanceof JTextComponent && !ClientProperty.isTrue(component, IGNORE_SWING_UNDO_MANAGER)) {
       return SwingUndoManagerWrapper.fromContext(dataContext);
@@ -90,7 +90,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
         return SwingUndoManagerWrapper.fromContext(dataContext);
       }
     }
-    if (myActionInProgress) {
+    if (myActionInProgress && isActionPerformed) {
       LOG.error("Recursive undo invocation attempt, component: " + component + ", fileEditor: " + editor +
                 ", rootPane: " + rootPane + ", popup: " + popup);
       return null;
@@ -117,11 +117,10 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
 
   protected abstract Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getActionNameAndDescription(FileEditor editor, UndoManager undoManager);
 
-  private static class SwingUndoManagerWrapper extends UndoManager{
+  private static final class SwingUndoManagerWrapper extends UndoManager{
     private final javax.swing.undo.UndoManager mySwingUndoManager;
 
-    @Nullable
-    static UndoManager fromContext(DataContext dataContext) {
+    static @Nullable UndoManager fromContext(DataContext dataContext) {
       javax.swing.undo.UndoManager swingUndoManager =
         SwingUndoUtil.getUndoManager(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext));
       return swingUndoManager != null ? new SwingUndoManagerWrapper(swingUndoManager) : null;
@@ -169,20 +168,17 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
       return mySwingUndoManager.canRedo();
     }
 
-    @NotNull
     @Override
-    public Pair<String, String> getUndoActionNameAndDescription(FileEditor editor) {
+    public @NotNull Pair<String, String> getUndoActionNameAndDescription(FileEditor editor) {
       return getUndoOrRedoActionNameAndDescription( true);
     }
 
-    @NotNull
     @Override
-    public Pair<String, String> getRedoActionNameAndDescription(FileEditor editor) {
+    public @NotNull Pair<String, String> getRedoActionNameAndDescription(FileEditor editor) {
       return getUndoOrRedoActionNameAndDescription( false);
     }
 
-    @NotNull
-    private static Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
+    private static @NotNull Pair<String, String> getUndoOrRedoActionNameAndDescription(boolean undo) {
       if (undo) {
         return Pair.create(
           ActionsBundle.message("action.undo.text", "").trim(),

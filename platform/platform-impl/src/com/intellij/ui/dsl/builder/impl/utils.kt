@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
+import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.ui.dsl.UiDslException
@@ -20,7 +22,7 @@ import javax.swing.text.JTextComponent
  * Internal component properties for UI DSL
  */
 @ApiStatus.Internal
-internal enum class DslComponentPropertyInternal {
+enum class DslComponentPropertyInternal {
   /**
    * A mark that component is a cell label, see [Cell.label]
    *
@@ -121,7 +123,7 @@ internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, 
 }
 
 internal fun labelCell(label: JLabel, cell: CellBaseImpl<*>?) {
-  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text)
+  val mnemonic = TextWithMnemonic.fromMnemonicText(label.text, true)
   val mnemonicExists = label.displayedMnemonic != 0 || label.displayedMnemonicIndex >= 0 || mnemonic?.hasMnemonic() == true
   if (cell !is CellImpl<*>) {
     if (mnemonicExists) {
@@ -167,8 +169,9 @@ internal fun warn(message: String) {
   }
 }
 
+@OptIn(IntellijInternalApi::class)
 internal fun registerCreationStacktrace(component: JComponent) {
-  if (ApplicationManager.getApplication().isInternal) {
+  if (ApplicationManager.getApplication().isInternal && UiInspectorAction.isSaveStacktraces()) {
     component.putClientProperty(DslComponentPropertyInternal.CREATION_STACKTRACE, Throwable())
   }
 }

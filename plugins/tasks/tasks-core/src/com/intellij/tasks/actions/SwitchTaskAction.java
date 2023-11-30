@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tasks.actions;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.playback.commands.ActionCommand;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
@@ -67,15 +68,15 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       TaskManager taskManager = TaskManager.getManager(project);
       LocalTask activeTask = taskManager.getActiveTask();
 
-      if (!TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO) {
-        presentation.setEnabledAndVisible(false);
-      }
-      else {
+      if (isTaskManagerComboInToolbarEnabledAndVisible(activeTask, taskManager)) {
         String s = getText(activeTask);
         presentation.setEnabledAndVisible(true);
         presentation.setText(s, false);
         presentation.setIcon(activeTask.getIcon());
         presentation.setDescription(activeTask.getSummary());
+      }
+      else {
+        presentation.setEnabledAndVisible(false);
       }
     }
     else {
@@ -84,9 +85,19 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     }
   }
 
+  public static boolean isTaskManagerComboInToolbarEnabledAndVisible(LocalTask activeTask, TaskManager taskManager) {
+    return !isOriginalDefault(activeTask) ||
+           ContainerUtil.exists(taskManager.getAllRepositories(), repository -> !repository.isShared()) ||
+           TaskSettings.getInstance().ALWAYS_DISPLAY_COMBO;
+  }
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
+  }
+
+  private static boolean isOriginalDefault(LocalTask activeTask) {
+    return activeTask.isDefault() && Comparing.equal(activeTask.getCreated(), activeTask.getUpdated());
   }
 
   private static @NlsActions.ActionText String getText(LocalTask activeTask) {
@@ -99,13 +110,13 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
-    ListPopupImpl popup = createPopup(dataContext, null, true);
+    ListPopup popup = createPopup(dataContext, null, true);
     popup.showCenteredInCurrentWindow(project);
   }
 
-  private static ListPopupImpl createPopup(@NotNull DataContext dataContext,
-                                           @Nullable Runnable onDispose,
-                                           boolean withTitle) {
+  private static ListPopup createPopup(@NotNull DataContext dataContext,
+                                       @Nullable Runnable onDispose,
+                                       boolean withTitle) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
     List<TaskListItem> items = project == null ? Collections.emptyList() :
@@ -152,7 +163,7 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       }
     };
 
-    final ListPopupImpl popup = (ListPopupImpl)JBPopupFactory.getInstance().createListPopup(step);
+    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
     if (onDispose != null) {
       Disposer.register(popup, new Disposable() {
         @Override
@@ -165,23 +176,26 @@ public class SwitchTaskAction extends ComboBoxAction implements DumbAware {
       return popup;
     }
 
-    popup.setAdText(TaskBundle.message("popup.advertisement.press.shift.to.merge.with.current.context"));
+    popup.setAdText(TaskBundle.message("popup.advertisement.press.shift.to.merge.with.current.context"), SwingConstants.LEFT);
 
-    popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
+    var popupImpl = (popup instanceof ListPopupImpl) ? (ListPopupImpl)popup : null;
+    if (popupImpl == null) return popup;
+    //todo: RDCT-627
+    popupImpl.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
         popup.setCaption(TaskBundle.message("popup.title.merge.with.current.context"));
       }
     });
-    popup.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
+    popupImpl.registerAction("shiftReleased", KeyStroke.getKeyStroke("released SHIFT"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(false);
         popup.setCaption(TaskBundle.message("popup.title.switch.to.task"));
       }
     });
-    popup.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
+    popupImpl.registerAction("invoke", KeyStroke.getKeyStroke("shift ENTER"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         popup.handleSelect(true);

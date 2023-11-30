@@ -4,7 +4,10 @@ package org.jetbrains.kotlin.idea.codeInsight
 import com.intellij.openapi.paths.WebReference
 import com.intellij.openapi.vcs.IssueNavigationConfiguration
 import com.intellij.openapi.vcs.IssueNavigationLink
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
+import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.junit.Assert
@@ -54,13 +57,13 @@ class KotlinIssueReferenceContributorTest : KotlinLightCodeInsightFixtureTestCas
         myFixture.configureByText(
             "Main.kt",
             """
-                val <info>s1</info> = "<info>IDEA-320295</info>"
-                val <info>s2</info> = "sometext <info>IDEA-320295</info> zz <info>IDEA-320296</info>"
-                val <info>s3</info> = ${quotes}
+                val s1 = "<info>IDEA-320295</info>"
+                val s2 = "sometext <info>IDEA-320295</info> zz <info>IDEA-320296</info>"
+                val s3 = ${quotes}
                   <info>IDEA-320295</info>
                 ${quotes}
-                val <info>s4</info> = "${dlr}{<info>s1</info>} <info>IDEA-320295</info>"
-                val <info>s5</info> = "  zIDEA-320295 "
+                val s4 = "${dlr}{s1} <info>IDEA-320295</info>"
+                val s5 = "  zIDEA-320295 "
             """.trimIndent()
         )
 

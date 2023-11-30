@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,11 +29,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.colorpicker.*;
-import com.intellij.ui.picker.ColorListener;
-import com.intellij.ui.picker.ColorPickerPopupCloseListener;
 import com.intellij.ui.picker.ColorPipette;
-import com.intellij.ui.picker.ColorPipetteBase;
-import com.intellij.ui.picker.MacColorPipette;
+import com.intellij.ui.picker.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -64,7 +62,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
-public class ColorPicker extends JPanel implements ColorListener, DocumentListener {
+public final class ColorPicker extends JPanel implements ColorListener, DocumentListener {
   private static final String COLOR_CHOOSER_COLORS_KEY = "ColorChooser.RecentColors";
   private static final String HSB_PROPERTY = "color.picker.is.hsb";
 
@@ -79,8 +77,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final List<? extends ColorPickerListener> myExternalListeners;
 
   private RecentColorsComponent myRecentColorsComponent;
-  @Nullable
-  private final ColorPipette myPicker;
+  private final @Nullable ColorPipette myPicker;
   private final JLabel myR = new JLabel(IdeBundle.message("colorpicker.label.red"));
   private final JLabel myG = new JLabel(IdeBundle.message("colorpicker.label.green"));
   private final JLabel myB = new JLabel(IdeBundle.message("colorpicker.label.blue"));
@@ -92,9 +89,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     @Override
     public Dimension getPreferredSize() {
       Dimension size = super.getPreferredSize();
-      UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentLookAndFeel();
-      if (info != null && info.getName().contains("Windows"))
+      UIThemeLookAndFeelInfo info = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+      if (info != null && info.getName().contains("Windows")) {
         size.width += 10;
+      }
       return size;
     }
   };
@@ -165,8 +163,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  @Nullable
-  public static RelativePoint bestLocationForColorPickerPopup(@Nullable Editor editor) {
+  public static @Nullable RelativePoint bestLocationForColorPickerPopup(@Nullable Editor editor) {
     if (editor == null || editor.isDisposed()) {
       return null;
     }
@@ -183,8 +180,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     return new RelativePoint(editor.getContentComponent(),pointInEditor);
   }
 
-  @Nullable
-  private ColorPipette createPipette(@NotNull ColorListener colorListener, @NotNull Disposable parentDisposable) {
+  private @Nullable ColorPipette createPipette(@NotNull ColorListener colorListener, @NotNull Disposable parentDisposable) {
     if (ColorPipetteBase.canUseMacPipette()) {
       ColorPipette pipette = getPipetteIfAvailable(new MacColorPipette(this, colorListener), parentDisposable);
       if (pipette != null) {
@@ -194,8 +190,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     return getPipetteIfAvailable(new DefaultColorPipette(this, colorListener), parentDisposable);
   }
 
-  @Nullable
-  private static ColorPipette getPipetteIfAvailable(@NotNull ColorPipette pipette, @NotNull Disposable parentDisposable) {
+  private static @Nullable ColorPipette getPipetteIfAvailable(@NotNull ColorPipette pipette, @NotNull Disposable parentDisposable) {
     if (pipette.isAvailable()) {
       Disposer.register(parentDisposable, pipette);
       return pipette;
@@ -343,8 +338,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  @Nullable
-  private Color gatherRGB() {
+  private @Nullable Color gatherRGB() {
     try {
       final int r = Integer.parseInt(myRed.getText());
       final int g = Integer.parseInt(myGreen.getText());
@@ -382,13 +376,12 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  @Nullable
-  public static Color showDialog(@NotNull Component parent,
-                                 @DialogTitle String caption,
-                                 Color preselectedColor,
-                                 boolean enableOpacity,
-                                 List<? extends ColorPickerListener> listeners,
-                                 boolean opacityInPercent) {
+  public static @Nullable Color showDialog(@NotNull Component parent,
+                                           @DialogTitle String caption,
+                                           Color preselectedColor,
+                                           boolean enableOpacity,
+                                           List<? extends ColorPickerListener> listeners,
+                                           boolean opacityInPercent) {
     final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
     dialog.show();
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
@@ -404,22 +397,6 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   @Deprecated(forRemoval = true)
   public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener) {
     showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), currentColor != null && currentColor.getAlpha() != 255);
-  }
-
-  /**
-   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
-   */
-  @Deprecated(forRemoval = true)
-  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha) {
-    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha);
-  }
-
-  /**
-   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
-   */
-  @Deprecated(forRemoval = true)
-  public static void showColorPickerPopup(@Nullable Project project, @Nullable Color currentColor, @Nullable Editor editor, @NotNull ColorListener listener, boolean showAlpha, boolean showAlphaAsPercent) {
-    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent);
   }
 
   /**
@@ -442,35 +419,17 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
    * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
    */
   @Deprecated(forRemoval = true)
-  public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
-    showColorPickerPopup(project, currentColor, listener, location, showAlpha, false);
+  public static void showColorPickerPopup(final @Nullable Project project, @Nullable Color currentColor, final @NotNull ColorListener listener, @Nullable RelativePoint location, boolean showAlpha) {
+    showColorPickerPopup(project, currentColor, listener, location, showAlpha, false, null);
   }
 
-  /**
-   * @deprecated this method doesn't support remote development. Replace with ColorChooserService.getInstance().showPopup
-   */
-  @Deprecated(forRemoval = true)
-  public static void showColorPickerPopup(@Nullable final Project project, @Nullable Color currentColor, @NotNull final ColorListener listener, @Nullable RelativePoint location, boolean showAlpha, boolean showAlphaAsPercent) {
-    showColorPickerPopup(project, currentColor, listener, location, showAlpha, showAlphaAsPercent, null);
-  }
-
-  static void showColorPickerPopup(@Nullable final Project project,
+  static void showColorPickerPopup(final @Nullable Project project,
                                    @Nullable Color currentColor,
-                                   @Nullable final Editor editor,
-                                   @NotNull final ColorListener listener,
-                                   boolean showAlpha,
-                                   boolean showAlphaAsPercent,
-                                   @Nullable final ColorPickerPopupCloseListener popupCloseListener) {
-    showColorPickerPopup(project, currentColor, listener, bestLocationForColorPickerPopup(editor), showAlpha, showAlphaAsPercent, popupCloseListener);
-  }
-
-  static void showColorPickerPopup(@Nullable final Project project,
-                                   @Nullable Color currentColor,
-                                   @NotNull final ColorListener listener,
+                                   final @NotNull ColorListener listener,
                                    @Nullable RelativePoint location,
                                    boolean showAlpha,
                                    boolean showAlphaAsPercent,
-                                   @Nullable final ColorPickerPopupCloseListener popupCloseListener) {
+                                   final @Nullable ColorPickerPopupCloseListener popupCloseListener) {
     if( !isEnoughSpaceToShowPopup() || !Registry.is("ide.new.color.picker")) {
       Color color = showDialog(IdeFocusManager.getGlobalInstance().getFocusOwner(), IdeBundle.message("dialog.title.choose.color"),
                                currentColor, showAlpha, null, showAlphaAsPercent);
@@ -510,9 +469,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     if (!recentColors.isEmpty()) {
       builder/*.addSeparator()*/
         .addCustomComponent(new ColorPickerComponentProvider() {
-          @NotNull
           @Override
-          public JComponent createComponent(@NotNull ColorPickerModel colorPickerModel) {
+          public @NotNull JComponent createComponent(@NotNull ColorPickerModel colorPickerModel) {
             return new RecentColorsPalette(colorPickerModel, recentColors);
           }
         });
@@ -566,8 +524,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  @NotNull
-  private static AbstractAction cancelPopup(Ref<LightCalloutPopup> ref) {
+  private static @NotNull AbstractAction cancelPopup(Ref<LightCalloutPopup> ref) {
     return new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -579,8 +536,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     };
   }
 
-  @NotNull
-  private static AbstractAction applyColor(Ref<LightCalloutPopup> ref) {
+  private static @NotNull AbstractAction applyColor(Ref<LightCalloutPopup> ref) {
     return new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -913,7 +869,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  public class NumberDocument extends PlainDocument {
+  public final class NumberDocument extends PlainDocument {
 
     private final boolean myHex;
     private JTextField mySrc;
@@ -997,8 +953,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       }
     }
 
-    @Nullable
-    public Color getMostRecentColor() {
+    public @Nullable Color getMostRecentColor() {
       return myRecentColors.isEmpty() ? null : myRecentColors.get(myRecentColors.size() - 1);
     }
 
@@ -1039,8 +994,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       return super.getToolTipText(event);
     }
 
-    @Nullable
-    private Color getColor(MouseEvent event) {
+    private @Nullable Color getColor(MouseEvent event) {
       Couple<Integer> pair = pointToCellCoords(event.getPoint());
       if (pair != null) {
         int ndx = pair.second + pair.first * 10;
@@ -1088,8 +1042,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       }
     }
 
-    @Nullable
-    private Couple<Integer> pointToCellCoords(Point p) {
+    private @Nullable Couple<Integer> pointToCellCoords(Point p) {
       int x = p.x;
       int y = p.y;
 
@@ -1149,7 +1102,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  static class ColorPickerDialog extends DialogWrapper {
+  static final class ColorPickerDialog extends DialogWrapper {
     private final Color myPreselectedColor;
     private final List<? extends ColorPickerListener> myListeners;
     private ColorPicker myColorPicker;
@@ -1211,7 +1164,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
   }
 
-  public static class ColorWheelImageProducer extends MemoryImageSource {
+  public static final class ColorWheelImageProducer extends MemoryImageSource {
     private final int[] myPixels;
     private final int myWidth;
     private final int myHeight;
@@ -1342,9 +1295,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     }
 
     @Override
-    @NotNull
     @SuppressWarnings("UseJBColor")
-    protected Dialog getOrCreatePickerDialog() {
+    protected @NotNull Dialog getOrCreatePickerDialog() {
       Dialog pickerDialog = getPickerDialog();
       if (pickerDialog == null) {
         pickerDialog = super.getOrCreatePickerDialog();

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
@@ -27,6 +28,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -171,7 +174,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     actions.add(getCancelAction());
     Action apply = myEditor.getApplyAction();
     if (apply != null && myApplyButtonNeeded) {
-      actions.add(apply);
+      actions.add(new ApplyActionWrapper(apply));
     }
     Action reset = myEditor.getResetAction();
     if (reset != null && myResetButtonNeeded) {
@@ -219,5 +222,48 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   static @Nullable ShortcutSet getFindActionShortcutSet() {
     AnAction action = ActionManager.getInstance().getAction(ACTION_FIND);
     return action == null ? null : action.getShortcutSet();
+  }
+
+  private class ApplyActionWrapper extends AbstractAction {
+    private final @NotNull Action delegate;
+
+    ApplyActionWrapper(@NotNull Action delegate) {
+      this.delegate = delegate;
+      superSetEnabled(delegate.isEnabled());
+      delegate.addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if ("enabled".equals(evt.getPropertyName())) {
+            superSetEnabled((Boolean)evt.getNewValue());
+          }
+        }
+      });
+
+      if (delegate instanceof AbstractAction abstractAction) {
+        Object[] keys = abstractAction.getKeys();
+        if (keys != null) {
+          for (Object key : keys) {
+            if (key instanceof String stringKey) {
+              putValue(stringKey, abstractAction.getValue(stringKey));
+            }
+          }
+        }
+      }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      delegate.actionPerformed(e);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(SettingsDialogListener.getTOPIC()).afterApply(myEditor);
+    }
+
+    @Override
+    public void setEnabled(boolean newValue) {
+      delegate.setEnabled(newValue);
+    }
+
+    private void superSetEnabled(boolean newValue) {
+      super.setEnabled(newValue);
+    }
   }
 }

@@ -78,7 +78,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected void addExtraToolbar(JPanel toolBarPanel) {
+  protected void addExtraToolbar(@NotNull JPanel toolBarPanel) {
     mySearchTextArea = new SearchTextArea(new JTextArea(), true);
     mySearchTextArea.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     new NextOccurenceAction(true).registerCustomShortcutSet(Utils.shortcutSetOf(ContainerUtil.concat(
@@ -125,7 +125,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @RequiresEdt
-  private void applyFilterText(@Nullable String filter, LoadingDecorator decorator) {
+  private void applyFilterText(@Nullable String filter, @NotNull LoadingDecorator decorator) {
     decorator.stopLoading();
     if (myFilterFuture != null) {
       myFilterFuture.cancel(true);
@@ -187,8 +187,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     session.setTextInField(filter);
   }
 
-  @Nullable
-  private Editor findLeftEditor() {
+  private @Nullable Editor findLeftEditor() {
     DiffSplitter splitter = UIUtil.findComponentOfType(myDiffPanel.getComponent(), DiffSplitter.class);
     JComponent editorPanel;
     if (splitter != null) {
@@ -214,7 +213,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected Runnable doUpdateDiffs(final FileHistoryDialogModel model) {
+  protected Runnable doUpdateDiffs(final @NotNull FileHistoryDialogModel model) {
     final FileDifferenceModel diffModel = model.getDifferenceModel();
     return () -> myDiffPanel.setRequest(createDifference(diffModel));
   }
@@ -224,7 +223,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     return "reference.dialogs.showhistory";
   }
 
-  private class NextOccurenceAction extends DumbAwareAction {
+  private final class NextOccurenceAction extends DumbAwareAction {
     private final boolean myForward;
     private NextOccurenceAction(boolean forward) {
       myForward = forward;

@@ -90,7 +90,7 @@ public final class JavaSharedImplUtil {
 
   @NotNull
   public static PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
-    String typeText = TypeInfo.createTypeText(typeInfo);
+    String typeText = typeInfo.text();
     assert typeText != null : owner;
     PsiType type = JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeFromText(typeText, owner);
     type = applyAnnotations(type, owner.getModifierList());
@@ -215,7 +215,7 @@ public final class JavaSharedImplUtil {
   public static PsiElement getPatternVariableDeclarationScope(@NotNull PsiPatternVariable variable) {
     PsiElement parent = variable.getPattern().getParent();
     if (!(parent instanceof PsiInstanceOfExpression) && !(parent instanceof PsiCaseLabelElementList) && !(parent instanceof PsiPattern)
-        && !(parent instanceof PsiDeconstructionList) && !(parent instanceof PsiPatternGuard)) {
+        && !(parent instanceof PsiDeconstructionList)) {
       return parent;
     }
     return getInstanceOfPartDeclarationScope(parent);
@@ -262,7 +262,7 @@ public final class JavaSharedImplUtil {
         }
         return nextParent.getParent();
       }
-      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList || nextParent instanceof PsiPatternGuard ||
+      if (nextParent instanceof PsiPattern || nextParent instanceof PsiCaseLabelElementList ||
           (parent instanceof PsiPattern && nextParent instanceof PsiInstanceOfExpression) ||
           (parent instanceof PsiPattern && nextParent instanceof PsiDeconstructionList)) {
         continue;

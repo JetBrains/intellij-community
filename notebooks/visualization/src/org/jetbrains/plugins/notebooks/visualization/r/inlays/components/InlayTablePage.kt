@@ -144,9 +144,9 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
     table.model = DataFrameTableModel(dataFrame)
 
     for (i in dataFrame.getColumns().indices) {
-      table.columnModel.getColumn(i).cellRenderer = when {
-        dataFrame[i].type == IntType -> IntegerTableCellRenderer()
-        dataFrame[i].type == DoubleType -> DoubleTableCellRenderer()
+      table.columnModel.getColumn(i).cellRenderer = when (dataFrame[i].type) {
+        IntType -> IntegerTableCellRenderer()
+        DoubleType -> DoubleTableCellRenderer()
         else -> StringTableCellRenderer()
       }
     }
@@ -169,7 +169,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
 
   private fun addTableFilterHeader() {
     filterHeader = TableFilterHeader()
-    filterHeader!!.table = table
+    filterHeader!!.installTable(table)
   }
 
   override fun createActions(): List<AnAction> {
@@ -196,7 +196,7 @@ class InlayTablePage : JPanel(BorderLayout()), ToolBarProvider {
           addTableFilterHeader()
         }
         else {
-          filterHeader?.table = null
+          filterHeader?.installTable(null)
           filterHeader = null
         }
       }

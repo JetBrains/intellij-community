@@ -43,7 +43,7 @@ open class DefaultTabTheme : TabTheme {
   override val hoverBackground: Color get() = JBUI.CurrentTheme.DefaultTabs.hoverBackground()
   override val underlinedTabBackground: Color? get() = JBUI.CurrentTheme.DefaultTabs.underlinedTabBackground()
   override val underlinedTabForeground: Color get() = JBUI.CurrentTheme.DefaultTabs.underlinedTabForeground()
-  override val underlineHeight: Int get()= JBUI.CurrentTheme.DefaultTabs.underlineHeight()
+  override val underlineHeight: Int get() = JBUI.CurrentTheme.DefaultTabs.UNDERLINE_HEIGHT.get()
   override val hoverInactiveBackground: Color?
     get() = hoverBackground
   override val underlinedTabInactiveBackground: Color?

@@ -1,7 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xml.dom.readXmlAsModel
+import org.jdom.Namespace
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
@@ -24,7 +26,8 @@ private val BUILD_DATE_PATTERN = DateTimeFormatter.ofPattern("uuuuMMddHHmm")
 @Suppress("SpellCheckingInspection")
 internal val MAJOR_RELEASE_DATE_PATTERN: DateTimeFormatter = DateTimeFormatter.ofPattern("uuuuMMdd")
 
-class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
+@Suppress("KotlinRedundantDiagnosticSuppress", "UNNECESSARY_LATEINIT")
+internal class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override lateinit var majorVersion: String
   override lateinit var minorVersion: String
   override val microVersion: String
@@ -32,14 +35,10 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override val fullVersionFormat: String
   override val isEAP: Boolean
   override val versionSuffix: String?
-  /**
-   * The first number from 'minor' part of the version. This property is temporary added because some products specify composite number (like '1.3')
-   * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
-   */
   override val minorVersionMainPart: String
   override val shortProductName: String
   override lateinit var productCode: String
-  override val productName: String
+  override val fullProductName: String
   override val majorReleaseDate: String
   override val edition: String?
   override val motto: String?
@@ -47,17 +46,17 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override val shortCompanyName: String
   override val svgRelativePath: String?
   override val svgProductIcons: List<String>
+  @Suppress("OVERRIDE_DEPRECATION")
   override val patchesUrl: String?
   override val launcherName: String
+
   private lateinit var context: BuildContext
 
   constructor(context: BuildContext) : this(context.project, context.productProperties, context.options) {
     this.context = context
   }
 
-  constructor(project: JpsProject,
-              productProperties: ProductProperties,
-              buildOptions: BuildOptions) {
+  constructor(project: JpsProject, productProperties: ProductProperties, buildOptions: BuildOptions) {
     val root = findApplicationInfoInSources(project, productProperties)
       .bufferedReader()
       .use(::readXmlAsModel)
@@ -90,7 +89,8 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
     }
     this.productCode = productCode!!
     this.majorReleaseDate = run {
-      val majorReleaseDate = buildTag.getAttributeValue("majorReleaseDate")
+      val majorReleaseDate = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_MAJOR_RELEASE_DATE)
+                             ?: buildTag.getAttributeValue("majorReleaseDate")
       when {
         isEAP -> {
           val buildDate = Instant.ofEpochSecond(buildOptions.buildDateInSeconds)
@@ -108,11 +108,12 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
           error("majorReleaseDate may be omitted only for EAP")
         }
       }
-      formatMajorReleaseDate(majorReleaseDate, buildOptions.buildDateInSeconds)
+      formatMajorReleaseDate(majorReleaseDateRaw = majorReleaseDate, buildDateInSeconds = buildOptions.buildDateInSeconds)
     }
-    productName = namesTag.getAttributeValue("fullname") ?: shortProductName
-    edition = namesTag.getAttributeValue("edition")
-    motto = namesTag.getAttributeValue("motto")
+    val productNameOverride = productProperties.productNameOverride(project)
+    fullProductName = productNameOverride?.fullProductName ?: namesTag.getAttributeValue("fullname") ?: shortProductName
+    edition = productNameOverride?.editionName ?: namesTag.getAttributeValue("edition")
+    motto = productNameOverride?.motto ?: namesTag.getAttributeValue("motto")
     launcherName = namesTag.getAttributeValue("script")!!
 
     val companyTag = root.getChild("company")!!
@@ -135,7 +136,7 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
   override val fullVersion: String
     get() = MessageFormat.format(fullVersionFormat, majorVersion, minorVersion, microVersion, patchVersion)
   override val productNameWithEdition: String
-    get() = if (edition == null) productName else "$productName $edition"
+    get() = if (edition == null) fullProductName else "$fullProductName $edition"
 
 
   override fun toString() = appInfoXml
@@ -168,13 +169,42 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       ),
       marker = "__"
     )
+
     val isEapOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_IS_EAP)
-    if (isEapOverride != null) {
-      patchedAppInfo = patchedAppInfo.replace("eap=\".+\"".toRegex(), "eap=\"$isEapOverride\"")
-    }
     val suffixOverride = System.getProperty(BuildOptions.INTELLIJ_BUILD_OVERRIDE_APPLICATION_VERSION_SUFFIX)
-    if (suffixOverride != null) {
-      patchedAppInfo = patchedAppInfo.replace("suffix=\".+\"".toRegex(), "eap=\"$suffixOverride\"")
+    val newNamesOverride = context.productProperties.productNameOverride(context.project)
+    if (isEapOverride != null || suffixOverride != null || newNamesOverride != null) {
+      val element = JDOMUtil.load(patchedAppInfo)
+      @Suppress("HttpUrlsUsage")
+      val namespace = Namespace.getNamespace("http://jetbrains.org/intellij/schema/application-info")
+
+      if (isEapOverride != null || suffixOverride != null) {
+        val version = element.getChildren("version", namespace)
+                        .singleOrNull() ?: error("Could not find child element 'version' under root of '$appInfoXmlPath'")
+        isEapOverride?.let { version.setAttribute("eap", it) }
+        suffixOverride?.let { version.setAttribute("suffix", it) }
+      }
+
+      if (newNamesOverride != null) {
+        val names = element.getChildren("names", namespace)
+          .singleOrNull() ?: error("Could not find child element 'names' under root of '$appInfoXmlPath'")
+
+        names.setAttribute("fullname", newNamesOverride.fullProductName)
+
+        if (newNamesOverride.editionName != null) {
+          names.setAttribute("edition", newNamesOverride.editionName)
+        } else {
+          names.removeAttribute("edition")
+        }
+
+        if (newNamesOverride.motto != null) {
+          names.setAttribute("motto", newNamesOverride.motto)
+        } else {
+          names.removeAttribute("motto")
+        }
+      }
+
+      patchedAppInfo = JDOMUtil.write(element)
     }
     return@lazy patchedAppInfo
   }
@@ -183,7 +213,7 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
 //copy of ApplicationInfoImpl.shortenCompanyName
 private fun shortenCompanyName(name: String) = name.removeSuffix(" s.r.o.").removeSuffix(" Inc.")
 
-private fun findApplicationInfoInSources(project: JpsProject, productProperties: ProductProperties): Path {
+fun findApplicationInfoInSources(project: JpsProject, productProperties: ProductProperties): Path {
   val module = checkNotNull(project.modules.find { it.name == productProperties.applicationInfoModule }) {
     "Cannot find required '${productProperties.applicationInfoModule}' module"
   }
@@ -205,7 +235,7 @@ fun formatMajorReleaseDate(majorReleaseDateRaw: String?, buildDateInSeconds: Lon
       MAJOR_RELEASE_DATE_PATTERN.parse(majorReleaseDateRaw)
       return majorReleaseDateRaw
     }
-    catch (ignored: Exception) {
+    catch (_: Exception) {
       return MAJOR_RELEASE_DATE_PATTERN.format(BUILD_DATE_PATTERN.parse(majorReleaseDateRaw))
     }
   }

@@ -1,13 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.diagnostic.telemetry.impl.use
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
-import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
@@ -21,6 +20,7 @@ import java.nio.file.Path
 interface BuildContext : CompilationContext {
   val productProperties: ProductProperties
   val windowsDistributionCustomizer: WindowsDistributionCustomizer?
+  val macDistributionCustomizer: MacDistributionCustomizer?
   val linuxDistributionCustomizer: LinuxDistributionCustomizer?
   val proprietaryBuildTools: ProprietaryBuildTools
 
@@ -61,7 +61,7 @@ interface BuildContext : CompilationContext {
   /**
    * Names of JARs inside `IDE_HOME/lib` directory which need to be added to the JVM classpath to start the IDE.
    */
-  var bootClassPathJarNames: PersistentList<String>
+  var bootClassPathJarNames: List<String>
 
   /**
    * Specifies name of Java class which should be used to start the IDE.
@@ -73,6 +73,11 @@ interface BuildContext : CompilationContext {
    * [BuildOptions.useModularLoader].
    */
   val useModularLoader: Boolean
+  
+  /**
+   * Specifies whether the runtime module repository should be added to the distributions, see [BuildOptions.generateRuntimeModuleRepository].
+   */
+  val generateRuntimeModuleRepository: Boolean
   
   /**
    * see BuildTasksImpl.buildProvidedModuleList
@@ -120,7 +125,9 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
+  fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean = true): BuildContext
+
+  suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
 }
 
 @Obsolete
@@ -129,14 +136,16 @@ fun executeStepSync(context: BuildContext, stepMessage: String, stepId: String, 
     Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
   }
   else {
-    spanBuilder(stepMessage).use {
+    spanBuilder(stepMessage).startSpan().use {
       step.run()
     }
   }
   return true
 }
 
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend CoroutineScope.(Span) -> Unit) {
+suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
+                                            stepId: String,
+                                            crossinline step: suspend CoroutineScope.(Span) -> Unit) {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
   }

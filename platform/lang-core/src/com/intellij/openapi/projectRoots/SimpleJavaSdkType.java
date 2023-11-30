@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.project.ProjectBundle;
@@ -16,7 +16,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.stream.Stream;
+import java.util.function.Predicate;
 
 /**
  * @author Gregory.Shrago
@@ -38,9 +38,8 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return jdk;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     //noinspection UnresolvedPropertyKey
     return ProjectBundle.message("sdk.java.name");
   }
@@ -68,17 +67,15 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return new File(sdk.getHomePath(), "bin/java").getPath();
   }
 
-  @Nullable
   @Override
-  public String suggestHomePath() {
+  public @Nullable String suggestHomePath() {
     return JdkFinder.getInstance().defaultJavaLocation();
   }
 
-  @NotNull
   @Override
-  public Collection<String> suggestHomePaths() {
+  public @NotNull Collection<String> suggestHomePaths() {
     //there is no need to search for JDKs if there is JavaSdkImpl registered
-    if (!notSimpleJavaSdkTypeIfAlternativeExists().value(this)) {
+    if (!notSimpleJavaSdkTypeIfAlternativeExists().test(this)) {
       return Collections.emptyList();
     }
 
@@ -90,9 +87,8 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return JdkUtil.checkForJdk(path);
   }
 
-  @NotNull
   @Override
-  public String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
+  public @NotNull String suggestSdkName(@Nullable String currentSdkName, @NotNull String sdkHome) {
     String suggestedName = JdkUtil.suggestJdkName(getVersionString(sdkHome));
     return suggestedName != null ? suggestedName : currentSdkName != null ? currentSdkName : "";
   }
@@ -103,27 +99,26 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     return jdkInfo != null ? JdkVersionDetector.formatVersionString(jdkInfo.version) : null;
   }
 
-  @NotNull
   @Override
-  public Comparator<String> versionStringComparator() {
+  public @NotNull Comparator<String> versionStringComparator() {
     return (sdk1, sdk2) -> {
       return Comparing.compare(JavaVersion.tryParse(sdk1), JavaVersion.tryParse(sdk2));
     };
   }
 
-  private static final Condition<SdkTypeId> TRUE = sdkTypeId -> true;
-  private static final Condition<SdkTypeId> NOT_SIMPLE_JAVA_TYPE = sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
-  private static final Condition<SdkTypeId> NOT_DEPENDENT_TYPE = sdkTypeId -> (sdkTypeId instanceof SdkType && ((SdkType)sdkTypeId).getDependencyType() == null);
+  private static final Predicate<SdkTypeId> TRUE = sdkTypeId -> true;
+  private static final Predicate<SdkTypeId> NOT_SIMPLE_JAVA_TYPE = sdkTypeId -> !(sdkTypeId instanceof SimpleJavaSdkType);
+  private static final Predicate<SdkTypeId> NOT_DEPENDENT_TYPE = sdkTypeId -> (sdkTypeId instanceof SdkType && ((SdkType)sdkTypeId).getDependencyType() == null);
 
-  @NotNull
-  public static Condition<SdkTypeId> notSimpleJavaSdkType() {
+  public static @NotNull Predicate<SdkTypeId> notSimpleJavaSdkType() {
     return NOT_SIMPLE_JAVA_TYPE;
   }
 
-  @NotNull
-  public static Condition<SdkTypeId> notSimpleJavaSdkType(@Nullable Condition<? super SdkTypeId> condition) {
-    if (condition == null) return NOT_SIMPLE_JAVA_TYPE;
-    return sdkTypeId -> NOT_SIMPLE_JAVA_TYPE.value(sdkTypeId) && condition.value(sdkTypeId);
+  public static @NotNull Predicate<SdkTypeId> notSimpleJavaSdkType(@Nullable Predicate<? super SdkTypeId> condition) {
+    if (condition == null) {
+      return NOT_SIMPLE_JAVA_TYPE;
+    }
+    return sdkTypeId -> NOT_SIMPLE_JAVA_TYPE.test(sdkTypeId) && condition.test(sdkTypeId);
   }
 
   /**
@@ -131,16 +126,23 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
    * If there are more more JavaSdkType non-dependent SDK Types, that predicate also
    * filters out the SimpleJavaSdkType implementation
    */
-  @NotNull
-  public static Condition<SdkTypeId> notSimpleJavaSdkTypeIfAlternativeExists() {
-    boolean hasNotSimple = Stream.of(SdkType.getAllTypes())
-      .filter(notSimpleJavaSdkType()::value)
-      .anyMatch(it -> it instanceof JavaSdkType && it.getDependencyType() == null && !((JavaSdkType)it).isDependent());
+  public static @NotNull Predicate<SdkTypeId> notSimpleJavaSdkTypeIfAlternativeExists() {
+    boolean hasNotSimple = false;
+    Predicate<SdkTypeId> condition = notSimpleJavaSdkType();
+    for (SdkType it : SdkType.getAllTypeList()) {
+      if (condition.test(it)) {
+        if (it instanceof JavaSdkType && it.getDependencyType() == null && !((JavaSdkType)it).isDependent()) {
+          hasNotSimple = true;
+          break;
+        }
+      }
+    }
 
     if (hasNotSimple) {
       //we found another JavaSdkType (e.g. JavaSdkImpl), there is no need for SimpleJavaSdkType
       return NOT_SIMPLE_JAVA_TYPE;
-    } else {
+    }
+    else {
       //there is only one JavaSdkType, so it is no need to filter anything
       return TRUE;
     }
@@ -151,9 +153,8 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
    * a dependent SDK type. Moreover, if there are several matches, the SimpleJavaSdkType
    * is filtered out too
    */
-  @NotNull
-  public static Condition<SdkTypeId> notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType() {
-    Condition<SdkTypeId> preferablyNotSimple = notSimpleJavaSdkTypeIfAlternativeExists();
-    return sdkType -> sdkType instanceof JavaSdkType && NOT_DEPENDENT_TYPE.value(sdkType) && preferablyNotSimple.value(sdkType);
+  public static @NotNull Condition<SdkTypeId> notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType() {
+    Predicate<SdkTypeId> preferablyNotSimple = notSimpleJavaSdkTypeIfAlternativeExists();
+    return sdkType -> sdkType instanceof JavaSdkType && NOT_DEPENDENT_TYPE.test(sdkType) && preferablyNotSimple.test(sdkType);
   }
 }

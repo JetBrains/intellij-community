@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -45,7 +45,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
                                                  VcsBaseRevisionAdviser {
   private static final Logger LOG = Logger.getInstance(GitHistoryProvider.class.getName());
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
 
   public GitHistoryProvider(@NotNull Project project) {
     myProject = project;
@@ -71,8 +71,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   @Override
-  @Nullable
-  public String getHelpId() {
+  public @Nullable String getHelpId() {
     return null;
   }
 
@@ -91,13 +90,12 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
   }
 
   private VcsAbstractHistorySession createSession(final FilePath filePath, final List<? extends VcsFileRevision> revisions,
-                                                  @Nullable final VcsRevisionNumber number) {
+                                                  final @Nullable VcsRevisionNumber number) {
     return new GitHistorySession(filePath, number, revisions);
   }
 
-  @Nullable
   @Override
-  public VcsFileRevision getLastRevision(FilePath filePath) throws VcsException {
+  public @Nullable VcsFileRevision getLastRevision(FilePath filePath) throws VcsException {
     List<VcsFileRevision> history = GitFileHistory.collectHistory(myProject, filePath, "--max-count=1");
     if (history.isEmpty()) return null;
     return history.get(0);
@@ -125,14 +123,11 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
   @Override
   public void reportAppendableHistory(@NotNull FilePath path,
                                       @Nullable VcsRevisionNumber startingRevision,
-                                      @NotNull final VcsAppendableHistorySessionPartner partner) {
+                                      final @NotNull VcsAppendableHistorySessionPartner partner) {
     final VcsAbstractHistorySession emptySession = createSession(path, Collections.emptyList(), null);
     partner.reportCreatedEmptySession(emptySession);
 
-    VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(myProject);
-    String[] additionalArgs = vcsConfiguration.LIMIT_HISTORY ?
-                              new String[]{"--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS} :
-                              ArrayUtilRt.EMPTY_STRING_ARRAY;
+    String[] additionalArgs = getHistoryLimitArgs(myProject);
 
     GitFileHistory.loadHistory(myProject, path, startingRevision,
                                fileRevision -> partner.acceptRevision(fileRevision),
@@ -157,7 +152,14 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     return repository != null && !repository.isFresh();
   }
 
-  class GitHistorySession extends VcsAbstractHistorySession {
+  static String @NotNull [] getHistoryLimitArgs(@NotNull Project project) {
+    VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(project);
+    return vcsConfiguration.LIMIT_HISTORY ?
+           new String[]{"--max-count=" + vcsConfiguration.MAXIMUM_HISTORY_ROWS} :
+           ArrayUtilRt.EMPTY_STRING_ARRAY;
+  }
+
+  final class GitHistorySession extends VcsAbstractHistorySession {
     private final @NotNull FilePath myFilePath;
 
     GitHistorySession(@NotNull FilePath filePath, @Nullable VcsRevisionNumber number, @NotNull List<? extends VcsFileRevision> revisions) {
@@ -166,8 +168,7 @@ public final class GitHistoryProvider implements VcsHistoryProviderEx,
     }
 
     @Override
-    @Nullable
-    protected VcsRevisionNumber calcCurrentRevisionNumber() {
+    protected @Nullable VcsRevisionNumber calcCurrentRevisionNumber() {
       try {
         return GitHistoryUtils.getCurrentRevision(myProject, myFilePath, "HEAD");
       }

@@ -4,9 +4,7 @@ package com.jetbrains.python.debugger.pydev.tables
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 interface PyNumericContainerPopupCustomizer {
   companion object {
     private val EP_NAME: ExtensionPointName<PyNumericContainerPopupCustomizer> =

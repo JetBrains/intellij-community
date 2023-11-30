@@ -1,14 +1,18 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.target.TargetConfigurationWithId;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.readableFs.PathInfo;
-import com.intellij.execution.target.readableFs.TargetConfigurationReadableFs;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.UserDataHolder;
@@ -17,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PatternUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
@@ -24,15 +29,18 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import icons.PythonSdkIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+
+import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionError;
 
 
 /**
@@ -43,6 +51,14 @@ import java.util.regex.Pattern;
  */
 public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   public static final ExtensionPointName<PythonSdkFlavor<?>> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
+  /**
+   * To prevent log pollution and slowness, we cache every {@link #isFileExecutable(String, TargetEnvironmentConfiguration)} call
+   * and only log it once
+   */
+  private static final Cache<@NotNull String, @NotNull Boolean> ourExecutableFiles = Caffeine.newBuilder()
+    .expireAfterWrite(10, TimeUnit.MINUTES)
+    .maximumSize(1000)
+    .build();
 
   private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
@@ -138,11 +154,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
       LOG.warn("Sdk doesn't have homepath:" + sdk.getName());
       return false;
     }
-    boolean executable = isFileExecutable(path, targetConfig);
-    if (! executable) {
-      LOG.warn("File not executable on default sdk flavour:" + path);
-    }
-    return executable;
+    return isFileExecutable(path, targetConfig);
   }
 
   /**
@@ -151,19 +163,58 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @param fullPath full path on target
    */
   protected static boolean isFileExecutable(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration targetEnvConfig) {
-    if (targetEnvConfig == null) {
-      // Local
-      return Files.isExecutable(Path.of(fullPath));
+    var id = getIdForCache(fullPath, targetEnvConfig);
+    Boolean executable = ourExecutableFiles.getIfPresent(id);
+    if (executable != null) {
+      return executable;
     }
-    if (targetEnvConfig instanceof TargetConfigurationReadableFs) {
-      var fileInfo = ((TargetConfigurationReadableFs)targetEnvConfig).getPathInfo(fullPath);
-      if (fileInfo instanceof PathInfo.Unknown) {
-        return true; // We can't be sure if file is executable or not
-      }
-      return (fileInfo instanceof PathInfo.RegularFile) && (((PathInfo.RegularFile)fileInfo).getExecutable());
+    var error = getErrorIfNotExecutable(fullPath, targetEnvConfig);
+    if (error != null) {
+      Logger.getInstance(PythonSdkFlavor.class).warn(String.format("%s is not executable: %s", fullPath, error));
     }
-    // We can't be sure if file is executable or not
-    return true;
+    var newValue = error == null;
+    ourExecutableFiles.put(id, newValue);
+    return newValue;
+  }
+
+  @Nullable
+  @Nls
+  private static String getErrorIfNotExecutable(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration targetEnvConfig) {
+    if (SwingUtilities.isEventDispatchThread()) {
+      // Run under progress
+      // TODO: use pyModalBlocking when we merge two modules
+      return ProgressManager.getInstance()
+        .run(new Task.WithResult<@Nullable @Nls String, RuntimeException>(null, PySdkBundle.message("path.validation.wait.path", fullPath),
+                                                                          false) {
+          @Override
+          @Nls
+          @Nullable
+          protected String compute(@NotNull ProgressIndicator indicator) throws RuntimeException {
+            return getFileExecutionError(fullPath, targetEnvConfig);
+          }
+        });
+    }
+    else {
+      return getFileExecutionError(fullPath, targetEnvConfig);
+    }
+  }
+
+  @NotNull
+  private static String getIdForCache(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration configuration) {
+    var builder = new StringBuilder(fullPath);
+    builder.append(" ");
+    if (configuration instanceof TargetConfigurationWithId) {
+      var typeAndTargetId = ((TargetConfigurationWithId)configuration).getTargetAndTypeId();
+      builder.append(typeAndTargetId.component1().toString());
+      builder.append(typeAndTargetId.getSecond());
+    }
+    else if (configuration != null) {
+      builder.append(configuration.getClass().getName());
+    }
+    else {
+      builder.append("local");
+    }
+    return builder.toString();
   }
 
   public static @NotNull List<PythonSdkFlavor<?>> getApplicableFlavors() {
@@ -273,7 +324,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * It only validates path for local target, hence use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)} instead
    */
   public boolean isValidSdkPath(@NotNull File file) {
-    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).startsWith("python");
+    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).contains("python");
   }
 
   @Nullable

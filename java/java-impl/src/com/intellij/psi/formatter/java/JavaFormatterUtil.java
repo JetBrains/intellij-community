@@ -20,8 +20,11 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 import static com.intellij.psi.impl.PsiImplUtil.isTypeAnnotation;
 
@@ -31,6 +34,8 @@ public final class JavaFormatterUtil {
    */
   private static final TokenSet ASSIGNMENT_ELEMENT_TYPES = TokenSet
     .create(JavaElementType.ASSIGNMENT_EXPRESSION, JavaElementType.LOCAL_VARIABLE, JavaElementType.FIELD);
+
+  private static final int CALL_EXPRESSION_DEPTH = 2500;
 
   private JavaFormatterUtil() { }
 
@@ -513,5 +518,40 @@ public final class JavaFormatterUtil {
     }
 
     return CommonCodeStyleSettings.DO_NOT_WRAP;
+  }
+
+  /**
+   * Traverses the children of the node and collects nodes with type method calls or reference expressions to the list
+   * @param nodes List in which the method add nodes
+   * @param node Node to traverse
+   *
+   */
+  public static void collectCallExpressionNodes(@NotNull List<? super ASTNode> nodes, @NotNull ASTNode node) {
+    ArrayDeque<ASTNode> stack = new ArrayDeque<>(CALL_EXPRESSION_DEPTH);
+    stack.addLast(node.getFirstChildNode());
+    while (!stack.isEmpty()) {
+      if (stack.size() >= CALL_EXPRESSION_DEPTH) {
+        throw new IllegalStateException("Too long call chain! " + node);
+      }
+      ASTNode currentNode = stack.removeLast();
+        if (!FormatterUtil.containsWhiteSpacesOnly(currentNode)) {
+          IElementType type = currentNode.getElementType();
+          if (type == JavaElementType.METHOD_CALL_EXPRESSION ||
+              type == JavaElementType.REFERENCE_EXPRESSION) {
+            ASTNode firstChild = currentNode.getFirstChildNode();
+            currentNode = FormatterUtil.getNextNonWhitespaceSibling(currentNode);
+            ContainerUtil.addIfNotNull(stack, currentNode);
+            ContainerUtil.addIfNotNull(stack, firstChild);
+          }
+          else {
+            nodes.add(currentNode);
+            currentNode = FormatterUtil.getNextNonWhitespaceSibling(currentNode);
+            ContainerUtil.addIfNotNull(stack, currentNode);
+          }
+        } else {
+          currentNode = FormatterUtil.getNextNonWhitespaceSibling(currentNode);
+          ContainerUtil.addIfNotNull(stack, currentNode);
+        }
+    }
   }
 }

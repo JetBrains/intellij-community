@@ -18,6 +18,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
@@ -29,7 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
+@VisibleForTesting
+public final class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
 
   @NonNls
   private static final Map<String, String> CLASSES = Map.of(

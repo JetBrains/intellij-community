@@ -60,7 +60,7 @@ internal class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleG
     }
   }
   companion object {
-    val LOG = Logger.getInstance(LoadModuleRenamingSchemeAction::class.java)
+    val LOG: Logger = Logger.getInstance(LoadModuleRenamingSchemeAction::class.java)
   }
 }
 

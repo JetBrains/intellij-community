@@ -25,8 +25,7 @@ import java.util.function.Function;
 public final class EditSourceUtil {
   private EditSourceUtil() { }
 
-  @Nullable
-  public static Navigatable getDescriptor(@NotNull PsiElement element) {
+  public static @Nullable Navigatable getDescriptor(@NotNull PsiElement element) {
     PsiElement original = getNavigatableOriginalElement(element);
     if (original != null) {
       element = original;
@@ -82,7 +81,7 @@ public final class EditSourceUtil {
    * Collect original elements from all filters.
    */
   private static PsiElement processAllOriginalElements(@NotNull PsiElement element, @NotNull Function<? super PsiElement, ? extends PsiElement> processor) {
-    for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensions()) {
+    for (GeneratedSourcesFilter filter : GeneratedSourcesFilter.EP_NAME.getExtensionList()) {
       for (PsiElement originalElement: filter.getOriginalElements(element)) {
         PsiElement apply = processor.apply(originalElement);
         if (apply != null) return apply;

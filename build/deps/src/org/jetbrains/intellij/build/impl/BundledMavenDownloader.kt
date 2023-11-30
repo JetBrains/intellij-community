@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "RAW_RUN_BLOCKING")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package org.jetbrains.intellij.build.impl
 
@@ -134,7 +134,7 @@ object BundledMavenDownloader {
 
   suspend fun downloadMavenDistribution(communityRoot: BuildDependenciesCommunityRoot): Path {
     val extractDir = communityRoot.communityRoot.resolve("plugins/maven/maven36-server-impl/lib/maven3")
-    val properties = BuildDependenciesDownloader.getDependenciesProperties(communityRoot)
+    val properties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
     val bundledMavenVersion = properties.property("bundledMavenVersion")
     mutex.withLock {
       val uri = BuildDependenciesDownloader.getUriForMavenArtifact(

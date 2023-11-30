@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
 import com.intellij.icons.AllIcons;
@@ -50,11 +50,11 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor, EditorCallback {
+public final class SceneBuilderEditor extends UserDataHolderBase implements FileEditor, EditorCallback {
   private static final Logger LOG = Logger.getInstance(SceneBuilderEditor.class);
 
-  private final static String SCENE_CARD = "scene_builder";
-  private final static String ERROR_CARD = "error";
+  private static final String SCENE_CARD = "scene_builder";
+  private static final String ERROR_CARD = "error";
 
   private final Project myProject;
   private final VirtualFile myFile;
@@ -283,15 +283,13 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     }
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myPanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return mySceneBuilder == null ? myErrorPanel : mySceneBuilder.getPanel();
   }
 
@@ -301,9 +299,8 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
     myChangeListener.dispose();
   }
 
-  @NotNull
   @Override
-  public String getName() {
+  public @NotNull String getName() {
     return JavaFXBundle.message("scene.builder.editor.tab.name");
   }
 
@@ -344,7 +341,7 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 
-  private class ExternalChangeListener implements DocumentListener {
+  private final class ExternalChangeListener implements DocumentListener {
     private volatile boolean myRunState;
 
     ExternalChangeListener() {

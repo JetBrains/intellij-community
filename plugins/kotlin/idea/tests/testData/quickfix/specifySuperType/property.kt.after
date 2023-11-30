@@ -15,3 +15,6 @@ class Test : X, Z, Y() {
     override val bar: Int
         get() = super<Z>.bar
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.SpecifySuperTypeFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.fixes.SpecifySuperTypeFixFactory$applicator$1

@@ -30,14 +30,16 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
         for (plugin in pluginIds) {
           val descriptor = findPlugin(plugin)
           assert(descriptor is TestPluginDescriptor)
-          descriptor?.isEnabled = true
-          pluginStateExceptionThrower?.invoke(plugin)
-          enabledList.add(descriptor!!)
+          if ((descriptor as TestPluginDescriptor).isDynamic) {
+            descriptor.isEnabled = true
+            pluginStateExceptionThrower?.invoke(plugin)
+            enabledList.add(descriptor)
+          }
         }
         for (pluginListener in pluginEnabledStateListeners) {
           pluginListener.stateChanged(enabledList, true)
         }
-        return true
+        return enabledList.size == pluginIds.size
       }
 
       override fun disableById(pluginIds: MutableSet<PluginId>): Boolean {
@@ -45,14 +47,16 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
         for (plugin in pluginIds) {
           val descriptor = findPlugin(plugin)
           assert(descriptor is TestPluginDescriptor)
-          descriptor?.isEnabled = false
-          pluginStateExceptionThrower?.invoke(plugin)
-          disabledList.add(descriptor!!)
+          if ((descriptor as TestPluginDescriptor).isDynamic) {
+            descriptor.isEnabled = false
+            pluginStateExceptionThrower?.invoke(plugin)
+            disabledList.add(descriptor)
+          }
         }
         for (pluginListener in pluginEnabledStateListeners) {
           pluginListener.stateChanged(disabledList, false)
         }
-        return true
+        return disabledList.size == pluginIds.size
       }
 
       override fun isDisabled(pluginId: PluginId): Boolean = throw UnsupportedOperationException()
@@ -62,12 +66,15 @@ internal class TestPluginManager : AbstractPluginManagerProxy() {
 
   override fun isDescriptorEssential(pluginId: PluginId): Boolean {
     val descriptor = ownPluginDescriptors[pluginId] ?: Assert.fail("Cannot find descriptor for pluginId $pluginId")
-    return (descriptor as TestPluginDescriptor).isEssential()
-
+    return (descriptor as TestPluginDescriptor).essential
   }
 
   override fun getDisabledPluginIds(): Set<PluginId> {
     return ownPluginDescriptors.filter { (_, descriptor) -> !descriptor.isEnabled }.keys
+  }
+
+  override fun isIncompatible(plugin: IdeaPluginDescriptor): Boolean {
+    return !(plugin as TestPluginDescriptor).compatible
   }
 
   override fun addPluginStateChangedListener(listener: PluginEnableStateChangedListener, parentDisposable: Disposable) {

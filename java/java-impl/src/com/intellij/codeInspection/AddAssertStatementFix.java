@@ -2,6 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -24,7 +26,7 @@ public class AddAssertStatementFix extends PsiUpdateModCommandQuickFix {
   }
 
   @Override
-  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
     PsiExpression expr = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
     if (expr == null) return;
     CodeBlockSurrounder surrounder = CodeBlockSurrounder.forExpression(expr);

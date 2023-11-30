@@ -11,13 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 interface SingleEventDispatcher2<T1, T2> {
 
   fun whenEventHappened(parentDisposable: Disposable?, listener: (T1, T2) -> Unit)
-  fun whenEventHappened(listener: (T1, T2) -> Unit) = whenEventHappened(null, listener)
+  fun whenEventHappened(listener: (T1, T2) -> Unit): Unit = whenEventHappened(null, listener)
 
   fun whenEventHappened(ttl: Int, parentDisposable: Disposable?, listener: (T1, T2) -> Unit)
-  fun whenEventHappened(ttl: Int, listener: (T1, T2) -> Unit) = whenEventHappened(ttl, null, listener)
+  fun whenEventHappened(ttl: Int, listener: (T1, T2) -> Unit): Unit = whenEventHappened(ttl, null, listener)
 
   fun onceWhenEventHappened(parentDisposable: Disposable?, listener: (T1, T2) -> Unit)
-  fun onceWhenEventHappened(listener: (T1, T2) -> Unit) = onceWhenEventHappened(null, listener)
+  fun onceWhenEventHappened(listener: (T1, T2) -> Unit): Unit = onceWhenEventHappened(null, listener)
 
   fun filterEvents(filter: (T1, T2) -> Boolean): SingleEventDispatcher2<T1, T2>
 

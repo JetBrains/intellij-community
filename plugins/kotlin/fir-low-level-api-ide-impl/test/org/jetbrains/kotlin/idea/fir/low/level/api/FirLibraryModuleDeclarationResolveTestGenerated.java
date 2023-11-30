@@ -23,9 +23,19 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("annotationArgs.kt")
+    public void testAnnotationArgs() throws Exception {
+        runTest("testData/libraryModuleResolve/annotationArgs.kt");
+    }
+
     @TestMetadata("enumEntry.kt")
     public void testEnumEntry() throws Exception {
         runTest("testData/libraryModuleResolve/enumEntry.kt");
+    }
+
+    @TestMetadata("flexibleTypes.kt")
+    public void testFlexibleTypes() throws Exception {
+        runTest("testData/libraryModuleResolve/flexibleTypes.kt");
     }
 
     @TestMetadata("implicitJavaTypes_listOfStrings.kt")
@@ -43,6 +53,11 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
         runTest("testData/libraryModuleResolve/implicitJavaTypes_stringFun.kt");
     }
 
+    @TestMetadata("innerClasses.kt")
+    public void testInnerClasses() throws Exception {
+        runTest("testData/libraryModuleResolve/innerClasses.kt");
+    }
+
     @TestMetadata("memberFunctionNoArgs.kt")
     public void testMemberFunctionNoArgs() throws Exception {
         runTest("testData/libraryModuleResolve/memberFunctionNoArgs.kt");
@@ -56,6 +71,11 @@ public class FirLibraryModuleDeclarationResolveTestGenerated extends AbstractFir
     @TestMetadata("memberProperty.kt")
     public void testMemberProperty() throws Exception {
         runTest("testData/libraryModuleResolve/memberProperty.kt");
+    }
+
+    @TestMetadata("requireCall.kt")
+    public void testRequireCall() throws Exception {
+        runTest("testData/libraryModuleResolve/requireCall.kt");
     }
 
     @TestMetadata("topLevelClass.kt")

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.java.workspace.entities.ModuleTestOutputPackagingElementEntity;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.project.Project;
@@ -10,12 +11,11 @@ import com.intellij.packaging.impl.ui.DelegatedPackagingElementPresentation;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.workspaceModel.storage.EntitySource;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleTestOutputPackagingElementEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleId;
+import com.intellij.platform.workspace.storage.EntitySource;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -61,10 +61,13 @@ public class TestModuleOutputPackagingElement extends ModuleOutputPackagingEleme
     String moduleName = this.getModuleName();
     ModuleTestOutputPackagingElementEntity addedEntity;
     if (moduleName != null) {
-      addedEntity = ExtensionsKt.addModuleTestOutputPackagingElementEntity(diff, new ModuleId(moduleName), source);
+      addedEntity = diff.addEntity(ModuleTestOutputPackagingElementEntity.create(source, entityBuilder -> {
+        entityBuilder.setModule(new ModuleId(moduleName));
+        return Unit.INSTANCE;
+      }));
     }
     else {
-      addedEntity = ExtensionsKt.addModuleTestOutputPackagingElementEntity(diff, null, source);
+      addedEntity = diff.addEntity(ModuleTestOutputPackagingElementEntity.create(source));
     }
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;

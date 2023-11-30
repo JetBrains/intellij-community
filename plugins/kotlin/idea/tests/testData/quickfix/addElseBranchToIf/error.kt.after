@@ -3,3 +3,4 @@
 fun foo(x: String?) {
     val a = if (x == null) 4 else <selection><caret>TODO()</selection>
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddIfElseBranchFix

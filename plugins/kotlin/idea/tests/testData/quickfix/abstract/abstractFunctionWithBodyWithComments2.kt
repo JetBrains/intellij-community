@@ -4,4 +4,5 @@ abstract class A() {
             { "" /*2*/ } // 3
 }
 
-/* IGNORE_FIR */
+/* IGNORE_K2 */
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveFunctionBodyFix

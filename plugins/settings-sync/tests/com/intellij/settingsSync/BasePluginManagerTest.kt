@@ -12,15 +12,13 @@ import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import com.intellij.util.containers.mapSmartSet
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.test.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
-import kotlin.coroutines.CoroutineContext
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @TestApplication
@@ -32,6 +30,28 @@ abstract class BasePluginManagerTest {
   internal lateinit var testRootDisposable: Disposable
   protected lateinit var testDispatcher: TestDispatcher
   protected lateinit var testScheduler: TestCoroutineScheduler
+
+  //is used in TestPluginDescriptor.Companion.allDependenciesOnly
+  internal val modulesPlatform = TestPluginDescriptor(
+    "com.intellij.modules.platform",
+    bundled = true,
+    essential = true,
+    isDependencyOnly = true
+  )
+  //is used in TestPluginDescriptor.Companion.allDependenciesOnly
+  internal val modulesLang = TestPluginDescriptor(
+    "com.intellij.modules.lang",
+    bundled = true,
+    essential = true,
+    isDependencyOnly = true
+  )
+
+  internal val modulesJava = TestPluginDescriptor(
+    "com.intellij.modules.java",
+    bundled = true,
+    essential = true,
+    isDependencyOnly = true
+  )
 
   internal val quickJump = TestPluginDescriptor(
     "QuickJump",
@@ -50,6 +70,12 @@ abstract class BasePluginManagerTest {
     listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
     bundled = true
   )
+  internal val cvsOutdated = TestPluginDescriptor(
+    "cvs",
+    listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
+    bundled = false,
+    compatible = false
+  )
   internal val javascript = TestPluginDescriptor(
     "JavaScript",
     listOf(TestPluginDependency("css", false)),
@@ -61,12 +87,18 @@ abstract class BasePluginManagerTest {
     listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
     bundled = true
   )
+  internal val scala = TestPluginDescriptor(
+    "org.intellij.scala",
+    listOf(TestPluginDependency("com.intellij.modules.java", isOptional = false)),
+    isDynamic = false
+  )
 
   @BeforeEach
   fun setUp() {
     SettingsSyncSettings.getInstance().syncEnabled = true
-    SettingsSyncSettings.getInstance().loadState(SettingsSyncSettings.SettingsSyncSettingsState())
+    SettingsSyncSettings.getInstance().loadState(SettingsSyncSettings.State())
     testPluginManager = TestPluginManager()
+    testPluginManager.addPluginDescriptors(*TestPluginDescriptor.allDependenciesOnly().toTypedArray())
     ApplicationManager.getApplication().replaceService(PluginManagerProxy::class.java, testPluginManager, testRootDisposable)
     testScheduler = TestCoroutineScheduler()
     testDispatcher = StandardTestDispatcher(testScheduler)
@@ -91,7 +123,7 @@ abstract class BasePluginManagerTest {
   }
 
   internal fun getIdeState(): Map<PluginId, PluginData> {
-    return PluginManagerProxy.getInstance().getPlugins().associate { plugin ->
+    return PluginManagerProxy.getInstance().getPlugins().filter { !(it as TestPluginDescriptor).isDependencyOnly}.associate { plugin ->
       plugin.pluginId to PluginData(plugin.isEnabled)
     }
   }
@@ -114,7 +146,7 @@ internal class StateBuilder {
     enabled: Boolean,
     category: SettingsCategory = SettingsCategory.PLUGINS): Pair<PluginId, PluginData> {
 
-    val pluginData = PluginData(enabled, category)
+    val pluginData = PluginData(enabled, category, this.pluginDependencies.mapSmartSet { it.pluginId.idString })
     states[pluginId] = pluginData
     return this.pluginId to pluginData
   }
@@ -127,8 +159,9 @@ internal fun assertPluginsState(expectedStates: Map<PluginId, PluginData>, actua
       .joinToString { (id, data) -> "$id: ${enabledOrDisabled(data.enabled)}" }
 
   if (expectedStates.size != actualStates.size) {
-    assertEquals("Expected and actual states have different number of elements",
-                 stringifyStates(expectedStates), stringifyStates(actualStates))
+    assertEquals(stringifyStates(expectedStates), stringifyStates(actualStates),
+                 "Expected and actual states have different number of elements"
+    )
   }
   for ((expectedId, expectedData) in expectedStates) {
     val actualData = actualStates[expectedId]

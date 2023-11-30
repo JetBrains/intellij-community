@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -44,6 +44,5 @@ public abstract class UnresolvedReferenceQuickFixProvider<T extends PsiReference
 
   public abstract void registerFixes(@NotNull T ref, @NotNull QuickFixActionRegistrar registrar);
 
-  @NotNull
-  public abstract Class<T> getReferenceClass();
+  public abstract @NotNull Class<T> getReferenceClass();
 }

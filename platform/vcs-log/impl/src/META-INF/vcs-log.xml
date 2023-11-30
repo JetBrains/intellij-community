@@ -10,17 +10,21 @@
     <extensionPoint name="vcsLogCommitStatusProvider"
                     interface="com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider"
                     dynamic="true"/>
+    <extensionPoint name="vcsLogFileHistoryHandler"
+                    interface="com.intellij.vcs.log.VcsLogFileHistoryHandler"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <changesViewContent tabName="Log"
                         className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogVisibilityPredicate"
-                        preloaderClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$VcsLogContentPreloader"
                         displayNameSupplierClassName="com.intellij.vcs.log.impl.VcsLogContentProvider$DisplayNameSupplier"/>
 
     <applicationService serviceImplementation="com.intellij.vcs.log.impl.VcsLogApplicationSettings"/>
-    <projectService serviceImplementation="com.intellij.vcs.log.impl.VcsLogSharedSettings"/>
+
+    <generalVcsSettingsExtension instance="com.intellij.vcs.log.ui.VcsLogSharedSettingsConfigurable"/>
 
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory"
                     serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl"/>
@@ -28,13 +32,15 @@
                     serviceImplementation="com.intellij.vcs.log.data.VcsUserRegistryImpl"/>
     <projectService serviceImplementation="com.intellij.vcs.log.history.VcsDirectoryRenamesProvider"/>
 
-    <projectService serviceImplementation="com.intellij.vcs.log.statistics.VcsLogIndexCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexProjectStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexApplicationStatisticsCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector"/>
+
+    <statistics.notificationIdsHolder implementation="com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter$Factory"/>
@@ -80,9 +86,15 @@
 
     <virtualFileSystem key="vcs-log" implementationClass="com.intellij.vcs.log.ui.editor.VcsLogVirtualFileSystem"/>
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
-    <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider"/>
+    <fileEditorProvider id="VcsLogEditor" implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
+    <openTelemetryExporterProvider implementation="com.intellij.vcs.log.statistics.VcsLogTelemetryExporter"/>
   </extensions>
+
+  <projectListeners>
+    <listener topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"
+              class="com.intellij.vcs.log.impl.VcsLogToolwindowManagerListener"/>
+  </projectListeners>
 
   <actions resource-bundle="messages.VcsLogBundle">
     <group id="Log.Unsorted.KeymapGroup" searchable="false">
@@ -118,7 +130,8 @@
       </action>
       <group class="com.intellij.vcs.log.ui.actions.ToggleLogColumnsActionGroup" id="Vcs.Log.ToggleColumns"/>
       <group class="com.intellij.vcs.log.ui.actions.HighlightersActionGroup" id="Vcs.Log.HighlightersActionGroup"/>
-      <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction" id="Vcs.Log.OpenAnotherTab"/>
+      <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InToolWindow" id="Vcs.Log.OpenAnotherTab"/>
+      <action class="com.intellij.vcs.log.ui.actions.OpenAnotherLogTabAction$InEditor" id="Vcs.Log.OpenAnotherTabInEditor"/>
       <action class="com.intellij.vcs.log.ui.actions.RefreshLogAction" id="Vcs.Log.Refresh" use-shortcut-of="Refresh"/>
       <action class="com.intellij.vcs.log.ui.actions.ShowCommitTooltipAction" id="Vcs.Log.ShowTooltip"
               use-shortcut-of="QuickJavaDoc"/>
@@ -246,6 +259,7 @@
       <reference id="Vcs.FileHistory.PresentationSettings"/>
       <separator/>
       <reference id="VcsHistoryActionsGroup.Toolbar"/>
+      <reference id="Vcs.Log.ResumeIndexing"/>
     </group>
 
     <group id="Vcs.Log.Internal" internal="true" popup="true">

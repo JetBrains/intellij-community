@@ -3,9 +3,11 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.EditorUpdater;
-import com.intellij.codeInspection.PsiUpdateModCommandAction;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -42,7 +44,7 @@ public class ChangeToAppendFix extends PsiUpdateModCommandAction<PsiAssignmentEx
   }
 
   @Override
-  protected void invoke(@NotNull ActionContext context, @NotNull PsiAssignmentExpression assignmentExpression, @NotNull EditorUpdater updater) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiAssignmentExpression assignmentExpression, @NotNull ModPsiUpdater updater) {
     final PsiExpression appendExpression =
       ChangeToAppendUtil.buildAppendExpression(assignmentExpression.getLExpression(), assignmentExpression.getRExpression());
     if (appendExpression == null) return;

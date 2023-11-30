@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -19,8 +19,7 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class VagrantSupport {
-  @Nullable
-  public static VagrantSupport getInstance() {
+  public static @Nullable VagrantSupport getInstance() {
     return ApplicationManager.getApplication().getService(VagrantSupport.class);
   }
 
@@ -34,8 +33,7 @@ public abstract class VagrantSupport {
                                                               IdeBundle.message("dialog.title.vagrant.support.disabled")));
   }
 
-  @NotNull
-  public abstract RemoteCredentials getCredentials(@NotNull String vagrantFolder, @Nullable String machineName) throws IOException;
+  public abstract @NotNull RemoteCredentials getCredentials(@NotNull String vagrantFolder, @Nullable String machineName) throws IOException;
 
   public abstract boolean checkVagrantRunning(@NotNull String vagrantFolder, @Nullable String machineName, boolean askToRunIfDown);
 
@@ -45,8 +43,7 @@ public abstract class VagrantSupport {
    * @param vagrantFolder folder with Vagrantfile
    * @return path mappings from vagrant file
    */
-  @Nullable
-  public abstract PathMappingSettings getMappedFolders(@NotNull String vagrantFolder);
+  public abstract @Nullable PathMappingSettings getMappedFolders(@NotNull String vagrantFolder);
 
   public abstract Collection<? extends RemoteConnector> getVagrantInstancesConnectors(@NotNull Project project);
 
@@ -62,10 +59,9 @@ public abstract class VagrantSupport {
     return errorMessage.contains("not yet ready for SSH");
   }
 
-  @Nullable
-  public abstract String findVagrantFolder(@NotNull Project project);
+  public abstract @Nullable String findVagrantFolder(@NotNull Project project);
 
 
-  public static class MultipleMachinesException extends Exception {
+  public static final class MultipleMachinesException extends Exception {
   }
 }

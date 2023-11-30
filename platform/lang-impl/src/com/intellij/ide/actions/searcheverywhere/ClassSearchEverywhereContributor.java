@@ -36,10 +36,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt.createPsiExtendedInfo;
+
 /**
  * @author Konstantin Bulenkov
  */
-public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor {
+public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor implements EssentialContributor,
+                                                                                           SearchEverywherePreviewProvider {
   private static final Pattern ourPatternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
   private final PersistentSearchEverywhereContributorFilter<LanguageRef> filter;
@@ -95,8 +98,18 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   }
 
   @Override
+  public boolean isEmptyPatternSupported() {
+    return true;
+  }
+
+  @Override
   public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
     return super.getElementPriority(element, searchPattern) + 5;
+  }
+
+  @Override
+  public @Nullable ExtendedInfo createExtendedInfo() {
+    return createPsiExtendedInfo();
   }
 
   @Override

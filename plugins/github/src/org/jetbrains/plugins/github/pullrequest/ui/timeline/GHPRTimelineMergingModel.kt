@@ -2,12 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestCommitShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import javax.swing.AbstractListModel
 import kotlin.math.max
+import kotlin.time.Duration.Companion.minutes
 
 class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
   private val list = mutableListOf<GHPRTimelineItem>()
@@ -67,7 +67,7 @@ class GHPRTimelineMergingModel : AbstractListModel<GHPRTimelineItem>() {
   }
 
   companion object {
-    private const val MERGE_THRESHOLD_MS = DateFormatUtil.MINUTE * 2
+    private val MERGE_THRESHOLD_MS = 2.minutes.inWholeMilliseconds
 
     private fun mergeIfPossible(existing: GHPRTimelineItem?, new: GHPRTimelineItem?): GHPRTimelineItem? {
       val groupedCommits = tryGroupCommits(existing, new)

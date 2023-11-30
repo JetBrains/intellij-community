@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiFile
@@ -62,17 +62,17 @@ interface UFile : UElement, UAnnotated {
     }
 
     val packageName = this@UFile.packageName
-    if (packageName.isNotEmpty()) appendln("package $packageName").appendln()
+    if (packageName.isNotEmpty()) appendLine("package $packageName").appendLine()
 
     val imports = this@UFile.imports
     if (imports.isNotEmpty()) {
-      imports.forEach { appendln(it.asRenderString()) }
-      appendln()
+      imports.forEach { appendLine(it.asRenderString()) }
+      appendLine()
     }
 
     classes.forEachIndexed { index, clazz ->
-      if (index > 0) appendln()
-      appendln(clazz.asRenderString())
+      if (index > 0) appendLine()
+      appendLine(clazz.asRenderString())
     }
   }
 

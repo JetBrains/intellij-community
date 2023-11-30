@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util.proximity;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -10,7 +10,7 @@ import com.intellij.psi.util.ProximityLocation;
 import org.jetbrains.annotations.NotNull;
 
 
-public class SameDirectoryWeigher extends ProximityWeigher {
+public final class SameDirectoryWeigher extends ProximityWeigher {
   private static final NullableLazyKey<PsiDirectory, ProximityLocation>
     PLACE_DIRECTORY = NullableLazyKey.create("placeDirectory", location -> getParentDirectory(location.getPosition()));
 
@@ -26,7 +26,7 @@ public class SameDirectoryWeigher extends ProximityWeigher {
   }
 
   @Override
-  public Boolean weigh(@NotNull final PsiElement element, @NotNull final ProximityLocation location) {
+  public Boolean weigh(final @NotNull PsiElement element, final @NotNull ProximityLocation location) {
     if (location.getPosition() == null) {
       return Boolean.TRUE;
     }

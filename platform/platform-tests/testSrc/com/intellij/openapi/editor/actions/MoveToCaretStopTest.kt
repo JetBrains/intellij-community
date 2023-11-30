@@ -445,7 +445,7 @@ my_list^ =^ [^"^one^"^,^ "^two^"^,^ "^three^"^,^
 
     private fun CharSequence.offsets(direction: Direction): IntProgression =
       when (direction) {
-        FORWARD -> 0 until length
+        FORWARD -> indices
         BACKWARD -> length downTo 1
       }
 

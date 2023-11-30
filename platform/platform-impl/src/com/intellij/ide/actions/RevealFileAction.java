@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -60,7 +61,7 @@ import java.util.stream.Stream;
  *
  * @see ShowFilePathAction
  */
-public class RevealFileAction extends DumbAwareAction implements LightEditCompatible {
+public class RevealFileAction extends DumbAwareAction implements LightEditCompatible, ActionRemoteBehaviorSpecification.Disabled {
   private static final Logger LOG = Logger.getInstance(RevealFileAction.class);
 
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
@@ -80,7 +81,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   };
 
   public RevealFileAction() {
-    getTemplatePresentation().setText(ActionsBundle.message("action.RevealIn.name.other", IdeBundle.message("action.file.manager.text")));
+    getTemplatePresentation().setText(getActionName(true));
   }
 
   @Override
@@ -121,20 +122,22 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   public static @ActionText @NotNull String getActionName(@Nullable String place) {
-    if (ActionPlaces.EDITOR_TAB_POPUP.equals(place) || ActionPlaces.EDITOR_POPUP.equals(place) || ActionPlaces.PROJECT_VIEW_POPUP.equals(place)) {
-      return getFileManagerName();
-    }
-    else if (SystemInfo.isMac) {
-      return ActionsBundle.message("action.RevealIn.name.mac");
-    }
-    else {
-      return ActionsBundle.message("action.RevealIn.name.other", getFileManagerName());
-    }
+    var shortName = ActionPlaces.EDITOR_TAB_POPUP.equals(place) || ActionPlaces.EDITOR_POPUP.equals(place) || ActionPlaces.PROJECT_VIEW_POPUP.equals(place);
+    return shortName ? getFileManagerName() : getActionName(false);
+  }
+
+  private static @ActionText String getActionName(boolean skipDetection) {
+    return SystemInfo.isMac ? ActionsBundle.message("action.RevealIn.name.mac") : ActionsBundle.message("action.RevealIn.name.other", getFileManagerName(skipDetection));
   }
 
   public static @NotNull @ActionText String getFileManagerName() {
+    return getFileManagerName(false);
+  }
+
+  public static @NotNull @ActionText String getFileManagerName(boolean skipDetection) {
     return SystemInfo.isMac ? IdeBundle.message("action.finder.text") :
            SystemInfo.isWindows ? IdeBundle.message("action.explorer.text") :
+           skipDetection ? IdeBundle.message("action.file.manager.text") :
            Objects.requireNonNullElseGet(Holder.fileManagerName, () -> IdeBundle.message("action.file.manager.text"));
   }
 
@@ -192,7 +195,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         openViaShellApi(dir, toSelect);
       }
       else {
-        spawn(toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"');
+        openViaExplorerCall(dir, toSelect);
       }
     }
     else if (SystemInfo.isMac) {
@@ -234,19 +237,20 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  private static void openViaShellApi(String dir, String toSelect) {
+  private static void openViaShellApi(String dir, @Nullable String toSelect) {
     if (LOG.isDebugEnabled()) LOG.debug("shell open: dir=" + dir + " toSelect=" + toSelect);
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
 
-      Pointer pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
-      Pointer[] apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
-      WinDef.UINT cIdl = new WinDef.UINT(apIdl != null ? apIdl.length : 0);
+      var pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
+      var apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
+      var cIdl = new WinDef.UINT(apIdl != null ? apIdl.length : 0);
       try {
-        WinNT.HRESULT result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
+        var result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
         if (!WinError.S_OK.equals(result)) {
           LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+          openViaExplorerCall(dir, toSelect);
         }
       }
       finally {
@@ -256,6 +260,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         Shell32Ex.INSTANCE.ILFree(pIdl);
       }
     });
+  }
+
+  private static void openViaExplorerCall(String dir, @Nullable String toSelect) {
+    spawn(toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"');
   }
 
   private interface Shell32Ex extends StdCallLibrary {
@@ -288,7 +296,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     });
   }
 
-  private static class Holder {
+  private static final class Holder {
     private static final String[] supportedFileManagers = {"nautilus", "pantheon-files", "dolphin", "dde-file-manager"};
 
     private static final @Nullable String fileManagerApp;

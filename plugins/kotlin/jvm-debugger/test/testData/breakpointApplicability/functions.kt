@@ -26,6 +26,13 @@ fun foo6() = when (2 + 3) { /// M, L
 // Line breakpoint should not be displayed for lambda literal results
 fun foo7() = { println() } /// M, λ
 
+fun foo7_1() = { /// M, λ
+    println() /// L
+} /// L
+
+fun foo7_2() = /// M
+    { println() } /// *, L, λ
+
 fun foo8() = (3 + 5).run { /// *, L, M, λ
     println() /// L
 } /// L
@@ -50,4 +57,14 @@ fun foo12() { /// M
             it * 2 /// L
         } /// L
         .joinToString() /// L
+} /// L
+
+fun foo13() { /// M
+    listOf(1, 2, 3, 4, 5) /// L
+      .map { it * 2 }.map { it * 3 } /// *, L, λ, λ
+} /// L
+
+fun foo14() { /// M
+    listOf(1, 2, 3, 4, 5) /// L
+      .map { x -> x.let { 42 } } /// *, L, λ, λ
 } /// L

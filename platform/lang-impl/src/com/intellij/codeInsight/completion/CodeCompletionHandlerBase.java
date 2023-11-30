@@ -11,7 +11,6 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -37,6 +36,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
+import com.intellij.openapi.project.DumbModeBlockedFunctionality;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -45,6 +45,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -67,8 +68,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
 
-import static com.intellij.codeInsight.util.CodeCompletionKt.*;
-import static com.intellij.platform.diagnostic.telemetry.impl.TraceKt.runWithSpan;
+import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
+import static com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck.DeliberateAdditionalCheckInCompletion;
 
 @SuppressWarnings("deprecation")
 public class CodeCompletionHandlerBase {
@@ -87,7 +89,7 @@ public class CodeCompletionHandlerBase {
   final boolean autopopup;
   private static int ourAutoInsertItemTimeout = Registry.intValue("ide.completion.auto.insert.item.timeout", 2000);
 
-  private final Tracer completionTracer = TelemetryTracer.getInstance().getTracer(CodeCompletion);
+  private final Tracer completionTracer = TelemetryManager.getInstance().getTracer(CodeCompletion);
 
   public static CodeCompletionHandlerBase createHandler(@NotNull CompletionType completionType) {
     return createHandler(completionType, true, false, true);
@@ -209,7 +211,8 @@ public class CodeCompletionHandlerBase {
     }
     catch (IndexNotReadyException e) {
       if (invokedExplicitly) {
-        DumbService.getInstance(project).showDumbModeNotification(CodeInsightBundle.message("completion.not.available.during.indexing"));
+        DumbService.getInstance(project).showDumbModeNotificationForFunctionality(CodeInsightBundle.message("completion.not.available.during.indexing"),
+                                                                                  DumbModeBlockedFunctionality.CodeCompletion);
       }
       throw e;
     }
@@ -302,7 +305,7 @@ public class CodeCompletionHandlerBase {
       phase = new CompletionPhase.BgCalculation(indicator);
       indicator.showLookup();
     } else {
-      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()));
+      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()), null);
     }
     CompletionServiceImpl.setCompletionPhase(phase);
 
@@ -362,6 +365,7 @@ public class CodeCompletionHandlerBase {
       return null;
     }
 
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(CompletionContributorListener.Companion.getTOPIC()).beforeCompletionContributorThreadStarted(indicator, initContext);
     return indicator.getCompletionThreading()
       .startThread(indicator, Context.current().wrap(() -> AsyncCompletion.tryReadOrCancel(indicator, Context.current().wrap(() -> {
         OffsetsInFile finalOffsets = CompletionInitializationUtil.toInjectedIfAny(initContext.getFile(), hostCopyOffsets);
@@ -652,10 +656,10 @@ public class CodeCompletionHandlerBase {
     if (psiFile != null) {
       if (Registry.is("ide.check.stub.text.consistency") ||
           ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
-        StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+        StubTextInconsistencyException.checkStubTextConsistency(psiFile, DeliberateAdditionalCheckInCompletion);
         if (PsiDocumentManager.getInstance(psiFile.getProject()).hasUncommitedDocuments()) {
           PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
-          StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+          StubTextInconsistencyException.checkStubTextConsistency(psiFile, DeliberateAdditionalCheckInCompletion);
         }
       }
     }

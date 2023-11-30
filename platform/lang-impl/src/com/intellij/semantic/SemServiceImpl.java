@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.semantic;
 
-import com.intellij.ProjectTopics;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
@@ -27,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,7 +53,7 @@ public final class SemServiceImpl extends SemService implements Disposable {
     SemContributor.EP_NAME.addChangeListener(() -> producers = null, project);
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);
-    messageBusConnection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    messageBusConnection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         producers = null;
@@ -89,16 +89,17 @@ public final class SemServiceImpl extends SemService implements Disposable {
         throw e;
       }
       catch (ExtensionNotApplicableException e) {
-        return;
+        return Unit.INSTANCE;
       }
       catch (Exception e) {
         Logger.getInstance(SemServiceImpl.class).error(e);
-        return;
+        return Unit.INSTANCE;
       }
 
       if (semContributor.isAvailable(project)) {
         semContributor.registerSemProviders(registrar, project);
       }
+      return Unit.INSTANCE;
     });
 
     return map;

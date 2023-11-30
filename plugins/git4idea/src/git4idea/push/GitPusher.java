@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
 import com.intellij.dvcs.push.PushSpec;
@@ -30,13 +16,16 @@ import git4idea.update.HashRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.Map;
+
+import static java.util.Collections.emptyMap;
 
 class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
 
-  @NotNull private final Project myProject;
-  @NotNull private final GitVcsSettings mySettings;
-  @NotNull private final GitPushSupport myPushSupport;
+  private final @NotNull Project myProject;
+  private final @NotNull GitVcsSettings mySettings;
+  private final @NotNull GitPushSupport myPushSupport;
 
   GitPusher(@NotNull Project project, @NotNull GitVcsSettings settings, @NotNull GitPushSupport pushSupport) {
     myProject = project;
@@ -46,10 +35,19 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
 
   @Override
   public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
-                   @Nullable VcsPushOptionValue optionValue, boolean force) {
+                   @Nullable VcsPushOptionValue additionalOption,
+                   boolean force) {
+    push(pushSpecs, additionalOption, force, emptyMap());
+  }
+
+  @Override
+  public void push(@NotNull Map<GitRepository, PushSpec<GitPushSource, GitPushTarget>> pushSpecs,
+                   @Nullable VcsPushOptionValue optionValue, boolean force,
+                   @NotNull Map<String, VcsPushOptionValue> customParams) {
     expireExistingErrorsAndWarnings();
     GitPushTagMode pushTagMode;
     boolean skipHook;
+
     if (optionValue instanceof GitVcsPushOptionValue) {
       pushTagMode = ((GitVcsPushOptionValue)optionValue).getPushTagMode();
       skipHook = ((GitVcsPushOptionValue)optionValue).isSkipHook();
@@ -58,14 +56,23 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
       pushTagMode = null;
       skipHook = false;
     }
+
     mySettings.setPushTagMode(pushTagMode);
 
     GitPushOperation pushOperation = new GitPushOperation(myProject, myPushSupport, pushSpecs, pushTagMode, force, skipHook);
-    pushAndNotify(myProject, pushOperation);
+    pushAndNotify(myProject, pushOperation, customParams);
   }
 
-  public static void pushAndNotify(@NotNull Project project, @NotNull GitPushOperation pushOperation) {
+  public static void pushAndNotify(@NotNull Project project,
+                                   @NotNull GitPushOperation pushOperation,
+                                   @NotNull Map<String, VcsPushOptionValue> customParams) {
     GitPushResult pushResult = pushOperation.execute();
+
+    GitPushListener pushListener = project.getMessageBus().syncPublisher(GitPushListener.getTOPIC());
+
+    for (Map.Entry<GitRepository, GitPushRepoResult> entry : pushResult.getResults().entrySet()) {
+      pushListener.onCompleted(entry.getKey(), entry.getValue(), customParams);
+    }
 
     Map<GitRepository, HashRange> updatedRanges = pushResult.getUpdatedRanges();
     GitUpdateInfoAsLog.NotificationData notificationData = !updatedRanges.isEmpty() ?
@@ -74,7 +81,8 @@ class GitPusher extends Pusher<GitRepository, GitPushSource, GitPushTarget> {
 
     ApplicationManager.getApplication().invokeLater(() -> {
       boolean multiRepoProject = GitUtil.getRepositoryManager(project).moreThanOneRoot();
-      GitPushResultNotification.create(project, pushResult, pushOperation, multiRepoProject, notificationData).notify(project);
+      GitPushResultNotification.create(project, pushResult, pushOperation, multiRepoProject, notificationData, customParams)
+        .notify(project);
     });
   }
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.core
 
 enum class Language(val displayName: String, private val extension: String, val ideaLanguageId: String, val needSdk: Boolean = false,
@@ -15,13 +16,14 @@ enum class Language(val displayName: String, private val extension: String, val 
   DART("Dart", "dart", "Dart", needSdk = true),
   RUST("Rust", "rs", "Rust"),
   CSHARP("C#", "cs", "C#"),
+  CSS("CSS", "css", "CSS"),
+  HTML("HTML", "html", "HTML"),
   ANOTHER("Another", "*", ""),
   UNSUPPORTED("Unsupported", "", ""); // TODO: There are no unsupported languages
 
   companion object {
-    fun resolve(displayName: String): Language = values()
-                                                   .find { it.displayName.equals(displayName, ignoreCase = true) } ?: ANOTHER
+    fun resolve(displayName: String): Language = entries.find { it.displayName.equals(displayName, ignoreCase = true) } ?: ANOTHER
 
-    fun resolveByExtension(extension: String): Language = values().find { it.extension == extension } ?: ANOTHER
+    fun resolveByExtension(extension: String): Language = entries.find { it.extension == extension } ?: ANOTHER
   }
 }

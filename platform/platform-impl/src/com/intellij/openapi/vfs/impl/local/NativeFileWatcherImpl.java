@@ -40,7 +40,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class NativeFileWatcherImpl extends PluggableFileWatcher {
+public final class NativeFileWatcherImpl extends PluggableFileWatcher {
   private static final Logger LOG = Logger.getInstance(NativeFileWatcherImpl.class);
 
   private static final String PROPERTY_WATCHER_DISABLED = "idea.filewatcher.disabled";
@@ -130,7 +130,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   /**
    * Subclasses should override this method if they want to use custom logic to disable their file watcher.
    */
-  protected boolean isDisabled() {
+  private static boolean isDisabled() {
     if (Boolean.getBoolean(PROPERTY_WATCHER_DISABLED)) return true;
     Application app = ApplicationManager.getApplication();
     return app.isCommandLine() || app.isUnitTestMode();
@@ -139,7 +139,8 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
   /**
    * Subclasses should override this method to provide a custom binary to run.
    */
-  protected @Nullable Path getExecutable() {
+  @Nullable
+  private static Path getExecutable() {
     String customPath = System.getProperty(PROPERTY_WATCHER_EXECUTABLE_PATH);
     if (customPath != null) {
       Path customFile = PathManager.findBinFile(customPath);
@@ -445,7 +446,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
   }
 
-  protected boolean isRepetition(String path) {
+  private boolean isRepetition(String path) {
     // debouncing subsequent notifications (happen e.g. on copying of large files); this reduces path checks at least 20% on Windows
     synchronized (myLastChangedPaths) {
       for (int i = 0; i < myLastChangedPaths.length; ++i) {

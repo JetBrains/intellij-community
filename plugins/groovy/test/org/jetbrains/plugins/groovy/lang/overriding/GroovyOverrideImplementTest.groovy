@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.overriding
 
 import com.intellij.codeInsight.generation.OverrideImplementUtil
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClassOwner
@@ -224,6 +225,7 @@ class <caret>A implements T {
 }
 ''')
     myFixture.launchAction myFixture.findSingleIntention('Implement methods')
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResult('''\
 class A implements T {
     @Override

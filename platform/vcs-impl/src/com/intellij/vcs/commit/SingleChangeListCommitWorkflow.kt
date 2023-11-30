@@ -24,13 +24,13 @@ internal fun CommitOptions.saveChangeListSpecificOptions() = changeListSpecificO
 class SingleChangeListCommitWorkflow(
   project: Project,
   affectedVcses: Set<AbstractVcs>,
-  val initiallyIncluded: Collection<*>,
+  initiallyIncluded: Collection<Any>,
   val initialChangeList: LocalChangeList?,
   executors: List<CommitExecutor>,
   override val isDefaultCommitEnabled: Boolean,
   initialCommitMessage: String?,
   private val resultHandler: CommitResultHandler?
-) : CommitChangeListDialogWorkflow(project, initialCommitMessage) {
+) : CommitChangeListDialogWorkflow(project, initialCommitMessage, initiallyIncluded) {
 
   init {
     updateVcses(affectedVcses)
@@ -81,7 +81,8 @@ class SingleChangeListCommitWorkflow(
 
 abstract class CommitChangeListDialogWorkflow(
   project: Project,
-  initialCommitMessage: String?
+  initialCommitMessage: String?,
+  val initiallyIncluded: Collection<Any>
 ) : AbstractCommitWorkflow(project) {
 
   abstract val isPartialCommitEnabled: Boolean

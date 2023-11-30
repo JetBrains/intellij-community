@@ -58,7 +58,7 @@ public final class FacetPointersManagerImpl extends FacetPointersManager {
   }
 
   void refreshPointers() {
-    //todo[nik] refresh only pointers related to renamed module/facet?
+    //todo refresh only pointers related to renamed module/facet?
     List<Pair<FacetPointerImpl, String>> changed = new ArrayList<>();
 
     for (FacetPointerImpl pointer : myPointers.values()) {

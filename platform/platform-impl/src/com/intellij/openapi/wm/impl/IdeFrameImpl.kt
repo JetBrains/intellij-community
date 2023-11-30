@@ -12,16 +12,16 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isMaximized
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.ui.BalloonLayout
+import com.intellij.ui.DisposableWindow
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.awt.Graphics
-import java.awt.Insets
-import java.awt.Rectangle
-import java.awt.Window
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.accessibility.AccessibleContext
@@ -31,7 +31,7 @@ import javax.swing.JRootPane
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
+class IdeFrameImpl : JFrame(), IdeFrame, DataProvider, DisposableWindow {
   companion object {
     @JvmStatic
     val activeFrame: Window?
@@ -39,16 +39,15 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   init {
-    val log = Logger.getInstance("ide.frame.events")
-    if (log.isDebugEnabled) {
-      addComponentListener(EventLogger(frame = this, log = log))
+    if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
+      addComponentListener(EventLogger(frame = this, log = IDE_FRAME_EVENT_LOG))
     }
   }
 
   var frameHelper: FrameHelper? = null
     private set
 
-  var reusedFullScreenState = false
+  var reusedFullScreenState: Boolean = false
 
   var normalBounds: Rectangle? = null
   var screenBounds: Rectangle? = null
@@ -56,6 +55,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   // when this client property is true, we have to ignore 'resizing' events and not spoil 'normal bounds' value for frame
   @JvmField
   internal var togglingFullScreenInProgress: Boolean = false
+
+  @Internal
+  var mouseReleaseCountSinceLastActivated = 0
+
+  private var isDisposed = false
 
   override fun getData(dataId: String): Any? = frameHelper?.getData(dataId)
 
@@ -70,6 +74,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   internal fun doSetRootPane(rootPane: JRootPane?) {
     super.setRootPane(rootPane)
+
     if (rootPane != null && isVisible && SystemInfoRt.isMac) {
       MacUtil.updateRootPane(this, rootPane)
     }
@@ -89,12 +94,25 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   }
 
   override fun setExtendedState(state: Int) {
+    val maximized = isMaximized(state)
+
     // do not load FrameInfoHelper class
-    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && isMaximized(state)) {
+    if (LoadingState.COMPONENTS_REGISTERED.isOccurred && extendedState == NORMAL && maximized) {
       normalBounds = bounds
       screenBounds = graphicsConfiguration?.bounds
+      if (IDE_FRAME_EVENT_LOG.isDebugEnabled) { // avoid unnecessary concatenation
+        IDE_FRAME_EVENT_LOG.debug("Saved bounds for IDE frame ${normalBounds} and screen ${screenBounds} before maximizing")
+      }
     }
-    super.setExtendedState(state)
+
+    if (maximized && StartupUiUtil.isXToolkit() && X11UiUtil.isInitialized()
+        && (state and Frame.ICONIFIED == 0) && isShowing) {
+      // Ubuntu (and may be other linux distros) doesn't set maximized correctly if the frame is MAXIMIZED_VERT already. Use X11 API
+      X11UiUtil.setMaximized(this, true)
+    }
+    else {
+      super.setExtendedState(state)
+    }
   }
 
   override fun paint(g: Graphics) {
@@ -106,6 +124,10 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
+    isDisposed = false
+    if (IdeRootPane.hideNativeLinuxTitle && !isUndecorated) {
+      isUndecorated = true
+    }
     @Suppress("DEPRECATION")
     super.show()
     SwingUtilities.invokeLater { focusableWindowState = true }
@@ -132,8 +154,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
       // must be called in addition to the `dispose`, otherwise not removed from `Window.allWindows` list.
       isVisible = false
       super.dispose()
+      isDisposed = true
     }
   }
+
+  override fun isWindowDisposed(): Boolean = isDisposed
 
   private inner class AccessibleIdeFrameImpl : AccessibleJFrame() {
     override fun getAccessibleName(): String {
@@ -193,4 +218,3 @@ private class EventLogger(private val frame: IdeFrameImpl, private val log: Logg
     )
   }
 }
-

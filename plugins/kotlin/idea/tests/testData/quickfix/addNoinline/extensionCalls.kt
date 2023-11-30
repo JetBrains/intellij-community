@@ -4,3 +4,5 @@
 inline fun inlineFun(lambda: () -> Unit) {
     <caret>lambda.let { }
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddInlineModifierFix

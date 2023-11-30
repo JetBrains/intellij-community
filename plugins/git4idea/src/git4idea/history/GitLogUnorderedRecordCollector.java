@@ -17,7 +17,7 @@ final class GitLogUnorderedRecordCollector extends GitLogRecordCollector<GitComp
   private static final Logger LOG = Logger.getInstance(GitLogUnorderedRecordCollector.class);
   private static final int STATUS_LINES_THRESHOLD = 200_000;
 
-  @NotNull private final MultiMap<String, GitCompressedRecord> myHashToIncompleteRecords = MultiMap.createLinked();
+  private final @NotNull MultiMap<String, GitCompressedRecord> myHashToIncompleteRecords = MultiMap.createLinked();
   private int myIncompleteStatusLinesCount = 0;
 
   GitLogUnorderedRecordCollector(@NotNull Project project,

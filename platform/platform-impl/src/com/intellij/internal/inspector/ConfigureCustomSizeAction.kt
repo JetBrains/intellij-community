@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector
 
 import com.intellij.ide.util.propComponentProperty
@@ -15,8 +15,7 @@ import java.awt.GraphicsEnvironment
  * @author Konstantin Bulenkov
  */
 internal class ConfigureCustomSizeAction : DumbAwareAction() {
-
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val centerPanel = panel {
@@ -42,7 +41,7 @@ internal class ConfigureCustomSizeAction : DumbAwareAction() {
   private fun maxWindowBounds() = GraphicsEnvironment.getLocalGraphicsEnvironment().maximumWindowBounds
 
   object CustomSizeModel {
-    var width by propComponentProperty(defaultValue = 640)
-    var height by propComponentProperty(defaultValue = 300)
+    var width: Int by propComponentProperty(defaultValue = 640)
+    var height: Int by propComponentProperty(defaultValue = 300)
   }
 }

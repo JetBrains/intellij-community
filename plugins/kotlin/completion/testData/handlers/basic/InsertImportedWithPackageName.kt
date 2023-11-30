@@ -1,4 +1,5 @@
 // FIR_COMPARISON
+// FIR_IDENTICAL
 import dependency.xxx
 import A.xxx
 

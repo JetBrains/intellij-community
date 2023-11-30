@@ -5,7 +5,7 @@
     <extensionPoint qualifiedName="com.intellij.projectService" beanClass="com.intellij.openapi.components.ServiceDescriptor"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <<warning descr="A service not going to be overridden does not need to be registered in plugin.xml.
-Instead, annotate service class with '@Service'. Project-level services must specify '@Service(Service.Level.PROJECT)'">projectService</warning> serviceImplementation="com.example.demo.MyService"/>
+    <<warning descr="Service can be converted to a light one.
+Annotate the service class with '@Service(Service.Level.PROJECT)' and remove its registration from the 'plugin.xml' file.">projectService</warning> serviceImplementation="com.example.demo.MyService"/>
   </extensions>
 </idea-plugin>

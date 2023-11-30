@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.configurationStore.RenameableStateStorageManager
@@ -15,29 +15,29 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.TestModuleProperties
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleId
+import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnSnapshot
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isModulePropertiesBridgeEnabled
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.TestModulePropertiesBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.toPath
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.bridgeEntities.addModuleCustomImlDataEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
 
@@ -49,32 +49,11 @@ internal class ModuleBridgeImpl(
   virtualFileUrl: VirtualFileUrl?,
   override var entityStorage: VersionedEntityStorage,
   override var diff: MutableEntityStorage?
-) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
+) : ModuleImpl(name = name, project = project, virtualFilePointer = virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge, WorkspaceModelChangeListener {
   init {
     // default project doesn't have modules
     if (!project.isDefault && !project.isDisposed) {
-      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChange) {
-          val start = System.currentTimeMillis()
-
-          event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
-            if (it.entity.symbolicId != moduleEntityId) return@forEach
-
-            if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
-
-            val currentStore = entityStorage.current
-            val storage = if (currentStore is MutableEntityStorage) currentStore.toSnapshot() else currentStore
-            entityStorage = VersionedEntityStorageOnStorage(storage)
-            assert(moduleEntityId in entityStorage.current) {
-              // If we ever get this assertion, replace use `event.storeBefore` instead of current
-              // As it made in ArtifactBridge
-              "Cannot resolve module $moduleEntityId. Current store: $currentStore"
-            }
-          }
-
-          moduleBridgeBeforeChangedTimeMs.addElapsedTimeMs(start)
-        }
-      })
+      project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, this)
     }
 
     // This is a temporary solution and should be removed after full migration to [TestModulePropertiesBridge]
@@ -89,6 +68,26 @@ internal class ModuleBridgeImpl(
       val implClass = classLoader.loadClass("com.intellij.openapi.roots.impl.TestModulePropertiesImpl")
       registerService(TestModuleProperties::class.java, implClass, corePluginDescriptor, false)
     }
+  }
+
+  override fun beforeChanged(event: VersionedStorageChange) {
+    val start = System.currentTimeMillis()
+
+    event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
+      if (it.entity.symbolicId != moduleEntityId) return@forEach
+
+      if (event.storageBefore.moduleMap.getDataByEntity(it.entity) != this@ModuleBridgeImpl) return@forEach
+
+      val currentStore = entityStorage.current
+      entityStorage = VersionedEntityStorageOnSnapshot(currentStore.toSnapshot())
+      assert(moduleEntityId in entityStorage.current) {
+        // If we ever get this assertion, replace use `event.storeBefore` instead of current
+        // As it made in ArtifactBridge
+        "Cannot resolve module $moduleEntityId. Current store: $currentStore"
+      }
+    }
+
+    moduleBridgeBeforeChangedTimeMs.addElapsedTimeMs(start)
   }
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
@@ -140,7 +139,10 @@ internal class ModuleBridgeImpl(
                                   precomputedExtensionModel: PrecomputedExtensionModel?,
                                   app: Application?,
                                   listenerCallbacks: MutableList<in Runnable>?) {
-    super.registerComponents(modules, app, precomputedExtensionModel, listenerCallbacks)
+    super.registerComponents(modules = modules,
+                             app = app,
+                             precomputedExtensionModel = precomputedExtensionModel,
+                             listenerCallbacks = listenerCallbacks)
     if (corePlugin == null) {
       return
     }
@@ -164,7 +166,9 @@ internal class ModuleBridgeImpl(
         val customImlData = entity.customImlData
         if (customImlData == null) {
           if (value != null) {
-            diff.addModuleCustomImlDataEntity(null, mapOf(key to value), entity, entity.entitySource)
+            diff addEntity ModuleCustomImlDataEntity(HashMap(mapOf(key to value)), entity.entitySource) {
+              module = entity
+            }
           }
         }
         else {

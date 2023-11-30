@@ -33,25 +33,31 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
     job = coroutineScope.launch {
       val delayDuration = dumpInterval.milliseconds
       while (true) {
-        dumpThreads()
+        dumpThreads(asyncCoroutineScope = coroutineScope)
         delay(delayDuration)
       }
     }
   }
 
-  private suspend fun dumpThreads() {
+  private suspend fun dumpThreads(asyncCoroutineScope: CoroutineScope) {
     currentTime = System.nanoTime()
     gcCurrentTime = currentGcTime()
     val infos = ThreadDumper.getThreadInfos(THREAD_MX_BEAN, false)
     coroutineContext.ensureActive()
 
     threadInfos = threadInfos.add(infos)
-    if (threadInfos.size >= maxDumps) {
-      stop()
+    if (threadInfos.size > maxDumps) {
+      stopDumpingThreads()
+      return
     }
 
-    coroutineContext.ensureActive()
-    dumpedThreads(ThreadDumper.getThreadDumpInfo(infos, true))
+    asyncCoroutineScope.launch {
+      val rawDump = ThreadDumper.getThreadDumpInfo(infos, true)
+      val dump = EventCountDumper.addEventCountersTo(rawDump)
+      dumpedThreads(dump)
+    }
+      // don't schedule yet another dumpedThreads - wait for completion
+      .join()
   }
 
   protected open suspend fun dumpedThreads(threadDump: ThreadDump) {}
@@ -62,6 +68,10 @@ internal open class SamplingTask(@JvmField internal val dumpInterval: Int, maxDu
 
   open fun stop() {
     job?.cancel()
+  }
+
+  open suspend fun stopDumpingThreads() {
+    job?.cancelAndJoin()
   }
 }
 

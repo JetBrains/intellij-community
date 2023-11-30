@@ -37,12 +37,13 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
         }
     }
 
-    fun createLookups(analysisSession: KtAnalysisSession, expression: KtExpression?): Collection<LookupElement> {
+    context(KtAnalysisSession)
+    fun createLookups(expression: KtExpression?): Collection<LookupElement> {
         if (expression == null) return emptyList()
         val supportsNonLocalBreakContinue =
             expression.languageVersionSettings.supportsFeature(LanguageFeature.BreakContinueInInlineLambdas)
         return expression.parentsWithSelf
-            .takeWhile { it !is KtDeclarationWithBody || canDoNonLocalJump(it, supportsNonLocalBreakContinue, analysisSession) }
+            .takeWhile { it !is KtDeclarationWithBody || canDoNonLocalJump(it, supportsNonLocalBreakContinue) }
             .filterIsInstance<KtLoopExpression>()
             .flatMapIndexed { index: Int, loop: KtLoopExpression ->
                 listOfNotNull(
@@ -54,24 +55,25 @@ class BreakContinueKeywordHandler(keyword: KtKeywordToken) : CompletionKeywordHa
             }
             .toList()
     }
-
+    context(KtAnalysisSession)
     private fun canDoNonLocalJump(
         body: KtDeclarationWithBody,
         supportsNonLocalBreakContinue: Boolean,
-        analysisSession: KtAnalysisSession
     ) = supportsNonLocalBreakContinue &&
             body is KtFunctionLiteral &&
-            analysisSession.isInlineFunctionCall(body.findLabelAndCall().second)
+            isInlineFunctionCall(body.findLabelAndCall().second)
 
-    override fun KtAnalysisSession.createLookups(
+    context(KtAnalysisSession)
+    override fun createLookups(
         parameters: CompletionParameters,
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project
-    ): Collection<LookupElement> = createLookups(this, expression)
+    ): Collection<LookupElement> = createLookups(expression)
 }
 
-fun KtAnalysisSession.isInlineFunctionCall(call: KtCallExpression?): Boolean =
+context(KtAnalysisSession)
+fun isInlineFunctionCall(call: KtCallExpression?): Boolean =
     (call?.calleeExpression as? KtReferenceExpression)?.mainReference
         ?.resolveToSymbol()
         ?.let { it as? KtFunctionSymbol }

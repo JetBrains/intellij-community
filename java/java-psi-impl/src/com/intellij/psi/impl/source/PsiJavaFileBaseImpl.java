@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -51,7 +51,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private final CachedValue<MostlySingularMultiMap<String, ResultWithContext>> myResolveCache;
   private volatile String myPackageName;
 
-  protected PsiJavaFileBaseImpl(IElementType elementType, IElementType contentElementType, FileViewProvider viewProvider) {
+  protected PsiJavaFileBaseImpl(@NotNull IElementType elementType, @NotNull IElementType contentElementType, @NotNull FileViewProvider viewProvider) {
     super(elementType, contentElementType, viewProvider);
     myResolveCache = CachedValuesManager.getManager(myManager.getProject()).createCachedValue(new MyCacheBuilder(this), false);
   }
@@ -66,7 +66,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   public PsiClass @NotNull [] getClasses() {
     StubElement<?> stub = getGreenStub();
     if (stub != null) {
-      return stub.getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
+      return stub.getChildrenByType(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
     }
 
     return calcTreeElement().getChildrenAsPsiElements(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
@@ -95,7 +95,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  public void setPackageName(String packageName) throws IncorrectOperationException {
+  public void setPackageName(@NotNull String packageName) throws IncorrectOperationException {
     if (PsiUtil.isModuleFile(this)) {
       throw new IncorrectOperationException("Cannot set package name for module declarations");
     }
@@ -123,7 +123,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         if (prev instanceof PsiComment) {
           String text = prev.getText().trim();
           if (text.startsWith("/*") && !text.endsWith("*/")) {
-            // close any open javadoc/comments before import list
+            // close any open javadoc/comments before the import list
             prev.replace(factory.createCommentFromText(text + (StringUtil.containsLineBreak(text) ? "\n*/" : " */"), prev));
           }
         }
@@ -206,7 +206,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  public PsiJavaCodeReferenceElement findImportReferenceTo(PsiClass aClass) {
+  public PsiJavaCodeReferenceElement findImportReferenceTo(@NotNull PsiClass aClass) {
     PsiImportList importList = getImportList();
     if (importList != null) {
       PsiImportStatement[] statements = importList.getImportStatements();
@@ -236,7 +236,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     private final Map<String, Iterable<ResultWithContext>> myExplicitlyEnumerated;
     private final Collection<PsiElement> myCollectedElements = new HashSet<>();
 
-    StaticImportFilteringProcessor(PsiScopeProcessor delegate, Map<String, Iterable<ResultWithContext>> explicitlyEnumerated) {
+    StaticImportFilteringProcessor(@NotNull Map<String, Iterable<ResultWithContext>> explicitlyEnumerated, @NotNull PsiScopeProcessor delegate) {
       super(delegate);
       myExplicitlyEnumerated = explicitlyEnumerated;
     }
@@ -282,24 +282,25 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     NameHint nameHint = processor.getHint(NameHint.KEY);
     String name = nameHint != null ? nameHint.getName(state) : null;
 
-    Map<String, Iterable<ResultWithContext>> explicitlyEnumerated = getExplicitlyEnumeratedDeclarations();
+    Map<String, Iterable<ResultWithContext>> explicitlyEnumerated = getEnumeratedDeclarations();
     //noinspection unchecked
     Iterable<ResultWithContext> iterable = name != null ? explicitlyEnumerated.get(name)
                                                         : ContainerUtil.concat(explicitlyEnumerated.values().toArray(new Iterable[0]));
-    if (iterable != null && !ContainerUtil.process(iterable, new MyResolveCacheProcessor(processor, state))) return false;
+    if (iterable != null && !ContainerUtil.process(iterable, new MyResolveCacheProcessor(state, processor))) return false;
 
     if (processor instanceof ClassResolverProcessor &&
         (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue()) &&
         !PsiUtil.isInsideJavadocComment(place)) {
       MostlySingularMultiMap<String, ResultWithContext> cache = myResolveCache.getValue();
-      MyResolveCacheProcessor cacheProcessor = new MyResolveCacheProcessor(processor, state);
+      MyResolveCacheProcessor cacheProcessor = new MyResolveCacheProcessor(state, processor);
       return name != null ? cache.processForKey(name, cacheProcessor) : cache.processAllValues(cacheProcessor);
     }
 
-    return processOnDemandPackages(processor, state, place);
+    return processOnDemandPackages(state, place, processor);
   }
 
-  private Map<String, Iterable<ResultWithContext>> getExplicitlyEnumeratedDeclarations() {
+  @NotNull
+  private Map<String, Iterable<ResultWithContext>> getEnumeratedDeclarations() {
     return CachedValuesManager.getCachedValue(this, () -> {
       MultiMap<String, PsiClass> ownClasses = MultiMap.create();
       MultiMap<String, PsiImportStatement> typeImports = MultiMap.create();
@@ -325,6 +326,14 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
           staticImports.putValue(name, staticImport);
         }
       }
+      if (PsiUtil.getLanguageLevel(this).isAtLeast(LanguageLevel.JDK_21_PREVIEW)) {
+        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(getProject());
+        PsiClass aClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING_TEMPLATE, getResolveScope());
+        if (aClass != null) {
+          PsiImportStaticStatement importStaticStatement = psiFacade.getElementFactory().createImportStaticStatement(aClass, "STR");
+          staticImports.putValue("STR", importStaticStatement);
+        }
+      }
 
       Map<String, Iterable<ResultWithContext>> result = new LinkedHashMap<>();
       for (String name : ContainerUtil.newLinkedHashSet(ContainerUtil.concat(ownClasses.keySet(), typeImports.keySet(), staticImports.keySet()))) {
@@ -335,10 +344,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     });
   }
 
-  private static Iterable<ResultWithContext> findExplicitDeclarations(String name,
-                                                                      MultiMap<String, PsiClass> ownClasses,
-                                                                      MultiMap<String, PsiImportStatement> typeImports,
-                                                                      MultiMap<String, PsiImportStaticStatement> staticImports) {
+  private static @NotNull Iterable<ResultWithContext> findExplicitDeclarations(@NotNull String name,
+                                                                               @NotNull MultiMap<String, PsiClass> ownClasses,
+                                                                               @NotNull MultiMap<String, PsiImportStatement> typeImports,
+                                                                               @NotNull MultiMap<String, PsiImportStaticStatement> staticImports) {
     List<ResultWithContext> result = new ArrayList<>();
     for (PsiClass psiClass : ownClasses.get(name)) {
       result.add(new ResultWithContext(psiClass, null));
@@ -363,48 +372,48 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return JBIterable.from(result).unique(ResultWithContext::getElement);
   }
 
-  private boolean processOnDemandPackages(PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement place) {
+  private boolean processOnDemandPackages(@NotNull ResolveState state, @NotNull PsiElement place, @NotNull PsiScopeProcessor processor) {
     ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
     boolean shouldProcessClasses = classHint == null || classHint.shouldProcess(ElementClassHint.DeclarationKind.CLASS);
-    if (shouldProcessClasses && !processCurrentPackage(processor, state, place)) return false;
+    if (shouldProcessClasses && !processCurrentPackage(state, place, processor)) return false;
 
-    if (!processOnDemandStaticImports(state, new StaticImportFilteringProcessor(processor, getExplicitlyEnumeratedDeclarations()))) {
+    if (!processOnDemandStaticImports(state, new StaticImportFilteringProcessor(getEnumeratedDeclarations(), processor))) {
       return false;
     }
 
-    if (shouldProcessClasses && !processOnDemandTypeImports(processor, state, place)) return false;
+    if (shouldProcessClasses && !processOnDemandTypeImports(state, place, processor)) return false;
 
-    return !shouldProcessClasses || processImplicitImports(processor, state, place);
+    return !shouldProcessClasses || processImplicitImports(state, place, processor);
   }
 
-  private PsiImportStaticStatement[] getImportStaticStatements() {
+  private PsiImportStaticStatement @NotNull [] getImportStaticStatements() {
     return getImportList() != null ? getImportList().getImportStaticStatements() : PsiImportStaticStatement.EMPTY_ARRAY;
   }
 
-  private PsiImportStatement[] getImportStatements() {
+  private PsiImportStatement @NotNull [] getImportStatements() {
     return getImportList() != null ? getImportList().getImportStatements() : PsiImportStatement.EMPTY_ARRAY;
   }
 
-  private boolean processCurrentPackage(PsiScopeProcessor processor, ResolveState state, PsiElement place) {
+  private boolean processCurrentPackage(@NotNull ResolveState state, @NotNull PsiElement place, @NotNull PsiScopeProcessor processor) {
     processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, null);
     PsiPackage aPackage = JavaPsiFacade.getInstance(myManager.getProject()).findPackage(getPackageName());
-    return aPackage == null || processPackageDeclarations(processor, state, place, aPackage);
+    return aPackage == null || processPackageDeclarations(state, place, aPackage, processor);
   }
 
-  private boolean processOnDemandTypeImports(PsiScopeProcessor processor, ResolveState state, PsiElement place) {
+  private boolean processOnDemandTypeImports(@NotNull ResolveState state, @NotNull PsiElement place, @NotNull PsiScopeProcessor processor) {
     for (PsiImportStatement statement : getImportStatements()) {
       if (statement.isOnDemand()) {
         PsiElement resolved = statement.resolve();
         if (resolved != null) {
           processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, statement);
-          if (!processOnDemandTarget(resolved, processor, state, place)) return false;
+          if (!processOnDemandTarget(resolved, state, place, processor)) return false;
         }
       }
     }
     return true;
   }
 
-  private boolean processOnDemandStaticImports(ResolveState state, StaticImportFilteringProcessor processor) {
+  private boolean processOnDemandStaticImports(@NotNull ResolveState state, @NotNull StaticImportFilteringProcessor processor) {
     for (PsiImportStaticStatement importStaticStatement : getImportStaticStatements()) {
       if (!importStaticStatement.isOnDemand()) continue;
       PsiClass targetElement = importStaticStatement.resolveTargetClass();
@@ -416,21 +425,21 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     return true;
   }
 
-  private boolean processImplicitImports(PsiScopeProcessor processor, ResolveState state, PsiElement place) {
+  private boolean processImplicitImports(@NotNull ResolveState state, @NotNull PsiElement place, @NotNull PsiScopeProcessor processor) {
     processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, null);
     for (PsiJavaCodeReferenceElement aImplicitlyImported : getImplicitlyImportedPackageReferences()) {
       PsiElement resolved = aImplicitlyImported.resolve();
       if (resolved != null) {
-        if (!processOnDemandTarget(resolved, processor, state, place)) return false;
+        if (!processOnDemandTarget(resolved, state, place, processor)) return false;
       }
     }
     return true;
   }
 
-  private static boolean processPackageDeclarations(PsiScopeProcessor processor,
-                                                    @NotNull ResolveState state,
-                                                    PsiElement place,
-                                                    @NotNull PsiPackage aPackage) {
+  private static boolean processPackageDeclarations(@NotNull ResolveState state,
+                                                    @NotNull PsiElement place,
+                                                    @NotNull PsiPackage aPackage,
+                                                    @NotNull PsiScopeProcessor processor) {
     if (!aPackage.getQualifiedName().isEmpty()) {
       processor = new DelegatingScopeProcessor(processor) {
         @Nullable
@@ -448,13 +457,13 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @NotNull
-  private static PsiSubstitutor createRawSubstitutor(PsiClass containingClass) {
+  private static PsiSubstitutor createRawSubstitutor(@NotNull PsiClass containingClass) {
     return JavaPsiFacade.getElementFactory(containingClass.getProject()).createRawSubstitutor(containingClass);
   }
 
-  private static boolean processOnDemandTarget(PsiElement target, PsiScopeProcessor processor, ResolveState substitutor, PsiElement place) {
+  private static boolean processOnDemandTarget(@NotNull PsiElement target, @NotNull ResolveState substitutor, @NotNull PsiElement place, @NotNull PsiScopeProcessor processor) {
     if (target instanceof PsiPackage) {
-      return processPackageDeclarations(processor, substitutor, place, (PsiPackage)target);
+      return processPackageDeclarations(substitutor, place, (PsiPackage)target, processor);
     }
     if (target instanceof PsiClass) {
       PsiClass[] inners = ((PsiClass)target).getInnerClasses();
@@ -558,7 +567,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         virtualFile.putUserData(SHEBANG_SOURCE_LEVEL, sourceLevel);
         VirtualFile file = virtualFile;
         ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(file),
-                                                        ModalityState.NON_MODAL,
+                                                        ModalityState.nonModal(),
                                                         ApplicationManager.getApplication().getDisposed());
       }
     }
@@ -567,16 +576,18 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private static class MyCacheBuilder implements CachedValueProvider<MostlySingularMultiMap<String, ResultWithContext>> {
+    @NotNull
     private final PsiJavaFileBaseImpl myFile;
 
-    MyCacheBuilder(PsiJavaFileBaseImpl file) {
+    MyCacheBuilder(@NotNull PsiJavaFileBaseImpl file) {
       myFile = file;
     }
 
     @Override
+    @NotNull
     public Result<MostlySingularMultiMap<String, ResultWithContext>> compute() {
       SymbolCollectingProcessor p = new SymbolCollectingProcessor();
-      myFile.processOnDemandPackages(p, ResolveState.initial(), myFile);
+      myFile.processOnDemandPackages(ResolveState.initial(), myFile, p);
       MostlySingularMultiMap<String, ResultWithContext> results = p.getResults();
       return Result.create(results, PsiModificationTracker.MODIFICATION_COUNT, myFile);
     }
@@ -586,13 +597,13 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     private final PsiScopeProcessor myProcessor;
     private final ResolveState myState;
 
-    MyResolveCacheProcessor(PsiScopeProcessor processor, ResolveState state) {
+    MyResolveCacheProcessor(@NotNull ResolveState state, @NotNull PsiScopeProcessor processor) {
       myProcessor = processor;
       myState = state;
     }
 
     @Override
-    public boolean process(ResultWithContext result) {
+    public boolean process(@NotNull ResultWithContext result) {
       PsiElement context = result.getFileContext();
       myProcessor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, context);
       PsiNamedElement element = result.getElement();

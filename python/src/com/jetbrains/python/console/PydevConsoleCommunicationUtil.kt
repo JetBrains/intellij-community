@@ -11,84 +11,12 @@ import com.jetbrains.python.debugger.ArrayChunkBuilder
 import com.jetbrains.python.debugger.PyDebugValue
 import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.values.DataFrameDebugValue
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.builtins.serializer
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.buildClassSerialDescriptor
-import kotlinx.serialization.descriptors.element
-import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.decodeStructure
-import kotlinx.serialization.json.Json
-
-@OptIn(ExperimentalSerializationApi::class)
-@Serializer(forClass = DataFrameDebugValue.InformationColumns::class)
-object InformationColumnsSerializer : DeserializationStrategy<DataFrameDebugValue.InformationColumns> {
-  override val descriptor: SerialDescriptor = buildClassSerialDescriptor("InformationColumns") {
-    element<Boolean>("isMultiIndex")
-    element<List<List<String>>?>("columns")
-  }
-
-  override fun deserialize(decoder: Decoder): DataFrameDebugValue.InformationColumns {
-    return decoder.decodeStructure(descriptor) {
-      var isMultiIndex = false
-      var columns: List<List<String>>? = null
-
-      while (true) {
-        when (val index = decodeElementIndex(descriptor)) {
-          DECODE_DONE -> break
-          0 -> isMultiIndex = decodeBooleanElement(descriptor, 0)
-          1 -> columns = decodeNullableSerializableElement(descriptor, 1, ListSerializer(ListSerializer(String.serializer())).nullable)
-          else -> throw SerializationException("Unexpected index $index")
-        }
-      }
-      DataFrameDebugValue.InformationColumns().apply {
-        this.isMultiIndex = isMultiIndex
-        this.columns = columns
-      }
-    }
-  }
-}
-
-private fun parseDebugValue(value: String): DataFrameDebugValue.InformationColumns? {
-  return try {
-    Json.decodeFromString(InformationColumnsSerializer, value)
-  }
-  catch (_: SerializationException) {
-    null
-  }
-  catch (_: IllegalArgumentException) {
-    null
-  }
-}
-
-private fun extractDataFrameColumns(dfReference: String,
-                                    frameAccessor: PydevConsoleCommunication): DataFrameDebugValue.InformationColumns? {
-  val additionalInformation = frameAccessor.evaluate(DataFrameDebugValue.commandExtractPandasColumns(dfReference, true), true, false)
-  return when (additionalInformation.type) {
-    "str" -> additionalInformation.value?.let { parseDebugValue(it) }
-    else -> null
-  }
-}
+import com.jetbrains.python.debugger.values.getColumnData
 
 fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFrameAccessor): XValueChildrenList {
   val list = XValueChildrenList(vars.size)
   for (debugValue in vars) {
     val pyDebugValue = createPyDebugValue(debugValue, frameAccessor)
-    if (frameAccessor is PydevConsoleCommunication && parent !is DataFrameDebugValue && pyDebugValue is DataFrameDebugValue) {
-      val dfReference = generateSequence(parent, PyDebugValue::getParent).fold(pyDebugValue.name) { name, parentValue ->
-        "${parentValue.name}.$name"
-      }
-      val columns = extractDataFrameColumns(dfReference, frameAccessor)
-      columns?.let {
-        pyDebugValue.setColumns(it)
-      }
-    }
     if (parent != null) {
       pyDebugValue.parent = parent
     }
@@ -99,9 +27,13 @@ fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFr
 
 fun createPyDebugValue(value: DebugValue, frameAccessor: PyFrameAccessor): PyDebugValue {
   return if (value.type == "DataFrame") {
-    DataFrameDebugValue(value.name, value.type, value.qualifier, value.value ?: "",
-                        value.isContainer, value.shape, value.isReturnedValue, value.isIPythonHidden, value.isErrorOnEval,
-                        value.typeRendererId, frameAccessor)
+    val columns = value.value?.let { getColumnData(it) }
+    val dataFrameDebugValue = DataFrameDebugValue(value.name, value.type, value.qualifier, value.value ?: "",
+                                                  value.isContainer, value.shape, value.isReturnedValue, value.isIPythonHidden,
+                                                  value.isErrorOnEval,
+                                                  value.typeRendererId, frameAccessor)
+    columns?.let { dataFrameDebugValue.setColumns(it) }
+    dataFrameDebugValue
   }
   else PyDebugValue(value.name, value.type, value.qualifier, value.value ?: "",
                     value.isContainer, value.shape, value.isReturnedValue, value.isIPythonHidden, value.isErrorOnEval,

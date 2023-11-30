@@ -98,6 +98,20 @@ class KotlinMppTierOneCasesImportingTests : AbstractKotlinMppGradleImportingTest
     }
 
     @Test
+    fun testKmpJvmConsumesPureJavaSource() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+        }
+    }
+
+    @Test
+    fun testKmpJvmConsumesKotlinJvmSource() {
+        doTest {
+            onlyCheckers(OrderEntriesChecker)
+        }
+    }
+
+    @Test
     fun testKotlinJvmConsumesKmmLibBinary() {
         doTest {
             onlyCheckers(OrderEntriesChecker)

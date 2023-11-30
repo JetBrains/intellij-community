@@ -15,7 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.generation.*;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
+import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideOrImplementOptions;
+import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -79,16 +82,17 @@ public class ImplementAbstractClassMethodsFix extends ImplementMethodsFix {
     if (classReference == null) return;
     final PsiClass psiClass = (PsiClass)classReference.resolve();
     if (psiClass == null) return;
-    final JavaOverrideImplementMemberChooser chooser = chooseMethodsToImplement(editor, startElement, psiClass, false);
-    if (chooser == null) return;
+    chooseMethodsToImplement(editor, startElement, psiClass, false, chooser -> {
+      if (chooser == null) return;
 
-    final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
-    OverrideOrImplementOptions options = chooser.getOptions();
+      final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
+      OverrideOrImplementOptions options = chooser.getOptions();
 
-    if (selectedElements == null || selectedElements.isEmpty()) return;
+      if (selectedElements == null || selectedElements.isEmpty()) return;
 
-    WriteCommandAction.writeCommandAction(project, file).run(() -> {
-      implementNewMethods(project, editor, startElement, selectedElements, options);
+      WriteCommandAction.writeCommandAction(project, file).run(() -> {
+        implementNewMethods(project, editor, startElement, selectedElements, options);
+      });
     });
   }
 

@@ -144,7 +144,7 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
 
   private fun getIncomingOutgoingIconWithTooltip(branch: GitBranch): Pair<Icon?, String?> {
     val branchName = branch.name
-    val incomingOutgoingManager = project.service<GitBranchIncomingOutgoingManager>()
+    val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
 
     val hasIncoming = affectedRepositories.any { incomingOutgoingManager.hasIncomingFor(it, branchName) }
     val hasOutgoing = affectedRepositories.any { incomingOutgoingManager.hasOutgoingFor(it, branchName) }
@@ -304,6 +304,13 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
     internal fun getText(treeNode: Any?, model: GitBranchesTreeModel, repositories: List<GitRepository>): @NlsSafe String? {
       val value = treeNode ?: return null
       return when (value) {
+        GitBranchesTreeModel.RecentNode -> {
+          when (model) {
+            is GitBranchesTreeSelectedRepoModel -> GitBundle.message("group.Git.Recent.Branch.in.repo.title",
+                                                                     DvcsUtil.getShortRepositoryName(model.selectedRepository))
+            else -> GitBundle.message("group.Git.Recent.Branch.title")
+          }
+        }
         GitBranchType.LOCAL -> {
           when {
             model is GitBranchesTreeSelectedRepoModel -> GitBundle.message("branches.local.branches.in.repo",
@@ -324,8 +331,10 @@ abstract class GitBranchesTreeRenderer(private val project: Project,
         is GitRepository -> DvcsUtil.getShortRepositoryName(value)
         is GitBranchesTreeModel.BranchTypeUnderRepository -> {
           when (value.type) {
+            GitBranchesTreeModel.RecentNode -> GitBundle.message("group.Git.Recent.Branch.title")
             GitBranchType.LOCAL -> GitBundle.message("group.Git.Local.Branch.title")
             GitBranchType.REMOTE -> GitBundle.message("group.Git.Remote.Branch.title")
+            else -> null
           }
         }
         is BranchUnderRepository -> getText(value.branch, model, repositories)

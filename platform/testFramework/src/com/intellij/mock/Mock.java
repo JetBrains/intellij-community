@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mock;
 
 import com.intellij.openapi.Disposable;
@@ -274,6 +274,11 @@ public final class Mock {
     }
 
     @Override
+    public @Nullable Object canOpenFileAsync(@NotNull VirtualFile file, @NotNull Continuation<? super Boolean> $completion) {
+      return false;
+    }
+
+    @Override
     public VirtualFile @NotNull [] getOpenFiles() {
       return VirtualFile.EMPTY_ARRAY;
     }
@@ -336,11 +341,10 @@ public final class Mock {
       return FileEditorComposite.Companion.fromPair(new kotlin.Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
     }
 
-    @Nullable
     @Override
-    public Object openFile(@NotNull VirtualFile file,
-                           @NotNull FileEditorOpenOptions options,
-                           @NotNull Continuation<? super FileEditorComposite> $completion) {
+    public @Nullable Object openFile(@NotNull VirtualFile file,
+                                     @NotNull FileEditorOpenOptions options,
+                                     @NotNull Continuation<? super FileEditorComposite> $completion) {
       return FileEditorComposite.Companion.fromPair(new kotlin.Pair<>(FileEditor.EMPTY_ARRAY, FileEditorProvider.EMPTY_ARRAY));
     }
   }
@@ -449,6 +453,11 @@ public final class Mock {
   public static class MyFileEditorProvider implements FileEditorProvider {
     @Override
     public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
+      return false;
+    }
+
+    @Override
+    public boolean acceptRequiresReadAction() {
       return false;
     }
 

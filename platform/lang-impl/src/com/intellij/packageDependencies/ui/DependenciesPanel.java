@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -38,10 +38,13 @@ import com.intellij.packageDependencies.actions.BackwardDependenciesHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.*;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.tree.AsyncTreeModel;
+import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -59,7 +62,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.IOException;
@@ -140,8 +142,8 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     toolbar.setTargetComponent(treeSplitter);
     add(toolbar.getComponent(), BorderLayout.NORTH);
 
-    myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree, myProject);
-    myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree, myProject);
+    myRightTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myRightTree);
+    myLeftTreeExpansionMonitor = PackageTreeExpansionMonitor.install(myLeftTree);
 
     myRightTreeMarker = new Marker() {
       @Override
@@ -361,10 +363,18 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
       }
     }
     deps.removeAll(scope);
-    myRightTreeExpansionMonitor.freeze();
-    myRightTree.setModel(buildTreeModel(deps, myRightTreeMarker));
-    myRightTreeExpansionMonitor.restore();
+    replaceModel(myRightTree, buildTreeModel(deps, myRightTreeMarker), myRightTreeExpansionMonitor);
     expandFirstLevel(myRightTree);
+  }
+
+  private static void replaceModel(@NotNull MyTree tree, @NotNull AsyncTreeModel model, @NotNull TreeExpansionMonitor<?> monitor) {
+    monitor.freeze();
+    var oldModel = tree.getModel();
+    if (oldModel instanceof Disposable disposable) {
+      Disposer.dispose(disposable);
+    }
+    tree.setModel(model);
+    monitor.restoreAsync();
   }
 
   private ActionGroup createTreePopupActions(boolean isRightTree) {
@@ -385,38 +395,67 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     return group;
   }
 
-  private TreeModel buildTreeModel(Set<? extends PsiFile> deps, Marker marker) {
-    return Objects.requireNonNull(PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE)).createTreeModel(myProject, deps, marker,
-                                                                                                             mySettings);
+  private AsyncTreeModel buildTreeModel(Set<? extends PsiFile> deps, Marker marker) {
+    return new AsyncTreeModel(
+      new BackgroundTreeModel(
+        () -> Objects.requireNonNull(PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE))
+          .createTreeModel(myProject, deps, marker, mySettings)
+      ), this
+    );
   }
 
   private void updateLeftTreeModel() {
     Set<PsiFile> psiFiles = myDependencies.keySet();
-    myLeftTreeExpansionMonitor.freeze();
-    myLeftTree.setModel(buildTreeModel(psiFiles, myLeftTreeMarker));
-    myLeftTreeExpansionMonitor.restore();
+    replaceModel(myLeftTree, buildTreeModel(psiFiles, myLeftTreeMarker), myLeftTreeExpansionMonitor);
     expandFirstLevel(myLeftTree);
   }
 
   private static void expandFirstLevel(Tree tree) {
-    PackageDependenciesNode root = (PackageDependenciesNode)tree.getModel().getRoot();
-    int count = root.getChildCount();
-    if (count < 10) {
-      for (int i = 0; i < count; i++) {
-        PackageDependenciesNode child = (PackageDependenciesNode)root.getChildAt(i);
-        expandNodeIfNotTooWide(tree, child);
-      }
-    }
-  }
-
-  private static void expandNodeIfNotTooWide(Tree tree, PackageDependenciesNode node) {
-    int count = node.getChildCount();
-    if (count > 5) return;
-    //another level of nesting
-    if (count == 1 && node.getChildAt(0).getChildCount() > 5){
+    var model = tree.getModel();
+    if (model == null) {
       return;
     }
-    tree.expandPath(new TreePath(node.getPath()));
+    // Can't figure child count before a node is expanded, so we have to do this in two passes:
+    // 1. first, expand everything that potentially needs expanding;
+    // 2. second, collapse back everything that doesn't need to be expanded.
+    TreeUtil.promiseExpand(tree, path -> {
+      var level = path.getPathCount();
+      if (level == 1) {
+        return TreeVisitor.Action.CONTINUE; // The root isn't visible and always expanded.
+      }
+      else {
+        var siblingCount = model.getChildCount(path.getParentPath().getLastPathComponent());
+        if (level == 2) {
+          return siblingCount < 10 ? TreeVisitor.Action.CONTINUE : TreeVisitor.Action.SKIP_SIBLINGS;
+        }
+        else {
+          return siblingCount == 1 ? TreeVisitor.Action.CONTINUE : TreeVisitor.Action.SKIP_SIBLINGS;
+        }
+      }
+    }).onSuccess(ignored -> {
+      TreeUtil.promiseVisit(tree, path -> {
+        var level = path.getPathCount();
+        Object value = path.getLastPathComponent();
+        var childCount = model.getChildCount(value);
+        if (level == 1) { // Don't even bother visiting the tree if the root has too many children.
+          return childCount < 10 ? TreeVisitor.Action.CONTINUE : TreeVisitor.Action.SKIP_CHILDREN;
+        }
+        else if (!tree.isExpanded(path)) { // Ignore everything that wasn't expanded above.
+          return TreeVisitor.Action.SKIP_CHILDREN;
+        }
+        else {
+          if (childCount == 1) { // Check auto expanded nodes, no matter how deep they are.
+            return TreeVisitor.Action.CONTINUE;
+          }
+          else { // Reached the deepest auto expanded node, check its child count.
+            if (childCount > 5) {
+              tree.collapsePath(path);
+            }
+            return TreeVisitor.Action.SKIP_CHILDREN; // Same as SKIP_SIBLINGS, really, as there's only one node on this level.
+          }
+        }
+      });
+    });
   }
 
   private Set<PsiFile> getSelectedScope(final Tree tree) {
@@ -463,7 +502,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     return null;
   }
 
-  private static class MyTreeCellRenderer extends ColoredTreeCellRenderer {
+  private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
     @Override
     public void customizeCellRenderer(
       @NotNull JTree tree,
@@ -676,7 +715,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private class DependenciesExporterToTextFile implements ExporterToTextFile {
+  private final class DependenciesExporterToTextFile implements ExporterToTextFile {
     @NotNull
     @Override
     public String getReportText() {
@@ -724,7 +763,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
   }
 
 
-  private class RerunAction extends AnAction {
+  private final class RerunAction extends AnAction {
     RerunAction(JComponent comp) {
       super(CommonBundle.message("action.rerun"), CodeInsightBundle.message("action.rerun.dependency"), AllIcons.Actions.Rerun);
       registerCustomShortcutSet(CommonShortcuts.getRerun(), comp);
@@ -765,7 +804,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private static class MyTree extends Tree implements DataProvider {
+  private static final class MyTree extends Tree implements DataProvider {
     @Override
     public Object getData(@NotNull String dataId) {
       PackageDependenciesNode node = getSelectedNode();
@@ -933,10 +972,10 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private class SelectInLeftTreeAction extends AnAction {
+  private final class SelectInLeftTreeAction extends AnAction {
     SelectInLeftTreeAction() {
       super(CodeInsightBundle.messagePointer("action.select.in.left.tree"),
-            CodeInsightBundle.messagePointer("action.select.in.left.tree.description"), null);
+            CodeInsightBundle.messagePointer("action.select.in.left.tree.description"));
     }
 
     @Override
@@ -966,20 +1005,24 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
   }
 
   private void selectElementInLeftTree(PsiElement elt) {
+    var pointer = SmartPointerManager.createPointer(elt);
     PsiManager manager = PsiManager.getInstance(myProject);
-
-    PackageDependenciesNode root = (PackageDependenciesNode)myLeftTree.getModel().getRoot();
-    Enumeration enumeration = root.breadthFirstEnumeration();
-    while (enumeration.hasMoreElements()) {
-      PackageDependenciesNode child = (PackageDependenciesNode)enumeration.nextElement();
-      if (manager.areElementsEquivalent(child.getPsiElement(), elt)) {
-        myLeftTree.setSelectionPath(new TreePath(((DefaultTreeModel)myLeftTree.getModel()).getPathToRoot(child)));
-        break;
+    TreeUtil.promiseSelect(myLeftTree, path -> {
+      var object = path.getLastPathComponent();
+      PsiElement element = pointer.getElement();
+      if (element == null) {
+        return TreeVisitor.Action.SKIP_SIBLINGS;
       }
-    }
+      else if (object instanceof PackageDependenciesNode pNode && manager.areElementsEquivalent(pNode.getPsiElement(), element)) {
+          return TreeVisitor.Action.INTERRUPT;
+      }
+      else {
+        return TreeVisitor.Action.CONTINUE;
+      }
+    });
   }
 
-  private class MarkAsIllegalAction extends AnAction {
+  private final class MarkAsIllegalAction extends AnAction {
     MarkAsIllegalAction() {
       super(CodeInsightBundle.messagePointer("mark.dependency.illegal.text"),
             CodeInsightBundle.messagePointer("mark.dependency.illegal.text"), AllIcons.Actions.Lightning);
@@ -1089,7 +1132,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  public static class DependencyPanelSettings {
+  public static final class DependencyPanelSettings {
     public boolean UI_FLATTEN_PACKAGES;
     public boolean UI_SHOW_FILES;
     public boolean UI_SHOW_MODULES;

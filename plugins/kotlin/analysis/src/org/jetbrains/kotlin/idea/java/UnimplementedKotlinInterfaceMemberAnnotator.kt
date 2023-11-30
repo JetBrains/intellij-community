@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.config.JvmDefaultMode
+import org.jetbrains.kotlin.config.JvmDefaultMode.*
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.load.java.structure.LightClassOriginKind
@@ -70,11 +71,7 @@ class UnimplementedKotlinInterfaceMemberAnnotator : Annotator {
         if (hasJvmDefaultOrJvmStatic) return false
 
         val jvmDefaultMode = psiMethod.languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
-        if (jvmDefaultMode == JvmDefaultMode.ALL_COMPATIBILITY || jvmDefaultMode == JvmDefaultMode.ALL_INCOMPATIBLE) {
-            return false
-        }
-
-        return true
+        return jvmDefaultMode != ALL_COMPATIBILITY && jvmDefaultMode != ALL_INCOMPATIBLE
     }
 
     private val PsiMethod.isBinaryOrigin get() = (containingClass as? KtLightClassMarker)?.originKind == LightClassOriginKind.BINARY

@@ -98,7 +98,7 @@ private interface SdkPopupListener {
 internal class PlatformSdkPopupFactory : SdkPopupFactory {
   override fun createBuilder(): SdkPopupBuilder = SdkPopupBuilderImpl()
 
-  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder) = object : ActionHandler {
+  override fun createEditorNotificationPanelHandler(builder: SdkPopupBuilder): ActionHandler = object : ActionHandler {
     override fun handlePanelActionClick(panel: EditorNotificationPanel,
                                         event: HyperlinkEvent) {
       //FileEditorManager#addTopComponent wraps the panel to implement borders, unwrapping

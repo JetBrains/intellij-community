@@ -8,12 +8,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolKind
-import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.isExtensionCall
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -32,9 +32,8 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         if (symbol.symbolKind == KtSymbolKind.CLASS_MEMBER && !containingClassIsObject) return ImportStrategy.DoNothing
 
         val callableId = symbol.callableIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
-        if (callableId.isAlreadyImported()) return ImportStrategy.DoNothing
 
-        return if (symbol.isExtension || isFunctionalVariableCall && (symbol.returnType as? KtFunctionalType)?.hasReceiver == true) {
+        return if (symbol.isExtensionCall(isFunctionalVariableCall)) {
             ImportStrategy.AddImport(callableId)
         } else {
             ImportStrategy.InsertFqNameAndShorten(callableId)
@@ -46,11 +45,10 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
         if (symbol !is KtClassLikeSymbol) return ImportStrategy.DoNothing
 
         val classId = symbol.classIdIfNonLocal?.asSingleFqName() ?: return ImportStrategy.DoNothing
-        if (classId.isAlreadyImported()) return ImportStrategy.DoNothing
         return ImportStrategy.InsertFqNameAndShorten(classId)
     }
 
-    private fun FqName.isAlreadyImported(): Boolean {
+    fun FqName.isAlreadyImported(): Boolean {
         val importPath = ImportPath(this, isAllUnder = false)
         return importPath.isImported(defaultImports, excludedImports)
     }

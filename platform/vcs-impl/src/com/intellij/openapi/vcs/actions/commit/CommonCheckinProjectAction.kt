@@ -37,12 +37,8 @@ fun AnActionEvent.isCommonCommitActionHidden(): Boolean {
   }
 
   val commitMode = getProjectCommitMode()
-  if (commitMode is CommitMode.NonModalCommitMode && !commitMode.isToggleMode && isFromLocalChangesPlace()) {
-    // Hide from LocalChanges toolwindow in non-modal commit (we use a commit workflow button instead).
-    return true
-  }
-
-  return false
+  // Hide from LocalChanges toolwindow in non-modal commit (we use a commit workflow button instead).
+  return commitMode is CommitMode.NonModalCommitMode && !commitMode.isToggleMode && isFromLocalChangesPlace()
 }
 
 class CommonCheckinProjectAction : DumbAwareAction() {

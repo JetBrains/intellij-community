@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.ide.IdeBundle;
@@ -117,8 +117,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
-  @NotNull
-  public TableModelEditor<T> disableUpDownActions() {
+  public @NotNull TableModelEditor<T> disableUpDownActions() {
     toolbarDecorator.disableUpDownActions();
     return this;
   }
@@ -127,13 +126,12 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     table.setShowGrid(v);
   }
 
-  @NotNull
-  public TableModelEditor<T> enabled(boolean value) {
+  public @NotNull TableModelEditor<T> enabled(boolean value) {
     table.setEnabled(value);
     return this;
   }
 
-  public static abstract class DataChangedListener<T> implements TableModelListener {
+  public abstract static class DataChangedListener<T> implements TableModelListener {
     public abstract void dataChanged(@NotNull ColumnInfo<T, ?> columnInfo, int rowIndex);
 
     @Override
@@ -147,8 +145,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     return this;
   }
 
-  @NotNull
-  public ListTableModel<T> getModel() {
+  public @NotNull ListTableModel<T> getModel() {
     return model;
   }
 
@@ -230,8 +227,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     }
   }
 
-  @NotNull
-  public JComponent createComponent() {
+  public @NotNull JComponent createComponent() {
     return toolbarDecorator.addExtraAction(
       new ToolbarDecorator.ElementActionButton(IdeBundle.message("button.copy"), PlatformIcons.COPY_ICON) {
         @Override
@@ -258,13 +254,12 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     ).createPanel();
   }
 
-  @NotNull
   @Override
-  protected List<T> getItems() {
+  protected @NotNull List<T> getItems() {
     return model.items;
   }
 
-  public void selectItem(@NotNull final T item) {
+  public void selectItem(final @NotNull T item) {
     table.clearSelection();
 
     Ref<T> ref;
@@ -284,8 +279,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     table.addSelection(ref == null || ref.isNull() ? item : ref.get());
   }
 
-  @NotNull
-  public List<T> apply() {
+  public @NotNull List<T> apply() {
     if (helper.hasModifiedItems()) {
       @SuppressWarnings("unchecked")
       final ColumnInfo<T, Object>[] columns = model.getColumnInfos();
@@ -315,7 +309,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
     model.setItems(new ArrayList<>(items));
   }
 
-  private class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {
+  private final class MyRemoveAction implements AnActionButtonRunnable, AnActionButtonUpdater, TableUtil.ItemChecker {
     @Override
     public void run(AnActionButton button) {
       if (TableUtil.doRemoveSelectedItems(table, model, this)) {

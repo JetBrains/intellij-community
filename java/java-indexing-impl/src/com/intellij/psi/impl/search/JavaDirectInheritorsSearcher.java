@@ -198,7 +198,7 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     GlobalSearchScope globalUseScope = ReadAction.compute(
       () -> new JavaSourceFilterScope(GlobalSearchScopeUtil.toGlobalSearchScope(useScope, project)));
     Collection<PsiReferenceList> candidates =
-      dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
+      dumbService.runReadActionInSmartMode(() -> JavaSuperClassNameOccurenceIndex.getInstance().getOccurrences(baseClassName, project, globalUseScope));
 
     RelaxedDirectInheritorChecker checker = dumbService.runReadActionInSmartMode(() -> new RelaxedDirectInheritorChecker(baseClass));
     // memory/speed optimisation: it really is a map(string -> PsiClass or List<PsiClass>)
@@ -258,7 +258,8 @@ public class JavaDirectInheritorsSearcher implements QueryExecutor<PsiClass, Dir
     }
 
     Collection<PsiAnonymousClass> anonymousCandidates =
-      dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance().get(baseClassName, project, globalUseScope));
+      dumbService.runReadActionInSmartMode(() -> JavaAnonymousClassBaseRefOccurenceIndex.getInstance()
+        .getOccurences(baseClassName, project, globalUseScope));
 
     processConcurrentlyIfTooMany(anonymousCandidates, candidate-> {
       if (dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {

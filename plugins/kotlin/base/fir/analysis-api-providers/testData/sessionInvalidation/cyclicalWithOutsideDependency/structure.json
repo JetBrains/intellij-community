@@ -1,0 +1,11 @@
+{
+    "modules" : [
+        { "name": "A", "dependsOn": ["B"] },
+        { "name": "B", "dependsOn": ["C", "O"] },
+        { "name": "C", "dependsOn": ["A"] },
+        { "name": "O", "dependsOn": [] }
+    ],
+    "rootModule": "A",
+    "modulesToMakeOOBM": ["O"],
+    "expectedInvalidatedModules": ["A", "B", "C", "O"]
+}

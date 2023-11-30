@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.ui.tabs;
+package com.intellij.ui.tabs
 
 import com.intellij.ui.tabs.impl.TabLabel
 import java.awt.Font

@@ -15,72 +15,22 @@
  */
 package org.jetbrains.idea.maven.project;
 
-public class MavenProjectChanges {
+public abstract class MavenProjectChanges {
   public static final MavenProjectChanges NONE = createNoneChanges();
   public static final MavenProjectChanges ALL = createAllChanges();
   public static final MavenProjectChanges DEPENDENCIES = createDependenciesChanges();
 
-  /**
-   * @deprecated Use MavenProjectChangesBuilder instead
-   */
-  @Deprecated
-  MavenProjectChanges() {
-  }
+  public abstract boolean hasPackagingChanges();
 
-  /**
-   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
-   */
-  @Deprecated
-  public boolean packaging;
-  /**
-   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
-   */
-  @Deprecated
-  public boolean output;
-  /**
-   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
-   */
-  @Deprecated
-  public boolean sources;
-  /**
-   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
-   */
-  @Deprecated
-  public boolean dependencies;
-  /**
-   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
-   */
-  @Deprecated
-  public boolean plugins;
-  /**
-   * @deprecated Use the corresponding setter method or MavenProjectChangesBuilder instead
-   */
-  @Deprecated
-  public boolean properties;
+  public abstract boolean hasOutputChanges();
 
-  public boolean hasPackagingChanges() {
-    return packaging;
-  }
+  public abstract boolean hasSourceChanges();
 
-  public boolean hasOutputChanges() {
-    return output;
-  }
+  public abstract boolean hasDependencyChanges();
 
-  public boolean hasSourceChanges() {
-    return sources;
-  }
+  public abstract boolean hasPluginsChanges();
 
-  public boolean hasDependencyChanges() {
-    return dependencies;
-  }
-
-  public boolean hasPluginsChanges() {
-    return plugins;
-  }
-
-  public boolean hasPropertyChanges() {
-    return properties;
-  }
+  public abstract boolean hasPropertyChanges();
 
   public boolean hasChanges() {
     return hasPackagingChanges() ||

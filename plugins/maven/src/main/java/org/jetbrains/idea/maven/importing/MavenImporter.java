@@ -10,6 +10,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -109,13 +110,13 @@ public abstract class MavenImporter {
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void getSupportedDependencyScopes(Collection<? super String> result) { }
 
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
     return null;
   }
@@ -137,6 +138,7 @@ public abstract class MavenImporter {
   /**
    * Import pre process callback.
    */
+  @RequiresWriteLock
   public void preProcess(Module module,
                          MavenProject mavenProject,
                          MavenProjectChanges changes,
@@ -147,6 +149,7 @@ public abstract class MavenImporter {
    *
    * @param postTasks is deprecated, use {@link org.jetbrains.idea.maven.project.MavenImportListener} instead
    */
+  @RequiresWriteLock
   public void process(@NotNull IdeModifiableModelsProvider modifiableModelsProvider,
                       @NotNull Module module,
                       @NotNull MavenRootModelAdapter rootModel,
@@ -160,6 +163,7 @@ public abstract class MavenImporter {
   /**
    * Import post process callback.
    */
+  @RequiresWriteLock
   public void postProcess(Module module,
                           MavenProject mavenProject,
                           MavenProjectChanges changes,
@@ -199,5 +203,10 @@ public abstract class MavenImporter {
   protected @Nullable String findGoalConfigValue(MavenProject p, @NonNls String goal, @NonNls String path) {
     return MavenJDOMUtil.findChildValueByPath(getGoalConfig(p, goal), path);
   }
+
+  /**
+   * Override this method if you'd like control over properties used by Maven, e.g. for pom interpolation.
+   */
+  public void customizeUserProperties(@NotNull Project project, @NotNull MavenProject mavenProject, @NotNull Properties properties) { }
 
 }

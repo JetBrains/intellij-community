@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.tests.kotlin.test.junit
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.test.junit.JUnit5ConverterInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.test.junit.JUnit5ConverterInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinJUnit5ConverterInspectionTest9 : JUnit5ConverterInspectionTestBase() {
   fun `test qualified conversion`() {
@@ -93,6 +93,30 @@ class KotlinJUnit5ConverterInspectionTest9 : JUnit5ConverterInspectionTestBase()
               fun foo(param: (Boolean) -> Unit) = param(false)
               foo(Assertions::assertTrue)
           }
+      }
+    """.trimIndent(), "Migrate to JUnit 5")
+  }
+
+  fun `test remove public modifier`() {
+    myFixture.testQuickFix(JvmLanguage.KOTLIN, """
+      import org.junit.Test
+
+      public class Presen<caret>ter {
+          @Test
+          public fun testJUnit4() {}
+      
+          @org.junit.jupiter.api.Test
+          public fun testJUnit5() {}
+      }
+    """.trimIndent(), """
+      import org.junit.jupiter.api.Test
+
+      class Presenter {
+          @Test
+          fun testJUnit4() {}
+      
+          @org.junit.jupiter.api.Test
+          fun testJUnit5() {}
       }
     """.trimIndent(), "Migrate to JUnit 5")
   }

@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.EDT;
@@ -8,17 +9,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.function.Function;
 
 /**
- * Use to assert that no AWT events are pumped during some activity (e.g. action update, write operations, etc)
+ * Use to assert that no AWT events are pumped during some activity (e.g., action update, write operations, etc.)
  */
 public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
   private static final Logger LOG = Logger.getInstance(ProhibitAWTEvents.class);
-
-  private static long ourUseCount;
 
   private final String myActivityName;
   private final Function<? super AWTEvent, String> myErrorFunction;
@@ -41,39 +39,26 @@ public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
     return true;
   }
 
-  @NotNull
-  public static AccessToken start(@NotNull @NonNls String activityName) {
+  public static @NotNull AccessToken start(@NotNull @NonNls String activityName) {
     return doStart(activityName, null);
   }
 
-  @NotNull
-  public static AccessToken startFiltered(@NotNull @NonNls String activityName, @NotNull Function<? super AWTEvent, String> errorFunction) {
+  public static @NotNull AccessToken startFiltered(@NotNull @NonNls String activityName, @NotNull Function<? super AWTEvent, String> errorFunction) {
     return doStart(activityName, errorFunction);
   }
 
-  @NotNull
-  private static AccessToken doStart(@NotNull @NonNls String activityName, @Nullable Function<? super AWTEvent, String> errorFunction) {
+  private static @NotNull AccessToken doStart(@NotNull @NonNls String activityName, @Nullable Function<? super AWTEvent, String> errorFunction) {
     if (!EDT.isCurrentThreadEdt()) {
       return AccessToken.EMPTY_ACCESS_TOKEN;
     }
 
     ProhibitAWTEvents dispatcher = new ProhibitAWTEvents(activityName, errorFunction);
-    IdeEventQueue.getInstance().addPostprocessor(dispatcher, null);
-    ourUseCount ++;
+    IdeEventQueue.getInstance().addPostprocessor(dispatcher, (Disposable)null);
     return new AccessToken() {
       @Override
       public void finish() {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourUseCount--;
         IdeEventQueue.getInstance().removePostprocessor(dispatcher);
       }
     };
-  }
-
-  public static boolean areEventsProhibited() {
-    if (!SwingUtilities.isEventDispatchThread()) {
-      return false;
-    }
-    return ourUseCount != 0;
   }
 }

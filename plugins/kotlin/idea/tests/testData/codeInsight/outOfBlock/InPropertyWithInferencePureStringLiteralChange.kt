@@ -1,4 +1,4 @@
-// OUT_OF_CODE_BLOCK: FALSE
+// OUT_OF_CODE_BLOCK: TRUE
 class Test {
    val q = "aasdf<caret>"
 }

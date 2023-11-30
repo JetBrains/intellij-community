@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.remote;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -17,11 +17,9 @@ public abstract class PathMappingProvider {
     return ContainerUtil.filter(EP_NAME.getExtensions(), provider -> provider.accepts(data));
   }
 
-  @NotNull
-  public abstract String getProviderPresentableName(@NotNull RemoteSdkAdditionalData data);
+  public abstract @NotNull String getProviderPresentableName(@NotNull RemoteSdkAdditionalData data);
 
   public abstract boolean accepts(@Nullable RemoteSdkAdditionalData data);
 
-  @NotNull
-  public abstract PathMappingSettings getPathMappingSettings(@NotNull Project project, @NotNull RemoteSdkAdditionalData data);
+  public abstract @NotNull PathMappingSettings getPathMappingSettings(@NotNull Project project, @NotNull RemoteSdkAdditionalData data);
 }

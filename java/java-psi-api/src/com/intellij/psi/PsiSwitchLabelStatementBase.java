@@ -45,6 +45,7 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
   @Nullable PsiSwitchBlock getEnclosingSwitchBlock();
 
   /** @deprecated doesn't support "switch" expressions; use {@link #getEnclosingSwitchBlock()} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   default PsiSwitchStatement getEnclosingSwitchStatement() {
     PsiSwitchBlock block = getEnclosingSwitchBlock();
@@ -55,4 +56,11 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
    * @return list of case labels or null if it is incomplete
    */
   @Nullable PsiCaseLabelElementList getCaseLabelElementList();
+
+  /**
+   * @return guard expression declared in this switch label; null if none is declared
+   */
+  default @Nullable PsiExpression getGuardExpression() {
+    return null;
+  }
 }

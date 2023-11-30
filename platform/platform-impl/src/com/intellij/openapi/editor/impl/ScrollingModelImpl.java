@@ -123,8 +123,8 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     }
 
     Editor editor = mySupplier.getEditor();
-    VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
     AsyncEditorLoader.performWhenLoaded(editor, () -> {
+      VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
       LogicalPosition logicalPosition = editor.visualToLogicalPosition(visualPosition);
       for (ScrollRequestListener listener : myScrollRequestListeners) {
         listener.scrollRequested(logicalPosition, scrollType);
@@ -344,7 +344,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     Disposer.register(parentDisposable, () -> myScrollRequestListeners.remove(scrollRequestListener));
   }
 
-  private class AnimatedScrollingRunnable {
+  private final class AnimatedScrollingRunnable {
 
     private final int myStartHOffset;
     private final int myStartVOffset;

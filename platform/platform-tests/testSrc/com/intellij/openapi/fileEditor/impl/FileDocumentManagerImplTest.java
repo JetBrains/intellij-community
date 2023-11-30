@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
-import com.intellij.AppTopics;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -361,7 +360,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
             long oldStamp = getModificationStamp();
             setModificationStamp(newModificationStamp);
             setText(toString());
-            myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, self, oldStamp, getModificationStamp(), false));
+            myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, self, oldStamp, getModificationStamp()));
           }
         };
       }
@@ -417,7 +416,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       document.setModificationStamp(file.getModificationStamp());
     });
 
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void beforeDocumentSaving(@NotNull Document documentToSave) {
         assertNotSame(document, documentToSave);
@@ -436,7 +435,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
         long oldStamp = getModificationStamp();
         setModificationStamp(LocalTimeCounter.currentTime());
-        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp(), false));
+        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp()));
       }
     };
     Document document = myDocumentManager.getDocument(file);
@@ -461,7 +460,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
         long oldStamp = getModificationStamp();
         setModificationStamp(LocalTimeCounter.currentTime());
-        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp(), false));
+        myDocumentManager.contentsChanged(new VFileContentChangeEvent(null, this, oldStamp, getModificationStamp()));
       }
     };
 
@@ -494,7 +493,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
       myDocumentManager.saveDocument(document);
 
       getProject().getMessageBus().connect(getTestRootDisposable())
-        .subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+        .subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
           @Override
           public void beforeDocumentSaving(@NotNull Document documentToSave) {
             assertNotSame(document, documentToSave);
@@ -580,7 +579,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
         });
       }
     };
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, saveListener);
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(FileDocumentManagerListener.TOPIC, saveListener);
     final Document document = PsiDocumentManager.getInstance(getProject()).getDocument(file);
     assertNotNull(document);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(1, "y"));
@@ -657,7 +656,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     Document document = myDocumentManager.getDocument(file);
     ArrayList<Document> firedDocuments = new ArrayList<>();
 
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
         firedDocuments.add(document);
@@ -674,7 +673,7 @@ public class FileDocumentManagerImplTest extends HeavyPlatformTestCase {
     ArrayList<Document> firedDocuments = new ArrayList<>();
     ArrayList<Document> reallySavedDocuments = new ArrayList<>();
 
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
       @Override
       public void beforeAnyDocumentSaving(@NotNull Document document, boolean explicit) {
         firedDocuments.add(document);

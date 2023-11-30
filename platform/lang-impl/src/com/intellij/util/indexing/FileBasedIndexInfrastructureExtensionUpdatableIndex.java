@@ -9,25 +9,5 @@ public interface FileBasedIndexInfrastructureExtensionUpdatableIndex<K, V, I, D>
   @Override
   @NotNull IndexInfrastructureExtensionUpdateComputation mapInputAndPrepareUpdate(int inputId, @Nullable I content);
 
-  default void setIndexedStateForFile(int fileId, @NotNull IndexedFile file, boolean isProvidedByInfrastructureExtension) {
-    setIndexedStateForFile(fileId, file);
-  }
-
-  @Override
-  default void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
-    throw new IllegalStateException("not implemented");
-  }
-
-  default void setIndexedStateForFileOnFileIndexMetaData(int fileId,
-                                                         @Nullable D fileIndexMetaData,
-                                                         boolean isProvidedByInfrastructureExtension) {
-    setIndexedStateForFileOnFileIndexMetaData(fileId, fileIndexMetaData);
-  }
-
-  @Override
-  default void setIndexedStateForFileOnFileIndexMetaData(int fileId, @Nullable D fileIndexMetaData) {
-    throw new IllegalStateException("not implemented");
-  }
-
   UpdatableIndex<K, V, FileContent, D> getBaseIndex();
 }

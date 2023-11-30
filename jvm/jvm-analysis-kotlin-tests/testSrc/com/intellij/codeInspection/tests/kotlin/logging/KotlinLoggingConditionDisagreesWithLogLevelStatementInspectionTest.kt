@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin.logging
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.logging.LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTest : LoggingConditionDisagreesWithLogLevelStatementInspectionTestBase() {
   fun `test slf4j`() {
@@ -50,6 +50,54 @@ class KotlinLoggingConditionDisagreesWithLogLevelStatementInspectionTest : Loggi
           companion object {
               val LOG = LogManager.getLogger()
           }
+      }
+    """.trimIndent())
+  }
+
+  fun `test several logs`() {
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      
+      import org.slf4j.Logger
+      import org.slf4j.LoggerFactory
+
+      internal object X {
+          private val logger = LoggerFactory.getLogger()
+          fun test1() {
+              if (logger.isDebugEnabled) {
+                  try {
+                      something()
+                      logger.debug("a")
+                  } catch (e: Exception) {
+                      logger.error("a")
+                  }
+              }
+              if (logger.isDebugEnabled()) {
+                  try {
+                      something()
+                      logger.debug("a")
+                  } catch (e: Exception) {
+                      logger.error("a")
+                  }
+              }
+              if (logger.<warning descr="Level of condition 'INFO' does not match level of logging call 'DEBUG'"><warning descr="Level of condition 'INFO' does not match level of logging call 'ERROR'">isInfoEnabled</warning></warning>) {
+                  try {
+                      something()
+                      logger.debug("a")
+                  } catch (e: Exception) {
+                      logger.error("a")
+                  }
+              }
+              if (logger.<warning descr="Level of condition 'INFO' does not match level of logging call 'DEBUG'"><warning descr="Level of condition 'INFO' does not match level of logging call 'ERROR'">isInfoEnabled</warning></warning>()) {
+                  try {
+                      something()
+                      logger.debug("a")
+                  } catch (e: Exception) {
+                      logger.error("a")
+                  }
+              }
+          }
+
+          private fun something() {}
       }
     """.trimIndent())
   }

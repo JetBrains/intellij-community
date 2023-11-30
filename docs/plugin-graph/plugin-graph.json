@@ -2928,55 +2928,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "A0",
-    "name": "intellij.space.auth",
-    "n": "i.space.auth",
-    "package": "com.intellij.auth.jetbrains.team",
-    "sourceModule": "intellij.space.auth",
-    "descriptor": "plugins/space-auth/resources/META-INF/plugin.xml",
-    "pluginId": "jetbrains.team.auth",
-    "parent": "cA0",
-    "type": 2
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "hC",
-    "name": "intellij.space.auth/jps-caches",
-    "n": "i.space.auth/jps-caches",
-    "package": "com.intellij.auth.jetbrains.team.jpsCaches",
-    "sourceModule": "intellij.space.auth",
-    "descriptor": "plugins/space-auth/resources/intellij.space.auth.jps-caches.xml",
-    "parent": "cA0",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "tX",
-    "name": "intellij.space.auth/shared-indices",
-    "n": "i.space.auth/shared-indices",
-    "package": "com.intellij.auth.jetbrains.team.sharedIndexes",
-    "sourceModule": "intellij.space.auth",
-    "descriptor": "plugins/space-auth/resources/intellij.space.auth.shared-indices.xml",
-    "parent": "cA0",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "d9",
-    "name": "intellij.space.auth/exception-analyzer",
-    "n": "i.space.auth/exception-analyzer",
-    "package": "com.intellij.auth.jetbrains.team.exceptionAnalyzer",
-    "sourceModule": "intellij.space.auth",
-    "descriptor": "plugins/space-auth/resources/intellij.space.auth.exception-analyzer.xml",
-    "parent": "cA0",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "ccj",
     "n": "com.intellij.spring.batch"
   }

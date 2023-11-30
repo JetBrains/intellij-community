@@ -2,20 +2,22 @@
 package com.intellij.xdebugger.impl
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.progress.blockingContextToIndicator
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType
+import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import javax.swing.Icon
 
 internal class XDebuggerLineChangeHandler(
   scope: CoroutineScope,
-  private val handler: (EditorGutterComponentEx, XSourcePositionImpl, types: List<XLineBreakpointType<*>>) -> Unit
+  private val handler: (EditorGutterComponentEx, XSourcePositionImpl, icon: Icon?) -> Unit
 ) {
   private val lineChangedEvents = MutableSharedFlow<LineChangedEvent?>(extraBufferCapacity = 1,
                                                                        onBufferOverflow = BufferOverflow.DROP_OLDEST)
@@ -27,14 +29,11 @@ internal class XDebuggerLineChangeHandler(
           return@collectLatest
         }
         val (editor, position) = event
+        val project = editor.project ?: return@collectLatest
         try {
-          val types: List<XLineBreakpointType<*>> = readAction {
-            blockingContextToIndicator {
-              XBreakpointUtil.getAvailableLineBreakpointTypes(editor.project!!, position, editor)
-            }
-          }
+          val icon = project.service<XDebuggerLineChangeIconProvider>().getIcon(position, editor)
           withContext(Dispatchers.Main) {
-            handler(editor.gutter as EditorGutterComponentEx, position, types)
+            handler(editor.gutter as EditorGutterComponentEx, position, icon)
           }
         }
         catch (e: CancellationException) {
@@ -56,4 +55,15 @@ internal class XDebuggerLineChangeHandler(
   }
 
   private data class LineChangedEvent(val editor: Editor, val position: XSourcePositionImpl)
+}
+
+open class XDebuggerLineChangeIconProvider(val project: Project) {
+  open suspend fun getIcon(position: XSourcePositionImpl, editor: Editor): Icon? {
+    return readAction {
+      blockingContextToIndicator {
+        val types = XBreakpointUtil.getAvailableLineBreakpointTypes(project, position, editor)
+        types.firstOrNull()?.enabledIcon
+      }
+    }
+  }
 }

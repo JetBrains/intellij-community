@@ -24,14 +24,14 @@
  */
 package org.jetbrains.lang.manifest.highlighting;
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.project.Project;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.engine.Suggestion;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.EditDistance;
@@ -82,11 +82,13 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
 
           List<LocalQuickFix> fixes = new ArrayList<>();
           for (Suggestion match : matches) {
-            fixes.add(new HeaderRenameQuickFix(header, match.getWord()));
+            fixes.add(LocalQuickFix.from(new HeaderRenameQuickFix(header, match.getWord())));
             if (fixes.size() == MAX_SUGGESTIONS) break;
           }
           if (bestMatch == null || bestMatch.getMetrics() > TYPO_DISTANCE) {
-            fixes.add(new CustomHeaderQuickFix(header, CUSTOM_HEADERS));
+            fixes.add(new AddToInspectionOptionListFix<>(MisspelledHeaderInspection.this,
+                                                         ManifestBundle.message("inspection.header.remember.fix", headerName),
+                                                         headerName, inspection -> inspection.CUSTOM_HEADERS));
           }
           holder.registerProblem(
             header.getNameElement(), ManifestBundle.message("inspection.header.message"),
@@ -111,7 +113,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
     return pane(OptPane.stringList("CUSTOM_HEADERS", ManifestBundle.message("inspection.header.ui.label")));
   }
 
-  private static final class HeaderRenameQuickFix extends AbstractManifestQuickFix {
+  private static final class HeaderRenameQuickFix extends PsiUpdateModCommandAction<Header> {
     private final String myNewName;
 
     private HeaderRenameQuickFix(Header header, String newName) {
@@ -121,49 +123,18 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
 
     @NotNull
     @Override
-    public String getText() {
-      return ManifestBundle.message("inspection.header.rename.fix", myNewName);
+    public String getFamilyName() {
+      return ManifestBundle.message("inspection.header.rename.fix.family.name");
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      ((Header)startElement).setName(myNewName);
-    }
-  }
-
-  private static final class CustomHeaderQuickFix extends AbstractManifestQuickFix {
-    private final String myHeaderName;
-    private final Collection<String> myHeaders;
-
-    private CustomHeaderQuickFix(Header header, Collection<String> headers) {
-      super(header);
-      myHeaderName = header.getName();
-      myHeaders = headers;
-    }
-
-    @NotNull
-    @Override
-    public String getText() {
-      return ManifestBundle.message("inspection.header.remember.fix", myHeaderName);
+    protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull Header element) {
+      return Presentation.of(ManifestBundle.message("inspection.header.rename.fix", myNewName));
     }
 
     @Override
-    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
-      myHeaders.add(myHeaderName);
-
-      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      List<String> updated = new ArrayList<>(myHeaders);
-      updated.add(myHeaderName);
-      return IntentionPreviewInfo.addListOption(updated, myHeaderName, ManifestBundle.message("inspection.header.ui.label"));
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return false;
+    protected void invoke(@NotNull ActionContext context, @NotNull Header header, @NotNull ModPsiUpdater updater) {
+      header.setName(myNewName);
     }
   }
 }

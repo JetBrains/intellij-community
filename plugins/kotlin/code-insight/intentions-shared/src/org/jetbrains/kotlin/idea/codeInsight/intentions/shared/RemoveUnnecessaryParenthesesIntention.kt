@@ -3,13 +3,17 @@
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.appendSemicolonBeforeLambdaContainingElement
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 
+@ApiStatus.Internal
+@IntellijInternalApi
 class RemoveUnnecessaryParenthesesIntention : SelfTargetingRangeIntention<KtParenthesizedExpression>(
     KtParenthesizedExpression::class.java, KotlinBundle.lazyMessage("remove.unnecessary.parentheses")
 ) {
@@ -27,16 +31,17 @@ class RemoveUnnecessaryParenthesesIntention : SelfTargetingRangeIntention<KtPare
             innerExpression is KtBinaryExpression &&
             binaryExpressionParent.right == element
         ) {
-            binaryExpressionParent.replace(
-                KtPsiFactory(element.project).createExpressionByPattern(
-                    "$0 $1 $2 $3 $4",
-                    binaryExpressionParent.left!!.text,
-                    binaryExpressionParent.operationReference.text,
-                    innerExpression.left!!.text,
-                    innerExpression.operationReference.text,
-                    innerExpression.right!!.text,
-                )
+            val ktPsiFactory = KtPsiFactory(element.project)
+            val newElement = ktPsiFactory.createExpressionByPattern(
+                "$0 $1 $2 $3 $4",
+                binaryExpressionParent.left!!,
+                binaryExpressionParent.operationReference,
+                innerExpression.left!!,
+                innerExpression.operationReference,
+                innerExpression.right!!,
             )
+            val replace = binaryExpressionParent.replace(newElement)
+            replace.replace(ktPsiFactory.createExpression(replace.text))
         } else
             element.replace(innerExpression)
 

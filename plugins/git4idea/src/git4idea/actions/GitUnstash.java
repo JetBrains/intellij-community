@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -23,8 +23,7 @@ public class GitUnstash extends GitRepositoryAction {
    * {@inheritDoc}
    */
   @Override
-  @NotNull
-  protected String getActionName() {
+  protected @NotNull String getActionName() {
     return GitBundle.message("unstash.action.name");
   }
 
@@ -45,9 +44,9 @@ public class GitUnstash extends GitRepositoryAction {
    * {@inheritDoc}
    */
   @Override
-  protected void perform(@NotNull final Project project,
-                         @NotNull final List<VirtualFile> gitRoots,
-                         @NotNull final VirtualFile defaultRoot) {
+  protected void perform(final @NotNull Project project,
+                         final @NotNull List<VirtualFile> gitRoots,
+                         final @NotNull VirtualFile defaultRoot) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification(GitBundle.message("unstash.error.can.not.unstash.changes.now"))) return;
     GitUnstashDialog.showUnstashDialog(project, gitRoots, defaultRoot);

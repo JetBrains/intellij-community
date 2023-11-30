@@ -5,7 +5,13 @@ package org.jetbrains.kotlin.idea.structuralsearch.search
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchTest
 
 class KotlinSSThrowExpressionTest : KotlinStructuralSearchTest() {
-    override fun getBasePath(): String = "throwExpression"
+    fun testAnyException() { doTest("throw '_", """
+        fun fooOne() {
+            <warning descr="SSR">throw Exception()</warning>
+        }
 
-    fun testAnyException() { doTest("throw '_") }
+        fun fooTwo() {
+            println()
+        }
+    """.trimIndent()) }
 }

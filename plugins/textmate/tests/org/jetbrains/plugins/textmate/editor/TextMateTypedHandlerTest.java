@@ -44,6 +44,10 @@ public class TextMateTypedHandlerTest extends TextMateAcceptanceTestCase {
     doTest("`<caret>'", "tex", "'", "`'<caret>");
   }
 
+  public void testMultiCharBraces() {
+    doTest("/*<caret>", "js_hack", "*", "/**<caret> */");
+  }
+
   public void testDisabledSmartBraces() {
     doTest("\\<caret>", "text", "`", "\\`<caret>");
   }

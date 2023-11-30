@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.errorTreeView.impl;
 
 import com.intellij.ide.ExporterToTextFile;
@@ -14,7 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.TooManyListenersException;
 
-public class ErrorViewTextExporter implements ExporterToTextFile {
+public final class ErrorViewTextExporter implements ExporterToTextFile {
   private final JCheckBox myCbShowDetails;
   private final ErrorViewStructure myStructure;
   private ChangeListener myChangeListener;
@@ -48,16 +48,14 @@ public class ErrorViewTextExporter implements ExporterToTextFile {
   }
 
   @Override
-  @NotNull
-  public String getReportText() {
+  public @NotNull String getReportText() {
     StringBuffer buffer = new StringBuffer();
     getReportText(buffer, (ErrorTreeElement)myStructure.getRootElement(), myCbShowDetails.isSelected(), 0);
     return buffer.toString();
   }
 
   @Override
-  @NotNull
-  public String getDefaultFilePath() {
+  public @NotNull String getDefaultFilePath() {
     return "";
   }
 

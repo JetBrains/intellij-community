@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -60,7 +60,7 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
   /// Utility methods ///
 
   fun setSample(sample: LessonSample, setCaret: Boolean = true) {
-    taskInvokeLater(ModalityState.NON_MODAL) {
+    taskInvokeLater(ModalityState.nonModal()) {
       lessonExecutor.lesson.beforeCaretApplied()
       TemplateManagerImpl.getTemplateState(editor)?.gotoEnd()
       (editor as? EditorEx)?.isViewer = false

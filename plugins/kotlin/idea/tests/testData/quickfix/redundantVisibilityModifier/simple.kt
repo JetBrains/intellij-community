@@ -1,3 +1,5 @@
 // "Remove redundant 'public' modifier" "true"
 <caret>public class C {
 }
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase

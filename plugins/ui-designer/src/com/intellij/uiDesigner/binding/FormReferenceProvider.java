@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -98,15 +99,17 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     return Pair.getFirst(typeRangePair);
   }
 
-  public static void setGUIComponentType(PsiPlainTextFile file, String fieldName, String typeText) {
+  public static ModCommand setGUIComponentType(PsiPlainTextFile file, String fieldName, String typeText) {
     final Map<String, Pair<PsiType, TextRange>> fieldNameToTypeMap = getCachedData(file).myFieldNameToTypeMap;
     final Pair<PsiType, TextRange> typeRangePair = fieldNameToTypeMap.get(fieldName);
     if (typeRangePair != null) {
       final TextRange range = typeRangePair.getSecond();
       if (range != null) {
-        PsiDocumentManager.getInstance(file.getProject()).getDocument(file).replaceString(range.getStartOffset(), range.getEndOffset(), typeText);
+        return ModCommand.psiUpdate(file, f -> f.getViewProvider().getDocument()
+          .replaceString(range.getStartOffset(), range.getEndOffset(), typeText));
       }
     }
+    return ModCommand.nop();
   }
 
   private static void processReferences(final PsiPlainTextFile file, final PsiReferenceProcessor processor) {

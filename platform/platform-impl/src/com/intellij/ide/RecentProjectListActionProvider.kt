@@ -15,7 +15,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectTr
 open class RecentProjectListActionProvider {
   companion object {
     @JvmStatic
-    fun getInstance() = service<RecentProjectListActionProvider>()
+    fun getInstance(): RecentProjectListActionProvider = service<RecentProjectListActionProvider>()
   }
 
   internal fun collectProjectsWithoutCurrent(currentProject: Project): List<RecentProjectTreeItem> = collectProjects(currentProject)

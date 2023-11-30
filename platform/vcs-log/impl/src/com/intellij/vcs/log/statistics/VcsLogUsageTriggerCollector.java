@@ -41,6 +41,7 @@ public final class VcsLogUsageTriggerCollector extends CounterUsagesCollector {
     GROUP.registerEvent("history.shown",
                         EventFields.String("kind", List.of("multiple", "folder", "file")),
                         EventFields.Boolean("has_revision"));
+
   private static final EventId COLUMN_RESET = GROUP.registerEvent("column.reset");
   private static final EventId TAB_NAVIGATED = GROUP.registerEvent("tab.navigated");
   private static final EventId IDLE_INDEXER_STARTED = GROUP.registerEvent("idle.indexer.started");

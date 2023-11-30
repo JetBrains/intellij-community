@@ -5,24 +5,24 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataParser
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataState
-import org.jetbrains.plugins.gradle.jvmcompat.IdeVersionedDataStorage
+import org.jetbrains.plugins.gradle.jvmcompat.*
 
 internal object KotlinWizardVersionParser : IdeVersionedDataParser<KotlinWizardVersionState>() {
     override fun parseJson(data: JsonObject): KotlinWizardVersionState? {
-        val obj = data.takeIf { it.isJsonObject }?.asJsonObject ?: return null
+        val obj = data.asSafeJsonObject ?: return null
 
         val versionData = KotlinWizardVersionState()
 
-        versionData.kotlinPluginVersion = obj["kotlinVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.kotlinForComposeVersion = obj["kotlinForComposeVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.composeCompilerExtension = obj["composeCompilerExtension"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.minGradleFoojayVersion = obj["minGradleFoojayVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.gradleAndroidVersion = obj["gradleAndroidVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.foojayVersion = obj["foojayVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.failsafeVersion = obj["failsafeVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
-        versionData.surefireVersion = obj["surefireVersion"]?.takeIf { it.isJsonPrimitive }?.asString ?: return null
+        versionData.kotlinPluginVersion = obj["kotlinVersion"]?.asSafeString ?: return null
+        versionData.kotlinForComposeVersion = obj["kotlinForComposeVersion"]?.asSafeString ?: return null
+        versionData.composeCompilerExtension = obj["composeCompilerExtension"]?.asSafeString ?: return null
+        versionData.minGradleFoojayVersion = obj["minGradleFoojayVersion"]?.asSafeString ?: return null
+        versionData.minKotlinFoojayVersion = obj["minKotlinFoojayVersion"]?.asSafeString ?: return null
+        versionData.gradleAndroidVersion = obj["gradleAndroidVersion"]?.asSafeString ?: return null
+        versionData.foojayVersion = obj["foojayVersion"]?.asSafeString ?: return null
+        versionData.failsafeVersion = obj["failsafeVersion"]?.asSafeString ?: return null
+        versionData.surefireVersion = obj["surefireVersion"]?.asSafeString ?: return null
+        versionData.codehausMojoExecVersion = obj["codehausMojoExecVersion"]?.asSafeString ?: return null
 
         return versionData
     }
@@ -34,19 +34,23 @@ class KotlinWizardVersionState() : IdeVersionedDataState() {
         kotlinForComposeVersion: String,
         composeCompilerExtension: String,
         minGradleFoojayVersion: String,
+        minKotlinFoojayVersion: String,
         foojayVersion: String,
         failsafeVersion: String,
         surefireVersion: String,
-        gradleAndroidVersion: String
+        gradleAndroidVersion: String,
+        codehausMojoExecVersion: String
     ) : this() {
         this.kotlinPluginVersion = kotlinPluginVersion
         this.kotlinForComposeVersion = kotlinForComposeVersion
         this.composeCompilerExtension = composeCompilerExtension
         this.minGradleFoojayVersion = minGradleFoojayVersion
+        this.minKotlinFoojayVersion = minKotlinFoojayVersion
         this.foojayVersion = foojayVersion
         this.failsafeVersion = failsafeVersion
         this.surefireVersion = surefireVersion
         this.gradleAndroidVersion = gradleAndroidVersion
+        this.codehausMojoExecVersion = codehausMojoExecVersion
     }
 
 
@@ -54,10 +58,12 @@ class KotlinWizardVersionState() : IdeVersionedDataState() {
     var kotlinForComposeVersion by string()
     var composeCompilerExtension by string()
     var minGradleFoojayVersion by string()
+    var minKotlinFoojayVersion by string()
     var foojayVersion by string()
     var failsafeVersion by string()
     var surefireVersion by string()
     var gradleAndroidVersion by string()
+    var codehausMojoExecVersion by string()
 }
 
 @State(name = "KotlinWizardVersionStore", storages = [Storage("kotlin-wizard-data.xml")])
@@ -93,10 +99,12 @@ internal val DEFAULT_KOTLIN_WIZARD_VERSIONS = KotlinWizardVersionState(
     kotlinForComposeVersion = "$kotlinForComposeVersion",
     composeCompilerExtension = "$composeCompilerExtension",
     minGradleFoojayVersion = "$minGradleFoojayVersion",
+    minKotlinFoojayVersion = "$minKotlinFoojayVersion",
     foojayVersion = "$foojayVersion",
     failsafeVersion = "$failsafeVersion",
     surefireVersion = "$surefireVersion",
-    gradleAndroidVersion = "$gradleAndroidVersion"
+    gradleAndroidVersion = "$gradleAndroidVersion",
+    codehausMojoExecVersion = "$codehausMojoExecVersion"
 )
 """.trimIndent()
 }

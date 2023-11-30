@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.fir.uast.test
 
 import com.intellij.openapi.project.Project
@@ -124,6 +124,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveImplicitLambdaParameter(myFixture)
     }
 
+    fun testResolveImplicitLambdaParameter_binary() {
+        checkResolveImplicitLambdaParameter_binary(myFixture)
+    }
+
     fun testResolveSyntheticMethod() {
         checkResolveSyntheticMethod(myFixture)
     }
@@ -184,6 +188,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveKotlinPropertyAccessor(myFixture)
     }
 
+    fun testResolveBackingField() {
+        checkResolveBackingField(myFixture)
+    }
+
+    fun testResolveBackingFieldInCompanionObject() {
+        checkResolveBackingFieldInCompanionObject(myFixture)
+    }
+
     fun testResolveStaticImportFromObject() {
         checkResolveStaticImportFromObject(myFixture)
     }
@@ -218,5 +230,17 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testParentOfParameterOfCatchClause() {
         checkParentOfParameterOfCatchClause(myFixture)
+    }
+
+    fun testCompanionConstantAsVarargAnnotationValue() {
+        checkCompanionConstantAsVarargAnnotationValue(myFixture)
+    }
+
+    fun testResolveThisExpression() {
+        checkResolveThisExpression(myFixture)
+    }
+
+    fun testResolveThisExpressionAsLambdaReceiver() {
+        checkResolveThisExpressionAsLambdaReceiver(myFixture)
     }
 }

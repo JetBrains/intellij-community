@@ -1,12 +1,12 @@
 package org.jetbrains.plugins.notebooks.visualization
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 
 /**
@@ -30,7 +30,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
   }
 
   override fun intervalsIterator(startLine: Int): ListIterator<NotebookCellLines.Interval> {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.softAssertReadAccess()
     val ordinal = intervals.find { startLine <= it.lines.last }?.ordinal ?: intervals.size
     return intervals.listIterator(ordinal)
   }
@@ -53,7 +53,9 @@ class NonIncrementalCellLines private constructor(private val document: Document
         }.count()
 
         val trimAtEnd = oldCells.asReversed().zip(newCells.asReversed()).takeWhile { (oldCell, newCell) ->
-          oldCell.type == newCell.type && oldCell.size == newCell.size &&
+          oldCell.type == newCell.type &&
+          oldCell.language == newCell.language &&
+          oldCell.size == newCell.size &&
           oldCell != oldAffectedCells.lastOrNull() && newCell != newAffectedCells.lastOrNull()
         }.count()
 
@@ -69,7 +71,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
       modificationStamp = modificationStamp,
     )
 
-    catchExceptionsAndLogThem {
+    catchThrowableAndLog {
       intervalListeners.multicaster.documentChanged(event)
     }
   }
@@ -80,7 +82,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
     override fun beforeDocumentChange(event: DocumentEvent) {
       oldAffectedCells = getAffectedCells(intervals, document, TextRange(event.offset, event.offset + event.oldLength))
 
-      catchExceptionsAndLogThem {
+      catchThrowableAndLog {
         intervalListeners.multicaster.beforeDocumentChange(
           NotebookCellLinesEventBeforeChange(
             documentEvent = event,
@@ -92,7 +94,7 @@ class NonIncrementalCellLines private constructor(private val document: Document
     }
 
     override fun documentChanged(event: DocumentEvent) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed()
+      ThreadingAssertions.assertWriteAccess()
       val oldIntervals = intervals
       intervals = intervalsGenerator.makeIntervals(document)
 
@@ -101,12 +103,12 @@ class NonIncrementalCellLines private constructor(private val document: Document
     }
   }
 
-  private inline fun catchExceptionsAndLogThem(func: () -> Unit) {
+  private inline fun catchThrowableAndLog(func: () -> Unit) {
     try {
       func()
     }
-    catch (e: Exception) {
-      thisLogger().error("NotebookCellLines.IntervalListener shouldn't throw exceptions", e)
+    catch (t: Throwable) {
+      thisLogger().error("NotebookCellLines.IntervalListener shouldn't throw exceptions", t)
       // consume exception, otherwise this will prevent document updating. See DS-4305
     }
   }

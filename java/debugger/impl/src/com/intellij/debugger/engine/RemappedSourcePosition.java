@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 abstract class RemappedSourcePosition extends SourcePosition {
   private SourcePosition myDelegate;
@@ -22,7 +23,7 @@ abstract class RemappedSourcePosition extends SourcePosition {
   }
 
   @Override
-  public PsiElement getElementAt() {
+  public @Nullable PsiElement getElementAt() {
     checkRemap();
     return myDelegate.getElementAt();
   }

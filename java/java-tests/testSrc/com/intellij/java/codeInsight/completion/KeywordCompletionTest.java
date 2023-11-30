@@ -12,6 +12,9 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Objects;
+
 public class KeywordCompletionTest extends LightCompletionTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/keywords/";
 
@@ -30,23 +33,23 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
 
   public void testFileScope1() {
     doTest(8, "package", "public", "import", "final", "class", "interface", "abstract", "enum");
-    assertNotContainItems("private", "default");
+    assertNotContainItems("default");
   }
 
-  public void testFileScopeAfterComment() { doTest(4, "package", "class", "import", "public", "private"); }
-  public void testFileScopeAfterJavaDoc() { doTest(4, "package", "class", "import", "public", "private"); }
+  public void testFileScopeAfterComment() { doTest(5, "package", "class", "import", "public", "private"); }
+  public void testFileScopeAfterJavaDoc() { doTest(5, "package", "class", "import", "public", "private"); }
   public void testFileScopeAfterJavaDocInsideModifierList() { doTest(2, "class", "public"); }
-  public void testFileScope2() { doTest(10, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope1() { doTest(8, CLASS_SCOPE_KEYWORDS); }
-  public void testClassScope2() { doTest(7, CLASS_SCOPE_KEYWORDS); }
+  public void testFileScope2() { doTestContains("public", "private", "protected", "import", "final", "class", "interface", "abstract", "enum", "record", "sealed", "non-sealed"); }
+  public void testClassScope1() { doTestContains("final", "class", "interface", "abstract", "enum", "record", "sealed", "non-sealed"); }
+  public void testClassScope2() { doTestContains("public", "private", "protected", "class", "interface", "enum", "record", "sealed", "non-sealed"); }
   public void testClassScope3() { doTest(0, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope4() { doTest(11, CLASS_SCOPE_KEYWORDS_2); }
   public void testInnerClassScope() {
     doTest(11, CLASS_SCOPE_KEYWORDS_2); 
   }
   public void testInterfaceScope() { setLanguageLevel(LanguageLevel.JDK_1_8); doTest(8, INTERFACE_SCOPE_KEYWORDS); }
-  public void testAfterAnnotations() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed", null); }
-  public void testAfterAnnotationsWithParams() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed", null); }
+  public void testAfterAnnotations() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed"); }
+  public void testAfterAnnotationsWithParams() { doTest(9, "public", "final", "class", "interface", "abstract", "enum", "record", "non-sealed", "sealed"); }
   public void testAfterAnnotationsWithParamsInClass() { doTest(7, "public", "private", "final", "class", "interface", "abstract", "enum"); }
   public void testExtends1() { doTest(3, "extends", "implements", "permits", null); }
   public void testExtends2() { doTest(1, "extends", "implements", "AAA", "BBB", "instanceof"); }
@@ -260,5 +263,10 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   protected void doTest(int finalCount, String... values) {
     configureByTestName();
     testByCount(finalCount, values);
+  }
+
+  protected void doTestContains(String... values) {
+    configureByTestName();
+    assertContainsItems(Arrays.stream(values).filter(Objects::nonNull).toArray(String[]::new));
   }
 }

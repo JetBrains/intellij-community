@@ -2,6 +2,7 @@
 package com.intellij.ide.actionsOnSave.impl
 
 import com.intellij.ide.actions.SaveDocumentAction
+import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionResult
@@ -20,11 +21,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import kotlinx.coroutines.*
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 
 private val EP_NAME = ExtensionPointName<ActionsOnSaveFileDocumentManagerListener.ActionOnSave>("com.intellij.actionOnSave")
 
@@ -35,7 +35,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
      *
      * @param project it's initialized, open, not disposed, and not the default one; no need to double-check in implementations
      */
-    @RequiresWriteLock
+    @RequiresReadLock
     open fun isEnabledForProject(project: Project): Boolean = false
 
     /**
@@ -48,7 +48,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
   }
 
   /**
-   * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but bot yet performed.
+   * Not empty state of this set means that processing has been scheduled (invokeLater(...)) but not yet performed.
    */
   private val documentsToProcess = HashSet<Document>()
 
@@ -92,14 +92,14 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
     val processingAlreadyScheduled = !documentsToProcess.isEmpty()
     documentsToProcess.addAll(documents)
     if (!processingAlreadyScheduled) {
-      service<CurrentActionHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.NON_MODAL.asContextElement()) {
+      service<CurrentActionHolder>().coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
         processSavedDocuments()
       }
     }
   }
 
   private suspend fun processSavedDocuments() {
-    val documents = documentsToProcess.toArray(Document.EMPTY_ARRAY)
+    val documentsAndModStamps = documentsToProcess.map { it to it.modificationStamp }
     documentsToProcess.clear()
 
     val manager = FileDocumentManager.getInstance()
@@ -112,9 +112,12 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
       val index = ProjectFileIndex.getInstance(project)
       val projectDocuments = withContext(Dispatchers.Default) {
         readAction {
-          documents.filter { document ->
-            val file = manager.getFile(document)
-            file != null && index.isInContent(file)
+          documentsAndModStamps.mapNotNull {
+            val document = it.first
+            val modStamp = it.second
+            if (document.modificationStamp != modStamp) return@mapNotNull null // already edited after save
+            val file = manager.getFile(document) ?: return@mapNotNull null
+            if (index.isInContent(file)) document else null
           }
         }
       }
@@ -134,7 +137,7 @@ class ActionsOnSaveFileDocumentManagerListener : FileDocumentManagerListener {
   }
 }
 
-private class CurrentActionListener() : AnActionListener {
+private class CurrentActionListener : AnActionListener {
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
     if (action is SaveDocumentAction) {
       service<CurrentActionHolder>().runningSaveDocumentAction = true
@@ -146,7 +149,16 @@ private class CurrentActionListener() : AnActionListener {
   }
 }
 
+@VisibleForTesting
 @Service(Service.Level.APP)
-private class CurrentActionHolder(@JvmField val coroutineScope: CoroutineScope) {
+class CurrentActionHolder(@JvmField val coroutineScope: CoroutineScope) {
   var runningSaveDocumentAction = false
+
+  @TestOnly
+  fun waitForTasks() {
+    @Suppress("DEPRECATION")
+    runUnderModalProgressIfIsEdt {
+      coroutineScope.coroutineContext.job.children.toList().joinAll()
+    }
+  }
 }

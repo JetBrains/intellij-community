@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -35,7 +35,7 @@ import javax.swing.*;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
-class FindPopupScopeUIImpl implements FindPopupScopeUI {
+final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   static final ScopeType PROJECT = new ScopeType("Project", FindBundle.messagePointer("find.popup.scope.project"), EmptyIcon.ICON_0);
   static final ScopeType MODULE = new ScopeType("Module", FindBundle.messagePointer("find.popup.scope.module"), EmptyIcon.ICON_0);
   static final ScopeType DIRECTORY = new ScopeType("Directory", FindBundle.messagePointer("find.popup.scope.directory"), EmptyIcon.ICON_0);
@@ -86,9 +86,7 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myDirectoryChooser = new FindPopupDirectoryChooser(myFindPopupPanel);
 
     myScopeCombo = new ScopeChooserCombo();
-    Object selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScope(),
-                                            myHelper.getModel().getCustomScopeName(),
-                                            FindSettings.getInstance().getDefaultScopeName());
+    Object selection = ObjectUtils.coalesce(myHelper.getModel().getCustomScopeName(), FindSettings.getInstance().getDefaultScopeName());
     myScopeCombo.init(myProject, true, true, selection, new Condition<>() {
       //final String projectFilesScopeName = PsiBundle.message("psi.search.scope.project");
       final String moduleFilesScopeName;
@@ -218,7 +216,7 @@ class FindPopupScopeUIImpl implements FindPopupScopeUI {
     myFindPopupPanel.scheduleResultsUpdate();
   }
 
-  private ScopeType getScope(FindModel model) {
+  private static ScopeType getScope(FindModel model) {
     if (model.isCustomScope()) {
       return SCOPE;
     }

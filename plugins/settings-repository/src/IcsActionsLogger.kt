@@ -10,15 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.settingsRepository.SyncType
 
-internal class IcsActionsLogger: CounterUsagesCollector() {
+internal object IcsActionsLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("settings.repository", 2)
-    private val SYNC_SETTINGS = GROUP.registerEvent("sync.settings",
-                                                    EventFields.Enum<SyncType>("sync_type") { StringUtil.toLowerCase(it.name) })
-    fun logSettingsSync(project: Project?, type: SyncType) {
-      SYNC_SETTINGS.log(project, type)
-    }
+  private val GROUP = EventLogGroup("settings.repository", 2)
+  private val SYNC_SETTINGS = GROUP.registerEvent("sync.settings",
+                                                  EventFields.Enum<SyncType>("sync_type") { StringUtil.toLowerCase(it.name) })
+
+  fun logSettingsSync(project: Project?, type: SyncType) {
+    SYNC_SETTINGS.log(project, type)
   }
 }

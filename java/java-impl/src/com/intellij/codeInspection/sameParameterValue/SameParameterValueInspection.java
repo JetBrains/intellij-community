@@ -22,10 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.JavaRefactoringFactory;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -33,7 +30,10 @@ import com.intellij.refactoring.util.CommonJavaInlineUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.uast.UastHintedVisitorAdapter;
-import com.intellij.util.*;
+import com.intellij.util.CommonJavaRefactoringUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Contract;
@@ -51,10 +51,8 @@ import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool {
   private static final Logger LOG = Logger.getInstance(SameParameterValueInspection.class);
-  @PsiModifier.ModifierConstant
-  private static final String DEFAULT_HIGHEST_MODIFIER = PsiModifier.PROTECTED;
-  @PsiModifier.ModifierConstant
-  public String highestModifier = DEFAULT_HIGHEST_MODIFIER;
+  public static final AccessModifier DEFAULT_HIGHEST_MODIFIER = AccessModifier.PROTECTED;
+  public AccessModifier highestModifier = DEFAULT_HIGHEST_MODIFIER;
   public int minimalUsageCount = 1;
   public boolean ignoreWhenRefactoringIsComplicated = true;
 
@@ -77,7 +75,8 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
     if (refEntity instanceof RefMethod refMethod) {
 
       if (refMethod.hasSuperMethods() ||
-          VisibilityUtil.compare(refMethod.getAccessModifier(), highestModifier) < 0 ||
+          Objects.requireNonNull(AccessModifier.fromPsiModifier(refMethod.getAccessModifier())).compareTo(
+            Objects.requireNonNullElse(highestModifier, DEFAULT_HIGHEST_MODIFIER)) < 0 ||
           refMethod.isEntry()) {
         return null;
       }
@@ -115,21 +114,17 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
   protected boolean queryExternalUsagesRequests(@NotNull RefManager manager, @NotNull GlobalJavaInspectionContext globalContext,
                                                 @NotNull ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(@NotNull RefEntity refEntity) {
-        if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
-          refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(@NotNull RefMethod refMethod) {
-              if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
-              globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
-                @Override
-                public boolean process(PsiReference psiReference) {
-                  processor.ignoreElement(refMethod);
-                  return false;
-                }
-              });
-            }
-          });
-        }
+      @Override
+      public void visitMethod(@NotNull RefMethod refMethod) {
+        if (processor.getDescriptions(refMethod) == null) return;
+        if (PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) return;
+        globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
+          @Override
+          public boolean process(PsiReference psiReference) {
+            processor.ignoreElement(refMethod);
+            return false;
+          }
+        });
       }
     });
 
@@ -402,7 +397,8 @@ public class SameParameterValueInspection extends GlobalJavaBatchInspectionTool 
         public boolean visitMethod(@NotNull UMethod method) {
           PsiMethod javaMethod = method.getJavaPsi();
           if (method.isConstructor() ||
-              VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(javaMethod.getModifierList()), myGlobal.highestModifier) < 0) {
+              AccessModifier.fromModifierList(javaMethod.getModifierList()).compareTo(
+                Objects.requireNonNullElse(myGlobal.highestModifier, DEFAULT_HIGHEST_MODIFIER)) < 0) {
             return true;
           }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
 import com.intellij.codeInsight.daemon.LineMarkerSettings;
@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
-public class ThemeColorAnnotator implements Annotator {
+final class ThemeColorAnnotator implements Annotator {
 
   private static final Pattern COLOR_HEX_PATTERN_RGB = Pattern.compile("^#([A-Fa-f0-9]{6})$");
   private static final Pattern COLOR_HEX_PATTERN_RGBA = Pattern.compile("^#([A-Fa-f0-9]{8})$");

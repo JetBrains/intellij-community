@@ -37,7 +37,7 @@ public final class FSOperations {
   /**
    * @return true if file is marked as "dirty" in the specified compilation round
    */
-  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) throws IOException {
+  public static boolean isMarkedDirty(CompileContext context, final CompilationRound round, final File file) {
     final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
@@ -276,7 +276,7 @@ public final class FSOperations {
                                              final BuildRootDescriptor rd,
                                              final CompilationRound round,
                                              final File file,
-                                             @NotNull final StampsStorage<? extends StampsStorage.Stamp> stampStorage,
+                                             final @NotNull StampsStorage<? extends StampsStorage.Stamp> stampStorage,
                                              final boolean forceDirty,
                                              @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
 
@@ -371,7 +371,7 @@ public final class FSOperations {
     }
   }
 
-  public static void pruneEmptyDirs(CompileContext context, @Nullable final Set<File> dirsToDelete) {
+  public static void pruneEmptyDirs(CompileContext context, final @Nullable Set<File> dirsToDelete) {
     if (dirsToDelete == null || dirsToDelete.isEmpty()) {
       return;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project
 
 import com.intellij.openapi.Disposable
@@ -6,17 +6,22 @@ import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ProjectExtensionPointName
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.*
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.Topic
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Unmodifiable
 import javax.swing.JComponent
 
 /**
@@ -62,7 +67,10 @@ abstract class DumbService {
    * Pause the current thread until dumb mode ends and then continue execution.
    * NOTE: there are no guarantees that a new dumb mode won't begin before the next statement.
    * Hence: use with care. Consider using [runWhenSmart] or [runReadActionInSmartMode] instead
+   *
+   * See [Project.waitForSmartMode] for using in a suspend context.
    */
+  @RequiresBlockingContext
   abstract fun waitForSmartMode()
 
   /**
@@ -77,13 +85,24 @@ abstract class DumbService {
     return result.get()
   }
 
-  fun <T> tryRunReadActionInSmartMode(task: Computable<T>, notification: @NlsContexts.PopupContent String?): T? {
+  /**
+   * Backward compatibility for plugins, use [tryRunReadActionInSmartMode] with [DumbModeBlockedFunctionality] instead
+   */
+  @Obsolete
+  fun <T> tryRunReadActionInSmartMode(task: Computable<T>,
+                                      notification: @NlsContexts.PopupContent String?): T? {
+    return tryRunReadActionInSmartMode(task, notification, DumbModeBlockedFunctionality.Other)
+  }
+
+  fun <T> tryRunReadActionInSmartMode(task: Computable<T>,
+                                      notification: @NlsContexts.PopupContent String?,
+                                      functionality: DumbModeBlockedFunctionality): T? {
     return if (ApplicationManager.getApplication().isReadAccessAllowed) {
       try {
         task.compute()
       }
       catch (e: IndexNotReadyException) {
-        notification?.let { showDumbModeNotification(it) }
+        notification?.let { showDumbModeNotificationForFunctionality(it, functionality) }
         null
       }
     }
@@ -158,7 +177,7 @@ abstract class DumbService {
    * @see isDumbAware
    */
   fun <T> filterByDumbAwareness(array: Array<T>): List<T> {
-    return filterByDumbAwareness(listOf(*array))
+    return filterByDumbAwareness(array.toList())
   }
 
   /**
@@ -166,9 +185,9 @@ abstract class DumbService {
    * @see isDumbAware
    */
   @Contract(pure = true)
-  fun <T> filterByDumbAwareness(collection: Collection<T>): List<T> {
+  fun <T> filterByDumbAwareness(collection: Collection<T>): @Unmodifiable List<T> {
     if (isDumb) {
-      val result: MutableList<T> = ArrayList(collection.size)
+      val result = ArrayList<T>(collection.size)
       for (element in collection) {
         if (isDumbAware(element)) {
           result.add(element)
@@ -176,7 +195,7 @@ abstract class DumbService {
       }
       return result
     }
-    return if (collection is List<*>) collection as List<T> else ArrayList(collection)
+    return if (collection is List<*>) collection as List<T> else collection.toImmutableList()
   }
 
   /**
@@ -252,16 +271,26 @@ abstract class DumbService {
   }
 
   /**
-   * Show a notification when given action is not available during dumb mode.
+   * Use [showDumbModeNotificationForAction] or [showDumbModeNotificationForFunctionality] instead
    */
+  @Obsolete
   abstract fun showDumbModeNotification(message: @NlsContexts.PopupContent String)
+
+  /**
+   * Show a notification when given functionality is not available during dumb mode.
+   */
+  abstract fun showDumbModeNotificationForFunctionality(message: @NlsContexts.PopupContent String,
+                                                        functionality: DumbModeBlockedFunctionality)
+
+  abstract fun showDumbModeNotificationForAction(message: @NlsContexts.PopupContent String, actionId: String?)
 
   /**
    * Shows balloon about indexing blocking those actions until it is hidden (by key input, mouse event, etc.) or indexing stops.
    * @param runWhenSmartAndBalloonStillShowing will be executed in smart mode on EDT, balloon won't be dismissed by user's actions
    */
   abstract fun showDumbModeActionBalloon(balloonText: @NlsContexts.PopupContent String,
-                                         runWhenSmartAndBalloonStillShowing: Runnable)
+                                         runWhenSmartAndBalloonStillShowing: Runnable,
+                                         actionIds: List<String>)
 
   abstract val project: Project
 
@@ -374,7 +403,7 @@ abstract class DumbService {
   companion object {
     @JvmField
     @Topic.ProjectLevel
-    val DUMB_MODE = Topic("dumb mode", DumbModeListener::class.java, Topic.BroadcastDirection.NONE)
+    val DUMB_MODE: Topic<DumbModeListener> = Topic("dumb mode", DumbModeListener::class.java, Topic.BroadcastDirection.NONE)
 
     @JvmStatic
     fun isDumb(project: Project): Boolean {
@@ -386,30 +415,36 @@ abstract class DumbService {
       val point = extensionPoint.point
       val size = point.size()
       if (size == 0) {
-        return emptyList()
+        return persistentListOf()
       }
+
       if (!getInstance(project).isDumb) {
         return point.extensionList
       }
-      val result: MutableList<T> = ArrayList(size)
-      for (element in point as ExtensionPointImpl<T>) {
-        if (isDumbAware(element)) {
-          result.add(element!!)
+
+      val result = ArrayList<T>(size)
+      for (item in extensionPoint.filterableLazySequence()) {
+        val aClass = item.implementationClass ?: continue
+        if (DumbAware::class.java.isAssignableFrom(aClass)) {
+          result.add(item.instance ?: continue)
+        }
+        else if (PossiblyDumbAware::class.java.isAssignableFrom(aClass)) {
+          val instance = item.instance ?: continue
+          if ((instance as PossiblyDumbAware).isDumbAware) {
+            result.add(instance)
+          }
         }
       }
       return result
     }
 
     @JvmStatic
-    fun <T: Any> getDumbAwareExtensions(project: Project, extensionPoint: ProjectExtensionPointName<T>): List<T> {
-      val dumbService = getInstance(project)
-      return dumbService.filterByDumbAwareness(extensionPoint.getExtensions(project))
+    fun <T: Any> getDumbAwareExtensions(project: Project, extensionPoint: ProjectExtensionPointName<T>): @Unmodifiable List<T> {
+      return getInstance(project).filterByDumbAwareness(extensionPoint.getExtensions(project))
     }
 
     @JvmStatic
-    fun getInstance(project: Project): DumbService {
-      return project.getService(DumbService::class.java)
-    }
+    fun getInstance(project: Project): DumbService = project.service()
 
     @Suppress("SSBasedInspection")
     @JvmStatic

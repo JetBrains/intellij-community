@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -138,6 +138,11 @@ public interface Configurable extends UnnamedConfigurable {
   @Contract(pure = true)
   String getDisplayName();
 
+  @ApiStatus.Internal
+  default @Nullable String getDisplayNameFast() {
+    return getDisplayName();
+  }
+
   /**
    * Returns the topic in the help file which is shown when help for the configurable is requested.
    *
@@ -174,6 +179,13 @@ public interface Configurable extends UnnamedConfigurable {
    */
   interface Beta {
 
+  }
+
+  /**
+   * This marker interface tells the Settings dialog to show a lock icon for the configurable.
+   */
+  interface Promo {
+    @NotNull Icon getPromoIcon();
   }
 
   /**

@@ -19,7 +19,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.util.*
 
-class StatefulEpInspection : DevKitUastInspectionBase(UField::class.java, UClass::class.java) {
+internal class StatefulEpInspection : DevKitUastInspectionBase(UField::class.java, UClass::class.java) {
 
   override fun checkField(field: UField, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val uClass = field.getContainingUClass() ?: return ProblemDescriptor.EMPTY_ARRAY
@@ -107,7 +107,7 @@ class StatefulEpInspection : DevKitUastInspectionBase(UField::class.java, UClass
         override fun visitSimpleNameReferenceExpression(node: USimpleNameReferenceExpression): Boolean {
           val expressionPsi = node.sourcePsi ?: return super.visitSimpleNameReferenceExpression(node)
           if (argumentList == null || !PsiTreeUtil.isAncestor(argumentList, expressionPsi, true)) {
-            val refElement = node.resolveToUElement() as? UVariable ?: return super.visitSimpleNameReferenceExpression(node)
+            val refElement = node.resolveToUElementOfType<UVariable>() ?: return super.visitSimpleNameReferenceExpression(node)
             val containingClass = refElement.getUastParentOfType<UClass>() ?: return super.visitSimpleNameReferenceExpression(node)
             if (isPsiAncestor(containingClass, uClass, true)) {
               capturedPoints.add(CapturedDescriptor(node, refElement))

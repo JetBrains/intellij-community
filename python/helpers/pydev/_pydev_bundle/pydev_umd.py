@@ -156,8 +156,7 @@ def runfile(filename, args=None, wdir=None, is_module=False, global_vars=None):
 
     if global_vars is None:
         m = save_main_module(filename, 'pydev_umd')
-        global_vars = _get_interpreter_globals()
-        global_vars.update(m.__dict__)
+        global_vars = m.__dict__
         try:
             global_vars['__builtins__'] = __builtins__
         except NameError:

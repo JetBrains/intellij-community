@@ -31,9 +31,8 @@ public abstract class LeafElement extends TreeElement {
     myText = text;
   }
 
-  @NotNull
   @Override
-  public LeafElement clone() {
+  public @NotNull LeafElement clone() {
     LeafElement clone = (LeafElement)super.clone();
     clone.clearCaches();
     return clone;
@@ -44,15 +43,13 @@ public abstract class LeafElement extends TreeElement {
     return myText.length();
   }
 
-  @NotNull
   @Override
-  public CharSequence getChars() {
+  public @NotNull CharSequence getChars() {
     return myText;
   }
 
-  @NotNull
   @Override
-  public String getText() {
+  public @NotNull String getText() {
     CharSequence text = myText;
     if (text.length() > 1000 && !(text instanceof String)) { // e.g. a large text file
       String cachedText = dereference(getUserData(CACHED_TEXT));
@@ -128,8 +125,7 @@ public abstract class LeafElement extends TreeElement {
     return start + length;
   }
 
-  @NotNull
-  public LeafElement rawReplaceWithText(@NotNull String newText) {
+  public @NotNull LeafElement rawReplaceWithText(@NotNull String newText) {
     LeafElement newLeaf = ASTFactory.leaf(getElementType(), newText);
     copyUserDataTo(newLeaf);
     rawReplaceWithList(newLeaf);
@@ -137,8 +133,7 @@ public abstract class LeafElement extends TreeElement {
     return newLeaf;
   }
 
-  @NotNull
-  public LeafElement replaceWithText(@NotNull String newText) {
+  public @NotNull LeafElement replaceWithText(@NotNull String newText) {
     LeafElement newLeaf = ChangeUtil.copyLeafWithText(this, newText);
     getTreeParent().replaceChild(this, newLeaf);
     return newLeaf;
@@ -184,14 +179,12 @@ public abstract class LeafElement extends TreeElement {
   }
 
   @Override
-  @Nullable
-  public ASTNode findChildByType(@NotNull TokenSet typesSet) {
+  public @Nullable ASTNode findChildByType(@NotNull TokenSet typesSet) {
     return null;
   }
 
   @Override
-  @Nullable
-  public ASTNode findChildByType(@NotNull TokenSet typesSet, @Nullable ASTNode anchor) {
+  public @Nullable ASTNode findChildByType(@NotNull TokenSet typesSet, @Nullable ASTNode anchor) {
     return null;
   }
 

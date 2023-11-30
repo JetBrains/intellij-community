@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.tracing;
 
 import org.jetbrains.annotations.NonNls;
@@ -138,7 +138,7 @@ public class MethodTracer {
     private static final ThreadLocal<Boolean> isDispatchThread = ThreadLocal.withInitial(() -> SwingUtilities.isEventDispatchThread());
 
     //atomic reference to an immutable map, it has better read performance than ConcurrentHashMap
-    private static class MyConcurrentMap<K, V> {
+    private static final class MyConcurrentMap<K, V> {
 
         private final AtomicReference<Map<K, V>> myReference = new AtomicReference<>(Collections.emptyMap());
 

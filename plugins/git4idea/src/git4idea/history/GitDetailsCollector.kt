@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.diagnostic.telemetry.TelemetryTracer
-import com.intellij.platform.diagnostic.telemetry.impl.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.util.ArrayUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
@@ -15,6 +15,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitCommit
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
+import git4idea.telemetry.GitTelemetrySpan
 import java.util.function.Consumer
 
 internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetadata>(protected val project: Project,
@@ -49,7 +50,7 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
                                          vararg parameters: String) {
     val factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project) ?: return
 
-    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters(project)), *parameters)
+    val commandParameters = ArrayUtil.mergeArrays(ArrayUtil.toStringArray(requirements.commandParameters(project, handler.executable)), *parameters)
     if (requirements.diffInMergeCommits == GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS) {
       val consumer = { records: List<R> ->
         val firstRecord = records.first()
@@ -86,13 +87,15 @@ internal abstract class GitDetailsCollector<R : GitLogRecord, C : VcsCommitMetad
     handler.addParameters("--name-status")
     handler.endOptions()
 
-    runWithSpan(TelemetryTracer.getInstance().getTracer(VcsScope), "loading details") { span ->
-      span.setAttribute("rootName", root.name)
+    TelemetryManager.getInstance().getTracer(VcsScope)
+      .spanBuilder(GitTelemetrySpan.Log.LoadingFullCommitDetails.name)
+      .useWithScopeBlocking { span ->
+        span.setAttribute("rootName", root.name)
 
-      val handlerListener = GitLogOutputSplitter(handler, parser, converter)
-      Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
-      handlerListener.reportErrors()
-    }
+        val handlerListener = GitLogOutputSplitter(handler, parser, converter)
+        Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError()
+        handlerListener.reportErrors()
+      }
   }
 
   protected abstract fun createRecordsCollector(consumer: (List<R>) -> Unit): GitLogRecordCollector<R>

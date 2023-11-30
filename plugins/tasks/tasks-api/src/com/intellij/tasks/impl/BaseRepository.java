@@ -13,13 +13,14 @@ import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -33,6 +34,7 @@ public abstract class BaseRepository extends TaskRepository {
   protected boolean myLoginAnonymously;
   protected CustomTaskState myPreferredOpenTaskState;
   protected CustomTaskState myPreferredCloseTaskState;
+  protected boolean myPasswordLoaded;
 
   public BaseRepository(TaskRepositoryType type) {
     super(type);
@@ -65,6 +67,10 @@ public abstract class BaseRepository extends TaskRepository {
 
   @Transient
   public String getPassword() {
+    if (!myPasswordLoaded) {
+      myPasswordLoaded = true;
+      loadPassword();
+    }
     return myPassword;
   }
 
@@ -83,8 +89,7 @@ public abstract class BaseRepository extends TaskRepository {
     }
   }
 
-  @Override
-  public void initializeRepository() {
+  private void loadPassword() {
     if (StringUtil.isEmpty(getPassword())) {
       CredentialAttributes attributes = getAttributes();
       Credentials credentials = PasswordSafe.getInstance().get(attributes);

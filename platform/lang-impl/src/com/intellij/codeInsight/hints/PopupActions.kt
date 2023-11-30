@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ImaginaryEditor
@@ -40,7 +41,7 @@ class ShowSettingsWithAddedPattern : AnAction() {
     templatePresentation.text = CodeInsightBundle.message("inlay.hints.show.settings", "_")
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
@@ -65,9 +66,9 @@ class ShowSettingsWithAddedPattern : AnAction() {
   }
 }
 
-class ShowParameterHintsSettings : AnAction() {
+class ShowParameterHintsSettings : AnAction(), ActionRemoteBehaviorSpecification.Frontend {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     showParameterHintsDialog(e) {null}
@@ -262,9 +263,9 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 }
 
 
-class ToggleInlineHintsAction : AnAction() {
+class ToggleInlineHintsAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     if (!InlayParameterHintsExtension.hasAnyExtensions()) {

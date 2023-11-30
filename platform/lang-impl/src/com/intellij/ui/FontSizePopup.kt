@@ -6,7 +6,6 @@ package com.intellij.ui
 
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.options.FontSize
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -74,16 +73,18 @@ fun <T> showFontSizePopup(
 
 data class FontSizePopupData(val slider: JBSlider)
 
-// Basically an observable value. Can be generified to work with any values.
-interface FontSizeModel {
+// Basically an observable value
+interface FontSizeModel<T> {
 
-  var value: FontSize
+  var value: T
+
+  val values: List<T>
 
   /**
    * The returned flow immediately emits [value] when collected.
    * The returned flow never completes.
    */
-  val updates: Flow<FontSize>
+  val updates: Flow<T>
 }
 
 /**
@@ -94,7 +95,7 @@ interface FontSizeModel {
  * - changing the value will update the slider presentation.
  */
 @RequiresEdt
-fun showFontSizePopup(model: FontSizeModel, anchor: JComponent) {
+fun <T> showFontSizePopup(model: FontSizeModel<T>, anchor: JComponent) {
   EDT.assertIsEdt()
   val popup = createFontSizePopup(model)
   val location = MouseInfo.getPointerInfo().location
@@ -107,8 +108,8 @@ fun showFontSizePopup(model: FontSizeModel, anchor: JComponent) {
 }
 
 // This function can be generified to work with any enums.
-private fun createFontSizePopup(model: FontSizeModel): JBPopup {
-  val values = FontSize.values()
+private fun <T> createFontSizePopup(model: FontSizeModel<T>): JBPopup {
+  val values = model.values
 
   val slider = JBSlider(0, values.size - 1).also {
     it.orientation = SwingConstants.HORIZONTAL
@@ -127,7 +128,10 @@ private fun createFontSizePopup(model: FontSizeModel): JBPopup {
     // The size can be changed externally, e.g. by scrolling mouse wheel.
     // This coroutine reflects the model changes in the UI.
     model.updates.collect {
-      slider.value = it.ordinal
+      val index = values.indexOf(it)
+      if (index >= 0) {
+        slider.value = index
+      }
     }
   }
 

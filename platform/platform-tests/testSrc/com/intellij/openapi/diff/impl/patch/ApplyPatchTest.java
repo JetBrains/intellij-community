@@ -92,6 +92,10 @@ public class ApplyPatchTest extends HeavyPlatformTestCase {
     doTest(1, ApplyPatchStatus.SUCCESS);
   }
 
+  public void testContextDiffSingleSpaceTrimmed() throws Exception {
+    doTest(1, ApplyPatchStatus.SUCCESS);
+  }
+
   public void testNoNewlineAtEof() throws Exception {
     doTest(1, ApplyPatchStatus.SUCCESS);
   }

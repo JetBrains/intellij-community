@@ -6,22 +6,22 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.LibraryId;
+import com.intellij.platform.workspace.storage.EntityReference;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.util.SmartList;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
-import com.intellij.workspaceModel.storage.EntityReference;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.HashSet;
 
-class OriginClassifier {
+final class OriginClassifier {
   private static final Logger LOG = Logger.getInstance(OriginClassifier.class);
   public final EntityStorage entityStorage;
   public final Collection<EntityReference<?>> entityReferences = new HashSet<>();
@@ -47,7 +47,7 @@ class OriginClassifier {
 
   private void doClassify(@NotNull WorkspaceFileIndexEx workspaceFileIndex, @NotNull VirtualFile file) {
     WorkspaceFileInternalInfo fileInfo =
-      workspaceFileIndex.getFileInfo(file, true, true, true, true);
+      workspaceFileIndex.getFileInfo(file, true, true, true, true, true);
     if (fileInfo == WorkspaceFileInternalInfo.NonWorkspace.IGNORED || fileInfo == WorkspaceFileInternalInfo.NonWorkspace.EXCLUDED) {
       //excluded files should be ignored by indexableSetContributors
       return;

@@ -35,7 +35,7 @@ internal class LightServiceMustBeFinalInspection : DevKitJvmInspection() {
           holder.registerProblem(elementToReport, message, ProblemHighlightType.GENERIC_ERROR, *fixes)
         }
         else {
-          val errorMessageProvider = LightServiceMustBeFinalErrorMessageProviders.forLanguage(sourceElement.language)
+          val errorMessageProvider = getProvider(LightServiceMustBeFinalErrorMessageProviders, sourceElement.language) ?: return true
           val message = errorMessageProvider.provideErrorMessage()
           val actions = createModifierActions(sourceElement, modifierRequest(JvmModifier.FINAL, true))
           val fixes = IntentionWrapper.wrapToQuickFixes(actions.toTypedArray(), file)

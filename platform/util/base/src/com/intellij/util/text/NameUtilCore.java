@@ -9,6 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class NameUtilCore {
+
+  private static final int KANA_START = 0x3040;
+  private static final int KANA_END = 0x3358;
+  private static final int KANA2_START = 0xFF66;
+  private static final int KANA2_END = 0xFF9D;
+
   /**
    * Splits an identifier into words, separated with underscores or upper-case characters
    * (camel-case).
@@ -99,8 +105,14 @@ public final class NameUtilCore {
     return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1)) || isHardCodedWordStart(text, i) ||
            isKanaBreak(cur, prev);
   }
+  
+  private static boolean maybeKana(int codePoint) {
+    return codePoint >= KANA_START && codePoint <= KANA_END ||
+           codePoint >= KANA2_START && codePoint <= KANA2_END;
+  }
 
   private static boolean isKanaBreak(int cur, int prev) {
+    if (!maybeKana(cur) && !maybeKana(prev)) return false;
     Character.UnicodeScript curScript = Character.UnicodeScript.of(cur);
     Character.UnicodeScript prevScript = Character.UnicodeScript.of(prev);
     if (prevScript == curScript) return false;

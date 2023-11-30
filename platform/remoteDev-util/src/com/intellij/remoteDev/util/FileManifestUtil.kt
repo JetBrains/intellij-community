@@ -5,7 +5,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.*
+import com.intellij.util.io.Decompressor
+import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.toByteArray
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
@@ -17,7 +19,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.function.BiConsumer
 import kotlin.io.path.*
-import kotlin.io.path.exists
 import com.intellij.util.io.Decompressor.Entry.Type as EntryType
 
 @ApiStatus.Experimental
@@ -187,19 +188,19 @@ object FileManifestUtil {
 
     val start = getFileFirstBytes(archiveFile, 2)
 
-    val manifestor = ManifestGenerator(targetDir, includeInManifest, includeModifiedDate, progress, archiveFile.size())
+    val manifestor = ManifestGenerator(targetDir, includeInManifest, includeModifiedDate, progress, archiveFile.fileSize())
     when {
       // 'PK' for zip files
       start[0] == 0x50.toByte() && start[1] == 0x4B.toByte() ->
         Decompressor.Zip(archiveFile)
           .withZipExtensions()
-          .allowEscapingSymlinks(false)
+          .escapingSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.DISALLOW)
           .postProcessor(manifestor)
           .extract(targetDir)
       // 0x1F 0x8B for gzip
       start[0] == 0x1F.toByte() && start[1] == 0x8B.toByte() ->
         Decompressor.Tar(archiveFile)
-          .allowEscapingSymlinks(false)
+          .escapingSymlinkPolicy(Decompressor.EscapingSymlinkPolicy.DISALLOW)
           .postProcessor(manifestor)
           .extract(targetDir)
       else -> error("Unsupported archive: " +

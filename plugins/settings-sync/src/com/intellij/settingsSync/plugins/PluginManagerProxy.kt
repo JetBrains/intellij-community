@@ -12,8 +12,8 @@ interface PluginManagerProxy {
   }
 
   fun getPlugins(): Array<IdeaPluginDescriptor>
-  fun enablePlugins(plugins: Set<PluginId>)
-  fun disablePlugins(plugins: Set<PluginId>)
+  fun enablePlugins(plugins: Set<PluginId>): Boolean
+  fun disablePlugins(plugins: Set<PluginId>): Boolean
   fun findPlugin(pluginId: PluginId): IdeaPluginDescriptor?
 
   fun createInstaller(notifyErrors: Boolean = false): SettingsSyncPluginInstaller
@@ -22,4 +22,6 @@ interface PluginManagerProxy {
   fun getDisabledPluginIds(): Set<PluginId>
 
   fun isEssential(pluginId: PluginId): Boolean
+
+  fun isIncompatible(plugin: IdeaPluginDescriptor): Boolean
 }

@@ -3,6 +3,7 @@
 package org.jetbrains.intellij.build
 
 import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestRetry
@@ -46,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import kotlin.time.Duration.Companion.hours
 
-const val SPACE_REPO_HOST = "packages.jetbrains.team"
+const val SPACE_REPO_HOST: String = "packages.jetbrains.team"
 
 private val httpClient = SynchronizedClearableLazy {
   // HttpTimeout is not used - CIO engine handles that
@@ -69,45 +70,6 @@ private val httpClient = SynchronizedClearableLazy {
 
     install(UserAgent) {
       agent = "Build Script Downloader"
-    }
-  }
-}
-
-private val httpSpaceClient = SynchronizedClearableLazy {
-  httpClient.value.config {
-    // we have custom error handler
-    expectSuccess = false
-
-    val token = System.getenv("SPACE_PACKAGE_TOKEN")
-    if (!token.isNullOrEmpty()) {
-      install(Auth) {
-        bearer {
-          sendWithoutRequest { request ->
-            request.url.host == SPACE_REPO_HOST
-          }
-
-          loadTokens {
-            BearerTokens(token, "")
-          }
-        }
-      }
-    }
-    else {
-      val userName = System.getProperty("jps.auth.spaceUsername")
-      val password = System.getProperty("jps.auth.spacePassword")
-      if (userName != null && password != null) {
-        install(Auth) {
-          basic {
-            sendWithoutRequest { request ->
-              request.url.host == SPACE_REPO_HOST
-            }
-
-            credentials {
-              BasicAuthCredentials(username = userName, password = password)
-            }
-          }
-        }
-      }
     }
   }
 }
@@ -189,7 +151,6 @@ internal fun spanBuilder(spanName: String): SpanBuilder = BuildDependenciesDownl
 
 fun closeKtorClient() {
   httpClient.drop()?.close()
-  httpSpaceClient.drop()?.close()
 }
 
 private val fileLocks = StripedMutex()
@@ -211,13 +172,37 @@ suspend fun downloadAsText(url: String): String {
 }
 
 fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
-  @Suppress("RAW_RUN_BLOCKING")
   return runBlocking(Dispatchers.IO) {
     downloadFileToCacheLocation(url, communityRoot)
   }
 }
 
+fun downloadFileToCacheLocationSync(url: String, communityRoot: BuildDependenciesCommunityRoot, username: String, password: String): Path {
+  return runBlocking(Dispatchers.IO) {
+    downloadFileToCacheLocation(url, communityRoot, username, password)
+  }
+}
+
 suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot): Path {
+  return downloadFileToCacheLocation(url, communityRoot, token = null, username = null, password = null)
+}
+
+suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDependenciesCommunityRoot, token: String): Path {
+  return downloadFileToCacheLocation(url, communityRoot, token = token, username = null, password = null)
+}
+
+suspend fun downloadFileToCacheLocation(url: String,
+                                        communityRoot: BuildDependenciesCommunityRoot,
+                                        username: String,
+                                        password: String): Path {
+  return downloadFileToCacheLocation(url, communityRoot, token = null, username = username, password = password)
+}
+
+private suspend fun downloadFileToCacheLocation(url: String,
+                                                communityRoot: BuildDependenciesCommunityRoot,
+                                                token: String?,
+                                                username: String?,
+                                                password: String?): Path {
   BuildDependenciesDownloader.cleanUpIfRequired(communityRoot)
 
   val target = BuildDependenciesDownloader.getTargetFile(communityRoot, url)
@@ -231,7 +216,7 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
         AttributeKey.stringKey("target"), targetPath,
       ))
 
-      // update file modification time to maintain FIFO caches i.e. in persistent cache folder on TeamCity agent
+      // update file modification time to maintain FIFO caches, i.e., in persistent cache folder on TeamCity agent
       Files.setLastModifiedTime(target, FileTime.from(Instant.now()))
       return target
     }
@@ -245,12 +230,56 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
           .resolve("${target.fileName}-${(Instant.now().epochSecond - 1634886185).toString(36)}-${Instant.now().nano.toString(36)}".take(255))
         Files.deleteIfExists(tempFile)
         try {
-          val response = httpSpaceClient.value.prepareGet(url).execute {
-            coroutineScope {
-              it.bodyAsChannel().copyAndClose(writeChannel(tempFile))
+          // each io.ktor.client.HttpClient.config call creates a new client
+          // extract common configuration to prevent excessive client creation
+          val commonConfig: HttpClientConfig<*>.() -> Unit = {
+            expectSuccess = false // we have custom error handler
+
+            install(ContentEncoding) {
+              // Any `Content-Encoding` will drop `Content-Length` header in nginx responses,
+              // yet we rely on that header in `downloadFileToCacheLocation`.
+              // Hence, we override `ContentEncoding` plugin config from `httpClient` with zero weights.
+              deflate(0.0F)
+              gzip(0.0F)
             }
-            it
           }
+
+          val effectiveClient = when {
+            token != null -> httpClient.value.config {
+              commonConfig()
+              Auth {
+                bearer {
+                  loadTokens {
+                    BearerTokens(token, "")
+                  }
+                }
+              }
+            }
+
+            username != null && password != null -> httpClient.value.config {
+              commonConfig()
+              Auth {
+                basic {
+                  credentials {
+                    sendWithoutRequest { true }
+                    BasicAuthCredentials(username, password)
+                  }
+                }
+              }
+            }
+
+            else -> httpClient.value.config(commonConfig)
+          }
+
+          val response = effectiveClient.use { client ->
+            client.prepareGet(url).execute {
+              coroutineScope {
+                it.bodyAsChannel().copyAndClose(writeChannel(tempFile))
+              }
+              it
+            }
+          }
+
           val statusCode = response.status.value
           if (statusCode != 200) {
             val builder = StringBuilder("Cannot download\n")
@@ -264,8 +293,7 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
             if (Files.exists(tempFile)) {
               Files.newInputStream(tempFile).use { inputStream ->
                 // yes, not trying to guess encoding
-                // string constructor should be exception free,
-                // so at worse we'll get some random characters
+                // string constructor should be exception-free, so at worse, we'll get some random characters
                 builder.append(inputStream.readNBytes(1024).toString(StandardCharsets.UTF_8))
               }
             }
@@ -277,7 +305,7 @@ suspend fun downloadFileToCacheLocation(url: String, communityRoot: BuildDepende
           val fileSize = Files.size(tempFile)
           check(fileSize == contentLength) {
             "Wrong file length after downloading uri '$url' to '$tempFile': expected length $contentLength " +
-            "from Content-Length header, but got $fileSize on disk"
+            "from ${HttpHeaders.ContentLength} header, but got $fileSize on disk"
           }
           Files.move(tempFile, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
         }

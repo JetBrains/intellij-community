@@ -5,6 +5,7 @@ fun foo(p: Int) {
         <caret>
 }
 
+// IGNORE_K2
 // EXIST: catch
 // EXIST: finally
 // EXIST: false

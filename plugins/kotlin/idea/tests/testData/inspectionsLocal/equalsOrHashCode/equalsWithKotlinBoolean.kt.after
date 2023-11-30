@@ -21,4 +21,4 @@ class WithConstructor(x: Int, s: String) {
     }
 }
 
-// IGNORE_FIR
+// IGNORE_K2

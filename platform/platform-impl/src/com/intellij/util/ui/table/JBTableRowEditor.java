@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.table;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -45,8 +45,7 @@ public abstract class JBTableRowEditor extends JPanel {
     }
   }
 
-  @Nullable
-  public final MouseEvent getMouseEvent() {
+  public final @Nullable MouseEvent getMouseEvent() {
     if (myMouseEvent != null && myMouseEvent.getClickCount() == 0) return null;
     return myMouseEvent;
   }
@@ -62,7 +61,7 @@ public abstract class JBTableRowEditor extends JPanel {
     return panel;
   }
 
-  public class RowEditorChangeListener implements DocumentListener {
+  public final class RowEditorChangeListener implements DocumentListener {
     private final int myColumn;
 
     public RowEditorChangeListener(int column) {

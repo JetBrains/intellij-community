@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter;
 
 import com.intellij.icons.AllIcons;
@@ -34,7 +20,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public class HtmlFileType extends XmlLikeFileType {
-  @NonNls public static final String DOT_DEFAULT_EXTENSION = ".html";
+  public static final @NonNls String DOT_DEFAULT_EXTENSION = ".html";
 
   public static final HtmlFileType INSTANCE = new HtmlFileType();
 
@@ -47,20 +33,17 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return "HTML";
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return XmlPsiBundle.message("filetype.html.description");
   }
 
   @Override
-  @NotNull
-  public String getDefaultExtension() {
+  public @NotNull String getDefaultExtension() {
     return "html";
   }
 
@@ -70,7 +53,7 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   @Override
-  public String getCharset(@NotNull final VirtualFile file, final byte @NotNull [] content) {
+  public String getCharset(final @NotNull VirtualFile file, final byte @NotNull [] content) {
     LoadTextUtil.DetectResult guessed = LoadTextUtil.guessFromContent(file, content);
     String charset =
       guessed.hardCodedCharset != null
@@ -84,7 +67,7 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   @Override
-  public Charset extractCharsetFromFileContent(@Nullable final Project project, @Nullable final VirtualFile file, @NotNull final CharSequence content) {
+  public Charset extractCharsetFromFileContent(final @Nullable Project project, final @Nullable VirtualFile file, final @NotNull CharSequence content) {
     String name = XmlCharsetDetector.extractXmlEncodingFromProlog(content);
     Charset charset = CharsetToolkit.forName(name);
 

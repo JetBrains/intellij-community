@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve;
 
 import com.intellij.model.Symbol;
@@ -87,13 +87,11 @@ public class ResolveCache implements Disposable {
   public interface Resolver extends AbstractResolver<PsiReference, PsiElement> {
   }
 
-  @NotNull
-  private static <K,V> Map<K, V> createWeakMap() {
+  private static @NotNull <K,V> Map<K, V> createWeakMap() {
     //noinspection deprecation
     return new ConcurrentWeakKeySoftValueHashMap<K, V>(100, 0.75f, Runtime.getRuntime().availableProcessors()) {
-      @NotNull
       @Override
-      protected ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
+      protected @NotNull ValueReference<K, V> createValueReference(@NotNull V value, @NotNull ReferenceQueue<? super V> queue) {
         ValueReference<K, V> result;
         if (value == NULL_RESULT || value instanceof Object[] && ((Object[])value).length == 0) {
           // no use in creating SoftReference to null
@@ -228,8 +226,7 @@ public class ResolveCache implements Disposable {
     return result;
   }
 
-  @NotNull
-  private static <R> Computable<R> loggingResolver(@NotNull Object ref, @NotNull Computable<? extends R> resolver) {
+  private static @NotNull <R> Computable<R> loggingResolver(@NotNull Object ref, @NotNull Computable<? extends R> resolver) {
     return () -> {
       if (IdempotenceChecker.isLoggingEnabled()) {
         IdempotenceChecker.logTrace("Resolving " + ref + " of " + ref.getClass());
@@ -258,11 +255,10 @@ public class ResolveCache implements Disposable {
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  @Nullable
-  public <TRef extends PsiReference, TResult> TResult resolveWithCaching(@NotNull TRef ref,
-                                                                         @NotNull AbstractResolver<TRef, TResult> resolver,
-                                                                         boolean needToPreventRecursion,
-                                                                         boolean incompleteCode) {
+  public @Nullable <TRef extends PsiReference, TResult> TResult resolveWithCaching(@NotNull TRef ref,
+                                                                                   @NotNull AbstractResolver<TRef, TResult> resolver,
+                                                                                   boolean needToPreventRecursion,
+                                                                                   boolean incompleteCode) {
     boolean isPhysical = ref.getElement().isPhysical();
     ProgressIndicatorProvider.checkCanceled();
     if (isPhysical) {
@@ -310,8 +306,7 @@ public class ResolveCache implements Disposable {
     map.put(ref, cached);
   }
 
-  @NotNull
-  private static <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
+  private static @NotNull <K, V> StrongValueReference<K, V> createStrongReference(@NotNull V value) {
     //noinspection unchecked
     return value == NULL_RESULT ? (StrongValueReference<K, V>)NULL_VALUE_REFERENCE
            : value == ResolveResult.EMPTY_ARRAY ? (StrongValueReference<K, V>)EMPTY_RESOLVE_RESULT
@@ -329,15 +324,13 @@ public class ResolveCache implements Disposable {
       myValue = value;
     }
 
-    @NotNull
     @Override
-    public ConcurrentWeakKeySoftValueHashMap.KeyReference<K, V> getKeyReference() {
+    public @NotNull ConcurrentWeakKeySoftValueHashMap.KeyReference<K, V> getKeyReference() {
       throw new UnsupportedOperationException(); // will never GC so this method will never be called so no implementation is necessary
     }
 
     @Override
-    @NotNull
-    public V get() {
+    public @NotNull V get() {
       return myValue;
     }
   }

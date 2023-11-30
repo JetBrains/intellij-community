@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.file;
 
@@ -28,8 +28,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import javax.swing.*;
 
 public final class SourceRootIconProvider {
-  @NotNull
-  public static Icon getDirectoryIcon(VirtualFile vFile, Project project) {
+  public static @NotNull Icon getDirectoryIcon(VirtualFile vFile, Project project) {
     SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
     if (sourceFolder != null) {
       return SourceRootPresentation.getSourceRootIcon(sourceFolder);
@@ -40,8 +39,7 @@ public final class SourceRootIconProvider {
     }
   }
 
-  @Nullable
-  public static Icon getIconIfExcluded(@NotNull Project project, @NotNull VirtualFile vFile) {
+  public static @Nullable Icon getIconIfExcluded(@NotNull Project project, @NotNull VirtualFile vFile) {
     if (!Registry.is("ide.hide.excluded.files")) {
       boolean ignored = ProjectRootManager.getInstance(project).getFileIndex().isExcluded(vFile);
       if (ignored) {
@@ -51,8 +49,7 @@ public final class SourceRootIconProvider {
     return null;
   }
 
-  @Nullable
-  private static Icon calcFileLayerIcon(VirtualFile vFile, Project project) {
+  private static @Nullable Icon calcFileLayerIcon(VirtualFile vFile, Project project) {
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
     if (vFile != null) {
       VirtualFile parent = vFile.getParent();
@@ -81,9 +78,9 @@ public final class SourceRootIconProvider {
     return null;
   }
 
-  public static class DirectoryProvider extends IconProvider implements DumbAware {
+  public static final class DirectoryProvider extends IconProvider implements DumbAware {
     @Override
-    public Icon getIcon(@NotNull final PsiElement element, final int flags) {
+    public Icon getIcon(final @NotNull PsiElement element, final int flags) {
       if (element instanceof PsiDirectory psiDirectory) {
         return getDirectoryIcon(psiDirectory.getVirtualFile(), psiDirectory.getProject());
       }
@@ -91,10 +88,9 @@ public final class SourceRootIconProvider {
     }
   }
 
-  public static class FileLayerProvider implements IconLayerProvider, DumbAware {
-    @Nullable
+  static final class FileLayerProvider implements IconLayerProvider, DumbAware {
     @Override
-    public Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
+    public @Nullable Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
       if (element instanceof PsiFile) {
         Project project = ((PsiFile)element).getProject();
         VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
@@ -105,9 +101,8 @@ public final class SourceRootIconProvider {
       return null;
     }
 
-    @NotNull
     @Override
-    public String getLayerDescription() {
+    public @NotNull String getLayerDescription() {
       return "Source root files";
     }
   }

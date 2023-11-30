@@ -4,15 +4,18 @@ package org.jetbrains.uast.kotlin
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UParenthesizedExpression
+import org.jetbrains.uast.*
 
 @ApiStatus.Internal
 class KotlinUParenthesizedExpression(
     override val sourcePsi: KtParenthesizedExpression,
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UParenthesizedExpression, KotlinUElementWithType {
-    override val expression by lz {
-        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.expression, this)
-    }
+
+    private val expressionPart = UastLazyPart<UExpression>()
+
+    override val expression: UExpression
+        get() = expressionPart.getOrBuild {
+            baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.expression, this)
+        }
 }

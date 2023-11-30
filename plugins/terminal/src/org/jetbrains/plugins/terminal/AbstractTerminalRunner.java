@@ -322,7 +322,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return new NopProcessHandler();
   }
 
-  private static class IncompatibleWidgetException extends RuntimeException {
+  private static final class IncompatibleWidgetException extends RuntimeException {
     private IncompatibleWidgetException() {
       super("Please migrate from AbstractTerminalRunner.createTerminalWidget(Disposable, String, boolean) to AbstractTerminalRunner.createShellTerminalWidget");
     }

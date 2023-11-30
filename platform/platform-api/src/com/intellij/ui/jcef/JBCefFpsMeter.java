@@ -10,11 +10,12 @@ import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
 import javax.swing.*;
-import javax.swing.Timer;
 import java.awt.*;
 import java.io.PrintStream;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -47,7 +48,7 @@ public abstract class JBCefFpsMeter {
 
   public abstract void registerComponent(@NotNull Component component);
 
-  public synchronized static @NotNull JBCefFpsMeter register(@NotNull String id) {
+  public static synchronized @NotNull JBCefFpsMeter register(@NotNull String id) {
     JBCefFpsMeter instance = INSTANCES.get(id);
     if (instance != null) {
       return instance;
@@ -57,7 +58,7 @@ public abstract class JBCefFpsMeter {
     return instance;
   }
 
-  public synchronized static @Nullable JBCefFpsMeter get(@NotNull String id) {
+  public static synchronized @Nullable JBCefFpsMeter get(@NotNull String id) {
     JBCefFpsMeter instance = INSTANCES.get(id);
     if (instance == null) {
       Logger.getInstance(JBCefFpsMeter.class).warn(JBCefFpsMeter.class + " not registered: " + id);

@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UNINITIALIZED_UAST_PART
 import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
@@ -14,18 +15,27 @@ abstract class KotlinAbstractUElement(
     givenParent: UElement?,
 ) : KotlinUElementWithComments {
 
-    protected val languagePlugin: UastLanguagePlugin? by lz {
-        psi?.let { UastFacade.findPlugin(it) }
-    }
+    private var uastParentPart: Any? = givenParent ?: UNINITIALIZED_UAST_PART
 
-    val baseResolveProviderService: BaseKotlinUastResolveProviderService by lz {
-        ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
-            ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
-    }
+    protected val languagePlugin: UastLanguagePlugin?
+        get() {
+            return psi?.let { UastFacade.findPlugin(it) }
+        }
 
-    final override val uastParent: UElement? by lz {
-        givenParent ?: convertParent()
-    }
+    val baseResolveProviderService: BaseKotlinUastResolveProviderService
+        get() {
+            return ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
+                ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
+        }
+
+    final override val uastParent: UElement?
+        get() {
+            if (uastParentPart == UNINITIALIZED_UAST_PART) {
+                uastParentPart = convertParent()
+            }
+
+            return uastParentPart as UElement?
+        }
 
     protected open fun convertParent(): UElement? {
         return baseResolveProviderService.convertParent(this)

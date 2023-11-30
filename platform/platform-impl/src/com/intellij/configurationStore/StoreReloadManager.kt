@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.StateStorage
@@ -7,10 +7,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 interface StoreReloadManager {
   companion object {
-    fun getInstance(project: Project) = project.service<StoreReloadManager>()
+    fun getInstance(project: Project): StoreReloadManager = project.service<StoreReloadManager>()
   }
 
   fun reloadProject()
@@ -30,4 +32,7 @@ interface StoreReloadManager {
   suspend fun reloadChangedStorageFiles()
 
   fun storageFilesChanged(store: IComponentStore, storages: Collection<StateStorage>)
+  
+  @ApiStatus.Internal
+  fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>)
 }

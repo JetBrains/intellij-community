@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.inspector;
 
 import com.google.common.base.MoreObjects;
@@ -95,6 +95,9 @@ public final class ComponentPropertiesCollector {
 
   private void collectProperties(@NotNull Component component) {
     addProperties("", component, PROPERTIES);
+
+    myProperties.add(new PropertyBean("baseline", component.getBaseline(component.getWidth(), component.getHeight())));
+
     Pair<String, String> addedAt = getAddedAtStacktrace(component);
     myProperties.add(new PropertyBean(addedAt.first, addedAt.second, addedAt.second != null));
 
@@ -625,8 +628,7 @@ public final class ComponentPropertiesCollector {
     return result.toString();
   }
 
-  @NotNull
-  private static String toString(@Nullable GridBagConstraints constraints) {
+  private static @NotNull String toString(@Nullable GridBagConstraints constraints) {
     if (constraints == null) return "null";
 
     MoreObjects.ToStringHelper h = MoreObjects.toStringHelper("");
@@ -652,8 +654,7 @@ public final class ComponentPropertiesCollector {
     if (!Comparing.equal(value, defaultValue)) h.add(field, value);
   }
 
-  @Nullable
-  private static AnAction getAction(Component c) {
+  private static @Nullable AnAction getAction(Component c) {
     return ClientProperty.get(c, ACTION_KEY);
   }
 

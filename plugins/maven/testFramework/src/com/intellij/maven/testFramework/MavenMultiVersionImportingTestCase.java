@@ -29,39 +29,36 @@ import java.util.List;
 
 @RunWith(Parameterized.class)
 public abstract class MavenMultiVersionImportingTestCase extends MavenImportingTestCase {
+  @Override
+  public boolean runInDispatchThread() { return false; }
 
-  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-alpha-5"};
-
-  @Parameterized.Parameters(name = "with Maven-{0}")
-  public static List<String[]> getMavenVersions() {
-    String mavenVersionsString = System.getProperty("maven.versions.to.run");
-    String[] mavenVersionsToRun = MAVEN_VERSIONS;
-    if (mavenVersionsString != null && !mavenVersionsString.isEmpty()) {
-      mavenVersionsToRun = mavenVersionsString.split(",");
-    }
-    return ContainerUtil.map(mavenVersionsToRun, it -> new String[]{it});
-  }
-
+  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-alpha-8"};
+  @Parameterized.Parameter(0)
+  public String myMavenVersion;
   @Nullable
   protected MavenWrapperTestFixture myWrapperTestFixture;
 
-  @Parameterized.Parameter(0)
-  public String myMavenVersion;
-
   protected void assumeVersionMoreThan(String version) {
-    Assume.assumeTrue("Version should be more than " + version, VersionComparatorUtil.compare(myMavenVersion, version) > 0);
+    Assume.assumeTrue("Version should be more than " + version,
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) > 0);
+  }
+
+  protected void assumeVersionAtLeast(String version) {
+    Assume.assumeTrue("Version should be " + version + " or more",
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) >= 0);
   }
 
   protected void assumeVersionLessThan(String version) {
-    Assume.assumeTrue("Version should be less than " + version, VersionComparatorUtil.compare(myMavenVersion, version) < 0);
+    Assume.assumeTrue("Version should be less than " + version,
+                      VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) < 0);
   }
 
   protected void assumeVersionNot(String version) {
-    Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(myMavenVersion, version) != 0);
+    Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) != 0);
   }
 
   protected void assumeVersion(String version) {
-    Assume.assumeTrue("Version " + version + " skipped", VersionComparatorUtil.compare(myMavenVersion, version) == 0);
+    Assume.assumeTrue("Version " + myMavenVersion + " is not " + version + ", therefore skipped", VersionComparatorUtil.compare(getActualVersion(myMavenVersion), getActualVersion(version)) == 0);
   }
 
   @Before
@@ -82,22 +79,21 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
 
   protected LanguageLevel getDefaultLanguageLevel() {
     var version = getActualVersion(myMavenVersion);
+    if (VersionComparatorUtil.compare("3.9.3", version) <= 0) {
+      return LanguageLevel.JDK_1_8;
+    }
     if (VersionComparatorUtil.compare("3.9.0", version) <= 0) {
       return LanguageLevel.JDK_1_7;
     }
     return LanguageLevel.JDK_1_5;
   }
 
-  protected static String getActualVersion(String version) {
-    if (version.equals("bundled")) {
-      return MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion();
-    }
-    return version;
-  }
-
   @NotNull
   protected String getDefaultPluginVersion(String pluginId) {
     if (pluginId.equals("org.apache.maven:maven-compiler-plugin")) {
+      if (mavenVersionIsOrMoreThan("3.9.3")) {
+        return "3.11.0";
+      }
       if (mavenVersionIsOrMoreThan("3.9.0")) {
         return "3.10.1";
       }
@@ -124,7 +120,7 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   }
 
   protected String[] defaultTestResources() {
-    return arrayOfNotNull("src/test/resources",  maven4orNull("src/test/resources-filtered"));
+    return arrayOfNotNull("src/test/resources", maven4orNull("src/test/resources-filtered"));
   }
 
   protected String[] allDefaultResources() {
@@ -166,8 +162,8 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     if (!subdir.isEmpty()) subdir += "/";
 
     var folders = ArrayUtil.mergeArrays(allDefaultResources(),
-      "src/main/java",
-      "src/test/java"
+                                        "src/main/java",
+                                        "src/test/java"
     );
 
     createProjectSubDirs(subdir, folders);
@@ -258,26 +254,6 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
     doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expected);
   }
 
-  private static void doAssertContentFolders(ContentEntry e,
-                                             final List<? extends ContentFolder> folders,
-                                             String... expected) {
-    List<String> actual = new ArrayList<>();
-    for (ContentFolder f : folders) {
-      String rootUrl = e.getUrl();
-      String folderUrl = f.getUrl();
-
-      if (folderUrl.startsWith(rootUrl)) {
-        int length = rootUrl.length() + 1;
-        folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
-      }
-
-      actual.add(folderUrl);
-    }
-
-    assertSameElements("Unexpected list of folders in content root " + e.getUrl(),
-                       actual, Arrays.asList(expected));
-  }
-
   private ContentEntry getContentRoot(String moduleName) {
     ContentEntry[] ee = getContentRoots(moduleName);
     List<String> roots = new ArrayList<>();
@@ -300,5 +276,42 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
                              "\nExpected root: " + path +
                              "\nExisting roots:" +
                              "\n" + StringUtil.join(roots, it -> " * " + it.getUrl(), "\n"));
+  }
+
+  @Parameterized.Parameters(name = "with Maven-{0}")
+  public static List<String[]> getMavenVersions() {
+    String mavenVersionsString = System.getProperty("maven.versions.to.run");
+    String[] mavenVersionsToRun = MAVEN_VERSIONS;
+    if (mavenVersionsString != null && !mavenVersionsString.isEmpty()) {
+      mavenVersionsToRun = mavenVersionsString.split(",");
+    }
+    return ContainerUtil.map(mavenVersionsToRun, it -> new String[]{it});
+  }
+
+  protected static String getActualVersion(String version) {
+    if (version.equals("bundled")) {
+      return MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion();
+    }
+    return version;
+  }
+
+  private static void doAssertContentFolders(ContentEntry e,
+                                             final List<? extends ContentFolder> folders,
+                                             String... expected) {
+    List<String> actual = new ArrayList<>();
+    for (ContentFolder f : folders) {
+      String rootUrl = e.getUrl();
+      String folderUrl = f.getUrl();
+
+      if (folderUrl.startsWith(rootUrl)) {
+        int length = rootUrl.length() + 1;
+        folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
+      }
+
+      actual.add(folderUrl);
+    }
+
+    assertSameElements("Unexpected list of folders in content root " + e.getUrl(),
+                       actual, Arrays.asList(expected));
   }
 }

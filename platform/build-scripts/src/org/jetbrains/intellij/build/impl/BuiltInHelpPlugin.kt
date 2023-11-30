@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.impl.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -18,7 +18,7 @@ private const val MODULE_NAME = "intellij.platform.builtInHelp"
 private val LUCENE_LIBRARIES = setOf("lucene-queryparser", "lucene-highlighter", "lucene-memory")
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
-  val productName = context.applicationInfo.productName
+  val productName = context.applicationInfo.fullProductName
   val resourceRoot = context.paths.projectHome.resolve("help/plugin-resources")
   if (Files.notExists(resourceRoot.resolve("topics/app.js"))) {
     Span.current().addEvent("skip $productName Help plugin because $resourceRoot/topics/app.js not present")
@@ -54,7 +54,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Plug
 }
 
 private fun pluginXml(buildContext: BuildContext, version: String): String {
-  val productName = buildContext.applicationInfo.productName
+  val productName = buildContext.applicationInfo.fullProductName
   val productLowerCase = productName.replace(" ", "-").lowercase()
   val pluginId = "bundled-$productLowerCase-help"
   val pluginName = "$productName Help"
@@ -88,7 +88,7 @@ private fun pluginXml(buildContext: BuildContext, version: String): String {
 private val helpIndexerMutex = Mutex()
 
 private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
-  spanBuilder("index help topics").useWithScope {
+  spanBuilder("index help topics").useWithScopeBlocking {
     helpIndexerMutex.withLock {
       runIdea(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
               args = listOf(resourceRoot.resolve("search").toString(),

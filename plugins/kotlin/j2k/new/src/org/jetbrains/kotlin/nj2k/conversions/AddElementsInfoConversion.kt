@@ -43,7 +43,7 @@ class AddElementsInfoConversion(context: NewJ2kConverterContext) : RecursiveAppl
             val superPsi = superDescriptor.original.findPsi()
             when (val symbol = symbolProvider.symbolsByPsi[superPsi]) {
                 is JKUniverseMethodSymbol ->
-                    InternalSuperFunctionInfo(context.elementsInfoStorage.getOrCreateInfoForElement(symbol.target))
+                    InternalSuperFunctionInfo(context.elementsInfoStorage.getOrCreateInferenceLabelForElement(symbol.target))
 
                 else -> ExternalSuperFunctionInfo(superDescriptor)
             }

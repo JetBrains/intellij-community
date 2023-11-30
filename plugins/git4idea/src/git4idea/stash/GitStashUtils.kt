@@ -1,16 +1,25 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitStashUtils")
 
 package git4idea.stash
 
 import com.intellij.dvcs.DvcsUtil
+import com.intellij.notification.NotificationAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
@@ -20,12 +29,15 @@ import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel
 import com.intellij.openapi.vcs.changes.ui.LoadingCommittedChangeListPanel.ChangelistData
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.impl.HashImpl
+import com.intellij.vcsUtil.VcsFileUtil
+import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.xml.util.XmlStringUtil
 import git4idea.GitCommit
 import git4idea.GitNotificationIdsHolder
@@ -36,21 +48,26 @@ import git4idea.GitUtil
 import git4idea.changes.GitChangeUtils
 import git4idea.commands.*
 import git4idea.config.GitConfigUtil
+import git4idea.config.GitExecutableManager
+import git4idea.config.GitVersionSpecialty
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.DIFF_TO_PARENTS
 import git4idea.history.GitCommitRequirements.DiffInMergeCommits.FIRST_PARENT
-import git4idea.history.GitCommitRequirements.DiffRenameLimit.NoRenames
+import git4idea.history.GitCommitRequirements.DiffRenames.NoRenames
 import git4idea.history.GitLogParser
 import git4idea.history.GitLogParser.GitLogOption
 import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
+import git4idea.index.isStagingAreaAvailable
 import git4idea.merge.GitConflictResolver
 import git4idea.repo.GitRepositoryManager
+import git4idea.stash.ui.isStashToolWindowEnabled
+import git4idea.stash.ui.showStashes
+import git4idea.stash.ui.stashToolWindowRegistryOption
 import git4idea.ui.StashInfo
 import git4idea.util.GitUIUtil
 import git4idea.util.GitUntrackedFilesHelper
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.nio.charset.Charset
 import javax.swing.event.HyperlinkEvent
@@ -173,7 +190,8 @@ object GitStashOperations {
         val indexConflictDetector = GitSimpleEventDetector(GitSimpleEventDetector.Event.INDEX_CONFLICT_ON_UNSTASH)
         val conflictDetector = GitSimpleEventDetector(GitSimpleEventDetector.Event.MERGE_CONFLICT_ON_UNSTASH)
         val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(root)
-        val localChangesDetector = GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE)
+        val localChangesDetector = GitLocalChangesWouldBeOverwrittenDetector(root,
+                                                                             GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE)
         handler.addLineListener(indexConflictDetector)
         handler.addLineListener(conflictDetector)
         handler.addLineListener(untrackedFilesDetector)
@@ -231,6 +249,72 @@ object GitStashOperations {
       LOG.warn("Couldn't load changes in root [$root] in stash resolved to [$hash]", e)
     }
   }
+
+  @JvmStatic
+  fun runStashInBackground(project: Project, roots: Collection<VirtualFile>, createHandler: (VirtualFile) -> GitLineHandler) {
+    object : Task.Backgroundable(project, GitBundle.message("stashing.progress.title"), false) {
+      override fun run(indicator: ProgressIndicator) {
+        DvcsUtil.workingTreeChangeStarted(project, GitBundle.message("stash.action.name")).use { _ ->
+          val successfulRoots = linkedSetOf<VirtualFile>()
+          val failedRoots = linkedMapOf<VirtualFile, @NlsSafe String>()
+          for (root in roots) {
+            val activity = GitStashUsageCollector.logStashPush(project)
+            val result = Git.getInstance().runCommand(createHandler(root))
+            activity.finished()
+
+            if (result.success()) {
+              successfulRoots.add(root)
+            }
+            else {
+              failedRoots[root] = result.errorOutputAsHtmlString
+            }
+          }
+
+          if (!successfulRoots.isEmpty()) {
+            GitUtil.refreshVfsInRoots(successfulRoots)
+            showSuccessNotification(project, successfulRoots, failedRoots.isNotEmpty())
+          }
+          if (!failedRoots.isEmpty()) {
+            val errorTitle = GitBundle.message("stash.error", getRootsText(project, failedRoots.keys))
+            val errorMessage = HtmlBuilder()
+              .appendWithSeparators(HtmlChunk.br(), failedRoots.values.map { HtmlChunk.raw(it) })
+              .toString()
+            VcsNotifier.getInstance(project).notifyError(GitNotificationIdsHolder.STASH_FAILED, errorTitle, errorMessage, true)
+          }
+        }
+      }
+    }.queue()
+  }
+
+  fun showSuccessNotification(project: Project, successfulRoots: Collection<VirtualFile>, hasErrors: Boolean) {
+    val actions = buildList {
+      if (isStashToolWindowEnabled(project)) {
+        add(NotificationAction.createSimple(GitBundle.message("stash.view.stashes.link")) { showStashes(project) })
+      }
+      else if (isStagingAreaAvailable(project)) {
+        add(NotificationAction.createSimpleExpiring(GitBundle.message("stash.enable.stashes.link", GitBundle.message("stash.tab.name"))) {
+          stashToolWindowRegistryOption().setValue(true)
+          showStashes(project)
+        })
+      }
+    }
+    val message = getSuccessMessage(project, successfulRoots, hasErrors)
+    VcsNotifier.getInstance(project).notifyMinorInfo(GitNotificationIdsHolder.STASH_SUCCESSFUL, "", message, *actions.toTypedArray())
+  }
+
+  private fun getSuccessMessage(project: Project,
+                                successfulRoots: Collection<VirtualFile>,
+                                hasErrors: Boolean): @NlsContexts.NotificationContent String {
+    if (!hasErrors) return GitBundle.message("stash.files.success")
+
+    val rootsText = getRootsText(project, successfulRoots)
+    return GitBundle.message("stash.files.in.roots.success", rootsText)
+  }
+
+  internal fun getRootsText(project: Project, roots: Collection<VirtualFile>): String {
+    val rootsText = roots.joinToString(", ") { "'${VcsImplUtil.getShortVcsRootName(project, it)}'" }
+    return StringUtil.shortenTextWithEllipsis(rootsText, 100, 0)
+  }
 }
 
 private class UnstashConflictResolver(project: Project, private val stashInfo: StashInfo) :
@@ -238,8 +322,10 @@ private class UnstashConflictResolver(project: Project, private val stashInfo: S
 
   override fun notifyUnresolvedRemain() {
     VcsNotifier.getInstance(myProject).notifyImportantWarning(GitNotificationIdsHolder.UNSTASH_UNRESOLVED_CONFLICTS,
-                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.title"),
-                                                              GitBundle.message("unstash.dialog.unresolved.conflict.warning.notification.message")
+                                                              GitBundle.message(
+                                                                "unstash.dialog.unresolved.conflict.warning.notification.title"),
+                                                              GitBundle.message(
+                                                                "unstash.dialog.unresolved.conflict.warning.notification.message")
     ) { _, event ->
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.description == "resolve") {
@@ -273,14 +359,6 @@ private class UnstashMergeDialogCustomizer(private val stashInfo: StashInfo) : M
 
   override fun getRightPanelTitle(file: VirtualFile, revisionNumber: VcsRevisionNumber?): String {
     return GitBundle.message("unstash.conflict.diff.dialog.right.title")
-  }
-}
-
-@Deprecated("use the simpler overloading method which returns a list")
-@ApiStatus.ScheduledForRemoval
-fun loadStashStack(project: Project, root: VirtualFile, consumer: Consumer<StashInfo>) {
-  for (stash in loadStashStack(project, root)) {
-    consumer.consume(stash)
   }
 }
 
@@ -351,4 +429,27 @@ private fun createUnstashHandler(project: Project, stash: StashInfo, branch: Str
   }
   h.addParameters(stash.stash)
   return h
+}
+
+fun createStashPushHandler(project: Project, root: VirtualFile, files: Collection<FilePath>, vararg parameters: String): GitLineHandler {
+  val handler = GitLineHandler(project, root, GitCommand.STASH)
+  handler.addParameters("push")
+  handler.addParameters(*parameters)
+  if (GitVersionSpecialty.STASH_PUSH_PATHSPEC_FROM_FILE_SUPPORTED.existsIn(GitExecutableManager.getInstance().getVersion(project))) {
+    handler.addParameters("--pathspec-from-file=-")
+    handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(VcsFileUtil.toRelativePaths(root, files),
+                                                                      "\n", handler.charset, false))
+  }
+  else {
+    handler.endOptions()
+    handler.addRelativePaths(files)
+  }
+  return handler
+}
+
+fun refreshStash(project: Project, root: VirtualFile) {
+  val reflogFile = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(root)?.repositoryFiles?.stashReflogFile
+  if (reflogFile != null) {
+    VfsUtil.markDirtyAndRefresh(true, false, false, reflogFile)
+  }
 }

@@ -211,7 +211,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     updateOnTextChange();
   }
 
-  public void setHyperlinkTarget(@NonNls @Nullable final String url) {
+  public void setHyperlinkTarget(final @NonNls @Nullable String url) {
     if (myHyperlinkListener != null) {
       removeHyperlinkListener(myHyperlinkListener);
     }
@@ -231,8 +231,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     myListeners.remove(listener);
   }
 
-  @NotNull
-  public @LinkLabel String getText() {
+  public @NotNull @LinkLabel String getText() {
     return myHighlightedText.getText();
   }
 
@@ -289,13 +288,6 @@ public class HyperlinkLabel extends HighlightableComponent {
       parent.repaint();
     }
     adjustSize();
-  }
-
-  public static class Croppable extends HyperlinkLabel {
-    @Override
-    protected void adjustSize() {
-      // ignore, keep minimum size default
-    }
   }
 
   @Override

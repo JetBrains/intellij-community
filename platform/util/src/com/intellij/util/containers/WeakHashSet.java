@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
@@ -7,7 +7,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.HashSet;
 import java.util.*;
 
 /**
@@ -18,7 +17,7 @@ final class WeakHashSet<T> extends AbstractSet<T> {
   private final Set<MyRef<T>> set = new HashSet<>();
   private final ReferenceQueue<T> queue = new ReferenceQueue<>();
 
-  private static class MyRef<T> extends WeakReference<T> {
+  private static final class MyRef<T> extends WeakReference<T> {
     private final int myHashCode;
 
     MyRef(@NotNull T referent, ReferenceQueue<? super T> q) {
@@ -31,26 +30,16 @@ final class WeakHashSet<T> extends AbstractSet<T> {
       return myHashCode; // has to be stable even in presence of GC
     }
 
-    // must compare to HardRef by its get().equals() for add()/remove()/contains() to put in correct bucket
-    // must compare to another MyRef by identity to be able for remove() to remove GCed value from processQueue()
     @Override
     public boolean equals(Object obj) {
       if (!(obj instanceof MyRef)) return false;
       MyRef<?> otherRef = (MyRef<?>)obj;
-      if (this instanceof HardRef || otherRef instanceof HardRef) {
-        return Comparing.equal(otherRef.get(), get());
-      }
-      return this == obj;
-    }
-  }
-
-  private static class HardRef<T> extends MyRef<T> {
-    HardRef(@NotNull T referent) {
-      super(referent, null);
+      return Comparing.equal(otherRef.get(), get());
     }
   }
 
   @Override
+  @NotNull
   public Iterator<T> iterator() {
     return ContainerUtil.filterIterator(ContainerUtil.mapIterator(set.iterator(), Reference::get), Objects::nonNull);
   }
@@ -71,14 +60,14 @@ final class WeakHashSet<T> extends AbstractSet<T> {
   public boolean remove(@NotNull Object o) {
     processQueue();
     //noinspection unchecked
-    return set.remove(new HardRef<>((T)o));
+    return set.remove(new MyRef<>((T)o, null));
   }
 
   @Override
   public boolean contains(@NotNull Object o) {
     processQueue();
     //noinspection unchecked
-    return set.contains(new HardRef<>((T)o));
+    return set.contains(new MyRef<>((T)o, null));
   }
 
   @Override
@@ -90,6 +79,8 @@ final class WeakHashSet<T> extends AbstractSet<T> {
     MyRef<T> ref;
     //noinspection unchecked
     while ((ref = (MyRef<T>)queue.poll()) != null) {
+      // could potentially remove irrelevant gced MyRef entry with the same hashCode, but it's ok,
+      // because the removal of that other MyRef down the queue will lead to removal of this entry `ref` later.
       set.remove(ref);
     }
   }

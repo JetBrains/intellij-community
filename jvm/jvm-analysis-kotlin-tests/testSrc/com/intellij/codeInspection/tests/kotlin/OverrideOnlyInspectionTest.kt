@@ -53,4 +53,13 @@ class OverrideOnlyInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting("plugin/KotlinCode.kt")
   }
 
+  fun `test java delegation`() {
+    myFixture.testHighlighting("plugin/DelegateJavaCode.java")
+  }
+
+  fun `test kotlin delegation`() {
+    myFixture.allowTreeAccessForAllFiles()
+    myFixture.testHighlighting("plugin/DelegateKotlinCode.kt")
+  }
+
 }

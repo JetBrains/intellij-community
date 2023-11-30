@@ -12,9 +12,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtConstructorSymbol
@@ -41,13 +43,17 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
         val referenceExpression = identifier.parent as? KtReferenceExpression ?: return
 
         allowAnalysisOnEdt {
-            analyze(referenceExpression) {
-                subtypeInfo = resolveSubtypeInfo(referenceExpression)
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(referenceExpression) {
+                    subtypeInfo = resolveSubtypeInfo(referenceExpression)
+                }
             }
         }
     }
 
-    private fun KtAnalysisSession.resolveSubtypeInfo(referenceExpression: KtReferenceExpression): SubtypeInfo? {
+    context(KtAnalysisSession)
+    private fun resolveSubtypeInfo(referenceExpression: KtReferenceExpression): SubtypeInfo? {
         val referencedClasses = sequence {
             for (symbol in referenceExpression.mainReference.resolveToSymbols()) {
                 if (symbol is KtNamedClassOrObjectSymbol) {

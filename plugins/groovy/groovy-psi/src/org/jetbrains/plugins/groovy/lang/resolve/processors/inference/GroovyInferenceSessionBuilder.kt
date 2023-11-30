@@ -34,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.api.ExpressionArgument
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate
 import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.getContainingCall
 
-open class GroovyInferenceSessionBuilder constructor(
+open class GroovyInferenceSessionBuilder(
   private val context: PsiElement,
   private val candidate: GroovyMethodCandidate,
   private val contextSubstitutor: PsiSubstitutor

@@ -36,7 +36,7 @@ public final class HashSetQueue<T> extends AbstractCollection<T> implements Queu
     TOMB.next = TOMB.prev = TOMB;
   }
 
-  private static class QueueEntry<T> {
+  private static final class QueueEntry<T> {
     private final @NotNull T t;
     private QueueEntry<T> next;
     private QueueEntry<T> prev;

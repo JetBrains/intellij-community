@@ -27,7 +27,7 @@ class AddNamesToCallArgumentsIntention : SelfTargetingRangeIntention<KtCallEleme
         if (!resolvedCall.candidateDescriptor.hasStableParameterNames()) return null
 
         if (arguments.all {
-                AddNameToArgumentIntention.argumentMatchedAndCouldBeNamedInCall(it, resolvedCall, element.languageVersionSettings)
+                AddNameToArgumentIntention.Holder.argumentMatchedAndCouldBeNamedInCall(it, resolvedCall, element.languageVersionSettings)
             }
         ) {
             val calleeExpression = element.calleeExpression ?: return null
@@ -44,7 +44,7 @@ class AddNamesToCallArgumentsIntention : SelfTargetingRangeIntention<KtCallEleme
         val resolvedCall = element.resolveToCall() ?: return
         for (argument in arguments) {
             if (argument !is KtValueArgument || argument is KtLambdaArgument) continue
-            AddNameToArgumentIntention.apply(argument, resolvedCall)
+            AddNameToArgumentIntention.Holder.apply(argument, resolvedCall)
         }
     }
 }

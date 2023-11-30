@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreBundle;
@@ -43,24 +43,19 @@ public abstract class SearchScope {
     return myDefaultHashCode;
   }
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  public String getDisplayName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getDisplayName() {
     return CoreBundle.message("search.scope.unknown");
   }
 
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
-  @NotNull
   @Contract(pure = true)
-  public abstract SearchScope intersectWith(@NotNull SearchScope scope2);
+  public abstract @NotNull SearchScope intersectWith(@NotNull SearchScope scope2);
 
-  @NotNull
   @Contract(pure = true)
-  public abstract SearchScope union(@NotNull SearchScope scope);
+  public abstract @NotNull SearchScope union(@NotNull SearchScope scope);
 
   @Contract(pure = true)
   public abstract boolean contains(@NotNull VirtualFile file);

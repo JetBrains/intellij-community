@@ -28,9 +28,9 @@ class OldFragmentCompilerCodegen(
     override fun initCodegen(
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo
+        parameterInfo: K1CodeFragmentParameterInfo
     ) {
-        val codegenInfo = CodeFragmentCodegenInfo(classDescriptor, methodDescriptor, parameterInfo.parameters)
+        val codegenInfo = CodeFragmentCodegenInfo(classDescriptor, methodDescriptor, parameterInfo.smartParameters)
         CodeFragmentCodegen.setCodeFragmentInfo(codeFragment, codegenInfo)
     }
 
@@ -48,7 +48,7 @@ class OldFragmentCompilerCodegen(
         compilerConfiguration: CompilerConfiguration,
         classDescriptor: ClassDescriptor,
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo
+        parameterInfo: K1CodeFragmentParameterInfo
     ) {
         // NO-OP
     }
@@ -57,18 +57,18 @@ class OldFragmentCompilerCodegen(
         executionContext: ExecutionContext,
         codeFragment: KtCodeFragment,
         bindingContext: BindingContext
-    ): CodeFragmentParameterInfo {
+    ): K1CodeFragmentParameterInfo {
         return CodeFragmentParameterAnalyzer(executionContext, codeFragment, bindingContext).analyze()
     }
 
     override fun extractResult(
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo,
+        parameterInfo: K1CodeFragmentParameterInfo,
         generationState: GenerationState
     ): CodeFragmentCompiler.CompilationResult {
         val classes = collectGeneratedClasses(generationState)
         val methodSignature = getMethodSignature(methodDescriptor, parameterInfo, generationState)
-        val functionSuffixes = getLocalFunctionSuffixes(parameterInfo.parameters, generationState.typeMapper)
+        val functionSuffixes = getLocalFunctionSuffixes(parameterInfo.smartParameters, generationState.typeMapper)
         return CodeFragmentCompiler.CompilationResult(classes, parameterInfo, functionSuffixes, methodSignature)
     }
 
@@ -92,13 +92,13 @@ class OldFragmentCompilerCodegen(
 
     private fun getMethodSignature(
         methodDescriptor: FunctionDescriptor,
-        parameterInfo: CodeFragmentParameterInfo,
+        parameterInfo: K1CodeFragmentParameterInfo,
         state: GenerationState
     ): CompiledCodeFragmentData.MethodSignature {
         val typeMapper = state.typeMapper
         val asmSignature = typeMapper.mapSignatureSkipGeneric(methodDescriptor)
 
-        val asmParameters = parameterInfo.parameters.zip(asmSignature.valueParameters).map { (param, sigParam) ->
+        val asmParameters = parameterInfo.smartParameters.zip(asmSignature.valueParameters).map { (param, sigParam) ->
             getSharedTypeIfApplicable(param, typeMapper) ?: sigParam.asmType
         }
 

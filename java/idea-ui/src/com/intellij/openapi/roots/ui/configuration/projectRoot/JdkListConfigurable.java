@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.ide.JavaUiBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
@@ -25,12 +26,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
 
 public class JdkListConfigurable extends BaseStructureConfigurable {
-  @NotNull
-  private final ProjectSdksModel myJdksTreeModel;
+  private final @NotNull ProjectSdksModel myJdksTreeModel;
   private boolean hasListenerRegistered = false;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
     @Override
@@ -70,22 +71,17 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  @Nls
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return JavaUiBundle.message("configurable.JdkListConfigurable.display.name");
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
+  public @Nullable @NonNls String getHelpTopic() {
     return myCurrentConfigurable != null ? myCurrentConfigurable.getHelpTopic() : "reference.settingsdialog.project.structure.jdk";
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return "jdk.list";
   }
 
@@ -99,9 +95,8 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     }
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends ProjectStructureElement> getProjectStructureElements() {
+  protected @NotNull Collection<? extends ProjectStructureElement> getProjectStructureElements() {
     final List<ProjectStructureElement> result = new ArrayList<>();
     for (Sdk sdk : myJdksTreeModel.getProjectSdks().values()) {
       result.add(new SdkProjectStructureElement(myContext, sdk));
@@ -128,8 +123,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     myJdksTreeModel.disposeUIResources();
   }
 
-  @NotNull
-  public ProjectSdksModel getJdksTreeModel() {
+  public @NotNull ProjectSdksModel getJdksTreeModel() {
     return myJdksTreeModel;
   }
 
@@ -163,9 +157,8 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
     return super.isModified() || myJdksTreeModel.isModified();
   }
 
-  @NotNull
   @Override
-  protected ArrayList<AnAction> createActions(boolean fromPopup) {
+  protected @NotNull ArrayList<AnAction> createActions(boolean fromPopup) {
     ArrayList<AnAction> defaultActions = super.createActions(fromPopup);
 
     AnAction addNewAction = new AddSdkAction();
@@ -175,7 +168,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  public AbstractAddGroup createAddAction() {
+  public AbstractAddGroup createAddAction(boolean fromPopup) {
     return null;
   }
 
@@ -231,11 +224,12 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
+      Predicate<SdkTypeId> predicate = notSimpleJavaSdkType();
       SdkPopupFactory
         .newBuilder()
         .withProject(myProject)
         .withProjectSdksModel(getJdksTreeModel())
-        .withSdkTypeFilter(notSimpleJavaSdkType())
+        .withSdkTypeFilter(predicate::test)
         .withSdkFilter(sdk -> false)
         .buildPopup()
         .showPopup(e);

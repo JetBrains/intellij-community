@@ -32,6 +32,9 @@ public final class MagicCompletionContributor extends CompletionContributor impl
   private static final ElementPattern<PsiElement> IN_ASSIGNMENT =
     PlatformPatterns.psiElement().withParent(
       PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiAssignmentExpression.class)));
+  private static final ElementPattern<PsiElement> IN_VARIABLE =
+    PlatformPatterns.psiElement().withParent(
+      PlatformPatterns.psiElement(PsiReferenceExpression.class).withParent(PlatformPatterns.psiElement(PsiVariable.class)));
   private static final ElementPattern<PsiElement> IN_RETURN =
     PlatformPatterns.psiElement().withParent(
       PlatformPatterns.psiElement(PsiReferenceExpression.class).inside(PlatformPatterns.psiElement(PsiReturnStatement.class)));
@@ -144,6 +147,10 @@ public final class MagicCompletionContributor extends CompletionContributor impl
       if (resolved != null && PsiTreeUtil.isAncestor(assignment.getRExpression(), pos, false)) {
         result.add(Pair.create(resolved, l.getType()));
       }
+    }
+    else if (IN_VARIABLE.accepts(pos)) {
+      PsiVariable variable = PsiTreeUtil.getParentOfType(pos, PsiVariable.class);
+      result.add(Pair.create(variable, variable.getType()));
     }
     else if (IN_RETURN.accepts(pos)) {
       PsiReturnStatement statement = PsiTreeUtil.getParentOfType(pos, PsiReturnStatement.class);

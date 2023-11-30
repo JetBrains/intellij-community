@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.liveTemplates.k2.macro
 
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
@@ -20,15 +22,17 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
             val initializer = declaration.initializer
             if (initializer != null) {
                 allowAnalysisOnEdt {
-                    analyze(initializer) {
-                        val nameValidator = KotlinDeclarationNameValidator(
-                            declaration,
-                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                            this
-                        )
+                    @OptIn(KtAllowAnalysisFromWriteAction::class)
+                    allowAnalysisFromWriteAction {
+                        analyze(initializer) {
+                            val nameValidator = KotlinDeclarationNameValidator(
+                                declaration,
+                                false,
+                                KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                                this
+                            )
 
-                        with(NAME_SUGGESTER) {
-                            return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestExpressionNames(initializer))
+                            return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + NAME_SUGGESTER.suggestExpressionNames(initializer))
                                 .filter(nameValidator)
                                 .toList()
                         }
@@ -38,16 +42,18 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
         }
 
         allowAnalysisOnEdt {
-            analyze(declaration) {
-                val symbol = declaration.getSymbolOfTypeSafe<KtVariableLikeSymbol>()
-                if (symbol != null) {
-                    val nameValidator = KotlinDeclarationNameValidator(
-                        declaration,
-                        KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                        this
-                    )
-                    with(NAME_SUGGESTER) {
-                        return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + suggestTypeNames(symbol.returnType))
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(declaration) {
+                    val symbol = declaration.getSymbolOfTypeSafe<KtVariableLikeSymbol>()
+                    if (symbol != null) {
+                        val nameValidator = KotlinDeclarationNameValidator(
+                            declaration,
+                            false,
+                            KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+                            this
+                        )
+                        return ((defaultName?.let { sequenceOf(it) } ?: emptySequence()) + NAME_SUGGESTER.suggestTypeNames(symbol.returnType))
                             .filter(nameValidator)
                             .toList()
                     }
@@ -57,8 +63,6 @@ class SymbolBasedSuggestVariableNameMacro(private val defaultName: String? = nul
 
         return emptyList()
     }
-
-    private companion object {
-        val NAME_SUGGESTER = KotlinNameSuggester(KotlinNameSuggester.Case.CAMEL)
-    }
 }
+
+private val NAME_SUGGESTER = KotlinNameSuggester()

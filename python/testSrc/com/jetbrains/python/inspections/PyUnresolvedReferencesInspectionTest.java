@@ -158,7 +158,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-4748
-  public void testStubAssignment() {
+  // TODO Re-enable once PY-61093 is fixed
+  public void _testStubAssignment() {
     doMultiFileTest("a.py");
   }
 
@@ -861,6 +862,23 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                  "a.<warning descr=\"Cannot find reference 'append' in 'None'\">append</warning>(10)");
   }
 
+  // PY-30190
+  public void testUnresolvedReferenceInDecoratedClass() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+       def foo(cls):
+           return cls
+                                  
+                                  
+       @foo
+       class Bar2(object):
+           def __init__(self):
+               print(self.<warning descr="Unresolved attribute reference 'hello' for class 'Bar2'">hello</warning>)
+                           """)
+    );
+  }
+
   // PY-39682
   public void testWildcardIgnorePatternReferenceForNestedBinaryModule() {
     runWithAdditionalClassEntryInSdkRoots(getTestDirectoryPath() + "/site-packages", () -> {
@@ -883,20 +901,31 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-48166
   public void testDisabledNumpyPyiStubs() {
+    Registry.get("enable.numpy.pyi.stubs").setValue(false, getTestRootDisposable());
     doMultiFileTest();
   }
 
   // PY-48166
   public void testEnabledNumpyPyiStubs() {
-    if (!Registry.is("enable.numpy.pyi.stubs", false)) {
-      Registry.get("enable.numpy.pyi.stubs").setValue(true, getTestRootDisposable());
-    }
     doMultiFileTest();
   }
 
   // PY-48012
   public void testUnresolvedKeywordPattern() {
     runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
+  }
+
+  // PY-63361
+  public void testParametrizationOfClassWithTypeParameterListIsNotReported() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      doTestByText("""
+                   class MyGeneric[T]:
+                       pass
+                   
+                   class Sub(MyGeneric[int]):
+                       pass
+                   """);
+    });
   }
 
   @NotNull

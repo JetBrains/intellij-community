@@ -3,16 +3,16 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord;
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.Attributes;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.*;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
+import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorage;
-import com.intellij.util.io.PagedFileStorageLockFree;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -56,7 +56,7 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
   public static List<Object[]> storagesToTest() {
     final ArrayList<Object[]> storages = new ArrayList<>();
     storages.add(new Object[]{false});
-    if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+    if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
       storages.add(new Object[]{true});
     }
     return storages;
@@ -67,13 +67,18 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
   public AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest(final boolean storage) { useLockFreeStorage = storage; }
 
   protected AttributesStorageOverBlobStorage createStorage(final Path storagePath) throws Exception {
-    final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(256, 64, 30);
+    final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(64, 256,
+                                                                                                   StreamlinedBlobStorageHelper.MAX_CAPACITY,
+                                                                                                   30
+    );
     final StreamlinedBlobStorage storage = useLockFreeStorage ?
-                                           new StreamlinedBlobStorageOverLockFreePagesStorage(
-                                             new PagedFileStorageLockFree(storagePath, LOCK_CONTEXT, PAGE_SIZE, true),
+                                           new StreamlinedBlobStorageOverLockFreePagedStorage(
+                                             new PagedFileStorageWithRWLockedPageContent(
+                                               storagePath, LOCK_CONTEXT, PAGE_SIZE, PageContentLockingStrategy.LOCK_PER_PAGE
+                                             ),
                                              spaceAllocationStrategy
                                            ) :
-                                           new SmallStreamlinedBlobStorage(
+                                           new StreamlinedBlobStorageOverPagedStorage(
                                              new PagedFileStorage(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, true),
                                              spaceAllocationStrategy
                                            );
@@ -132,7 +137,7 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
         while (true) {
           final int fileId = env.generateValue(Generator.integers(0, Integer.MAX_VALUE),
                                                "Generated fileId: %s");
-          final int attributeId = env.generateValue(Generator.integers(0, AttributesStorageOverBlobStorage.MAX_ATTRIBUTE_ID),
+          final int attributeId = env.generateValue(Generator.integers(0, AbstractAttributesStorage.MAX_ATTRIBUTE_ID),
                                                     "Generated attributeId: %s");
           //RC: we can create >1 AttributeRecords with the same fileId/attributeId, which leads to
           // property failure (i.e. one of the record found not exist because another one was

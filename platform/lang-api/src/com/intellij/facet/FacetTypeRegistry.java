@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,9 +16,7 @@ public abstract class FacetTypeRegistry {
 
   public abstract FacetType<?, ?> @NotNull [] getSortedFacetTypes();
 
-  @Nullable
-  public abstract FacetType findFacetType(String id);
+  public abstract @Nullable FacetType findFacetType(String id);
 
-  @NotNull
-  public abstract <F extends Facet<C>, C extends FacetConfiguration> FacetType<F, C> findFacetType(@NotNull FacetTypeId<F> typeId);
+  public abstract @NotNull <F extends Facet<C>, C extends FacetConfiguration> FacetType<F, C> findFacetType(@NotNull FacetTypeId<F> typeId);
 }

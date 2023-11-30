@@ -12,23 +12,22 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtVariableLikeSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
-import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.analysis.withRootPrefixIfNeeded
 import org.jetbrains.kotlin.idea.completion.lookups.*
 import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer.renderVariable
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
+import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailTextForVariableCall
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.insertLambdaBraces
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.types.Variance
 
 internal class VariableLookupElementFactory {
-    fun KtAnalysisSession.createLookup(
+    context(KtAnalysisSession)
+    fun createLookup(
         signature: KtVariableLikeSignature<*>,
         options: CallableInsertionOptions,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
     ): LookupElementBuilder {
         val rendered = renderVariable(signature)
         var builder = createLookupElementBuilder(options, signature, rendered)
@@ -42,7 +41,8 @@ internal class VariableLookupElementFactory {
         return withCallableSignatureInfo(signature, builder)
     }
 
-    private fun KtAnalysisSession.createLookupElementBuilder(
+    context(KtAnalysisSession)
+    private fun createLookupElementBuilder(
         options: CallableInsertionOptions,
         signature: KtVariableLikeSignature<*>,
         rendered: String,
@@ -62,9 +62,7 @@ internal class VariableLookupElementFactory {
                     insertEmptyLambda = insertLambdaBraces(functionalType),
                 )
 
-                val tailText = functionalType.parameterTypes.joinToString(prefix = "(", postfix = ")") {
-                    it.render(CompletionShortNamesRenderer.rendererVerbose, position = Variance.INVARIANT)
-                }
+                val tailText = getTailTextForVariableCall(functionalType, signature)
 
                 LookupElementBuilder.create(lookupObject, name.asString())
                     .withTailText(tailText, true)
@@ -86,7 +84,8 @@ internal class VariableLookupElementFactory {
         }
     }
 
-    private fun KtAnalysisSession.markIfSyntheticJavaProperty(
+    context(KtAnalysisSession)
+    private fun markIfSyntheticJavaProperty(
         lookupElementBuilder: LookupElementBuilder,
         symbol: KtVariableLikeSymbol
     ): LookupElementBuilder = when (symbol) {
@@ -96,6 +95,7 @@ internal class VariableLookupElementFactory {
             lookupElementBuilder.withTailText((" (from ${buildSyntheticPropertyTailText(getterName, setterName)})"))
                 .withLookupStrings(listOfNotNull(getterName, setterName))
         }
+
         else -> lookupElementBuilder
     }
 
@@ -113,10 +113,12 @@ private data class VariableLookupObject(
 ) : KotlinCallableLookupObject()
 
 
-private object VariableInsertionHandler : QuotedNamesAwareInsertionHandler() {
+private object VariableInsertionHandler : CallableIdentifierInsertionHandler()
+
+internal open class CallableIdentifierInsertionHandler : QuotedNamesAwareInsertionHandler() {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
         val targetFile = context.file as? KtFile ?: return
-        val lookupObject = item.`object` as VariableLookupObject
+        val lookupObject = item.`object` as KotlinCallableLookupObject
 
         super.handleInsert(context, item)
 

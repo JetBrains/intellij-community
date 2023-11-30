@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.lang.Xxh3
 import org.jetbrains.ikv.builder.IkvIndexBuilder
-import org.jetbrains.xxh3.Xxh3
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -182,12 +182,14 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     }
 
     // write names
-    writeData { buffer ->
-      val shortBuffer = buffer.asShortBuffer()
-      for (name in names) {
-        shortBuffer.put(name.size.toShort())
+    for (list in names.asSequence().chunked(4096)) {
+      writeData { buffer ->
+        val shortBuffer = buffer.asShortBuffer()
+        for (name in list) {
+          shortBuffer.put(name.size.toShort())
+        }
+        buffer.position(buffer.position() + (shortBuffer.position() * Short.SIZE_BYTES))
       }
-      buffer.position(buffer.position() + (shortBuffer.position() * Short.SIZE_BYTES))
     }
 
     for (list in names.asSequence().chunked(1024)) {
@@ -339,7 +341,7 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     buffer.putShort(0)
   }
 
-  internal fun getChannelPosition() = channelPosition
+  internal fun getChannelPosition(): Long = channelPosition
 
   internal fun getChannelPositionAndAdd(increment: Int): Long {
     val p = channelPosition

@@ -67,7 +67,7 @@ public class ConfigurationErrorEventProcessor extends AbstractTestEventProcessor
 
 
   @Nls
-  private String getConfigurationErrorMessage(@NlsSafe String configurationErrorMsg, boolean openSettings) {
+  private static String getConfigurationErrorMessage(@NlsSafe String configurationErrorMsg, boolean openSettings) {
     if (openSettings) {
       return new HtmlBuilder()
         .append(HtmlChunk.br())

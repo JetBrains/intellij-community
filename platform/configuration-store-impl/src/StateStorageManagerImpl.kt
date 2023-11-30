@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.configurationStore
@@ -6,6 +6,8 @@ package com.intellij.configurationStore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.StateStorageChooserEx.Resolution
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ProjectModelElement
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.AsyncFileListener
@@ -42,16 +44,11 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()
 
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
-    if (first) {
-      compoundStreamProvider.providers.add(0, provider)
-    }
-    else {
-      compoundStreamProvider.providers.add(provider)
-    }
+    compoundStreamProvider.addStreamProvider(provider = provider, first = first)
   }
 
   override fun removeStreamProvider(aClass: Class<out StreamProvider>) {
-    compoundStreamProvider.providers.removeAll(aClass::isInstance)
+    compoundStreamProvider.removeStreamProvider(aClass)
   }
 
   // access under storageLock
@@ -127,7 +124,10 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
     return storage
   }
 
-  private fun computeStorageKey(storageClass: Class<out StateStorage>, normalizedCollapsedPath: String, collapsedPath: String, storageCreator: StorageCreator?): String {
+  private fun computeStorageKey(storageClass: Class<out StateStorage>,
+                                normalizedCollapsedPath: String,
+                                collapsedPath: String,
+                                storageCreator: StorageCreator?): String {
     if (storageClass != StateStorage::class.java) {
       return storageClass.name
     }
@@ -138,8 +138,6 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
   }
 
   fun getCachedFileStorages(): Set<StateStorage> = storageLock.read { storages.values.toSet() }
-
-  fun findCachedFileStorage(name: String): StateStorage? = storageLock.read { storages.get(name) }
 
   fun getCachedFileStorages(changed: Collection<String>,
                             deleted: Collection<String>,
@@ -232,47 +230,41 @@ open class StateStorageManagerImpl(@NonNls private val rootTagName: String,
                                             roamingType: RoamingType,
                                             usePathMacroManager: Boolean,
                                             rootTagName: String?): StateStorage {
-    val provider = if (roamingType == RoamingType.DISABLED) {
-      // remove to ensure that repository doesn't store non-roamable files
-      try {
-        compoundStreamProvider.delete(collapsedPath, roamingType)
-      }
-      catch (e: IllegalStateException) {
-        LOG.debug(e)
-        // ignore - it means that delete operation is not supported
-      }
-      null
-    }
-    else {
-      compoundStreamProvider
-    }
+    compoundStreamProvider.deleteIfObsolete(collapsedPath, roamingType)
     return MyFileStorage(storageManager = this,
                          file = path,
                          fileSpec = collapsedPath,
                          rootElementName = rootTagName,
                          roamingType = roamingType,
                          pathMacroManager = if (usePathMacroManager) macroSubstitutor else null,
-                         provider = provider)
+                         provider = compoundStreamProvider)
   }
 
   // open for upsource
   protected open fun createDirectoryBasedStorage(file: Path,
                                                  collapsedPath: String,
                                                  @Suppress("DEPRECATION", "removal") splitter: StateSplitter): StateStorage {
-    return object : DirectoryBasedStorage(file, splitter, macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
+    return object : DirectoryBasedStorage(dir = file,
+                                          splitter = splitter,
+                                          pathMacroSubstitutor = macroSubstitutor), StorageVirtualFileTracker.TrackedStorage {
       override val storageManager = this@StateStorageManagerImpl
     }
   }
 
-  protected open class MyFileStorage(override val storageManager: StateStorageManagerImpl,
-                                     file: Path,
-                                     fileSpec: String,
-                                     rootElementName: String?,
-                                     roamingType: RoamingType,
-                                     pathMacroManager: PathMacroSubstitutor? = null,
-                                     provider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager,
-                                                                                          roamingType,
-                                                                                          provider), StorageVirtualFileTracker.TrackedStorage {
+  protected open class MyFileStorage(
+    override val storageManager: StateStorageManagerImpl,
+    file: Path,
+    fileSpec: String,
+    rootElementName: String?,
+    roamingType: RoamingType,
+    pathMacroManager: PathMacroSubstitutor? = null,
+    provider: StreamProvider? = null,
+  ) : FileBasedStorage(file = file,
+                       fileSpec = fileSpec,
+                       rootElementName = rootElementName,
+                       pathMacroManager = pathMacroManager,
+                       roamingType = roamingType,
+                       provider = provider), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = rootElementName != null && storageManager.isUseXmlProlog && !isSpecialStorage(fileSpec)
 
@@ -406,7 +398,13 @@ fun checkStorageIsNotTracked(module: ComponentManager) {
 
 private class MyAsyncVfsListener : AsyncFileListener {
   override fun prepareChange(events: List<VFileEvent>): AsyncFileListener.ChangeApplier? {
-    return service<StorageVirtualFileTracker>().prepare(events)
+    LOG.debug { "Got a change in MyAsyncVfsListener: $events" }
+    service<StorageVirtualFileTracker>().schedule(events)
+    return null
+  }
+
+  companion object {
+    private val LOG = logger<MyAsyncVfsListener>()
   }
 }
 

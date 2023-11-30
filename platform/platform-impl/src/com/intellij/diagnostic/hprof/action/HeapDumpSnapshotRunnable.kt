@@ -45,20 +45,21 @@ import kotlin.io.path.exists
 import kotlin.math.max
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun usedMemory(withGC: Boolean): Long {
+private inline fun usedMemory(withGC: Boolean): Long {
   if (withGC) {
     System.gc()
   }
   val rt = Runtime.getRuntime()
   return (rt.totalMemory() - rt.freeMemory())
 }
-class HeapDumpSnapshotRunnable(
+
+internal class HeapDumpSnapshotRunnable(
   private val reason: MemoryReportReason,
   private val analysisOption: AnalysisOption) : Runnable {
 
   companion object {
-    const val MINIMUM_USED_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB = 800
-    const val NEXT_CHECK_TIMESTAMP_KEY = "heap.dump.snapshot.next.check.timestamp"
+    const val MINIMUM_USED_MEMORY_TO_CAPTURE_HEAP_DUMP_IN_MB: Int = 800
+    const val NEXT_CHECK_TIMESTAMP_KEY: String = "heap.dump.snapshot.next.check.timestamp"
     private val LOG = Logger.getInstance(HeapDumpSnapshotRunnable::class.java)
   }
 
@@ -152,7 +153,7 @@ class HeapDumpSnapshotRunnable(
 
     override fun onSuccess() {
       if (analysisOption == AnalysisOption.SCHEDULE_ON_NEXT_START && restart) {
-        ApplicationManager.getApplication().invokeLater(this::confirmRestart, ModalityState.NON_MODAL)
+        ApplicationManager.getApplication().invokeLater(this::confirmRestart, ModalityState.nonModal())
       }
     }
 

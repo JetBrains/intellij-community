@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate.linux;
 
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -10,66 +10,62 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class MimeTypeDescription implements Comparable<MimeTypeDescription> {
+final class MimeTypeDescription implements Comparable<MimeTypeDescription> {
   private final static String TYPE_PREFIX = "application/x-" + PlatformUtils.getPlatformPrefix() + "-";
 
   /**
-   * See <a href="https://www.freedesktop.org/wiki/Specifications/shared-mime-info-spec">FreeDesktop Shared Mime Info</a>
+   * See <a href="https://www.freedesktop.org/wiki/Specifications/shared-mime-info-spec">FreeDesktop Shared Mime Info</a>.
    */
-  private final static Map<String,String> OS_MIME_TYPES = new HashMap<>();
-  static {
+  private final static Map<String, String> OS_MIME_TYPES = Map.ofEntries(
     // @formatter:off
-    OS_MIME_TYPES.put("ASP",            "application/x-asp");
-    OS_MIME_TYPES.put("CMakeLists.txt", "text/x-cmake");
-    OS_MIME_TYPES.put("CSS",            "text/css");
-    OS_MIME_TYPES.put("Cucumber",       "text/x-gherkin");
-    OS_MIME_TYPES.put("DTD",            "application/xml-dtd");
-    OS_MIME_TYPES.put("Go",             "text/x-go");
-    OS_MIME_TYPES.put("Groovy",         "text/x-groovy");
-    OS_MIME_TYPES.put("HTML",           "text/html");
-    OS_MIME_TYPES.put("JAVA",           "text/x-java");
-    OS_MIME_TYPES.put("JSON",           "application/json");
-    OS_MIME_TYPES.put("JavaScript",     "application/javascript");
-    OS_MIME_TYPES.put("Jupyter",        "application/x-ipynb+json");
-    OS_MIME_TYPES.put("Log",            "text/x-log");
-    OS_MIME_TYPES.put("Markdown",       "text/markdown");
-    OS_MIME_TYPES.put("ObjectiveC",     "text/x-c++src");
-    OS_MIME_TYPES.put("PHP",            "application/x-php");
-    OS_MIME_TYPES.put("PLAIN_TEXT",     "text/plain");
-    OS_MIME_TYPES.put("Python",         "text/x-python");
-    OS_MIME_TYPES.put("QT UI file",     "application/x-designer");
-    OS_MIME_TYPES.put("RNG Compact",    "application/relax-ng-compact-syntax");
-    OS_MIME_TYPES.put("ReST",           "text/x-rst");
-    OS_MIME_TYPES.put("Ruby",           "application/x-ruby");
-    OS_MIME_TYPES.put("SCSS",           "text/x-scss");
-    OS_MIME_TYPES.put("SVG",            "image/svg+xml");
-    OS_MIME_TYPES.put("Sass",           "text/x-sass");
-    OS_MIME_TYPES.put("XHTML",          "text/xhtml+xml");
-    OS_MIME_TYPES.put("XML",            "application/xml");
-    OS_MIME_TYPES.put("YAML",           "application/x-yaml");
+    Map.entry("ASP",            "application/x-asp"),
+    Map.entry("CMakeLists.txt", "text/x-cmake"),
+    Map.entry("CSS",            "text/css"),
+    Map.entry("Cucumber",       "text/x-gherkin"),
+    Map.entry("DTD",            "application/xml-dtd"),
+    Map.entry("Go",             "text/x-go"),
+    Map.entry("Groovy",         "text/x-groovy"),
+    Map.entry("HTML",           "text/html"),
+    Map.entry("JAVA",           "text/x-java"),
+    Map.entry("JSON",           "application/json"),
+    Map.entry("JavaScript",     "application/javascript"),
+    Map.entry("Jupyter",        "application/x-ipynb+json"),
+    Map.entry("Log",            "text/x-log"),
+    Map.entry("Markdown",       "text/markdown"),
+    Map.entry("ObjectiveC",     "text/x-c++src"),
+    Map.entry("PHP",            "application/x-php"),
+    Map.entry("PLAIN_TEXT",     "text/plain"),
+    Map.entry("Python",         "text/x-python"),
+    Map.entry("QT UI file",     "application/x-designer"),
+    Map.entry("RNG Compact",    "application/relax-ng-compact-syntax"),
+    Map.entry("ReST",           "text/x-rst"),
+    Map.entry("Ruby",           "application/x-ruby"),
+    Map.entry("SCSS",           "text/x-scss"),
+    Map.entry("SVG",            "image/svg+xml"),
+    Map.entry("Sass",           "text/x-sass"),
+    Map.entry("XHTML",          "text/xhtml+xml"),
+    Map.entry("XML",            "application/xml"),
+    Map.entry("YAML",           "application/x-yaml")
     // @formatter:on
-  }
+  );
 
-  private final List<String> myGlobPatterns = new ArrayList<>();
-  private final String myComment;
-  private final String myType;
+  final @NotNull String comment;
+  final @NotNull String type;
+  final @NotNull List<String> globPatterns;
 
   MimeTypeDescription(@NotNull FileType fileType) {
-    myComment = fileType.getDescription();
-    myType = getMimeType(fileType);
-    for (FileNameMatcher matcher: OSAssociateFileTypesUtil.getMatchers(fileType)) {
-      if (matcher instanceof ExtensionFileNameMatcher) {
-        myGlobPatterns.add(matcher.getPresentableString());
-      }
-    }
+    comment = fileType.getDescription();
+    type = getMimeType(fileType);
+    globPatterns = OSAssociateFileTypesUtil.getMatchers(fileType).stream()
+      .filter(ExtensionFileNameMatcher.class::isInstance)
+      .map(FileNameMatcher::getPresentableString)
+      .toList();
   }
 
-  private static String getMimeType(@NotNull FileType fileType) {
+  private static String getMimeType(FileType fileType) {
     if (fileType instanceof LanguageFileType) {
       String[] mimeTypes = ((LanguageFileType)fileType).getLanguage().getMimeTypes();
       if (mimeTypes.length > 0) return mimeTypes[0];
@@ -83,21 +79,8 @@ class MimeTypeDescription implements Comparable<MimeTypeDescription> {
     return fromName;
   }
 
-  List<String> getGlobPatterns() {
-    return myGlobPatterns;
-  }
-
-  String getComment() {
-    return myComment;
-  }
-
-  String getType() {
-    return myType;
-  }
-
   @Override
   public int compareTo(@NotNull MimeTypeDescription o) {
-    return myType.compareTo(o.myType);
+    return type.compareTo(o.type);
   }
-
 }

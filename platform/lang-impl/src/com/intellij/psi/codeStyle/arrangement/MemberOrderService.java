@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -15,20 +16,20 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * The whole arrangement idea is to allow to change file entries order according to the user-provided rules.
+ * The whole arrangement idea is to allow changing file entries order according to the user-provided rules.
  * <p/>
  * That means that we can re-use the same mechanism during, say, new members generation - arrangement rules can be used to
  * determine position where a new element should be inserted.
  * <p/>
  * This service provides utility methods for that.
  */
-public class MemberOrderService {
-  
+@Service
+public final class MemberOrderService {
   /**
-   * Tries to find an element at the given context which should be the previous sibling for the given 'member'element according to the
+   * Tries to find an element at the given context which should be the previous sibling for the given 'member' element according to the
    * {@link CommonCodeStyleSettings#getArrangementSettings() user-defined arrangement rules}.
    * <p/>
-   * E.g. the IDE might generate given 'member' element and wants to know element after which it should be inserted
+   * E.g. the IDE might generate a given 'member' an element and wants to know an element after which it should be inserted
    * 
    * @param member    target member which anchor should be calculated
    * @param settings  code style settings to use
@@ -37,8 +38,7 @@ public class MemberOrderService {
    *                  given 'context' element if given member should be the first child
    *                  {@code null} otherwise
    */
-  @Nullable
-  public PsiElement getAnchor(@NotNull PsiElement member, @NotNull CommonCodeStyleSettings settings, @NotNull PsiElement context) {
+  public @Nullable PsiElement getAnchor(@NotNull PsiElement member, @NotNull CommonCodeStyleSettings settings, @NotNull PsiElement context) {
     Language language = context.getLanguage();
     Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
     if (rearranger == null) {

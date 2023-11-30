@@ -41,9 +41,6 @@ public final class GradleConstants {
 
   @NonNls public static final String BUILD_SRC_NAME = "buildSrc";
 
-  @NonNls public static final String MINIMAL_SUPPORTED_GRADLE_VERSION = "3.0";
-  @NonNls public static final String MINIMAL_RECOMMENDED_GRADLE_VERSION = "4.5";
-
   private GradleConstants() {
   }
 }

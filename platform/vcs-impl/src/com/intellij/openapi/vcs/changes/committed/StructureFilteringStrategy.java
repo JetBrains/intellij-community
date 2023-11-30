@@ -154,7 +154,7 @@ public class StructureFilteringStrategy implements ChangeListFilteringStrategy {
     }
 
     @NotNull
-    private List<FilePath> getFilePathsUnder(@NotNull ChangesBrowserNode<?> node) {
+    private static List<FilePath> getFilePathsUnder(@NotNull ChangesBrowserNode<?> node) {
       List<FilePath> result = Collections.emptyList();
       Object userObject = node.getUserObject();
 

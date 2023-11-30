@@ -374,7 +374,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     return "QuickEditHandler@" + this.hashCode() + super.toString();
   }
 
-  private static class MyQuietHandler implements ReadonlyFragmentModificationHandler {
+  private static final class MyQuietHandler implements ReadonlyFragmentModificationHandler {
     @Override
     public void handle(ReadOnlyFragmentModificationException e) {
       //nothing

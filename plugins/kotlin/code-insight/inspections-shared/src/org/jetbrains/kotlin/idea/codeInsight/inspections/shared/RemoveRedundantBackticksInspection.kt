@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
-class RemoveRedundantBackticksInspection : AbstractKotlinInspection() {
+internal class RemoveRedundantBackticksInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : KtVisitorVoid() {
             override fun visitKtElement(element: KtElement) {

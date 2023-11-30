@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lexer;
 
 import com.intellij.html.embedding.HtmlEmbeddedContentProvider;
@@ -66,7 +66,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer implements Restartable
   }
 
   @Override
-  public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+  public void start(final @NotNull CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     super.start(buffer, startOffset, endOffset, initialState & BASE_STATE_MASK);
     if ((initialState & CONTENT_PROVIDER_HAS_STATE) != 0) {
       throw new IllegalStateException(
@@ -96,14 +96,20 @@ public abstract class BaseHtmlLexer extends DelegateLexer implements Restartable
   @Override
   public void advance() {
     if (myHtmlEmbedmentInfo != null) {
-      myDelegate.start(myDelegate.getBufferSequence(), myHtmlEmbedmentInfo.getRange().getEndOffset(),
-                       myDelegate.getBufferEnd(), myHtmlEmbedmentInfo.getBaseLexerState());
+      restartAfterEmbedment(
+        myHtmlEmbedmentInfo.getRange().getEndOffset(),
+        myHtmlEmbedmentInfo.getBaseLexerState()
+      );
     }
     else {
       super.advance();
     }
     broadcastToken();
     myHtmlEmbedmentInfo = null;
+  }
+
+  protected void restartAfterEmbedment(int offset, int baseLexerState) {
+    myDelegate.start(myDelegate.getBufferSequence(), offset, myDelegate.getBufferEnd(), baseLexerState);
   }
 
   protected @NotNull TokenSet createTagEmbedmentStartTokenSet() {
@@ -212,6 +218,10 @@ public abstract class BaseHtmlLexer extends DelegateLexer implements Restartable
 
   protected boolean acceptEmbeddedContentProvider(@NotNull HtmlEmbeddedContentProvider provider) {
     return true;
+  }
+
+  public boolean isPossiblyCustomTagName(@NotNull CharSequence tagName) {
+    return false;
   }
 
   private static class HtmlLexerPosition implements LexerPosition {

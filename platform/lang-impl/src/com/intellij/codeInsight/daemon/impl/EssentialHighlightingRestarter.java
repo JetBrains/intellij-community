@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 
@@ -20,7 +20,7 @@ import java.util.Objects;
  * Tells {@link DaemonCodeAnalyzerImpl} to run full set of passes after "Save all" to show all diagnostics
  * if the current selected file configured as "Highlight: Essential only"
  */
-public class EssentialHighlightingRestarter implements SaveAndSyncHandlerListener {
+public final class EssentialHighlightingRestarter implements SaveAndSyncHandlerListener {
   private final Project myProject;
 
   public EssentialHighlightingRestarter(Project project) {
@@ -31,11 +31,10 @@ public class EssentialHighlightingRestarter implements SaveAndSyncHandlerListene
   public void beforeSave(@NotNull SaveAndSyncHandler.SaveTask task, boolean forceExecuteImmediately) {
     boolean hasFilesWithEssentialHighlightingConfigured =
       Arrays.stream(FileEditorManager.getInstance(myProject).getOpenFiles())
-        .map(vf -> ReadAction.compute(() -> PsiManagerEx.getInstanceEx(myProject).getFileManager().findFile(vf)))
+        .map(vf -> ReadAction.nonBlocking(() -> PsiManagerEx.getInstanceEx(myProject).getFileManager().findFile(vf)).executeSynchronously())
         .filter(Objects::nonNull)
-        .map(psiFile -> ReadAction.compute(() -> HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(psiFile) ==
-                        FileHighlightingSetting.ESSENTIAL))
-        .findAny().isPresent();
+        .anyMatch(psiFile -> ReadAction.nonBlocking(() -> HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(psiFile) ==
+                                                      FileHighlightingSetting.ESSENTIAL).executeSynchronously());
     if (hasFilesWithEssentialHighlightingConfigured) {
       DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject);
       codeAnalyzer.restartToCompleteEssentialHighlighting();

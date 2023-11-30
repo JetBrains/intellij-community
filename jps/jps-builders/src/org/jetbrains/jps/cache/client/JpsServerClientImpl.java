@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.client;
 
 import com.intellij.openapi.application.PathManager;
@@ -56,9 +57,8 @@ public final class JpsServerClientImpl implements JpsServerClient {
     }
   }
 
-  @Nullable
   @Override
-  public File downloadCacheById(@NotNull JpsLoaderContext context, @NotNull String cacheId, @NotNull File targetDir) {
+  public @Nullable File downloadCacheById(@NotNull JpsLoaderContext context, @NotNull String cacheId, @NotNull File targetDir) {
     String downloadUrl = myServerUrl + "/caches/" + cacheId;
     String fileName = "portable-build-cache.zip";
     DownloadableFileUrl description = new DownloadableFileUrl(downloadUrl, fileName);

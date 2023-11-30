@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("KotlinPsiModificationUtils")
 
 package org.jetbrains.kotlin.idea.base.psi
@@ -9,9 +9,12 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.canPlaceAfterSimpleNameEntry
+import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 
 inline fun <reified T : PsiElement> T.copied(): T {
     return copy() as T
@@ -28,6 +31,13 @@ inline fun <reified T : PsiElement> PsiElement.replaced(newElement: T): T {
     }
 }
 
+/**
+ * Deletes this single PSI element from the PSI tree without removing other elements.
+ * This method is mostly used as a substitute for [PsiElement.delete] because [PsiElement.delete] can delete more than the element it is
+ * called on. When for example calling it on a [KtClassOrObject], [PsiElement.delete] will delete the class or object but when this class
+ * or object is the only declaration in the file, it will also delete the file. On the contrary [PsiElement.deleteSingle] will only delete
+ * the class or object here, but not the file.
+ */
 fun PsiElement.deleteSingle() {
     CodeEditUtil.removeChild(parent?.node ?: return, node ?: return)
 }
@@ -83,4 +93,70 @@ inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T)
             body.addAfter(declaration, anchor)
 
     return newDeclaration as T
+}
+
+fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): KtTypeParameter? {
+    typeParameterList?.let { return it.addParameter(typeParameter) }
+
+    val list = KtPsiFactory(project).createTypeParameterList("<X>")
+    list.parameters[0].replace(typeParameter)
+    val leftAnchor = when (this) {
+        is KtClass -> nameIdentifier
+        is KtNamedFunction -> funKeyword
+        is KtProperty -> valOrVarKeyword
+        is KtTypeAlias -> nameIdentifier
+        else -> null
+    } ?: return null
+    return (addAfter(list, leftAnchor) as KtTypeParameterList).parameters.first()
+}
+
+fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement {
+    defaultValue?.let { return it.replaced(newDefaultValue) }
+
+    val psiFactory = KtPsiFactory(project)
+    val eq = equalsToken ?: add(psiFactory.createEQ())
+    return addAfter(newDefaultValue, eq) as KtExpression
+}
+
+/**
+ * Moves the lambda argument inside parentheses and replaces it with the specified replacement expression.
+ *
+ * @param replacement The replacement expression to be used.
+ * @param lambdaArgumentName The name of the lambda argument; use `null` if no name is needed.
+ * @return The modified `KtCallExpression` with the lambda argument moved inside parentheses and replaced with
+ * the specified replacement expression.
+ */
+fun KtLambdaArgument.moveInsideParenthesesAndReplaceWith(
+    replacement: KtExpression,
+    lambdaArgumentName: Name?,
+): KtCallExpression {
+    val oldCallExpression = parent as KtCallExpression
+    val newCallExpression = oldCallExpression.copy() as KtCallExpression
+
+    val psiFactory = KtPsiFactory(project)
+    val argument = psiFactory.createArgument(replacement, lambdaArgumentName)
+
+    val functionLiteralArgument = newCallExpression.lambdaArguments.firstOrNull()!!
+    val valueArgumentList = newCallExpression.valueArgumentList ?: psiFactory.createCallArguments("()")
+
+    valueArgumentList.addArgument(argument)
+
+    (functionLiteralArgument.prevSibling as? PsiWhiteSpace)?.delete()
+    if (newCallExpression.valueArgumentList != null) {
+        functionLiteralArgument.delete()
+    } else {
+        functionLiteralArgument.replace(valueArgumentList)
+    }
+    return oldCallExpression.replace(newCallExpression) as KtCallExpression
+}
+
+/**
+ * Returns `true` if the lambda argument should be named, `false` otherwise.
+ */
+fun shouldLambdaParameterBeNamed(argument: KtLambdaArgument): Boolean {
+    val callExpression = argument.parent as KtCallExpression
+    val args = callExpression.getValueArgumentsInParentheses()
+    if (args.any { it.isNamed() }) return true
+    val callee = (callExpression.calleeExpression?.mainReference?.resolve() as? KtFunction) ?: return false
+    return if (callee.valueParameters.any { it.isVarArg }) true else callee.valueParameters.size - 1 > args.size
 }

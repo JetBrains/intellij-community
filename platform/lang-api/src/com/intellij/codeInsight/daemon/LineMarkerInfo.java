@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.diagnostic.PluginException;
@@ -37,14 +37,13 @@ public class LineMarkerInfo<T extends PsiElement> {
   public final int endOffset;
   public Color separatorColor;
   public SeparatorPlacement separatorPlacement;
-  public RangeHighlighter highlighter;
+  public volatile RangeHighlighter highlighter;
 
   public int updatePass;
   private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
   private final Supplier<@Nls @NotNull String> myAccessibleNameProvider;
   private AnAction myNavigateAction = new NavigateAction<>(this);
-  @NotNull
-  private final GutterIconRenderer.Alignment myIconAlignment;
+  private final @NotNull GutterIconRenderer.Alignment myIconAlignment;
   private final GutterIconNavigationHandler<T> myNavigationHandler;
 
   /**

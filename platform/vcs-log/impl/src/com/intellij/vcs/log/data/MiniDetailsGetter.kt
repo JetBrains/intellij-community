@@ -19,6 +19,7 @@ import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import it.unimi.dsi.fastutil.ints.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 
 class MiniDetailsGetter internal constructor(project: Project,
@@ -42,12 +43,13 @@ class MiniDetailsGetter internal constructor(project: Project,
   private var currentTaskIndex: Long = 0
   private val loadingFinishedListeners = ArrayList<Runnable>()
 
-  override fun getCommitData(commit: Int): VcsCommitMetadata {
+  override fun getCachedDataOrPlaceholder(commit: Int): VcsCommitMetadata {
     return getCommitData(commit, emptySet())
   }
 
+  @ApiStatus.Internal
   fun getCommitData(commit: Int, commitsToLoad: Iterable<Int>): VcsCommitMetadata {
-    val details = getCommitDataIfAvailable(commit)
+    val details = getFromCacheAndCleanOldPlaceholder(commit)
     if (details != null) return details
 
     if (!EventQueue.isDispatchThread()) {
@@ -56,13 +58,17 @@ class MiniDetailsGetter internal constructor(project: Project,
     }
 
     val toLoad = IntOpenHashSet(commitsToLoad.iterator())
+    if (toLoad.isEmpty()) {
+      return cache.getIfPresent(commit) ?: createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
+    }
+
     val taskNumber = currentTaskIndex++
     toLoad.forEach(IntConsumer { cacheCommit(it, taskNumber) })
     loader.queue(TaskDescriptor(toLoad))
     return cache.getIfPresent(commit) ?: createPlaceholderCommit(commit, taskNumber)
   }
 
-  override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
+  private fun getFromCacheAndCleanOldPlaceholder(commit: Int): VcsCommitMetadata? {
     if (!EventQueue.isDispatchThread()) {
       return cache.getIfPresent(commit) ?: topCommitsDetailsCache[commit]
     }
@@ -80,15 +86,12 @@ class MiniDetailsGetter internal constructor(project: Project,
     return topCommitsDetailsCache[commit]
   }
 
-  override fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
-    val detailsFromCache = commits.associateNotNull {
-      val details = getCommitDataIfAvailable(it)
-      if (details is LoadingDetails) {
-        return@associateNotNull null
-      }
-      details
-    }
-    return detailsFromCache
+  override fun getCachedData(commit: Int): VcsCommitMetadata? {
+    return cache.getIfPresent(commit).takeIf { it !is LoadingDetails } ?: topCommitsDetailsCache[commit]
+  }
+
+  override fun getCachedData(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
+    return commits.associateNotNull { getCachedData(it) }
   }
 
   override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)

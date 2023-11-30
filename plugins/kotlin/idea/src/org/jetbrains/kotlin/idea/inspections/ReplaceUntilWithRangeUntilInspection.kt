@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
+import org.jetbrains.kotlin.idea.inspections.ReplaceUntilWithRangeUntilInspection.Util.isPossibleToUseRangeUntil
 import org.jetbrains.kotlin.idea.intentions.getArguments
 import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.statistics.KotlinLanguageFeaturesFUSCollector
@@ -78,7 +79,7 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection(
         }
     }
 
-    companion object {
+    object Util {
         @ApiStatus.Internal
         fun KtElement.isPossibleToUseRangeUntil(context: Lazy<BindingContext>?): Boolean {
             val annotationFqName = FqName(EXPERIMENTAL_STDLIB_API_ANNOTATION)
@@ -89,27 +90,26 @@ class ReplaceUntilWithRangeUntilInspection : AbstractRangeInspection(
                                 isOptInAllowed(annotationFqName, languageVersionSettings, it.value)
                     } == true
         }
-
-        private fun KtElement.isOtpInRequiredForRangeUntil(annotationFqName: FqName, context: BindingContext): Boolean {
-            val rangeUntilFunctionDescriptor = findRangeUntilFunctionDescriptor(context)
-                ?: return false
-            if (rangeUntilFunctionDescriptor.annotations.hasAnnotation(annotationFqName)) {
-                return true
-            }
-            val necessaryOptIns = WasExperimentalOptInsNecessityCheckerFe10.getNecessaryOptInsFromWasExperimental(
-                rangeUntilFunctionDescriptor.annotations, findModuleDescriptor(), languageVersionSettings.apiVersion
-            )
-            return annotationFqName in necessaryOptIns
-        }
-
-        private fun KtElement.findRangeUntilFunctionDescriptor(context: BindingContext): CallableDescriptor? {
-            val descriptor = getResolvedCall(context)?.resultingDescriptor
-            val receiverType = descriptor?.receiverType() ?: return null
-
-            // Opt-in will be removed simultaneously on all rangeUntil, so no need to search for matching overload.
-            return receiverType.memberScope
-                .getContributedFunctions(Name.identifier("rangeUntil"), NoLookupLocation.FROM_IDE)
-                .firstOrNull { it.isOperator }
-        }
     }
+}
+
+private fun KtElement.isOtpInRequiredForRangeUntil(annotationFqName: FqName, context: BindingContext): Boolean {
+    val rangeUntilFunctionDescriptor = findRangeUntilFunctionDescriptor(context) ?: return false
+    if (rangeUntilFunctionDescriptor.annotations.hasAnnotation(annotationFqName)) {
+        return true
+    }
+    val necessaryOptIns = WasExperimentalOptInsNecessityCheckerFe10.getNecessaryOptInsFromWasExperimental(
+        rangeUntilFunctionDescriptor.annotations, findModuleDescriptor(), languageVersionSettings.apiVersion
+    )
+    return annotationFqName in necessaryOptIns
+}
+
+private fun KtElement.findRangeUntilFunctionDescriptor(context: BindingContext): CallableDescriptor? {
+    val descriptor = getResolvedCall(context)?.resultingDescriptor
+    val receiverType = descriptor?.receiverType() ?: return null
+
+    // Opt-in will be removed simultaneously on all rangeUntil, so no need to search for matching overload.
+    return receiverType.memberScope
+        .getContributedFunctions(Name.identifier("rangeUntil"), NoLookupLocation.FROM_IDE)
+        .firstOrNull { it.isOperator }
 }

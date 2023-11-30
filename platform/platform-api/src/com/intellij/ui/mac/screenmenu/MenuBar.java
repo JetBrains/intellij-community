@@ -1,31 +1,35 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.mac.screenmenu;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.Arrays;
+import java.util.Objects;
 
-@SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public final class MenuBar extends Menu {
-  static private long[] ourLastMenubarPeers = null;
-  private Window myFrame;
-  private final WindowListener myListener;
+  private static long[] ourLastMenuBarPeers;
 
-  public MenuBar(String title) {
+  private @Nullable Window myFrame;
+  private final WindowListener myListener = new WindowAdapter() {
+    @Override
+    public void windowActivated(WindowEvent e) {
+      refillIfNeeded();
+    }
+  };
+
+  public MenuBar(@Nullable String title, @NotNull JFrame frame) {
     super(title);
-    myListener = new WindowAdapter() {
-      @Override
-      public void windowActivated(WindowEvent e) {
-        if (Arrays.equals(myCachedPeers, ourLastMenubarPeers))
-          return;
-        refillImpl(true);
-      }
-    };
+    setFrame(frame);
   }
 
-  public void setFrame(Window frame) {
+  public synchronized void setFrame(@Nullable Window frame) {
+    Objects.requireNonNull(myListener);
     if (myFrame != null) {
       myFrame.removeWindowListener(myListener);
     }
@@ -35,10 +39,19 @@ public final class MenuBar extends Menu {
     }
   }
 
+  /** @noinspection NonPrivateFieldAccessedInSynchronizedContext*/
+  private synchronized void refillIfNeeded() {
+    if (Arrays.equals(myCachedPeers, ourLastMenuBarPeers)) {
+      return;
+    }
+    refillImpl(true);
+  }
+
+  /** @noinspection NonPrivateFieldAccessedInSynchronizedContext, AssignmentToStaticFieldFromInstanceMethod */
   @Override
   synchronized void refillImpl(boolean onAppKit) {
-    if (myCachedPeers != null) {
-      ourLastMenubarPeers = myCachedPeers;
+    if (myCachedPeers != null && myFrame != null && myFrame.isActive()) {
+      ourLastMenuBarPeers = myCachedPeers;
       nativeRefill(0, myCachedPeers, onAppKit);
     }
   }

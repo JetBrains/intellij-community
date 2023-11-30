@@ -6,18 +6,36 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.webSymbols.utils.markdown.DocumentationHtmlBlockProvider;
+import org.intellij.markdown.IElementType;
+import org.intellij.markdown.MarkdownTokenTypes;
+import org.intellij.markdown.ast.ASTNode;
+import org.intellij.markdown.flavours.commonmark.CommonMarkMarkerProcessor;
+import org.intellij.markdown.flavours.gfm.GFMConstraints;
+import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor;
+import org.intellij.markdown.html.GeneratingProvider;
+import org.intellij.markdown.html.HtmlGenerator;
+import org.intellij.markdown.parser.LinkMap;
+import org.intellij.markdown.parser.MarkdownParser;
+import org.intellij.markdown.parser.MarkerProcessorFactory;
+import org.intellij.markdown.parser.ProductionHolder;
+import org.intellij.markdown.parser.constraints.CommonMarkdownConstraints;
+import org.intellij.markdown.parser.markerblocks.MarkerBlockProvider;
+import org.intellij.markdown.parser.markerblocks.providers.HtmlBlockProvider;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.markdown.utils.MarkdownToHtmlConverterKt.convertMarkdownToHtml;
+import static org.intellij.markdown.ast.ASTUtilKt.getTextInNode;
 
 /**
  * TODO move to contrib/markdown/lib/intellij-markdown.jar
@@ -31,14 +49,9 @@ public final class HtmlMarkdownUtils {
   private static final String HTML_CODE_START = "<code>";
   private static final String HTML_CODE_END = "</code>";
   private static final String FENCED_CODE_BLOCK = "```";
-  private static final String INLINE_CODE_BLOCK = "``";
+  private static final String INLINE_CODE_BLOCK = "`";
 
-  // Final adjustments to make PhpDoc look more readable
-  // Final adjustments to make PhpDoc look more readable
-  private static final Map<String, String> HTML_DOC_SUBSTITUTIONS = new HashMap<>();
-  public static final String BR_TAG_AFTER_MARKDOWN_PROCESSING = "<br  />";
-  public static final String BR_TAG_OPENING = "&lt;br&gt;";
-  public static final String BR_TAG_CLOSING = "&lt;/br&gt;";
+  private static final Map<String, String> HTML_DOC_SUBSTITUTIONS = new LinkedHashMap<>();
 
   static {
     HTML_DOC_SUBSTITUTIONS.put("<pre><code>", "<pre>");
@@ -48,18 +61,44 @@ public final class HtmlMarkdownUtils {
     HTML_DOC_SUBSTITUTIONS.put("<strong>", "<b>");
     HTML_DOC_SUBSTITUTIONS.put("</strong>", "</b>");
     HTML_DOC_SUBSTITUTIONS.put(": //", "://"); // Fix URL
+    HTML_DOC_SUBSTITUTIONS.put("<p></p><pre>", "<pre>");
+    HTML_DOC_SUBSTITUTIONS.put("</p><pre>", "<pre>");
+    HTML_DOC_SUBSTITUTIONS.put("</p>", "");
+    HTML_DOC_SUBSTITUTIONS.put("<br  />", "");
   }
 
-  private static final Set<String> ACCEPTABLE_TAGS =
-    Set.of("span", "img", "p", "i", "code", "ul", "h1", "h2", "h3", "h4", "h5", "h6",
-                               "li", "blockquote", "ol", "b", "a", "tt", "pre", "tr", "th",
-                               "td", "table", "strong", "em", "u", "dl", "dd", "dt");
+  private static final Set<CharSequence> ACCEPTABLE_TAGS = CollectionFactory.createCharSequenceSet(false);
+  public static final Set<CharSequence> ACCEPTABLE_BLOCK_TAGS = CollectionFactory.createCharSequenceSet(false);
+
+  static {
+    ACCEPTABLE_BLOCK_TAGS.addAll(Arrays.asList(
+      // Text content
+      "blockquote", "dd", "dl", "dt",
+      "hr", "li", "ol", "ul", "pre", "p",
+
+      // Table,
+      "caption", "col", "colgroup", "table", "tbody", "td", "tfoot", "th", "thead", "tr"
+    ));
+    ACCEPTABLE_TAGS.addAll(ACCEPTABLE_BLOCK_TAGS);
+    ACCEPTABLE_TAGS.addAll(Arrays.asList(
+      // Content sectioning
+      "h1", "h2", "h3", "h4", "h5", "h6",
+      // Inline text semantic
+      "a", "b", "br", "code", "em", "i", "s", "span", "strong", "u", "wbr",
+      // Image and multimedia
+      "img",
+      // Svg and math
+      "svg",
+      // Obsolete
+      "tt"
+    ));
+  }
 
   private HtmlMarkdownUtils() {
   }
 
   @Contract(pure = true)
-  public static @Nullable String toHtml(@NotNull String markdownText) {
+  public static @NotNull String toHtml(@NotNull String markdownText) {
     return toHtml(markdownText, true);
   }
 
@@ -69,7 +108,7 @@ public final class HtmlMarkdownUtils {
   }
 
   @Contract(pure = true)
-  public static @Nullable String toHtml(@NotNull String markdownText, boolean convertTagCodeBlocks) {
+  public static @NotNull String toHtml(@NotNull String markdownText, boolean convertTagCodeBlocks) {
     String[] lines = SPLIT_BY_LINE_PATTERN.split(markdownText);
     List<String> processedLines = new ArrayList<>(lines.length);
     boolean isInCode = false;
@@ -78,7 +117,6 @@ public final class HtmlMarkdownUtils {
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
       String processedLine = StringUtil.trimTrailing(line);
-      processedLine = StringUtil.trimStart(processedLine, " ");
       if (processedLine.matches("\\s+```.*")) {
         processedLine = processedLine.trim();
       }
@@ -135,8 +173,7 @@ public final class HtmlMarkdownUtils {
             isInTable = false;
             tableFormats = null;
           }
-          List<TextRange> ranges = getInlineCodeBlocks(processedLine);
-          processedLine = isInCode ? processedLine : replaceProhibitedTags(StringUtil.trimLeading(processedLine), ranges);
+          processedLine = isInCode ? processedLine : StringUtil.trimLeading(processedLine);
         }
       }
       processedLines.add(processedLine);
@@ -144,8 +181,15 @@ public final class HtmlMarkdownUtils {
     String normalizedMarkdown = StringUtil.join(processedLines, "\n");
     if (isInTable) normalizedMarkdown += "</table>"; //NON-NLS
     String html = convert(normalizedMarkdown);
-
+    if (html == null) {
+      html = replaceProhibitedTags(convertNewLinePlaceholdersToTags(markdownText), ContainerUtil.emptyList());
+    }
     return adjustHtml(html);
+  }
+
+  @NotNull
+  private static String convertNewLinePlaceholdersToTags(@NotNull String generatedDoc) {
+    return StringUtil.replace(generatedDoc, "\n", "\n<p>");
   }
 
   private static @Nullable List<String> parseTableFormats(@NotNull List<String> cols) {
@@ -158,7 +202,7 @@ public final class HtmlMarkdownUtils {
   }
 
   private static boolean isTableHeaderSeparator(@NotNull List<String> parts) {
-    return parts.stream().allMatch(HtmlMarkdownUtils::isHeaderSeparator);
+    return ContainerUtil.and(parts, HtmlMarkdownUtils::isHeaderSeparator);
   }
 
   private static boolean isHeaderSeparator(@NotNull String s) {
@@ -203,37 +247,19 @@ public final class HtmlMarkdownUtils {
     return c0 == ':' && cE == ':' ? "center" : cE == ':' ? "right" : "left";
   }
 
-  private static @NotNull List<TextRange> getInlineCodeBlocks(@NotNull String processingLine) {
-    int next = 0;
-    List<TextRange> ranges = new ArrayList<>();
-    int length = processingLine.length();
-    while (next >= 0 && next < length) {
-      int startQuote = processingLine.indexOf('`', next);
-      if (startQuote < 0 || length <= startQuote + 1) break;
-      char nextChar = processingLine.charAt(startQuote + 1);
-      int offset = nextChar == '`' ? 2 : 1;
-      if (length <= startQuote + offset) break;
-      int endQuote = processingLine.indexOf('`', startQuote + offset);
-      if (endQuote <= 0) break;
-      ranges.add(new TextRange(startQuote, endQuote));
-      next = endQuote + offset;
-    }
-
-    return ranges;
-  }
+  private static final IElementType embeddedHtmlType = new IElementType("ROOT");
 
   private static @Nullable @NlsSafe String convert(@NotNull @Nls String text) {
     try {
-      return convertMarkdownToHtml(text);
+      var flavour = new DocumentationFlavourDescriptor();
+      var parsedTree = new MarkdownParser(flavour).parse(embeddedHtmlType, text, true);
+      return new HtmlGenerator(text, parsedTree, flavour, false)
+        .generateHtml(new DocumentationTagRenderer(text));
     }
     catch (Exception e) {
       LOG.warn(e.getMessage(), e);
       return null;
     }
-  }
-
-  public static @NotNull String replaceProhibitedTags(@NotNull String line) {
-    return replaceProhibitedTags(line, ContainerUtil.emptyList());
   }
 
   private static @NotNull String replaceProhibitedTags(@NotNull String line, @NotNull List<TextRange> skipRanges) {
@@ -245,7 +271,7 @@ public final class HtmlMarkdownUtils {
     while (matcher.find()) {
       final String tagName = matcher.group(2);
 
-      if (ACCEPTABLE_TAGS.contains(StringUtil.toLowerCase(tagName))) continue;
+      if (ACCEPTABLE_TAGS.contains(tagName)) continue;
 
       int startOfTag = matcher.start(2);
       for (TextRange range : skipRanges) {
@@ -261,7 +287,8 @@ public final class HtmlMarkdownUtils {
         String replacement = isOpenTag ? "<span>" : "</span>";
         builder.replace(start, end, replacement);
         diff += 1;
-      } else {
+      }
+      else {
         builder.replace(start, start + 1, "&lt;");
         diff += 3;
       }
@@ -270,14 +297,119 @@ public final class HtmlMarkdownUtils {
   }
 
   @Contract(pure = true)
-  public static @Nullable String adjustHtml(@Nullable String html) {
-    if (html == null) return null;
+  private static @NotNull String adjustHtml(@NotNull String html) {
     String str = html;
     for (Map.Entry<String, String> entry : HTML_DOC_SUBSTITUTIONS.entrySet()) {
       str = str.replace(entry.getKey(), entry.getValue());
     }
-    str = str.replace(BR_TAG_AFTER_MARKDOWN_PROCESSING, "");
-
     return str.trim();
+  }
+
+  private static class DocumentationMarkerProcessor extends CommonMarkMarkerProcessor {
+
+    DocumentationMarkerProcessor(@NotNull ProductionHolder productionHolder,
+                                 @NotNull CommonMarkdownConstraints constraintsBase) {
+      super(productionHolder, constraintsBase);
+    }
+
+    @NotNull
+    @Override
+    protected List<MarkerBlockProvider<StateInfo>> getMarkerBlockProviders() {
+      return ContainerUtil.concat(ContainerUtil.filter(super.getMarkerBlockProviders(), it -> !(it instanceof HtmlBlockProvider)),
+                                  Collections.singletonList(new DocumentationHtmlBlockProvider()));
+    }
+  }
+
+  private static class DocumentationFlavourDescriptor extends GFMFlavourDescriptor {
+    @NotNull
+    @Override
+    public MarkerProcessorFactory getMarkerProcessorFactory() {
+      return (productionHolder) -> new DocumentationMarkerProcessor(productionHolder, GFMConstraints.Companion.getBASE());
+    }
+
+    @NotNull
+    @Override
+    public Map<IElementType, GeneratingProvider> createHtmlGeneratingProviders(@NotNull LinkMap linkMap, @Nullable URI baseURI) {
+      var result = new HashMap<>(super.createHtmlGeneratingProviders(linkMap, baseURI));
+      result.put(MarkdownTokenTypes.HTML_TAG, new SanitizingTagGeneratingProvider());
+      return result;
+    }
+  }
+
+  private static class SanitizingTagGeneratingProvider implements GeneratingProvider {
+
+    private static final Pattern TAG_PATTERN = Pattern.compile("^</?([a-z][a-z-_0-9]*)[^>]*>$", Pattern.CASE_INSENSITIVE);
+
+    @Override
+    public void processNode(@NotNull HtmlGenerator.HtmlGeneratingVisitor visitor, @NotNull String wholeText, @NotNull ASTNode node) {
+      var text = getTextInNode(node, wholeText);
+      var matcher = TAG_PATTERN.matcher(text);
+      if (matcher.matches()) {
+        var tagName = matcher.group(1);
+        if (StringUtil.equalsIgnoreCase(tagName, "div")) {
+          visitor.consumeHtml(text.subSequence(0, matcher.start(1)));
+          visitor.consumeHtml("span");
+          visitor.consumeHtml(text.subSequence(matcher.end(1), text.length()));
+          return;
+        }
+        if (ACCEPTABLE_TAGS.contains(tagName)) {
+          visitor.consumeHtml(text);
+          return;
+        }
+      }
+      visitor.consumeHtml(StringUtil.escapeXmlEntities(text.toString()));
+    }
+  }
+
+  private static class DocumentationTagRenderer extends HtmlGenerator.DefaultTagRenderer {
+
+    private final String wholeText;
+
+    private DocumentationTagRenderer(@NotNull String wholeText) {
+      super((a, b, c) -> c, false);
+      this.wholeText = wholeText;
+    }
+
+    @NotNull
+    @Override
+    public CharSequence openTag(@NotNull ASTNode node,
+                                @NotNull CharSequence tagName,
+                                CharSequence @NotNull [] attributes,
+                                boolean autoClose) {
+      if (StringUtil.equalsIgnoreCase(tagName, "p")) {
+        ASTNode first = ContainerUtil.getFirstItem(node.getChildren());
+        if (first != null && first.getType() == MarkdownTokenTypes.HTML_TAG) {
+          var text = getTextInNode(first, wholeText);
+          var matcher = SanitizingTagGeneratingProvider.TAG_PATTERN.matcher(text);
+          if (matcher.matches()) {
+            var nestedTag = matcher.group(1);
+            if (ACCEPTABLE_BLOCK_TAGS.contains(nestedTag)) {
+              return "";
+            }
+          }
+        }
+      }
+      if (StringUtil.equalsIgnoreCase(tagName, "code") && node.getType() == MarkdownTokenTypes.CODE_FENCE_CONTENT) {
+        return "";
+      }
+      return super.openTag(node, convertTag(tagName), attributes, autoClose);
+    }
+
+    @NotNull
+    @Override
+    public CharSequence closeTag(@NotNull CharSequence tagName) {
+      if (StringUtil.equalsIgnoreCase(tagName, "p")) return "";
+      return super.closeTag(convertTag(tagName));
+    }
+
+    private static @NotNull CharSequence convertTag(@NotNull CharSequence tagName) {
+      if (StringUtil.equalsIgnoreCase(tagName, "strong")) {
+        return "b";
+      }
+      else if (StringUtil.equalsIgnoreCase(tagName, "em")) {
+        return "i";
+      }
+      return tagName;
+    }
   }
 }

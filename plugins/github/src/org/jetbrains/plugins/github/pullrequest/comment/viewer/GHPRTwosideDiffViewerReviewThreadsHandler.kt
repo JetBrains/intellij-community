@@ -3,12 +3,10 @@ package org.jetbrains.plugins.github.pullrequest.comment.viewer
 
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.diff.DiffMappedValue
-import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
-import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRCommentsUtil
 import org.jetbrains.plugins.github.pullrequest.comment.ui.*
@@ -30,10 +28,8 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
   override val viewerReady = true
 
   init {
-    val inlaysManagerLeft = EditorComponentInlaysManager(viewer.editor1 as EditorImpl)
-
     val gutterIconRendererFactoryLeft = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel,
-                                                                                    inlaysManagerLeft,
+                                                                                    viewer.editor1,
                                                                                     componentsFactory,
                                                                                     cumulative) { line ->
       val (startLine, endLine) = getCommentLinesRange(viewer.editor1, line)
@@ -41,12 +37,10 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
     }
 
     GHPREditorCommentableRangesController(commentableRangesLeft, gutterIconRendererFactoryLeft, viewer.editor1)
-    GHPREditorReviewThreadsController(editorThreadsLeft, componentsFactory, inlaysManagerLeft)
-
-    val inlaysManagerRight = EditorComponentInlaysManager(viewer.editor2 as EditorImpl)
+    GHPREditorReviewThreadsController(editorThreadsLeft, componentsFactory, viewer.editor1)
 
     val gutterIconRendererFactoryRight = GHPRDiffEditorGutterIconRendererFactoryImpl(reviewProcessModel,
-                                                                                     inlaysManagerRight,
+                                                                                     viewer.editor2,
                                                                                      componentsFactory,
                                                                                      cumulative) { line ->
       val (startLine, endLine) = getCommentLinesRange(viewer.editor2, line)
@@ -54,7 +48,7 @@ class GHPRTwosideDiffViewerReviewThreadsHandler(reviewProcessModel: GHPRReviewPr
     }
 
     GHPREditorCommentableRangesController(commentableRangesRight, gutterIconRendererFactoryRight, viewer.editor2)
-    GHPREditorReviewThreadsController(editorThreadsRight, componentsFactory, inlaysManagerRight)
+    GHPREditorReviewThreadsController(editorThreadsRight, componentsFactory, viewer.editor2)
   }
 
   override fun markCommentableRanges(ranges: List<Range>?) {

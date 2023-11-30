@@ -19,6 +19,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+/**
+ * @see VcsLogFilterObject#fromPaths(Collection)
+ */
 @ApiStatus.Internal
 public class VcsLogStructureFilterImpl implements VcsLogDetailsFilter, VcsLogStructureFilter {
   private final @NotNull Collection<FilePath> myFiles;

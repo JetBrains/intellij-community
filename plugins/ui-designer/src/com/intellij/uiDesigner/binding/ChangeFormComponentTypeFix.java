@@ -1,24 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.psi.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiPlainTextFile;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class ChangeFormComponentTypeFix implements IntentionAction {
-  @SafeFieldForPreview private final PsiPlainTextFile myFormFile;
+public class ChangeFormComponentTypeFix implements ModCommandAction {
+  private final PsiPlainTextFile myFormFile;
   private final String myFieldName;
   private final String myComponentTypeToSet;
 
@@ -41,35 +41,17 @@ public class ChangeFormComponentTypeFix implements IntentionAction {
 
   @Override
   @NotNull
-  public String getText() {
+  public String getFamilyName() {
     return QuickFixBundle.message("uidesigner.change.gui.component.type");
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return getText();
+  public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    return Presentation.of(getFamilyName());
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return true;
-  }
-
-  @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    CommandProcessor.getInstance().executeCommand(file.getProject(), () -> {
-      final ReadonlyStatusHandler readOnlyHandler = ReadonlyStatusHandler.getInstance(myFormFile.getProject());
-      final ReadonlyStatusHandler.OperationStatus status =
-        readOnlyHandler.ensureFilesWritable(Collections.singletonList(myFormFile.getVirtualFile()));
-      if (!status.hasReadonlyFiles()) {
-        FormReferenceProvider.setGUIComponentType(myFormFile, myFieldName, myComponentTypeToSet);
-      }
-    }, getText(), null);
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+  public @NotNull ModCommand perform(@NotNull ActionContext context) {
+    return FormReferenceProvider.setGUIComponentType(myFormFile, myFieldName, myComponentTypeToSet);
   }
 }

@@ -32,3 +32,14 @@ object KotlinStdJSWithStdLibProjectDescriptor : KotlinLightProjectDescriptor() {
         }
     }
 }
+
+object KotlinStdJSWithDomApiCompatProjectDescriptor : KotlinLightProjectDescriptor() {
+    override fun getSdk(): Sdk? = null
+
+    override fun configureModule(module: Module, model: ModifiableRootModel) {
+        KotlinStdJSProjectDescriptor.configureModule(module, model)
+        ConfigLibraryUtil.addLibrary(model, "kotlin-dom-api-compat", KotlinJavaScriptLibraryKind) {
+            addRoot(VfsUtil.getUrlForLibraryRoot(TestKotlinArtifacts.kotlinDomApiCompat), OrderRootType.CLASSES)
+        }
+    }
+}

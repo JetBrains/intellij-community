@@ -126,15 +126,6 @@ sealed class BaseLayout {
                                                     reason = reason))
   }
 
-  fun withProjectLibraries(libraryNames: Collection<String>, jarName: String, reason: String? = null) {
-    for (libraryName in libraryNames) {
-      includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
-                                                      packMode = LibraryPackMode.STANDALONE_MERGED,
-                                                      outPath = jarName,
-                                                      reason = reason))
-    }
-  }
-
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
     moduleExcludes = moduleExcludes.mutate {
       it.computeIfAbsent(moduleName) { mutableListOf() }.add(excludedPattern)
@@ -148,7 +139,9 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = LibraryPackMode.MERGED))
+    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
+                                                    packMode = LibraryPackMode.MERGED,
+                                                    reason = "withProjectLibrary"))
   }
 
   fun withProjectLibraries(libraryNames: Iterable<String>) {
@@ -156,12 +149,12 @@ sealed class BaseLayout {
   }
 
   fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode))
+    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, reason = "withProjectLibrary"))
   }
 
   /**
    * Include the module library to the plugin distribution. Please note that it makes sense to call this method only
-   * for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution, because for ordinary modules
+   * for additional modules which aren't copied directly to the 'lib' directory of the plugin distribution, because for ordinary modules,
    * their module libraries are included in the layout automatically.
    * @param relativeOutputPath target path relative to 'lib' directory
    */
@@ -190,12 +183,12 @@ data class ModuleLibraryData(
   @JvmField val moduleName: String,
   @JvmField val libraryName: String,
   @JvmField val relativeOutputPath: String = "",
-  @JvmField val extraCopy: Boolean = false // set to true to have library both packed to plugin and copied to plugin as additional JAR
+  @JvmField val extraCopy: Boolean = false // set to true to have a library both packed to plugin and copied to plugin as additional JAR
 )
 
 class ModuleItem(
   @JvmField val moduleName: String,
-  // for one module, maybe several JARs - that's why `relativeOutputPath` is included into hash code
+  // for one module, maybe several JARs - that's why `relativeOutputPath` is included in hash code
   @JvmField val relativeOutputFile: String,
   @JvmField val reason: String?,
 ) {
@@ -206,24 +199,11 @@ class ModuleItem(
   }
 
   override fun equals(other: Any?): Boolean {
-    if (this === other) {
-      return true
-    }
-    if (other !is ModuleItem) {
-      return false
-    }
-
-    if (moduleName != other.moduleName) {
-      return false
-    }
-    return relativeOutputFile == other.relativeOutputFile
+    return this === other ||
+           other is ModuleItem && moduleName == other.moduleName && relativeOutputFile == other.relativeOutputFile
   }
 
-  override fun hashCode(): Int {
-    var result = moduleName.hashCode()
-    result = 31 * result + relativeOutputFile.hashCode()
-    return result
-  }
+  override fun hashCode(): Int = 31 * moduleName.hashCode() + relativeOutputFile.hashCode()
 
-  override fun toString(): String = "ModuleItem(moduleName=$moduleName, relativeOutputFile=$relativeOutputFile, reason=$reason)"
+  override fun toString(): String = "ModuleItem(moduleName=${moduleName}, relativeOutputFile=${relativeOutputFile}, reason=${reason})"
 }

@@ -3,6 +3,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.*;
@@ -12,6 +13,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
@@ -39,6 +42,8 @@ import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTy
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementGenerator;
 import org.apache.thrift.TException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,6 +97,11 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   private final List<PyFrameListener> myFrameListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @Nullable private XCompositeNode myCurrentRootNode;
+
+  @Nullable
+  public PsiFile getHistoryPsiFile() {
+    return myConsoleView != null ? myConsoleView.getHistoryPsiFile() : null;
+  }
 
   /**
    * Initializes the bidirectional RPC communication.
@@ -278,6 +288,24 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    */
   protected Pair<String, Boolean> exec(final ConsoleCodeFragment command) throws PythonUnhandledException {
     setExecuting(true);
+
+    // add code fragment to myConsoleView.getHistoryPsiFile()
+    PsiFile psi = getHistoryPsiFile();
+    if (myConsoleView != null && psi != null) {
+      ApplicationManager.getApplication().invokeLater(
+        () -> WriteCommandAction.runWriteCommandAction(myProject, null, null,
+                                                       () -> {
+                                                         PsiElement[] newElems =
+                                                           PyElementGenerator.getInstance(myProject)
+                                                             .createDummyFile(LanguageLevel.forElement(myConsoleView.getFile()),
+                                                                              command.getText())
+                                                             .getChildren();
+                                                         for (PsiElement elem : newElems) {
+                                                           psi.add(elem);
+                                                         }
+                                                       },
+                                                       psi));
+    }
 
     boolean more;
     try {

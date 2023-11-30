@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
@@ -109,7 +110,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
                                      PsiElement parameterOwner,
                                      @NotNull ParameterInfoHandler handler,
                                      boolean showHint) {
-    ApplicationManager.getApplication().assertIsDispatchThread(); // DEXP-575205
+    ThreadingAssertions.assertEventDispatchThread(); // DEXP-575205
 
     myProject = project;
     myEditor = editor;
@@ -521,7 +522,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
 
     public void applyUIChanges() {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       for (int index = 0, len = getObjects().length; index < len; index++) {
         boolean enabled = isUIComponentEnabled(index);
@@ -553,7 +554,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
   public interface SignatureItemModel {
   }
 
-  public static class RawSignatureItem implements SignatureItemModel {
+  public static final class RawSignatureItem implements SignatureItemModel {
     public final String htmlText;
 
     public RawSignatureItem(String htmlText) {
@@ -561,7 +562,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
   }
 
-  public static class SignatureItem implements SignatureItemModel {
+  public static final class SignatureItem implements SignatureItemModel {
     public final String text;
     public final boolean deprecated;
     public final boolean disabled;
@@ -581,7 +582,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     }
   }
 
-  public static class Model {
+  public static final class Model {
     public final List<SignatureItemModel> signatures = new ArrayList<>();
     public int current = -1;
     public int highlightedSignature = -1;
@@ -590,7 +591,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
     public Project project;
   }
 
-  private class MyDeleteParameterInfoContext implements DeleteParameterInfoContext {
+  private final class MyDeleteParameterInfoContext implements DeleteParameterInfoContext {
     @Override
     public PsiElement getParameterOwner() {
       return myParameterInfoControllerData.getParameterOwner();

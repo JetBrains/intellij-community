@@ -43,7 +43,6 @@ class GradleBuildCancelledIssueChecker : GradleIssueChecker {
                                                 parentEventId: Any,
                                                 messageConsumer: Consumer<in BuildEvent>): Boolean {
     // Build cancellation errors should be handled by GradleBuildCancelledIssueChecker.check method based on exceptions come from Gradle TAPI
-    if (failureCause.contains("Build cancelled.")) return true
-    return false
+    return failureCause.contains("Build cancelled.")
   }
 }

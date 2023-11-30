@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.actions;
 
 import com.intellij.find.FindBundle;
@@ -78,7 +78,7 @@ public class FindUsagesAction extends AnAction {
     FindUsagesInFileAction.updateFindUsagesAction(event);
   }
 
-  public static class ShowSettingsAndFindUsages extends FindUsagesAction {
+  public static final class ShowSettingsAndFindUsages extends FindUsagesAction {
     @Override
     protected void startFindUsages(@NotNull PsiElement element) {
       FindManager.getInstance(element.getProject()).findUsages(element, true);

@@ -1,16 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory
 
@@ -87,6 +87,8 @@ internal sealed interface StoredFileSet : StoredFileSetCollection {
   override fun forEach(action: (StoredFileSet) -> Unit) {
     action(this)
   }
+
+  abstract override fun toString(): String
 }
 
 /**
@@ -120,6 +122,10 @@ internal class WorkspaceFileSetImpl(override val root: VirtualFile,
 
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
     return this.takeIf(condition)
+  }
+
+  override fun toString(): String {
+    return "WorkspaceFileSet{root=$root, kind=$kind}"
   }
 }
 
@@ -166,6 +172,10 @@ private data class TwoWorkspaceFileSets(private val first: WorkspaceFileSetImpl,
 
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
     return first.takeIf(condition) ?: second.takeIf(condition)
+  }
+
+  override fun toString(): String {
+    return "TwoWorkspaceFileSets{$first, $second}"
   }
 }
 
@@ -225,6 +235,10 @@ internal class MultipleStoredWorkspaceFileSets(private val storedFileSets: Mutab
       it is WorkspaceFileSetImpl && condition(it)
     } as? WorkspaceFileSetWithCustomData<*>
   }
+
+  override fun toString(): String {
+    return "MultipleStoredWorkspaceFileSets{${storedFileSets.joinToString()}}"
+  }
 }
 
 internal class MultipleWorkspaceFileSetsImpl(override val fileSets: List<WorkspaceFileSetImpl>): MultipleWorkspaceFileSets {
@@ -234,6 +248,10 @@ internal class MultipleWorkspaceFileSetsImpl(override val fileSets: List<Workspa
 
   override fun findFileSet(condition: (WorkspaceFileSetWithCustomData<*>) -> Boolean): WorkspaceFileSetWithCustomData<*>? {
     return fileSets.find(condition)
+  }
+
+  override fun toString(): String {
+    return "MultipleWorkspaceFileSets{${fileSets.joinToString()}}"
   }
 }
 
@@ -247,7 +265,8 @@ internal object WorkspaceFileKindMask {
   const val EXTERNAL_BINARY = 2
   const val EXTERNAL_SOURCE = 4
   const val EXTERNAL = EXTERNAL_SOURCE or EXTERNAL_BINARY
-  const val ALL = CONTENT or EXTERNAL
+  const val CUSTOM = 8
+  const val ALL = CONTENT or EXTERNAL or CUSTOM
 }
 
 internal sealed interface ExcludedFileSet : StoredFileSet {
@@ -261,6 +280,10 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
       val withExclusion = if (honorExclusion) currentMasks.unsetAcceptedKinds(mask) else currentMasks
       return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
+    }
+
+    override fun toString(): String {
+      return "ExcludedFileSet.ByFileKind{mask=$mask}"
     }
   }
 
@@ -290,6 +313,10 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
       val withExclusion = if (honorExclusion && isExcluded(file)) currentMasks.unsetAcceptedKinds(WorkspaceFileKindMask.ALL) else currentMasks
       return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
     }
+
+    override fun toString(): String {
+      return "ExcludedFileSet.ByPattern{root=$root, patterns=$table}"
+    }
   }
 
   class ByCondition(val root: VirtualFile, val condition: (VirtualFile) -> Boolean,
@@ -310,6 +337,10 @@ internal sealed interface ExcludedFileSet : StoredFileSet {
     override fun computeMasks(currentMasks: Int, project: Project, honorExclusion: Boolean, file: VirtualFile): Int {
       val withExclusion = if (honorExclusion && isExcluded(file)) currentMasks.unsetAcceptedKinds(WorkspaceFileKindMask.ALL) else currentMasks
       return withExclusion or StoredFileSetKindMask.IRRELEVANT_FILE_SET
+    }
+
+    override fun toString(): String {
+      return "ExcludedFileSet.ByCondition{root=$root}"
     }
   }
 }

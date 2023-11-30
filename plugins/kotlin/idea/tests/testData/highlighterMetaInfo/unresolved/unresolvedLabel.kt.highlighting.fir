@@ -1,8 +1,9 @@
 // ALLOW_ERRORS
+// CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
 
-class <!HIGHLIGHTING("textAttributesKey='KOTLIN_CLASS'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'")!>A<!> {
-    <!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'")!>init<!> {
-        this<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_LABEL] Unresolved label'; highlightingTextAttributesKey='WRONG_REFERENCES_ATTRIBUTES'"), HIGHLIGHTING("textAttributesKey='KOTLIN_LABEL'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'")!>@B<!>
+class <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_CLASS'")!>A<!> {
+    <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>init<!> {
+        this<!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_LABEL] Unresolved label.'; highlightingTextAttributesKey='WRONG_REFERENCES_ATTRIBUTES'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_LABEL'")!>@B<!>
     }
 }

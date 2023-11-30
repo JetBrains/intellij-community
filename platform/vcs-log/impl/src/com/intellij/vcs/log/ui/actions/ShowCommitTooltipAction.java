@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -9,26 +9,25 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Commit;
 import org.jetbrains.annotations.NotNull;
 
-public class ShowCommitTooltipAction extends DumbAwareAction {
+public final class ShowCommitTooltipAction extends DumbAwareAction {
   public ShowCommitTooltipAction() {
     super(VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.text"),
-          VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.description"), null);
+          VcsLogBundle.messagePointer("action.ShowCommitTooltipAction.description"));
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    VcsLogUiEx ui = e.getData(VcsLogInternalDataKeys.LOG_UI_EX);
-    if (project == null || ui == null) {
+    VcsLogGraphTable table = e.getData(VcsLogInternalDataKeys.VCS_LOG_GRAPH_TABLE);
+    if (project == null || table == null) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setEnabledAndVisible(ui.getTable().getSelectedRowCount() == 1);
+      e.getPresentation().setEnabledAndVisible(table.getSelectedRowCount() == 1);
     }
   }
 
@@ -36,7 +35,7 @@ public class ShowCommitTooltipAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
-    VcsLogGraphTable table = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_EX).getTable();
+    VcsLogGraphTable table = e.getRequiredData(VcsLogInternalDataKeys.VCS_LOG_GRAPH_TABLE);
     int row = table.getSelectedRow();
     if (ScrollingUtil.isVisible(table, row)) {
       table.showTooltip(row, Commit.INSTANCE);

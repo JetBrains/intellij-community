@@ -68,7 +68,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
     FormEditingUtil.showPopupUnderComponent(popup, selection.get(0));
   }
 
-  private DefaultActionGroup prepareActionGroup(final List<? extends RadComponent> selection) {
+  private static DefaultActionGroup prepareActionGroup(final List<? extends RadComponent> selection) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     final EventSetDescriptor[] eventSetDescriptors;
     try {
@@ -260,14 +260,16 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
       }
     }
 
-    private PsiMethod findConstructorToInsert(final PsiClass aClass) throws IncorrectOperationException {
+    private static PsiMethod findConstructorToInsert(final PsiClass aClass) throws IncorrectOperationException {
       final PsiMethod[] constructors = aClass.getConstructors();
       if (constructors.length == 0) {
-        PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
-        PsiMethod newConstructor = factory.createMethodFromText("public " + aClass.getName() + "() { }", aClass);
-        final PsiMethod[] psiMethods = aClass.getMethods();
-        PsiMethod firstMethod = (psiMethods.length == 0) ? null : psiMethods [0];
-        return (PsiMethod) aClass.addBefore(newConstructor, firstMethod);
+        return WriteAction.compute(() -> {
+          PsiElementFactory factory = JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory();
+          PsiMethod newConstructor = factory.createMethodFromText("public " + aClass.getName() + "() { }", aClass);
+          final PsiMethod[] psiMethods = aClass.getMethods();
+          PsiMethod firstMethod = (psiMethods.length == 0) ? null : psiMethods[0];
+          return (PsiMethod)aClass.addBefore(newConstructor, firstMethod);
+        });
       }
       for(PsiMethod method: constructors) {
         if (method.getParameterList().isEmpty()) {

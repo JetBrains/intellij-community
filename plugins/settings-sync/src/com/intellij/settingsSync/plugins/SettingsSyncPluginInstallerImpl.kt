@@ -1,23 +1,17 @@
 package com.intellij.settingsSync.plugins
 
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
-import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
+import com.intellij.settingsSync.*
 import com.intellij.settingsSync.NOTIFICATION_GROUP
-import com.intellij.settingsSync.SettingsSyncBundle
-import com.intellij.settingsSync.SettingsSyncEvents
-import com.intellij.settingsSync.SettingsSyncSettings
-import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Boolean) : SettingsSyncPluginInstaller {
@@ -29,13 +23,14 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
   override fun installPlugins(pluginsToInstall: List<PluginId>) {
     if (pluginsToInstall.isEmpty())
       return
-    ApplicationManager.getApplication().invokeAndWait {
-      val prepareRunnable = PrepareInstallationRunnable(pluginsToInstall) { pluginId, indicator -> createDownloader(pluginId, indicator) }
-      if (ProgressManager.getInstance().runProcessWithProgressSynchronously(
-          prepareRunnable, SettingsSyncBundle.message("installing.plugins.indicator"), true, null)) {
+    val pluginInstallation = object : Task.Backgroundable(null, SettingsSyncBundle.message("installing.plugins.indicator"), true) {
+      override fun run(indicator: ProgressIndicator) {
+        val prepareRunnable = PrepareInstallationRunnable(pluginsToInstall, indicator) { pluginId, indicator -> createDownloader(pluginId, indicator) }
+        prepareRunnable.run()
         installCollected(prepareRunnable.getInstallers())
       }
     }
+    ProgressManager.getInstance().run(pluginInstallation)
   }
 
   private fun installCollected(installers: List<PluginDownloader>) {
@@ -45,10 +40,11 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
     for (installer in installers) {
       try {
         if (!install(installer)) {
-          pluginsRequiredRestart.add("'${installer.pluginName}'")
+          pluginsRequiredRestart.add(installer.pluginName)
         }
         LOG.info("Setting sync installed plugin ID: ${installer.id.idString}")
       } catch (ex: Exception) {
+
         // currently, we don't install plugins that have missing dependencies.
         // TODO: toposort plugin with dependencies.
         // TODO: Skip installation dependent plugins, if any dependency fails to install.
@@ -60,7 +56,9 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
     if (settingsChanged){
       SettingsSyncEvents.getInstance().fireCategoriesChanged()
     }
-    notifyRestartNeeded(pluginsRequiredRestart)
+    if (pluginsRequiredRestart.size > 0) {
+      SettingsSyncEvents.getInstance().fireRestartRequired(RestartForPluginInstall(pluginsRequiredRestart))
+    }
   }
 
   open internal fun install(installer: PluginDownloader): Boolean = installer.installDynamically(null)
@@ -85,31 +83,9 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
     return null
   }
 
-  private fun notifyRestartNeeded(pluginsRequiredRestart: List<String>) {
-    if (pluginsRequiredRestart.isEmpty())
-      return
-    val listOfPluginsQuoted = pluginsRequiredRestart.joinToString(
-      limit = 10,
-      truncated = SettingsSyncBundle.message("plugins.sync.restart.notification.more.plugins",
-                                             pluginsRequiredRestart.size - 10)
-    )
-    val notification = NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
-      .createNotification(SettingsSyncBundle.message("plugins.sync.restart.notification.title"),
-                          SettingsSyncBundle.message("plugins.sync.restart.notification.message",
-                                                     pluginsRequiredRestart.size, listOfPluginsQuoted),
-                          NotificationType.INFORMATION)
-    notification.addAction(NotificationAction.create(
-      SettingsSyncBundle.message("plugins.sync.restart.notification.action", ApplicationNamesInfo.getInstance().fullProductName),
-      Consumer {
-        val app = ApplicationManager.getApplication() as ApplicationEx
-        app.restart(true)
-      }))
-    notification.notify(null)
-  }
-
-
   internal class PrepareInstallationRunnable(
-    val pluginIds: List<PluginId>,
+    private val pluginIds: List<PluginId>,
+    private val indicator: ProgressIndicator,
     val dwnldPreparer: (pluginId: PluginId, indicator: ProgressIndicator) -> PluginDownloader?
   ) : Runnable {
 
@@ -117,7 +93,6 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
 
     @RequiresBackgroundThread
     override fun run() {
-      val indicator = ProgressManager.getInstance().progressIndicator
       pluginIds.forEach {
         prepareToInstall(it, indicator)
         indicator.checkCanceled()

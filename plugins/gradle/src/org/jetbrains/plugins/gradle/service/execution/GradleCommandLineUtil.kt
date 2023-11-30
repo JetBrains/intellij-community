@@ -5,6 +5,7 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineOption
 import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLineTask
 
 
@@ -20,7 +21,11 @@ fun parseCommandLine(tasksAndArguments: List<String>, arguments: List<String>): 
 
 fun GradleCommandLineTask.getTestPatterns(): Set<String> {
   return options
-    .filter { GradleConstants.TESTS_ARG_NAME == it.name }
+    .filter { it.isTestPattern() }
     .flatMap { it.values }
     .toSet()
+}
+
+fun GradleCommandLineOption.isTestPattern(): Boolean {
+  return GradleConstants.TESTS_ARG_NAME == name
 }

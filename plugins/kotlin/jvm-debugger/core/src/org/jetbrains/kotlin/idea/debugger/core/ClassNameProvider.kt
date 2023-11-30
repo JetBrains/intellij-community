@@ -168,7 +168,14 @@ class ClassNameProvider(
             ProgressManager.getInstance().runProcessWithProgressSynchronously(task, progressMessage, true, project)
         } else {
             try {
-                ProgressManager.getInstance().runProcess(task, ProgressIndicatorBase())
+                // We should not create new indicator when already running in a process,
+                // as it will make the outer process not cancellable
+                val currentIndicator = ProgressManager.getInstance().progressIndicator
+                if (currentIndicator != null) {
+                    task.run()
+                } else {
+                    ProgressManager.getInstance().runProcess(task, ProgressIndicatorBase())
+                }
                 true
             } catch (e: InterruptedException) {
                 false

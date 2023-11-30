@@ -33,8 +33,6 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   protected void setupJavaParameters(@NotNull JavaParameters params) throws ExecutionException {
-    JavaParametersUtil.configureConfiguration(params, myConfiguration);
-
     ReadAction.run(() -> JavaRunConfigurationExtensionManager.getInstance()
       .updateJavaParameters(getConfiguration(), params, getRunnerSettings(), getEnvironment().getExecutor()));
   }

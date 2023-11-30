@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public class HippieBackwardCompletionAction extends BaseCodeInsightAction implements DumbAware {
+public final class HippieBackwardCompletionAction extends BaseCodeInsightAction implements DumbAware {
   public HippieBackwardCompletionAction() {
     setEnabledInModalContext(true);
   }

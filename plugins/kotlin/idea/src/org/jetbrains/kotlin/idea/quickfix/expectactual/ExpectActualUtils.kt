@@ -15,7 +15,7 @@ import com.intellij.util.SlowOperations
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.isInlineOrValue
 import org.jetbrains.kotlin.idea.base.psi.mustHaveValOrVar
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -152,7 +152,7 @@ fun createFileForDeclaration(module: Module, declaration: KtNamedDeclaration): K
             if (existingFile.declarations.isNotEmpty() &&
                 existingPackageDirective?.fqName != packageDirective?.fqName
             ) {
-                val newName = Fe10KotlinNameSuggester.suggestNameByName(fileName) {
+                val newName = KotlinNameSuggester.suggestNameByName(fileName) {
                     directory.findFile("$it.kt") == null
                 } + ".kt"
                 createKotlinFile(newName, directory, packageName)

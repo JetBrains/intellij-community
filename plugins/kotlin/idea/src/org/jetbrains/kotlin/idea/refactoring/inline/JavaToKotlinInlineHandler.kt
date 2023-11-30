@@ -7,24 +7,25 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.codeInliner.UsageReplacementStrategy
-import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.codeInliner.CodeToInlineBuilder
+import org.jetbrains.kotlin.idea.codeInliner.PropertyUsageReplacementStrategy
+import org.jetbrains.kotlin.idea.codeInliner.unwrapSpecialUsageOrNull
+import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 import org.jetbrains.kotlin.idea.j2k.IdeaJavaToKotlinServices
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findOrCreateUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.J2KInlineCache.Companion.findUsageReplacementStrategy
-import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.JKMultipleFilesPostProcessingTarget
@@ -36,7 +37,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.calls.tower.isSynthesized
-
 
 class JavaToKotlinInlineHandler : AbstractCrossLanguageInlineHandler() {
     override fun prepareReference(reference: PsiReference, referenced: PsiElement): MultiMap<PsiElement, String> {
@@ -96,45 +96,39 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
     referenced: PsiMember,
     context: PsiElement,
 ): KtNamedDeclaration {
-    var fakeFile: KtFile? = null
-    object : Task.Modal(project, KotlinBundle.message("action.j2k.name"), false) {
-        override fun run(indicator: ProgressIndicator) {
-            val converterExtension = J2kConverterExtension.extension(useNewJ2k = true)
-            val postProcessor = converterExtension.createPostProcessor(formatCode = true)
-            val processor = converterExtension.createWithProgressProcessor(
-                progress = indicator,
-                files = listOf(referenced.containingFile as PsiJavaFile),
-                phasesCount = phasesCount + postProcessor.phasesCount,
-            )
+    val converterExtension = J2kConverterExtension.extension(useNewJ2k = true)
+    val postProcessor = converterExtension.createPostProcessor(formatCode = true)
+    val processor = converterExtension.createWithProgressProcessor(
+        progress = ProgressManager.getInstance().progressIndicator,
+        files = listOf(referenced.containingFile as PsiJavaFile),
+        phasesCount = phasesCount + postProcessor.phasesCount,
+    )
 
-            val (j2kResults, _, j2kContext) = runReadAction {
-                elementsToKotlin(
-                    inputElements = listOf(referenced),
-                    processor = processor,
-                    bodyFilter = { it == referenced }
-                )
-            }
+    val (j2kResults, _, j2kContext) = runReadAction {
+        elementsToKotlin(
+            inputElements = listOf(referenced),
+            processor = processor,
+            bodyFilter = { it == referenced },
+            forInlining = true
+        )
+    }
 
-            val file = runReadAction {
-                val factory = KtPsiFactory.contextual(context)
-                val className = referenced.containingClass?.qualifiedName
-                val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
-                factory.createFile("dummy.kt", text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}")
-                    .also { it.addImports(j2kResult.importsToAdd) }
-            }
+    val file = runReadAction {
+        val factory = KtPsiFactory.contextual(context)
+        val className = referenced.containingClass?.qualifiedName
+        val j2kResult = j2kResults.first() ?: error("Can't convert to Kotlin ${referenced.text}")
+        factory.createFile("dummy.kt", text = "class DuMmY_42_ : $className {\n${j2kResult.text}\n}")
+            .also { it.addImports(j2kResult.importsToAdd) }
+    }
 
-            postProcessor.doAdditionalProcessing(
-                target = JKMultipleFilesPostProcessingTarget(files = listOf(file)),
-                converterContext = j2kContext,
-                onPhaseChanged = { i, s -> processor.updateState(null, phasesCount + i, s) },
-            )
+    postProcessor.doAdditionalProcessing(
+        target = JKMultipleFilesPostProcessingTarget(files = listOf(file)),
+        converterContext = j2kContext,
+        onPhaseChanged = { i, s -> processor.updateState(null, phasesCount + i, s) },
+    )
 
-            fakeFile = file
-        }
-    }.queue()
-
-    val fakeClass = fakeFile?.declarations?.singleOrNull() as? KtClass ?: error("Can't find dummy class in ${fakeFile?.text}")
-    return fakeClass.declarations.singleOrNull() as? KtNamedDeclaration ?: error("Can't find fake declaration in ${fakeFile?.text}")
+    val fakeClass = file.declarations.singleOrNull() as? KtClass ?: error("Can't find dummy class in ${file.text}")
+    return fakeClass.declarations.singleOrNull() as? KtNamedDeclaration ?: error("Can't find fake declaration in ${file.text}")
 }
 
 private fun unwrapUsage(usage: UsageInfo): KtReferenceExpression? {
@@ -214,7 +208,14 @@ private fun createUsageReplacementStrategyForNamedDeclaration(
         property = namedDeclaration,
         editor = editor,
         project = namedDeclaration.project,
-        fallbackToSuperCall = fallbackToSuperCall,
+        { decl, fallback ->
+            CodeToInlineBuilder(
+                originalDeclaration = decl,
+                fallbackToSuperCall = fallback,
+            )
+        },
+        { readReplacement, writeReplacement -> PropertyUsageReplacementStrategy(readReplacement, writeReplacement) },
+        fallbackToSuperCall = fallbackToSuperCall
     )
 
     else -> null

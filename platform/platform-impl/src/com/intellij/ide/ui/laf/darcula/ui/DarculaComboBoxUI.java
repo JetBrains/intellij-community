@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
@@ -9,6 +9,8 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRenderer;
+import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
@@ -227,8 +229,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return JBUI.CurrentTheme.Arrow.backgroundColor(comboBox.isEnabled(), comboBox.isEditable());
   }
 
-  @NotNull
-  static Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
+  static @NotNull Dimension getArrowButtonPreferredSize(@Nullable JComboBox comboBox) {
     Insets i = comboBox != null ? comboBox.getInsets() : getDefaultComboBoxInsets();
     int height = (isCompact(comboBox) ? COMPACT_HEIGHT.get() : MINIMUM_HEIGHT.get()) + i.top + i.bottom;
     return new Dimension(ARROW_BUTTON_WIDTH.get() + i.left, height);
@@ -252,8 +253,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
     return path;
   }
 
-  @NotNull
-  private static JBInsets getDefaultComboBoxInsets() {
+  private static @NotNull JBInsets getDefaultComboBoxInsets() {
     return JBUI.insets(3);
   }
 
@@ -782,9 +782,18 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
     @Override
     public void show(Component invoker, int x, int y) {
+      int sideBorders = 0;
+
+      if (ExperimentalUI.isNewUI() && ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer())) {
+        scroller.setViewportBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
+        scroller.setBackground(UIManager.getColor("ComboBox.background"));
+        scroller.getVerticalScrollBar().setBackground(UIManager.getColor("ComboBox.background"));
+        sideBorders = 10;
+      }
+
       if (comboBox instanceof ComboBoxWithWidePopup) {
         Dimension popupSize = comboBox.getSize();
-        int minPopupWidth = ((ComboBoxWithWidePopup<?>)comboBox).getMinimumPopupWidth();
+        int minPopupWidth = ((ComboBoxWithWidePopup<?>)comboBox).getMinimumPopupWidth() + 2 * sideBorders;
         Insets insets = getInsets();
 
         popupSize.width = Math.max(popupSize.width, minPopupWidth);
@@ -796,7 +805,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
         list.revalidate();
       }
-      super.show(invoker, x, y);
+
+      super.show(invoker, x - sideBorders, y);
     }
 
     @Override
@@ -846,7 +856,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       return result;
     }
 
-    private class MyDelegateRenderer implements ListCellRenderer {
+    private final class MyDelegateRenderer implements ListCellRenderer {
       @Override
       public Component getListCellRendererComponent(JList list,
                                                     Object value,
@@ -855,7 +865,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
                                                     boolean cellHasFocus) {
         //noinspection unchecked
         Component component = comboBox.getRenderer().getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (component instanceof JComponent) {
+        if (component instanceof JComponent && !(component instanceof KotlinUIDslRenderer)) {
           customizeListRendererComponent((JComponent)component);
         }
         return component;

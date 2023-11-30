@@ -12,10 +12,7 @@ import org.jetbrains.jps.model.module.JpsModule
 
 class LibraryLicensesTester(private val project: JpsProject, private val licenses: List<LibraryLicense>) {
   fun reportMissingLicenses(collector: SoftAssertions) {
-    val nonPublicModules = hashSetOf("intellij.idea.ultimate.build",
-                                     "intellij.idea.community.build",
-                                     "buildSrc",
-                                     "intellij.workspaceModel.performanceTesting")
+    val nonPublicModules = hashSetOf("intellij.workspaceModel.performanceTesting")
     val libraries = HashMap<JpsLibrary, JpsModule>()
     project.modules.filter {
       it.name !in nonPublicModules
@@ -24,7 +21,13 @@ class LibraryLicensesTester(private val project: JpsProject, private val license
       && !it.name.contains("integrationTests", ignoreCase = true)
     }
       .forEach { module ->
-        JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.forEach {
+        val enumerator = JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
+        if (enumerator.modules
+            .asSequence().plus(module)
+            .any { it.name == "intellij.platform.buildScripts" }) {
+          return@forEach
+        }
+        enumerator.libraries.forEach {
           libraries[it] = module
         }
       }

@@ -17,7 +17,7 @@ class GitBranchesTreeSelectedRepoModel(
 
   override fun getTopLevelNodes(): List<Any> {
     val topNodes = topLevelActions + repositories
-    val localAndRemoteNodes = getLocalAndRemoteTopLevelNodes(localBranchesTree, remoteBranchesTree)
+    val localAndRemoteNodes = getLocalAndRemoteTopLevelNodes(localBranchesTree, remoteBranchesTree, recentCheckoutBranchesTree)
 
     return if (localAndRemoteNodes.isEmpty()) topNodes else topNodes + branchesSubtreeSeparator + localAndRemoteNodes
   }

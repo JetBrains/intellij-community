@@ -39,6 +39,27 @@ abstract class LightServiceMigrationInspectionTestBase : LightDevKitInspectionFi
         public @interface Service {}
       """
     )
+    myFixture.addClass("""
+      package com.intellij.openapi.application;
+
+      public final class ApplicationManager {
+
+        private static Application ourApplication;
+
+        public static Application getApplication() {
+          return ourApplication;
+        }  
+      }
+    """)
+
+    myFixture.addClass("""
+      package com.intellij.openapi.application;
+
+      public interface Application {
+        boolean isUnitTestMode();
+        boolean isHeadlessEnvironment();
+      }
+    """)
     myFixture.enableInspections(LightServiceMigrationXMLInspection::class.java,
                                 LightServiceMigrationCodeInspection::class.java)
   }

@@ -74,9 +74,7 @@ private fun compareDescriptorsText(project: Project, d1: DeclarationDescriptor, 
 
     val declarations1 = DescriptorToSourceUtilsIde.getAllDeclarations(project, d1)
     val declarations2 = DescriptorToSourceUtilsIde.getAllDeclarations(project, d2)
-    if (declarations1 == declarations2 && declarations1.isNotEmpty()) return true
-
-    return false
+    return declarations1 == declarations2 && declarations1.isNotEmpty()
 }
 
 fun compareDescriptors(project: Project, currentDescriptor: DeclarationDescriptor?, originalDescriptor: DeclarationDescriptor?): Boolean {

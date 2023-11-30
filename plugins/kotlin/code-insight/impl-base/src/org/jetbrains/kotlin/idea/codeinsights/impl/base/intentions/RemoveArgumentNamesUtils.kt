@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
-import org.jetbrains.kotlin.idea.parameterInfo.isArrayOfCall
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isArrayOfCall
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 
@@ -19,8 +19,9 @@ object RemoveArgumentNamesUtils {
      * Returns arguments that are not named or can be unnamed, placed on their correct positions.
      * No arguments following vararg argument are returned.
      */
-    fun KtAnalysisSession.collectSortedArgumentsThatCanBeUnnamed(callElement: KtCallElement): ArgumentsData? {
-        val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return null
+    context(KtAnalysisSession)
+    fun collectSortedArgumentsThatCanBeUnnamed(callElement: KtCallElement): ArgumentsData? {
+        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
         val valueArguments = callElement.valueArgumentList?.arguments ?: return null
 
         val argumentToParameterIndex = CallParameterInfoProvider.mapArgumentsToParameterIndices(

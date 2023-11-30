@@ -12,12 +12,13 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction.*
 import org.jetbrains.kotlin.idea.intentions.callExpression
+import org.jetbrains.kotlin.idea.refactoring.getLastLambdaExpression
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -28,14 +29,13 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+private val associateFunctionNames: List<String> = listOf("associate", "associateTo")
+private val associateFqNames: List<FqName> = listOf(FqName("kotlin.collections.associate"), FqName("kotlin.sequences.associate"))
+private val associateToFqNames: List<FqName> = listOf(FqName("kotlin.collections.associateTo"), FqName("kotlin.sequences.associateTo"))
 
 class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
-    companion object {
-        private val associateFunctionNames = listOf("associate", "associateTo")
-        private val associateFqNames = listOf(FqName("kotlin.collections.associate"), FqName("kotlin.sequences.associate"))
-        private val associateToFqNames = listOf(FqName("kotlin.collections.associateTo"), FqName("kotlin.sequences.associateTo"))
 
+    object Util {
         fun getAssociateFunctionAndProblemHighlightType(
             dotQualifiedExpression: KtDotQualifiedExpression,
             context: BindingContext = dotQualifiedExpression.analyze(BodyResolveMode.PARTIAL)
@@ -83,7 +83,7 @@ class ReplaceAssociateFunctionInspection : AbstractKotlinInspection() {
         val isAssociateTo = fqName in associateToFqNames
         if (!isAssociate && !isAssociateTo) return
 
-        val (associateFunction, highlightType) = getAssociateFunctionAndProblemHighlightType(dotQualifiedExpression, context) ?: return
+        val (associateFunction, highlightType) = Util.getAssociateFunctionAndProblemHighlightType(dotQualifiedExpression, context) ?: return
         holder.registerProblemWithoutOfflineInformation(
             calleeExpression,
             KotlinBundle.message("replace.0.with.1", calleeExpression.text, associateFunction.name(isAssociateTo)),

@@ -2,6 +2,7 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -35,6 +36,8 @@ public abstract class AbstractStorage implements IStorage {
 
   public static final @NonNls String INDEX_EXTENSION = ".storageRecordIndex";
   public static final @NonNls String DATA_EXTENSION = ".storageData";
+
+  private final Path storagePath;
 
   protected AbstractRecordsTable myRecordsTable;
   protected DataTable myDataTable;
@@ -87,6 +90,7 @@ public abstract class AbstractStorage implements IStorage {
   protected AbstractStorage(@NotNull Path storageFilePath,
                             @NotNull StorageLockContext context,
                             @Nullable CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    this.storagePath = storageFilePath;
     myCapacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
                                                                   : CapacityAllocationPolicy.DEFAULT;
     tryInit(storageFilePath, context, 0);
@@ -136,7 +140,7 @@ public abstract class AbstractStorage implements IStorage {
         throw new IOException("Can't create storage at: " + storageFilePath);
       }
 
-      tryInit(storageFilePath, context, retryCount+1);
+      tryInit(storageFilePath, context, retryCount + 1);
       return;
     }
 
@@ -149,7 +153,8 @@ public abstract class AbstractStorage implements IStorage {
     }
   }
 
-  protected abstract AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context, @NotNull Path recordsFile) throws IOException;
+  protected abstract AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context, @NotNull Path recordsFile)
+    throws IOException;
 
   private void compact(@NotNull Path path) {
     withWriteLock(() -> {
@@ -166,7 +171,7 @@ public abstract class AbstractStorage implements IStorage {
         DataTable newDataTable = new DataTable(newDataFile, myContext);
 
         RecordIdIterator recordIterator = myRecordsTable.createRecordIdIterator();
-        while(recordIterator.hasNextId()) {
+        while (recordIterator.hasNextId()) {
           final int recordId = recordIterator.nextId();
           final long addr = myRecordsTable.getAddress(recordId);
           final int size = myRecordsTable.getSize(recordId);
@@ -239,12 +244,12 @@ public abstract class AbstractStorage implements IStorage {
   @Override
   @TestOnly
   public RecordIdIterator createRecordIdIterator() throws IOException {
-    myRecordsTable.myStorage.lockWrite();
+    myContext.lockWrite();
     try {
       return myRecordsTable.createRecordIdIterator();
     }
     finally {
-      myRecordsTable.myStorage.unlockWrite();
+      myContext.unlockWrite();
     }
   }
 
@@ -252,6 +257,7 @@ public abstract class AbstractStorage implements IStorage {
   public StorageDataOutput writeStream(final int record) {
     return writeStream(record, false);
   }
+
   @Override
   public StorageDataOutput writeStream(final int record, boolean fixedSize) {
     return new StorageDataOutput(this, record, fixedSize);
@@ -272,7 +278,7 @@ public abstract class AbstractStorage implements IStorage {
     return withReadLock(() -> {
       final int length = myRecordsTable.getSize(record);
       if (length == 0 || AbstractRecordsTable.isSizeOfRemovedRecord(length)) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
-      assert length > 0:length;
+      assert length > 0 : length;
 
       final long address = myRecordsTable.getAddress(record);
       byte[] result = new byte[length];
@@ -351,17 +357,25 @@ public abstract class AbstractStorage implements IStorage {
   }
 
   @Override
+  public void closeAndClean() throws IOException {
+    Disposer.dispose(this);
+    deleteFiles(storagePath);
+  }
+
+
+  @Override
   public void checkSanity(final int record) throws IOException {
     withReadLock(() -> {
       final int size = myRecordsTable.getSize(record);
-      assert size >= 0;
       final int capacity = myRecordsTable.getCapacity(record);
-      assert capacity >= 0;
-      assert size <= capacity;
       final long address = myRecordsTable.getAddress(record);
-      assert address >= 0;
-      assert address + size < myDataTable.getFileSize();
-      assert address + capacity < myDataTable.getFileSize();
+      final long dataFileSize = myDataTable.getFileSize();
+      assert size >= 0 : "[#" + record + "]: size(=" + size + ") must not be negative";
+      assert capacity >= 0 : "[#" + record + "]: capacity(=" + capacity + ") -- must NOT be negative";
+      assert address >= 0 : "[#" + record + "]: address(=" + address + ") must not be negative";
+      assert size <= capacity : "[#" + record + "]: size(=" + size + ") > capacity(=" + capacity + ")";
+      assert address + capacity <= dataFileSize
+        : "[#" + record + "]: address(=" + address + ")+capacity(=" + size + ") is beyond EOF(=" + dataFileSize + ")";
     });
   }
 
@@ -449,7 +463,7 @@ public abstract class AbstractStorage implements IStorage {
     ConcurrencyUtil.withLock(myContext.readLock(), runnable);
   }
 
-  protected  <T, E extends Throwable> T withWriteLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
+  protected <T, E extends Throwable> T withWriteLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
     return ConcurrencyUtil.withLock(myContext.writeLock(), runnable);
   }
 

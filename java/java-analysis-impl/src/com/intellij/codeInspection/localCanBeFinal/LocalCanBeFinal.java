@@ -4,6 +4,8 @@ package com.intellij.codeInspection.localCanBeFinal;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -216,7 +218,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         }
         PsiElement context = PsiTreeUtil.getParentOfType(variable,
                                                          PsiInstanceOfExpression.class,
-                                                         PsiCaseLabelElementList.class,
+                                                         PsiSwitchLabelStatementBase.class,
                                                          PsiForeachPatternStatement.class,
                                                          PsiForeachStatement.class);
         int from;
@@ -225,25 +227,13 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
           from = flow.getEndOffset(instanceOf);
           end = flow.getEndOffset(body);
         }
-        else if (context instanceof PsiCaseLabelElementList list) {
-          if (list.getElementCount() == 1) {
-            PsiCaseLabelElement element = list.getElements()[0];
-            if (element instanceof PsiGuardedPattern guardedPattern) {
-              PsiExpression guardingExpression = guardedPattern.getGuardingExpression();
-              if (guardingExpression == null) return;
-              from = flow.getStartOffset(guardingExpression);
-            }
-            else if (element instanceof PsiPatternGuard patternGuard) {
-              PsiExpression guardingExpression = patternGuard.getGuardingExpression();
-              if (guardingExpression == null) return;
-              from = flow.getStartOffset(guardingExpression);
-            }
-            else {
-              from = flow.getEndOffset(list.getParent());
-            }
+        else if (context instanceof PsiSwitchLabelStatementBase label) {
+          PsiExpression guardExpression = label.getGuardExpression();
+          if (guardExpression != null) {
+            from = flow.getStartOffset(guardExpression);
           }
           else {
-            from = flow.getEndOffset(list.getParent());
+            from = flow.getEndOffset(label);
           }
           end = flow.getEndOffset(body);
         }
@@ -394,7 +384,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     return SHORT_NAME;
   }
 
-  private static class AcceptSuggested implements LocalQuickFix {
+  private static class AcceptSuggested extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -402,9 +392,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problem) {
-      PsiElement nameIdentifier = problem.getPsiElement();
-      if (nameIdentifier == null) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement nameIdentifier, @NotNull ModPsiUpdater updater) {
       PsiVariable psiVariable = PsiTreeUtil.getParentOfType(nameIdentifier, PsiVariable.class, false);
       if (psiVariable == null) return;
       psiVariable.normalizeDeclaration();

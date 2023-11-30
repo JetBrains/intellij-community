@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.config;
 
-import com.google.gson.GsonBuilder;
 import com.intellij.internal.statistic.config.bean.EventLogBucketRange;
 import com.intellij.internal.statistic.config.bean.EventLogConfigVersions;
 import com.intellij.internal.statistic.config.bean.EventLogConfigVersions.EventLogConfigFilterCondition;
@@ -28,7 +27,7 @@ public class EventLogExternalSettings {
   public static EventLogExternalSendSettings parseSendSettings(@NotNull Reader reader, @NotNull String version)
     throws EventLogConfigParserException {
     try {
-      final EventLogExternalSettings parsed = new GsonBuilder().create().fromJson(reader, EventLogExternalSettings.class);
+      final EventLogExternalSettings parsed = SerializationHelper.INSTANCE.deserialize(reader, EventLogExternalSettings.class);
       if (parsed != null) {
         return parsed.toSendSettings(version);
       }

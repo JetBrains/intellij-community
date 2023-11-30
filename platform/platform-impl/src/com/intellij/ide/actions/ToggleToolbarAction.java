@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -7,6 +7,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
@@ -32,21 +33,18 @@ import java.util.function.Supplier;
  * @author gregsh
  */
 public final class ToggleToolbarAction extends ToggleAction implements DumbAware {
-  @NotNull
-  public static DefaultActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+  public static @NotNull DefaultActionGroup createToggleToolbarGroup(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     return new DefaultActionGroup(new OptionsGroup(toolWindow),
                                   createToolWindowAction(toolWindow, PropertiesComponent.getInstance(project)));
   }
 
-  @NotNull
-  public static ToggleToolbarAction createAction(@NotNull String id,
-                                                 @NotNull PropertiesComponent properties,
-                                                 @NotNull Supplier<? extends Iterable<? extends JComponent>> components) {
+  public static @NotNull ToggleToolbarAction createAction(@NotNull String id,
+                                                          @NotNull PropertiesComponent properties,
+                                                          @NotNull Supplier<? extends Iterable<? extends JComponent>> components) {
     return new ToggleToolbarAction(properties, getShowToolbarProperty(id), components);
   }
 
-  @NotNull
-  public static ToggleToolbarAction createToolWindowAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
+  public static @NotNull ToggleToolbarAction createToolWindowAction(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
     updateToolbarsVisibility(toolWindow, properties);
     toolWindow.addContentManagerListener(new ContentManagerListener() {
       @Override
@@ -186,24 +184,25 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     return properties.getBoolean(property, true);
   }
 
-  @NotNull
-  static String getShowToolbarProperty(@NotNull ToolWindow window) {
+  static @NotNull String getShowToolbarProperty(@NotNull ToolWindow window) {
     return getShowToolbarProperty("ToolWindow" + window.getStripeTitle());
   }
 
-  @NotNull
-  static String getShowToolbarProperty(@NotNull @NonNls String s) {
+  static @NotNull String getShowToolbarProperty(@NotNull @NonNls String s) {
     return s + ".ShowToolbar";
   }
 
-  @NotNull
-  private static Iterable<ActionToolbar> iterateToolbars(Iterable<? extends JComponent> roots) {
+  private static @NotNull Iterable<ActionToolbar> iterateToolbars(Iterable<? extends JComponent> roots) {
     return UIUtil.uiTraverser(null).withRoots(roots).preOrderDfsTraversal()
       .filter(ActionToolbar.class)
-      .filter(toolbar -> !Boolean.TRUE.equals(toolbar.getComponent().getClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY)));
+      .filter(toolbar -> {
+        var c = toolbar.getComponent();
+        return !Boolean.TRUE.equals(c.getClientProperty(ActionToolbarImpl.IMPORTANT_TOOLBAR_KEY))
+          && !(c instanceof FloatingToolbarComponent);
+      });
   }
 
-  private static class OptionsGroup extends NonTrivialActionGroup implements DumbAware {
+  private static final class OptionsGroup extends NonTrivialActionGroup implements DumbAware {
 
     private final ToolWindow myToolWindow;
 

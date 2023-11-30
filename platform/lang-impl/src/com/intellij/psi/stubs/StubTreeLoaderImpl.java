@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.AppUIExecutor;
@@ -13,22 +13,17 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.indexing.events.VfsEventsMerger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,14 +33,15 @@ import java.util.List;
 final class StubTreeLoaderImpl extends StubTreeLoader {
   private static final Logger LOG = Logger.getInstance(StubTreeLoaderImpl.class);
   // todo remove once we don't need this for stub-ast mismatch debug info
-  private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 3, true);
-  private static final byte IS_BINARY_MASK = 1;
-  private static final byte BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK = 1 << 1;
   private static volatile boolean ourStubReloadingProhibited;
+  private final IndexingStampInfoStorage indexingStampInfoStorage = createStorage();
+
+  private static IndexingStampInfoStorage createStorage() {
+    return IndexingStampInfoStorage.create("stubIndexStamp", 4);
+  }
 
   @Override
-  @Nullable
-  public ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile) {
+  public @Nullable ObjectStubTree<?> readOrBuild(@NotNull Project project, @NotNull VirtualFile vFile, @Nullable PsiFile psiFile) {
     ObjectStubTree<?> fromIndices = readFromVFile(project, vFile);
     if (fromIndices != null) {
       return fromIndices;
@@ -100,8 +96,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   @Override
-  @Nullable
-  public ObjectStubTree<?> readFromVFile(@NotNull Project project, final @NotNull VirtualFile vFile) {
+  public @Nullable ObjectStubTree<?> readFromVFile(@NotNull Project project, final @NotNull VirtualFile vFile) {
     if ((DumbService.getInstance(project).isDumb() &&
          (!FileBasedIndex.isIndexAccessDuringDumbModeEnabled() ||
           FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != DumbModeAccessType.RELIABLE_DATA_ONLY)) ||
@@ -165,7 +160,9 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
                                       @Nullable Document document,
                                       boolean saved,
                                       @Nullable PsiFile cachedPsi) {
-    String message = "Outdated stub in index: " + vFile + " " + getIndexingStampInfo(vFile) +
+    String message = "Outdated stub in index: " + vFile +
+                     (vFile instanceof VirtualFileWithId fileWithId? ", vFileId=" + fileWithId.getId() : "") +
+                     ", " + getIndexingStampInfo(vFile) +
                      ", doc=" + document +
                      ", docSaved=" + saved +
                      ", wasIndexedAlready=" + wasIndexedAlready +
@@ -237,7 +234,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   private static ObjectStubTree<?> processError(final VirtualFile vFile, String message, @Nullable Exception e) {
     LOG.error(message, e);
 
-    AppUIExecutor.onWriteThread(ModalityState.NON_MODAL).later().submit(() -> {
+    AppUIExecutor.onWriteThread(ModalityState.nonModal()).later().submit(() -> {
       final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
       if (doc != null) {
         FileDocumentManager.getInstance().saveDocument(doc);
@@ -262,7 +259,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   @Override
-  protected boolean hasPsiInManyProjects(@NotNull final VirtualFile virtualFile) {
+  protected boolean hasPsiInManyProjects(final @NotNull VirtualFile virtualFile) {
     int count = 0;
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       if (PsiManagerEx.getInstanceEx(project).getFileManager().findCachedViewProvider(virtualFile) != null) {
@@ -273,8 +270,13 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   }
 
   @Override
-  protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
-    return readSavedIndexingStampInfo(file);
+  protected @Nullable IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
+    if (file instanceof VirtualFileWithId fileWithId) {
+      return indexingStampInfoStorage.readStampInfo(fileWithId.getId());
+    }
+    else {
+      return null;
+    }
   }
 
   @Override
@@ -282,55 +284,15 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
     return ((FileBasedIndexImpl)FileBasedIndex.getInstance()).isTooLarge(file);
   }
 
-  static void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
-    try (DataOutputStream stream = FSRecords.writeAttribute(fileId, INDEXED_STAMP)) {
-      if (indexingStampInfo == null) return;
-      DataInputOutputUtil.writeTIME(stream, indexingStampInfo.indexingFileStamp);
-      DataInputOutputUtil.writeLONG(stream, indexingStampInfo.indexingByteLength);
+  void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
+    VfsEventsMerger.tryLog(() -> {
+      return "event=SAVE_STUB_INDEXING_STAMP_INFO" +
+             ",id=" + fileId +
+             "," + indexingStampInfo;
+    });
 
-      boolean lengthsAreTheSame = indexingStampInfo.indexingCharLength == indexingStampInfo.indexingByteLength;
-      byte flags = 0;
-      flags = BitUtil.set(flags, IS_BINARY_MASK, indexingStampInfo.isBinary);
-      flags = BitUtil.set(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK, lengthsAreTheSame);
-      stream.writeByte(flags);
-
-      if (!lengthsAreTheSame && !indexingStampInfo.isBinary) {
-        DataInputOutputUtil.writeINT(stream, indexingStampInfo.indexingCharLength);
-      }
-    }
-    catch (IOException e) {
-      StubUpdatingIndex.LOG.error(e);
-    }
-  }
-
-  @Nullable
-  static IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
-    try (DataInputStream stream = INDEXED_STAMP.readFileAttribute(file)) {
-      if (stream == null || stream.available() <= 0) {
-        return null;
-      }
-      long stamp = DataInputOutputUtil.readTIME(stream);
-      long byteLength = DataInputOutputUtil.readLONG(stream);
-
-      byte flags = stream.readByte();
-      boolean isBinary = BitUtil.isSet(flags, IS_BINARY_MASK);
-      boolean readOnlyOneLength = BitUtil.isSet(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK);
-
-      int charLength;
-      if (isBinary) {
-        charLength = -1;
-      }
-      else if (readOnlyOneLength) {
-        charLength = (int)byteLength;
-      }
-      else {
-        charLength = DataInputOutputUtil.readINT(stream);
-      }
-      return new IndexingStampInfo(stamp, byteLength, charLength, isBinary);
-    }
-    catch (IOException e) {
-      StubUpdatingIndex.LOG.error(e);
-      return null;
+    if (indexingStampInfo != null) {
+      indexingStampInfoStorage.writeStampInfo(fileId, indexingStampInfo);
     }
   }
 }

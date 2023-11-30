@@ -5,6 +5,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.util.ThreeState
 import com.intellij.util.indexing.IndexedFile
 import com.intellij.util.indexing.hints.BinaryFileTypePolicy.*
+import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION
 import org.jetbrains.annotations.ApiStatus
 
 enum class BinaryFileTypePolicy { BINARY, NON_BINARY, BINARY_OR_NON_BINARY }
@@ -12,8 +13,9 @@ enum class BinaryFileTypePolicy { BINARY, NON_BINARY, BINARY_OR_NON_BINARY }
 @ApiStatus.Experimental
 class FileNameSuffixInputFilter(private val fileNameSuffix: String,
                                 private val ignoreCase: Boolean,
-                                binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY) : BaseWeakFileNameSuffixInputFilter(binary) {
-  override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+                                binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY
+) : BaseWeakBinaryFileInputFilter(binary, BEFORE_SUBSTITUTION) {
+  override fun slowPathIfFileTypeHintUnsure(file: IndexedFile): Boolean {
     return file.fileName.endsWith(fileNameSuffix, ignoreCase)
   }
 }
@@ -21,8 +23,9 @@ class FileNameSuffixInputFilter(private val fileNameSuffix: String,
 @ApiStatus.Experimental
 class ExactFileNameInputFilter(private val fileName: String,
                                private val ignoreCase: Boolean,
-                               binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY) : BaseWeakFileNameSuffixInputFilter(binary) {
-  override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+                               binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY
+) : BaseWeakBinaryFileInputFilter(binary, BEFORE_SUBSTITUTION) {
+  override fun slowPathIfFileTypeHintUnsure(file: IndexedFile): Boolean {
     return file.fileName.equals(fileName, ignoreCase)
   }
 }
@@ -30,18 +33,20 @@ class ExactFileNameInputFilter(private val fileName: String,
 @ApiStatus.Experimental
 class FileNameExtensionInputFilter(extension: String,
                                    private val ignoreCase: Boolean,
-                                   binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY) : BaseWeakFileNameSuffixInputFilter(binary) {
+                                   binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY
+) : BaseWeakBinaryFileInputFilter(binary, BEFORE_SUBSTITUTION) {
   private val dotExtension = ".$extension"
 
-  override fun whenAllOtherHintsUnsure(file: IndexedFile): Boolean {
+  override fun slowPathIfFileTypeHintUnsure(file: IndexedFile): Boolean {
     return file.fileName.endsWith(dotExtension, ignoreCase)
   }
 }
 
 @ApiStatus.Experimental
-abstract class BaseWeakFileNameSuffixInputFilter internal constructor(
-  private val binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY
-) : BaseFileTypeInputFilter() {
+abstract class BaseWeakBinaryFileInputFilter internal constructor(
+  private val binary: BinaryFileTypePolicy = BINARY_OR_NON_BINARY,
+  fileTypeSubstitutionStrategy: FileTypeSubstitutionStrategy
+) : BaseFileTypeInputFilter(fileTypeSubstitutionStrategy) {
   // Don't do like this, this is not correct (see IDEA-303356 for example):
   //    val ext = fileNameSuffix.substringAfterLast(".")
   //    val weakFileType = if (ext != fileNameSuffix) FileTypeManager.getInstance().getFileTypeByExtension(ext) else null

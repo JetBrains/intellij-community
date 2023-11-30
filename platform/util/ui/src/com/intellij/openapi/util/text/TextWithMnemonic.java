@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
 
@@ -12,6 +13,8 @@ import java.util.regex.Pattern;
  * An immutable object which represents a text string with mnemonic character.
  */
 public final class TextWithMnemonic {
+  private static final Logger LOG = Logger.getInstance(TextWithMnemonic.class);
+
   public static final TextWithMnemonic EMPTY = new TextWithMnemonic("", -1, "");
   public static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
 
@@ -57,16 +60,6 @@ public final class TextWithMnemonic {
       return text;
     }
     return text + mnemonicSuffix.substring(mnemonicSuffix.length() - ellipsisLength);
-  }
-
-  /**
-   * @return a mnemonic character (upper-cased) if mnemonic is set; 0 otherwise
-   * @deprecated use {@link #getMnemonicChar} or {@link #getMnemonicCode} instead
-   */
-  @Deprecated
-  public int getMnemonic() {
-    char ch = getMnemonicChar();
-    return ch == KeyEvent.CHAR_UNDEFINED ? 0 : Character.toUpperCase(ch);
   }
 
   /**
@@ -117,20 +110,6 @@ public final class TextWithMnemonic {
   }
 
   /**
-   * Sets mnemonic at given index
-   * @param index index, must be within the {@link #getText() text} string.
-   * @return a TextWithMnemonic object with a mnemonic set at given index
-   * @deprecated use {@link #withMnemonicIndex} or {@link #fromPlainTextWithIndex(String, int)} instead
-   */
-  @Deprecated
-  public TextWithMnemonic setMnemonicAt(int index) {
-    if (index < 0 || index >= text.length() + mnemonicSuffix.length()) {
-      throw new IndexOutOfBoundsException(String.valueOf(index));
-    }
-    return index == mnemonicIndex ? this : new TextWithMnemonic(text, index, mnemonicSuffix);
-  }
-
-  /**
    * @param index mnemonic index within the {@link #getText() text}, or {@code -1} to remove mnemonic
    * @return new {@code TextWithMnemonic} object with updated mnemonic index, or the same instance otherwise
    * @throws IndexOutOfBoundsException if mnemonic index cannot be used
@@ -177,19 +156,36 @@ public final class TextWithMnemonic {
     return new TextWithMnemonic(resultText, resultIndex, mnemonicSuffix);
   }
 
+  @ApiStatus.Internal
+  public static @Nullable TextWithMnemonic fromMnemonicText(@NotNull @Nls String text) {
+    return fromMnemonicText(text, true);
+  }
+
   /**
    * @param text a text with a mnemonic specified by the {@link UIUtil#MNEMONIC MNEMONIC} marker
    * @return new {@code TextWithMnemonic} object, or {@code null} if mnemonic is not specified in the given text
-   * @throws IllegalArgumentException if the given text contains a marker at wrong position, or if it contains several markers
    * @see UIUtil#replaceMnemonicAmpersand
    */
   @ApiStatus.Internal
-  public static @Nullable TextWithMnemonic fromMnemonicText(@NotNull @Nls String text) {
+  public static @Nullable TextWithMnemonic fromMnemonicText(@NotNull @Nls String text, boolean reportInvalidMnemonics) {
     int pos = text.indexOf(UIUtil.MNEMONIC);
     if (pos < 0) return null;
     String str = text.substring(pos + 1);
-    if (str.isEmpty()) throw new IllegalArgumentException("unexpected mnemonic marker in " + text);
-    if (str.indexOf(UIUtil.MNEMONIC) >= 0) throw new IllegalArgumentException("several mnemonic markers in " + text);
+
+    Exception error = null;
+    if (str.isEmpty()) error = new IllegalArgumentException("unexpected mnemonic marker in " + text);
+    if (str.indexOf(UIUtil.MNEMONIC) >= 0) error = new IllegalArgumentException("several mnemonic markers in " + text);
+
+    if (error != null) {
+      if (reportInvalidMnemonics) {
+        LOG.error(error);
+      }
+      else {
+        LOG.warn(error);
+      }
+      return null;
+    }
+
     return fromPlainTextWithIndex(pos > 0 ? text.substring(0, pos) + str : str, pos);
   }
 

@@ -84,7 +84,7 @@ public final class LineWrappingUtil {
     }
   }
 
-  public static void doWrapLongLinesIfNecessary(@NotNull final Editor editor, @NotNull final Project project, @NotNull Document document,
+  public static void doWrapLongLinesIfNecessary(final @NotNull Editor editor, final @NotNull Project project, @NotNull Document document,
                                                 int startOffset, int endOffset, List<? extends TextRange> enabledRanges, int rightMargin) {
     // Normalization.
     int startOffsetToUse = MathUtil.clamp(startOffset, 0, document.getTextLength());
@@ -173,7 +173,7 @@ public final class LineWrappingUtil {
    *                       1. The first element holds added lines number;
    *                       2. The second element holds added symbols number;
    */
-  private static void emulateEnter(@NotNull final Editor editor, @NotNull Project project, int[] shifts) {
+  private static void emulateEnter(final @NotNull Editor editor, @NotNull Project project, int[] shifts) {
     DataContext dataContext = prepareContext(project, editor);
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
@@ -357,8 +357,7 @@ public final class LineWrappingUtil {
     return wrapLine ? result : -1;
   }
 
-  @NotNull
-  private static DataContext prepareContext(@NotNull Project project, @NotNull Editor editor) {
+  private static @NotNull DataContext prepareContext(@NotNull Project project, @NotNull Editor editor) {
     // There is a possible case that formatting is performed from project view and editor is not opened yet. The problem is that
     // its data context doesn't contain information about project then. So, we explicitly support that here (see IDEA-72791).
     Project editorProject = editor.getProject();

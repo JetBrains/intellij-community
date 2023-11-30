@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XSourcePosition
@@ -13,7 +14,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.sun.jdi.ReferenceType
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
-import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.safeSourceName
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
@@ -27,7 +27,7 @@ class KotlinLineBreakpoint(
         val sourcePosition = runReadAction { xBreakpoint?.sourcePosition }
 
         if (classType != null && sourcePosition != null) {
-            if (!hasTargetLine(classType, sourcePosition)) {
+            if (!canHaveTargetLine(classType, sourcePosition)) {
                 return
             }
         }
@@ -36,14 +36,12 @@ class KotlinLineBreakpoint(
     }
 
     /**
-     * Returns false if `classType` definitely does not contain a location for a given `sourcePosition`.
+     * Returns false if `classType` definitely does not contain a location for a given `sourcePosition`
+     * in the view of line number information available to the debugger.
      */
-    private fun hasTargetLine(classType: ReferenceType, sourcePosition: XSourcePosition): Boolean {
-        val allLineLocations = DebuggerUtilsEx.allLineLocations(classType) ?: return true
-
-        if (DexDebugFacility.isDex(classType.virtualMachine())) {
-            return true
-        }
+    private fun canHaveTargetLine(classType: ReferenceType, sourcePosition: XSourcePosition): Boolean {
+        // If we do not have information about lines for this class at all, it does not contain this location.
+        val allLineLocations = DebuggerUtilsEx.allLineLocations(classType) ?: return false
 
         val fileName = sourcePosition.file.name
         val lineNumber = sourcePosition.line + 1
@@ -67,10 +65,9 @@ class KotlinLineBreakpoint(
     }
 
     override fun getMethodName(): String? {
-        val element = sourcePosition?.elementAt?.getNonStrictParentOfType<KtElement>()
-        if (element is KtElement) {
-            element.containingNonLocalDeclaration()?.name?.let { return it }
-        }
+        ReadAction.compute<String, Throwable> {
+            sourcePosition?.elementAt?.getNonStrictParentOfType<KtElement>()?.containingNonLocalDeclaration()?.name
+        }?.let { return it }
 
         return super.getMethodName()
     }

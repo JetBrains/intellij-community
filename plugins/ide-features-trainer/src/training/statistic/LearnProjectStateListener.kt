@@ -28,7 +28,6 @@ private class LearnProjectStateListener : ProjectManagerListener {
     val languageId = LangManager.getInstance().getLanguageId() ?: return
     if (isLearningProject(project, languageId)) {
       CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
-      RecentProjectsManagerBase.getInstanceEx().setProjectHidden(project, hidden = true)
     }
     else {
       val learnProjectState = LearnProjectState.instance
@@ -43,8 +42,11 @@ private class LearnProjectStateListener : ProjectManagerListener {
 
   override fun projectClosingBeforeSave(project: Project) {
     val languageId = LangManager.getInstance().getLanguageId() ?: return
-    if (isLearningProject(project, languageId) && !StatisticBase.isLearnProjectCloseLogged) {
-      StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.CLOSE_PROJECT)
+    if (isLearningProject(project, languageId)) {
+      RecentProjectsManagerBase.getInstanceEx().setProjectHidden(project, hidden = true)
+      if (!StatisticBase.isLearnProjectCloseLogged) {
+        StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.CLOSE_PROJECT)
+      }
     }
   }
 

@@ -39,6 +39,7 @@ class TestClass {
     }
 }
 
+// IGNORE_K2
 // EXIST: {"lookupString":"addMember","tailText":"(element: E)","typeText":"Boolean"}
 // EXIST_JAVA_ONLY: {"lookupString":"addMemberWithBlock","tailText":"(element: String, block: (Exception /* = Exception */) -> Nothing)","typeText":"Boolean"}
 // EXIST_JAVA_ONLY: {"lookupString":"addMemberWithBlock","tailText":"(element: E, block: (Exception /* = Exception */) -> Nothing)","typeText":"Boolean"}

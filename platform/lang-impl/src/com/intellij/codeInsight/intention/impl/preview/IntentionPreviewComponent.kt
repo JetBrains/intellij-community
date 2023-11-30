@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -10,10 +10,7 @@ import com.intellij.ui.PopupBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.system.OS
-import com.intellij.util.ui.ExtendableHTMLViewFactory
-import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Container
@@ -79,7 +76,10 @@ internal class IntentionPreviewComponent(parent: Disposable) :
         .build()
       editor.text = content.toString()
       editor.size = Dimension(targetSize, Integer.MAX_VALUE)
-      editor.background = JBUI.CurrentTheme.Popup.BACKGROUND
+      editor.background = when (htmlInfo.infoKind()) {
+        IntentionPreviewInfo.InfoKind.INFORMATION -> JBUI.CurrentTheme.Popup.BACKGROUND
+        IntentionPreviewInfo.InfoKind.ERROR -> JBUI.CurrentTheme.Notification.Error.BACKGROUND
+      }
       return wrapToPanel(editor)
     }
   }
@@ -91,9 +91,9 @@ internal class IntentionPreviewComponent(parent: Disposable) :
   }
 
   companion object {
-    const val NO_PREVIEW = -1
-    const val LOADING_PREVIEW = -2
-    val BORDER = JBUI.Borders.empty(6, 10)
+    const val NO_PREVIEW: Int = -1
+    const val LOADING_PREVIEW: Int = -2
+    val BORDER: JBEmptyBorder = JBUI.Borders.empty(6, 10)
 
     private fun setupLabel(text: @Nls String): JComponent {
       val label = SimpleColoredComponent()

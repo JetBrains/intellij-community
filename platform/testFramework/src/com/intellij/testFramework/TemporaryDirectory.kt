@@ -177,9 +177,9 @@ open class TemporaryDirectory : ExternalResource() {
   }
 }
 
-fun VirtualFile.writeChild(relativePath: String, data: String) = VfsTestUtil.createFile(this, relativePath, data)
+fun VirtualFile.writeChild(relativePath: String, data: String): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)
 
-fun VirtualFile.writeChild(relativePath: String, data: ByteArray) = VfsTestUtil.createFile(this, relativePath, data)
+fun VirtualFile.writeChild(relativePath: String, data: ByteArray): VirtualFile = VfsTestUtil.createFile(this, relativePath, data)
 
 fun Path.refreshVfs() {
   // If a temp directory is reused from some previous test run, there might be cached children in its VFS. Ensure they're removed.

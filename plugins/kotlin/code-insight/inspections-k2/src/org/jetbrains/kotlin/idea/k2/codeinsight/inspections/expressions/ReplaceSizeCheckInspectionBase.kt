@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
+import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
@@ -11,16 +14,18 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.*
 
 internal sealed class ReplaceSizeCheckInspectionBase :
-    AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>(
-        KtBinaryExpression::class
-    ) {
+    AbstractKotlinApplicableInspectionWithContext<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>() {
 
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
+        return object : KtVisitorVoid() {
+            override fun visitBinaryExpression(expression: KtBinaryExpression) {
+                visitTargetElement(expression, holder, isOnTheFly)
+            }
+        }
+    }
     enum class EmptinessCheckMethod(val callString: String) {
         IS_EMPTY("isEmpty()"), IS_NOT_EMPTY("isNotEmpty()")
     }

@@ -23,9 +23,12 @@ import com.jetbrains.python.testing.PyUnitTestConfiguration;
 import com.jetbrains.python.testing.PyUnitTestFactory;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
+import org.hamcrest.MatcherAssert;
+import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Set;
 
 /**
  * {@link ProcessWithConsoleRunner} to run unittest
@@ -38,6 +41,8 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
    */
   public static final String TEST_PATTERN_PREFIX = "pattern:";
 
+  private static final Set<Integer> EXIT_CODES_FOR_SKIPPED_TESTS = Set.of(0, 5);
+
   public PyUnitTestProcessRunner(@NotNull final String scriptName, final int timesToRerunFailedTests) {
     super(new PyUnitTestFactory(PythonTestConfigurationType.getInstance()),
           PyUnitTestConfiguration.class, scriptName, timesToRerunFailedTests);
@@ -47,7 +52,7 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
   protected void configurationCreatedAndWillLaunch(@NotNull PyUnitTestConfiguration configuration) throws IOException {
     super.configurationCreatedAndWillLaunch(configuration);
     final Sdk sdk = configuration.getSdk();
-    if (sdk == null ||  PythonSdkFlavor.getFlavor(sdk) instanceof CPythonSdkFlavor) {
+    if (sdk == null || PythonSdkFlavor.getFlavor(sdk) instanceof CPythonSdkFlavor) {
       // -Werror checks we do not use deprecated API in runners, but only works for cpython (not iron nor jython)
       // and we can't use it for pytest/nose, since it is not our responsibility to check them for deprecation api usage
       // while unit is part of stdlib and does not use deprecated api, so only runners are checked
@@ -59,5 +64,11 @@ public class PyUnitTestProcessRunner extends PyScriptTestProcessRunner<PyUnitTes
       configuration.getTarget().setTarget(".");
       configuration.setPattern(myScriptName.substring(TEST_PATTERN_PREFIX.length()));
     }
+  }
+
+  @Override
+  protected void assertExitCodeForSkippedTests(int code) {
+    //TODO: Return `isPython312OrGreater ? 5 : 0` when the bug in СPython is fixed
+    MatcherAssert.assertThat("Exit code must be 0 or 5 if all tests are ignored", code, Matchers.isIn(EXIT_CODES_FOR_SKIPPED_TESTS));
   }
 }

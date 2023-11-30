@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -9,8 +10,6 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -26,6 +25,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,21 +43,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 
-public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
+public final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
-  private final AnnotationHolderImpl myAnnotationHolder;
   private final List<MyData<?,?>> myAnnotationData = new ArrayList<>();
-  @NotNull
-  private volatile List<? extends HighlightInfo> myHighlightInfos = Collections.emptyList();
+  private volatile @NotNull List<? extends HighlightInfo> myHighlightInfos = Collections.emptyList();
 
-  private static class MyData<K,V> {
-    @NotNull
-    final ExternalAnnotator<K,V> annotator;
-    @NotNull
-    final PsiFile psiRoot;
-    @NotNull
-    final K collectedInfo;
+  private static final class MyData<K,V> {
+    final @NotNull ExternalAnnotator<K,V> annotator;
+    final @NotNull PsiFile psiRoot;
+    final @NotNull K collectedInfo;
     volatile V annotationResult;
 
     MyData(@NotNull ExternalAnnotator<K,V> annotator, @NotNull PsiFile psiRoot, @NotNull K collectedInfo) {
@@ -74,7 +69,6 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
                    int endOffset,
                    @NotNull HighlightInfoProcessor processor) {
     super(file.getProject(), document, LangBundle.message("pass.external.annotators"), file, editor, new TextRange(startOffset, endOffset), false, processor);
-    myAnnotationHolder = new AnnotationHolderImpl(new AnnotationSession(file), false);
   }
 
   @Override
@@ -148,39 +142,44 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
 
     long modificationStampBefore = myDocument.getModificationStamp();
-    Update update = new Update(myFile) {
-      @Override
-      public void setRejected() {
-        super.setRejected();
-        doFinish(convertToHighlights());
-      }
-
-      @Override
-      public void run() {
-        if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-          return;
+    AnnotationSessionImpl.computeWithSession(myFile, false, annotationHolder -> {
+      Update update = new Update(myFile) {
+        @Override
+        public void setRejected() {
+          super.setRejected();
+          if (!myProject.isDisposed()) { // Project close in EDT might call MergeUpdateQueue.dispose which calls setRejected in EDT
+            doFinish(convertToHighlights(annotationHolder));
+          }
         }
-        // have to instantiate new indicator because the old one (progress) might have already been canceled
-        DaemonProgressIndicator indicator = new DaemonProgressIndicator();
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-          // run annotators outside the read action because they could start OSProcessHandler
-          runChangeAware(myDocument, ExternalToolPass.this::doAnnotate);
-          ReadAction.run(() -> {
-            ProgressManager.checkCanceled();
-            if (!documentChanged(modificationStampBefore)) {
-              doApply();
-              doFinish(convertToHighlights());
-            }
-          });
-        }, indicator);
-      }
-    };
-    ExternalAnnotatorManager.getInstance().queue(update);
+
+        @Override
+        public void run() {
+          if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+            return;
+          }
+          // have to instantiate new indicator because the old one (progress) might have already been canceled
+          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+            // run annotators outside the read action because they could start OSProcessHandler
+            runChangeAware(myDocument, () -> doAnnotate());
+            ReadAction.run(() -> {
+              ProgressManager.checkCanceled();
+              if (!documentChanged(modificationStampBefore)) {
+                doApply(annotationHolder);
+                doFinish(convertToHighlights(annotationHolder));
+              }
+            });
+          }, indicator);
+        }
+      };
+      ExternalAnnotatorManager.getInstance().queue(update);
+      return null;
+    });
   }
 
-  @NotNull
   @Override
-  public List<HighlightInfo> getInfos() {
+  public @NotNull List<HighlightInfo> getInfos() {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
       ExternalAnnotatorManager.getInstance().waitForAllExecuted(1, TimeUnit.MINUTES);
     }
@@ -214,17 +213,17 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
   }
 
-  private void doApply() {
+  private void doApply(@NotNull AnnotationHolderImpl annotationHolder) {
     for (MyData<?,?> data : myAnnotationData) {
-      doApply(data);
+      doApply(data, annotationHolder);
     }
-    myAnnotationHolder.assertAllAnnotationsCreated();
+    annotationHolder.assertAllAnnotationsCreated();
   }
 
-  private <K,V> void doApply(@NotNull MyData<K,V> data) {
+  private static <K, V> void doApply(@NotNull MyData<K, V> data, @NotNull AnnotationHolderImpl annotationHolder) {
     if (data.annotationResult != null && data.psiRoot.isValid()) {
       try {
-        myAnnotationHolder.applyExternalAnnotatorWithContext(data.psiRoot, data.annotator, data.annotationResult);
+        annotationHolder.applyExternalAnnotatorWithContext(data.psiRoot, data.annotator, data.annotationResult);
       }
       catch (Throwable t) {
         processError(t, data.annotator, data.psiRoot);
@@ -232,13 +231,8 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
   }
 
-  @NotNull
-  private List<HighlightInfo> convertToHighlights() {
-    List<HighlightInfo> infos = new ArrayList<>(myAnnotationHolder.size());
-    for (Annotation annotation : myAnnotationHolder) {
-      infos.add(HighlightInfo.fromAnnotation(annotation));
-    }
-    return infos;
+  private static @NotNull List<HighlightInfo> convertToHighlights(@NotNull AnnotationHolderImpl holder) {
+    return ContainerUtil.map(holder, annotation -> HighlightInfo.fromAnnotation(annotation));
   }
 
   private void doFinish(@NotNull List<? extends HighlightInfo> highlights) {
@@ -250,7 +244,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
   }
 
   private static void processError(@NotNull Throwable t, @NotNull ExternalAnnotator<?,?> annotator, @NotNull PsiFile root) {
-    if (t instanceof ProcessCanceledException) throw (ProcessCanceledException)t;
+    if (t instanceof ProcessCanceledException pce) throw pce;
 
     VirtualFile file = root.getVirtualFile();
     String path = file != null ? file.getPath() : root.getName();

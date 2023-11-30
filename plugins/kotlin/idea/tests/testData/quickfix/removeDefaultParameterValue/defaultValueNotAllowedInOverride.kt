@@ -6,3 +6,4 @@ open class A {
 class B : A() {
     override fun foo(x : Int = 1<caret>, y: Int) {}
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveDefaultParameterValueFix

@@ -11,6 +11,7 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
+import kotlin.io.path.fileSize
 
 class ResizableMappedFileTest {
   companion object {
@@ -22,10 +23,10 @@ class ResizableMappedFileTest {
   }
 
   @get: Rule
-  val tempDir = TempDirectory()
+  val tempDir: TempDirectory = TempDirectory()
 
   @get: Rule
-  val disposable = DisposableRule()
+  val disposable: DisposableRule = DisposableRule()
 
   @Test
   fun `put data to non-existing page`() {
@@ -70,7 +71,7 @@ class ResizableMappedFileTest {
       }
     }
 
-    Assert.assertTrue(address + 8 < storagePath.size())
+    Assert.assertTrue(address + 8 < storagePath.fileSize())
   }
 
   @Test

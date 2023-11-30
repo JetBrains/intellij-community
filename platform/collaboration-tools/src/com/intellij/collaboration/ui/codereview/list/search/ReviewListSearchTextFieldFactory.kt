@@ -16,8 +16,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.awt.Point
-import java.awt.event.InputEvent
-import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JTextField
 
@@ -40,12 +38,10 @@ class ReviewListSearchTextFieldFactory(private val searchState: MutableStateFlow
       override fun isIconBeforeText(): Boolean = true
       override fun getIcon(hovered: Boolean): Icon = AllIcons.Actions.SearchWithHistory
 
-      override fun getActionOnClick(inputEvent: InputEvent): Runnable = Runnable {
-        if (inputEvent is MouseEvent) {
-          val point = createHistoryPoint(searchField)
-          viewScope.launch {
-            chooseFromHistory(point)
-          }
+      override fun getActionOnClick(): Runnable = Runnable {
+        val point = createHistoryPoint(searchField)
+        viewScope.launch {
+          chooseFromHistory(point)
         }
       }
     })

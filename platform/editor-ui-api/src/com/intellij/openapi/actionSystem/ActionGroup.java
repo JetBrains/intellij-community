@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -6,7 +6,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.util.NlsActions.ActionDescription;
@@ -52,12 +55,21 @@ public abstract class ActionGroup extends AnAction {
 
   public ActionGroup(@NotNull Supplier<@ActionText String> shortName, boolean popup) {
     super(shortName);
-    setPopup(popup);
+    // avoid creating template presentation right on init
+    if (popup) {
+      getTemplatePresentation().setPopupGroup(popup);
+    }
   }
 
   public ActionGroup(@Nullable @ActionText String text,
                      @Nullable @ActionDescription String description,
                      @Nullable Icon icon) {
+    super(text, description, icon);
+  }
+
+  public ActionGroup(@NotNull Supplier<@ActionText String> text,
+                     @NotNull Supplier<@ActionDescription String> description,
+                     @Nullable Supplier<? extends @Nullable Icon> icon) {
     super(text, description, icon);
   }
 
@@ -89,12 +101,6 @@ public abstract class ActionGroup extends AnAction {
   @ApiStatus.NonExtendable
   public boolean isPopup() {
     return getTemplatePresentation().isPopupGroup();
-  }
-
-  /** @deprecated Use {@link Presentation#setPopupGroup(boolean)} instead. */
-  @Deprecated(forRemoval = true)
-  public boolean isPopup(@NotNull String place) {
-    return isPopup();
   }
 
   /**
@@ -150,10 +156,8 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Allows the group to intercept and transform its expanded content.
    */
-  @NotNull
-  @ApiStatus.Experimental
-  public List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
-                                                   @NotNull UpdateSession updateSession) {
+  public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
+                                                            @NotNull UpdateSession updateSession) {
     return Collections.unmodifiableList(visibleChildren);
   }
 
@@ -171,14 +175,14 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /** @deprecated Use {@link Presentation#setHideGroupIfEmpty(boolean)} instead. */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.NonExtendable
   public boolean hideIfNoVisibleChildren() {
     return getTemplatePresentation().isHideGroupIfEmpty();
   }
 
   /** @deprecated Use {@link Presentation#setDisableGroupIfEmpty(boolean)} instead. */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @ApiStatus.NonExtendable
   public boolean disableIfNoVisibleChildren() {
     return getTemplatePresentation().isDisableGroupIfEmpty();

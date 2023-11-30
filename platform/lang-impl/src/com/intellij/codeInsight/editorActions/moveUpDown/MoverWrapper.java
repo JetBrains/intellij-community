@@ -20,14 +20,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class MoverWrapper {
+final class MoverWrapper {
   private static final Logger LOGGER = Logger.getInstance(MoverWrapper.class);
 
-  protected final boolean myIsDown;
+  private final boolean myIsDown;
   private final StatementUpDownMover myMover;
   private final StatementUpDownMover.MoveInfo myInfo;
 
-  protected MoverWrapper(@NotNull final StatementUpDownMover mover, @NotNull final StatementUpDownMover.MoveInfo info, final boolean isDown) {
+  MoverWrapper(@NotNull final StatementUpDownMover mover, @NotNull final StatementUpDownMover.MoveInfo info, final boolean isDown) {
     myMover = mover;
     myIsDown = isDown;
 
@@ -38,7 +38,7 @@ class MoverWrapper {
     return myInfo;
   }
 
-  public final void move(@NotNull Editor editor, @Nullable PsiFile file) {
+  public void move(@NotNull Editor editor, @Nullable PsiFile file) {
     assert myInfo.toMove2 != null;
     myMover.beforeMove(editor, myInfo, myIsDown);
     final Document document = editor.getDocument();

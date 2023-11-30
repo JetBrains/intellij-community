@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * @author Eugene Zhuravlev
  */
-public class Chunk<Node> {
+public final class Chunk<Node> {
   private final @NotNull Set<Node> myNodes;
 
   public Chunk(Node node) {

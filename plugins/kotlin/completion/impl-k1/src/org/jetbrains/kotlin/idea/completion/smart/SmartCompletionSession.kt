@@ -49,8 +49,8 @@ class SmartCompletionSession(
     private val smartCompletion by lazy(LazyThreadSafetyMode.NONE) {
         expression?.let {
             SmartCompletion(
-                it, resolutionFacade, bindingContext, moduleDescriptor, isVisibleFilter, indicesHelper(false),
-                prefixMatcher, searchScope, toFromOriginalFileMapper,
+                it, resolutionFacade, bindingContext, moduleDescriptor, isVisibleFilter, applicabilityFilter,
+                indicesHelper(false), prefixMatcher, searchScope, toFromOriginalFileMapper,
                 callTypeAndReceiver, isJvmModule
             )
         }

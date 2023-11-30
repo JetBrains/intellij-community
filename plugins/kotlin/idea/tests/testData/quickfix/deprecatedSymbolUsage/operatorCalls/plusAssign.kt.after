@@ -10,3 +10,4 @@ fun f() {
     var c1 = C()
     c1 = c1.add(C())
 }
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix

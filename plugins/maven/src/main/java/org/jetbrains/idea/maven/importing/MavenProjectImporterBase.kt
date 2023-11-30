@@ -7,17 +7,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.IdeUIModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.externalSystem.statistics.runImportActivitySync
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.ExtensionImporter
 import org.jetbrains.idea.maven.importing.MavenLegacyModuleImporter.ExtensionImporter.CountAndTime
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.statistics.MavenImportCollector
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -29,11 +27,7 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
                                         @JvmField protected val myImportingSettings: MavenImportingSettings,
                                         @JvmField protected val myIdeModifiableModelsProvider: IdeModifiableModelsProvider) : MavenProjectImporter {
   @JvmField
-  protected val myModelsProvider: IdeModifiableModelsProvider
-
-  init {
-    myModelsProvider = myIdeModifiableModelsProvider
-  }
+  protected val myModelsProvider: IdeModifiableModelsProvider = myIdeModifiableModelsProvider
 
   protected fun selectProjectsToImport(originalProjects: Collection<MavenProject>): Set<MavenProject> {
     val result: MutableSet<MavenProject> = HashSet()
@@ -51,14 +45,13 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
   protected class RefreshingFilesTask(private val myFiles: Set<File>) : MavenProjectsProcessorTask {
     override fun perform(project: Project,
                          embeddersManager: MavenEmbeddersManager,
-                         console: MavenConsole,
-                         indicator: MavenProgressIndicator) {
+                         indicator: ProgressIndicator) {
       runImportActivitySync(project, MavenUtil.SYSTEM_ID, RefreshingFilesTask::class.java) {
         doPerform(indicator)
       }
     }
 
-    private fun doPerform(indicator: MavenProgressIndicator) {
+    private fun doPerform(indicator: ProgressIndicator) {
       indicator.setText(MavenProjectBundle.message("progress.text.refreshing.files"))
       doRefreshFiles(myFiles)
     }
@@ -66,53 +59,46 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
 
   companion object {
     @JvmStatic
-    fun importExtensions(project: Project?,
-                         modifiableModelsProvider: IdeModifiableModelsProvider?,
+    fun importExtensions(project: Project,
+                         modifiableModelsProvider: IdeModifiableModelsProvider,
                          extensionImporters: List<ExtensionImporter>,
-                         postTasks: List<MavenProjectsProcessorTask?>?,
-                         activity: StructuredIdeActivity?) {
-      var extensionImporters = extensionImporters
-      extensionImporters = ContainerUtil.filter(extensionImporters) { it: ExtensionImporter -> !it.isModuleDisposed }
-      if (extensionImporters.isEmpty()) return
+                         postTasks: List<MavenProjectsProcessorTask>,
+                         activity: StructuredIdeActivity) {
+      val importers = extensionImporters.filter { !it.isModuleDisposed }
+      if (importers.isEmpty()) return
       val beforeBridgesCreation = System.nanoTime()
-      val provider: IdeModifiableModelsProvider
-      provider = // commit does nothing for this provider, so it should be reused
-        modifiableModelsProvider as? IdeUIModifiableModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(
-          project!!)
+      // commit does nothing for this provider, so it should be reused
+      val provider = modifiableModelsProvider as? IdeUIModifiableModelsProvider
+                     ?: ProjectDataManager.getInstance().createModifiableModelsProvider(project)
       var bridgesCreationNano = System.nanoTime() - beforeBridgesCreation
       try {
         val beforeInitInit = System.nanoTime()
-        extensionImporters.forEach(
-          Consumer { importer: ExtensionImporter -> importer.init(provider) })
+        importers.forEach(Consumer { importer: ExtensionImporter -> importer.init(provider) })
         bridgesCreationNano += System.nanoTime() - beforeInitInit
-        val counters: Map<Class<out MavenImporter?>, CountAndTime> = HashMap()
-        extensionImporters.forEach(
-          Consumer { importer: ExtensionImporter -> importer.preConfig(counters) })
-        extensionImporters.forEach(
-          Consumer { importer: ExtensionImporter -> importer.config(postTasks, counters) })
-        extensionImporters.forEach(
-          Consumer { importer: ExtensionImporter -> importer.postConfig(counters) })
+        val counters: MutableMap<Class<out MavenImporter?>, CountAndTime> = HashMap()
+        importers.forEach(Consumer { it.preConfig(counters) })
+        importers.forEach(Consumer { it.config(postTasks, counters) })
+        importers.forEach(Consumer { it.postConfig(counters) })
         for ((key, value) in counters) {
-          MavenImportCollector.IMPORTER_RUN.log(project,
-                                                MavenImportCollector.ACTIVITY_ID.with(activity!!),
-                                                MavenImportCollector.IMPORTER_CLASS.with(key),
-                                                MavenImportCollector.NUMBER_OF_MODULES.with(value.count),
-                                                MavenImportCollector.TOTAL_DURATION_MS.with(
-                                                  TimeUnit.NANOSECONDS.toMillis(value.timeNano)))
+          MavenImportCollector.IMPORTER_RUN.log(
+            project,
+            MavenImportCollector.ACTIVITY_ID.with(activity),
+            MavenImportCollector.IMPORTER_CLASS.with(key),
+            MavenImportCollector.NUMBER_OF_MODULES.with(value.count),
+            MavenImportCollector.TOTAL_DURATION_MS.with(TimeUnit.NANOSECONDS.toMillis(value.timeNano)))
         }
       }
       finally {
         val beforeCommit = System.nanoTime()
-        MavenUtil.invokeAndWaitWriteAction(project!!) {
+        MavenUtil.invokeAndWaitWriteAction(project) {
           ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring { provider.commit() }
         }
         val afterCommit = System.nanoTime()
-        MavenImportCollector.LEGACY_IMPORTERS_STATS.log(project,
-                                                        MavenImportCollector.ACTIVITY_ID.with(activity!!),
-                                                        MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_CREATION_MS.with(
-                                                          TimeUnit.NANOSECONDS.toMillis(bridgesCreationNano)),
-                                                        MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_COMMIT_MS.with(
-                                                          TimeUnit.NANOSECONDS.toMillis(afterCommit - beforeCommit)))
+        MavenImportCollector.LEGACY_IMPORTERS_STATS.log(
+          project,
+          MavenImportCollector.ACTIVITY_ID.with(activity),
+          MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_CREATION_MS.with(TimeUnit.NANOSECONDS.toMillis(bridgesCreationNano)),
+          MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_COMMIT_MS.with(TimeUnit.NANOSECONDS.toMillis(afterCommit - beforeCommit)))
       }
     }
 
@@ -150,8 +136,8 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
       javacOptions.ADDITIONAL_OPTIONS_STRING = options
     }
 
-    protected fun doRefreshFiles(files: Set<File>?) {
-      LocalFileSystem.getInstance().refreshIoFiles(files!!)
+    protected fun doRefreshFiles(files: Set<File>) {
+      LocalFileSystem.getInstance().refreshIoFiles(files)
     }
   }
 }

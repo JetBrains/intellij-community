@@ -28,11 +28,9 @@ class KotlinChangeSignatureData(
     private val descriptorsForSignatureChange: Collection<CallableDescriptor>
 ) : KotlinMethodDescriptor {
     private val parameters: List<KotlinParameterInfo>
-    override val receiver: KotlinParameterInfo?
+    override var receiver: KotlinParameterInfo? = createReceiverInfoIfNeeded()
 
     init {
-        receiver = createReceiverInfoIfNeeded()
-
         val valueParameters = when (baseDeclaration) {
             is KtFunction -> baseDeclaration.valueParameters
             is KtClass -> baseDeclaration.primaryConstructorParameters

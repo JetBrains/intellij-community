@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -21,7 +21,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-class QuickListPanel {
+final class QuickListPanel {
   private final CollectionListModel<String> myActionsModel;
   private JPanel myPanel;
   private final JBList<String> myActionsList;
@@ -30,7 +30,7 @@ class QuickListPanel {
   private JPanel myListPanel;
   QuickList item;
 
-  QuickListPanel(@NotNull final CollectionListModel<QuickList> model) {
+  QuickListPanel(final @NotNull CollectionListModel<QuickList> model) {
     myActionsModel = new MyCollectionListModel();
     myActionsList = new JBList<>(myActionsModel);
     myActionsList.setCellRenderer(new MyListCellRenderer());
@@ -115,7 +115,7 @@ class QuickListPanel {
       return;
     }
 
-    myName.setText(item.getName());
+    myName.setText(item.getDisplayName());
     myName.setEnabled(QuickListsManager.getInstance().getSchemeManager().isMetadataEditable(item));
     myDescription.setText(item.getDescription());
 
@@ -135,7 +135,7 @@ class QuickListPanel {
     return myPanel;
   }
 
-  private static class MyCollectionListModel extends CollectionListModel<String> {
+  private static final class MyCollectionListModel extends CollectionListModel<String> {
     @Override
     public void exchangeRows(int oldIndex, int newIndex) {
       String element = getElementAt(oldIndex);
@@ -144,7 +144,7 @@ class QuickListPanel {
     }
   }
 
-  private static class MyListCellRenderer extends DefaultListCellRenderer {
+  private static final class MyListCellRenderer extends DefaultListCellRenderer {
     @Override
     public @NotNull Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean selected, boolean focused) {
       super.getListCellRendererComponent(list, value, index, selected, focused);

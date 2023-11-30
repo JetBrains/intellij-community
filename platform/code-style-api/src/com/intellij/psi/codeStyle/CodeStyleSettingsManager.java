@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class CodeStyleSettingsManager implements PersistentStateComponentWithModificationTracker<Element> {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
@@ -43,6 +44,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   public volatile boolean USE_PER_PROJECT_SETTINGS;
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
+  
+  private final ThreadLocal<CodeStyleSettings> myLocalSettings = new ThreadLocal<>();
 
   private final static WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
 
@@ -60,8 +63,9 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   @TestOnly
   @NotNull
   public final CodeStyleSettings createTemporarySettings() {
-    myTemporarySettings = new CodeStyleSettings(true, false);
-    return myTemporarySettings;
+    CodeStyleSettings temporarySettings = new CodeStyleSettings(true, false);
+    myTemporarySettings = temporarySettings;
+    return temporarySettings;
   }
 
   @SuppressWarnings("MethodMayBeStatic")
@@ -79,6 +83,81 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
       testSettings.copyFrom(baseSettings);
     }
     return testSettings;
+  }
+
+  /**
+   * @see CodeStyle#runWithLocalSettings(Project, CodeStyleSettings, Runnable)
+   */
+  public void runWithLocalSettings(@NotNull CodeStyleSettings localSettings,
+                                   @NotNull Runnable runnable) {
+    CodeStyleSettings tempSettingsBefore = myLocalSettings.get();
+    try {
+      myLocalSettings.set(localSettings);
+      runnable.run();
+    }
+    finally {
+      myLocalSettings.set(tempSettingsBefore);
+    }
+  }
+
+  /**
+   * @see CodeStyle#runWithLocalSettings(Project, CodeStyleSettings, Consumer)
+   */
+  public void runWithLocalSettings(@NotNull CodeStyleSettings baseSettings,
+                                   @NotNull Consumer<? super @NotNull CodeStyleSettings> localSettingsConsumer) {
+    CodeStyleSettings tempSettingsBefore = myLocalSettings.get();
+    try {
+      CodeStyleSettings tempSettings = new CodeStyleSettings(true, false);
+      tempSettings.copyFrom(baseSettings);
+      myLocalSettings.set(tempSettings);
+      localSettingsConsumer.accept(tempSettings);
+    }
+    finally {
+      myLocalSettings.set(tempSettingsBefore);
+    }
+  }
+
+  /**
+   * @see CodeStyle#doWithTemporarySettings(Project, CodeStyleSettings, Runnable)
+   */
+  @TestOnly
+  public void doWithTemporarySettings(@NotNull CodeStyleSettings tempSettings,
+                                      @NotNull Runnable runnable) {
+    CodeStyleSettings tempSettingsBefore = getTemporarySettings();
+    try {
+      setTemporarySettings(tempSettings);
+      runnable.run();
+    }
+    finally {
+      if (tempSettingsBefore != null) {
+        setTemporarySettings(tempSettingsBefore);
+      }
+      else {
+        dropTemporarySettings();
+      }
+    }
+  }
+
+  /**
+   * @see CodeStyle#doWithTemporarySettings(Project, CodeStyleSettings, Consumer)
+   */
+  @TestOnly
+  public void doWithTemporarySettings(@NotNull CodeStyleSettings baseSettings,
+                                      @NotNull Consumer<? super CodeStyleSettings> tempSettingsConsumer) {
+    CodeStyleSettings tempSettingsBefore = getTemporarySettings();
+    try {
+      CodeStyleSettings tempSettings = createTemporarySettings();
+      tempSettings.copyFrom(baseSettings);
+      tempSettingsConsumer.accept(tempSettings);
+    }
+    finally {
+      if (tempSettingsBefore != null) {
+        setTemporarySettings(tempSettingsBefore);
+      }
+      else {
+        dropTemporarySettings();
+      }
+    }
   }
 
   private @NotNull Collection<CodeStyleSettings> getAllSettings() {
@@ -211,6 +290,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   @Deprecated
   @NotNull
   public CodeStyleSettings getCurrentSettings() {
+    CodeStyleSettings localSettings = getLocalSettings();
+    if (localSettings != null) return localSettings;
     CodeStyleSettings temporarySettings = myTemporarySettings;
     if (temporarySettings != null) return temporarySettings;
     CodeStyleSettings projectSettings = getMainProjectCodeStyle();
@@ -285,6 +366,11 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   public CodeStyleSettings getTemporarySettings() {
     return myTemporarySettings;
   }
+  
+  @ApiStatus.Internal
+  public @Nullable CodeStyleSettings getLocalSettings() {
+    return myLocalSettings.get();
+  }
 
   protected @NotNull MessageBus getMessageBus() {
     throw new UnsupportedOperationException("The method is not implemented");
@@ -294,7 +380,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
    * @deprecated use {@link #fireCodeStyleSettingsChanged()} for project-wide changes or
    * {@link #fireCodeStyleSettingsChanged(VirtualFile)} for file-related changes.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
     if (file != null) {
       fireCodeStyleSettingsChanged(file.getVirtualFile());

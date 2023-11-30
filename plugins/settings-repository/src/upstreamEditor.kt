@@ -1,14 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.ui.components.DialogManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.nullize
@@ -75,10 +75,10 @@ fun doSync(icsManager: IcsManager, project: Project?, syncType: SyncType, url: S
     runBlockingModalWithRawProgressReporter(owner, icsMessage("task.sync.title")) {
       if (isRepositoryWillBeCreated && syncType != SyncType.OVERWRITE_LOCAL) {
         com.intellij.configurationStore.saveSettings(componentManager = ApplicationManager.getApplication(), forceSavingAllSettings = false)
-        icsManager.sync(syncType = syncType, project = project) { copyLocalConfig() }
+        icsManager.sync(syncType = syncType) { copyLocalConfig() }
       }
       else {
-        icsManager.sync(syncType = syncType, project = project, localRepositoryInitializer = null)
+        icsManager.sync(syncType = syncType, localRepositoryInitializer = null)
       }
     }
   }

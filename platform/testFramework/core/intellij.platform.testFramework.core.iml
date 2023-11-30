@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
     <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
@@ -20,7 +19,6 @@
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="jackson-databind" level="project" />
     <orderEntry type="library" name="jackson-module-kotlin" level="project" />
-    <orderEntry type="library" name="jsonpath" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
   </component>
 </module>

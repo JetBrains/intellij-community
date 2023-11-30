@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -69,15 +69,13 @@ public final class CommonActionsPanel extends JPanel {
       myText = text;
     }
 
-    @NotNull
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return myIcon;
     }
 
     abstract @NotNull AnActionButton createButton(@NotNull Listener listener, @NlsContexts.Button String name, @NotNull Icon icon);
 
-    @NotNull
-    public @NlsContexts.Button String getText() {
+    public @NotNull @NlsContexts.Button String getText() {
       return myText.get();
     }
   }
@@ -156,8 +154,7 @@ public final class CommonActionsPanel extends JPanel {
     add(myToolbar.getComponent(), BorderLayout.CENTER);
   }
 
-  @NotNull
-  public ActionToolbar getToolbar() {
+  public @NotNull ActionToolbar getToolbar() {
     return myToolbar;
   }
 
@@ -273,8 +270,7 @@ public final class CommonActionsPanel extends JPanel {
     }
   }
 
-  @NotNull
-  public ActionToolbarPosition getPosition() {
+  public @NotNull ActionToolbarPosition getPosition() {
     return myPosition;
   }
 
@@ -321,7 +317,7 @@ public final class CommonActionsPanel extends JPanel {
     return null;
   }
 
-  static abstract class MyActionButton extends AnActionButton implements DumbAware {
+  abstract static class MyActionButton extends AnActionButton implements DumbAware {
     private final Buttons myButton;
     protected final Listener myListener;
 

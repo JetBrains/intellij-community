@@ -17,7 +17,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.openapi.application.appSystemDir
-import com.intellij.util.io.isFile
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.NormalizedPackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
@@ -34,7 +33,6 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.idea.packagesearch.SortMetric
@@ -44,6 +42,7 @@ import org.jetbrains.packagesearch.api.v2.ApiRepository
 import org.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import java.io.Closeable
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.hours
@@ -65,7 +64,7 @@ internal class ProjectDataProvider(
 
     suspend fun fetchKnownRepositories() =
         cacheFolder.resolve("repositories.json")
-            .takeIf { it.isFile() }
+            .takeIf { it.isRegularFile() }
             ?.runCatching { json.decodeFromString<Cacheable<List<ApiRepository>>>(readText()) }
             ?.onFailure { logDebug("${this::class.simpleName}#fetchKnownRepositories", it) }
             ?.getOrNull()

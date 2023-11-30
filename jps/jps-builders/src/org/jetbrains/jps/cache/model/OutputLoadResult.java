@@ -1,8 +1,9 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.model;
 
 import java.io.File;
 
-public class OutputLoadResult {
+public final class OutputLoadResult {
   private final File zipFile;
   private final String downloadUrl;
   private final AffectedModule module;

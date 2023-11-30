@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 
 @ApiStatus.Internal
 fun interface LibraryDependenciesFilter {
-    operator fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate>
+    operator fun invoke(platform: TargetPlatform, candidates: Collection<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate>
 }
 
 /**
@@ -23,7 +23,7 @@ fun interface LibraryDependenciesFilter {
  */
 @ApiStatus.Internal
 object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
-    override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
+    override fun invoke(platform: TargetPlatform, candidates: Collection<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         return candidates.filterTo(LinkedHashSet(candidates.size)) { candidate -> platform representsSubsetOf candidate.platform }
     }
 }
@@ -42,7 +42,7 @@ object DefaultLibraryDependenciesFilter : LibraryDependenciesFilter {
  */
 @ApiStatus.Internal
 object StrictEqualityForPlatformSpecificCandidatesFilter : LibraryDependenciesFilter {
-    override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
+    override fun invoke(platform: TargetPlatform, candidates: Collection<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         return candidates.filterTo(LinkedHashSet(candidates.size)) { candidate ->
             if (platform.size == 1)
                 platform == candidate.platform
@@ -63,7 +63,7 @@ object StrictEqualityForPlatformSpecificCandidatesFilter : LibraryDependenciesFi
  */
 @ApiStatus.Internal
 object SharedNativeLibraryToNativeInteropFallbackDependenciesFilter : LibraryDependenciesFilter {
-    override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
+    override fun invoke(platform: TargetPlatform, candidates: Collection<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         /* Filter only works on shared native dependee libraries to interop dependency libraries */
         if (!platform.isSharedNative()) return emptySet()
 
@@ -137,7 +137,7 @@ infix fun LibraryDependenciesFilter.union(other: LibraryDependenciesFilter): Lib
 class LibraryDependenciesFilterUnion(
     val filters: List<LibraryDependenciesFilter>
 ) : LibraryDependenciesFilter {
-    override fun invoke(platform: TargetPlatform, candidates: Set<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
+    override fun invoke(platform: TargetPlatform, candidates: Collection<LibraryDependencyCandidate>): Set<LibraryDependencyCandidate> {
         return filters
             .map { filter ->
                 ProgressManager.checkCanceled()

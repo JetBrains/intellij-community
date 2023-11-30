@@ -10,23 +10,27 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
-import com.intellij.platform.workspaceModel.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
+import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.LibraryRoot
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageImpl
+import com.intellij.platform.workspace.storage.impl.assertConsistency
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
-import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
+import com.intellij.workspaceModel.ide.getGlobalInstance
+import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.bridgeEntities.ExcludeUrlEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
-import com.intellij.workspaceModel.storage.impl.assertConsistency
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -63,7 +67,7 @@ class GlobalWorkspaceModel : Disposable {
         val activity = StartUpMeasurer.startActivity("global cache loading")
         val previousStorage: MutableEntityStorage?
         val loadingCacheTime = measureTimeMillis {
-          previousStorage = cache.loadCache()?.toBuilder()
+          previousStorage = cache.loadCache()
         }
         val storage = if (previousStorage == null) {
           MutableEntityStorage.create()
@@ -81,7 +85,7 @@ class GlobalWorkspaceModel : Disposable {
     entityStorage = VersionedEntityStorageImpl(EntityStorageSnapshot.empty())
 
     val callback = JpsGlobalModelSynchronizer.getInstance().loadInitialState(mutableEntityStorage, entityStorage, loadedFromCache)
-    val changes = mutableEntityStorage.collectChanges(EntityStorageSnapshot.empty())
+    val changes = mutableEntityStorage.collectChanges()
     entityStorage.replace(mutableEntityStorage.toSnapshot(), changes, {}, {})
     callback.invoke()
   }
@@ -105,7 +109,7 @@ class GlobalWorkspaceModel : Disposable {
       }
       val changes: Map<Class<*>, List<EntityChange<*>>>
       collectChangesTimeMillis = measureTimeMillis {
-        changes = builder.collectChanges(before)
+        changes = builder.collectChanges()
       }
       initializingTimeMillis = measureTimeMillis {
         this.initializeBridges(changes, builder)

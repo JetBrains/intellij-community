@@ -17,7 +17,7 @@ object GrazieToastNotifications {
 
   private val shownNotifications = MultiMap.createConcurrent<Group, WeakReference<Notification>>()
 
-  internal val MISSING_LANGUAGES_GROUP
+  private val MISSING_LANGUAGES_GROUP
     get() = obtainGroup("Proofreading missing languages information")
 
   internal val GENERAL_GROUP

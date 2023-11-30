@@ -3,6 +3,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -208,7 +210,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     }
 
     @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull EditorUpdater updater) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiAssignmentExpression assignment = ObjectUtils.tryCast(element, PsiAssignmentExpression.class);
       if (assignment == null) return;
       PsiField field = getAssignedField(assignment);

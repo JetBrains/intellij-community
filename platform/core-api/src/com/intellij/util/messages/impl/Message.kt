@@ -16,11 +16,11 @@ internal class Message(
   @JvmField val bus: MessageBusImpl,
 ) {
   @JvmField
-  val clientId = ClientId.getCurrentValue()
+  val clientId: String = ClientId.getCurrentValue()
 
   // to avoid creating Message for each handler
   // see note about pumpMessages in createPublisher (invoking job handlers can be stopped and continued as part of another pumpMessages call)
-  @JvmField var currentHandlerIndex = 0
+  @JvmField var currentHandlerIndex: Int = 0
 
   override fun toString(): String {
     return "Message(topic=$topic, method=$methodName, args=${args.contentToString()}, handlers=${handlers.contentToString()})"

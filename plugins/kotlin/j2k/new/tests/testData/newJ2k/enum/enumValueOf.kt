@@ -7,7 +7,9 @@ object Foo {
         foo(enumValueOf<Color>("RED"))
     }
 
-    private fun foo(c: Color) {}
+    private fun foo(c: Color) {
+    }
+
     internal enum class Color {
         RED
     }

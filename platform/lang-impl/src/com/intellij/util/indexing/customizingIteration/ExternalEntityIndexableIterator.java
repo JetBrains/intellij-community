@@ -12,14 +12,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implement this interface to change {@link ExternalEntityIndexableIterator#iterateFiles(Project, ContentIterator, VirtualFileFilter)}
- * Don't forget to define own origin class to use in {@link ExternalEntityIndexableIterator#getOrigin()} –
- * iterators are deduplicated on base of origins equality.
- * <p>
- * If the goal is customizing getDebugName()/getIndexingProgressText()/getRootsScanningProgressText() texts only,
- * or specifying custom getOrigin() to be able to distinguish it,
- * use {@link com.intellij.util.indexing.roots.ExternalEntityIndexableIteratorImpl}
+ * @deprecated Will be removed as a part of {@link com.intellij.util.indexing.CustomizingIndexingContributor} API
  */
+@Deprecated(forRemoval = true)
 public interface ExternalEntityIndexableIterator extends IndexableFilesIterator {
 
   @NonNls

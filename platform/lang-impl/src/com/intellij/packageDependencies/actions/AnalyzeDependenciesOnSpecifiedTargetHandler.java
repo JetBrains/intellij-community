@@ -8,8 +8,8 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.packageDependencies.DependenciesBuilder;
+import com.intellij.packageDependencies.DependencyAnalysisResult;
 import com.intellij.packageDependencies.DependencyVisitorFactory;
 import com.intellij.packageDependencies.ForwardDependenciesBuilder;
 import com.intellij.psi.PsiFile;
@@ -18,7 +18,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHandlerBase {
@@ -42,15 +41,15 @@ public class AnalyzeDependenciesOnSpecifiedTargetHandler extends DependenciesHan
   }
 
   @Override
-  protected boolean shouldShowDependenciesPanel(List<? extends DependenciesBuilder> builders) {
-    for (DependenciesBuilder builder : builders) {
+  protected boolean shouldShowDependenciesPanel(@NotNull DependencyAnalysisResult result) {
+    for (DependenciesBuilder builder : result.getBuilders()) {
       for (Set<PsiFile> files : builder.getDependencies().values()) {
         if (!files.isEmpty()) {
           return true;
         }
       }
     }
-    final String source = StringUtil.decapitalize(getPanelDisplayName(builders));
+    final String source = StringUtil.decapitalize(result.getPanelDisplayName());
     final String target = StringUtil.decapitalize(myTargetScope.getDisplayName());
     String message = CodeInsightBundle.message("no.dependencies.found.message", source, target);
     if (DependencyVisitorFactory.VisitorOptions.fromSettings(myProject).skipImports()) {

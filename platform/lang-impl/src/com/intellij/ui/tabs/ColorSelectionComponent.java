@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs;
 
 import com.intellij.ide.IdeBundle;
@@ -25,7 +25,7 @@ import java.util.Objects;
 /**
  * @author gregsh
  */
-public class ColorSelectionComponent extends JPanel {
+public final class ColorSelectionComponent extends JPanel {
   private final Map<String, ColorButton> myColorToButtonMap = new LinkedHashMap<>();
   private final ButtonGroup myButtonGroup = new ButtonGroup();
 
@@ -97,7 +97,7 @@ public class ColorSelectionComponent extends JPanel {
     protected void doPerformAction(ActionEvent e) {}
   }
 
-  private static class CustomColorButton extends ColorButton {
+  private static final class CustomColorButton extends ColorButton {
     private CustomColorButton() {
       super(IdeBundle.message("settings.file.color.custom.name"), JBColor.WHITE);
       myColor = null;

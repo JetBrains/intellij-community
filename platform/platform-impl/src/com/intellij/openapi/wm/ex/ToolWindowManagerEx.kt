@@ -20,10 +20,6 @@ abstract class ToolWindowManagerEx : ToolWindowManager() {
   abstract val toolWindows: List<ToolWindow>
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use {{@link #registerToolWindow(RegisterToolWindowTask)}}")
-  abstract fun initToolWindow(bean: ToolWindowEP)
-
-  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link ToolWindowManagerListener#TOPIC}", level = DeprecationLevel.ERROR)
   open fun addToolWindowManagerListener(listener: ToolWindowManagerListener) {
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.highlighting.CustomFoldRegionRendererWrapper;
@@ -30,7 +30,7 @@ import java.util.Map;
 /**
  * Allows to set default colors for multiple languages.
  */
-public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
+public final class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
   private final static TextAttributesKey FAKE_BAD_CHAR =
     TextAttributesKey.createTextAttributesKey("FAKE_BAD_CHAR", HighlighterColors.BAD_CHARACTER);
 

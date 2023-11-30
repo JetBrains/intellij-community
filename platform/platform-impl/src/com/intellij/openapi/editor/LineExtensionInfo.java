@@ -15,12 +15,12 @@ import java.awt.*;
  *
  * @author Konstantin Bulenkov
  */
-public class LineExtensionInfo {
-  @NotNull private final @Nls String myText;
-  @Nullable private final Color myColor;
-  @Nullable private final EffectType myEffectType;
-  @Nullable private final Color myEffectColor;
-  @Nullable private final Color myBgColor;
+public final class LineExtensionInfo {
+  private final @NotNull @Nls String myText;
+  private final @Nullable Color myColor;
+  private final @Nullable EffectType myEffectType;
+  private final @Nullable Color myEffectColor;
+  private final @Nullable Color myBgColor;
   @JdkConstants.FontStyle private final int myFontType;
 
   public LineExtensionInfo(@NotNull @Nls String text,
@@ -45,28 +45,23 @@ public class LineExtensionInfo {
     myBgColor = attr.getBackgroundColor();
   }
 
-  @NotNull
-  public @Nls String getText() {
+  public @NotNull @Nls String getText() {
     return myText;
   }
 
-  @Nullable
-  public Color getColor() {
+  public @Nullable Color getColor() {
     return myColor;
   }
 
-  @Nullable
-  public Color getBgColor() {
+  public @Nullable Color getBgColor() {
     return myBgColor;
   }
 
-  @Nullable
-  public EffectType getEffectType() {
+  public @Nullable EffectType getEffectType() {
     return myEffectType;
   }
 
-  @Nullable
-  public Color getEffectColor() {
+  public @Nullable Color getEffectColor() {
     return myEffectColor;
   }
 

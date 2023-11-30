@@ -1,7 +1,7 @@
 package com.intellij.codeInspection.tests.kotlin
 
-import com.intellij.codeInspection.tests.JvmLanguage
-import com.intellij.codeInspection.tests.ObsoleteApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.internal.testFramework.ObsoleteApiUsageInspectionTestBase
+import com.intellij.jvm.analysis.testFramework.JvmLanguage
 
 class KotlinObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase() {
   fun `test direct usage`() {
@@ -25,5 +25,14 @@ class KotlinObsoleteApiUsageInspectionTest : ObsoleteApiUsageInspectionTestBase(
          override fun <warning descr="Obsolete API is used">f</warning>() { }
       }      
     """.trimIndent())
+  }
+
+  fun `test generic reference`() {
+    myFixture.addClass("@org.jetbrains.annotations.ApiStatus.Obsolete public interface I<T> {}")
+    myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+class U {
+  fun u(i: <warning descr="Obsolete API is used">I</warning><Int>) = i
+}
+""".trimIndent())
   }
 }

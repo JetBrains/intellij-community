@@ -63,13 +63,12 @@ class KotlinLambdaMethodFilter(
                 return@runReadAction true
             }
 
-            val blockAt = elementAt.parentOfType<KtBlockExpression>(withSelf = true)
+            val blockAt = elementAt?.parentOfType<KtBlockExpression>(withSelf = true)
             blockAt == bodyExpression
         }
     }
 
-    override fun getCallingExpressionLines() =
-        if (lambdaInfo.isInline) Range(0, Int.MAX_VALUE) else callingExpressionLines
+    override fun getCallingExpressionLines() = callingExpressionLines
 
     fun isTargetLambdaName(name: String): Boolean {
         val actualName = name.trimIfMangledInBytecode(lambdaInfo.isNameMangledInBytecode)

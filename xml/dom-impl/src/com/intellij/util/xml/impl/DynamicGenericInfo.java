@@ -26,14 +26,14 @@ import static com.intellij.reference.SoftReference.dereference;
 public final class DynamicGenericInfo extends DomGenericInfoEx {
   private static final Key<SoftReference<Interner<ChildrenDescriptionsHolder<?>>>> HOLDERS_CACHE = Key.create("DOM_CHILDREN_HOLDERS_CACHE");
   private final StaticGenericInfo myStaticGenericInfo;
-  @NotNull private final DomInvocationHandler myInvocationHandler;
+  private final @NotNull DomInvocationHandler myInvocationHandler;
   private volatile boolean myInitialized;
   private volatile ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private volatile ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
   private volatile ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
   private volatile List<CustomDomChildrenDescriptionImpl> myCustomChildren;
 
-  public DynamicGenericInfo(@NotNull final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo) {
+  public DynamicGenericInfo(final @NotNull DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo) {
     myInvocationHandler = handler;
     myStaticGenericInfo = staticGenericInfo;
 
@@ -115,8 +115,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
     return (ChildrenDescriptionsHolder<T>)cache.intern(holder);
   }
 
-  @Nullable
-  private DomExtensionsRegistrarImpl runDomExtenders() {
+  private @Nullable DomExtensionsRegistrarImpl runDomExtenders() {
     DomExtensionsRegistrarImpl registrar = null;
     Project project = myInvocationHandler.getManager().getProject();
     for (DomExtenderEP extenderEP : DomExtenderEP.EP_NAME.getExtensionList()) {
@@ -144,8 +143,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription() {
+  public @NotNull List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription() {
     checkInitialized();
     if (myCustomChildren != null) return myCustomChildren;
     return myStaticGenericInfo.getCustomNameChildrenDescription();
@@ -157,8 +155,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
+  public @NotNull List<AbstractDomChildDescriptionImpl> getChildrenDescriptions() {
     checkInitialized();
     final List<AbstractDomChildDescriptionImpl> list = new ArrayList<>();
     myAttributes.dumpDescriptions(list);
@@ -169,15 +166,13 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<FixedChildDescriptionImpl> getFixedChildrenDescriptions() {
+  public @NotNull List<FixedChildDescriptionImpl> getFixedChildrenDescriptions() {
     checkInitialized();
     return myFixeds.getDescriptions();
   }
 
   @Override
-  @NotNull
-  public List<CollectionChildDescriptionImpl> getCollectionChildrenDescriptions() {
+  public @NotNull List<CollectionChildDescriptionImpl> getCollectionChildrenDescriptions() {
     checkInitialized();
     return myCollections.getDescriptions();
   }
@@ -225,8 +220,7 @@ public final class DynamicGenericInfo extends DomGenericInfoEx {
   }
 
   @Override
-  @NotNull
-  public List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
+  public @NotNull List<AttributeChildDescriptionImpl> getAttributeChildrenDescriptions() {
     checkInitialized();
     return myAttributes.getDescriptions();
   }

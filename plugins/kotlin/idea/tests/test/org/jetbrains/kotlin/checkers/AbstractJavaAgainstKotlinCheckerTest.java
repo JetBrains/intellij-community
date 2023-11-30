@@ -7,9 +7,11 @@ import com.intellij.codeInspection.dataFlow.DataFlowInspection;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.ig.bugs.StaticCallOnSubclassInspection;
 import com.siyeh.ig.bugs.StaticFieldReferenceOnSubclassInspection;
 import kotlin.collections.CollectionsKt;
@@ -93,6 +95,8 @@ public abstract class AbstractJavaAgainstKotlinCheckerTest extends KotlinDaemonA
     @NotNull
     protected Module createMainModule() throws IOException {
         Module module = super.createMainModule();
+
+        ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations);
 
         String configFileText = getConfigFileText();
         if (configFileText == null) {

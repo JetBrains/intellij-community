@@ -1,17 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.checkin
 
 import com.intellij.CommonBundle
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
-import com.intellij.openapi.progress.progressSink
-import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.CheckinProjectPanel
@@ -21,6 +18,9 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.progress.indeterminateStep
+import com.intellij.platform.util.progress.progressStep
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.vcs.log.VcsUser
 import git4idea.GitUserRegistry
 import git4idea.GitUtil
@@ -35,7 +35,6 @@ import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.Nls
 
 abstract class GitCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
 
@@ -70,9 +69,12 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
 
     val files = commitInfo.committedVirtualFiles // Deleted files aren't included. But for them, we don't care about CRLFs.
     val shouldWarn = withContext(Dispatchers.Default) {
-      coroutineContext.progressSink?.update(GitBundle.message("progress.checking.line.separator.issues"))
-      coroutineToIndicator {
-        GitCrlfProblemsDetector.detect(project, git, files).shouldWarn()
+      progressStep(endFraction = 1.0, GitBundle.message("progress.checking.line.separator.issues")) {
+        withRawProgressReporter {
+          coroutineToIndicator {
+            GitCrlfProblemsDetector.detect(project, git, files).shouldWarn()
+          }
+        }
       }
     }
     if (!shouldWarn) return null
@@ -93,7 +95,9 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
         .map { it.path }
         .firstOrNull()
       if (anyRoot != null) {
-        setCoreAutoCrlfAttribute(project, anyRoot)
+        indeterminateStep(GitBundle.message("progress.setting.config.value")) {
+          setCoreAutoCrlfAttribute(project, anyRoot)
+        }
       }
     }
     else if (dontWarnAgain) {
@@ -103,14 +107,18 @@ private class GitCRLFCheckinHandler(project: Project) : GitCheckinHandler(projec
     return null
   }
 
-  private fun setCoreAutoCrlfAttribute(project: Project, anyRoot: VirtualFile) {
-    runModalTask(GitBundle.message("progress.setting.config.value"), project, true) {
-      try {
-        GitConfigUtil.setValue(project, anyRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global")
-      }
-      catch (e: VcsException) {
-        // it is not critical: the user just will get the dialog again next time
-        logger<GitCRLFCheckinHandler>().warn("Couldn't globally set core.autocrlf in $anyRoot", e)
+  private suspend fun setCoreAutoCrlfAttribute(project: Project, anyRoot: VirtualFile) {
+    withContext(Dispatchers.IO) {
+      withRawProgressReporter {
+        coroutineToIndicator {
+          try {
+            GitConfigUtil.setValue(project, anyRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global")
+          }
+          catch (e: VcsException) {
+            // it is not critical: the user just will get the dialog again next time
+            logger<GitCRLFCheckinHandler>().warn("Couldn't globally set core.autocrlf in $anyRoot", e)
+          }
+        }
       }
     }
   }
@@ -152,10 +160,12 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
     val dialog = GitUserNameNotDefinedDialog(project, notDefined, affectedRoots, defined)
     if (!dialog.showAndGet()) return GitUserNameCommitProblem(closeWindow = true)
 
-    if (setUserNameUnderProgress(project, notDefined, dialog)) {
-      return null
+    val success = indeterminateStep(GitBundle.message("progress.setting.user.name.email")) {
+      setUserNameUnderProgress(project, notDefined, dialog)
     }
+    if (success) return null
 
+    Messages.showErrorDialog(project, GitBundle.message("error.cant.set.user.name.email"), CommonBundle.getErrorTitle())
     return GitUserNameCommitProblem(closeWindow = false)
   }
 
@@ -163,47 +173,47 @@ private class GitUserNameCheckinHandler(project: Project) : GitCheckinHandler(pr
                                           roots: Collection<VirtualFile>,
                                           stopWhenFoundFirst: Boolean): MutableMap<VirtualFile, VcsUser> {
     return withContext(Dispatchers.Default) {
-      coroutineToIndicator {
-        val defined = HashMap<VirtualFile, VcsUser>()
-        for (root in roots) {
-          val user = GitUserRegistry.getInstance(project).readUser(root) ?: continue
-          defined[root] = user
-          if (stopWhenFoundFirst) {
-            break
+      withRawProgressReporter {
+        coroutineToIndicator {
+          val defined = HashMap<VirtualFile, VcsUser>()
+          for (root in roots) {
+            val user = GitUserRegistry.getInstance(project).readUser(root) ?: continue
+            defined[root] = user
+            if (stopWhenFoundFirst) {
+              break
+            }
           }
+          defined
         }
-        defined
       }
     }
   }
 
-  private fun setUserNameUnderProgress(project: Project,
-                                       notDefined: Collection<VirtualFile>,
-                                       dialog: GitUserNameNotDefinedDialog): Boolean {
-    val error = Ref.create<@Nls String?>()
-    runModalTask(GitBundle.message("progress.setting.user.name.email"), project, true) {
-      try {
-        if (dialog.isSetGlobalConfig) {
-          GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_NAME, dialog.userName, "--global")
-          GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_EMAIL, dialog.userEmail, "--global")
-        }
-        else {
-          for (root in notDefined) {
-            GitConfigUtil.setValue(project, root, GitConfigUtil.USER_NAME, dialog.userName)
-            GitConfigUtil.setValue(project, root, GitConfigUtil.USER_EMAIL, dialog.userEmail)
+  private suspend fun setUserNameUnderProgress(project: Project,
+                                               notDefined: Collection<VirtualFile>,
+                                               dialog: GitUserNameNotDefinedDialog): Boolean {
+    try {
+      withContext(Dispatchers.IO) {
+        withRawProgressReporter {
+          coroutineToIndicator {
+            if (dialog.isSetGlobalConfig) {
+              GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_NAME, dialog.userName, "--global")
+              GitConfigUtil.setValue(project, notDefined.iterator().next(), GitConfigUtil.USER_EMAIL, dialog.userEmail, "--global")
+            }
+            else {
+              for (root in notDefined) {
+                GitConfigUtil.setValue(project, root, GitConfigUtil.USER_NAME, dialog.userName)
+                GitConfigUtil.setValue(project, root, GitConfigUtil.USER_EMAIL, dialog.userEmail)
+              }
+            }
+
           }
         }
       }
-      catch (e: VcsException) {
-        logger<GitUserNameCheckinHandler>().warn("Couldn't set user.name and user.email", e)
-        error.set(GitBundle.message("error.cant.set.user.name.email"))
-      }
-    }
-    if (error.isNull) {
       return true
     }
-    else {
-      Messages.showErrorDialog(project, error.get(), CommonBundle.getErrorTitle())
+    catch (e: VcsException) {
+      logger<GitUserNameCheckinHandler>().warn("Couldn't set user.name and user.email", e)
       return false
     }
   }

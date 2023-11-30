@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce
@@ -80,14 +80,14 @@ internal class IdleVcsLogIndexer(private val project: Project,
     if (isRunning.compareAndSet(false, true)) {
 
       startIndexJob = launch("Start VCS log indexing on IDE idle", idleDelayValue.asInteger().minutes) {
-        if (index.isIndexingPaused()) {
+        if (!index.isIndexingScheduled()) {
           VcsLogUsageTriggerCollector.idleIndexerTriggered(project)
           index.toggleIndexing()
         }
       }
 
       stopIndexJob = launch("Stop VCS log indexing on IDE active", 100.milliseconds) {
-        if (!index.isIndexingPaused()) {
+        if (index.isIndexingScheduled()) {
           index.toggleIndexing()
         }
       }

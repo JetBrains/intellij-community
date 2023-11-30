@@ -47,7 +47,7 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
                     return
                 }
                 analyze(callExpression) {
-                    val resolvedCall = callExpression.resolveCall().successfulFunctionCallOrNull() ?: return
+                    val resolvedCall = callExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return
                     val resolvedCallSymbol = resolvedCall.partiallyAppliedSymbol.symbol
                     val enumClassSymbol = (resolvedCallSymbol.getContainingSymbol() as? KtClassOrObjectSymbol) ?: return
 
@@ -71,7 +71,8 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
             })
         }
 
-    private fun KtAnalysisSession.isOptInRequired(
+    context(KtAnalysisSession)
+    private fun isOptInRequired(
         enumEntriesPropertySymbol: KtCallableSymbol,
         moduleApiVersion: ApiVersion,
     ): Boolean? {
@@ -86,9 +87,11 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return EXPERIMENTAL_ANNOTATION_CLASS_ID in necessaryOptIns
     }
 
-    protected abstract fun KtAnalysisSession.isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
+    context(KtAnalysisSession)
+    protected abstract fun isOptInAllowed(element: KtCallExpression, annotationClassId: ClassId): Boolean
 
-    private fun KtAnalysisSession.createQuickFix(callExpression: KtCallExpression, symbol: KtFunctionLikeSymbol): LocalQuickFix? {
+    context(KtAnalysisSession)
+    private fun createQuickFix(callExpression: KtCallExpression, symbol: KtFunctionLikeSymbol): LocalQuickFix? {
         val enumClassSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol
         val enumClassQualifiedName = enumClassSymbol?.classIdIfNonLocal?.asFqNameString() ?: return null
         return createQuickFix(getReplaceFixType(callExpression), enumClassQualifiedName)
@@ -98,7 +101,8 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return ReplaceFix(fixType, enumClassQualifiedName)
     }
 
-    private fun KtAnalysisSession.getReplaceFixType(callExpression: KtCallExpression): ReplaceFixType {
+    context(KtAnalysisSession)
+    private fun getReplaceFixType(callExpression: KtCallExpression): ReplaceFixType {
         val qualifiedOrSimpleCall = callExpression.qualifiedOrSimpleValuesCall()
         val parent = qualifiedOrSimpleCall.parent
         // Special handling for most popular use cases where `entries` can be used without cast to Array
@@ -136,7 +140,8 @@ abstract class EnumValuesSoftDeprecateInspectionBase : DeprecationCollectingInsp
         return ReplaceFixType.WITH_CAST
     }
 
-    private fun KtAnalysisSession.getCallableMethodIdString(expression: KtElement?): String? {
+    context(KtAnalysisSession)
+    private fun getCallableMethodIdString(expression: KtElement?): String? {
         val resolvedCall = expression?.resolveCall()?.successfulCallOrNull<KtCallableMemberCall<*, *>>()
         return resolvedCall?.partiallyAppliedSymbol?.symbol?.callableIdIfNonLocal?.toString()
     }

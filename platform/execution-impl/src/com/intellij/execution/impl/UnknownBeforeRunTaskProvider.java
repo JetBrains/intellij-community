@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
-public class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownBeforeRunTaskProvider.UnknownTask> {
+public final class UnknownBeforeRunTaskProvider extends BeforeRunTaskProvider<UnknownBeforeRunTaskProvider.UnknownTask> {
   private final Key<UnknownTask> myId;
 
   public UnknownBeforeRunTaskProvider(String mirrorProviderName) {

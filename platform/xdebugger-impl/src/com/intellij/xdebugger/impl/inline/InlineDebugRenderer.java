@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
@@ -539,7 +539,6 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
               result.add(new LineExtensionInfo(ARRAY_DELIMITER, getNormalAttributes()));
             }
           }
-          //noinspection HardCodedStringLiteral
           result.add(new LineExtensionInfo(wrapperActual.second, getNormalAttributes()));
           return;
         }

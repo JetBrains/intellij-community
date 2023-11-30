@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.IdeCoreBundle;
@@ -13,9 +13,9 @@ public interface DoNotAskOption {
   abstract class Adapter implements DoNotAskOption {
     /**
      * Save the state of the checkbox in the settings, or perform some other related action.
-     * This method is called right after the dialog is closed, see {@code DialogWrapper.close(int)}.
+     * This method is called right after the dialog is closed, see {@link DialogWrapper#close(int)}.
      * <p>
-     * If the dialog is closed by {@code DialogWrapper.CANCEL_EXIT_CODE},
+     * If the dialog is closed by {@link DialogWrapper#CANCEL_EXIT_CODE},
      * this method is not called by default.
      * To call it even in this case, override {@link #shouldSaveOptionsOnCancel()} to return {@code true}.
      *

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Computable;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<T,Loc>>, ForceableComparable {
+public final class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<T,Loc>>, ForceableComparable {
   private static final Comparable NULL = new Comparable() {
     @Override
     public int compareTo(final Object o) {
@@ -27,7 +27,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   private final Weigher<T,Loc>[] myWeighers;
 
   public WeighingComparable(final Computable<? extends T> element,
-                            @Nullable final Loc location,
+                            final @Nullable Loc location,
                             final Weigher<T,Loc>[] weighers) {
     myElement = element;
     myLocation = location;
@@ -46,7 +46,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
   }
 
   @Override
-  public int compareTo(@NotNull final WeighingComparable<T,Loc> comparable) {
+  public int compareTo(final @NotNull WeighingComparable<T,Loc> comparable) {
     if (myComputedWeighs == comparable.myComputedWeighs) return 0;
 
     for (int i = 0; i < myComputedWeighs.length; i++) {
@@ -67,8 +67,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     return 0;
   }
 
-  @Nullable
-  private Comparable getWeight(final int index) {
+  private @Nullable Comparable getWeight(final int index) {
     Comparable weight = myComputedWeighs[index];
     if (weight == null) {
       T element = myElement.compute();

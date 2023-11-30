@@ -4,6 +4,9 @@ package com.intellij.workspaceModel.ide
 import com.intellij.util.messages.Topic
 import java.util.*
 
+/**
+ * Discussion about this listener: IDEA-330045
+ */
 interface JpsProjectLoadedListener : EventListener {
   /** This method will be executed right after JPS project model loading */
   fun loaded()

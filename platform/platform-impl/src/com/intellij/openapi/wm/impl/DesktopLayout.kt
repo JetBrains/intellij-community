@@ -18,7 +18,7 @@ class DesktopLayout(
   val unifiedWeights: UnifiedToolWindowWeights = UnifiedToolWindowWeights(),
 ) {
   companion object {
-    @NonNls const val TAG = "layout"
+    @NonNls const val TAG: String = "layout"
   }
 
   /**
@@ -30,7 +30,7 @@ class DesktopLayout(
     return idToInfo.values.asSequence().filter { paneId == it.safeToolWindowPaneId && anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
   }
 
-  fun copy() = DesktopLayout(
+  fun copy(): DesktopLayout = DesktopLayout(
     idToInfo.entries.associateTo(HashMap(idToInfo.size)) { e -> e.key to e.value.copy() },
     unifiedWeights.copy(),
   )
@@ -50,8 +50,8 @@ class DesktopLayout(
     return info
   }
 
-  fun getInfo(id: String) = idToInfo.get(id)
-  fun getInfos() = idToInfo.toMap()
+  fun getInfo(id: String): WindowInfoImpl? = idToInfo.get(id)
+  fun getInfos(): Map<String, WindowInfoImpl> = idToInfo.toMap()
 
   internal fun addInfo(id: String, info: WindowInfoImpl) {
     val old = idToInfo.put(id, info)
@@ -164,6 +164,12 @@ class DesktopLayout(
   }
 
   internal fun getSortedList(): List<WindowInfoImpl> = idToInfo.values.sortedWith(windowInfoComparator)
+
+  override fun toString(): String =
+    "DesktopLayout(\n" +
+      "unifiedWeights: $unifiedWeights,\n" +
+      idToInfo.entries.joinToString("\n") { "${it.key}: (${it.value})" } +
+    "\n)"
 }
 
 private val LOG = logger<DesktopLayout>()

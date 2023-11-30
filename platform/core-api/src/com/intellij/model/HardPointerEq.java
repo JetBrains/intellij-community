@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model;
 
 import org.jetbrains.annotations.NotNull;
@@ -18,9 +18,8 @@ final class HardPointerEq<T> implements Pointer<T> {
     myValue = value;
   }
 
-  @NotNull
   @Override
-  public T dereference() {
+  public @NotNull T dereference() {
     return myValue;
   }
 

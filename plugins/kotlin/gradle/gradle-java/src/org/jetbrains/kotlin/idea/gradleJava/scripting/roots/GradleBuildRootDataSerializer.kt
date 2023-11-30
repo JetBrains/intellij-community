@@ -2,11 +2,9 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.gist.GistManager
-import com.intellij.util.gist.VirtualFileGist
+import com.intellij.util.gist.storage.GistStorage
 import com.intellij.util.io.DataExternalizer
 import org.jetbrains.kotlin.idea.core.util.readString
 import org.jetbrains.kotlin.idea.core.util.writeString
@@ -16,24 +14,24 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptM
 import java.io.DataInput
 import java.io.DataOutput
 
+private const val BINARY_FORMAT_VERSION = 1
+private const val NO_TRACK_GIST_STAMP = 0
+
 internal object GradleBuildRootDataSerializer {
 
     private val currentBuildRoot: ThreadLocal<VirtualFile> = ThreadLocal()
-    private val currentData: ThreadLocal<GradleBuildRootData> = ThreadLocal()
+
+    private val buildRootDataGist =
+        GistStorage.getInstance().newGist("GradleBuildRootData", BINARY_FORMAT_VERSION, Externalizer)
 
     fun read(buildRoot: VirtualFile): GradleBuildRootData? {
         currentBuildRoot.set(buildRoot)
-        return runReadAction { buildRootGist.getFileData(null, buildRoot) }
+        return buildRootDataGist.getGlobalData(buildRoot, NO_TRACK_GIST_STAMP).data()
     }
 
     fun write(buildRoot: VirtualFile, data: GradleBuildRootData?) {
-        GistManager.getInstance().invalidateData(buildRoot)
-        if (data == null) return
-
-        currentBuildRoot.set(buildRoot)
-        currentData.set(data)
-
-        runReadAction { buildRootGist.getFileData(null, buildRoot) }
+        currentBuildRoot.set(buildRoot) // putGlobalData calls  Externalizer.read
+        buildRootDataGist.putGlobalData(buildRoot, data, NO_TRACK_GIST_STAMP)
     }
 
     fun remove(buildRoot: VirtualFile) {
@@ -41,26 +39,13 @@ internal object GradleBuildRootDataSerializer {
         LastModifiedFiles.remove(buildRoot)
     }
 
-    /*
-        The idea to utilize VirtualFileGist is dictated by the need to avoid using VFS attributes.
-        By the moment of this change there is no good alternative - VirtualFileGist isn't designed to be a key-value storage, its API
-        isn't designed for the purposes of this class. Hence, thread-locals and data invalidation for write method.
-        Once a better solution exists it should be applied instead.
-     */
-    private val buildRootGist: VirtualFileGist<GradleBuildRootData> = GistManager.getInstance().newVirtualFileGist(
-        "kotlin-dsl-script-models",
-        1,
-        object : DataExternalizer<GradleBuildRootData> {
-            override fun save(out: DataOutput, value: GradleBuildRootData) {
-                writeKotlinDslScriptModels(out, value)
-            }
+    private object Externalizer: DataExternalizer<GradleBuildRootData> {
+        override fun save(out: DataOutput, value: GradleBuildRootData) =
+            writeKotlinDslScriptModels(out, value)
 
-            override fun read(input: DataInput): GradleBuildRootData {
-                return readKotlinDslScriptModels(input, currentBuildRoot.get().path)
-            }
-        },
-    ) { _, _ -> currentData.get() }
-
+        override fun read(`in`: DataInput): GradleBuildRootData =
+            readKotlinDslScriptModels(`in`, currentBuildRoot.get().path)
+    }
 }
 
 @IntellijInternalApi

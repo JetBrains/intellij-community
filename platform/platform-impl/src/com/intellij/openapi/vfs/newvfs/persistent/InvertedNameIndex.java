@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataEnumeratorEx;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -9,18 +8,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.Arrays;
-import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntPredicate;
+
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
  * Index for lookup fileName -> fileId(s). Supposed to be replacement of {@link com.intellij.psi.search.FilenameIndex}?
  * <p>
  * Data layout is either single entry or multiple entries, not both:
  * <ul>
- *   <li>single {@code nameId->fileId} entry in {@link InvertedNameIndex#ourSingleData}</li>
- *   <li>multiple entries in {@link InvertedNameIndex#ourMultiData} in 2 possible formats:
+ *   <li>single {@code nameId->fileId} entry in {@link InvertedNameIndex#singularMapping}</li>
+ *   <li>multiple entries in {@link InvertedNameIndex#multiMapping} in 2 possible formats:
  *     <ul>
  *       <li>{@code nameId->(fileId1, fileId2)}</li>
  *       <li>{@code nameId->(N, fileId1, ..., fileIdN, 0, ... 0)}</li>
@@ -37,27 +37,31 @@ public final class InvertedNameIndex {
    */
   public static final int NULL_NAME_ID = DataEnumeratorEx.NULL_ID;
 
-  private final ReadWriteLock myRwLock = new ReentrantReadWriteLock();
+  private final boolean CHECK_CONSISTENCY = getBooleanProperty("idea.vfs.name.index.check.consistency", false);
 
-  private final Int2IntMap ourSingleData = new Int2IntOpenHashMap();
-  private final Int2ObjectMap<int[]> ourMultiData = new Int2ObjectOpenHashMap<>();
-  private final boolean ourCheckConsistency = SystemProperties.getBooleanProperty("idea.vfs.name.index.check.consistency", false);
+  private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 
-  public InvertedNameIndex() {
-  }
+  /** [nameId -> fileId] mapping then fileId is unique -- i.e. only 1 file has such a name */
+  private final Int2IntMap singularMapping = new Int2IntOpenHashMap();
+  /**
+   * [nameId -> (array of fileId)] mapping then fileId is NOT unique -- i.e. >1 files have such a name
+   * (The exact array format is complicated, see class javadoc)
+   */
+  private final Int2ObjectMap<int[]> multiMapping = new Int2ObjectOpenHashMap<>();
 
-  boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
-    myRwLock.readLock().lock();
+
+  boolean processFilesWithNames(@NotNull IntList namesIds, @NotNull IntPredicate processor) {
+    rwLock.readLock().lock();
     try {
-      return processData(names, processor);
+      return processData(namesIds, processor);
     }
     finally {
-      myRwLock.readLock().unlock();
+      rwLock.readLock().unlock();
     }
   }
 
   void updateFileName(int fileId, int newNameId, int oldNameId) {
-    myRwLock.writeLock().lock();
+    rwLock.writeLock().lock();
     try {
       if (oldNameId != NULL_NAME_ID) {
         deleteDataInner(fileId, oldNameId);
@@ -67,18 +71,18 @@ public final class InvertedNameIndex {
       }
     }
     finally {
-      myRwLock.writeLock().unlock();
+      rwLock.writeLock().unlock();
     }
   }
 
   void clear() {
-    myRwLock.writeLock().lock();
+    rwLock.writeLock().lock();
     try {
-      ourSingleData.clear();
-      ourMultiData.clear();
+      singularMapping.clear();
+      multiMapping.clear();
     }
     finally {
-      myRwLock.writeLock().unlock();
+      rwLock.writeLock().unlock();
     }
   }
 
@@ -86,19 +90,19 @@ public final class InvertedNameIndex {
    * Add fileId to the list of fileIds associated with nameId
    */
   void updateDataInner(int fileId, int nameId) {
-    myRwLock.writeLock().lock();
+    rwLock.writeLock().lock();
     try {
-      int single = ourSingleData.get(nameId);
-      int[] multi = ourMultiData.get(nameId);
+      int single = singularMapping.get(nameId);
+      int[] multi = multiMapping.get(nameId);
       if (single == NULL_NAME_ID && multi == null) {
-        ourSingleData.put(nameId, fileId);
+        singularMapping.put(nameId, fileId);
       }
       else if (multi == null) {
-        ourMultiData.put(nameId, new int[]{single, fileId});
-        ourSingleData.remove(nameId);
+        multiMapping.put(nameId, new int[]{single, fileId});
+        singularMapping.remove(nameId);
       }
       else if (multi.length == 2) {
-        ourMultiData.put(nameId, new int[]{3, multi[0], multi[1], fileId, NULL_NAME_ID});
+        multiMapping.put(nameId, new int[]{3, multi[0], multi[1], fileId, NULL_NAME_ID});
       }
       else if (multi[multi.length - 1] == 0) {
         multi[0]++;
@@ -108,14 +112,14 @@ public final class InvertedNameIndex {
         int[] next = Arrays.copyOf(multi, multi.length * 2 + 1);
         next[0]++;
         next[next[0]] = fileId;
-        ourMultiData.put(nameId, next);
+        multiMapping.put(nameId, next);
       }
-      if (ourCheckConsistency) {
+      if (CHECK_CONSISTENCY) {
         checkConsistency(nameId);
       }
     }
     finally {
-      myRwLock.writeLock().unlock();
+      rwLock.writeLock().unlock();
     }
   }
 
@@ -125,12 +129,12 @@ public final class InvertedNameIndex {
     final IntIterator it = nameIds.iterator();
     while (it.hasNext()) {
       final int nameId = it.nextInt();
-      final int single = ourSingleData.get(nameId);
+      final int single = singularMapping.get(nameId);
       final int[] multi;
       if (single != NULL_NAME_ID) {
         if (!processor.test(single)) return false;
       }
-      else if ((multi = ourMultiData.get(nameId)) != null) {
+      else if ((multi = multiMapping.get(nameId)) != null) {
         if (multi.length == 2) {
           if (!processor.test(multi[0])) return false;
           if (!processor.test(multi[1])) return false;
@@ -146,16 +150,16 @@ public final class InvertedNameIndex {
     return true;
   }
 
-  private boolean processData(@NotNull Set<String> names, @NotNull IntPredicate processor) {
-    for (String name : names) {
-      //TODO RC: this will not work for non-strict names enumerator!
-      int nameId = FSRecords.getNameId(name);
-      int single = ourSingleData.get(nameId);
+  private boolean processData(@NotNull IntList namesIds,
+                              @NotNull IntPredicate processor) {
+    for (IntIterator it = namesIds.iterator(); it.hasNext(); ) {
+      int nameId = it.nextInt();
+      int single = singularMapping.get(nameId);
       int[] multi;
       if (single != NULL_NAME_ID) {
         if (!processor.test(single)) return false;
       }
-      else if ((multi = ourMultiData.get(nameId)) != null) {
+      else if ((multi = multiMapping.get(nameId)) != null) {
         if (multi.length == 2) {
           if (!processor.test(multi[0])) return false;
           if (!processor.test(multi[1])) return false;
@@ -171,20 +175,20 @@ public final class InvertedNameIndex {
   }
 
   private void deleteDataInner(int fileId, int nameId) {
-    int single = ourSingleData.get(nameId);
-    int[] multi = ourMultiData.get(nameId);
+    int single = singularMapping.get(nameId);
+    int[] multi = multiMapping.get(nameId);
     if (single == fileId) {
-      ourSingleData.remove(nameId);
+      singularMapping.remove(nameId);
     }
     else if (multi != null) {
       if (multi.length == 2) {
         if (multi[0] == fileId) {
-          ourMultiData.remove(nameId);
-          ourSingleData.put(nameId, multi[1]);
+          multiMapping.remove(nameId);
+          singularMapping.put(nameId, multi[1]);
         }
         else if (multi[1] == fileId) {
-          ourMultiData.remove(nameId);
-          ourSingleData.put(nameId, multi[0]);
+          multiMapping.remove(nameId);
+          singularMapping.put(nameId, multi[0]);
         }
       }
       else {
@@ -201,14 +205,14 @@ public final class InvertedNameIndex {
         if (found) {
           int len = multi[0];
           if (len == 0) {
-            ourMultiData.remove(nameId);
+            multiMapping.remove(nameId);
           }
           else if (len == 1) {
-            ourMultiData.remove(nameId);
-            ourSingleData.put(nameId, multi[1]);
+            multiMapping.remove(nameId);
+            singularMapping.put(nameId, multi[1]);
           }
           else if (len == 2) {
-            ourMultiData.put(nameId, new int[]{multi[1], multi[2]});
+            multiMapping.put(nameId, new int[]{multi[1], multi[2]});
           }
           else {
             multi[len + 1] = NULL_NAME_ID;
@@ -216,33 +220,33 @@ public final class InvertedNameIndex {
         }
       }
     }
-    if (ourCheckConsistency) {
+    if (CHECK_CONSISTENCY) {
       checkConsistency(nameId);
     }
   }
 
   void checkConsistency() {
-    myRwLock.readLock().lock();
+    rwLock.readLock().lock();
     try {
-      IntIterator keyIt1 = ourSingleData.keySet().intIterator();
+      IntIterator keyIt1 = singularMapping.keySet().intIterator();
       while (keyIt1.hasNext()) {
         checkConsistency(keyIt1.nextInt());
       }
-      IntIterator keyIt2 = ourMultiData.keySet().intIterator();
+      IntIterator keyIt2 = multiMapping.keySet().intIterator();
       while (keyIt2.hasNext()) {
         checkConsistency(keyIt2.nextInt());
       }
     }
     finally {
-      myRwLock.readLock().unlock();
+      rwLock.readLock().unlock();
     }
   }
 
   private void checkConsistency(int nameId) {
-    int single = ourSingleData.get(nameId);
-    int[] multi = ourMultiData.get(nameId);
+    int single = singularMapping.get(nameId);
+    int[] multi = multiMapping.get(nameId);
     if (single != NULL_NAME_ID && multi != null) {
-      throw new AssertionError("both single and multi entries present");
+      throw new AssertionError("both single- and multi- entries present");
     }
     else if (multi == null) {
       // nothing

@@ -113,6 +113,8 @@ class StubBasedPackageMemberDeclarationProvider(
             KotlinFullClassNameIndex.processAllKeys(searchScope, null, processor)
             val everyObjects = KotlinFullClassNameIndex.get(childName, project, GlobalSearchScope.everythingScope(project))
             if (processor.isFound || everyObjects.isNotEmpty()) {
+                project.messageBus.syncPublisher(KotlinCorruptedIndexListener.TOPIC).corruptionDetected()
+
                 throw IllegalStateException(
                     """
                      | KotlinFullClassNameIndex ${if (processor.isFound) "has" else "has not"} '$childName' key.

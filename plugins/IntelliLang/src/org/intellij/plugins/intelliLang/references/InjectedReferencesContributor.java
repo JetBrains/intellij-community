@@ -48,10 +48,18 @@ public class InjectedReferencesContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(), new PsiReferenceProvider() {
-
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
         return getInjectionInfo(element).first;
+      }
+
+      @Override
+      public boolean acceptsHints(@NotNull PsiElement element, PsiReferenceService.@NotNull Hints hints) {
+        if (hints == PsiReferenceService.Hints.HIGHLIGHTED_REFERENCES) {
+          return false;
+        }
+
+        return super.acceptsHints(element, hints);
       }
     });
   }

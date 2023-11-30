@@ -1,9 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.coverage.analysis.AnalysisUtils;
+import com.intellij.coverage.analysis.JavaCoverageAnnotator;
+import com.intellij.coverage.analysis.JavaCoverageClassesEnumerator;
 import com.intellij.coverage.listeners.java.CoverageListener;
 import com.intellij.coverage.view.CoverageViewExtension;
 import com.intellij.coverage.view.CoverageViewManager;
@@ -58,6 +61,7 @@ import com.intellij.rt.coverage.data.JumpData;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.task.ProjectTaskManager;
+import com.intellij.task.impl.ProjectTaskManagerImpl;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 import jetbrains.coverage.report.ReportGenerationFailedException;
@@ -122,19 +126,19 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public Set<String> getTestsForLine(Project project, String classFQName, int lineNumber) {
-    return extractTracedTests(project, classFQName, lineNumber);
+  public Set<String> getTestsForLine(Project project, CoverageSuitesBundle bundle, String classFQName, int lineNumber) {
+    return extractTracedTests(bundle, classFQName, lineNumber);
   }
 
   @Override
-  public boolean wasTestDataCollected(Project project) {
-    File[] files = getTraceFiles(project);
+  public boolean wasTestDataCollected(Project project, CoverageSuitesBundle bundle) {
+    File[] files = getTraceFiles(bundle);
     return files != null && files.length > 0;
   }
 
-  private static Set<String> extractTracedTests(Project project, final String classFQName, final int lineNumber) {
+  private static Set<String> extractTracedTests(CoverageSuitesBundle bundle, final String classFQName, final int lineNumber) {
     Set<String> tests = new HashSet<>();
-    final File[] traceFiles = getTraceFiles(project);
+    final File[] traceFiles = getTraceFiles(bundle);
     if (traceFiles == null) return tests;
     for (File traceFile : traceFiles) {
       DataInputStream in = null;
@@ -180,11 +184,9 @@ public class JavaCoverageEngine extends CoverageEngine {
     }
   }
 
-  private static File @Nullable [] getTraceFiles(Project project) {
-    final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
-    if (currentSuite == null) return null;
+  private static File @Nullable [] getTraceFiles(CoverageSuitesBundle bundle) {
     final List<File> files = new ArrayList<>();
-    for (CoverageSuite coverageSuite : currentSuite.getSuites()) {
+    for (CoverageSuite coverageSuite : bundle.getSuites()) {
       final File tracesDir = getTracesDirectory(coverageSuite);
       final File[] suiteFiles = tracesDir.listFiles();
       if (suiteFiles != null) {
@@ -232,7 +234,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   protected void deleteAssociatedTraces(CoverageSuite suite) {
-    if (suite.isTracingEnabled()) {
+    if (suite.isBranchCoverage()) {
       File tracesDirectory = getTracesDirectory(suite);
       if (tracesDirectory.exists()) {
         FileUtil.delete(tracesDirectory);
@@ -272,8 +274,8 @@ public class JavaCoverageEngine extends CoverageEngine {
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
                          new Date().getTime(),
-                         javaConfig.isTrackPerTestCoverage() && javaConfig.isTracingEnabled(),
-                         javaConfig.isTracingEnabled(),
+                         javaConfig.isTrackPerTestCoverage() && javaConfig.isBranchCoverageEnabled(),
+                         javaConfig.isBranchCoverageEnabled(),
                          javaConfig.isTrackTestFolders(), config.getConfiguration().getProject());
     }
     return null;
@@ -359,6 +361,7 @@ public class JavaCoverageEngine extends CoverageEngine {
                                                          JavaCoverageBundle.message("project.class.files.are.out.of.date"),
                                                          NotificationType.INFORMATION);
       notification.addAction(NotificationAction.createSimpleExpiring(JavaCoverageBundle.message("coverage.recompile"), () -> {
+        ProjectTaskManagerImpl.putBuildOriginator(project, this.getClass());
         ProjectTaskManager taskManager = ProjectTaskManager.getInstance(project);
         Promise<ProjectTaskManager.Result> promise = taskManager.buildAllModules();
         promise.onSuccess(result -> ApplicationManager.getApplication().invokeLater(() -> {
@@ -471,8 +474,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final VirtualFile[] roots = JavaCoverageClassesEnumerator.getRoots(dataManager, module, includeTests);
 
 
-    final String packageFQName = getPackageName(srcFile);
-    final String packageVmName = packageFQName.replace('.', '/');
+    String packageVmName = AnalysisUtils.fqnToInternalName(getPackageName(srcFile));
 
     final List<File> children = new ArrayList<>();
     for (VirtualFile root : roots) {
@@ -489,6 +491,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     final PsiClass[] classes = ReadAction.compute(() -> ((PsiClassOwner)srcFile).getClasses());
     for (final PsiClass psiClass : classes) {
       final String className = ReadAction.compute(() -> psiClass.getName());
+      if (className == null) continue;
       for (File child : children) {
         if (FileUtilRt.extensionEquals(child.getName(), JavaClassFileType.INSTANCE.getDefaultExtension())) {
           final String childName = FileUtilRt.getNameWithoutExtension(child.getName());
@@ -772,7 +775,7 @@ public class JavaCoverageEngine extends CoverageEngine {
     return new JavaCoverageViewExtension((JavaCoverageAnnotator)getCoverageAnnotator(project), project, suiteBundle, stateBean);
   }
 
-  public static boolean isSourceMapNeeded(RunConfigurationBase configuration) {
+  public static boolean isSourceMapNeeded(RunConfigurationBase<?> configuration) {
     for (final JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensionList()) {
       if (extension.isSourceMapNeeded(configuration)) {
         return true;

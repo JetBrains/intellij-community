@@ -7,13 +7,12 @@ import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.searchEverywhereMl.common.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCacheDataProvider
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereContextFeaturesProvider
-import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereContributorStatistician
 import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereStatisticianService
+import com.intellij.searchEverywhereMl.ranking.features.statistician.increaseContributorUseCount
 import com.intellij.searchEverywhereMl.ranking.id.SearchEverywhereMlOrderedItemIdProvider
 import com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereModelProvider
 import com.intellij.searchEverywhereMl.ranking.performance.PerformanceTracker
@@ -57,14 +56,13 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
       val searchReason = if (prevState == null) SearchRestartReason.SEARCH_STARTED else reason
       val nextSearchIndex = (prevState?.searchIndex ?: 0) + 1
       val experimentGroup = experimentStrategy.experimentGroup
-      val projectIsDumb = project?.let { DumbService.isDumb(it) }
       performanceTracker.start()
 
       SearchEverywhereMlSearchState(
         sessionStartTime, startTime, nextSearchIndex, searchReason,
         tabId, experimentGroup, orderByMl,
         keysTyped, backspacesTyped, searchQuery, modelProviderWithCache, providersCache,
-        projectIsDumb, searchScope, isSearchEverywhere
+        project, searchScope, isSearchEverywhere
       )
     }
 
@@ -90,7 +88,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
         if (state.tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID) {
           elementsProvider.invoke()
             .slice(indexes.asIterable())
-            .forEach { SearchEverywhereContributorStatistician.increaseUseCount(it.contributor.searchProviderId) }
+            .forEach { increaseContributorUseCount(it.contributor.searchProviderId) }
         }
       }
 

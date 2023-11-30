@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.dtd;
 
 import com.intellij.lang.ASTNode;
@@ -30,13 +30,11 @@ public class DTDParserDefinition extends XMLParserDefinition {
     return new XmlFileImpl(viewProvider, XmlElementType.DTD_FILE);
   }
 
-  @NotNull
   @Override
-  public PsiParser createParser(Project project) {
+  public @NotNull PsiParser createParser(Project project) {
     return new PsiParser() {
-      @NotNull
       @Override
-      public ASTNode parse(IElementType root, PsiBuilder builder) {
+      public @NotNull ASTNode parse(IElementType root, PsiBuilder builder) {
         return new DtdParsing(root, XmlEntityDecl.EntityContextType.GENERIC_XML, builder).parse();
       }
     };
@@ -47,9 +45,8 @@ public class DTDParserDefinition extends XMLParserDefinition {
     return XmlElementType.DTD_FILE;
   }
 
-  @NotNull
   @Override
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new DtdLexer(false);
   }
 }

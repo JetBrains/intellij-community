@@ -62,7 +62,7 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     EditorColorsManager manager = EditorColorsManager.getInstance();
     EditorColorsScheme globalScheme = manager.getGlobalScheme();
     EditorColorsScheme scheme = (EditorColorsScheme)globalScheme.clone();
-    manager.addColorsScheme(scheme);
+    manager.addColorScheme(scheme);
     manager.setGlobalScheme(scheme);
     Disposer.register(getTestRootDisposable(), () -> manager.setGlobalScheme(globalScheme));
     return scheme;

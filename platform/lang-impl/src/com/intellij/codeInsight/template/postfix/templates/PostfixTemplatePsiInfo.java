@@ -25,6 +25,9 @@ public abstract class PostfixTemplatePsiInfo {
                                               @NotNull String prefix,
                                               @NotNull String suffix);
 
+  /**
+   * You can assume that {@code element} is an element produced by {@code createExpression}
+   */
   @NotNull
   public abstract PsiElement getNegatedExpression(@NotNull PsiElement element);
 }

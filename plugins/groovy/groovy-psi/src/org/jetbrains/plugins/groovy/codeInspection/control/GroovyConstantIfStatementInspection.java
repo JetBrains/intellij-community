@@ -15,19 +15,21 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.control;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+
+import static org.jetbrains.plugins.groovy.codeInspection.GroovyFix.replaceStatement;
 
 public class GroovyConstantIfStatementInspection extends BaseInspection {
 
@@ -44,11 +46,11 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
   }
 
   @Override
-  public GroovyFix buildFix(@NotNull PsiElement location) {
+  public LocalQuickFix buildFix(@NotNull PsiElement location) {
     return new ConstantIfStatementFix();
   }
 
-  private static class ConstantIfStatementFix extends GroovyFix {
+  private static class ConstantIfStatementFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -57,10 +59,8 @@ public class GroovyConstantIfStatementInspection extends BaseInspection {
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor)
-        throws IncorrectOperationException {
-      final PsiElement ifKeyword = descriptor.getPsiElement();
-      final GrIfStatement ifStatement = (GrIfStatement) ifKeyword.getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final GrIfStatement ifStatement = (GrIfStatement) element.getParent();
       assert ifStatement != null;
       final GrStatement thenBranch = ifStatement.getThenBranch();
       final GrStatement elseBranch = ifStatement.getElseBranch();

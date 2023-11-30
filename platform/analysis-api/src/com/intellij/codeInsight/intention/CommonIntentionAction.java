@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModCommandAction;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A common interface for two ways to define a registered intention action
@@ -29,4 +31,15 @@ public interface CommonIntentionAction {
   @IntentionFamilyName
   @Contract(pure = true)
   String getFamilyName();
+
+  /**
+   * @return this action adapted to {@link IntentionAction} interface
+   */
+  @NotNull IntentionAction asIntention();
+
+  /**
+   * @return ModCommandAction; either wrapped into this {@link CommonIntentionAction}, or this action itself.
+   * May return null if this is a legacy IntentionAction, which does not wrap {@link ModCommandAction}.
+   */
+  @Nullable ModCommandAction asModCommandAction();
 }

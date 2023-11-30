@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
 import com.intellij.openapi.util.ClassExtension;
@@ -12,9 +12,8 @@ public final class ItemPresentationProviders extends ClassExtension<ItemPresenta
     super("com.intellij.itemPresentationProvider");
   }
 
-  @Nullable
   @SuppressWarnings({"unchecked"})
-  public static ItemPresentation getItemPresentation(@NotNull NavigationItem element) {
+  public static @Nullable ItemPresentation getItemPresentation(@NotNull NavigationItem element) {
     for (ItemPresentationProvider<NavigationItem> provider : INSTANCE.forKey(element.getClass())) {
       ItemPresentation presentation = provider.getPresentation(element);
       if (presentation != null) {

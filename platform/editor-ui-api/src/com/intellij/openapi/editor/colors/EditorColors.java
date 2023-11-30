@@ -71,18 +71,6 @@ public interface EditorColors {
   ColorKey TEARLINE_COLOR = ColorKey.createColorKey("TEARLINE_COLOR");
   ColorKey SELECTED_TEARLINE_COLOR = ColorKey.createColorKey("SELECTED_TEARLINE_COLOR");
 
-  /**
-   * @deprecated use {@link #TEARLINE_COLOR}
-   */
-  @Deprecated(forRemoval = true)
-  ColorKey SEPARATOR_ABOVE_COLOR = ColorKey.createColorKey("SEPARATOR_ABOVE_COLOR");
-
-  /**
-   * @deprecated use {@link #TEARLINE_COLOR}
-   */
-  @Deprecated(forRemoval = true)
-  ColorKey SEPARATOR_BELOW_COLOR = ColorKey.createColorKey("SEPARATOR_BELOW_COLOR");
-
   ColorKey ADDED_LINES_COLOR = ColorKey.createColorKey("ADDED_LINES_COLOR");
   ColorKey MODIFIED_LINES_COLOR = ColorKey.createColorKey("MODIFIED_LINES_COLOR");
   ColorKey DELETED_LINES_COLOR = ColorKey.createColorKey("DELETED_LINES_COLOR");
@@ -92,6 +80,7 @@ public interface EditorColors {
   ColorKey IGNORED_MODIFIED_LINES_BORDER_COLOR = ColorKey.createColorKey("IGNORED_MODIFIED_LINES_BORDER_COLOR");
   ColorKey IGNORED_DELETED_LINES_BORDER_COLOR = ColorKey.createColorKey("IGNORED_DELETED_LINES_BORDER_COLOR");
   ColorKey CHANGED_LINES_POPUP = ColorKey.createColorKey("CHANGED_LINES_POPUP");
+  ColorKey DIFF_BLOCK_AREA_HIGHLIGHT_MARKER = ColorKey.createColorKeyWithFallback("DIFF_BLOCK_AREA_HIGHLIGHT_MARKER", DELETED_LINES_COLOR);
 
   TextAttributesKey INJECTED_LANGUAGE_FRAGMENT = TextAttributesKey.createTextAttributesKey("INJECTED_LANGUAGE_FRAGMENT");
 
@@ -110,8 +99,7 @@ public interface EditorColors {
   ColorKey PREVIEW_BACKGROUND = ColorKey.createColorKey("PREVIEW_BACKGROUND");
   ColorKey PREVIEW_BORDER_COLOR = ColorKey.createColorKeyWithFallback("PREVIEW_BORDER_COLOR", INDENT_GUIDE_COLOR);
 
-  @NotNull
-  static TextAttributesKey createInjectedLanguageFragmentKey(@Nullable Language language) {
+  static @NotNull TextAttributesKey createInjectedLanguageFragmentKey(@Nullable Language language) {
     Stack<Language> languages = new Stack<>();
     while (language != null && language != Language.ANY) {
       languages.push(language);
@@ -129,8 +117,7 @@ public interface EditorColors {
   }
 
   final class GlobalScheme {
-    @Nullable
-    public static Color getColor(@NotNull ColorKey key) {
+    public static @Nullable Color getColor(@NotNull ColorKey key) {
       return EditorColorsManager.getInstance().getGlobalScheme().getColor(key);
     }
   }

@@ -99,7 +99,7 @@ private class TestMethodWithoutAssertionVisitor(
                            else -> method.uastBody
                          } ?: return false
     val callExpression = lastExpression.asSafely<UCallExpression>() ?: return false
-    val targetMethod = callExpression.resolveToUElement()?.asSafely<UMethod>() ?: return false
+    val targetMethod = callExpression.resolveToUElementOfType<UMethod>() ?: return false
     return containsAssertion(targetMethod)
   }
 

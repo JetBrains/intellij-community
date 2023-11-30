@@ -2,6 +2,7 @@
 package com.intellij.find;
 
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.hint.HintManager.PositionFlags;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -46,11 +47,13 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -216,7 +219,7 @@ public final class FindUtil {
   }
 
   public static void find(@NotNull final Project project, @NotNull final Editor editor) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ThreadingAssertions.assertEventDispatchThread();
     PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
     final FindManager findManager = FindManager.getInstance(project);
     String s = getSelectedText(editor);
@@ -684,7 +687,7 @@ public final class FindUtil {
     }
     if (!isFound) {
       if (toWarn) {
-        processNotFound(editor, model.getStringToFind(), model, project);
+        processNotFound(editor, editor.getCaretModel().getOffset(), model.getStringToFind(), model, project);
       }
       return null;
     }
@@ -763,7 +766,7 @@ public final class FindUtil {
     }
   }
 
-  public static void processNotFound(final Editor editor, String stringToFind, FindModel model, Project project) {
+  public static void processNotFound(final Editor editor, int caretOffset, String stringToFind, FindModel model, Project project) {
     String message = FindBundle.message("find.search.string.not.found.message", stringToFind);
 
     short position = HintManager.UNDER;
@@ -819,12 +822,19 @@ public final class FindUtil {
       editor.getCaretModel().addCaretListener(listener);
     }
     JComponent component = HintUtil.createInformationLabel(JDOMUtil.escapeText(message, false, false));
-    final LightweightHint hint = new LightweightHint(component);
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, position,
-                                                     HintManager.HIDE_BY_ANY_KEY |
-                                                     HintManager.HIDE_BY_TEXT_CHANGE |
-                                                     HintManager.HIDE_BY_SCROLLING,
-                                                     0, false);
+    LightweightHint hint = new LightweightHint(component);
+    LogicalPosition caretPosition = editor.offsetToLogicalPosition(caretOffset);
+    @PositionFlags short finalPosition = position;
+    editor.getScrollingModel().scrollTo(caretPosition, ScrollType.MAKE_VISIBLE);
+    editor.getScrollingModel().runActionOnScrollingFinished(() -> {
+      Point hintPoint = HintManagerImpl.getHintPosition(hint, editor, caretPosition, finalPosition);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, hintPoint,
+                                                       HintManager.HIDE_BY_ANY_KEY |
+                                                       HintManager.HIDE_BY_TEXT_CHANGE |
+                                                       HintManager.HIDE_BY_SCROLLING,
+                                                       0, false,
+                                                       finalPosition);
+    });
   }
 
   public static TextRange doReplace(final Project project,
@@ -921,9 +931,9 @@ public final class FindUtil {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, FindBundle.message("progress.title.updating.usage.view")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        UsageViewImpl impl = (UsageViewImpl)view;
+        UsageViewImpl impl = (view instanceof UsageViewImpl) ? (UsageViewImpl)view : null;
         for (T pointer : targets) {
-          if (impl.isDisposed()) break;
+          if (impl != null && impl.isDisposed()) break;
           ApplicationManager.getApplication().runReadAction(() -> {
             Usage usage = usageConverter.fun(pointer);
             if (usage != null) {
@@ -932,7 +942,7 @@ public final class FindUtil {
           });
         }
         UIUtil.invokeLaterIfNeeded(() -> {
-          if (!impl.isDisposed()) impl.expandRoot();
+          if (impl != null && !impl.isDisposed()) impl.expandRoot();
         });
       }
     });

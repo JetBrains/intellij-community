@@ -13,6 +13,10 @@ import com.intellij.vcs.log.data.VcsLogUserResolver
 import com.intellij.vcs.log.data.VcsLogUserResolverBase
 import com.intellij.vcs.log.util.VcsUserUtil
 
+/**
+ * @see VcsLogFilterObject.fromUser
+ * @see VcsLogFilterObject.fromUserNames
+ */
 internal class VcsLogUserFilterImpl(private val userNames: Collection<String>,
                                     private val resolver: VcsLogUserResolver) : VcsLogUserFilter {
 

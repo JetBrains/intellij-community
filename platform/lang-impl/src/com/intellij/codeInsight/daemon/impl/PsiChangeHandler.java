@@ -46,9 +46,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   private final Map<Document, List<Pair<PsiElement, Boolean>>> changedElements = new WeakHashMap<>();
   private final FileStatusMap myFileStatusMap;
 
-  PsiChangeHandler(@NotNull Project project, @NotNull SimpleMessageBusConnection connection, @NotNull Disposable parentDisposable) {
+  PsiChangeHandler(@NotNull Project project, @NotNull SimpleMessageBusConnection connection,
+                   @NotNull DaemonCodeAnalyzerEx daemonCodeAnalyzerEx, @NotNull Disposable parentDisposable) {
     myProject = project;
-    myFileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
+    myFileStatusMap = daemonCodeAnalyzerEx.getFileStatusMap();
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(ProjectDisposeAwareDocumentListener.create(project, new DocumentListener() {
       @Override
       public void beforeDocumentChange(@NotNull DocumentEvent event) {
@@ -108,8 +109,8 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     PsiFile selectedFile = selectedEditor == null ? null : PsiDocumentManager.getInstance(myProject).getCachedPsiFile(selectedEditor.getDocument());
     if (selectedFile != null && !application.isUnitTestMode()) {
       application.invokeLater(() -> {
-        if (!selectedEditor.isDisposed()) {
-          EditorMarkupModel markupModel = (EditorMarkupModel)selectedEditor.getMarkupModel();
+        if (!selectedEditor.isDisposed() &&
+            selectedEditor.getMarkupModel() instanceof EditorMarkupModel markupModel) {
           ErrorStripeUpdateManager.getInstance(myProject).setOrRefreshErrorStripeRenderer(markupModel, selectedFile);
         }
       }, ModalityState.stateForComponent(selectedEditor.getComponent()), myProject.getDisposed());
@@ -171,7 +172,7 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
     String propertyName = event.getPropertyName();
     if (!propertyName.equals(PsiTreeChangeEvent.PROP_WRITABLE)) {
       Object oldValue = event.getOldValue();
-      if (oldValue instanceof VirtualFile && shouldBeIgnored((VirtualFile)oldValue)) {
+      if (oldValue instanceof VirtualFile vf && shouldBeIgnored(vf)) {
         // ignore workspace.xml
         return;
       }
@@ -270,10 +271,10 @@ final class PsiChangeHandler extends PsiTreeChangeAdapter {
   private static @Nullable PsiElement getChangeHighlightingScope(@NotNull PsiElement element) {
     DefaultChangeLocalityDetector defaultDetector = null;
     for (ChangeLocalityDetector detector : EP_NAME.getExtensionList()) {
-      if (detector instanceof DefaultChangeLocalityDetector) {
+      if (detector instanceof DefaultChangeLocalityDetector def) {
         // run default detector last
         assert defaultDetector == null : defaultDetector;
-        defaultDetector = (DefaultChangeLocalityDetector)detector;
+        defaultDetector = def;
         continue;
       }
       PsiElement scope = detector.getChangeHighlightingDirtyScopeFor(element);

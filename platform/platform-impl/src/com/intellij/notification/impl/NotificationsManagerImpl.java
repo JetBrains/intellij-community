@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -17,7 +17,6 @@ import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.startup.StartupManager;
@@ -33,6 +32,9 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -47,6 +49,7 @@ import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -80,6 +83,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   private static final Logger LOG = Logger.getInstance(NotificationsManagerImpl.class);
 
   private @Nullable List<Pair<Notification, @Nullable Project>> myEarlyNotifications = new ArrayList<>();
+  private final IJTracer myTracer = TelemetryManager.getInstance().getTracer(NotificationScopeKt.NotificationScope);
 
   public NotificationsManagerImpl() {
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
@@ -121,7 +125,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return ArrayUtil.toObjectArray(result, klass);
   }
 
-  private void doNotify(Notification notification, @Nullable Project project) {
+  @Override
+  public void showNotification(@NotNull Notification notification, @Nullable Project project) {
     NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
     NotificationSettings settings = NotificationsConfigurationImpl.getSettings(notification.getGroupId());
 
@@ -129,19 +134,21 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       configuration.register(notification.getGroupId(), NotificationDisplayType.BALLOON);
     }
 
-    if (!settings.isShouldLog() && (settings.getDisplayType() == NotificationDisplayType.NONE || !configuration.SHOW_BALLOONS)) {
+    if (!settings.isShouldLog() && (settings.getDisplayType() == NotificationDisplayType.NONE ||
+                                    notification.isShowingPopupSuppressed() ||
+                                    !configuration.SHOW_BALLOONS)) {
       notification.expire();
     }
 
     if (configuration.SHOW_BALLOONS) {
       if (project == null) {
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), ApplicationManager.getApplication().getDisposed(),
-                                           () -> showNotification(notification, null)
+                                           () -> showNotificationWithSpan(notification, null)
         );
       }
       else if (!project.isDisposed()) {
         StartupManager.getInstance(project).runAfterOpened(() -> {
-          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), project.getDisposed(), () -> showNotification(notification, project));
+          ModalityUiUtil.invokeLaterIfNeeded(ModalityState.any(), project.getDisposed(), () -> showNotificationWithSpan(notification, project));
         });
       }
     }
@@ -154,12 +161,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       List<Pair<Notification, @Nullable Project>> copy = myEarlyNotifications;
       myEarlyNotifications = null;
       if (LOG.isDebugEnabled()) LOG.debug("dispatching early notifications: " + copy);
-      copy.forEach(early -> showNotification(early.first, early.second));
+      copy.forEach(early -> showNotificationWithSpan(early.first, early.second));
     }
   }
 
   @RequiresEdt
-  private void showNotification(Notification notification, @Nullable Project project) {
+  private void showNotificationInner(Notification notification, @Nullable Project project) {
     if (LOG.isDebugEnabled()) LOG.debug("incoming: " + notification + ", project=" + project);
 
     if (myEarlyNotifications != null) {
@@ -178,6 +185,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     if (type == NotificationDisplayType.TOOL_WINDOW &&
         (toolWindowId == null || project == null || !ToolWindowManager.getInstance(project).canShowNotification(toolWindowId))) {
       type = NotificationDisplayType.BALLOON;
+    }
+
+    if (notification.isShowingPopupSuppressed()) {
+      type = NotificationDisplayType.NONE;
+      if (LOG.isDebugEnabled()) LOG.debug("showing popup is suppressed for the notification");
     }
 
     switch (type) {
@@ -276,6 +288,17 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         NotificationCollector.getInstance().logToolWindowNotificationShown(project, notification);
       }
     }
+  }
+
+  @RequiresEdt
+  private void showNotificationWithSpan(Notification notification, @Nullable Project project) {
+    TraceUtil.runWithSpanThrows(myTracer, "show notification", (Span span) -> {
+      if(project != null) {
+        span.setAttribute("project", project.toString());
+      }
+      span.setAttribute("notification", notification.toString());
+      showNotificationInner(notification, project);
+    });
   }
 
   private static @Nullable Balloon notifyByBalloon(Notification notification,
@@ -628,7 +651,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     iconComponent.setOpaque(false);
 
     Runnable iconSizeRunnable = () -> iconComponent.setPreferredSize(
-      new Dimension(layoutData.configuration.iconPanelWidth, 2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
+      new Dimension(Math.max(layoutData.configuration.iconPanelWidth, icon.getIconWidth() + layoutData.configuration.iconOffset.width + JBUIScale.scale(5)),
+                    2 * layoutData.configuration.iconOffset.height + icon.getIconHeight()));
     iconSizeRunnable.run();
 
     content.add(iconComponent, BorderLayout.WEST);
@@ -1112,12 +1136,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return text.getPreferredSize().height;
   }
 
-  private static boolean isDummyEnvironment() {
+  static boolean isDummyEnvironment() {
     Application app = ApplicationManager.getApplication();
     return app.isUnitTestMode() || app.isCommandLine();
   }
 
-  private static class BalloonPopupSupport extends PopupMenuListenerAdapter implements Disposable {
+  private static final class BalloonPopupSupport extends PopupMenuListenerAdapter implements Disposable {
     private final JPopupMenu myPopupMenu;
     private final JComponent myComponent;
     private final Alarm myAlarm;
@@ -1211,27 +1235,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return null;
   }
 
-  static final class MyNotificationListener implements Notifications {
-    private final Project project;
-
-    @SuppressWarnings("unused")
-    MyNotificationListener() {
-      project = null;
-    }
-
-    @SuppressWarnings("unused")
-    private MyNotificationListener(@Nullable Project project) {
-      this.project = project;
-      if (isDummyEnvironment()) {
-        throw ExtensionNotApplicableException.create();
-      }
-    }
-
-    @Override
-    public void notify(@NotNull Notification notification) {
-      ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).doNotify(notification, project);
-    }
-  }
 
   private static @Nullable Point getCollapsedTextEndLocation(JEditorPane text, BalloonLayoutData layoutData) {
     try {
@@ -1351,7 +1354,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class CenteredLayoutWithActions extends BorderLayout {
+  private static final class CenteredLayoutWithActions extends BorderLayout {
     private final JEditorPane myText;
     private final BalloonLayoutData myLayoutData;
     private JLabel myTitleComponent;
@@ -1537,7 +1540,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class TextCaret extends DefaultCaret implements UIResource {
+  private static final class TextCaret extends DefaultCaret implements UIResource {
     private final BalloonLayoutData myLayoutData;
 
     TextCaret(@NotNull BalloonLayoutData layoutData) {

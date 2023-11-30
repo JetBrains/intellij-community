@@ -9,9 +9,11 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.Function
 import org.jetbrains.kotlin.KtNodeTypes
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.psi.*
@@ -55,11 +57,21 @@ internal class ExpressionTypeFilter(val predicate: KtAnalysisSession.(KtType) ->
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun invoke(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
-            analyze(expression) {
-                val type = expression.getKtType()
-                return type != null && predicate(type)
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(expression) {
+                    val type = expression.getKtType()
+                    return type != null && predicate(type)
+                }
             }
         }
+    }
+}
+
+internal object NonPackageAndNonImportFilter : (KtExpression) -> Boolean {
+    override fun invoke(expression: KtExpression): Boolean {
+        val parent = expression.parent
+        return parent !is KtPackageDirective && parent !is KtImportDirective
     }
 }
 

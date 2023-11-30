@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.openapi.paths.DynamicContextProvider;
@@ -20,7 +20,7 @@ import java.util.List;
 public class AnchorPathReferenceProvider implements PathReferenceProvider {
 
   @Override
-  public boolean createReferences(@NotNull final PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
+  public boolean createReferences(final @NotNull PsiElement psiElement, final @NotNull List<PsiReference> references, final boolean soft) {
     final TextRange range = ElementManipulators.getValueTextRange(psiElement);
     final String elementText = psiElement.getText();
     final int anchorOffset = elementText.indexOf('#');
@@ -66,8 +66,7 @@ public class AnchorPathReferenceProvider implements PathReferenceProvider {
     return false;
   }
 
-  @Nullable
-  private static FileReference findFileReference(final List<? extends PsiReference> references) {
+  private static @Nullable FileReference findFileReference(final List<? extends PsiReference> references) {
     FileReference fileReference = null;
     for (PsiReference reference : references) {
       if (reference instanceof FileReference) {
@@ -79,7 +78,7 @@ public class AnchorPathReferenceProvider implements PathReferenceProvider {
   }
 
   @Override
-  public PathReference getPathReference(@NotNull final String path, @NotNull final PsiElement element) {
+  public PathReference getPathReference(final @NotNull String path, final @NotNull PsiElement element) {
     return null;
   }
 }

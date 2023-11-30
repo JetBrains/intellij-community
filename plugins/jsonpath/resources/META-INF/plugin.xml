@@ -1,0 +1,64 @@
+<idea-plugin package="com.intellij.jsonpath">
+  <id>com.intellij.jsonpath</id>
+  <name>JSONPath</name>
+  <vendor>JetBrains</vendor>
+  <category>JavaScript Frameworks and Tools</category>
+  <description><![CDATA[
+    <p>Provides JSONPath language for injected code fragments and dedicated Evaluate JSONPath tool window.</p>
+    <p>Go to menu <b>Edit - Find - Evaluate JSONPath Expression...</b> to evaluate expressions with a snippet or JSON file.</p>
+  ]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+  </dependencies>
+
+  <resource-bundle>messages.JsonPathBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.parserDefinition language="JSONPath" implementationClass="com.intellij.jsonpath.psi.JsonPathParserDefinition"/>
+    <lang.braceMatcher language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathPairedBraceMatcher"/>
+    <lang.quoteHandler language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathQuoteHandler"/>
+    <lang.syntaxHighlighterFactory language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathSyntaxHighlighterFactory"/>
+    <annotator language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathFunctionCallAnnotator"/>
+    <colorSettingsPage implementation="com.intellij.jsonpath.JsonPathColorSettingsPage"/>
+    <completion.contributor language="JSONPath" order="last" implementationClass="com.intellij.jsonpath.JsonPathCompletionContributor"/>
+    <spellchecker.support language="JSONPath" implementationClass="com.intellij.jsonpath.JsonPathSpellcheckerStrategy"/>
+
+    <localInspection language="JSONPath" shortName="JsonPathUnknownFunction"
+                     implementationClass="com.intellij.jsonpath.inspections.JsonPathUnknownFunctionInspection"
+                     bundle="messages.JsonPathBundle" key="inspection.jsonpath.unknown.function"
+                     groupBundle="messages.JsonPathBundle" groupKey="jsonpath.inspection.group"
+                     level="WARNING" enabledByDefault="true"/>
+    <localInspection language="JSONPath" shortName="JsonPathUnknownOperator"
+                     implementationClass="com.intellij.jsonpath.inspections.JsonPathUnknownOperatorInspection"
+                     bundle="messages.JsonPathBundle" key="inspection.jsonpath.unknown.operator"
+                     groupBundle="messages.JsonPathBundle" groupKey="jsonpath.inspection.group"
+                     level="WARNING" enabledByDefault="true"/>
+    <localInspection language="JSONPath" shortName="JsonPathEvaluateUnknownKey"
+                     implementationClass="com.intellij.jsonpath.inspections.JsonPathEvaluateUnknownKeyInspection"
+                     bundle="messages.JsonPathBundle" key="inspection.jsonpath.unknown.key"
+                     groupBundle="messages.JsonPathBundle" groupKey="jsonpath.inspection.group"
+                     level="WARNING" enabledByDefault="true"/>
+
+    <toolWindowAllowlist id="JSONPathEvaluate"/>
+
+    <intentionAction>
+      <language>JSONPath</language>
+      <className>com.intellij.jsonpath.ui.JsonPathEvaluateIntentionAction</className>
+      <bundleName>messages.JsonBundle</bundleName>
+      <categoryKey>json.intention.category.name</categoryKey>
+    </intentionAction>
+  </extensions>
+
+  <actions>
+    <action id="JsonPathEvaluateAction" class="com.intellij.jsonpath.ui.JsonPathEvaluateAction" icon="AllIcons.FileTypes.Json">
+      <add-to-group group-id="FindMenuGroup" anchor="last"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
+
+    <action id="JsonPathExportEvaluateResultAction" class="com.intellij.jsonpath.ui.JsonPathExportEvaluateResultAction"
+            use-shortcut-of="ExportToTextFile" icon="AllIcons.Actions.MenuSaveall">
+      <add-to-group group-id="EditorContextBarMenu"/>
+    </action>
+  </actions>
+</idea-plugin>

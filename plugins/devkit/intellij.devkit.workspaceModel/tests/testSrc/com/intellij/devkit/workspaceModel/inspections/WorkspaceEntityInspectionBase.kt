@@ -10,13 +10,13 @@ abstract class WorkspaceEntityInspectionBase: LightJavaCodeInsightFixtureTestCas
   override fun setUp() {
     super.setUp()
     myFixture.createFile("Obj.kt", """
-      package org.jetbrains.deft
+      package com.intellij.platform.workspace.storage
       
       interface Obj""".trimIndent())
     myFixture.createFile("WorkspaceEntity.kt", """
-        package com.intellij.workspaceModel.storage
+        package com.intellij.platform.workspace.storage
         
-        import org.jetbrains.deft.Obj
+        import com.intellij.platform.workspace.storage.Obj
         
         interface WorkspaceEntity : Obj""".trimIndent())
   }

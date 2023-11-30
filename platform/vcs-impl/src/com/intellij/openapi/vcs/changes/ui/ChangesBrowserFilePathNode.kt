@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
-import com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 import com.intellij.openapi.vcs.impl.PlatformVcsPathPresenter.getPresentableRelativePath
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
@@ -66,7 +65,7 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
   private fun buildOriginInfo(): OriginInfo? {
     val originPath = originPath(getUserObject()) ?: return null
     val path = filePath
-    val areParentsEqual = CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(path.parentPath, originPath.parentPath)
+    val areParentsEqual = ChangesUtil.equalsCaseSensitive(path.parentPath, originPath.parentPath)
 
     return when {
       !areParentsEqual -> OriginInfo.Moved(getPresentableRelativePath(path, originPath))
@@ -80,17 +79,19 @@ abstract class AbstractChangesBrowserFilePathNode<U>(userObject: U, val status: 
     else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
   protected open fun getRelativePath(renderer: ChangesBrowserNodeRenderer?, path: FilePath): @NlsSafe String {
-    val parent = getParent()
     val isLocal = !path.isNonLocal
-    if (parent is ChangesBrowserRootNode && isLocal) {
+    val parentPath = safeCastToFilePath(getParent())
+    if (parentPath != null) {
+      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
+      val relativePath = FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive)
+      val prettyPath = relativePath ?: path.path
+      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
+    }
+    else if (isLocal) {
       return VcsUtil.getPresentablePath(renderer?.project, path, true, false)
     }
     else {
-      val parentPath = safeCastToFilePath(parent)
-      val caseSensitive = isLocal && SystemInfo.isFileSystemCaseSensitive
-      val relativePath = if (parentPath != null) FileUtil.getRelativePath(parentPath.path, path.path, '/', caseSensitive) else null
-      val prettyPath = relativePath ?: path.path
-      return if (isLocal) FileUtil.toSystemDependentName(prettyPath) else prettyPath
+      return path.path
     }
   }
 

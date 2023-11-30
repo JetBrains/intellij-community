@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.ui.uiDslTestAction
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.dsl.builder.AlignY
@@ -20,7 +21,7 @@ import javax.swing.border.Border
 @Suppress("DialogTitleCapitalization")
 @ApiStatus.Internal
 internal class CheckBoxRadioButtonPanel {
-  val panel = panel {
+  val panel: DialogPanel = panel {
     row {
       panel {
         buttonsGroup {

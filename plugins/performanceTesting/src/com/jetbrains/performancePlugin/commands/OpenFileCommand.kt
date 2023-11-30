@@ -2,7 +2,6 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.fileEditor.impl.waitForFullyLoaded
@@ -14,12 +13,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.IdeFocusManager
 import com.jetbrains.performancePlugin.PerformanceTestingBundle
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.sampullara.cli.Args
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -27,7 +24,7 @@ import org.jetbrains.annotations.SystemIndependent
 
 /**
  * Command opens file.
- * Example: %openFile -file <filename from the root of the project> [-suppressError <true|false>] [-timeout <in seconds>] [WARMUP]
+ * Example: %openFile -file <filename from the root of the project> [-suppressErrors] [-timeout <in seconds>] [WARMUP] [-disableCodeAnalysis(-dsa) by default false]
  */
 class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
@@ -53,7 +50,7 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     val myOptions = runCatching {
       OpenFileCommandOptions().apply { Args.parse(this, extractCommandArgument(PREFIX).split(" ").toTypedArray()) }
     }.getOrNull()
-    val filePath = myOptions?.file ?:  text.split(' ', limit = 4)[1]
+    val filePath = myOptions?.file ?: text.split(' ', limit = 4)[1]
     val timeout = myOptions?.timeout ?: 0
     val suppressErrors = myOptions?.suppressErrors ?: false
 
@@ -61,14 +58,12 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
     val file = findFile(filePath, project) ?: error(PerformanceTestingBundle.message("command.file.not.found", filePath))
     val connection = project.messageBus.simpleConnect()
     val spanRef = Ref<Span>()
-    val scopeRef = Ref<Scope>()
     val projectPath = project.basePath
-    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, scopeRef, timeout)
+    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, timeout)
     if (suppressErrors) {
       job.suppressErrors()
     }
     spanRef.set(startSpan(SPAN_NAME))
-    scopeRef.set(spanRef.get().makeCurrent())
     setFilePath(projectPath = projectPath, span = spanRef.get(), file = file)
 
     // focus window
@@ -76,26 +71,20 @@ class OpenFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdap
       ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
     }
 
-    val editors = FileEditorManagerEx.getInstanceEx(project).openFile(file = file, options = FileEditorOpenOptions(requestFocus = true))
-    editors.waitForFullyLoaded()
-
-    // focus window
-    withContext(Dispatchers.EDT) {
-      ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
-      for (editor in editors.allEditors) {
-        if (editor is TextEditor) {
-          editor.preferredFocusedComponent?.let {
-            IdeFocusManager.getGlobalInstance().requestFocus(/* c = */ it, /* forced = */ true)
-          }
-        }
-      }
+    val fileEditor = FileEditorManagerEx.getInstanceEx(project).openFile(file = file,
+                                                        options = FileEditorOpenOptions(requestFocus = true))
+    if(myOptions!=null && !myOptions.disableCodeAnalysis) {
+      fileEditor.waitForFullyLoaded()
     }
 
     job.onError {
       spanRef.get()?.setAttribute("timeout", "true")
     }
     job.withErrorMessage("Timeout on open file ${file.path} more than $timeout seconds")
-    job.waitForComplete()
+
+    if(myOptions!=null && !myOptions.disableCodeAnalysis) {
+      job.waitForComplete()
+    }
   }
 
   private fun setFilePath(projectPath: @SystemIndependent @NonNls String?, span: Span, file: VirtualFile) {

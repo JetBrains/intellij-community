@@ -1,3 +1,4 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.json.editor.folding;
 
 import com.intellij.json.JsonElementTypes;
@@ -20,7 +21,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
+public final class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
   @Override
   public FoldingDescriptor @NotNull [] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     final List<FoldingDescriptor> descriptors = new ArrayList<>();
@@ -52,9 +53,8 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
     }
   }
 
-  @Nullable
   @Override
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  public @Nullable String getPlaceholderText(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
     if (type == JsonElementTypes.OBJECT) {
       final JsonObject object = node.getPsi(JsonObject.class);
@@ -95,8 +95,7 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
     return false;
   }
 
-  @NotNull
-  public static Couple<PsiElement> expandLineCommentsRange(@NotNull PsiElement anchor) {
+  public static @NotNull Couple<PsiElement> expandLineCommentsRange(@NotNull PsiElement anchor) {
     return Couple.of(JsonPsiUtil.findFurthestSiblingOfSameType(anchor, false), JsonPsiUtil.findFurthestSiblingOfSameType(anchor, true));
   }
 

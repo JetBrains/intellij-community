@@ -1,37 +1,34 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author kir
  */
-@SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-public class DefaultIdeaErrorLogger implements ErrorLogger {
-  private static boolean ourOomOccurred = false;
-  private static boolean ourLoggerBroken = false;
-  private static boolean ourMappingFailedNotificationPosted = false;
+public final class DefaultIdeaErrorLogger {
+  private static volatile boolean ourOomOccurred;
+  private static volatile boolean ourLoggerBroken;
 
   private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
   private static final String DISABLED_VALUE = "disabled";
   private static final String ENABLED_VALUE = "enabled";
 
-  @Override
-  public boolean canHandle(IdeaLoggingEvent event) {
+  static boolean canHandle(@NotNull IdeaLoggingEvent event) {
     if (ourLoggerBroken) return false;
 
     try {
-      final Application app = ApplicationManager.getApplication();
-      if (app.isDisposed()) {
+      Application app = ApplicationManager.getApplication();
+      if (app == null || app.isDisposed()) {
         return false;
       }
 
@@ -61,8 +58,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
-  @Override
-  public void handle(IdeaLoggingEvent event) {
+  static void handle(@NotNull IdeaLoggingEvent event) {
     if (ourLoggerBroken) return;
 
     try {
@@ -86,7 +82,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     }
   }
 
-  public static @Nullable MemoryKind getOOMErrorKind(Throwable t) {
+  public static @Nullable MemoryKind getOOMErrorKind(@NotNull Throwable t) {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {

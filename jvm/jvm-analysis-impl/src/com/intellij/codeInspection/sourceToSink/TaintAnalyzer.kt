@@ -3,8 +3,10 @@ package com.intellij.codeInspection.sourceToSink
 
 import com.intellij.codeInspection.dataFlow.HardcodedContracts
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
+import com.intellij.codeInspection.dataFlow.Mutability
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmModifiersOwner
+import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.psi.*
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.*
@@ -13,6 +15,7 @@ import com.intellij.util.containers.MultiMap
 import com.siyeh.ig.psiutils.ClassUtils
 import org.jetbrains.uast.*
 import org.jetbrains.uast.UastBinaryOperator.AssignOperator
+import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.visitor.AbstractUastVisitor
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -21,7 +24,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   private val myCurrentParameters: MutableMap<PsiElement, TaintValue> = HashMap()
   private val myVisitedMethods: MutableMap<Pair<PsiElement, List<TaintValue>>, TaintValue> = HashMap()
   private val myNonMarkedElements: MutableList<NonMarkedElement> = ArrayList()
-
+  private val safeLambdaClass = setOf("java.lang.Iterable", "java.util.Collection", "java.util.Map",
+                                      "kotlin.collections.CollectionsKt___CollectionsKt")
   private val skipClasses: Set<String> = myTaintValueFactory.getConfiguration()
     .skipClasses
     .filterNotNull()
@@ -32,6 +36,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   fun analyzeExpression(expression: UExpression,
                         collectOuterUsages: Boolean,
                         untilTaintValue: TaintValue = TaintValue.TAINTED): TaintValue {
+
+
     val file = expression.getContainingUFile() ?: return TaintValue.UNKNOWN
     val context = AnalyzeContext.create(
       processOuterMethodAsQualifierAndArguments = myTaintValueFactory.getConfiguration().processOuterMethodAsQualifierAndArguments,
@@ -39,13 +45,15 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       file = file,
       collectReferences = collectOuterUsages,
       processOnlyConstant = false,
-      depthOutside = 1,
+      depthOutsideFields = 1,
+      depthOutsideMethods = myTaintValueFactory.getConfiguration().depthOutsideMethods,
       parts = 20,
-      depthInside = 5,
-      depthNestedMethods = 1,
+      depthInside = myTaintValueFactory.getConfiguration().depthInside,
+      depthNestedMethods = myTaintValueFactory.getConfiguration().depthNestedMethods,
       next = true,
       untilTaintValue = untilTaintValue,
-      parameterOfPrivateMethodIsUntainted = myTaintValueFactory.getConfiguration().parameterOfPrivateMethodIsUntainted)
+      parameterOfPrivateMethodIsUntainted = myTaintValueFactory.getConfiguration().parameterOfPrivateMethodIsUntainted,
+      privateOrFinalFieldSafe = myTaintValueFactory.getConfiguration().privateOrFinalFieldSafe)
     return fromExpressionInner(expression, context)
   }
 
@@ -62,8 +70,10 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     val collectMarkedByDefault: Boolean,
     //used to limit processing outer files with fields
     val processOnlyConstant: Boolean,
-    //used to limit processing outer files for methods and fields
-    val depthOutside: Int,
+    //used to limit processing outer files for fields
+    val depthOutsideFields: Int,
+    //used to limit processing outer files for methods
+    val depthOutsideMethods: Int,
     //current processed parts
     private val parts: AtomicInteger,
     //current resolving depth
@@ -72,37 +82,42 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     //mark for propagation tree that it is a leaf
     val checkPropagationNext: Boolean,
     val untilTaintValue: TaintValue,
-    val parameterOfPrivateMethodIsUntainted: Boolean) {
+    val parameterOfPrivateMethodIsUntainted: Boolean,
+    val privateOrFinalFieldSafe: Boolean) {
     companion object {
       fun create(processOuterMethodAsQualifierAndArguments: Boolean,
                  processInnerMethodAsQualifierAndArguments: Boolean,
                  file: UFile,
                  collectReferences: Boolean,
                  processOnlyConstant: Boolean,
-                 depthOutside: Int,
+                 depthOutsideFields: Int,
+                 depthOutsideMethods: Int = 0,
                  parts: Int,
                  depthInside: Int,
                  depthNestedMethods: Int,
                  next: Boolean,
                  untilTaintValue: TaintValue,
-                 parameterOfPrivateMethodIsUntainted: Boolean): AnalyzeContext {
+                 parameterOfPrivateMethodIsUntainted: Boolean,
+                 privateOrFinalFieldSafe: Boolean): AnalyzeContext {
         return AnalyzeContext(processOuterMethodAsQualifierAndArguments = processOuterMethodAsQualifierAndArguments,
                               processInnerMethodAsQualifierAndArguments = processInnerMethodAsQualifierAndArguments,
                               file = file,
                               collectReferences = collectReferences,
                               processOnlyConstant = processOnlyConstant,
-                              depthOutside = depthOutside,
+                              depthOutsideFields = depthOutsideFields,
+                              depthOutsideMethods = depthOutsideMethods,
                               parts = AtomicInteger(parts),
                               inside = depthInside,
                               depthNestedMethods = depthNestedMethods,
                               checkPropagationNext = next,
                               untilTaintValue = untilTaintValue,
                               collectMarkedByDefault = true,
-                              parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted)
+                              parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted,
+                              privateOrFinalFieldSafe = privateOrFinalFieldSafe)
       }
     }
 
-    fun minusMethod(): AnalyzeContext {
+    fun withDecrementedMethods(): AnalyzeContext {
       val depth = depthNestedMethods - 1
       if (depth < 0) {
         throw DeepTaintAnalyzerException()
@@ -110,7 +125,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       return copy(depthNestedMethods = depth)
     }
 
-    fun minusPart(): AnalyzeContext {
+    fun withDecrementedParts(): AnalyzeContext {
       val depth = parts.decrementAndGet()
       if (depth < 0) {
         throw DeepTaintAnalyzerException()
@@ -118,14 +133,22 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       return this
     }
 
-    fun minusInside(): AnalyzeContext {
+    fun withDecrementedSteps(): AnalyzeContext {
       if (inside < 0) {
         throw DeepTaintAnalyzerException()
       }
       return copy(inside = inside - 1)
     }
 
-    fun minusPart(size: Int): AnalyzeContext {
+    fun withDecrementedExternalFields(): AnalyzeContext {
+      return copy(depthOutsideFields = depthOutsideFields - 1)
+    }
+
+    fun withDecrementedExternalMethods(): AnalyzeContext {
+      return copy(depthOutsideMethods = depthOutsideMethods - 1)
+    }
+
+    fun withDecrementedParts(size: Int): AnalyzeContext {
       val previous = parts.get()
       val next = previous - size
       parts.set(next)
@@ -170,13 +193,35 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     if (sourceTarget == null) {
       return fromCall(expression, analyzeContext) ?: TaintValue.UNKNOWN
     }
-    var taintValue: TaintValue = myTaintValueFactory.fromElement(sourceTarget) ?: TaintValue.UNKNOWN
+    //foreach kotlin
+    if (sourceTarget !is PsiModifierListOwner && sourceTarget.parent.toUElement() is UForEachExpression) {
+      val uForEachExpression = sourceTarget.parent.toUElement() as UForEachExpression
+      return TaintValue.UNTAINTED.joinUntil(analyzeContext.untilTaintValue) {
+        fromExpressionWithoutCollection(uForEachExpression.iteratedValue, analyzeContext)
+      }
+    }
+    var taintValue: TaintValue = myTaintValueFactory.fromElement(sourceTarget, getClazzFromReceiver(expression)) ?: TaintValue.UNKNOWN
     if (taintValue != TaintValue.UNKNOWN) return taintValue
     val value = checkAndPrepareVisited(expression)
     if (value != null) return value
     taintValue = fromModifierListOwner(sourceTarget, expression, analyzeContext) ?: TaintValue.UNKNOWN
     addToVisited(expression, taintValue)
     return taintValue
+  }
+
+  private fun getClazzFromReceiver(expression: UResolvable): PsiClass? {
+    val type = when (expression) {
+      is UQualifiedReferenceExpression -> {
+        expression.receiver.getExpressionType()
+      }
+      is UCallExpression -> {
+        expression.receiverType
+      }
+      else -> {
+        null
+      }
+    }
+    return PsiUtil.resolveClassInClassTypeOnly(type)
   }
 
   private fun checkAndPrepareVisited(uElement: UElement?, prepare: Boolean = true): TaintValue? {
@@ -264,6 +309,17 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
         return TaintValue.UNKNOWN
       }
     }
+
+    if (uMethod is UMethod && !equalFiles(analyzeContext, uMethod) && !isLibraryCode(uMethod)) {
+      val jvmModifiersOwner: JvmModifiersOwner = uMethod
+      if (jvmModifiersOwner.hasModifier(JvmModifier.STATIC)) {
+        if (analyzeContext.depthOutsideMethods > 0) {
+          analyzeContext = analyzeContext.withDecrementedExternalMethods()
+          return analyzeMethod(uMethod, analyzeContext, getNotEmptyParameters(uMethod, expression, analyzeContext))
+        }
+      }
+    }
+
     if (analyzeContext.processOuterMethodAsQualifierAndArguments || analyzeContext.processInnerMethodAsQualifierAndArguments) {
       var taintValue = TaintValue.UNTAINTED
       if (!(uMethod is JvmModifiersOwner && uMethod.hasModifier(JvmModifier.STATIC))) {
@@ -337,16 +393,14 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
 
   private fun fromLocalVar(expression: UExpression, sourceTarget: PsiElement, analyzeContext: AnalyzeContext): TaintValue? {
     if (sourceTarget !is PsiLocalVariable) return null
-    val localVariable = (expression as? UResolvable)?.resolveToUElement() as? ULocalVariable ?: return null
+    val localVariable = (expression as? UResolvable)?.resolveToUElementOfType<ULocalVariable>() ?: return null
     val containingMethod = localVariable.getContainingUMethod() ?: return null
     val skipAfterReference = possibleToSkipCheckAfterReference(expression, containingMethod)
     val uInitializer = localVariable.uastInitializer
     val taintValue = fromExpressionWithoutCollection(uInitializer, analyzeContext)
     val uMethod: UMethod? = localVariable.getParentOfType(UMethod::class.java)
     return uMethod?.let {
-      taintValue.joinUntil(analyzeContext.untilTaintValue) {
-        analyzeVar(taintValue, it, localVariable, analyzeContext, expression, skipAfterReference)
-      }
+      analyzeVar(taintValue, it, localVariable, analyzeContext, expression, skipAfterReference)
     } ?: taintValue
   }
 
@@ -374,9 +428,17 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     if (sourcePsi == null) return TaintValue.UNKNOWN
     val variableFlow = getVariableFlow(sourcePsi)
 
-    return variableFlow.process(this, initValue, uVariable, analyzeContext, usedReference, skipAfterReference)
+    return variableFlow.process(this, initValue, uVariable, analyzeContext, usedReference, skipAfterReference, myTaintValueFactory).taintValue
   }
 
+  private fun getVariableFlow(sourcePsi: PsiElement): VariableFlow =
+    CachedValuesManager.getManager(sourcePsi.project)
+      .getCachedValue(sourcePsi, CachedValueProvider {
+        val method = sourcePsi.toUElement() as? UMethod
+        val visitor = FlowVisitor()
+        method?.uastBody?.accept(visitor)
+        return@CachedValueProvider CachedValueProvider.Result.create(visitor.flow, PsiModificationTracker.MODIFICATION_COUNT)
+      })
 
   private fun fromParam(expression: UExpression, target: PsiElement?, analyzeContext: AnalyzeContext): TaintValue? {
     val psiParameter = (target as? PsiParameter) ?: return null
@@ -387,6 +449,39 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       return fromExpressionWithoutCollection(expression.receiver, analyzeContext)
     }
     var taintValue = TaintValue.UNTAINTED // by default
+
+    //foreach
+    val forEach = uParameter.sourcePsi?.parent.toUElement() as? UForEachExpression
+    if (forEach != null && uParameter.sourcePsi != null && forEach.parameter?.sourcePsi == uParameter.sourcePsi) {
+      return taintValue.joinUntil(analyzeContext.untilTaintValue) {
+        fromExpressionWithoutCollection(forEach.iteratedValue, analyzeContext)
+      }
+    }
+
+    //as parameter in lambda
+    val lambda = uParameter.sourcePsi?.parent?.parent.toUElement() as? ULambdaExpression
+    if (lambda != null && lambda.uastParent is UCallExpression && lambda.sourcePsi != null) {
+      val targetPsi = lambda.sourcePsi
+      val callExpression = lambda.uastParent as? UCallExpression ?: return TaintValue.TAINTED
+      val valueArguments = callExpression.valueArguments
+      if (analyzeContext.processOuterMethodAsQualifierAndArguments &&
+          valueArguments.map { it.sourcePsi }.contains(targetPsi)) {
+        val psiMember = callExpression.resolve() as? PsiMember
+        if (psiMember != null && safeLambdaClass.contains(psiMember.containingClass?.qualifiedName ?: "")) {
+          taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
+            fromExpressionWithoutCollection(callExpression.receiver, analyzeContext)
+          }
+          for (valueArgument in valueArguments) {
+            if (targetPsi != null && valueArgument.sourcePsi == targetPsi) continue
+            taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
+              fromExpressionWithoutCollection(valueArgument, analyzeContext)
+            }
+          }
+          return taintValue
+        }
+      }
+    }
+
     val uMethod = (uParameter.uastParent as? UMethod) ?: return TaintValue.UNKNOWN
     val methodJavaPsi = uMethod.javaPsi
 
@@ -417,9 +512,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) { fromExpressionWithoutCollection(uInitializer, analyzeContext) }
     val uBlock = (uMethod.uastBody as? UBlockExpression)
     if (uBlock != null) {
-      taintValue = taintValue.joinUntil(analyzeContext.untilTaintValue) {
-        analyzeVar(taintValue, uMethod, uParameter, analyzeContext, expression, possibleToSkipCheckAfterReference(expression, uMethod))
-      }
+      taintValue = analyzeVar(taintValue, uMethod, uParameter, analyzeContext, expression,
+                              possibleToSkipCheckAfterReference(expression, uMethod))
     }
     val nonMarkedElements = SmartList<NonMarkedElement?>()
     // this might happen when we analyze kotlin primary constructor parameter
@@ -435,36 +529,52 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     return taintValue
   }
 
-  private fun fromField(expression: UExpression?, target: PsiElement, analyzeContext: AnalyzeContext): TaintValue? {
+  private fun fromField(expression: UExpression?, target: PsiElement, context: AnalyzeContext): TaintValue? {
+    var currentContext = context
     //kotlin constructor parameters are considered as parameters
-    if (analyzeContext.depthOutside < 0) return null
     val uElement = target.toUElement() as? UField ?: return null
+    if (!equalFiles(currentContext, uElement)) {
+      currentContext = currentContext.withDecrementedExternalFields()
+    }
+    if (currentContext.depthOutsideFields < 0) return TaintValue.UNTAINTED
     val jvmModifiersOwner: JvmModifiersOwner = uElement
-    val equalFiles = equalFiles(analyzeContext, uElement)
+    val equalFiles = equalFiles(currentContext, uElement)
     if (!equalFiles &&
         jvmModifiersOwner.hasModifier(JvmModifier.FINAL) &&
         expression is UQualifiedReferenceExpression &&
         skipClass(expression.receiver.getExpressionType())) {
       return TaintValue.UNTAINTED
     }
-    if (equalFiles &&
-        (jvmModifiersOwner.hasModifier(JvmModifier.FINAL) &&
-         (uElement.uastInitializer != null || fieldAssignedOnlyWithLiterals(uElement, analyzeContext)) ||
-         (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) && fieldAssignedOnlyWithLiterals(uElement, analyzeContext)))) {
-      val uastInitializer = uElement.uastInitializer
-      if (uastInitializer == null) return TaintValue.UNTAINTED
-      return fromExpressionWithoutCollection(uElement.uastInitializer, analyzeContext.notCheckPropagationNext())
+
+    if (equalFiles) {
+      if (currentContext.privateOrFinalFieldSafe &&
+          (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) || jvmModifiersOwner.hasModifier(JvmModifier.FINAL))) {
+        return TaintValue.UNTAINTED
+      }
+      val isImmutable = (ClassUtils.isImmutable(uElement.type) ||
+                         (target is PsiModifierListOwner && Mutability.getMutability(target) in setOf(Mutability.UNMODIFIABLE,
+                                                                                                      Mutability.UNMODIFIABLE_VIEW)))
+      if (isImmutable &&
+          ((jvmModifiersOwner.hasModifier(JvmModifier.FINAL) && (uElement.uastInitializer != null || fieldAssignedOnlyWithLiterals(uElement,
+                                                                                                                                   currentContext))) ||
+           (jvmModifiersOwner.hasModifier(JvmModifier.PRIVATE) && fieldAssignedOnlyWithLiterals(uElement, currentContext)))) {
+        val uastInitializer = uElement.uastInitializer
+        if (uastInitializer == null) return TaintValue.UNTAINTED
+        return fromExpressionWithoutCollection(uElement.uastInitializer, currentContext.notCheckPropagationNext())
+      }
     }
-    if (!equalFiles && jvmModifiersOwner.hasModifier(JvmModifier.FINAL) && jvmModifiersOwner.hasModifier(JvmModifier.STATIC)) {
+
+    if (!equalFiles && ClassUtils.isImmutable(uElement.type) &&
+        jvmModifiersOwner.hasModifier(JvmModifier.FINAL) && jvmModifiersOwner.hasModifier(JvmModifier.STATIC)) {
       //simplify and not to check
       return TaintValue.UNTAINTED
     }
-    if (analyzeContext.processOnlyConstant) {
+    if (currentContext.processOnlyConstant) {
       return null
     }
-    if (analyzeContext.collectReferences) {
+    if (currentContext.collectReferences) {
       val children: MutableList<NonMarkedElement?> = ArrayList()
-      val initializer = NonMarkedElement.create(uElement.uastInitializer, analyzeContext.checkPropagationNext)
+      val initializer = NonMarkedElement.create(uElement.uastInitializer, currentContext.checkPropagationNext)
       if (initializer != null) children.add(initializer)
       children.addAll(findAssignments(target))
       myNonMarkedElements.addAll(children.filterNotNull())
@@ -472,11 +582,15 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     return TaintValue.UNKNOWN
   }
 
-  private fun fromMethod(target: PsiElement, analyzeContext: AnalyzeContext): TaintValue? {
+  private fun fromMethod(target: PsiElement, context: AnalyzeContext): TaintValue? {
+    var analyzeContext = context
     if (analyzeContext.processOnlyConstant) {
       return null
     }
     val uMethod = target.toUElement(UMethod::class.java) ?: return null
+    if (!equalFiles(analyzeContext, uMethod)) {
+      analyzeContext = analyzeContext.withDecrementedExternalMethods()
+    }
     return analyzeMethod(uMethod, analyzeContext, getEmptyParameters(uMethod))
   }
 
@@ -490,7 +604,9 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   }
 
   private fun analyzeMethod(uMethod: UMethod, sourceContext: AnalyzeContext, arguments: List<TaintValue>): TaintValue {
-    if (!equalFiles(sourceContext, uMethod)) return TaintValue.UNKNOWN
+    if (!equalFiles(sourceContext, uMethod) &&
+        (sourceContext.depthOutsideMethods < 0 ||
+         sourceContext.depthOutsideFields < 0)) return TaintValue.UNKNOWN
     val psiElement = uMethod.sourcePsi ?: return TaintValue.UNKNOWN
     val key = Pair(psiElement, arguments)
     val value = myVisitedMethods[key]
@@ -504,11 +620,11 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     val sourcePsi = uMethod.sourcePsi ?: return TaintValue.UNKNOWN
     if (methodBody == null) {
       // maybe it is a generated kotlin property getter or setter
-      val taintValue = fromField(null, sourcePsi, analyzeContext.minusInside())
+      val taintValue = fromField(null, sourcePsi, analyzeContext.withDecrementedSteps())
       return taintValue ?: TaintValue.UNKNOWN
     }
 
-    analyzeContext = analyzeContext.minusMethod()
+    analyzeContext = analyzeContext.withDecrementedMethods()
 
     val allReturns = getAllReturns(sourcePsi)
 
@@ -529,7 +645,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     //prevent recursion always
     myVisited[psiElement] = TaintValue.UNKNOWN
 
-    val returnValue = allReturns.join(analyzeContext.minusPart(allReturns.size))
+    val returnValue = allReturns.join(analyzeContext.withDecrementedParts(allReturns.size))
 
     myCurrentParameters.clear()
     myCurrentParameters.putAll(previousTemporary)
@@ -547,7 +663,8 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
 
   private fun fromExpressionInner(sourceUExpression: UExpression?, analyzeContext: AnalyzeContext): TaintValue {
     var uExpression = sourceUExpression ?: return TaintValue.UNTAINTED //may be null as receiver
-    if (analyzeContext.depthOutside < 0) return TaintValue.UNKNOWN
+    if (analyzeContext.depthOutsideFields < 0) return TaintValue.UNKNOWN
+    if (analyzeContext.depthOutsideMethods < 0) return TaintValue.UNKNOWN
     val type = uExpression.getExpressionType()
     if (type != null && skipClass(type)) return TaintValue.UNTAINTED
     uExpression = uExpression.skipParenthesizedExprDown()
@@ -555,7 +672,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     if (uConcatenation != null) {
       val operands = uConcatenation.operands
       val size = operands.filter { it !is ULiteralExpression && it !is UPolyadicExpression }.size
-      return withCache(uExpression) { operands.join(analyzeContext.minusPart(size)) }
+      return withCache(uExpression) { operands.join(analyzeContext.withDecrementedParts(size)) }
     }
     when (uExpression) {
       is UUnknownExpression -> {
@@ -573,26 +690,48 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       is UClassLiteralExpression -> {
         return TaintValue.UNTAINTED
       }
+      is UBinaryExpressionWithType -> {
+        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.withDecrementedParts()) }
+      }
       is UResolvable -> {
-        return withCache(uExpression) { analyzeInner(uExpression, analyzeContext.minusInside()) }
+        if (uExpression is UPostfixExpression && uExpression.operator.text == "!!") {
+          return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.withDecrementedParts()) }
+        }
+        return withCache(uExpression) { analyzeInner(uExpression, analyzeContext.withDecrementedSteps()) }
       }
       is UUnaryExpression -> {
-        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.minusPart()) }
+        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.operand, analyzeContext.withDecrementedParts()) }
       }
       is UBinaryExpression -> {
         return withCache(uExpression) {
-          setOf(uExpression.leftOperand, uExpression.rightOperand).join(analyzeContext.minusPart(2))
+          setOf(uExpression.leftOperand, uExpression.rightOperand).join(analyzeContext.withDecrementedParts(2))
         }
       }
       is ULabeledExpression -> {
-        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.expression, analyzeContext.minusPart()) }
+        return withCache(uExpression) { fromExpressionWithoutCollection(uExpression.expression, analyzeContext.withDecrementedParts()) }
       }
       is UIfExpression, is USwitchExpression, is UBlockExpression -> {
+        if (uExpression is UIfExpression) {
+          val condition = uExpression.condition
+          val value: Any? = getConstant(condition)
+          val thenExpression = uExpression.thenExpression
+          val elseExpression = uExpression.elseExpression
+          if (value == true && thenExpression != null) {
+            return withCache(thenExpression) {
+              fromExpressionWithoutCollection(thenExpression, analyzeContext.withDecrementedParts())
+            }
+          }
+          else if (value == false && elseExpression != null) {
+            return withCache(elseExpression) {
+              fromExpressionWithoutCollection(elseExpression, analyzeContext.withDecrementedParts())
+            }
+          }
+        }
         return withCache(uExpression) {
           val nonStructuralChildren = nonStructuralChildren(uExpression).toList()
           nonStructuralChildren
             .filterNotNull()
-            .join(analyzeContext.minusPart(nonStructuralChildren.size))
+            .join(analyzeContext.withDecrementedParts(nonStructuralChildren.size))
         }
       }
       else -> {
@@ -632,73 +771,189 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
     private fun getAllReturns(sourcePsi: PsiElement): MutableSet<UExpression> =
       CachedValuesManager.getManager(sourcePsi.project)
         .getCachedValue(sourcePsi, CachedValueProvider {
-          val method = sourcePsi.toUElement() as? UMethod
-          val visitor = object : AbstractUastVisitor() {
+          class ReturnFinder: AbstractUastVisitor() {
             val returns = mutableSetOf<UExpression>()
+            var stop = false
+            var onlyInSameLevel = true
+
+            override fun visitBreakExpression(node: UBreakExpression): Boolean {
+              onlyInSameLevel = false
+              return super.visitBreakExpression(node)
+            }
+
+            override fun visitYieldExpression(node: UYieldExpression): Boolean {
+              onlyInSameLevel = false
+              return super.visitYieldExpression(node)
+            }
+
+            override fun visitContinueExpression(node: UContinueExpression): Boolean {
+              onlyInSameLevel = false
+              return super.visitContinueExpression(node)
+            }
+
+            override fun visitClass(node: UClass): Boolean {
+              return true
+            }
+
+            override fun visitSwitchExpression(node: USwitchExpression): Boolean {
+              if (stop) {
+                return true
+              }
+              //simplification
+              onlyInSameLevel = false
+              return super.visitSwitchExpression(node)
+            }
+
+            override fun visitIfExpression(node: UIfExpression): Boolean {
+              val constant = getConstant(node.condition)
+              val returnFinder = ReturnFinder()
+              var nextExpression: UExpression? = null
+              if (constant == true) {
+                nextExpression = node.thenExpression
+              }
+              else if (constant == false) {
+                nextExpression = node.elseExpression
+              }
+              if (nextExpression != null) {
+                if (nextExpression is UBlockExpression) {
+                  processList(nextExpression.expressions, returnFinder)
+                }
+                else {
+                  nextExpression.accept(returnFinder)
+                }
+              }
+              returns.addAll(returnFinder.returns)
+              if (returnFinder.onlyInSameLevel && returnFinder.returns.isNotEmpty()) {
+                stop = true
+              }
+              return true
+            }
+
+            private fun processList(expressions: List<UExpression>, returnFinder: ReturnFinder) {
+              expressions.acceptList(returnFinder)
+            }
+
+            override fun visitBlockExpression(node: UBlockExpression): Boolean {
+              if (stop) {
+                return true
+              }
+              val returnFinder = ReturnFinder()
+              processList(node.expressions, returnFinder)
+              returns.addAll(returnFinder.returns)
+              onlyInSameLevel = false
+              return true
+            }
+
+            override fun visitElement(node: UElement): Boolean {
+              return stop
+            }
+
             override fun visitReturnExpression(node: UReturnExpression): Boolean {
+              if (stop) {
+                return true
+              }
               val returnExpression = node.returnExpression ?: return super.visitReturnExpression(node)
               returns.add(returnExpression)
               return super.visitReturnExpression(node)
             }
           }
+          val method = sourcePsi.toUElement() as? UMethod
+          val visitor = ReturnFinder()
           method?.uastBody?.accept(visitor)
           return@CachedValueProvider CachedValueProvider.Result.create(visitor.returns, PsiModificationTracker.MODIFICATION_COUNT)
         })
 
-    private fun getVariableFlow(sourcePsi: PsiElement): VariableFlow =
-      CachedValuesManager.getManager(sourcePsi.project)
-        .getCachedValue(sourcePsi, CachedValueProvider {
-          val method = sourcePsi.toUElement() as? UMethod
-          val visitor = object : AbstractUastVisitor() {
-            val flow = VariableFlow()
+    private class FlowVisitor : AbstractUastVisitor() {
+      val flow = VariableFlow()
 
-            override fun afterVisitExpression(node: UExpression) {
-              val currentVariable = (node as? UResolvable)?.resolveToUElement() as? UVariable ?: return
-              if (!(currentVariable is ULocalVariable || currentVariable is UParameter)) return
-              flow.addUsage(currentVariable, node)
-            }
-
-            override fun afterVisitCallExpression(node: UCallExpression) {
-              val javaPsi = (node.resolveToUElement() as? UMethod)?.javaPsi
-              if (javaPsi != null && JavaMethodContractUtil.isPure(javaPsi)) {
-                return
-              }
-              val receiver = node.receiver
-              if (receiver != null) {
-                checkUsages(listOf(receiver), node.valueArguments)
-              }
-              if (javaPsi != null && HardcodedContracts.isKnownNoParameterLeak(javaPsi)) {
-                return
-              }
-              checkUsages(node.valueArguments, null)
-              return
-            }
-
-            override fun afterVisitBinaryExpression(node: UBinaryExpression) {
-              if (node.operator !is AssignOperator) return
-              val lhs = (node.leftOperand as? UReferenceExpression) ?: return
-              val uElement = lhs.resolveToUElement() as? UVariable ?: return
-              if (!(uElement is ULocalVariable || uElement is UParameter)) return
-              val rhs = node.rightOperand
-              flow.addAssign(uElement, rhs)
-            }
-
-            private fun checkUsages(expressions: List<UExpression?>, dependsOn: List<UExpression?>?) {
-              for (expression in expressions) {
-                if (expression == null) continue
-                val currentVariable = (expression as? UResolvable)?.resolveToUElement() as? UVariable ?: continue
-                if (!(currentVariable is ULocalVariable || currentVariable is UParameter)) continue
-                flow.addDropLocality(currentVariable, dependsOn)
-              }
-            }
+      override fun visitIfExpression(node: UIfExpression): Boolean {
+        val condition = node.condition
+        condition.accept(this)
+        val value: Any? = getConstant(node.condition)
+        when (value) {
+          true -> {
+            node.thenExpression?.accept(this)
           }
-          method?.uastBody?.accept(visitor)
-          return@CachedValueProvider CachedValueProvider.Result.create(visitor.flow, PsiModificationTracker.MODIFICATION_COUNT)
-        })
+          false -> {
+            node.elseExpression?.accept(this)
+          }
+          else -> {
+            val flowIf = FlowVisitor()
+            val flowElse = FlowVisitor()
+            node.thenExpression?.accept(flowIf)
+            node.elseExpression?.accept(flowElse)
+            flow.addSplit(listOf(flowIf.flow, flowElse.flow), node.thenExpression != null && node.elseExpression != null)
+          }
+        }
+        return true
+      }
 
-    private fun equalFiles(analyzeContext: AnalyzeContext, method: UElement): Boolean {
-      val file = method.getContainingUFile()
+      override fun visitSwitchExpression(node: USwitchExpression): Boolean {
+        val flows = mutableListOf<VariableFlow>()
+        val body = node.body
+        for (expression in body.expressions) {
+          val flowIf = FlowVisitor()
+          expression.accept(flowIf)
+          flows.add(flowIf.flow)
+        }
+        flow.addSplit(flows, false)
+        return true
+      }
+
+
+      override fun afterVisitExpression(node: UExpression) {
+        val currentVariable = (node as? UResolvable)?.resolveToUElementOfType<UVariable>() ?: return
+        if (!(currentVariable is ULocalVariable || currentVariable is UParameter)) return
+        flow.addUsage(currentVariable, node)
+      }
+
+      override fun afterVisitCallExpression(node: UCallExpression) {
+        val javaPsi = node.resolveToUElementOfType<UMethod>()?.javaPsi
+        val receiver = node.receiver
+        if (javaPsi != null && JavaMethodContractUtil.isPure(javaPsi)) {
+          flow.addCleaning(receiver, node)
+          return
+        }
+        if (receiver != null) {
+          checkUsages(listOf(receiver), node.valueArguments)
+          flow.addCleaning(receiver, node)
+        }
+        if (javaPsi != null && HardcodedContracts.isKnownNoParameterLeak(javaPsi)) {
+          return
+        }
+        checkUsages(node.valueArguments, null)
+        return
+      }
+
+      override fun afterVisitBinaryExpression(node: UBinaryExpression) {
+        if (node.operator !is AssignOperator) return
+        val lhs = (node.leftOperand as? UReferenceExpression) ?: return
+        val uElement = lhs.resolveToUElementOfType<UVariable>() ?: return
+        if (!(uElement is ULocalVariable || uElement is UParameter)) return
+        val rhs = node.rightOperand
+        flow.addAssign(uElement, rhs)
+      }
+
+      private fun checkUsages(expressions: List<UExpression?>, dependsOn: List<UExpression?>?) {
+        for (expression in expressions) {
+          if (expression == null) continue
+          val currentVariable = (expression as? UResolvable)?.resolveToUElementOfType<UVariable>() ?: continue
+          if (!(currentVariable is ULocalVariable || currentVariable is UParameter)) continue
+          flow.addDropLocality(currentVariable, dependsOn)
+        }
+      }
+    }
+
+    private fun equalFiles(analyzeContext: AnalyzeContext, element: UElement): Boolean {
+      val file = element.getContainingUFile()
       return file != null && analyzeContext.file.sourcePsi == file.sourcePsi
+    }
+
+    private fun isLibraryCode(element: UElement): Boolean {
+      val sourcePsi = element.sourcePsi ?: return true
+      if (sourcePsi is PsiCompiledElement) return true
+      val virtualFile = PsiUtilCore.getVirtualFile(sourcePsi)
+      return virtualFile != null && FileIndexFacade.getInstance(sourcePsi.getProject()).isInLibrarySource(virtualFile)
     }
 
     private fun fieldAssignedOnlyWithLiterals(field: UField, analyzeContext: AnalyzeContext): Boolean {
@@ -724,7 +979,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
               val sourcePsi = node.sourcePsi
               if (sourcePsi == null) return super.visitBinaryExpression(node)
               val lhs = (node.leftOperand as? UReferenceExpression) ?: return super.visitBinaryExpression(node)
-              val uField = (lhs.resolveToUElement() as? UField) ?: return super.visitBinaryExpression(node)
+              val uField = lhs.resolveToUElementOfType<UField>() ?: return super.visitBinaryExpression(node)
               if (node.rightOperand !is ULiteralExpression) {
                 assignedFields.add(uField)
               }
@@ -751,7 +1006,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
           return@CachedValueProvider CachedValueProvider.Result.create(uMethods, PsiModificationTracker.MODIFICATION_COUNT)
         })
 
-      analyzeContext.minusPart(methods.size)
+      analyzeContext.withDecrementedParts(methods.size)
       return methods.none {
         //kotlin setters, lombok
         (it.sourcePsi == target && it.javaPsi.parameters.isNotEmpty())
@@ -807,6 +1062,18 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
   }
 
   private class VariableFlow {
+    private interface VariableStep
+
+    private class CleaningStep(val node: UCallExpression) : VariableStep
+
+    private class DropLocalityStep(val dependsOn: List<UExpression?>?) : VariableStep
+
+    private data class UsagesStep(val usages: MutableSet<PsiElement> = hashSetOf()) : VariableStep
+
+    private class AssignmentStep(val expression: UExpression) : VariableStep
+    private class SplitStep(val flows: List<VariableFlow>, val full: Boolean) : VariableStep
+
+
     val variables: MultiMap<PsiElement, VariableStep> = MultiMap()
 
     fun addDropLocality(currentVariable: UVariable, dependsOn: List<UExpression?>?) {
@@ -827,20 +1094,41 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       }
     }
 
+    fun addCleaning(uExpression: UExpression?, node: UCallExpression) {
+      if (uExpression == null) {
+        return
+      }
+      val currentVariable = (uExpression as? UResolvable)?.resolveToUElementOfType<UVariable>() ?: return
+      val psiElement = currentVariable.sourcePsi ?: return
+      variables.putValue(psiElement, CleaningStep(node))
+    }
+
     fun addAssign(currentVariable: UVariable, assign: UExpression) {
       val psiElement = currentVariable.sourcePsi ?: return
-      variables.putValue(psiElement, DependsOnStep(assign))
+      variables.putValue(psiElement, AssignmentStep(assign))
     }
+
+
+    fun addSplit(flows: List<VariableFlow>, full: Boolean) {
+      flows.flatMap { it.variables.keySet() }
+        .distinct()
+        .forEach {
+          variables.putValue(it, SplitStep(flows, full))
+        }
+    }
+
+    class FlowResult(val taintValue: TaintValue, val fast: Boolean)
 
     fun process(taintAnalyzer: TaintAnalyzer,
                 initValue: TaintValue,
                 uVariable: UVariable,
                 analyzeContext: AnalyzeContext,
                 usedReference: UExpression?,
-                skipAfterReference: Boolean): TaintValue {
-      val psiElement = uVariable.sourcePsi ?: return TaintValue.UNKNOWN
+                skipAfterReference: Boolean,
+                taintValueFactory: TaintValueFactory): FlowResult {
+      val psiElement = uVariable.sourcePsi ?: return FlowResult(TaintValue.UNKNOWN, false)
       val variableSteps = variables[psiElement]
-      if (variableSteps.isEmpty()) return initValue
+      if (variableSteps.isEmpty()) return FlowResult(initValue, false)
       var resultValue = initValue
 
       for (variableStep in variableSteps) {
@@ -873,30 +1161,55 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
             if (skipAfterReference && usedReference != null) {
               val sourcePsi = usedReference.sourcePsi
               if (sourcePsi != null && variableStep.usages.contains(sourcePsi)) {
-                return resultValue //fast exit
+                return FlowResult(resultValue, true) //fast exit
               }
             }
           }
-          is DependsOnStep -> {
+          is SplitStep -> {
+            var processValue = TaintValue.UNTAINTED
+            if (!variableStep.full) {
+              processValue = resultValue
+            }
+            val flowResults = variableStep.flows.map {
+              it.process(taintAnalyzer, resultValue, uVariable, analyzeContext, usedReference, skipAfterReference, taintValueFactory)
+            }
+            val fastExit = flowResults.firstOrNull { it.fast }
+            if (fastExit != null) {
+              return FlowResult(fastExit.taintValue, true) //fast exit
+            }
+            else {
+              flowResults.forEach { flowResult ->
+                processValue = processValue.joinUntil(analyzeContext.untilTaintValue) {
+                  flowResult.taintValue
+                }
+              }
+            }
+
+            resultValue = processValue
+          }
+          is AssignmentStep -> {
             val expression = variableStep.expression
-            resultValue = resultValue.joinUntil(analyzeContext.untilTaintValue) {
-              taintAnalyzer.fromExpressionWithoutCollection(expression, analyzeContext)
+            resultValue = taintAnalyzer.fromExpressionWithoutCollection(expression, analyzeContext)
+          }
+          is CleaningStep -> {
+            if (taintValueFactory.needToCleanQualifier(variableStep.node)) {
+              resultValue = TaintValue.UNTAINTED
             }
           }
         }
       }
 
-      return resultValue
+      return FlowResult(resultValue, false)
     }
   }
 }
 
-private interface VariableStep
-
-private class DropLocalityStep(val dependsOn: List<UExpression?>?) : VariableStep
-
-private data class UsagesStep(val usages: MutableSet<PsiElement> = hashSetOf()) : VariableStep
-
-private class DependsOnStep(val expression: UExpression) : VariableStep
+private fun getConstant(condition: UExpression): Any? {
+  val sourcePsi = condition.sourcePsi
+  if (sourcePsi == null) return null
+  val sourceToSinkProvider = SourceToSinkProvider.sourceToSinkLanguageProvider.forLanguage(sourcePsi.getLanguage())
+  if(sourceToSinkProvider==null) return null
+  return sourceToSinkProvider.computeConstant(sourcePsi)
+}
 
 class DeepTaintAnalyzerException : RuntimeException()

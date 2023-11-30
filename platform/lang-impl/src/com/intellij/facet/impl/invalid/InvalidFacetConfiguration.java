@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.invalid;
 
 import com.intellij.facet.FacetConfiguration;
@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.facet.FacetState;
 
-public class InvalidFacetConfiguration implements FacetConfiguration {
+public final class InvalidFacetConfiguration implements FacetConfiguration {
   private final FacetState myFacetState;
   private final @NlsContexts.DialogMessage String myErrorMessage;
 

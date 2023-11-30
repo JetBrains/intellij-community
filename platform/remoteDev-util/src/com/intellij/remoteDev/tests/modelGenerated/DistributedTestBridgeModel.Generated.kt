@@ -19,7 +19,8 @@ import kotlin.jvm.JvmStatic
  * #### Generated from [DistributedTestBridgeModel.kt]
  */
 class DistributedTestBridgeModel private constructor(
-    private val _syncCall: RdCall<Unit, Unit>
+    private val _syncCall: RdCall<Unit, Unit>,
+    private val _sendMessage: RdSignal<String>
 ) : RdExtBase() {
     //companion
     
@@ -46,7 +47,7 @@ class DistributedTestBridgeModel private constructor(
         }
         
         
-        const val serializationHash = -6785668080277295037L
+        const val serializationHash = 3736242864823673959L
         
     }
     override val serializersOwner: ISerializersOwner get() = DistributedTestBridgeModel
@@ -54,16 +55,27 @@ class DistributedTestBridgeModel private constructor(
     
     //fields
     val syncCall: RdCall<Unit, Unit> get() = _syncCall
+    
+    /**
+     * Send message between peers
+     */
+    val sendMessage: ISignal<String> get() = _sendMessage
     //methods
     //initializer
     init {
+        _syncCall.async = true
+    }
+    
+    init {
         bindableChildren.add("syncCall" to _syncCall)
+        bindableChildren.add("sendMessage" to _sendMessage)
     }
     
     //secondary constructor
     private constructor(
     ) : this(
-        RdCall<Unit, Unit>(FrameworkMarshallers.Void, FrameworkMarshallers.Void)
+        RdCall<Unit, Unit>(FrameworkMarshallers.Void, FrameworkMarshallers.Void),
+        RdSignal<String>(FrameworkMarshallers.String)
     )
     
     //equals trait
@@ -73,13 +85,15 @@ class DistributedTestBridgeModel private constructor(
         printer.println("DistributedTestBridgeModel (")
         printer.indent {
             print("syncCall = "); _syncCall.print(printer); println()
+            print("sendMessage = "); _sendMessage.print(printer); println()
         }
         printer.print(")")
     }
     //deepClone
     override fun deepClone(): DistributedTestBridgeModel   {
         return DistributedTestBridgeModel(
-            _syncCall.deepClonePolymorphic()
+            _syncCall.deepClonePolymorphic(),
+            _sendMessage.deepClonePolymorphic()
         )
     }
     //contexts

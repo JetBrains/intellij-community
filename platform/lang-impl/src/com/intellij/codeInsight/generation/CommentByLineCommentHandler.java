@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -25,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommentStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.util.PsiUtilBase;
@@ -175,10 +176,10 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
 
       block.blockSuitableCommenter = getBlockSuitableCommenter(psiFile, block.editor, offset, endOffset);
       Language lineStartLanguage = getLineStartLanguage(block.editor, psiFile, startLine);
-      CommonCodeStyleSettings languageSettings = CodeStyle.getLanguageSettings(psiFile, lineStartLanguage);
-      block.commentWithIndent = !languageSettings.LINE_COMMENT_AT_FIRST_COLUMN;
-      block.addLineSpace = languageSettings.LINE_COMMENT_ADD_SPACE;
-      block.addBlockSpace = languageSettings.BLOCK_COMMENT_ADD_SPACE;
+      CommentStyleSettings commentStyleSettings = CodeStyle.getLanguageSettings(psiFile, lineStartLanguage);
+      block.commentWithIndent = !commentStyleSettings.isLineCommentInTheFirstColumn();
+      block.addLineSpace = commentStyleSettings.isLineCommentFollowedWithSpace();
+      block.addBlockSpace = commentStyleSettings.isBlockCommentIncludesSpace();
 
       for (int line = startLine; line <= endLine; line++) {
         Commenter commenter = block.blockSuitableCommenter != null ? block.blockSuitableCommenter : findCommenter(block.editor, psiFile, line);
@@ -195,7 +196,9 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
         }
 
         block.commenters[line - startLine] = commenter;
-        if (!isLineCommented(block, line, commenter) && (singleline || !DocumentUtil.isLineEmpty(document, line))) {
+        if (allLinesCommented
+            && !isLineCommented(block, line, commenter)
+            && (singleline || !DocumentUtil.isLineEmpty(document, line))) {
           allLinesCommented = false;
           if (commenter instanceof IndentedCommenter) {
             final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
@@ -203,7 +206,6 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
               block.commentWithIndent = value;
             }
           }
-          break;
         }
       }
     }
@@ -443,7 +445,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     return CharArrayUtil.regionMatches(chars, offset, prefix) ? offset : -1;
   }
 
-  private void doDefaultCommenting(final Block block) {
+  private static void doDefaultCommenting(final Block block) {
     final Document document = block.editor.getDocument();
     DocumentUtil.executeInBulk(
       document, block.endLine - block.startLine >= Registry.intValue("comment.by.line.bulk.lines.trigger"), () -> {
@@ -627,6 +629,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
   private static void commentLine(Block block, int line, int offset) {
     Commenter commenter = block.blockSuitableCommenter;
     Document document = block.editor.getDocument();
+    if (commenter == null) commenter = block.commenters[line - block.startLine];
     if (commenter == null) commenter = findCommenter(block.editor, block.psiFile, line);
     if (commenter == null) return;
     if (commenter instanceof SelfManagingCommenter selfManagingCommenter) {
@@ -759,7 +762,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     return false;
   }
 
-  private static class Block {
+  private static final class Block {
     private Editor editor;
     private PsiFile psiFile;
     private final List<Caret> carets = new ArrayList<>();

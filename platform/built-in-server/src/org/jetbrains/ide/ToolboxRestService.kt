@@ -59,6 +59,11 @@ interface ToolboxServiceHandler<T> {
     request: T,
     onResult: (JsonElement) -> Unit,
   )
+
+  /**
+   * Check if a given HTTP method is supported by this specific handler
+   */
+  fun isMethodSupported(method: HttpMethod) = method == HttpMethod.POST
 }
 
 private fun findToolboxHandlerByUri(requestUri: String): ToolboxServiceHandler<*>? = toolboxHandlerEP.findFirstSafe {
@@ -111,11 +116,12 @@ internal class ToolboxRestService : RestService() {
 
   override fun isSupported(request: FullHttpRequest): Boolean {
     val requestUri = request.uri().substringBefore('?')
-    if (findToolboxHandlerByUri(requestUri) == null) return false
-    return super.isSupported(request)
+    val handler = findToolboxHandlerByUri(requestUri)
+    if (handler == null) return false
+    return handler.isMethodSupported(request.method()) && super.isSupported(request)
   }
 
-  override fun isMethodSupported(method: HttpMethod) = method == HttpMethod.POST
+  override fun isMethodSupported(method: HttpMethod) = method == HttpMethod.POST || method == HttpMethod.GET
 
   override fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String? {
     val channel = context.channel()

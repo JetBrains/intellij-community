@@ -13,70 +13,57 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import org.jspecify.nullness.NullMarked;
-import org.jspecify.nullness.Nullable;
-import org.jspecify.nullness.NullnessUnspecified;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
+import org.jspecify.annotations.NullnessUnspecified;
 
 @NullMarked
 class CaptureConvertedToObjectUnionNull {
-  @Nullable
-  Object x0(ImplicitlyObjectBounded<? extends Lib> x) {
+  @Nullable Object x0(ImplicitlyObjectBounded<? extends Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x1(ImplicitlyObjectBounded<? extends @NullnessUnspecified Lib> x) {
+  @Nullable Object x1(ImplicitlyObjectBounded<? extends @NullnessUnspecified Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x2(ImplicitlyObjectBounded<? extends @Nullable Lib> x) {
+  @Nullable Object x2(ImplicitlyObjectBounded<? extends @Nullable Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x3(ExplicitlyObjectBounded<? extends Lib> x) {
+  @Nullable Object x3(ExplicitlyObjectBounded<? extends Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x4(ExplicitlyObjectBounded<? extends @NullnessUnspecified Lib> x) {
+  @Nullable Object x4(ExplicitlyObjectBounded<? extends @NullnessUnspecified Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x5(ExplicitlyObjectBounded<? extends @Nullable Lib> x) {
+  @Nullable Object x5(ExplicitlyObjectBounded<? extends @Nullable Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x6(UnspecBounded<? extends Lib> x) {
+  @Nullable Object x6(UnspecBounded<? extends Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x7(UnspecBounded<? extends @NullnessUnspecified Lib> x) {
+  @Nullable Object x7(UnspecBounded<? extends @NullnessUnspecified Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x8(UnspecBounded<? extends @Nullable Lib> x) {
+  @Nullable Object x8(UnspecBounded<? extends @Nullable Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x9(NullableBounded<? extends Lib> x) {
+  @Nullable Object x9(NullableBounded<? extends Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x10(NullableBounded<? extends @NullnessUnspecified Lib> x) {
+  @Nullable Object x10(NullableBounded<? extends @NullnessUnspecified Lib> x) {
     return x.get();
   }
 
-  @Nullable
-  Object x11(NullableBounded<? extends @Nullable Lib> x) {
+  @Nullable Object x11(NullableBounded<? extends @Nullable Lib> x) {
     return x.get();
   }
 

@@ -1154,6 +1154,12 @@ class CommonIntentionActionsTest : BasePlatformTestCase() {
         )
     }
 
+
+    @Suppress("CAST_NEVER_SUCCEEDS")
+    private fun List<IntentionAction>.findWithText(text: String): IntentionAction =
+        this.filter { it.isAvailable(myFixture.project, myFixture.editor, myFixture.file) }.firstOrNull { it.text == text }
+            ?: Assert.fail("intention with text '$text' was not found, only ${this.joinToString { "\"${it.text}\"" }} available") as Nothing
+
     private fun CodeInsightTestFixture.addJavaFileToProject(relativePath: String, @Language("JAVA") fileText: String) =
         this.addFileToProject(relativePath, fileText)
 
@@ -1198,11 +1204,5 @@ private class TestModifierRequest(private val _modifier: JvmModifier, private va
     override fun isValid(): Boolean = true
     override fun getModifier(): JvmModifier = _modifier
 }
-
-@Suppress("CAST_NEVER_SUCCEEDS")
-internal fun List<IntentionAction>.findWithText(text: String): IntentionAction =
-    this.firstOrNull { it.text == text }
-        ?: Assert.fail("intention with text '$text' was not found, only ${this.joinToString { "\"${it.text}\"" }} available") as Nothing
-
 
 

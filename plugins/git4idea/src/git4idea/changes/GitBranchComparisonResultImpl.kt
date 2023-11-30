@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes
 
+import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
@@ -26,14 +27,11 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
   private val _changes = mutableListOf<Change>()
   override val changes: List<Change> = Collections.unmodifiableList(_changes)
-  private val _changesByCommits = mutableMapOf<String, Collection<Change>>()
-  override val changesByCommits: Map<String, Collection<Change>> = Collections.unmodifiableMap(_changesByCommits)
-  private val _commitByChange: MutableMap<Change, String> =
-    CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
-  override val commitByChange: Map<Change, String> = Collections.unmodifiableMap(_commitByChange)
+  private val _changesByCommits = mutableMapOf<String, List<Change>>()
+  override val changesByCommits: Map<String, List<Change>> = Collections.unmodifiableMap(_changesByCommits)
 
   private val _diffDataByChange: MutableMap<Change, GitTextFilePatchWithHistory> =
-    CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
+    CollectionFactory.createCustomHashingStrategyMap(CODE_REVIEW_CHANGE_HASHING_STRATEGY)
   override val patchesByChange: Map<Change, GitTextFilePatchWithHistory> = Collections.unmodifiableMap(_diffDataByChange)
 
   init {
@@ -44,11 +42,16 @@ class GitBranchComparisonResultImpl(private val project: Project,
       commit.parents.count { commitsHashes.contains(it) } <= 1
     }
 
-    if (linearHistory) {
-      initForLinearHistory(commits)
+    try {
+      if (linearHistory) {
+        initForLinearHistory(commits)
+      }
+      else {
+        initForHistoryWithMerges(commits)
+      }
     }
-    else {
-      initForHistoryWithMerges(commits)
+    catch (e: Exception) {
+      throw RuntimeException("Unable to build branch comparison result between $baseSha and $headSha via $mergeBaseSha - ${e.message}", e)
     }
   }
 
@@ -73,17 +76,16 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
           val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
           val fileHistory = (historyBefore ?: MutableLinearGitFileHistory(commitsHashes)).apply {
+            append(previousCommitSha, beforePath)
             append(commitSha, patch)
           }
-          if (afterPath != null) {
-            fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
-          }
+          val path = (afterPath ?: beforePath)!!
+          fileHistoriesByLastKnownFilePath[path] = fileHistory
 
           patch.beforeVersionId = previousCommitSha
           patch.afterVersionId = commitSha
           _diffDataByChange[change] = GitTextFilePatchWithHistory(patch, false, fileHistory)
         }
-        _commitByChange[change] = commitWithPatches.sha
       }
       _changesByCommits[commitWithPatches.sha] = commitChanges
       previousCommitSha = commitSha
@@ -101,7 +103,7 @@ class GitBranchComparisonResultImpl(private val project: Project,
         val filePath = patch.filePath
         val fileHistory = fileHistoriesBySummaryFilePath[filePath]
         if (fileHistory == null) {
-          LOG.debug("Unable to find file history for cumulative patch for $filePath")
+          LOG.warn("Unable to find file history for cumulative patch for $filePath")
           continue
         }
         patch.beforeVersionId = baseSha
@@ -118,7 +120,6 @@ class GitBranchComparisonResultImpl(private val project: Project,
       val previousCommitSha = commitWithPatches.parents.find { commitsHashes.contains(it) } ?: mergeBaseSha
       val commitSha = commitWithPatches.sha
       val commitChanges = commitWithPatches.patches.map { createChangeFromPatch(previousCommitSha, commitSha, it) }
-      commitChanges.forEach { _commitByChange[it] = commitWithPatches.sha }
       _changesByCommits[commitWithPatches.sha] = commitChanges
     }
 
@@ -148,6 +149,31 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
     return beforeName?.let { VcsUtil.getFilePath(vcsRoot, it) } to afterName?.let { VcsUtil.getFilePath(vcsRoot, it) }
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as GitBranchComparisonResultImpl
+
+    if (project != other.project) return false
+    if (vcsRoot != other.vcsRoot) return false
+    if (baseSha != other.baseSha) return false
+    if (mergeBaseSha != other.mergeBaseSha) return false
+    if (headSha != other.headSha) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = project.hashCode()
+    result = 31 * result + vcsRoot.hashCode()
+    result = 31 * result + baseSha.hashCode()
+    result = 31 * result + mergeBaseSha.hashCode()
+    result = 31 * result + headSha.hashCode()
+    return result
+  }
+
 
   companion object {
     private val LOG = logger<GitBranchComparisonResult>()

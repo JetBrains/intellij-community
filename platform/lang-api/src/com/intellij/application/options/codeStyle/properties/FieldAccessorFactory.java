@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.properties;
 
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.BraceStyleConstant;
@@ -63,34 +63,32 @@ class FieldAccessorFactory {
   @Nullable
   CodeStyleFieldAccessor<?,?> createAccessor(@NotNull Object codeStyleObject) {
     if (mayHaveAccessor()) {
-      switch (getValueType()) {
-        case BOOLEAN:
+      return switch (getValueType()) {
+        case BOOLEAN -> {
           if ("USE_TAB_CHARACTER".equals(myField.getName())) {
-            return new TabCharPropertyAccessor(codeStyleObject, myField);
+            yield new TabCharPropertyAccessor(codeStyleObject, myField);
           }
-          return new BooleanAccessor(codeStyleObject, myField);
-        case INT:
+          yield new BooleanAccessor(codeStyleObject, myField);
+        }
+        case INT -> {
           if ("WRAP_ON_TYPING".equals(myField.getName())) {
-            return new WrapOnTypingAccessor(codeStyleObject, myField);
+            yield new WrapOnTypingAccessor(codeStyleObject, myField);
           }
-          return new IntegerAccessor(codeStyleObject, myField);
-        case STRING:
+          yield new IntegerAccessor(codeStyleObject, myField);
+        }
+        case STRING -> {
           CommaSeparatedValues annotation = myField.getAnnotation(CommaSeparatedValues.class);
           if (annotation != null) {
-            return new CommaSeparatedValuesAccessor(codeStyleObject, myField);
+            yield new CommaSeparatedValuesAccessor(codeStyleObject, myField);
           }
-          return new StringAccessor(codeStyleObject, myField);
-        case WRAP:
-          return new WrappingAccessor(codeStyleObject, myField);
-        case BRACE_STYLE:
-          return new BraceStyleAccessor(codeStyleObject, myField);
-        case FORCE_BRACES:
-          return new ForceBracesAccessor(codeStyleObject, myField);
-        case ENUM:
-          return new EnumPropertyAccessor(codeStyleObject, myField);
-        case OTHER:
-          break;
-      }
+          yield new StringAccessor(codeStyleObject, myField);
+        }
+        case WRAP -> new WrappingAccessor(codeStyleObject, myField);
+        case BRACE_STYLE -> new BraceStyleAccessor(codeStyleObject, myField);
+        case FORCE_BRACES -> new ForceBracesAccessor(codeStyleObject, myField);
+        case ENUM -> new EnumPropertyAccessor(codeStyleObject, myField);
+        case OTHER -> null;
+      };
     }
     return null;
   }
@@ -108,27 +106,23 @@ class FieldAccessorFactory {
       super(object, field);
     }
 
-    @Nullable
     @Override
-    protected String parseString(@NotNull String string) {
+    protected @Nullable String parseString(@NotNull String string) {
       return string;
     }
 
-    @Nullable
     @Override
-    protected String valueToString(@NotNull String value) {
+    protected @Nullable String valueToString(@NotNull String value) {
       return value;
     }
 
-    @Nullable
     @Override
-    protected Boolean fromExternal(@NotNull String str) {
+    protected @Nullable Boolean fromExternal(@NotNull String str) {
       return "tab".equalsIgnoreCase(str);
     }
 
-    @NotNull
     @Override
-    protected String toExternal(@NotNull Boolean value) {
+    protected @NotNull String toExternal(@NotNull Boolean value) {
       return value ? "tab" : "space";
     }
 

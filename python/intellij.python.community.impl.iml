@@ -31,7 +31,7 @@
     <orderEntry type="library" name="XStream" level="project" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
     <orderEntry type="library" name="libthrift" level="project" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
@@ -40,23 +40,16 @@
     <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
     <orderEntry type="module" module-name="intellij.python.psi.impl" exported="" />
     <orderEntry type="module" module-name="intellij.python.sdk" exported="" />
-    <orderEntry type="module-library">
-      <library name="completion-ranking-python" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python:0.2.3" />
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.3/completion-ranking-python-0.2.3.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python/0.2.3/completion-ranking-python-0.2.3-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.statistics" />
     <orderEntry type="module-library">
       <library name="ml-completion-prev-exprs-models" type="repository">
         <properties maven-id="completion.ml.python.features:ml-completion-prev-exprs-models:1.11">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/completion/ml/python/features/ml-completion-prev-exprs-models/1.11/ml-completion-prev-exprs-models-1.11.jar">
+              <sha256sum>8924b199c8cc52530de2b250670806d8b046fa5ae9d32a9f27a9b224e934a1ad</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="com.google.code.gson:gson" />
             <dependency maven-id="org.jetbrains:annotations" />
@@ -80,12 +73,19 @@
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jcef" level="project" />
-    <orderEntry type="library" name="commons-lang" level="project" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.toml" />
     <orderEntry type="module-library">
       <library name="tuweni-toml" type="repository">
         <properties maven-id="org.apache.tuweni:tuweni-toml:2.0.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/tuweni/tuweni-toml/2.0.0/tuweni-toml-2.0.0.jar">
+              <sha256sum>b7331e02e955b6b962a8fa89eb8d7db0960d0b232880bfc60e8602fb3fed36ad</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4.7.1/antlr4-runtime-4.7.1.jar">
+              <sha256sum>43516d19beae35909e04d06af6c0c58c17bc94e0070c85e8dc9929ca640dc91d</sha256sum>
+            </artifact>
+          </verification>
           <exclude>
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
             <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
@@ -121,5 +121,27 @@
     <orderEntry type="module" module-name="intellij.python.community.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.python.psi" />
+    <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
+    <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module-library">
+      <library name="completion-ranking-python-with-full-line" type="repository">
+        <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python-with-full-line:0.2.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.2.1/completion-ranking-python-with-full-line-0.2.1.jar">
+              <sha256sum>141df5d2e70b27911bb5b601e1574623dc43b31bc6b4160f164ddd6f2ca27e6f</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.2.1/completion-ranking-python-with-full-line-0.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-python-with-full-line/0.2.1/completion-ranking-python-with-full-line-0.2.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="module" module-name="intellij.terminal" />
   </component>
 </module>

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.credentialStore.Credentials
@@ -13,15 +13,16 @@ import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
-import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.Consumer
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.CancellationException
@@ -29,6 +30,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Component
+
+private const val NEW_THREAD_POST_URL = "https://ea-report.jetbrains.com/trackerRpc/idea/createScr"
 
 private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions to form a chain, ms
 @Volatile private var previousReport: Pair<Long, Int>? = null  // (timestamp, threadID) of last reported exception
@@ -39,7 +42,7 @@ private const val INTERVAL = 10 * 60 * 1000L  // an interval between exceptions 
  * their own implementations of [ErrorReportSubmitter].
  */
 @InternalIgnoreDependencyViolation
-open class ITNReporter : ErrorReportSubmitter() {
+open class ITNReporter(private val newThreadPostUrl: String = NEW_THREAD_POST_URL) : ErrorReportSubmitter() {
 
   override fun getReportActionText(): String = DiagnosticBundle.message("error.report.to.jetbrains.action")
 
@@ -68,7 +71,7 @@ open class ITNReporter : ErrorReportSubmitter() {
     }
     val errorBean = ErrorBean(event, additionalInfo, plugin?.pluginId?.idString, plugin?.name, plugin?.version, lastActionId, previousReportId)
     val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
-    return submit(project, errorBean, parentComponent, consumer::consume)
+    return submit(project, errorBean, parentComponent, newThreadPostUrl, consumer::consume)
   }
 
   /**
@@ -77,35 +80,41 @@ open class ITNReporter : ErrorReportSubmitter() {
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 }
 
-private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, callback: (SubmittedReportInfo) -> Unit): Boolean {
-  var credentials = ErrorReportConfigurable.getCredentials()
-  if (credentials.hasOnlyUserName()) {
-    credentials = askJBAccountCredentials(parentComponent, project)
-    if (credentials == null) return false
+private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, newThreadPostUrl: String, callback: (SubmittedReportInfo) -> Unit): Boolean {
+  val credentialsLazy = suspend {
+    var credentials = ErrorReportConfigurable.getCredentials()
+    if (credentials.hasOnlyUserName()) {
+      credentials = withContext(Dispatchers.EDT) {
+        askJBAccountCredentials(parentComponent, project)
+      }
+    }
+    credentials
   }
-  submit(project, credentials, errorBean, parentComponent, callback)
+  submit(project, credentialsLazy, errorBean, parentComponent, newThreadPostUrl, callback)
   return true
 }
 
 private fun submit(project: Project?,
-                   credentials: Credentials?,
+                   credentialsLazy: suspend () -> Credentials?,
                    errorBean: ErrorBean,
                    parentComponent: Component,
+                   newThreadPostUrl: String,
                    callback: (SubmittedReportInfo) -> Unit) {
-  ITNProxy.cs.launch {
+  service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
     try {
+      val credentials = credentialsLazy()
       val threadId = if (project != null) {
         withBackgroundProgress(project, DiagnosticBundle.message("title.submitting.error.report")) {
-          ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean)
+          ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean, newThreadPostUrl)
         }
       }
       else {
-        ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean)
+        ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean, newThreadPostUrl)
       }
       onSuccess(project, threadId, errorBean.event.data, callback)
     }
     catch (e: Exception) {
-      onError(project, e, errorBean, parentComponent, callback)
+      onError(project, e, errorBean, parentComponent, newThreadPostUrl, callback)
     }
   }
 }
@@ -119,7 +128,9 @@ private suspend fun onSuccess(project: Project?, threadId: Int, eventData: Any?,
   withContext(Dispatchers.EDT) {
     val text = StringBuilder()
     IdeErrorsDialog.appendSubmissionInformation(reportInfo, text)
-    text.append('.').append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"))
+    text
+      .append('.').append(" It will be available after some time.")
+      .append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"))
     val content = XmlStringUtil.wrapInHtml(text)
     val title = DiagnosticBundle.message("error.report.submitted")
     NotificationGroupManager.getInstance().getNotificationGroup("Error Report")
@@ -134,6 +145,7 @@ private suspend fun onError(project: Project?,
                             e: Exception,
                             errorBean: ErrorBean,
                             parentComponent: Component,
+                            newThreadPostUrl: String,
                             callback: (SubmittedReportInfo) -> Unit) {
   Logger.getInstance(ITNReporter::class.java).info("reporting failed: $e")
   withContext(Dispatchers.EDT) {
@@ -148,7 +160,7 @@ private suspend fun onError(project: Project?,
     else if (e is NoSuchEAPUserException) {
       val credentials = askJBAccountCredentials(parentComponent, project, true)
       if (credentials != null) {
-        submit(project, credentials, errorBean, parentComponent, callback)
+        submit(project, { credentials }, errorBean, parentComponent, newThreadPostUrl, callback)
       }
       else {
         callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
@@ -161,7 +173,7 @@ private suspend fun onError(project: Project?,
       val message = DiagnosticBundle.message("error.report.failed.message", e.message)
       val title = DiagnosticBundle.message("error.report.failed.title")
       val result = MessageDialogBuilder.yesNo(title, message).ask(project)
-      if (!result || !submit(project, errorBean, parentComponent, callback)) {
+      if (!result || !submit(project, errorBean, parentComponent, newThreadPostUrl, callback)) {
         callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
     }

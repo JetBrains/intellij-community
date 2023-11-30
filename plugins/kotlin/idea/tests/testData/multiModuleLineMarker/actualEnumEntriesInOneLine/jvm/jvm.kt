@@ -1,10 +1,3 @@
 package test
 
-actual enum class <!LINE_MARKER("descr='Has expects in common module'")!>Enum<!> { A, B, C }
-
-/*
-LINEMARKER: Has declaration in common module
-TARGETS:
-common.kt
-expect enum class <4>Enum { <1>A, <2>B, <3>C }
-*/
+actual enum class <!LINE_MARKER("descr='Has expects in common module'; targets=[(text=Enum; container=common; icon=nodes/Module.svg); (text=A; container=common; icon=nodes/Module.svg); (text=B; container=common; icon=nodes/Module.svg); (text=C; container=common; icon=nodes/Module.svg)]")!>Enum<!> { A, B, C }

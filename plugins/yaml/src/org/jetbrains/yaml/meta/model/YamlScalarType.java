@@ -22,8 +22,16 @@ import java.util.Set;
 @ApiStatus.Internal
 public abstract class YamlScalarType extends YamlMetaType {
 
+  /**
+   * @deprecated initialise the {@code displayName} explicitly via {@link #YamlScalarType(String, String)}
+   */
+  @Deprecated(forRemoval = true)
   protected YamlScalarType(@NonNls @NotNull String typeName) {
     super(typeName);
+  }
+
+  protected YamlScalarType(@NonNls @NotNull String typeName, @NonNls @NotNull String displayName) {
+    super(typeName, displayName);
   }
 
   @Nullable

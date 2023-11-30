@@ -24,6 +24,7 @@ import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.views.DirectoryChange;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
   }
 
   @Override
-  protected DirectoryChange createChange(Difference d) {
+  protected DirectoryChange createChange(@NotNull Difference d) {
     return new DirectoryChange(new DirectoryChangeModel(d, myGateway));
   }
 
@@ -42,7 +43,7 @@ public class DirectoryHistoryDialogModel extends HistoryDialogModel {
     return createRevisionReverter(getDifferences());
   }
 
-  public Reverter createRevisionReverter(List<? extends Difference> diffs) {
+  public Reverter createRevisionReverter(List<Difference> diffs) {
     return new DifferenceReverter(myProject, myVcs, myGateway, diffs, getLeftRevision());
   }
 }

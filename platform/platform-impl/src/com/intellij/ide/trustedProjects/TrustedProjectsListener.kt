@@ -56,7 +56,7 @@ interface TrustedProjectsListener {
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic(TrustedProjectsListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<TrustedProjectsListener> = Topic(TrustedProjectsListener::class.java, Topic.BroadcastDirection.NONE)
 
     /**
      * Adds a one-time listener of the project's trust state change: when the project becomes trusted, the listener is called and disconnected.
@@ -76,7 +76,7 @@ interface TrustedProjectsListener {
 
     @JvmStatic
     @JvmOverloads
-    fun onceWhenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>) =
+    fun onceWhenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>): Unit =
       onceWhenProjectTrusted(parentDisposable, listener::accept)
   }
 }

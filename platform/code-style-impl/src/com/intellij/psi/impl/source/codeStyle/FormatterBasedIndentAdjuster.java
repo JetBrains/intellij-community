@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 final class FormatterBasedIndentAdjuster  {
-  private final static int MAX_SYNCHRONOUS_ADJUSTMENT_DOC_SIZE = 100000;
+  private static final int MAX_SYNCHRONOUS_ADJUSTMENT_DOC_SIZE = 100000;
 
   private FormatterBasedIndentAdjuster() {
   }
@@ -45,7 +45,7 @@ final class FormatterBasedIndentAdjuster  {
            document.getTextLength() <= MAX_SYNCHRONOUS_ADJUSTMENT_DOC_SIZE && !BlockSupport.isTooDeep(file);
   }
 
-  static class IndentAdjusterRunnable implements Runnable {
+  static final class IndentAdjusterRunnable implements Runnable {
     private final Project myProject;
     private final int myLine;
     private final Document myDocument;
@@ -75,7 +75,7 @@ final class FormatterBasedIndentAdjuster  {
         ReadAction
           .nonBlocking(() -> codeStyleManager.getLineIndent(myFile, lineStart, FormattingMode.ADJUST_INDENT_ON_ENTER))
           .withDocumentsCommitted(myProject)
-          .finishOnUiThread(ModalityState.NON_MODAL, indentString -> updateIndent(indentMarker, indentString))
+          .finishOnUiThread(ModalityState.nonModal(), indentString -> updateIndent(indentMarker, indentString))
           .submit(AppExecutorUtil.getAppExecutorService());
       }
     }

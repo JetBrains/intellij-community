@@ -1,10 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
-import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
+import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector
+import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluationResult
+import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluator
 import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -12,12 +18,17 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
 
+    internal val stats: CodeFragmentCompilationStats = CodeFragmentCompilationStats()
+
     abstract val compilerBackend: FragmentCompilerCodegen
 
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
 
-    abstract fun processError(e: CodeFragmentCodegenException)
+    abstract fun onSuccess()
+    abstract fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
+    abstract fun beforeRunningFallback()
+    abstract fun beforeAnalyzingCodeFragment()
 }
 
 class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
@@ -32,11 +43,32 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         )
     }
 
-    override fun processError(e: CodeFragmentCodegenException) {
+    override fun onSuccess() {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.OLD,
+            StatisticsEvaluationResult.SUCCESS,
+            stats
+        )
+    }
+
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.OLD,
+            StatisticsEvaluationResult.FAILURE,
+            stats,
+        )
         throw e
     }
 
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? = null
+
+    override fun beforeRunningFallback() {
+    }
+
+    override fun beforeAnalyzingCodeFragment() {
+    }
 }
 
 class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
@@ -79,11 +111,28 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         }
     }
 
-    override fun processError(e: CodeFragmentCodegenException) {
-        // TODO maybe break down known cases of failures and keep statistics on them?
-        //      This way, we will have a complete picture of what exact errors users
-        //      come across.
-        LOG.error("Error when compiling code fragment with IR evaluator", e.reason)
+    override fun onSuccess() {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.IR,
+            StatisticsEvaluationResult.SUCCESS,
+            stats
+        )
+    }
+
+    override fun processError(e: Throwable, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.IR,
+            StatisticsEvaluationResult.FAILURE,
+            stats
+        )
+        if (isFallbackDisabled()) {
+            throw e
+        }
+        if (isApplicationInternalMode()) {
+            reportErrorWithAttachments(executionContext, codeFragment, e)
+        }
     }
 
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? {
@@ -91,5 +140,17 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         if (isUnitTestMode()) return null
 
         return OldCodeFragmentCompilingStrategy(codeFragment)
+    }
+
+    override fun beforeRunningFallback() {
+        KotlinDebuggerEvaluatorStatisticsCollector.logFallbackToOldEvaluator(codeFragment.project)
+    }
+
+    private fun isFallbackDisabled(): Boolean {
+        return Registry.`is`("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
+    }
+
+    override fun beforeAnalyzingCodeFragment() {
+        codeFragment.putCopyableUserData(CodeFragmentUtils.USED_FOR_COMPILATION_IN_IR_EVALUATOR, true)
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.ActivityCategory
@@ -26,7 +26,7 @@ sealed class TopHitCache : Disposable {
   }
 
   @JvmField
-  protected val map = ConcurrentHashMap<Class<*>, Collection<OptionDescription>>()
+  protected val map: ConcurrentHashMap<Class<*>, Collection<OptionDescription>> = ConcurrentHashMap<Class<*>, Collection<OptionDescription>>()
 
   override fun dispose() {
   }
@@ -55,7 +55,7 @@ sealed class TopHitCache : Disposable {
         }
       }
 
-      val startTime = StartUpMeasurer.getCurrentTime()
+      val startTime = System.nanoTime()
       val result = when (provider) {
         is ProjectLevelProvider -> provider.getOptions(project!!)
         is ApplicationLevelProvider -> provider.options

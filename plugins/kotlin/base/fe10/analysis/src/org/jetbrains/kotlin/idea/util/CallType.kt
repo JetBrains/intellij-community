@@ -164,21 +164,22 @@ sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallTyp
 
             val receiverExpression = expression.getReceiverExpression()
 
-            if (expression.isImportDirectiveExpression()) {
-                return IMPORT_DIRECTIVE(receiverExpression)
-            }
-
-            if (expression.isPackageDirectiveExpression()) {
-                return PACKAGE_DIRECTIVE(receiverExpression)
-            }
-
-            if (parent is KtUserType) {
-                val constructorCallee = (parent.parent as? KtTypeReference)?.parent as? KtConstructorCalleeExpression
-                if (constructorCallee != null && constructorCallee.parent is KtAnnotationEntry) {
-                    return ANNOTATION(receiverExpression)
+            if (parent != null) {
+                if (expression.isImportDirectiveExpression()) {
+                    return IMPORT_DIRECTIVE(receiverExpression)
                 }
 
-                return TYPE(receiverExpression)
+                if (expression.isPackageDirectiveExpression()) {
+                    return PACKAGE_DIRECTIVE(receiverExpression)
+                }
+                if (parent is KtUserType) {
+                    val constructorCallee = (parent.parent as? KtTypeReference)?.parent as? KtConstructorCalleeExpression
+                    if (constructorCallee != null && constructorCallee.parent is KtAnnotationEntry) {
+                        return ANNOTATION(receiverExpression)
+                    }
+
+                    return TYPE(receiverExpression)
+                }
             }
 
             when (expression) {

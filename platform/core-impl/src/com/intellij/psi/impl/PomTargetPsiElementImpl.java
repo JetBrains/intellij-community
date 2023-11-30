@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.ide.IconProvider;
@@ -31,8 +31,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
   }
 
   @Override
-  @NotNull
-  public PomTarget getTarget() {
+  public @NotNull PomTarget getTarget() {
     return myTarget;
   }
 
@@ -57,9 +56,8 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
     throw new UnsupportedOperationException("Method getTypeName is not yet implemented for " + myTarget.getClass().getName() + "; see PomDescriptionProvider");
   }
 
-  @NotNull
   @Override
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     if (myTarget instanceof PsiTarget) {
       return ((PsiTarget)myTarget).getNavigationElement();
     }
@@ -68,7 +66,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
 
   @Override
   public Icon getIcon() {
-    for (IconProvider iconProvider : IconProvider.EXTENSION_POINT_NAME.getExtensionList()) {
+    for (IconProvider iconProvider : IconProvider.EXTENSION_POINT_NAME.getIterable()) {
       if (iconProvider instanceof PomIconProvider) {
         Icon icon = ((PomIconProvider)iconProvider).getIcon(myTarget, 0);
         if (icon != null) {
@@ -132,8 +130,7 @@ public class PomTargetPsiElementImpl extends RenameableFakePsiElement implements
   }
 
   @Override
-  @Nullable
-  public PsiElement getParent() {
+  public @Nullable PsiElement getParent() {
     return null;
   }
 

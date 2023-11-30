@@ -63,7 +63,9 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
           foo.compileClasspath += sourceSets.test.runtimeClasspath
         }
       """.trimIndent())
-      .addPrefix("""
+      .addPrefix(
+        if (isGradleOlderThan("8.2")) {
+          """
         task 'foo test task'(type: Test) {
           testClassesDirs = sourceSets.foo.output.classesDirs
           classpath += sourceSets.foo.runtimeClasspath
@@ -72,7 +74,18 @@ class ExternalTestsModelCompatibilityTest : GradleImportingTestCase() {
           testClassesDirs = sourceSets.foo.output.classesDirs
           classpath += sourceSets.foo.runtimeClasspath
         }
-      """.trimIndent())
+      """.trimIndent()
+        } else { """
+        task 'foo test task'(type: Test) {
+          testClassesDirs = sourceSets.foo.output.classesDirs
+          classpath = testing.suites.test.sources.runtimeClasspath + sourceSets.foo.runtimeClasspath
+        }
+        task 'super foo test task'(type: Test) {
+          testClassesDirs = sourceSets.foo.output.classesDirs
+          classpath = testing.suites.test.sources.runtimeClasspath + sourceSets.foo.runtimeClasspath
+        }
+      """.trimIndent()
+        })
     importProject(buildScript.generate())
     assertTestTasks(createProjectSubFile("foo-src/package/TestCase.java", "class TestCase"),
                     listOf(":foo test task"),

@@ -32,7 +32,7 @@ internal class GroupInputValidator(val manager: BookmarksManager, val groups: Co
     return initial
   }
 
-  internal fun install(parent: Disposable, component: JComponent, text: () -> String?) = ComponentValidator(parent)
+  internal fun install(parent: Disposable, component: JComponent, text: () -> String?): ComponentValidator = ComponentValidator(parent)
     .withValidator(Supplier { getErrorText(text())?.let { ValidationInfo(it, component) } })
     .installOn(component)
 }

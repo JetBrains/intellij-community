@@ -5,22 +5,23 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.LexerTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class YAMLLexerTest extends LexerTestCase {
   @Override
-  protected Lexer createLexer() {
+  protected @NotNull Lexer createLexer() {
     return new YAMLFlexLexer();
   }
 
   @Override
-  protected void doTest(String text, @Nullable String expected) {
+  protected void doTest(@NotNull String text, @Nullable String expected) {
     super.doTest(text, expected);
     checkCorrectRestart(text);
   }
 
   @Override
-  protected String getDirPath() {
+  protected @NotNull String getDirPath() {
     return (PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/lexer/data/")
       .substring(PathManager.getHomePath().length());
   }
@@ -247,6 +248,10 @@ public class YAMLLexerTest extends LexerTestCase {
 
   // Copy-paste from parser test
   public void testExplicitMaps() {
+    doTest();
+  }
+
+  public void testExplicitMapsWithoutEmptyLine() {
     doTest();
   }
 

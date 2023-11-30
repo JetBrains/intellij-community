@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.ide.actions.SplitAction
@@ -25,7 +25,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
                                  private var filters: VcsLogFilterCollection? = null) :
   VcsLogFile(VcsLogTabsManager.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
 
-  private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.getInstance()
+  private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.Holder.getInstance()
   internal val tabId get() = pathId.logId
 
   internal var tabName: String
@@ -40,10 +40,10 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
     VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
       val projectLog = VcsProjectLog.getInstance(project)
-      val tabsManager = projectLog.tabManager
+      val tabsManager = projectLog.tabManager ?: return@runWhenVcsAndLogIsReady
 
       try {
-        val factory = tabsManager.getPersistentVcsLogUiFactory(logManager, tabId, VcsLogTabLocation.EDITOR, filters)
+        val factory = tabsManager.getPersistentVcsLogUiFactory(tabId, VcsLogTabLocation.EDITOR, filters)
         val ui = logManager.createLogUi(factory, VcsLogTabLocation.EDITOR)
         tabName = VcsLogTabsManager.generateDisplayName(ui)
         ui.filterUi.addFilterListener {
@@ -76,9 +76,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
 
     other as DefaultVcsLogFile
 
-    if (tabId != other.tabId) return false
-
-    return true
+    return tabId == other.tabId
   }
 
   override fun hashCode(): Int {
