@@ -17,7 +17,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.SLRUMap
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
@@ -373,7 +372,10 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
     @Volatile
     private var definitions: List<ScriptDefinition>? = null
 
-    private val failedContributorsHashes = ConcurrentHashMap.newKeySet<Int>()
+    private val activatedDefinitionSources: MutableSet<ScriptDefinitionsSource> = ConcurrentHashMap.newKeySet()
+
+    private val failedContributorsHashes: MutableSet<Int> = ConcurrentHashMap.newKeySet()
+
 
     // cache service as it's getter is on the hot path
     // it is safe, since both services are in same plugin
@@ -450,6 +452,8 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
             definitions = loadedDefinitions
         }
 
+        activatedDefinitionSources.addAll(sources)
+
         applyDefinitionsUpdate() // <== acquires read-action inside
 
         return loadedDefinitions ?: emptyList()
@@ -461,6 +465,8 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
             return getOrLoadDefinitions().asSequence().filter { scriptingSettings.isScriptDefinitionEnabled(it) }
         }
 
+    private fun allDefinitionSourcesContributedToCache(): Boolean = activatedDefinitionSources.containsAll(getSources())
+
     private fun getSources(): List<ScriptDefinitionsSource> {
         @Suppress("DEPRECATION")
         val fromDeprecatedEP = project.extensionArea.getExtensionPoint(ScriptTemplatesProvider.EP_NAME).extensions.toList()
@@ -471,7 +477,13 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
     }
 
     private fun getOrLoadDefinitions(): List<ScriptDefinition> {
-        return definitions ?: reloadDefinitionsInternal(getSources())
+        // This is not thread safe, but if the condition changes by the time of the "then do this" it's ok - we just refresh the data.
+        // Taking local lock here is dangerous due to the possible global read-lock acquisition (hence, the deadlock). See KTIJ-27838.
+        return if (definitions == null || !allDefinitionSourcesContributedToCache()) {
+            reloadDefinitionsInternal(getSources())
+        } else {
+            definitions ?: error("'definitions' became null after they weren't")
+        }
     }
 
     override fun reloadScriptDefinitionsIfNeeded(): List<ScriptDefinition> = getOrLoadDefinitions()
@@ -562,6 +574,7 @@ class NewLogicDelegate(private val project: Project) : LogicDelegate() {
 
         definitionsBySource.clear()
         definitions = null
+        activatedDefinitionSources.clear()
         failedContributorsHashes.clear()
         configurations = null
     }
