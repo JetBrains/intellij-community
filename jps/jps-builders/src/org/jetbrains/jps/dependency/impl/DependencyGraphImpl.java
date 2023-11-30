@@ -178,7 +178,7 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
     Set<ReferenceID> candidates = collect(filter(flat(map(scopeNodes, this::getDependingNodes)), id -> !dependingOnDeleted.contains(id)), new HashSet<>());
     
     for (NodeSource depSrc : unique(flat(map(candidates, dependent -> getSources(dependent))))) {
-      if (!affectedSources.contains(depSrc)) {
+      if (!affectedSources.contains(depSrc) && !diffContext.affectedSources.contains(depSrc) && !allProcessedSources.contains(depSrc)) {
         boolean affectSource = false;
         for (var depNode : filter(getNodes(depSrc), n -> candidates.contains(n.getReferenceID()))) {
           Boolean isAffected = checkAffected.apply(depNode);
