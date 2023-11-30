@@ -80,6 +80,19 @@ internal class KtSimplifiableServiceRetrievingInspectionTest : SimplifiableServi
     doTestWithServicesKt()
   }
 
+  fun testJvmName() {
+    myFixture.addFileToProject(
+      "JvmPlatformAnnotations.kt",
+      //language=kotlin
+      """
+        package kotlin.jvm
+
+        actual annotation class JvmName(actual val name: String)
+      """
+    )
+    doTest(DevKitBundle.message("inspection.simplifiable.service.retrieving.replace.with", "MyAppService", "getInstance"))
+  }
+
   private fun doTestWithServicesKt() {
     @Language("kotlin") val servicesKtFileText = """
       @file:Suppress("UnusedReceiverParameter")
