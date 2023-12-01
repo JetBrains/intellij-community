@@ -344,7 +344,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 
   //IDEA-331405 Hide IntelliJ Light from new UI
-  private fun Element.getThemeNameWithReplacingDeprecated(): String {
+  private fun Element.getThemeNameWithReplacingDeprecated(): String? {
     val currentTheme = this.getAttributeValue(ATTRIBUTE_THEME_NAME)
     if (ExperimentalUI.isNewUI() && currentTheme == "JetBrainsLightTheme") {
       val newThemeId = "ExperimentalLightWithLightHeader"
