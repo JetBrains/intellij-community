@@ -6,7 +6,7 @@ import com.intellij.ide.util.gotoByName.AbstractPrimeSymbolNavigationContributor
 import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.GotoClassContributor
 import com.intellij.navigation.NavigationItem
-import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
-import org.jetbrains.kotlin.idea.base.util.isInDumbMode
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -30,12 +29,14 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
     private val helper: KotlinStringStubIndexHelper<T>,
     private val useOriginalScope: Boolean = false
-) : ChooseByNameContributorEx, GotoClassContributor, DumbAware {
+) : ChooseByNameContributorEx, GotoClassContributor, PossiblyDumbAware {
     override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
         DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode {
             helper.processAllKeys(scope, filter, processor)
         }
     }
+
+    override fun isDumbAware(): Boolean = true
 
     override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
         val project = parameters.project
@@ -81,9 +82,10 @@ class KotlinGotoTypeAliasContributor: AbstractKotlinGotoSymbolContributor<KtType
 }
 
 class KotlinGotoFunctionSymbolContributor: AbstractKotlinGotoSymbolContributor<KtNamedFunction>(KotlinFunctionShortNameIndex) {
-    override fun wrapProcessor(processor: Processor<in KtNamedFunction>): Processor<KtNamedFunction> = Processor {
-        if (it.project.isInDumbMode) return@Processor true
+    // as LCs rely on resolve, hence indices
+    override fun isDumbAware(): Boolean = false
 
+    override fun wrapProcessor(processor: Processor<in KtNamedFunction>): Processor<KtNamedFunction> = Processor {
         val method = LightClassUtil.getLightClassMethod(it)
         if (method == null || it.name != method.name) {
             processor.process(it)
@@ -95,9 +97,10 @@ class KotlinGotoFunctionSymbolContributor: AbstractKotlinGotoSymbolContributor<K
 
 class KotlinGotoPropertySymbolContributor: AbstractKotlinGotoSymbolContributor<KtNamedDeclaration>(KotlinPropertyShortNameIndex) {
 
-    override fun wrapProcessor(processor: Processor<in KtNamedDeclaration>): Processor<KtNamedDeclaration> = Processor {
-        if (it.project.isInDumbMode) return@Processor true
+    // as LCs rely on resolve, hence indices
+    override fun isDumbAware(): Boolean = false
 
+    override fun wrapProcessor(processor: Processor<in KtNamedDeclaration>): Processor<KtNamedDeclaration> = Processor {
         if (LightClassUtil.getLightClassBackingField(it) == null || it.containingClass()?.isInterface() == true) {
             processor.process(it)
         } else {
