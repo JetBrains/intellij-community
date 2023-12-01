@@ -169,6 +169,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
         if (redirectToId == NULL_ID) {
           return false;
         }
+        checkRedirectToId(recordId, currentRecordId, redirectToId);
         currentRecordId = redirectToId;
       }
       else {
@@ -200,9 +201,9 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
     checkRecordIdExists(recordId);
     int currentRecordId = recordId;
     for (int i = 0; i < MAX_REDIRECTS; i++) {
-      final long recordOffset = idToOffset(currentRecordId);
-      final int offsetOnPage = storage.toOffsetInPage(recordOffset);
-      final Page page = storage.pageByOffset(recordOffset);
+      final long recordOffsetInFile = idToOffset(currentRecordId);
+      final int offsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+      final Page page = storage.pageByOffset(recordOffsetInFile);
       final ByteBuffer buffer = page.rawPageBuffer();
       final RecordLayout recordLayout = RecordLayout.recordLayout(buffer, offsetOnPage);
       final byte recordType = recordLayout.recordType();
@@ -221,9 +222,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
 
       if (recordType == RecordLayout.RECORD_TYPE_MOVED) {
         final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
-        if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
-          throw new RecordAlreadyDeletedException("Can't read record[" + currentRecordId + "]: it was deleted");
-        }
+        checkRedirectToId(recordId, currentRecordId, redirectToId);
         currentRecordId = redirectToId;
       }
       else {
@@ -306,9 +305,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
       final byte recordType = recordLayout.recordType();
       if (recordType == RecordLayout.RECORD_TYPE_MOVED) {
         final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
-        if (!isValidRecordId(redirectToId)) {
-          throw new RecordAlreadyDeletedException("Can't write to record[" + currentRecordId + "]: it was deleted");
-        }
+        checkRedirectToId(recordId, currentRecordId, redirectToId);
         currentRecordId = redirectToId;
         continue;//hope redirect chains are not too long...
       }
@@ -410,7 +407,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
     switch (recordType) {
       case RecordLayout.RECORD_TYPE_MOVED -> {
         final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
-        if (!isValidRecordId(redirectToId)) {
+        if (redirectToId == NULL_ID) {
           throw new RecordAlreadyDeletedException("Can't delete record[" + recordId + "]: it was already deleted");
         }
 
@@ -423,7 +420,7 @@ public final class StreamlinedBlobStorageOverMMappedFile extends StreamlinedBlob
         // changed since MovedRecord has another headerSize than Small|LargeRecord
         final int deletedRecordCapacity = recordLayout.fullRecordSize(recordCapacity) - movedRecordLayout.headerSize();
         // set (redirectToId=NULL) to mark record as deleted ('moved nowhere')
-        movedRecordLayout.putRecord(buffer, offsetOnPage, deletedRecordCapacity, 0, NULL_ID, null);
+        movedRecordLayout.putRecord(buffer, offsetOnPage, deletedRecordCapacity, /* length: */ 0, NULL_ID, null);
       }
       default -> throw new AssertionError("RecordType(" + recordType + ") should not appear in the chain: " +
                                           "it is either not implemented yet, or all wrong");

@@ -184,6 +184,7 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
             if (redirectToId == NULL_ID) {
               return false;
             }
+            checkRedirectToId(recordId, currentRecordId, redirectToId);
             currentRecordId = redirectToId;
           }
           else {
@@ -243,9 +244,7 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
 
           if (recordType == RecordLayout.RECORD_TYPE_MOVED) {
             final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
-            if (redirectToId == NULL_ID) { //!actual && redirectTo = NULL
-              throw new RecordAlreadyDeletedException("Can't read record[" + currentRecordId + "]: it was deleted");
-            }
+            checkRedirectToId(recordId, currentRecordId, redirectToId);
             currentRecordId = redirectToId;
           }
           else {
@@ -334,9 +333,7 @@ public final class StreamlinedBlobStorageOverLockFreePagedStorage extends Stream
           final byte recordType = recordLayout.recordType();
           if (recordType == RecordLayout.RECORD_TYPE_MOVED) {
             final int redirectToId = recordLayout.redirectToId(buffer, offsetOnPage);
-            if (!isValidRecordId(redirectToId)) {
-              throw new RecordAlreadyDeletedException("Can't write to record[" + currentRecordId + "]: it was deleted");
-            }
+            checkRedirectToId(recordId, currentRecordId, redirectToId);
             currentRecordId = redirectToId;
             continue;//hope redirect chains are not too long...
           }
