@@ -4,6 +4,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
@@ -14,7 +15,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
 import org.jetbrains.annotations.NotNull;
 
-public final class CopyElementAction extends AnAction {
+public final class CopyElementAction extends AnAction implements DumbAware {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -44,7 +45,7 @@ public final class CopyElementAction extends AnAction {
       }
     }
     else {
-      elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      elements = PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     }
     doCopy(elements, defaultTargetDirectory);
   }

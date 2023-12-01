@@ -15,6 +15,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
@@ -46,7 +47,7 @@ import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CopyClassesHandler extends CopyHandlerDelegateBase {
+public class CopyClassesHandler extends CopyHandlerDelegateBase implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CopyClassesHandler.class);
 
   @Override
@@ -185,15 +186,6 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       LOG.assertTrue(defaultTargetDirectory != null, psiFile);
     }
     Project project = defaultTargetDirectory.getProject();
-    if (DumbService.isDumb(project)) {
-      int copyDumb = Messages.showYesNoDialog(project,
-                                              JavaRefactoringBundle.message("copy.handler.is.dumb.during.indexing"),
-                                              getActionName(elements), Messages.getQuestionIcon());
-      if (copyDumb == Messages.YES) {
-        copyAsFiles(elements, defaultTargetDirectory, project);
-      }
-      return;
-    }
 
     VirtualFile sourceRootForFile =
       ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(defaultTargetDirectory.getVirtualFile());
@@ -399,6 +391,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                                   final Project project) throws IncorrectOperationException {
     final Map<PsiClass, PsiClass> oldToNewMap = new HashMap<>();
     final List<PsiFile> createdFiles = new ArrayList<>(fileToClasses.size());
+    final DumbService dumbService = DumbService.getInstance(project);
     final List<PsiFile> filesToProcess = checkExistingFiles(fileToClasses.keySet(), targetDirectory, fileToRelativePath, copyClassName);
 
     runWriteAction(project, RefactoringBundle.message("command.name.copy"), progress -> {
@@ -436,8 +429,10 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
 
           for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
             if (copyClassName != null && sourceToDestination.size() == 1) {
-              final PsiClass copy = copy(classEntry.getKey(), copyClassName);
-              PsiClass newClass = WriteAction.compute(() -> (PsiClass) classEntry.getValue().replace(copy));
+              PsiClass newClass = dumbService.computeWithAlternativeResolveEnabled(() -> {
+                final PsiClass copy = copy(classEntry.getKey(), copyClassName);
+                return WriteAction.compute(() -> (PsiClass)classEntry.getValue().replace(copy));
+              });
               oldToNewMap.put(classEntry.getKey(), newClass);
             }
             else {
@@ -448,7 +443,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     });
 
-    DumbService.getInstance(project).completeJustSubmittedTasks();
+    dumbService.completeJustSubmittedTasks();
     CopyFilesOrDirectoriesHandler.updateAddedFiles(createdFiles);
 
     runWriteAction(project, RefactoringBundle.message("copy.update.references"), progress -> {
@@ -466,18 +461,20 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           progress.setText2(InspectionsBundle.message("processing.progress.text", copiedClass.getName()));
           numberOfProcessedClasses++;
         }
-        decodeRefs(copiedClass, oldToNewMap, rebindExpressions);
-        final PsiFile psiFile = copiedClass.getContainingFile();
-        if (psiFile instanceof PsiJavaFile) {
-          codeStyleManager.removeRedundantImports((PsiJavaFile)psiFile);
-        }
-        for (PsiElement expression : rebindExpressions) {
-          //filter out invalid elements which are produced by nested elements:
-          //new expressions/type elements, like: List<List<String>>; new Foo(new Foo()), etc
-          if (expression.isValid()) {
-            codeStyleManager.shortenClassReferences(expression);
+        dumbService.runWithAlternativeResolveEnabled(() -> {
+          decodeRefs(copiedClass, oldToNewMap, rebindExpressions);
+          final PsiFile psiFile = copiedClass.getContainingFile();
+          if (psiFile instanceof PsiJavaFile) {
+            codeStyleManager.removeRedundantImports((PsiJavaFile)psiFile);
           }
-        }
+          for (PsiElement expression : rebindExpressions) {
+            //filter out invalid elements which are produced by nested elements:
+            //new expressions/type elements, like: List<List<String>>; new Foo(new Foo()), etc
+            if (expression.isValid()) {
+              codeStyleManager.shortenClassReferences(expression);
+            }
+          }
+        });
       }
     });
 

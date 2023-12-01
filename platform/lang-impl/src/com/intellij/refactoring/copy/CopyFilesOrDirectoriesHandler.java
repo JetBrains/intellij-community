@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -50,7 +51,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
+public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CopyFilesOrDirectoriesHandler.class);
 
   @Override
@@ -271,12 +272,13 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
   public static void updateAddedFiles(List<? extends PsiFile> added) {
     if (added.isEmpty()) return;
     Project project = added.get(0).getProject();
+    DumbService dumbService = DumbService.getInstance(project);
     if (Registry.is("run.refactorings.under.progress")) {
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
-        RefactoringBundle.message("progress.title.update.added.files"), project, null, pi -> UpdateAddedFileProcessor.updateAddedFiles(added));
+        RefactoringBundle.message("progress.title.update.added.files"), project, null, pi -> dumbService.runWithAlternativeResolveEnabled(() -> UpdateAddedFileProcessor.updateAddedFiles(added)));
     }
     else {
-      WriteAction.run(() -> UpdateAddedFileProcessor.updateAddedFiles(added));
+      WriteAction.run(() -> dumbService.runWithAlternativeResolveEnabled(() -> UpdateAddedFileProcessor.updateAddedFiles(added)));
     }
   }
 
