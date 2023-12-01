@@ -152,10 +152,10 @@ public fun <T> BasicLazyTree(
             val backgroundShape by derivedStateOf {
                 val hasRoundedTopCorners = flattenedTree.getOrNull(index - 1)?.id?.let {
                     it !in treeState.delegate.selectedKeys
-                } ?: false
+                } ?: true
                 val hasRoundedBottomCorners = flattenedTree.getOrNull(index + 1)?.id?.let {
                     it !in treeState.delegate.selectedKeys
-                } ?: false
+                } ?: true
                 val topCornerSize = computerCornerSize(hasRoundedTopCorners, elementBackgroundCornerSize)
                 val bottomCornerSize = computerCornerSize(hasRoundedBottomCorners, elementBackgroundCornerSize)
                 RoundedCornerShape(
