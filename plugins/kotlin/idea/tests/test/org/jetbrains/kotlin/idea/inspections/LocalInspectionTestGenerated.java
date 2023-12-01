@@ -3151,6 +3151,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/complexRedundantLet/plusNullable.kt");
         }
 
+        @TestMetadata("receiverHasSideEffectAndLetParamIsUnused.kt")
+        public void testReceiverHasSideEffectAndLetParamIsUnused() throws Exception {
+            runTest("testData/inspectionsLocal/complexRedundantLet/receiverHasSideEffectAndLetParamIsUnused.kt");
+        }
+
         @TestMetadata("receiverWithLambda.kt")
         public void testReceiverWithLambda() throws Exception {
             runTest("testData/inspectionsLocal/complexRedundantLet/receiverWithLambda.kt");

@@ -100,10 +100,15 @@ class ComplexRedundantLetInspection : RedundantLetInspection() {
                 false
             } else {
                 val references = lambdaExpression.functionLiteral.valueParameterReferences(bodyExpression)
-                val destructuringDeclaration = lambdaExpression.functionLiteral.valueParameters.firstOrNull()?.destructuringDeclaration
-                references.isEmpty() || (references.singleOrNull()?.takeIf { expression ->
-                    expression.parents.takeWhile { it != lambdaExpression.functionLiteral }.find { it is KtFunction } == null
-                } != null && destructuringDeclaration == null)
+                if (references.isEmpty()) {
+                    val receiver = element.getQualifiedExpressionForSelector()?.receiverExpression
+                    receiver?.anyDescendantOfType<KtCallElement>() != true
+                } else {
+                    val destructuringDeclaration = lambdaExpression.functionLiteral.valueParameters.firstOrNull()?.destructuringDeclaration
+                    references.singleOrNull()?.takeIf { expression ->
+                        expression.parents.takeWhile { it != lambdaExpression.functionLiteral }.find { it is KtFunction } == null
+                    } != null && destructuringDeclaration == null
+                }
             }
         else ->
             false
