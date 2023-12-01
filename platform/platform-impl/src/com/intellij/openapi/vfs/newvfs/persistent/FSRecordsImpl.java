@@ -618,8 +618,9 @@ public final class FSRecordsImpl implements Closeable {
     try {
       return treeAccessor.findOrCreateRootRecord(rootUrl);
     }
-    catch (IOException e) {
-      throw handleError(e);
+    catch (Throwable t) {
+      //not only IOException: almost everything thrown from .findOrCreateRootRecord() is a sign of VFS structure corruption
+      throw handleError(t);
     }
   }
 
