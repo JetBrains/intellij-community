@@ -19,6 +19,8 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.*;
 
+import static com.intellij.application.options.codeStyle.properties.OverrideLanguageIndentOptionsAccessor.OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME;
+
 @ApiStatus.Experimental
 public final class LanguageCodeStylePropertyMapper extends AbstractCodeStylePropertyMapper {
   private final @NotNull Language myLanguage;
@@ -54,6 +56,10 @@ public final class LanguageCodeStylePropertyMapper extends AbstractCodeStyleProp
           accessorMap.put(accessor.getPropertyName(), accessor);
         }
       }
+    }
+    IndentOptions indentOptions = getRootSettings().getCommonSettings(myLanguage).getIndentOptions();
+    if (indentOptions != null) {
+      accessorMap.put(OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME, new OverrideLanguageIndentOptionsAccessor(indentOptions));
     }
   }
 

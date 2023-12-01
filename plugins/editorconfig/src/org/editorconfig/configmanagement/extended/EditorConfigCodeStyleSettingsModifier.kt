@@ -4,10 +4,8 @@
 package org.editorconfig.configmanagement.extended
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertiesUtil
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor
-import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper
+import com.intellij.application.options.codeStyle.properties.*
+import com.intellij.application.options.codeStyle.properties.OverrideLanguageIndentOptionsAccessor.OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -213,7 +211,7 @@ private fun getDependentProperties(property: String, langPrefix: String?): List<
     stripped = stripped.removePrefix(langPrefix)
   }
   return when (stripped) {
-    "indent_size" -> listOf("continuation_indent_size")
+    "indent_size" -> listOf("continuation_indent_size", OVERRIDE_LANGUAGE_INDENT_OPTIONS_PROPERTY_NAME)
     else -> emptyList()
   }
 }
