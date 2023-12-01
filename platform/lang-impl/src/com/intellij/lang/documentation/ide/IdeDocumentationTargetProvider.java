@@ -8,7 +8,7 @@ import com.intellij.platform.backend.documentation.DocumentationTarget;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,18 +23,16 @@ public interface IdeDocumentationTargetProvider {
     return project.getService(IdeDocumentationTargetProvider.class);
   }
 
-  /**
-   * @deprecated Use {@link #documentationTargets(Editor, PsiFile, LookupElement)} instead.
-   */
-  @Deprecated
+  @ApiStatus.OverrideOnly
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
+  @SuppressWarnings("unused")
   default @Nullable DocumentationTarget documentationTarget(
     @NotNull Editor editor,
     @NotNull PsiFile file,
     @NotNull LookupElement lookupElement
   ) {
-    return ContainerUtil.getFirstItem(documentationTargets(editor, file, lookupElement));
+    throw new IllegalStateException("Override this or documentationTargets(Editor, PsiFile, LookupElement)");
   }
 
   @RequiresReadLock
