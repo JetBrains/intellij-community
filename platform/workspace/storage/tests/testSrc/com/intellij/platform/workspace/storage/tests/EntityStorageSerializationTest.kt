@@ -312,6 +312,9 @@ private val expectedKryoRegistration = """
   com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity
   com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity#Data
   com.intellij.platform.workspace.storage.impl.ChangeEntry#ReplaceEntity#References
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata#Id
+  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata#SerializableTypeMetadata
   com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
   com.intellij.platform.workspace.storage.metadata.model.EntityMetadata
   com.intellij.platform.workspace.storage.metadata.model.StorageClassMetadata
@@ -332,7 +335,6 @@ private val expectedKryoRegistration = """
   com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#SimpleType#CustomType
   com.intellij.platform.workspace.storage.metadata.model.ValueTypeMetadata#EntityReference
   com.intellij.platform.workspace.storage.impl.ConnectionId#ConnectionType
-  com.intellij.platform.workspace.storage.impl.serialization.CacheMetadata
   java.util.Collections#UnmodifiableCollection
   java.util.Collections#UnmodifiableSet
   java.util.Collections#UnmodifiableRandomAccessList
