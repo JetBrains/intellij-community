@@ -1,15 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.yaml.smart;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.yaml.smart
 
-import com.intellij.openapi.options.ConfigurableBuilder;
-import org.jetbrains.yaml.YAMLBundle;
+import com.intellij.openapi.options.BeanConfigurable
+import org.jetbrains.yaml.YAMLBundle
 
-public class YAMLSmartOptionsProvider extends ConfigurableBuilder {
-  public YAMLSmartOptionsProvider() {
-    super(YAMLBundle.message("yaml.smartkeys.option.title"));
-    YAMLEditorOptions options = YAMLEditorOptions.getInstance();
-    checkBox(YAMLBundle.message("yaml.smartkeys.option.paste"),
-             options::isUseSmartPaste,
-             options::setUseSmartPaste);
+class YAMLSmartOptionsProvider : BeanConfigurable<YAMLEditorOptions>(
+  YAMLEditorOptions.getInstance(), YAMLBundle.message("yaml.smartkeys.option.title")) {
+
+  init {
+    checkBox(YAMLBundle.message("yaml.smartkeys.option.paste"), instance!!::isUseSmartPaste, instance!!::setUseSmartPaste)
   }
 }
