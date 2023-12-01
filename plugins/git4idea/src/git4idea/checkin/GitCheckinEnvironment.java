@@ -1099,6 +1099,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
     }
 
     public boolean isMove() {
+      if (beforePath == null || afterPath == null) return false;
       return !equalsCaseSensitive(beforePath, afterPath);
     }
 
