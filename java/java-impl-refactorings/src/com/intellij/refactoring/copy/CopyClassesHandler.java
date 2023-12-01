@@ -13,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -366,14 +367,19 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     if (Registry.is("run.refactorings.under.progress")){
       ApplicationEx application = ApplicationManagerEx.getApplicationEx();
       AtomicReference<Throwable> thrown = new AtomicReference<>();
-      application.runWriteActionWithCancellableProgressInDispatchThread(title, project, null, progress -> {
+      if (!application.runWriteActionWithCancellableProgressInDispatchThread(title, project, null, progress -> {
         try {
           consumer.consume(progress);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Throwable e) {
           thrown.set(e);
         }
-      });
+      })) {
+        return;
+      }
       Throwable throwable = thrown.get();
       if (throwable instanceof IncorrectOperationException) {
         throw (IncorrectOperationException) throwable;
