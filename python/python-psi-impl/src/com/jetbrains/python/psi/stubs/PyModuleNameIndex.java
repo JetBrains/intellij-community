@@ -130,9 +130,9 @@ public class PyModuleNameIndex extends ScalarIndexExtension<String> {
   public static List<PyFile> findByQualifiedName(@NotNull QualifiedName qName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     String shortName = qName.getLastComponent();
     if (shortName == null) return Collections.emptyList();
-    return ContainerUtil.mapNotNull(findByShortName(shortName, project, scope), file -> {
+    return ContainerUtil.filter(findByShortName(shortName, project, scope), file -> {
       List<QualifiedName> possibleQNames = QualifiedNameFinder.findImportableQNames(file, file.getVirtualFile());
-      return possibleQNames.contains(qName) ? file : null;
+      return possibleQNames.contains(qName);
     });
   }
 }
