@@ -26,6 +26,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
         }
 
+        @TestMetadata("abstractClass.test")
+        public void testAbstractClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/autoImports/callableReference/abstractClass.test");
+        }
+
         @TestMetadata("annotation.test")
         public void testAnnotation() throws Exception {
             runTest("../idea/tests/testData/quickfix/autoImports/callableReference/annotation.test");
