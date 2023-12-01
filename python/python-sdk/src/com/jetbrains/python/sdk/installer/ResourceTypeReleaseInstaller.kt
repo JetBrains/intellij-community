@@ -30,7 +30,7 @@ class PkgReleaseInstaller : ResourceTypeReleaseInstaller(ResourceType.APPLE_SOFT
  */
 class ExeReleaseInstaller : ResourceTypeReleaseInstaller(ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
   override fun buildCommandLine(resource: Resource, path: Path): GeneralCommandLine {
-    return GeneralCommandLine(path.absolutePathString(), "/quiet", "InstallAllUsers=0")
+    return GeneralCommandLine(path.absolutePathString(), "/repair", "/quiet", "InstallAllUsers=0")
   }
 }
 
