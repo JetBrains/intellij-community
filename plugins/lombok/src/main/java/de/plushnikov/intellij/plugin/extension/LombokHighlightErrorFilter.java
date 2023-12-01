@@ -20,6 +20,7 @@ import de.plushnikov.intellij.plugin.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.handler.FieldNameConstantsHandler;
 import de.plushnikov.intellij.plugin.handler.LazyGetterHandler;
 import de.plushnikov.intellij.plugin.handler.OnXAnnotationHandler;
+import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +133,7 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
 
         // applicable only for methods
         if (importantParent instanceof PsiMethod) {
-          AddAnnotationFix fix = new AddAnnotationFix(LombokClassNames.SNEAKY_THROWS, (PsiModifierListOwner) importantParent);
+          AddAnnotationFix fix = PsiQuickFixFactory.createAddAnnotationFix(LombokClassNames.SNEAKY_THROWS, (PsiModifierListOwner) importantParent);
           highlightInfo.registerFix(fix, null, null, null, null);
         }
       }

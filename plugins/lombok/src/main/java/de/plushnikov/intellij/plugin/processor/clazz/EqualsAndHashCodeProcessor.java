@@ -90,7 +90,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   void validateCallSuperParamExtern(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     validateCallSuperParam(psiAnnotation, psiClass, builder,
-                           () -> PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper = true"));
+                           () -> PsiQuickFixFactory.createAddAnnotationFix(psiClass, "lombok.EqualsAndHashCode", "callSuper = true"));
   }
 
   private void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation,

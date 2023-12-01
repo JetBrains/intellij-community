@@ -1,7 +1,5 @@
 package de.plushnikov.intellij.plugin.inspection;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
@@ -14,6 +12,7 @@ import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -84,8 +83,8 @@ public class LombokInspection extends LombokJavaInspectionBase {
               !parentOfAnnotation.hasAnnotation(LombokClassNames.SUPER_BUILDER)) {
             final LombokProblemInstance problemInstance = new LombokProblemInstance(
               LombokBundle.message("inspection.message.builder.default.requires.builder.annotation"), ProblemHighlightType.GENERIC_ERROR);
-            problemInstance.withLocalQuickFixes(() -> new AddAnnotationFix(LombokClassNames.BUILDER, parentOfAnnotation),
-                                                () -> new AddAnnotationFix(LombokClassNames.SUPER_BUILDER, parentOfAnnotation));
+            problemInstance.withLocalQuickFixes(() -> PsiQuickFixFactory.createAddAnnotationFix(LombokClassNames.BUILDER, parentOfAnnotation),
+                                                () -> PsiQuickFixFactory.createAddAnnotationFix(LombokClassNames.SUPER_BUILDER, parentOfAnnotation));
             problems.add(problemInstance);
           }
         }
