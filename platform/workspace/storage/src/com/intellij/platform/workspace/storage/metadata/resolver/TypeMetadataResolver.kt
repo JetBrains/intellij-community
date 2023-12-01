@@ -5,6 +5,7 @@ import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.serialization.PluginId
 import com.intellij.platform.workspace.storage.metadata.MetadataHash
 import com.intellij.platform.workspace.storage.metadata.MetadataStorage
+import com.intellij.platform.workspace.storage.metadata.exceptions.MissingMetadataStorage
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import org.jetbrains.annotations.TestOnly
 
@@ -14,12 +15,13 @@ import org.jetbrains.annotations.TestOnly
  * See [com.intellij.platform.workspace.storage.tests.metadata.serialization.service.TestTypeMetadataResolver]
  */
 internal interface TypeMetadataResolver {
-  fun resolveTypeMetadata(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): StorageTypeMetadata
+  fun resolveTypeMetadata(metadataStorage: MetadataStorage, typeFqn: String): StorageTypeMetadata
 
-  fun resolveTypeMetadataHashOrNull(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataHash?
+  fun resolveTypeMetadataHash(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash
 
-  fun resolveTypeMetadataHash(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataHash
+  fun resolveTypeMetadataHashOrNull(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash?
 
+  fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataStorage
 
   companion object {
     internal fun getInstance(): TypeMetadataResolver = INSTANCE
@@ -35,27 +37,16 @@ internal interface TypeMetadataResolver {
 
 
 internal object TypeMetadataResolverImpl: TypeMetadataResolver {
+  override fun resolveTypeMetadata(metadataStorage: MetadataStorage, typeFqn: String): StorageTypeMetadata =
+    metadataStorage.getMetadataByTypeFqn(typeFqn)
 
-  override fun resolveTypeMetadata(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): StorageTypeMetadata {
-    val metadataStorage = resolveMetadataStorage(typesResolver, typeFqn, pluginId)
-    return metadataStorage.getMetadataByTypeFqn(typeFqn)
-  }
+  override fun resolveTypeMetadataHash(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash =
+    metadataStorage.getMetadataHashByTypeFqn(typeFqn)
 
-  override fun resolveTypeMetadataHashOrNull(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataHash? {
-    val metadataStorage = resolveMetadataStorageOrNull(typesResolver, typeFqn, pluginId)
-    return metadataStorage?.getMetadataHashByTypeFqnOrNull(typeFqn)
-  }
+  override fun resolveTypeMetadataHashOrNull(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash? =
+    metadataStorage.getMetadataHashByTypeFqnOrNull(typeFqn)
 
-  override fun resolveTypeMetadataHash(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataHash {
-    val metadataStorage = resolveMetadataStorage(typesResolver, typeFqn, pluginId)
-    return metadataStorage.getMetadataHashByTypeFqn(typeFqn)
-  }
-
-
-  private fun resolveMetadataStorageOrNull(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataStorage? =
-    MetadataStorageResolver.resolveMetadataStorageOrNull(typesResolver, extractPackageName(typeFqn), pluginId)
-
-  private fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataStorage =
+  override fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataStorage =
     MetadataStorageResolver.resolveMetadataStorage(typesResolver, extractPackageName(typeFqn), pluginId)
 
 

@@ -195,6 +195,7 @@ internal class StorageClassesRegistrar(
 
   private fun registerMetadataClasses(kryo: Kryo) {
     kryo.register(CacheMetadata::class.java)
+    kryo.register(CacheMetadata.Id::class.java)
     kryo.register(CacheMetadata.SerializableTypeMetadata::class.java)
 
     kryo.register(StorageTypeMetadata::class.java)

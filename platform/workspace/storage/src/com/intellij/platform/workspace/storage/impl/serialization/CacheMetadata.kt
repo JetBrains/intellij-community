@@ -13,29 +13,29 @@ import com.intellij.platform.workspace.storage.metadata.diff.TypesMetadataCompar
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolver
 import com.intellij.platform.workspace.storage.metadata.utils.collectTypesByFqn
-import java.util.LinkedHashMap
 
 internal fun compareWithCurrentEntitiesMetadata(cacheMetadata: CacheMetadata,
                                                 typesResolver: EntityTypesResolver): ComparisonResult {
   val metadataResolver = TypeMetadataResolver.getInstance()
 
-  cacheMetadata.forEach { (pluginId, cacheTypeMetadata) ->
-      val typeFqn = cacheTypeMetadata.metadata.fqName
-      val currentTypeMetadataHash = metadataResolver.resolveTypeMetadataHashOrNull(typesResolver, typeFqn, pluginId)
-                                    ?: return NotEqual("Failed to load existing metadata for type $typeFqn")
+  cacheMetadata.forEach { (id, cacheTypeMetadata) ->
+    val typeFqn = cacheTypeMetadata.metadata.fqName
+    val metadataStorage = metadataResolver.resolveMetadataStorage(typesResolver, id.metadataStorageFqn, id.pluginId)
+    val currentTypeMetadataHash = metadataResolver.resolveTypeMetadataHashOrNull(metadataStorage, typeFqn)
+                                  ?: return NotEqual("Failed to load existing metadata for type $typeFqn")
 
-      if (cacheTypeMetadata.metadataHash != currentTypeMetadataHash) {
-        val currentTypeMetadata = metadataResolver.resolveTypeMetadata(typesResolver, typeFqn, pluginId)
-        val comparisonResult = TypesMetadataComparator(cacheTypeMetadata.metadata, currentTypeMetadata)
-          .areEquals(cacheTypeMetadata.metadata, currentTypeMetadata)
-        if (comparisonResult.areEquals) {
-          throw IllegalStateException(
-            "Hashes of the type $typeFqn differ in the cache (${cacheTypeMetadata.metadataHash}) from the current one ($currentTypeMetadataHash)"
-            + ", although after comparison they are equal."
-          )
-        }
-        return comparisonResult
+    if (cacheTypeMetadata.metadataHash != currentTypeMetadataHash) {
+      val currentTypeMetadata = metadataResolver.resolveTypeMetadata(metadataStorage, typeFqn)
+      val comparisonResult = TypesMetadataComparator(cacheTypeMetadata.metadata, currentTypeMetadata)
+        .areEquals(cacheTypeMetadata.metadata, currentTypeMetadata)
+      if (comparisonResult.areEquals) {
+        throw IllegalStateException(
+          "Hashes of the type $typeFqn differ in the cache (${cacheTypeMetadata.metadataHash}) from the current one ($currentTypeMetadataHash)"
+          + ", although after comparison they are equal."
+        )
       }
+      return comparisonResult
+    }
   }
   return Equal
 }
@@ -62,39 +62,43 @@ internal fun getCacheMetadata(entityStorage: EntityStorageSnapshotImpl, typesRes
 
 
 internal class CacheMetadata(
-  private val metadataByPluginId: LinkedHashMap<PluginId, List<SerializableTypeMetadata>>
-): Iterable<Pair<PluginId, SerializableTypeMetadata>> {
+  private val metadataById: LinkedHashMap<Id, List<SerializableTypeMetadata>>
+): Iterable<Pair<CacheMetadata.Id, SerializableTypeMetadata>> {
+
+  internal data class Id(val pluginId: PluginId, val metadataStorageFqn: String)
 
   internal class SerializableTypeMetadata(val metadata: StorageTypeMetadata, val metadataHash: MetadataHash)
 
-  fun getMetadataWithPluginId(): Iterable<Pair<PluginId, StorageTypeMetadata>> = this.map { it.first to it.second.metadata }
+  fun getMetadataWithPluginId(): Iterable<Pair<PluginId, StorageTypeMetadata>> = this.map { it.first.pluginId to it.second.metadata }
 
-  override fun iterator(): Iterator<Pair<PluginId, SerializableTypeMetadata>> {
-    return CacheMetadataIterator(metadataByPluginId.iterator())
+  override fun iterator(): Iterator<Pair<Id, SerializableTypeMetadata>> {
+    return CacheMetadataIterator(metadataById.iterator())
   }
 
 
   internal class MutableCacheMetadata(private val typesResolver: EntityTypesResolver) {
-    private val metadataByPluginId: MutableMap<PluginId, MutableMap<String, StorageTypeMetadata>> = hashMapOf()
+    private val metadataById: MutableMap<Id, MutableMap<String, StorageTypeMetadata>> = hashMapOf()
 
     fun add(clazz: Class<*>) {
       val pluginId: PluginId = typesResolver.getPluginId(clazz)
-      val typeMetadata = TypeMetadataResolver.getInstance().resolveTypeMetadata(typesResolver, clazz.name, pluginId)
+      val metadataStorage = TypeMetadataResolver.getInstance().resolveMetadataStorage(typesResolver, clazz.name, pluginId)
+      val typeMetadata = TypeMetadataResolver.getInstance().resolveTypeMetadata(metadataStorage, clazz.name)
 
-      val metadataByFqn = metadataByPluginId.getOrPut(pluginId) { hashMapOf() }
+      val metadataByFqn = metadataById.getOrPut(Id(pluginId, metadataStorage::class.java.name)) { hashMapOf() }
       typeMetadata.collectTypesByFqn(metadataByFqn)
     }
 
     fun addAll(classes: Iterable<Class<*>>) = classes.forEach(::add)
 
     fun toImmutable(typesResolver: EntityTypesResolver): CacheMetadata {
-      val map = LinkedHashMap<PluginId, List<SerializableTypeMetadata>>()
-      metadataByPluginId.forEach { (pluginId, metadataByFqn) ->
+      val map = LinkedHashMap<Id, List<SerializableTypeMetadata>>()
+      metadataById.forEach { (id, metadataByFqn) ->
+        val metadataStorage = TypeMetadataResolver.getInstance().resolveMetadataStorage(typesResolver, id.metadataStorageFqn, id.pluginId)
         val serializableTypesMetadata = metadataByFqn.values.map {
-          val typeMetadataHash = TypeMetadataResolver.getInstance().resolveTypeMetadataHash(typesResolver, it.fqName, pluginId)
+          val typeMetadataHash = TypeMetadataResolver.getInstance().resolveTypeMetadataHash(metadataStorage, it.fqName)
           SerializableTypeMetadata(it, typeMetadataHash)
         }
-        map[pluginId] = serializableTypesMetadata
+        map[id] = serializableTypesMetadata
       }
       return CacheMetadata(map)
     }
@@ -102,10 +106,10 @@ internal class CacheMetadata(
 
 
   private class CacheMetadataIterator(
-    private val metadataWithPluginIdIterator: Iterator<Map.Entry<PluginId, List<SerializableTypeMetadata>>>
-  ): Iterator<Pair<PluginId, SerializableTypeMetadata>> {
+    private val metadataWithIdIterator: Iterator<Map.Entry<Id, List<SerializableTypeMetadata>>>
+  ): Iterator<Pair<Id, SerializableTypeMetadata>> {
 
-    private var currentPluginId: PluginId = null
+    private var currentId: Id? = null
     private var metadataIterator: Iterator<SerializableTypeMetadata>? = null
 
     override fun hasNext(): Boolean {
@@ -113,16 +117,16 @@ internal class CacheMetadata(
       return metadataIterator?.hasNext() == true
     }
 
-    override fun next(): Pair<PluginId, SerializableTypeMetadata> {
+    override fun next(): Pair<Id, SerializableTypeMetadata> {
       updateIterator()
       val typeMetadata = metadataIterator?.next() ?: throw NoSuchElementException("Next on empty iterator")
-      return Pair(currentPluginId, typeMetadata)
+      return Pair(currentId!!, typeMetadata)
     }
 
     private fun updateIterator() {
-      while (metadataWithPluginIdIterator.hasNext() && metadataIterator?.hasNext() != true) {
-        val pair = metadataWithPluginIdIterator.next()
-        currentPluginId = pair.key
+      while (metadataWithIdIterator.hasNext() && metadataIterator?.hasNext() != true) {
+        val pair = metadataWithIdIterator.next()
+        currentId = pair.key
         metadataIterator = pair.value.iterator()
       }
     }
