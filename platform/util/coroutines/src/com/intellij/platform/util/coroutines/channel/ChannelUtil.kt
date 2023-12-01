@@ -34,7 +34,9 @@ class ChannelInputStream(
   private val transferJob = parentCoroutineScope.launch {
     try {
       channel.consumeEach { bytes ->
-        myBuffer.offerLast(Content.Data(ByteArrayInputStream(bytes)))
+        if (bytes.isNotEmpty()) {
+          myBuffer.offerLast(Content.Data(ByteArrayInputStream(bytes)))
+        }
       }
       myBuffer.offerLast(Content.End)
     }
@@ -62,9 +64,26 @@ class ChannelInputStream(
     return available.read(b, off, minOf(len, available.available()))
   }
 
-  override fun available(): Int {
-    return (myBuffer.peekFirst() as? Content.Data)?.stream?.available() ?: 0
-  }
+  override tailrec fun available(): Int =
+    when (val current = myBuffer.pollFirst()) {
+      null -> 0
+
+      is Content.Data -> {
+        val availableInCurrent = current.stream.available()
+        if (availableInCurrent > 0) {
+          myBuffer.putFirst(current)
+          availableInCurrent
+        }
+        else {
+          available()
+        }
+      }
+
+      Content.End, is Content.Error -> {
+        myBuffer.putFirst(current)
+        0
+      }
+    }
 
   private fun getAvailableBuffer(): ByteArrayInputStream? {
     while (true) {
