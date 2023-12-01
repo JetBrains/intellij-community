@@ -398,7 +398,6 @@ class PyLineCallback(PEP669CallbackBase):
                 stop = False
 
                 if step_cmd == CMD_SMART_STEP_INTO:
-                    stop = False
                     if smart_stop_frame is frame:
                         if not is_within_context:
                             # We don't stop on jumps in multiline statements, which
