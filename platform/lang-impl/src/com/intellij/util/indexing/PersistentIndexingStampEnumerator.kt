@@ -18,7 +18,7 @@ import java.nio.ByteBuffer
 import java.nio.file.Path
 
 
-private val USE_MAPPED_ENUMERATOR = SystemProperties.getBooleanProperty("idea.use-mapped-index-stamps-enumerator", false)
+private val USE_MAPPED_ENUMERATOR = SystemProperties.getBooleanProperty("idea.use-mapped-index-stamps-enumerator", true)
 
 class DurableTimestampsEnumerator(path: Path) : DurableDataEnumerator<TimestampsImmutable>
                                                 by createTimestampsEnumerator(path)
