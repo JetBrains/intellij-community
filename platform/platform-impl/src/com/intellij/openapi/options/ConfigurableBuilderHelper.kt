@@ -1,8 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
+import javax.swing.JComponent
 
 class ConfigurableBuilderHelper {
   companion object {
@@ -18,6 +22,21 @@ class ConfigurableBuilderHelper {
       }
     }
 
+    @JvmStatic
+    @ApiStatus.Internal
+    fun buildBeanPanel(@NlsContexts.BorderTitle title: String?, components: List<JComponent>): DialogPanel {
+      return panel {
+        if (title != null) {
+          group(title) {
+            appendBeanFields(components)
+          }
+        }
+        else {
+          appendBeanFields(components)
+        }
+      }
+    }
+
     private fun Panel.appendFields(fields: List<ConfigurableBuilder.BeanField<*, *>>) {
       for (field in fields) {
         row {
@@ -25,6 +44,14 @@ class ConfigurableBuilderHelper {
             .onApply { field.apply() }
             .onIsModified { field.isModified }
             .onReset { field.reset() }
+        }
+      }
+    }
+
+    private fun Panel.appendBeanFields(components: List<JComponent>) {
+      for (component in components) {
+        row {
+          cell(component)
         }
       }
     }

@@ -8,11 +8,8 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import kotlin.reflect.KMutableProperty0;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -20,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -307,15 +303,8 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
 
   @Override
   public JComponent createComponent() {
-    final JPanel panel = new JPanel(new GridLayout(myFields.size(), 1, 0, JBUI.scale(5)));
-    for (BeanField field: myFields) {
-      panel.add(field.getComponent());
-    }
-    BorderLayoutPanel result = JBUI.Panels.simplePanel().addToTop(panel);
-    if (myTitle != null) {
-      result.setBorder(IdeBorderFactory.createTitledBorder(myTitle));
-    }
-    return result;
+    List<JComponent> components = ContainerUtil.map(myFields, field -> field.getComponent());
+    return ConfigurableBuilderHelper.buildBeanPanel(myTitle, components);
   }
 
   @Override
