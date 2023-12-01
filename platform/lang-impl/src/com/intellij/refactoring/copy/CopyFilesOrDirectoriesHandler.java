@@ -272,7 +272,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     if (added.isEmpty()) return;
     Project project = added.get(0).getProject();
     if (Registry.is("run.refactorings.under.progress")) {
-      ApplicationManagerEx.getApplicationEx().runWriteActionWithNonCancellableProgressInDispatchThread(
+      ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(
         RefactoringBundle.message("progress.title.update.added.files"), project, null, pi -> UpdateAddedFileProcessor.updateAddedFiles(added));
     }
     else {

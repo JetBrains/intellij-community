@@ -21,8 +21,8 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessagesService;
@@ -522,8 +522,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null,
-                                                                     indicator -> performRefactoring(writableUsageInfos));
+        if (!app.runWriteActionWithCancellableProgressInDispatchThread(commandName, myProject, null,
+                                                                       indicator -> performRefactoring(writableUsageInfos))) {
+          return;
+        }
       }
       else {
         app.runWriteAction(() -> performRefactoring(writableUsageInfos));
@@ -537,8 +539,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
       myTransaction.commit();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null,
-                                                                     indicator -> performPsiSpoilingRefactoring());
+        if (!app.runWriteActionWithCancellableProgressInDispatchThread(commandName, myProject, null,
+                                                                       indicator -> performPsiSpoilingRefactoring())) {
+          return;
+        }
       }
       else {
         app.runWriteAction(this::performPsiSpoilingRefactoring);
