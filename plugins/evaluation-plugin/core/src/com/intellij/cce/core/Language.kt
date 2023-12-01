@@ -18,6 +18,7 @@ enum class Language(val displayName: String, private val extension: String, val 
   RUST("Rust", "rs", "Rust"),
   CSHARP("C#", "cs", "C#"),
   CSS("CSS", "css", "CSS"),
+  LESS("Less", "less", "LESS"),
   HTML("HTML", "html", "HTML"),
   ANOTHER("Another", "*", ""),
   UNSUPPORTED("Unsupported", "", ""); // TODO: There are no unsupported languages
