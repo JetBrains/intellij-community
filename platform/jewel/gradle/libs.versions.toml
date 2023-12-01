@@ -1,10 +1,10 @@
 [versions]
-composeDesktop = "1.5.10"
+composeDesktop = "1.5.11"
 coroutines = "1.7.3"
 detekt = "1.23.1"
 dokka = "1.8.20"
 idea232 = "232.10227.8"
-idea233 = "233.11799.67-EAP-SNAPSHOT"
+idea233 = "233.11799.196-EAP-SNAPSHOT"
 ideaGradlePlugin = "1.16.0"
 javaSarif = "2.0"
 jna = "5.13.0"
