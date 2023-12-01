@@ -37,7 +37,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
-import org.jetbrains.idea.maven.server.ParallelRunner;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
@@ -751,7 +750,7 @@ public final class MavenProjectsTree {
     public void updateProjects(@NotNull List<UpdateSpec> specs) {
       if (specs.isEmpty()) return;
 
-      ParallelRunner.runInParallel(specs, spec -> {
+      ParallelRunner.getInstance(tree.myProject).runInParallelBlocking(specs, spec -> {
         update(spec.mavenProjectFile(), spec.forceRead());
       });
     }

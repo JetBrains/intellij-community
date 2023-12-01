@@ -878,7 +878,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         PluginResolutionData resolution = new PluginResolutionData(mavenPluginId, pluginDependencies, remoteRepos);
         resolutions.add(resolution);
       }
-      List<PluginResolutionResponse> results = ParallelRunner.execute(runInParallel, resolutions, resolution ->
+      List<PluginResolutionResponse> results = ParallelRunnerForServer.execute(runInParallel, resolutions, resolution ->
         resolvePlugin(task, resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
       );
       return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token));

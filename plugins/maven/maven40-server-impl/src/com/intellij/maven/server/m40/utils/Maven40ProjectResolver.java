@@ -29,7 +29,7 @@ import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.LongRunningTask;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicatorImpl;
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
-import org.jetbrains.idea.maven.server.ParallelRunner;
+import org.jetbrains.idea.maven.server.ParallelRunnerForServer;
 
 import java.io.File;
 import java.rmi.RemoteException;
@@ -142,7 +142,7 @@ public class Maven40ProjectResolver {
         task.updateTotalRequests(buildingResultsToResolveDependencies.size());
         boolean runInParallel = myResolveInParallel;
         Collection<Maven40ExecutionResult> execResults =
-          ParallelRunner.execute(
+          ParallelRunnerForServer.execute(
             runInParallel,
             buildingResultsToResolveDependencies.entrySet(), entry -> {
               if (task.isCanceled()) return new Maven40ExecutionResult(Collections.emptyList());

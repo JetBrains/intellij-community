@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class ParallelRunner {
+public final class ParallelRunnerForServer {
   @FunctionalInterface
   public interface ThrowingConsumer<T> extends Consumer<T> {
     @Override
@@ -75,7 +75,7 @@ public final class ParallelRunner {
   }
 
   public static <T, R, E extends Exception> List<R> executeSequentially(@NotNull Collection<T> collection,
-                                                                        @NotNull ParallelRunner.CheckedFunction<T, R, E> method) throws E {
+                                                                        @NotNull ParallelRunnerForServer.CheckedFunction<T, R, E> method) throws E {
     List<R> result = new ArrayList<>();
 
     for (T item : collection) {
@@ -86,7 +86,7 @@ public final class ParallelRunner {
   }
 
   public static <T, R, E extends Exception> List<R> executeInParallel(@NotNull Collection<T> collection,
-                                                                      @NotNull ParallelRunner.CheckedFunction<T, R, E> method) throws E {
+                                                                      @NotNull ParallelRunnerForServer.CheckedFunction<T, R, E> method) throws E {
     Set<RuntimeException> runtimeExceptions = ConcurrentHashMap.newKeySet();
     Set<E> checkedExceptions = ConcurrentHashMap.newKeySet();
 
@@ -125,7 +125,7 @@ public final class ParallelRunner {
 
   public static <T, R, E extends Exception> List<R> execute(boolean inParallel,
                                                             @NotNull Collection<T> collection,
-                                                            @NotNull ParallelRunner.CheckedFunction<T, R, E> method) throws E {
+                                                            @NotNull ParallelRunnerForServer.CheckedFunction<T, R, E> method) throws E {
     return inParallel ? executeInParallel(collection, method) : executeSequentially(collection, method);
   }
 

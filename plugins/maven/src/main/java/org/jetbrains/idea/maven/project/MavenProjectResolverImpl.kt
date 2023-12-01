@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.model.MavenWorkspaceMap
 import org.jetbrains.idea.maven.project.MavenProjectResolver.MavenProjectResolutionResult
 import org.jetbrains.idea.maven.server.MavenConfigParseException
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.ParallelRunner
+import org.jetbrains.idea.maven.utils.ParallelRunner
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -115,7 +115,8 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
       .filterKeys { it != null }
       .mapKeys { it.key!! }
     val projectsWithUnresolvedPlugins = ConcurrentLinkedQueue<MavenProjectWithHolder>()
-    ParallelRunner.runInParallelRethrow<MavenProjectReaderResult, MavenProcessCanceledException>(results) {
+
+    ParallelRunner.getInstance(myProject).runInParallel(results) {
       doResolve(it, artifactIdToMavenProjects, generalSettings, embedder, tree, projectsWithUnresolvedPlugins)
     }
     return projectsWithUnresolvedPlugins
