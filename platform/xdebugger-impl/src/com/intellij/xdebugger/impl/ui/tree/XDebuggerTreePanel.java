@@ -5,10 +5,12 @@ import com.intellij.ide.dnd.DnDAction;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSource;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -31,7 +33,16 @@ public final class XDebuggerTreePanel implements DnDSource {
                             @NotNull @NonNls final String popupActionGroupId, @Nullable XValueMarkers<?, ?> markers) {
     myTree = new XDebuggerTree(project, editorsProvider, sourcePosition, popupActionGroupId, markers);
     myMainPanel = new JPanel(new BorderLayout());
-    myMainPanel.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
+    Component content;
+    if (Registry.intValue("debugger.anti.flickering.delay", 0) > 0) {
+      AntiFlickeringPanel antiFlickeringPanel = new AntiFlickeringPanel(new BorderLayout());
+      antiFlickeringPanel.add(myTree);
+      content = antiFlickeringPanel;
+    }
+    else {
+      content = myTree;
+    }
+    myMainPanel.add(ScrollPaneFactory.createScrollPane(content), BorderLayout.CENTER);
     Disposer.register(parentDisposable, myTree);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
