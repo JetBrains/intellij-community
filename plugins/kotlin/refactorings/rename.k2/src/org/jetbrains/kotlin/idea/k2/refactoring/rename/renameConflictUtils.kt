@@ -101,7 +101,8 @@ fun checkCallableShadowing(
         if (refElement.getStrictParentOfType<KtTypeReference>() != null ||
             refElement.getStrictParentOfType<KtImportDirective>() != null) continue
 
-        val callExpression = refElement.parent as? KtCallExpression ?: refElement.parent as? KtQualifiedExpression ?: refElement
+        val parent = refElement.parent
+        val callExpression = parent as? KtCallExpression ?: parent as? KtQualifiedExpression ?: parent as? KtCallableReferenceExpression ?: refElement
         val topLevel = PsiTreeUtil.getTopmostParentOfType(refElement, KtQualifiedExpression::class.java) ?: callExpression
         val offsetInCopy = callExpression.textRange.shiftLeft(topLevel.textRange.startOffset)
 
@@ -123,6 +124,8 @@ fun checkCallableShadowing(
                 getter
             } else {
                 val element = resolvedSymbol?.psi
+                    //callable references are ignored now by resolveCall() in AA, thus they require separate treatment here
+                    ?: (copyCallExpression as? KtCallableReferenceExpression)?.callableReference?.mainReference?.resolve()
                 externalDeclarations.addIfNotNull(element)
                 element
             }
@@ -232,6 +235,11 @@ private fun KtPsiFactory.createCodeFragmentWithNewName(
 
         is KtQualifiedExpression -> {
             copiedExpression.selectorExpression?.replace(replacement)
+            topLevelCopy
+        }
+
+        is KtCallableReferenceExpression -> {
+            copiedExpression.callableReference.replace(replacement)
             topLevelCopy
         }
 

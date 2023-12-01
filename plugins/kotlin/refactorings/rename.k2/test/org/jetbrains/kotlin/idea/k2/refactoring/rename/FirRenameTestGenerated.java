@@ -913,6 +913,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFunWithJvmName/renameKotlinFunWithJvmName.test");
     }
 
+    @TestMetadata("renameKotlinFunctionCallableReference/renameKotlinFunctionCallableReference.test")
+    public void testRenameKotlinFunctionCallableReference_RenameKotlinFunctionCallableReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFunctionCallableReference/renameKotlinFunctionCallableReference.test");
+    }
+
     @TestMetadata("renameKotlinFunctionInEnum/renameKotlinFunctionInEnum.test")
     public void testRenameKotlinFunctionInEnum_RenameKotlinFunctionInEnum() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/renameKotlinFunctionInEnum/renameKotlinFunctionInEnum.test");
