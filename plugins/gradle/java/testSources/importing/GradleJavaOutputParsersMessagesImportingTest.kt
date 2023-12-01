@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import org.gradle.util.GradleVersion
-import org.gradle.util.GradleVersion.version
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -50,7 +48,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
 
     var expectedExecutionTree: String
     when {
-      this.currentGradleVersion >= version("4.7") -> expectedExecutionTree =
+      isGradleNewerOrSameAs("4.7") -> expectedExecutionTree =
         "-\n" +
         " -successful\n" +
         "  :api:compileJava\n" +
@@ -79,7 +77,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewTreeSame(expectedExecutionTree)
 
     when {
-      this.currentGradleVersion >= version("4.7") -> expectedExecutionTree =
+      isGradleNewerOrSameAs("4.7") -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
         "  -:brokenProject:compileJava\n" +
@@ -140,8 +138,8 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
                               |  :compileTestJava
                               |  Could not resolve junit:junit:4.12 because no repositories are defined
                               """.trimMargin())
-    val files = if (currentGradleVersion < GradleVersion.version("4.0")) "dependencies" else "files"
-    val projectName = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
+    val files = if (isGradleOlderThan("4.0")) "dependencies" else "files"
+    val projectName = if (isGradleOlderThan("3.1")) ":project:unspecified" else "project :"
     assertBuildViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined",
                                 """
                                 |Could not resolve all $files for configuration ':testCompileClasspath'.
@@ -203,8 +201,8 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
       addTestImplementationDependency("junit:junit:99.99")
     }
     compileModules("project.test")
-    val files = if (currentGradleVersion < GradleVersion.version("4.0")) "dependencies" else "files"
-    val projectName = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
+    val files = if (isGradleOlderThan("4.0")) "dependencies" else "files"
+    val projectName = if (isGradleOlderThan("3.1")) ":project:unspecified" else "project :"
     assertBuildViewTreeEquals("""
                               | -
                               | -failed
@@ -293,10 +291,10 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
                               |  Could not resolve junit:junit:99.99
                               """.trimMargin()
     )
-    val files = if (currentGradleVersion < GradleVersion.version("4.0")) "dependencies" else "files"
-    val projectName = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
+    val files = if (isGradleOlderThan("4.0")) "dependencies" else "files"
+    val projectName = if (isGradleOlderThan("3.1")) ":project:unspecified" else "project :"
     val mavenRepositoryAddress = getMavenRepositoryAddress()
-    val repositoryPrefix = if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-"
+    val repositoryPrefix = if (isGradleOlderThan("4.8")) " " else "-"
     assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
                                 """Could not resolve all $files for configuration ':testCompileClasspath'.
                                 |> Could not find junit:junit:99.99.
@@ -341,10 +339,10 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
                               """.trimMargin())
     val mavenRepositoryAddress = getMavenRepositoryAddress()
     val jarPath = when {
-      currentGradleVersion >= GradleVersion.version("6.0") && currentGradleVersion <= GradleVersion.version("8.2") ->
+      isGradleNewerOrSameAs("8.2") -> ""
+      isGradleNewerOrSameAs("6.0") ->
         "\n     If the artifact you are trying to retrieve can be found in the repository but without metadata in 'Maven POM' format, " +
         "you need to adjust the 'metadataSources { ... }' of the repository declaration."
-      currentGradleVersion >= GradleVersion.version("8.2") -> ""
       else -> "\n       - $mavenRepositoryAddress/junit/junit/99.99/junit-99.99.jar"
     }
     assertBuildViewSelectedNode("Could not resolve junit:junit:99.99",
@@ -373,7 +371,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     "https://repo.labs.intellij.net/repo1"
   }
   else {
-    if (GradleVersion.version("4.10.0") > currentGradleVersion) {
+    if (isGradleOlderThan("4.10.0") ) {
       "https://repo1.maven.org/maven2"
     }
     else {

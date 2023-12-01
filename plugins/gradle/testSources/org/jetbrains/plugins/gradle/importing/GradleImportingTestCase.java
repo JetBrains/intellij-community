@@ -564,6 +564,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) < 0;
   }
 
+  @Deprecated
   protected boolean isGradleOlderOrSameAs(@NotNull String ver) {
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) <= 0;
   }
@@ -572,6 +573,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) >= 0;
   }
 
+  @Deprecated
   protected boolean isGradleNewerThan(@NotNull String ver) {
     return getCurrentGradleBaseVersion().compareTo(GradleVersion.version(ver)) > 0;
   }

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.util.io.FileUtil
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.mavenRepository
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -22,14 +21,13 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
                          "}")
     importProject("subprojects { apply plugin: 'java' }")
 
-    val expectedExecutionTree: String
-    when {
-      currentGradleVersion < GradleVersion.version("2.14") -> expectedExecutionTree =
+    val expectedExecutionTree = when {
+      isGradleOlderThan("2.14") ->
         "-\n" +
         " -failed\n" +
         "  -build.gradle\n" +
         "   Could not find method ghostConf() for arguments [project ':api'] on project ':impl'"
-      else -> expectedExecutionTree =
+      else ->
         "-\n" +
         " -failed\n" +
         "  -build.gradle\n" +
@@ -94,17 +92,17 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
     val className = if (isGradleNewerOrSameAs("6.8")) "class 'example.SomePlugin'." else "[class 'example.SomePlugin']"
 
-    val tryText = if (isGradleNewerOrSameAs("8.2")) {
+    val tryText = when {
+      isGradleNewerOrSameAs("8.2") ->
                               """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
                                  |> Run with --scan to get full insights.
                                  |> Get more help at https://help.gradle.org."""
-
-    } else if (isGradleNewerOrSameAs("7.4")) {
+      isGradleNewerOrSameAs("7.4") ->
                               """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
                                  |> Run with --scan to get full insights."""
-    } else {
+      else ->
       """|Run with --stacktrace option to get the stack trace. Run with --debug option to get more log output.$tryScanSuggestion"""
     }
     assertSyncViewSelectedNode("Something's wrong!",
@@ -224,7 +222,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     currentExternalProjectSettings.isResolveModulePerSourceSet = true
     // check unresolved dependency for disabled offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = false
-    val itemLinePrefix =  if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-"
+    val itemLinePrefix = if (isGradleOlderThan("4.8")) " " else "-"
     importProject {
       withJavaPlugin()
       withRepository {
@@ -257,11 +255,11 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
 
   @Test
   fun `test unresolved build script dependencies errors on Sync`() {
-    val requiredByProject = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
+    val requiredByProject = if (isGradleOlderThan("3.1")) ":project:unspecified" else "project :"
     val artifacts = when {
-      currentGradleVersion < GradleVersion.version("4.0") -> "dependencies"
-      currentGradleVersion < GradleVersion.version("4.6") || currentGradleVersion >= GradleVersion.version("7.4") -> "files"
-      else -> "artifacts"
+      isGradleOlderThan("4.0") -> "dependencies"
+      isGradleNewerOrSameAs("4.6") && isGradleOlderThan("7.4") -> "artifacts"
+      else -> "files"
     }
 
     // check unresolved dependency w/o repositories
@@ -325,7 +323,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewRerunActions() // quick fix above uses Sync view 'rerun' action to restart import with changes offline mode
 
     // check unresolved dependency for disabled offline mode
-    val itemLinePrefix = if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-"
+    val itemLinePrefix = if (isGradleOlderThan("4.8")) " " else "-"
     GradleSettings.getInstance(myProject).isOfflineWork = false
     importProject {
       withBuildScriptRepository {
