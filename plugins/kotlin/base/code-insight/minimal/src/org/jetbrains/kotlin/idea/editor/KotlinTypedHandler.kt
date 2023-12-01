@@ -11,6 +11,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.TokenType
@@ -67,22 +69,43 @@ internal object KotlinTypedHandlerHelper {
                 || endsWith(chars, offset, "continue@")
     }
 
+    /**
+     * @param atElement [PsiElement] corresponding to typed `@`
+     */
+    private fun isAnnotationCompletion(atElement: PsiElement): Boolean {
+        val errorElement = atElement.parent as? PsiErrorElement
+        return errorElement?.parent.let { it is KtDeclarationModifierList || it is KtFileAnnotationList }
+    }
+
     internal fun autoPopupAt(project: Project, editor: Editor) {
         AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
             val offset = editor.caretModel.offset
             val chars = editor.document.charsSequence
-            val lastNodeType = file.findElementAt(offset - 1)?.node?.elementType ?: return@autoPopupMemberLookup false
+            val elementAtCaret = file.findElementAt(offset - 1)
+            val lastNodeType = elementAtCaret?.node?.elementType ?: return@autoPopupMemberLookup false
 
-            lastNodeType === KDocTokens.TEXT || (lastNodeType === KtTokens.AT && isLabelCompletion(chars, offset))
+            lastNodeType === KDocTokens.TEXT ||
+                    lastNodeType === KtTokens.AT && (isLabelCompletion(chars, offset) || isAnnotationCompletion(elementAtCaret))
         }
     }
 
-    internal fun autoPopupCallableReferenceLookup(project: Project, editor: Editor): Unit =
+    internal fun autoPopupColon(project: Project, editor: Editor): Unit =
         AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
             val offset = editor.caretModel.offset
             val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
-            lastElement.node.elementType === KtTokens.COLONCOLON
+            lastElement.node.elementType === KtTokens.COLONCOLON || isAnnotationAfterUseSiteTargetCompletion(lastElement)
         }
+
+    /**
+     * Check whether the [element] is `:` in annotation with specified use-site target. For example, `:` in `@file:`.
+     */
+    private fun isAnnotationAfterUseSiteTargetCompletion(element: PsiElement): Boolean {
+        val colonElement = element.takeIf { it.node.elementType == KtTokens.COLON }
+        val identifierElement = colonElement?.prevSibling?.takeIf { it.node.elementType == KtTokens.IDENTIFIER }
+        val atElement = identifierElement?.prevSibling?.takeIf { it.node.elementType == KtTokens.AT } ?: return false
+
+        return isAnnotationCompletion(atElement)
+    }
 
     private fun endsWith(chars: CharSequence, offset: Int, text: String): Boolean =
         if (offset < text.length) false else chars.subSequence(offset - text.length, offset).toString() == text
@@ -229,7 +252,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             }
 
             '.' -> KotlinTypedHandlerHelper.autoPopupMemberLookup(project, editor)
-            ':' -> KotlinTypedHandlerHelper.autoPopupCallableReferenceLookup(project, editor)
+            ':' -> KotlinTypedHandlerHelper.autoPopupColon(project, editor)
             '[' -> KotlinTypedHandlerHelper.autoPopupParameterInfo(project, editor)
             '@' -> KotlinTypedHandlerHelper.autoPopupAt(project, editor)
         }

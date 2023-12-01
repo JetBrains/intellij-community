@@ -5,9 +5,10 @@ import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
+import kotlin.test.assertContains
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinAutoPopupTest: CompletionAutoPopupTestCase() {
+class KotlinAutoPopupTest : CompletionAutoPopupTestCase() {
 
     fun testAfterLT() {
         myFixture.configureByText(KotlinFileType.INSTANCE, """
@@ -15,8 +16,36 @@ class KotlinAutoPopupTest: CompletionAutoPopupTestCase() {
                 if (x <caret>)
             }
         """.trimIndent())
+
         type("<")
         assertNull(lookup)
     }
 
+    fun testAfterAtInModifierList() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            <caret>
+            fun test() {}
+        """.trimIndent())
+
+        type("@")
+        lookup?.items?.map { it.lookupString }.orEmpty().let { lookupStrings ->
+            assertContains(lookupStrings, "receiver")
+            assertContains(lookupStrings, "OptIn")
+        }
+        assertContains(lookup?.items?.map { it.lookupString }.orEmpty(), "OptIn")
+    }
+
+    fun testAfterAtInFileAnnotationList() {
+        myFixture.configureByText(KotlinFileType.INSTANCE, """
+            <caret>
+        """.trimIndent())
+
+        type("@")
+        lookup?.items?.map { it.lookupString }.orEmpty().let { lookupStrings ->
+            assertContains(lookupStrings, "file")
+            assertContains(lookupStrings, "OptIn")
+        }
+        type("file:")
+        assertContains(lookup?.items?.map { it.lookupString }.orEmpty(), "OptIn")
+    }
 }
