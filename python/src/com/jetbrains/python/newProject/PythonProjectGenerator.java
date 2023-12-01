@@ -36,6 +36,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
@@ -176,7 +177,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     if (sdk instanceof PyLazySdk) {
       final Sdk createdSdk = ((PyLazySdk)sdk).create();
       settings.setSdk(createdSdk);
-      if (createdSdk != null && !Registry.is("python.new.interpreter.creation.ui")) {
+      if (createdSdk != null && !useNewInterpreterCreationUi()) {
         SdkConfigurationUtil.addSdk(createdSdk);
       }
     }
@@ -477,5 +478,9 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
         reportPackageInstallationFailure(requirement, Pair.create(sdk, e));
       }
     }
+  }
+
+  public static boolean useNewInterpreterCreationUi() {
+    return Registry.is("python.new.interpreter.creation.ui") && !PlatformUtils.isDataSpell();
   }
 }
