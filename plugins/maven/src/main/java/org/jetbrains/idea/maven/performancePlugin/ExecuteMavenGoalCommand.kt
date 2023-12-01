@@ -12,25 +12,27 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 
 
 /**
- * The command executes a maven goal in module
- * Syntax: %executeMavenGoal moduleName [moduleName] goalName [goal]
- * Example: %executeMavenGoal moduleName main module goalName package
+ * The command executes a maven goals in module
+ * Syntax: %executeMavenGoals moduleName [moduleName] goalNames [goal1,goal2,goal3]
+ * Example: %executeMavenGoals moduleName main module goalNames verify,package
+ * @see [MavenConstants.PHASES]
  */
 class ExecuteMavenGoalCommand(text: String, line: Int) : AbstractCommand(text, line) {
   companion object {
-    const val PREFIX = "%executeMavenGoal"
+    const val PREFIX = "%executeMavenGoals"
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     val promise = AsyncPromise<Any?>()
     val args = extractCommandArgument(PREFIX)
-    val moduleName = "(?<=moduleName)(.*)(?=goalName)".toRegex().find(args)?.value?.trim() ?: throw IllegalArgumentException(
+    val moduleName = "(?<=moduleName)(.*)(?=goalNames)".toRegex().find(args)?.value?.trim() ?: throw IllegalArgumentException(
       "${args} doesn't contain valid module with goal name")
-    val goal = args.substringAfter("goalName").trim()
+    val goals = args.substringAfter("goalNames").trim().split(",")
     val project = context.getProject()
     project.messageBus.connect().subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processNotStarted(executorId: String, env: ExecutionEnvironment, cause: Throwable?) {
@@ -48,11 +50,11 @@ class ExecuteMavenGoalCommand(text: String, line: Int) : AbstractCommand(text, l
         }
       }
     })
-    perform(project, moduleName, goal, promise)
+    perform(project, moduleName, goals, promise)
     return promise
   }
 
-  private fun perform(project: Project, moduleName: String, goal: String, promise: AsyncPromise<Any?>) {
+  private fun perform(project: Project, moduleName: String, goals: List<String>, promise: AsyncPromise<Any?>) {
     ApplicationManager.getApplication().invokeLater {
       val projectsManager = MavenProjectsManager.getInstance(project)
       if (projectsManager == null) {
@@ -73,7 +75,7 @@ class ExecuteMavenGoalCommand(text: String, line: Int) : AbstractCommand(text, l
       val params = MavenRunnerParameters(true,
                                          mavenProject.directory,
                                          mavenProject.file.getName(),
-                                         listOf(goal),
+                                         goals,
                                          explicitProfiles.enabledProfiles,
                                          explicitProfiles.disabledProfiles)
       MavenRunConfigurationType.runConfiguration(project, params, null)
