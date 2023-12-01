@@ -440,6 +440,7 @@ open class CodeVisionHost(val project: Project) {
           }
           return@forEach
         }
+        providerWhoWantToUpdate.add(it.id)
         runSafe("computeCodeVision for ${it.id}") {
           val state = it.computeCodeVision(editor, precalculatedUiThings[it.id])
           if (state.isReady.not()) {
@@ -455,10 +456,7 @@ open class CodeVisionHost(val project: Project) {
           }
           else {
             watcher.dropProvider(it.groupId)
-            if (state.result.isNotEmpty()) {
-              results.addAll(state.result)
-              providerWhoWantToUpdate.add(it.id)
-            }
+            results.addAll(state.result)
           }
         }
       }
