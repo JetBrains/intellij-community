@@ -18,6 +18,7 @@ import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.ColorUtil;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
@@ -121,6 +122,11 @@ public final class QuickChangeColorSchemeAction extends QuickSwitchSchemeAction 
     if (onDone != null) {
       SwingUtilities.invokeLater(onDone);
     }
+  }
+
+  @Override
+  protected JBPopupFactory.ActionSelectionAid getAidMethod() {
+    return JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING;
   }
 
   @Override
