@@ -3,5 +3,5 @@
   "type": "MOVE_MEMBERS",
   "targetClass": "B",
   "visibility": "packageLocal",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }
