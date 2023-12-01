@@ -415,6 +415,10 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   @Internal
   fun actionsOrStubs(): Sequence<AnAction> = actionPostInitRegistrar.actionsOrStubs()
 
+  @Experimental
+  @Internal
+  fun unstubbedActions(): Sequence<AnAction> = actionPostInitRegistrar.unstubbedActions()
+
   /**
    * @return instance of ActionGroup or ActionStub. The method never returns real subclasses of `AnAction`.
    */
@@ -1814,6 +1818,12 @@ private class PostInitActionRegistrar(
   }
 
   fun actionsOrStubs(): Sequence<AnAction> = idToAction.values.asSequence()
+
+  fun unstubbedActions(): Sequence<AnAction> {
+    return idToAction.keys.asSequence().mapNotNull {
+      getAction(id = it, canReturnStub = false, actionRegistrar = this)
+    }
+  }
 
   fun getBoundActions(): Set<String> = boundShortcuts.keys
 
