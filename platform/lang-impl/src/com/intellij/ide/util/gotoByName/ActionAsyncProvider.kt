@@ -14,6 +14,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel.*
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
@@ -25,8 +26,6 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
@@ -35,10 +34,9 @@ import kotlin.coroutines.coroutineContext
 private val LOG = logger<ActionAsyncProvider>()
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class ActionAsyncProvider(private val myModel: GotoActionModel) {
-
+class ActionAsyncProvider(private val model: GotoActionModel) {
   private val actionManager: ActionManager = ActionManager.getInstance()
-  private val myIntentions = ConcurrentHashMap<String, ApplyIntentionAction>()
+  private val intentions = ConcurrentHashMap<String, ApplyIntentionAction>()
 
   fun processActions(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation, pattern: String,
                      ids: Set<String>, consumer: suspend (MatchedValue) -> Boolean) {
@@ -66,7 +64,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
                      pattern: String, consumer: suspend (MatchedValue) -> Boolean) {
     if (pattern.isEmpty()) return
 
-    LOG.debug("Start actions searching ($pattern)")
+    LOG.debug { "Start actions searching ($pattern)" }
 
     val actionIds = (actionManager as ActionManagerImpl).actionIds
 
@@ -258,14 +256,14 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
   }
 
   private suspend fun getIntentionsMap(): Map<String, ApplyIntentionAction> {
-    if (myIntentions.isEmpty()) {
+    if (intentions.isEmpty()) {
       val intentions = readAction {
         model.availableIntentions
       }
 
-      myIntentions.putAll(intentions)
+      this.intentions.putAll(intentions)
     }
-    return myIntentions
+    return intentions
   }
 
   private fun optionsFlow(pattern: String,
@@ -333,8 +331,10 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
       .map { matchItem(it, weightMatcher, pattern, MatchedValueType.TOP_HIT) }
   }
 
-  private suspend fun loadAction(id: String): AnAction? = withContext(coroutineContext) {
-     async { myActionManager.getAction(id) }.await()
+  private suspend fun loadAction(id: String): AnAction? {
+    return withContext(coroutineContext) {
+      async { actionManager.getAction(id) }.await()
+    }
   }
 
   private fun matchItem(item: Any, matcher: MinusculeMatcher, pattern: String, matchType: MatchedValueType): MatchedValue {
@@ -354,7 +354,7 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     .build()
 
   fun clearIntentions() {
-    myIntentions.clear()
+    intentions.clear()
   }
 }
 
