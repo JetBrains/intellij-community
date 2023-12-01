@@ -748,6 +748,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameJavaSyntheticPropertyByRef1/renameJavaSyntheticPropertyByRef1.test");
     }
 
+    @TestMetadata("renameJavaSyntheticPropertyByRefWithSuperMethod/renameJavaSyntheticPropertyByRefWithSuperMethod.test")
+    public void testRenameJavaSyntheticPropertyByRefWithSuperMethod_RenameJavaSyntheticPropertyByRefWithSuperMethod() throws Exception {
+        runTest("testData/refactoring/rename/renameJavaSyntheticPropertyByRefWithSuperMethod/renameJavaSyntheticPropertyByRefWithSuperMethod.test");
+    }
+
     @TestMetadata("renameJavaSyntheticPropertyBySetterRef/renameJavaSyntheticPropertyBySetterRef.test")
     public void testRenameJavaSyntheticPropertyBySetterRef_RenameJavaSyntheticPropertyBySetterRef() throws Exception {
         runTest("testData/refactoring/rename/renameJavaSyntheticPropertyBySetterRef/renameJavaSyntheticPropertyBySetterRef.test");
