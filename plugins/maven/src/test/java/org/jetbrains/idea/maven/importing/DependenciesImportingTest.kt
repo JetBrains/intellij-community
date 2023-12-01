@@ -2315,33 +2315,46 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     repositoryPath = repoPath
 
     createProjectPom("""
-                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><packaging>pom</packaging><modules>  <module>m</module></modules>     <dependencyManagement>
-                                <dependencies>
-                                     <dependency>
-                                        <artifactId>asm</artifactId>
-                                        <groupId>asm</groupId>
-                                        <version>[2.2.1]</version>
-                                        <scope>runtime</scope>
-                                    </dependency>
-                                    <dependency>
-                                        <artifactId>asm-attrs</artifactId>
-                                        <groupId>asm</groupId>
-                                        <version>[2.2.1]</version>
-                                        <scope>runtime</scope>
-                                    </dependency>
-                                </dependencies>
-                            </dependencyManagement>
-                            """.trimIndent())
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m</module>
+      </modules>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <artifactId>asm</artifactId>
+            <groupId>asm</groupId>
+            <version>[2.2.1]</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <artifactId>asm-attrs</artifactId>
+            <groupId>asm</groupId>
+            <version>[2.2.1]</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>""".trimIndent())
 
     createModulePom("m", """
-      <groupId>test</groupId><artifactId>m</artifactId><version>1</version>    <parent>
-              <groupId>test</groupId>
-              <artifactId>project</artifactId>
-              <version>1</version>
-          </parent><dependencies>  <dependency>            <artifactId>asm-attrs</artifactId>
-                  <groupId>asm</groupId>
-                  <scope>test</scope>  </dependency></dependencies>
-                  """.trimIndent())
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>    
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      <dependencies>
+        <dependency>
+          <artifactId>asm-attrs</artifactId>
+          <groupId>asm</groupId>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>""".trimIndent())
 
     importProjectAsync()
 
