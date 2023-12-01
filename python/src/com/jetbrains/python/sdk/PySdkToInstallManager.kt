@@ -7,10 +7,8 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.ui.Messages
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.webcore.packaging.PackageManagementService
-import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -61,45 +59,23 @@ object PySdkToInstallManager {
     catch (ex: ReleaseInstallerException) {
       LOGGER.info(ex)
       PySdkToInstallCollector.logInstallerException(project, sdk.release, ex)
-      if (ex !is PrepareException) {
-        showErrorNotification(sdk.release, ex)
-      }
+      showErrorNotification(project, ex)
     }
     return null
   }
 
-  private fun showErrorNotification(release: Release, ex: ReleaseInstallerException) {
-    val title = when (ex) {
-      is CancelledProcessException, is CancelledPrepareException -> {
-        PyBundle.message("python.sdk.installation.has.been.cancelled.title", release.title)
-      }
-      else -> PyBundle.message("python.sdk.failed.to.install.title", release.title)
+  private fun showErrorNotification(project: Project?, ex: ReleaseInstallerException) {
+    val title  = when (ex) {
+      is PrepareException -> PyBundle.message("python.sdk.download.failed.title")
+      else -> PyBundle.message("python.sdk.installation.failed.title")
     }
 
-    val message: @NlsSafe String = when (ex) {
-      is CancelledProcessException -> PyBundle.message(
-        "python.sdk.some.installed.python.components.might.get.inconsistent.after.cancellation")
-      is TimeoutProcessException -> PyBundle.message("python.sdk.failed.to.install.timed.out")
-      is NonZeroExitCodeProcessException -> PyBundle.message("python.sdk.failed.to.install.exit.code", ex.output?.exitCode ?: 0)
-      else -> (ex.cause?.message ?: "")
+    val message = when (ex) {
+      is CancelledProcessException, is CancelledPrepareException -> PyBundle.message("python.sdk.installation.cancelled.message")
+      is PrepareException -> PyBundle.message("python.sdk.download.failed.message")
+      else -> PyBundle.message("python.sdk.try.to.install.python.manually")
     }
-
-    val commandOutput = when (ex) {
-      is ProcessException -> {
-        ex.command.commandLineString to listOf(ex.output?.stderr, ex.output?.stdout).firstOrNull { it?.isNotBlank() ?: false }
-      }
-      else -> null
-    }
-
-    PackagesNotificationPanel.showError(
-      title,
-      PackageManagementService.ErrorDescription(
-        message,
-        commandOutput?.first,
-        commandOutput?.second,
-        PyBundle.message("python.sdk.consider.installing.python.manually")
-      )
-    )
+    Messages.showErrorDialog(project, message, title)
   }
 
 
@@ -111,17 +87,6 @@ object PySdkToInstallManager {
     }.toMap()
   }
 
-  private fun selectInstallerAndRelease(languageLevel: LanguageLevel): Pair<ReleaseInstaller, Release>? {
-    return installers.firstNotNullOfOrNull { installer ->
-      getLatestReleases(installer)[languageLevel]?.let { installer to it }
-    }
-  }
-
-  fun getLatestInstallableRelease(): Pair<ReleaseInstaller, Release>? {
-    val available = SdksKeeper.pythonReleasesByLanguageLevel()
-    val priority = available.keys.sortedDescending()
-    return priority.firstNotNullOfOrNull { selectInstallerAndRelease(it) }
-  }
 
   private fun findInstalledSdk(languageLevel: LanguageLevel?,
                                project: Project?,
