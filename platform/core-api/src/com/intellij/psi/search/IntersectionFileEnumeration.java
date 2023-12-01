@@ -1,24 +1,26 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.psi.search.impl;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.psi.search;
 
+import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.List;
 
 @ApiStatus.Internal
-public final class IntersectionFileEnumeration implements VirtualFileEnumeration {
-  private final @NotNull Collection<? extends VirtualFileEnumeration> myHints;
+final class IntersectionFileEnumeration implements VirtualFileEnumeration {
+  private final @NotNull List<? extends VirtualFileEnumeration> myHints;
 
-  public IntersectionFileEnumeration(@NotNull Collection<? extends VirtualFileEnumeration> hints) {
+  IntersectionFileEnumeration(@NotNull List<? extends VirtualFileEnumeration> hints) {
     myHints = hints;
   }
 
   @Override
   public boolean contains(int fileId) {
-    if (myHints.isEmpty()) return false;
-    for (VirtualFileEnumeration scope : myHints) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0; i < myHints.size(); i++) {
+      VirtualFileEnumeration scope = myHints.get(i);
       if (!scope.contains(fileId)) {
         return false;
       }

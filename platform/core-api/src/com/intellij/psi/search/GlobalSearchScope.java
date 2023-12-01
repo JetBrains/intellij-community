@@ -14,8 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.impl.IntersectionFileEnumeration;
-import com.intellij.psi.search.impl.UnionFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.util.ArrayUtil;
@@ -464,7 +462,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
 
     @Override
     public @Nullable VirtualFileEnumeration extractFileEnumeration() {
-      Collection<VirtualFileEnumeration> fileEnumerations = new SmartList<>();
+      List<VirtualFileEnumeration> fileEnumerations = new SmartList<>();
       for (GlobalSearchScope scope : myScopes) {
         VirtualFileEnumeration fileEnumeration = VirtualFileEnumeration.extract(scope);
         if (fileEnumeration == null) {
