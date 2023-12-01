@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options;
+package com.intellij.application.options
 
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.java.JavaBundle;
-import com.intellij.openapi.options.ConfigurableBuilder;
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.java.JavaBundle
+import com.intellij.openapi.options.BeanConfigurable
 
-public class JavadocOptionsProvider extends ConfigurableBuilder {
-  public JavadocOptionsProvider() {
-    super(JavaBundle.message("javadoc.option.javadoc.title"));
-    CodeInsightSettings settings = CodeInsightSettings.getInstance();
-    checkBox(JavaBundle.message("javadoc.option.automatically.insert.closing.tag.javadoc"),
-             () -> settings.JAVADOC_GENERATE_CLOSING_TAG,
-             (value) -> settings.JAVADOC_GENERATE_CLOSING_TAG = value);
+class JavadocOptionsProvider : BeanConfigurable<CodeInsightSettings>(CodeInsightSettings.getInstance(),
+                                                                     JavaBundle.message("javadoc.option.javadoc.title")) {
+
+  init {
+    checkBox(JavaBundle.message("javadoc.option.automatically.insert.closing.tag.javadoc"), instance::JAVADOC_GENERATE_CLOSING_TAG)
   }
 }
