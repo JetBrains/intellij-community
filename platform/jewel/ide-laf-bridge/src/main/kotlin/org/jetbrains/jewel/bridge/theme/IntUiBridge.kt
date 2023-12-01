@@ -611,9 +611,11 @@ private fun readScrollbarStyle(isDark: Boolean) =
         colors = ScrollbarColors(
             // See ScrollBarPainter.THUMB_OPAQUE_BACKGROUND
             thumbBackground = retrieveColorOrUnspecified("ScrollBar.Mac.Transparent.thumbColor")
+                .let { if (it.alpha == 0f) Color.Unspecified else it } // See https://github.com/JetBrains/jewel/issues/259
                 .takeOrElse { if (isDark) Color(0x59808080) else Color(0x33000000) },
             // See ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND
             thumbBackgroundHovered = retrieveColorOrUnspecified("ScrollBar.Mac.Transparent.hoverThumbColor")
+                .let { if (it.alpha == 0f) Color.Unspecified else it } // See https://github.com/JetBrains/jewel/issues/259
                 .takeOrElse { if (isDark) Color(0x8C808080) else Color(0x80000000) },
         ),
         metrics = ScrollbarMetrics(
