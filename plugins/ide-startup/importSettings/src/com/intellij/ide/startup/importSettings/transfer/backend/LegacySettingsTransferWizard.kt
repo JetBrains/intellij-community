@@ -13,7 +13,6 @@ object LegacySettingsTransferWizard {
   private val isLegacyThreadingModel: Boolean
     get() = isLegacyThreadingModelStorage.get().let { it != null && it }
 
-  @Suppress("unused") // used in Rider
   fun <T> withRelaxedThreading(action: () -> T): T {
     assert(!isLegacyThreadingModel)
     isLegacyThreadingModelStorage.set(true)
