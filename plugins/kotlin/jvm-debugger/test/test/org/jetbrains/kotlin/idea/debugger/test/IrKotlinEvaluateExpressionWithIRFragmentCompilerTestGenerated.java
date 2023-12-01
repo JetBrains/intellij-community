@@ -1701,6 +1701,11 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 runTest("testData/evaluation/singleBreakpoint/unusedTransitiveDependencies.kt");
             }
 
+            @TestMetadata("valueMethodsInSignature.kt")
+            public void testValueMethodsInSignature() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/valueMethodsInSignature.kt");
+            }
+
             @TestMetadata("valueParameterName.kt")
             public void testValueParameterName() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/valueParameterName.kt");
