@@ -126,32 +126,10 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
   private fun matchedActionsAndStubsFlow(pattern: String, allIds: Collection<String>,
                                                  presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
-    val matcher = buildMatcher(pattern)
     val weightMatcher = buildWeightMatcher(pattern)
 
-    val fromIdsFlow = allIds.asFlow().mapNotNull {
-      val action = myActionManager.getActionOrStub(it) ?: return@mapNotNull null
-      if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
-
-      return@mapNotNull action
-    }
-
-    val additionalActionsFlow = myModel.dataContext.getData(QuickActionProvider.KEY)?.getActions(true)?.asFlow() ?: emptyFlow<AnAction>()
-
-    val actionsWithWeightsFlow = merge(fromIdsFlow, additionalActionsFlow).transform {
-      runCatching {
-        val mode = myModel.actionMatches(pattern, matcher, it)
-        if (mode != MatchMode.NONE) {
-          val weight = calcElementWeight(it, pattern, weightMatcher)
-          emit(MatchedAction(it, mode, weight))
-        }
-      }.getOrLogException(LOG)
-    }
-
-    val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
-
     return flow {
-      val list = collectAndSort(actionsWithWeightsFlow, comparator)
+      val list = collectMatchedActions(pattern, allIds, weightMatcher)
       LOG.debug("List is collected")
 
       list.forEach {
@@ -170,6 +148,31 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
         wrapAnAction(it.action, presentation, it.mode)
       }
       .map { matchItem(it, weightMatcher, pattern, MatchedValueType.ACTION) }
+  }
+
+  private suspend fun collectMatchedActions(pattern: String, allIds: Collection<String>, weightMatcher: MinusculeMatcher): List<MatchedAction> = coroutineScope {
+    val matcher = buildMatcher(pattern)
+
+    val mainActions: List<AnAction> = allIds.mapNotNull {
+      val action = myActionManager.getActionOrStub(it) ?: return@mapNotNull null
+      if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
+
+      return@mapNotNull action
+    }
+    val extendedActions: List<AnAction> = myModel.dataContext.getData(QuickActionProvider.KEY)?.getActions(true) ?: emptyList<AnAction>()
+    val actions = (mainActions + extendedActions).mapNotNull {
+      runCatching {
+        val mode = myModel.actionMatches(pattern, matcher, it)
+        if (mode != MatchMode.NONE) {
+          val weight = calcElementWeight(it, pattern, weightMatcher)
+          return@runCatching(MatchedAction(it, mode, weight))
+        }
+        return@runCatching null
+      }.getOrLogException(LOG)
+    }
+
+    val comparator = Comparator.comparing<MatchedAction, Int> { it.weight ?: 0 }.reversed()
+    return@coroutineScope actions.sortedWith(comparator)
   }
 
   private fun unmatchedStubsFlow(pattern: String, allIds: Collection<String>,
