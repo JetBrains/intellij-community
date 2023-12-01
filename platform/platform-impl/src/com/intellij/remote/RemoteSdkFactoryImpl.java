@@ -2,6 +2,7 @@
 package com.intellij.remote;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -34,9 +35,13 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setVersionString(sdkVersion);
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      sdkModificator.commitChanges();
-    });
+    Application application = ApplicationManager.getApplication();
+    Runnable runnable = () -> sdkModificator.commitChanges();
+    if (application.isDispatchThread()) {
+      application.runWriteAction(runnable);
+    } else {
+      application.invokeAndWait(() -> application.runWriteAction(runnable));
+    }
 
     data.setValid(true);
 
