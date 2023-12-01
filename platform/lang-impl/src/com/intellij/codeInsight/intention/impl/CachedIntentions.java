@@ -168,7 +168,7 @@ public final class CachedIntentions implements IntentionContainer {
     myGutters.clear();
 
     Predicate<IntentionAction> filter = action -> ContainerUtil.and(
-      IntentionActionFilter.EXTENSION_POINT_NAME.getExtensionList(), f -> f.accept(action, myFile));
+      IntentionActionFilter.EXTENSION_POINT_NAME.getExtensionList(), f -> f.accept(action, myFile, myOffset));
 
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(

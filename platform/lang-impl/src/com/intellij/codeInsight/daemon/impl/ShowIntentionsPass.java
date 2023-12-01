@@ -212,13 +212,13 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
       myHighlightInfoType = highlightInfoType;
     }
 
-    private static void filter(@NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
-                               @Nullable PsiFile psiFile,
-                               IntentionActionFilter @NotNull [] filters) {
+    private void filter(@NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                        @Nullable PsiFile psiFile,
+                        IntentionActionFilter @NotNull [] filters) {
       for (Iterator<HighlightInfo.IntentionActionDescriptor> it = descriptors.iterator(); it.hasNext(); ) {
         HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
         for (IntentionActionFilter filter : filters) {
-          if (!filter.accept(actionDescriptor.getAction(), psiFile)) {
+          if (!filter.accept(actionDescriptor.getAction(), psiFile, myOffset)) {
             it.remove();
             break;
           }
