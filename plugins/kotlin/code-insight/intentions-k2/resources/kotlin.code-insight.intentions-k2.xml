@@ -242,5 +242,6 @@
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
+
   </extensions>
 </idea-plugin>

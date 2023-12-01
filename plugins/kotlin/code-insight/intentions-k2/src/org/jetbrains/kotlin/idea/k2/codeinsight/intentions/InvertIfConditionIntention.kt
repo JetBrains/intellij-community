@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractK
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AnalysisActionContext
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
-import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.applyDemorgansLaw
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.getOperandsIfAllBoolean
 import org.jetbrains.kotlin.idea.codeinsight.utils.DemorgansLawUtils.invertSelectorFunction
@@ -21,6 +21,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.handle
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.isEmptyReturn
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.nextEolCommentOnSameLine
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.parentBlockRBrace
+import org.jetbrains.kotlin.idea.codeinsight.utils.negate
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExitStatement
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -213,11 +215,6 @@ internal class InvertIfConditionIntention :
             }
         }
         return null
-    }
-
-    private fun KtExpression.isExitStatement(): Boolean = when (this) {
-        is KtContinueExpression, is KtBreakExpression, is KtThrowExpression, is KtReturnExpression -> true
-        else -> false
     }
 
     context(KtAnalysisSession)

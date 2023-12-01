@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.handle
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.isEmptyReturn
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.nextEolCommentOnSameLine
 import org.jetbrains.kotlin.idea.codeinsight.utils.InvertIfConditionUtils.parentBlockRBrace
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExitStatement
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.unblockDocument
 import org.jetbrains.kotlin.idea.inspections.ReplaceNegatedIsEmptyWithIsNotEmptyInspection.Util.invertSelectorFunction
@@ -18,7 +19,10 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.matches
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
+import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
+import org.jetbrains.kotlin.psi.psiUtil.siblings
+import org.jetbrains.kotlin.psi.psiUtil.trimWhiteSpaces
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull

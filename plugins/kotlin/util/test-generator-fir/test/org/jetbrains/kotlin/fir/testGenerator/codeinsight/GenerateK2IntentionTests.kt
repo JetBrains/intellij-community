@@ -109,7 +109,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertFunctionTypeParameterToReceiver", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertLazyPropertyToOrdinary", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertVarargParameterToArray", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/splitIf", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeExplicitLambdaParameterTypes", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertPrimaryConstructorToSecondary", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertArgumentToSet", pattern = pattern, isIgnored = true)

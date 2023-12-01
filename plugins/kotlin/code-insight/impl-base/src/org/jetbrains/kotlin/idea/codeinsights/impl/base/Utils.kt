@@ -30,3 +30,6 @@ fun KtCallableDeclaration.hasUsages(inElements: Collection<KtElement>): Boolean 
     assert(this.isPhysical)
     return ReferencesSearch.search(this, LocalSearchScope(inElements.toTypedArray())).any()
 }
+
+fun KtExpression.isExitStatement(): Boolean =
+    this is KtContinueExpression || this is KtBreakExpression || this is KtThrowExpression || this is KtReturnExpression

@@ -70,11 +70,6 @@ val KtQualifiedExpression.calleeName: String?
 fun KtQualifiedExpression.toResolvedCall(bodyResolveMode: BodyResolveMode): ResolvedCall<out CallableDescriptor>? =
     callExpression?.resolveToCall(bodyResolveMode)
 
-fun KtExpression.isExitStatement(): Boolean = when (this) {
-    is KtContinueExpression, is KtBreakExpression, is KtThrowExpression, is KtReturnExpression -> true
-    else -> false
-}
-
 // returns false for call of super, static method or method from package
 fun KtQualifiedExpression.isReceiverExpressionWithValue(): Boolean {
     val receiver = receiverExpression

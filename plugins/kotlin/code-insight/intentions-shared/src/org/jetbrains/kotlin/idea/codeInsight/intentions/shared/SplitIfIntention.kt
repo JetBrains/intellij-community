@@ -1,36 +1,26 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.AbstractKotlinApplicableIntention
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityTarget
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExitStatement
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
-import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.util.match
 
-/**
- * Affected tests:
- * [org.jetbrains.kotlin.idea.intentions.IntentionTestGenerated.SplitIf]
- */
-class SplitIfIntention : SelfTargetingIntention<KtExpression>(KtExpression::class.java, KotlinBundle.lazyMessage("split.if.into.two")) {
-    override fun isApplicableTo(element: KtExpression, caretOffset: Int): Boolean {
-        return when (element) {
-            is KtOperationReferenceExpression -> isOperatorValid(element)
-            is KtIfExpression -> getFirstValidOperator(element) != null && element.ifKeyword.textRange.containsOffset(caretOffset)
-            else -> false
-        }
-    }
+class SplitIfIntention : AbstractKotlinApplicableIntention<KtExpression>(KtExpression::class) {
+    override fun getActionName(element: KtExpression): String = familyName
 
-    override fun applyTo(element: KtExpression, editor: Editor?) {
+    override fun apply(element: KtExpression, project: Project, editor: Editor?) {
         val operator = when (element) {
             is KtIfExpression -> getFirstValidOperator(element)!!
             else -> element as KtOperationReferenceExpression
@@ -68,29 +58,23 @@ class SplitIfIntention : SelfTargetingIntention<KtExpression>(KtExpression::clas
                 }
             }
 
-            else -> throw IllegalArgumentException()
+            else -> return
         }
 
         val result = ifExpression.replace(newIf)
         commentSaver.restore(result)
     }
 
-    private fun getRight(element: KtBinaryExpression, condition: KtExpression, commentSaver: CommentSaver): KtExpression {
-        //gets the textOffset of the right side of the JetBinaryExpression in context to condition
-        val conditionRange = condition.textRange
-        val startOffset = element.right!!.startOffset - conditionRange.startOffset
-        val endOffset = conditionRange.length
-        val rightString = condition.text.substring(startOffset, endOffset)
+    override fun getFamilyName(): String = KotlinBundle.message("split.if.into.two")
 
-        val expression = KtPsiFactory(element.project).createExpression(rightString)
-        commentSaver.elementCreatedByText(expression, condition, TextRange(startOffset, endOffset))
-        return expression
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = applicabilityTarget {
+        if (it is KtIfExpression) it.ifKeyword else it
     }
 
-    private fun getFirstValidOperator(element: KtIfExpression): KtOperationReferenceExpression? {
-        val condition = element.condition ?: return null
-        return PsiTreeUtil.findChildrenOfType(condition, KtOperationReferenceExpression::class.java)
-            .firstOrNull { isOperatorValid(it) }
+    override fun isApplicableByPsi(element: KtExpression): Boolean = when (element) {
+        is KtOperationReferenceExpression -> isOperatorValid(element)
+        is KtIfExpression -> getFirstValidOperator(element) != null
+        else -> false
     }
 
     private fun isOperatorValid(element: KtOperationReferenceExpression): Boolean {
@@ -115,5 +99,22 @@ class SplitIfIntention : SelfTargetingIntention<KtExpression>(KtExpression::clas
 
         return true
     }
-}
 
+    private fun getFirstValidOperator(element: KtIfExpression): KtOperationReferenceExpression? {
+        val condition = element.condition ?: return null
+        return PsiTreeUtil.findChildrenOfType(condition, KtOperationReferenceExpression::class.java)
+            .firstOrNull { isOperatorValid(it) }
+    }
+
+    private fun getRight(element: KtBinaryExpression, condition: KtExpression, commentSaver: CommentSaver): KtExpression {
+        //gets the textOffset of the right side of the JetBinaryExpression in context to condition
+        val conditionRange = condition.textRange
+        val startOffset = element.right!!.startOffset - conditionRange.startOffset
+        val endOffset = conditionRange.length
+        val rightString = condition.text.substring(startOffset, endOffset)
+
+        val expression = KtPsiFactory(element.project).createExpression(rightString)
+        commentSaver.elementCreatedByText(expression, condition, TextRange(startOffset, endOffset))
+        return expression
+    }
+}

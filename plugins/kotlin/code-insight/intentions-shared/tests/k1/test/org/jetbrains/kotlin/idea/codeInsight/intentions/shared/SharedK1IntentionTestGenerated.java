@@ -1804,6 +1804,171 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/splitIf")
+    public abstract static class SplitIf extends AbstractSharedK1IntentionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/splitIf/keepComments")
+        public static class KeepComments extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ifOrReturn.kt")
+            public void testIfOrReturn() throws Exception {
+                runTest("../testData/intentions/splitIf/keepComments/ifOrReturn.kt");
+            }
+
+            @TestMetadata("twoOperators.kt")
+            public void testTwoOperators() throws Exception {
+                runTest("../testData/intentions/splitIf/keepComments/twoOperators.kt");
+            }
+
+            @TestMetadata("withAnd.kt")
+            public void testWithAnd() throws Exception {
+                runTest("../testData/intentions/splitIf/keepComments/withAnd.kt");
+            }
+
+            @TestMetadata("withOR.kt")
+            public void testWithOR() throws Exception {
+                runTest("../testData/intentions/splitIf/keepComments/withOR.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/intentions/splitIf")
+        public static class Uncategorized extends AbstractSharedK1IntentionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("and.kt")
+            public void testAnd() throws Exception {
+                runTest("../testData/intentions/splitIf/and.kt");
+            }
+
+            @TestMetadata("caretOnIf.kt")
+            public void testCaretOnIf() throws Exception {
+                runTest("../testData/intentions/splitIf/caretOnIf.kt");
+            }
+
+            @TestMetadata("ifAndOr.kt")
+            public void testIfAndOr() throws Exception {
+                runTest("../testData/intentions/splitIf/ifAndOr.kt");
+            }
+
+            @TestMetadata("ifAndOrWithBraces.kt")
+            public void testIfAndOrWithBraces() throws Exception {
+                runTest("../testData/intentions/splitIf/ifAndOrWithBraces.kt");
+            }
+
+            @TestMetadata("ifAndWithBraces.kt")
+            public void testIfAndWithBraces() throws Exception {
+                runTest("../testData/intentions/splitIf/ifAndWithBraces.kt");
+            }
+
+            @TestMetadata("ifOrReturn.kt")
+            public void testIfOrReturn() throws Exception {
+                runTest("../testData/intentions/splitIf/ifOrReturn.kt");
+            }
+
+            @TestMetadata("ifWithElse.kt")
+            public void testIfWithElse() throws Exception {
+                runTest("../testData/intentions/splitIf/ifWithElse.kt");
+            }
+
+            @TestMetadata("localFunction.kt")
+            public void testLocalFunction() throws Exception {
+                runTest("../testData/intentions/splitIf/localFunction.kt");
+            }
+
+            @TestMetadata("nestedIf.kt")
+            public void testNestedIf() throws Exception {
+                runTest("../testData/intentions/splitIf/nestedIf.kt");
+            }
+
+            @TestMetadata("nestedIfNotApplicable.kt")
+            public void testNestedIfNotApplicable() throws Exception {
+                runTest("../testData/intentions/splitIf/nestedIfNotApplicable.kt");
+            }
+
+            @TestMetadata("nestedIfOutside.kt")
+            public void testNestedIfOutside() throws Exception {
+                runTest("../testData/intentions/splitIf/nestedIfOutside.kt");
+            }
+
+            @TestMetadata("nestedInside.kt")
+            public void testNestedInside() throws Exception {
+                runTest("../testData/intentions/splitIf/nestedInside.kt");
+            }
+
+            @TestMetadata("notIf.kt")
+            public void testNotIf() throws Exception {
+                runTest("../testData/intentions/splitIf/notIf.kt");
+            }
+
+            @TestMetadata("onIfWithOr.kt")
+            public void testOnIfWithOr() throws Exception {
+                runTest("../testData/intentions/splitIf/onIfWithOr.kt");
+            }
+
+            @TestMetadata("operatorAsFunctionParam.kt")
+            public void testOperatorAsFunctionParam() throws Exception {
+                runTest("../testData/intentions/splitIf/operatorAsFunctionParam.kt");
+            }
+
+            @TestMetadata("operatorOutsideIf.kt")
+            public void testOperatorOutsideIf() throws Exception {
+                runTest("../testData/intentions/splitIf/operatorOutsideIf.kt");
+            }
+
+            @TestMetadata("orAnd.kt")
+            public void testOrAnd() throws Exception {
+                runTest("../testData/intentions/splitIf/orAnd.kt");
+            }
+
+            @TestMetadata("orWithBraces.kt")
+            public void testOrWithBraces() throws Exception {
+                runTest("../testData/intentions/splitIf/orWithBraces.kt");
+            }
+
+            @TestMetadata("twoOperatorsFirst.kt")
+            public void testTwoOperatorsFirst() throws Exception {
+                runTest("../testData/intentions/splitIf/twoOperatorsFirst.kt");
+            }
+
+            @TestMetadata("twoOperatorsSecond.kt")
+            public void testTwoOperatorsSecond() throws Exception {
+                runTest("../testData/intentions/splitIf/twoOperatorsSecond.kt");
+            }
+
+            @TestMetadata("withNotOperator.kt")
+            public void testWithNotOperator() throws Exception {
+                runTest("../testData/intentions/splitIf/withNotOperator.kt");
+            }
+
+            @TestMetadata("withNotOperatorGood.kt")
+            public void testWithNotOperatorGood() throws Exception {
+                runTest("../testData/intentions/splitIf/withNotOperatorGood.kt");
+            }
+
+            @TestMetadata("withOR.kt")
+            public void testWithOR() throws Exception {
+                runTest("../testData/intentions/splitIf/withOR.kt");
+            }
+
+            @TestMetadata("withORElse.kt")
+            public void testWithORElse() throws Exception {
+                runTest("../testData/intentions/splitIf/withORElse.kt");
+            }
+
+            @TestMetadata("wrongCaretLocation.kt")
+            public void testWrongCaretLocation() throws Exception {
+                runTest("../testData/intentions/splitIf/wrongCaretLocation.kt");
+            }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/swapBinaryExpression")
     public static class SwapBinaryExpression extends AbstractSharedK1IntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
