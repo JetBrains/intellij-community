@@ -149,7 +149,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
           else {
             try {
-              usedIdeaJdk = (Sdk)usedIdeaJdk.clone();
+              usedIdeaJdk = usedIdeaJdk.clone();
             }
             catch (CloneNotSupportedException e) {
               throw new ExecutionException(e.getMessage());

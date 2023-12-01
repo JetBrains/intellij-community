@@ -379,7 +379,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     setHomePathValue(homePath.replace('/', File.separatorChar));
 
     try {
-      final Sdk dummySdk = (Sdk)mySdk.clone();
+      final Sdk dummySdk = mySdk.clone();
       SdkModificator sdkModificator = dummySdk.getSdkModificator();
       sdkModificator.setHomePath(homePath);
       sdkModificator.removeAllRoots();

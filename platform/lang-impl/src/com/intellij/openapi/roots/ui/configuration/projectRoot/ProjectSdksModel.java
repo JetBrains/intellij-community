@@ -84,7 +84,7 @@ public class ProjectSdksModel implements SdkModel {
 
       Sdk editableCopy;
       try {
-        editableCopy = (Sdk)sdk.clone();
+        editableCopy = sdk.clone();
       }
       catch (CloneNotSupportedException e) {
         LOG.error(e);
@@ -104,7 +104,7 @@ public class ProjectSdksModel implements SdkModel {
     final Sdk[] projectSdks = jdkTable.getAllJdks();
     for (Sdk sdk : projectSdks) {
       try {
-        Sdk editable = (Sdk)sdk.clone();
+        Sdk editable = sdk.clone();
         myProjectSdks.put(sdk, editable);
         SdkDownloadTracker.getInstance().registerEditableSdk(sdk, editable);
       }
@@ -521,7 +521,7 @@ public class ProjectSdksModel implements SdkModel {
   public void doAdd(@NotNull Sdk newSdk, @Nullable java.util.function.Consumer<? super Sdk> updateTree) {
     myModified = true;
     try {
-      Sdk editableCopy = (Sdk)newSdk.clone();
+      Sdk editableCopy = newSdk.clone();
       myProjectSdks.put(newSdk, editableCopy);
       if (updateTree != null) {
         updateTree.accept(editableCopy);

@@ -43,7 +43,7 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   @Contract(pure = true)
   private static @NotNull Sdk retainRtJarOnlyAndSetVersion(Sdk jdk) {
     try {
-      jdk = (Sdk)jdk.clone();
+      jdk = jdk.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);

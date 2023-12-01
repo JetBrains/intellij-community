@@ -85,7 +85,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkEntity.Builder) : UserDataH
 
   override fun getSdkAdditionalData(): SdkAdditionalData? = additionalData
 
-  override fun clone(): Any {
+  override fun clone(): SdkBridgeImpl {
     val sdkEntityClone = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
     sdkEntityClone.applyChangesFrom(sdkEntityBuilder)
     return SdkBridgeImpl(sdkEntityClone)

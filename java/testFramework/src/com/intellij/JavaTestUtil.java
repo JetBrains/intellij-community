@@ -44,7 +44,7 @@ public final class JavaTestUtil {
       Sdk jdk = internalJdk;
       if (!internalJdk.getName().equals(finalJdkName)) {
         try {
-          Sdk copy = (Sdk)internalJdk.clone();
+          Sdk copy = internalJdk.clone();
           SdkModificator modificator = copy.getSdkModificator();
           modificator.setName(finalJdkName);
           modificator.commitChanges();

@@ -228,7 +228,7 @@ class SdkInRootModelTest {
   }
 
   private fun renameSdk(sdk: Sdk, newName: String) {
-    val clone = sdk.clone() as Sdk
+    val clone = sdk.clone()
     val modificator = clone.sdkModificator
     modificator.name = newName
 
