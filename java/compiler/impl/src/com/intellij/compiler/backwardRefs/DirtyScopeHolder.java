@@ -187,6 +187,9 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
   private GlobalSearchScope calculateDirtyScope() {
     final Set<Module> dirtyModules = getAllDirtyModules();
     if (dirtyModules.isEmpty()) return myExcludedFilesScope;
+    if (dirtyModules.size() == ModuleManager.getInstance(myProject).getModules().length) {
+      return GlobalSearchScope.allScope(myProject);
+    }
     GlobalSearchScope dirtyModuleScope = GlobalSearchScope.union(dirtyModules
                                                                    .stream()
                                                                    .map(Module::getModuleWithDependentsScope)
