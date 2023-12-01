@@ -15,6 +15,14 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Color
 
 internal object PreviewLAFThemeStyles {
+  @Suppress("ConstPropertyName", "CssInvalidHtmlTagReference")
+  object Variables {
+    const val FontSize = "--default-font-size"
+  }
+
+  val defaultFontSize: Int
+    get() = EditorUtil.getEditorFont().size + 1
+
   /**
    * This method will generate stylesheet with colors and other attributes matching current LAF settings of the IDE.
    * Generated CSS will override base rules from the default.css, so the preview elements will have correct colors.
@@ -32,13 +40,17 @@ internal object PreviewLAFThemeStyles {
     val infoForeground = namedColor("Component.infoForeground", contrastedForeground).webRgba()
 
     val markdownFenceBackground = JBColor(Color(212, 222, 231, 255 / 4), Color(212, 222, 231, 25))
-    val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1)
+    val fontSize = JBCefApp.normalizeScaledSize(defaultFontSize)
     val backgroundColor = scheme.defaultBackground.webRgba()
     // language=CSS
     return """
+    :root {
+      ${Variables.FontSize}: ${fontSize}px;
+    }
+
     body {
         background-color: ${backgroundColor};
-        font-size: ${fontSize}px !important;
+        font-size: var(${Variables.FontSize}) !important;
     }
     
     body, p, blockquote, ul, ol, dl, table, pre, code, tr  {
