@@ -16,6 +16,7 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -414,7 +415,10 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   public void testClassesFromPythonSkeletonsNotSuggested() {
     doMultiFileNegativeTest("Import");
 
-    PyClass djangoViewClass = PyClassNameIndex.findClass("django.views.generic.base.View", myFixture.getProject());
+    Project project = myFixture.getProject();
+    PyClass djangoViewClass = ContainerUtil.getFirstItem(PyClassNameIndex.findByQualifiedName("django.views.generic.base.View",
+                                                                                              project,
+                                                                                              GlobalSearchScope.allScope(project)));
     if (djangoViewClass == null) {
       dumpSdkRootsFileSystemAndIndexResults();
     }
