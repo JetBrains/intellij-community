@@ -23,6 +23,7 @@ import com.intellij.xdebugger.impl.dfaassist.DfaHint
 import com.sun.jdi.Location
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -126,7 +127,7 @@ class KotlinDfaAssistProvider : DfaAssistProvider {
 
     override fun constraintFromJvmClassName(anchor: PsiElement, jvmClassName: String): TypeConstraint {
         val classDef = KtClassDef.fromJvmClassName(anchor as KtElement, jvmClassName) ?: return TypeConstraints.TOP
-        return TypeConstraints.exactClass(classDef)
+        return if (classDef.cls.kind == ClassKind.OBJECT) TypeConstraints.singleton(classDef) else TypeConstraints.exactClass(classDef)
     }
 
     class KotlinDebuggerDfaListener : DebuggerDfaListener {
