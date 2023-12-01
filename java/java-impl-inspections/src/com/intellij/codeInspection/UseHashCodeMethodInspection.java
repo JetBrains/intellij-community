@@ -6,6 +6,7 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiPrecedenceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -41,12 +42,11 @@ public class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInspection
     PsiJavaToken operationSign = binaryExpression.getOperationSign();
     if (operationSign.getTokenType() != JavaTokenType.XOR) return null;
 
-
     PsiExpression leftOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getLOperand());
     PsiExpression rightOperand = PsiUtil.skipParenthesizedExprDown(binaryExpression.getROperand());
 
     if (leftOperand == null || rightOperand == null) return null;
-    if (!PsiTypes.longType().equals(leftOperand.getType())) return null;
+    if (!PsiTypes.longType().equals(PsiPrimitiveType.getOptionallyUnboxedType(leftOperand.getType()))) return null;
 
     if (isXorShift(leftOperand, rightOperand)) return leftOperand;
     if (isXorShift(rightOperand, leftOperand)) return rightOperand;
@@ -79,8 +79,12 @@ public class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInspection
       PsiTypeCastExpression element = (PsiTypeCastExpression)startElement;
       PsiExpression operand = getHashCodeOperand(element);
       if (operand != null) {
+        PsiType type = operand.getType();
         CommentTracker ct = new CommentTracker();
-        ct.replace(element, "Long.hashCode(" + ct.text(operand) + ")");
+        String call = PsiTypes.longType().equals(type)
+                      ? "Long.hashCode(" + ct.text(operand) + ")"
+                      : ct.text(operand, PsiPrecedenceUtil.METHOD_CALL_PRECEDENCE) + ".hashCode()";
+        ct.replace(element, call);
       }
     }
   }
