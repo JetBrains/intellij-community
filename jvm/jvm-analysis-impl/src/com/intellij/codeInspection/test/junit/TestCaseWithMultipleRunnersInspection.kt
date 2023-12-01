@@ -3,15 +3,16 @@ package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.*
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import com.intellij.uast.UastVisitorAdapter
 import com.siyeh.ig.psiutils.TestUtils
-import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
+import java.util.*
 
-class JUnit4RunWithInspection : AbstractBaseUastLocalInspectionTool() {
+class TestCaseWithMultipleRunnersInspection : AbstractBaseUastLocalInspectionTool() {
   private fun shouldInspect(file: PsiFile) = isJUnit4InScope(file)
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -21,21 +22,20 @@ class JUnit4RunWithInspection : AbstractBaseUastLocalInspectionTool() {
 }
 
 private class RunWithVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
-  override fun visitAnnotation(node: UAnnotation): Boolean {
-    if (node.qualifiedName != TestUtils.RUN_WITH) return super.visitAnnotation(node)
-    val current = node.uastParent
-    if (current == null || current !is UClass) return super.visitAnnotation(node)
+  override fun visitClass(node: UClass): Boolean {
+    val runWiths = node.findAnnotations(TestUtils.RUN_WITH)
+    if (runWiths.isEmpty()) return true
 
-    var parent = current.javaPsi.superClass
-    while (parent != null) {
+    val queue: Queue<PsiClass> = ArrayDeque<PsiClass>().apply { addAll(node.javaPsi.supers) }
+    while (queue.isNotEmpty()) {
+      val parent = queue.poll()
       if (parent.hasAnnotation(TestUtils.RUN_WITH)) {
         val message = JvmAnalysisBundle.message("jvm.inspections.junit4.inherited.runwith.problem.descriptor", parent.name)
-        holder.registerUProblem(node, message, highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+        holder.registerUProblem(runWiths[0], message, highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         return true
       }
-      parent = parent.superClass
+      queue.addAll(parent.supers)
     }
-
-    return super.visitAnnotation(node)
+    return true
   }
 }
