@@ -62,15 +62,16 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   private enum CheckCanceledBehavior {
     /**
-     * Nothing to be canceled
+     * Nothing to be executed during ProgressManager.checkCanceled
      */
     NONE,
     /**
-     * Only hooks can be canceled
+     * At least one hook exists and should be executed during ProgressManager.checkCanceled
      */
     ONLY_HOOKS,
     /**
-     * Progress indicator is in canceled state, the process underneath is to be canceled + hooks
+     * There is at least one indicator in the canceled state,
+     * during ProgressManager.checkCanceled the processes underneath are to be canceled, and all existing hooks are to be executed
      */
     INDICATOR_PLUS_HOOKS
   }
