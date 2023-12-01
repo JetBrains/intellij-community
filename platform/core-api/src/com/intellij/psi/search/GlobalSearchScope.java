@@ -529,6 +529,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     private UnionScope(Project project, GlobalSearchScope @NotNull [] scopes) {
       super(project);
       myScopes = scopes;
+      if (scopes.length < 2) {
+        throw new IllegalArgumentException("expected >= 2 scopes but got: " + Arrays.toString(scopes));
+      }
     }
 
     @Override

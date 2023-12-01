@@ -14,6 +14,9 @@ final class IntersectionFileEnumeration implements VirtualFileEnumeration {
 
   IntersectionFileEnumeration(@NotNull List<? extends VirtualFileEnumeration> hints) {
     myHints = hints;
+    if (hints.size() < 2) {
+      throw new IllegalArgumentException("expected >= 2 scopes but got: "+hints);
+    }
   }
 
   @Override
