@@ -1,10 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -113,11 +117,28 @@ public final class MessagePool {
         attachment.setIncluded(true);
       }
     }
-    if (SlowOperations.isMyMessage(message.getThrowable().getMessage())) {
+    if (SlowOperations.isMyMessage(message.getThrowable().getMessage()) || shouldMarkMessageAsRead(message)) {
       message.setRead(true);
     }
     myErrors.add(message);
     notifyEntryAdded();
+  }
+
+  private static boolean shouldMarkMessageAsRead(@NotNull AbstractMessage message) {
+    // https://youtrack.jetbrains.com/issue/RUST-12889
+    if (PlatformUtils.isRustRover()) {
+      IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(message.getThrowable()));
+      if (plugin == null) {
+        return true; // Mark exceptions from Core as read
+      }
+      if (plugin.getPluginId().getIdString().equals("com.jetbrains.rust")) {
+        return false; // Don't mark exceptions from the Rust plugin as read - RustRover team wants to receive them
+      }
+      // Mark exceptions from other bundled plugins as read
+      return plugin.isBundled();
+    }
+
+    return false;
   }
 
   private final class MessageGrouper implements Runnable {
