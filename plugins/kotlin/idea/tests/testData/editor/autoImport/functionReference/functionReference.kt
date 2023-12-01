@@ -1,5 +1,5 @@
 package main
 
 fun test() {
-    val p = ::A
+    val p = ::one
 }<caret>

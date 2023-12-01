@@ -7,4 +7,3 @@ import p2.receiveSomeCtor
 fun a() {
     receiveSomeCtor(::Some<caret>)
 }
-/* IGNORE_K2 */

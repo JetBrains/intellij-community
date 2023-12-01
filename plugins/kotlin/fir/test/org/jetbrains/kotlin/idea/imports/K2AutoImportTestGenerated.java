@@ -63,6 +63,11 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
         runTest("../idea/tests/testData/editor/autoImport/extFunctionWithGenerics/");
     }
 
+    @TestMetadata("functionReference")
+    public void testFunctionReference() throws Exception {
+        runTest("../idea/tests/testData/editor/autoImport/functionReference/");
+    }
+
     @TestMetadata("invoke")
     public void testInvoke() throws Exception {
         runTest("../idea/tests/testData/editor/autoImport/invoke/");

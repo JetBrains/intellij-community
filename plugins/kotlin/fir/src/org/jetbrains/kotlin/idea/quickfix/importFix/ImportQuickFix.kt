@@ -213,7 +213,8 @@ class ImportQuickFix(
                     }
 
                     is KotlinWithSubjectEntryPositionContext,
-                    is KotlinExpressionNameReferencePositionContext -> {
+                    is KotlinExpressionNameReferencePositionContext,
+                    is KotlinCallableReferencePositionContext -> {
                         add(CallableImportCandidatesProvider(positionContext, indexProvider))
                         add(ClassifierImportCandidatesProvider(positionContext, indexProvider))
                     }
@@ -223,10 +224,6 @@ class ImportQuickFix(
                     }
 
                     is KDocLinkNamePositionContext -> {
-                        // TODO
-                    }
-
-                    is KotlinCallableReferencePositionContext -> {
                         // TODO
                     }
 
