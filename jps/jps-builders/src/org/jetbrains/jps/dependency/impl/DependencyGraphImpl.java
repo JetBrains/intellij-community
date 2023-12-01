@@ -130,16 +130,11 @@ public final class DependencyGraphImpl extends GraphImpl implements DependencyGr
       }
 
       boolean isNodeAffected(Node<?, ?> node) {
-        for (Usage usage : node.getUsages()) {
-          Predicate<Node<?, ?>> constraint = affectedUsages.get(usage);
-          if (constraint != null && constraint.test(node)) {
-            return true;
-          }
-          for (BiPredicate<Node<?, ?>, Usage> query : usageQueries) {
-            if (query.test(node, usage)) {
-              return true;
-            }
-          }
+        if (!affectedUsages.isEmpty() && find(filter(map(node.getUsages(), affectedUsages::get), Objects::nonNull), constr -> constr.test(node)) != null) {
+          return true;
+        }
+        if (!usageQueries.isEmpty() && find(node.getUsages(), u -> find(usageQueries, query -> query.test(node, u)) != null) != null) {
+          return true;
         }
         return false;
       }

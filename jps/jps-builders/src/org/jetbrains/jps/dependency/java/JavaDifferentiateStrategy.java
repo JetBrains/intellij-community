@@ -1009,10 +1009,4 @@ public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
     }
   }
 
-  @Override
-  protected void debug(String message) {
-    if (isDebugEnabled()) {
-      super.debug("JavaStrategy: " + message);
-    }
-  }
 }
