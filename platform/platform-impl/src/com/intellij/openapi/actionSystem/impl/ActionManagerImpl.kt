@@ -121,7 +121,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                       actionRegistrar = actionPreInitRegistrar)
     this.keymapToOperations = keymapToOperations
 
-    val mutator = PreInitActionRuntimeRegistrar(idToAction = idToAction, actionPreInitRegistrar = actionPreInitRegistrar)
+    val mutator = PreInitActionRuntimeRegistrar(idToAction = idToAction, actionRegistrar = actionPreInitRegistrar)
 
     val heavyTasks = mutableListOf<ActionConfigurationCustomizer.CustomizeStrategy>()
     ActionConfigurationCustomizer.EP.forEachExtensionSafe { extension ->
@@ -177,15 +177,15 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
   }
 
-  inner class PostInitActionRuntimeRegistrar : ActionRuntimeRegistrar {
+  private inner class PostInitActionRuntimeRegistrar : ActionRuntimeRegistrar {
     override fun registerAction(actionId: String, action: AnAction) {
       val plugin = walker.callerClass?.let { PluginManager.getPluginByClass(it) }
       synchronized(actionPostInitRegistrar.state.lock) {
-        doRegisterAction(actionId = actionId,
-                         action = action,
-                         pluginId = plugin?.pluginId,
-                         projectType = null,
-                         actionRegistrar = actionPostInitRegistrar)
+        registerAction(actionId = actionId,
+                       action = action,
+                       pluginId = plugin?.pluginId,
+                       projectType = null,
+                       actionRegistrar = actionPostInitRegistrar)
       }
     }
 
@@ -206,16 +206,16 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     override fun getActionOrStub(actionId: String): AnAction? = actionPostInitRegistrar.getAction(actionId)
 
     override fun getUnstubbedAction(actionId: String): AnAction? {
-      return doGetAction(id = actionId, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
+      return getAction(id = actionId, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
     }
 
     override fun addToGroup(group: AnAction, action: AnAction, last: Constraints) {
-      doAddToGroup(group = group as DefaultActionGroup,
-                   action = action,
-                   constraints = last,
-                   module = null,
-                   state = actionPostInitRegistrar.state,
-                   secondary = false)
+      addToGroup(group = group as DefaultActionGroup,
+                                                        action = action,
+                                                        constraints = last,
+                                                        module = null,
+                                                        state = actionPostInitRegistrar.state,
+                                                        secondary = false)
     }
 
     override fun replaceAction(actionId: String, newAction: AnAction) {
@@ -230,63 +230,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     override fun getBaseAction(overridingAction: OverridingAction): AnAction? = this@ActionManagerImpl.getBaseAction(overridingAction)
 
     override fun isGroup(actionId: String): Boolean {
-      return doGetAction(id = actionId, canReturnStub = true, actionPostInitRegistrar) is ActionGroup
-    }
-  }
-
-  private class PreInitActionRuntimeRegistrar(
-    private val idToAction: HashMap<String, AnAction>,
-    private val actionPreInitRegistrar: ActionPreInitRegistrar,
-  ) : ActionRuntimeRegistrar {
-    override fun unregisterActionByIdPrefix(idPrefix: String) {
-      for (oldId in idToAction.keys.filter { it.startsWith(idPrefix) }) {
-        unregisterAction(actionId = oldId, actionRegistrar = actionPreInitRegistrar)
-      }
-    }
-
-    override fun unregisterAction(actionId: String) {
-      unregisterAction(actionId = actionId, actionRegistrar = actionPreInitRegistrar)
-    }
-
-    override fun getActionOrStub(actionId: String): AnAction? = idToAction.get(actionId)
-
-    override fun getUnstubbedAction(actionId: String): AnAction? {
-      return doGetAction(id = actionId, canReturnStub = false, actionRegistrar = actionPreInitRegistrar)
-    }
-
-    override fun addToGroup(group: AnAction, action: AnAction, last: Constraints) {
-      doAddToGroup(group = group,
-                   action = action,
-                   constraints = last,
-                   module = null,
-                   state = actionPreInitRegistrar.state,
-                   secondary = false)
-    }
-
-    override fun replaceAction(actionId: String, newAction: AnAction) {
-      val plugin = walker.callerClass?.let { PluginManager.getPluginByClass(it) }
-      replaceAction(actionId = actionId, newAction = newAction, pluginId = plugin?.pluginId, actionRegistrar = actionPreInitRegistrar)
-    }
-
-    override fun getId(action: AnAction): String? {
-      return if (action is ActionStubBase) action.id else actionPreInitRegistrar.state.actionToId.get(action)
-    }
-
-    override fun getBaseAction(overridingAction: OverridingAction): AnAction? {
-      val id = getId(overridingAction as AnAction) ?: return null
-      return actionPreInitRegistrar.state.baseActions.get(id)
-    }
-
-    override fun isGroup(actionId: String): Boolean {
-      return doGetAction(id = actionId, canReturnStub = true, actionPreInitRegistrar) is ActionGroup
-    }
-
-    override fun registerAction(actionId: String, action: AnAction) {
-      doRegisterAction(actionId = actionId,
-                       action = action,
-                       pluginId = null,
-                       projectType = null,
-                       actionRegistrar = actionPreInitRegistrar)
+      return getAction(id = actionId, canReturnStub = true, actionPostInitRegistrar) is ActionGroup
     }
   }
 
@@ -498,7 +442,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   final override fun getAction(id: String): AnAction? {
-    return doGetAction(id = id, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
+    return getAction(id = id, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
   }
 
   override fun getId(action: AnAction): String? {
@@ -518,7 +462,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   final override fun getActionIds(idPrefix: String): Array<String> = ArrayUtilRt.toStringArray(getActionIdList(idPrefix))
 
   final override fun isGroup(actionId: String): Boolean {
-    return doGetAction(id = actionId, canReturnStub = true, actionPostInitRegistrar) is ActionGroup
+    return getAction(id = actionId, canReturnStub = true, actionPostInitRegistrar) is ActionGroup
   }
 
   @Suppress("removal", "OVERRIDE_DEPRECATION")
@@ -528,7 +472,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   final override fun getActionOrStub(id: String): AnAction? {
-    return doGetAction(id = id, canReturnStub = true, actionRegistrar = actionPostInitRegistrar)
+    return getAction(id = id, canReturnStub = true, actionRegistrar = actionPostInitRegistrar)
   }
 
   @Experimental
@@ -633,7 +577,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
     synchronized(actionPostInitRegistrar.state.lock) {
       if (element.attributes.get(OVERRIDES_ATTR_NAME).toBoolean()) {
-        val actionOrStub = doGetAction(id = id, canReturnStub = true, actionRegistrar = actionRegistrar)
+        val actionOrStub = getAction(id = id, canReturnStub = true, actionRegistrar = actionRegistrar)
         if (actionOrStub == null) {
           LOG.error("'$id' action group in '${plugin.name}' does not override anything")
           return
@@ -650,11 +594,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
       }
       else {
-        doRegisterAction(actionId = id,
-                         action = action,
-                         pluginId = plugin.pluginId,
-                         projectType = element.attributes.get(PROJECT_TYPE)?.let { ProjectType.create(it) },
-                         actionRegistrar = actionRegistrar)
+        registerAction(actionId = id,
+                                                              action = action,
+                                                              pluginId = plugin.pluginId,
+                                                              projectType = element.attributes.get(PROJECT_TYPE)?.let { ProjectType.create(it) },
+                                                              actionRegistrar = actionRegistrar)
       }
       onActionLoadedFromXml(actionId = id, plugin = plugin)
     }
@@ -767,12 +711,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                 keymapToOperations = keymapToOperations,
                                                 classLoader = classLoader)
               if (action != null) {
-                doAddToGroup(group = group,
-                             action = action,
-                             constraints = Constraints.LAST,
-                             module = module,
-                             state = actionRegistrar.state,
-                             secondary = isSecondary(child))
+                addToGroup(group = group,
+                                                                  action = action,
+                                                                  constraints = Constraints.LAST,
+                                                                  module = module,
+                                                                  state = actionRegistrar.state,
+                                                                  secondary = isSecondary(child))
               }
             }
           }
@@ -808,12 +752,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                actionRegistrar = actionRegistrar,
                                                classLoader = classLoader)
               if (action != null) {
-                doAddToGroup(group = group,
-                             action = action,
-                             constraints = Constraints.LAST,
-                             module = module,
-                             state = actionRegistrar.state,
-                             secondary = false)
+                addToGroup(group = group,
+                                                                  action = action,
+                                                                  constraints = Constraints.LAST,
+                                                                  module = module,
+                                                                  state = actionRegistrar.state,
+                                                                  secondary = false)
               }
             }
           }
@@ -827,12 +771,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
           REFERENCE_ELEMENT_NAME -> {
             val action = processReferenceElement(element = child, module = module, actionRegistrar = actionRegistrar)
             if (action != null) {
-              doAddToGroup(group = group,
-                           action = action,
-                           constraints = Constraints.LAST,
-                           module = module,
-                           state = actionRegistrar.state,
-                           secondary = isSecondary(child))
+              addToGroup(group = group,
+                                                                action = action,
+                                                                constraints = Constraints.LAST,
+                                                                module = module,
+                                                                state = actionRegistrar.state,
+                                                                secondary = isSecondary(child))
             }
           }
           OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = group, id = id, element = child, module = module, bundle = bundle)
@@ -898,21 +842,21 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return
     }
 
-    doAddToGroup(group = parentGroup,
-                 action = action,
-                 state = actionPostInitRegistrar.state,
-                 constraints = Constraints(anchor, relativeToActionId),
-                 module = module,
-                 secondary = secondary)
+    addToGroup(group = parentGroup,
+                                                      action = action,
+                                                      state = actionPostInitRegistrar.state,
+                                                      constraints = Constraints(anchor, relativeToActionId),
+                                                      module = module,
+                                                      secondary = secondary)
   }
 
   fun addToGroup(group: DefaultActionGroup, action: AnAction, constraints: Constraints) {
-    doAddToGroup(group = group,
-                 action = action,
-                 constraints = constraints,
-                 module = null,
-                 secondary = false,
-                 state = actionPostInitRegistrar.state)
+    addToGroup(group = group,
+                                                      action = action,
+                                                      constraints = constraints,
+                                                      module = null,
+                                                      secondary = false,
+                                                      state = actionPostInitRegistrar.state)
   }
 
   private fun getParentGroup(groupId: String?,
@@ -924,7 +868,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return null
     }
 
-    val parentGroup = doGetAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar)
+    val parentGroup = getAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar)
     if (parentGroup == null) {
       reportActionError(module = module,
                         message = "$actionName: group with id \"$groupId\" isn't registered so the action won't be added to it; the action can be invoked via \"Find Action\"",
@@ -986,7 +930,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return
     }
 
-    val action = doGetAction(id = id, canReturnStub = false, actionRegistrar = actionRegistrar)
+    val action = getAction(id = id, canReturnStub = false, actionRegistrar = actionRegistrar)
     if (action == null) {
       reportActionError(module, "Trying to unregister non-existing action $id")
       return
@@ -1007,7 +951,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return null
     }
 
-    val action = doGetAction(id = ref, canReturnStub = true, actionRegistrar = actionRegistrar)
+    val action = getAction(id = ref, canReturnStub = true, actionRegistrar = actionRegistrar)
     if (action == null) {
       if (!notRegisteredInternalActionIds.contains(ref)) {
         reportActionError(module, "action specified by reference isn't registered (ID=$ref)", null)
@@ -1078,17 +1022,17 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
   override fun registerAction(actionId: String, action: AnAction, pluginId: PluginId?) {
     synchronized(actionPostInitRegistrar.state.lock) {
-      doRegisterAction(actionId = actionId,
-                       action = action,
-                       pluginId = pluginId,
-                       projectType = null,
-                       actionRegistrar = actionPostInitRegistrar)
+      registerAction(actionId = actionId,
+                                                            action = action,
+                                                            pluginId = pluginId,
+                                                            projectType = null,
+                                                            actionRegistrar = actionPostInitRegistrar)
     }
   }
 
   override fun registerAction(actionId: String, action: AnAction) {
     synchronized(actionPostInitRegistrar.state.lock) {
-      doRegisterAction(actionId = actionId, action = action, pluginId = null, projectType = null, actionRegistrar = actionPostInitRegistrar)
+      registerAction(actionId = actionId, action = action, pluginId = null, projectType = null, actionRegistrar = actionPostInitRegistrar)
     }
   }
 
@@ -1252,7 +1196,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     else {
       return actionPostInitRegistrar.ids.asSequence()
         .mapNotNull {
-          doGetAction(id = it, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
+          getAction(id = it, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
         }
     }
   }
@@ -1260,7 +1204,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   @TestOnly
   fun preloadActions() {
     for (id in actionPostInitRegistrar.ids) {
-      doGetAction(id = id, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
+      getAction(id = id, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
       // don't preload ActionGroup.getChildren() because that would un-stub child actions
       // and make it impossible to replace the corresponding actions later
       // (via unregisterAction+registerAction, as some app components do)
@@ -1909,7 +1853,6 @@ private class ActionManagerState {
 
   @JvmField val baseActions: MutableMap<String, AnAction> = HashMap<String, AnAction>()
 
-
   @JvmField val lock = Any()
 }
 
@@ -1978,6 +1921,62 @@ private class PostInitActionRegistrar(
   }
 }
 
+private class PreInitActionRuntimeRegistrar(
+  private val idToAction: HashMap<String, AnAction>,
+  private val actionRegistrar: ActionPreInitRegistrar,
+) : ActionRuntimeRegistrar {
+  override fun unregisterActionByIdPrefix(idPrefix: String) {
+    for (oldId in idToAction.keys.filter { it.startsWith(idPrefix) }) {
+      unregisterAction(actionId = oldId, actionRegistrar = actionRegistrar)
+    }
+  }
+
+  override fun unregisterAction(actionId: String) {
+    unregisterAction(actionId = actionId, actionRegistrar = actionRegistrar)
+  }
+
+  override fun getActionOrStub(actionId: String): AnAction? = idToAction.get(actionId)
+
+  override fun getUnstubbedAction(actionId: String): AnAction? {
+    return getAction(id = actionId, canReturnStub = false, actionRegistrar = actionRegistrar)
+  }
+
+  override fun addToGroup(group: AnAction, action: AnAction, last: Constraints) {
+    addToGroup(group = group,
+               action = action,
+               constraints = last,
+               module = null,
+               state = actionRegistrar.state,
+               secondary = false)
+  }
+
+  override fun replaceAction(actionId: String, newAction: AnAction) {
+    val plugin = walker.callerClass?.let { PluginManager.getPluginByClass(it) }
+    replaceAction(actionId = actionId, newAction = newAction, pluginId = plugin?.pluginId, actionRegistrar = actionRegistrar)
+  }
+
+  override fun getId(action: AnAction): String? {
+    return if (action is ActionStubBase) action.id else actionRegistrar.state.actionToId.get(action)
+  }
+
+  override fun getBaseAction(overridingAction: OverridingAction): AnAction? {
+    val id = getId(overridingAction as AnAction) ?: return null
+    return actionRegistrar.state.baseActions.get(id)
+  }
+
+  override fun isGroup(actionId: String): Boolean {
+    return getAction(id = actionId, canReturnStub = true, actionRegistrar) is ActionGroup
+  }
+
+  override fun registerAction(actionId: String, action: AnAction) {
+    registerAction(actionId = actionId,
+                                                          action = action,
+                                                          pluginId = null,
+                                                          projectType = null,
+                                                          actionRegistrar = actionRegistrar)
+  }
+}
+
 private fun getActionBinding(actionId: String, boundShortcuts: Map<String, String>): String? {
   var visited: MutableSet<String>? = null
   var id = actionId
@@ -1994,7 +1993,6 @@ private fun getActionBinding(actionId: String, boundShortcuts: Map<String, Strin
   }
   return if (id == actionId) null else id
 }
-
 
 private class ActionPreInitRegistrar(
   private val idToAction: HashMap<String, AnAction>,
@@ -2057,12 +2055,12 @@ private fun actionToString(action: AnAction?): @NonNls String {
 
 private val walker = StackWalker.getInstance(setOf(StackWalker.Option.RETAIN_CLASS_REFERENCE), 3)
 
-private fun doAddToGroup(group: AnAction,
-                         action: AnAction,
-                         constraints: Constraints,
-                         module: IdeaPluginDescriptor?,
-                         state: ActionManagerState,
-                         secondary: Boolean) {
+private fun addToGroup(group: AnAction,
+                       action: AnAction,
+                       constraints: Constraints,
+                       module: IdeaPluginDescriptor?,
+                       state: ActionManagerState,
+                       secondary: Boolean) {
   try {
     val actionId = if (action is ActionStub) action.id else state.actionToId.get(action)
     val actionGroup = group as DefaultActionGroup
@@ -2106,11 +2104,11 @@ private fun replaceStub(stub: ActionStubBase, convertedAction: AnAction, actionR
 }
 
 // executed under lock
-private fun doRegisterAction(actionId: String,
-                             action: AnAction,
-                             pluginId: PluginId?,
-                             projectType: ProjectType?,
-                             actionRegistrar: ActionRegistrar) {
+private fun registerAction(actionId: String,
+                           action: AnAction,
+                           pluginId: PluginId?,
+                           projectType: ProjectType?,
+                           actionRegistrar: ActionRegistrar) {
   val state = actionRegistrar.state
   if (state.prohibitedActionIds.contains(actionId)) {
     return
@@ -2152,7 +2150,7 @@ private fun doRegisterAction(actionId: String,
   }
 }
 
-private fun doGetAction(id: String, canReturnStub: Boolean, actionRegistrar: ActionRegistrar): AnAction? {
+private fun getAction(id: String, canReturnStub: Boolean, actionRegistrar: ActionRegistrar): AnAction? {
   var action = actionRegistrar.getAction(id)
   if (canReturnStub || action !is ActionStubBase) {
     return action
@@ -2198,7 +2196,7 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
     val customActionSchema = serviceIfCreated<CustomActionsSchema>()
     for (groupId in (state.idToGroupId.get(actionId) ?: java.util.List.of())) {
       customActionSchema?.invalidateCustomizedActionGroup(groupId)
-      val group = doGetAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
+      val group = getAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
       if (group == null) {
         LOG.error("Trying to remove action $actionId from non-existing group $groupId")
         continue
@@ -2208,9 +2206,9 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
       if (group !is ActionGroupStub) {
         // group can be used as a stub in other actions
         for (parentOfGroup in (state.idToGroupId.get(groupId) ?: java.util.List.of())) {
-          val parentOfGroupAction = doGetAction(id = parentOfGroup,
-                                                canReturnStub = true,
-                                                actionRegistrar = actionRegistrar) as DefaultActionGroup?
+          val parentOfGroupAction = getAction(id = parentOfGroup,
+                                              canReturnStub = true,
+                                              actionRegistrar = actionRegistrar) as DefaultActionGroup?
           if (parentOfGroupAction == null) {
             LOG.error("Trying to remove action $actionId from non-existing group $parentOfGroup")
             continue
@@ -2241,10 +2239,10 @@ private fun replaceAction(actionId: String, newAction: AnAction, pluginId: Plugi
   }
 
   val oldAction = if (newAction is OverridingAction) {
-    doGetAction(id = actionId, canReturnStub = false, actionRegistrar = actionRegistrar)
+    getAction(id = actionId, canReturnStub = false, actionRegistrar = actionRegistrar)
   }
   else {
-    doGetAction(id = actionId, canReturnStub = true, actionRegistrar = actionRegistrar)
+    getAction(id = actionId, canReturnStub = true, actionRegistrar = actionRegistrar)
   }
   // valid indices >= 0
   val oldIndex = state.idToIndex.getInt(actionId)
@@ -2256,18 +2254,18 @@ private fun replaceAction(actionId: String, newAction: AnAction, pluginId: Plugi
     }
 
     for (groupId in (state.idToGroupId.get(actionId) ?: java.util.List.of())) {
-      val group = doGetAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
+      val group = getAction(id = groupId, canReturnStub = true, actionRegistrar = actionRegistrar) as DefaultActionGroup?
                   ?: throw IllegalStateException("Trying to replace action which has been added to a non-existing group $groupId")
       group.replaceAction(oldAction, newAction)
     }
     unregisterAction(actionId = actionId, removeFromGroups = false, actionRegistrar = actionRegistrar)
   }
 
-  doRegisterAction(actionId = actionId,
-                   action = newAction,
-                   pluginId = pluginId,
-                   projectType = null,
-                   actionRegistrar = actionRegistrar)
+  registerAction(actionId = actionId,
+                 action = newAction,
+                 pluginId = pluginId,
+                 projectType = null,
+                 actionRegistrar = actionRegistrar)
   if (oldIndex >= 0) {
     state.idToIndex.put(actionId, oldIndex)
   }
