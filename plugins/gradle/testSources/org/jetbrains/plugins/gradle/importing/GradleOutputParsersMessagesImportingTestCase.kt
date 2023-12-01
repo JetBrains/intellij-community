@@ -4,15 +4,18 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.testFramework.UsefulTestCase
-import org.gradle.util.GradleVersion
 
 @Suppress("GrUnresolvedAccess")
 open class GradleOutputParsersMessagesImportingTestCase : BuildViewMessagesImportingTestCase() {
 
-  val itemLinePrefix by lazy { if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-" }
-  val isPerTaskOutputSupported by lazy { currentGradleVersion >= GradleVersion.version("4.7") }
   var enableStackTraceImportingOption = false
   var quietLogLevelImportingOption = false
+
+  override fun setUp() {
+    super.setUp()
+    enableStackTraceImportingOption = false
+    quietLogLevelImportingOption = false
+  }
 
   // do not inject repository
   override fun injectRepo(config: String): String = config

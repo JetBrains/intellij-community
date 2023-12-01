@@ -224,6 +224,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     currentExternalProjectSettings.isResolveModulePerSourceSet = true
     // check unresolved dependency for disabled offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = false
+    val itemLinePrefix =  if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-"
     importProject {
       withJavaPlugin()
       withRepository {
@@ -324,6 +325,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertSyncViewRerunActions() // quick fix above uses Sync view 'rerun' action to restart import with changes offline mode
 
     // check unresolved dependency for disabled offline mode
+    val itemLinePrefix = if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-"
     GradleSettings.getInstance(myProject).isOfflineWork = false
     importProject {
       withBuildScriptRepository {

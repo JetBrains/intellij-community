@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing
 
 import org.gradle.util.GradleVersion
+import org.gradle.util.GradleVersion.version
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
@@ -49,7 +50,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
 
     var expectedExecutionTree: String
     when {
-      isPerTaskOutputSupported -> expectedExecutionTree =
+      this.currentGradleVersion >= version("4.7") -> expectedExecutionTree =
         "-\n" +
         " -successful\n" +
         "  :api:compileJava\n" +
@@ -78,7 +79,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewTreeSame(expectedExecutionTree)
 
     when {
-      isPerTaskOutputSupported -> expectedExecutionTree =
+      this.currentGradleVersion >= version("4.7") -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
         "  -:brokenProject:compileJava\n" +
