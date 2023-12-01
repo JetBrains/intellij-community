@@ -72,13 +72,6 @@ abstract class SplitTextEditorProvider(
     return sourceElement.getAttribute(SPLIT_LAYOUT)?.value
   }
 
-  override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
-    val firstState = readFirstProviderState(sourceElement, project, file)
-    val secondState = readSecondProviderState(sourceElement, project, file)
-    val layoutName = readSplitLayoutState(sourceElement, project, file)
-    return SplitFileEditor.MyFileEditorState(/* splitLayout = */ layoutName, /* firstState = */ firstState, /* secondState = */ secondState)
-  }
-
   protected fun writeFirstProviderState(state: FileEditorState?, project: Project, targetElement: Element) {
     val child = Element(FIRST_EDITOR)
     if (state != null) {
@@ -99,15 +92,6 @@ abstract class SplitTextEditorProvider(
     if (splitLayout != null) {
       targetElement.setAttribute(SPLIT_LAYOUT, splitLayout)
     }
-  }
-
-  override fun writeState(state: FileEditorState, project: Project, targetElement: Element) {
-    if (state !is SplitFileEditor.MyFileEditorState) {
-      return
-    }
-    writeFirstProviderState(state = state.firstState, project = project, targetElement = targetElement)
-    writeSecondProviderState(state = state.secondState, project = project, targetElement = targetElement)
-    writeSplitLayoutState(splitLayout = state.splitLayout, targetElement = targetElement)
   }
 
   protected abstract fun createSplitEditor(firstEditor: FileEditor, secondEditor: FileEditor): FileEditor
