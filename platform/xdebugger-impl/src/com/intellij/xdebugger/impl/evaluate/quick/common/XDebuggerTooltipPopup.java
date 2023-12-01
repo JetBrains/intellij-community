@@ -82,8 +82,8 @@ class XDebuggerTooltipPopup {
       myPopup.cancel();
       return null;
     }
-    hideAndDisableFloatingToolbar(myEditor, myPopup);
     myPopup.show(new RelativePoint(myEditor.getContentComponent(), myPoint));
+    hideAndDisableFloatingToolbar(myEditor, myPopup);
     return myPopup;
   }
 

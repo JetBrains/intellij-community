@@ -34,6 +34,7 @@ import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import java.awt.Dimension
+import java.awt.IllegalComponentStateException
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
@@ -255,7 +256,7 @@ class CodeFloatingToolbar(
   }
 
   /**
-   * Hides the toolbar if it intersects another popup.
+   * Hides the toolbar if it intersects another popup. Should be called when popup is visible already.
    */
   fun hideOnPopupConflict(popup: JBPopup){
     val toolbarBounds = getScreenBounds(hintComponent) ?: return
@@ -275,9 +276,13 @@ class CodeFloatingToolbar(
   }
 
   private fun getScreenBounds(component: JComponent?): Rectangle? {
-    val location = component?.locationOnScreen ?: return null
-    val size = component.size ?: return null
-    return Rectangle(location.x, location.y, size.width, size.height)
+    try {
+      val location = component?.locationOnScreen ?: return null
+      val size = component.size ?: return null
+      return Rectangle(location.x, location.y, size.width, size.height)
+    } catch (e: IllegalComponentStateException) { //thrown if component is not visible
+      return null
+    }
   }
 
   private fun getPopupDisposable(popup: JBPopup): Disposable {
