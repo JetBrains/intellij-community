@@ -4,12 +4,24 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.actionSystem.ActionPromoter
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.editor.actionSystem.EditorAction
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.project.DumbAwareAction
 
 abstract class TerminalPromotedDumbAwareAction : DumbAwareAction(), ActionPromoter {
   /**
    * Prioritize terminal actions if there are actions with the same shortcuts.
-   * It's safe because terminal actions are enabled only in terminal.
+   * It's safe because terminal actions are enabled only in the terminal.
+   */
+  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
+    return listOf(this)
+  }
+}
+
+abstract class TerminalPromotedEditorAction(handler: EditorActionHandler) : EditorAction(handler), ActionPromoter {
+  /**
+   * Prioritize terminal actions if there are actions with the same shortcuts.
+   * It's safe because terminal actions are enabled only in the terminal.
    */
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     return listOf(this)
