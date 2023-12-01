@@ -13,7 +13,6 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -207,12 +206,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
             "record(" + attributeRecordId + ") is invalid: " + attributesRecord
           );
         }
-        if (attributesRecord.fileId() != fileId) {
-          throw new IllegalStateException(
-            "record(" + attributeRecordId + ").fileId(" + fileId + ") != backref fileId(" + attributesRecord.fileId() + ")" +
-            ": " + attributesRecord
-          );
-        }
+        attributesRecord.checkBackrefFile(attributeRecordId, fileId);
 
         if (attributesRecord.hasDirectory()) {
           int entryNo = 0;
@@ -377,14 +371,17 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
     private final AttributeEntry entry = new AttributeEntry();
 
-    public AttributesRecord(final ByteBuffer buffer) {
+    public AttributesRecord(final ByteBuffer buffer) throws IOException {
       this.buffer = buffer;
       this.length = buffer.remaining();
 
       if (length >= RECORD_HEADER_SIZE) {
         final int fileId = buffer.getInt(RECORD_FILE_ID_OFFSET);
         if (fileId < 0) {//this is a dedicated attribute record, not a directory record:
-          assert length >= DEDICATED_RECORD_HEADER_SIZE : "record length(=" + length + ") must be > " + DEDICATED_RECORD_HEADER_SIZE;
+          if (length < DEDICATED_RECORD_HEADER_SIZE) {
+            throw new CorruptedException("record length(=" + length + ") must be > " + DEDICATED_RECORD_HEADER_SIZE + ", " +
+                                         "buffer: " + IOUtil.toHexString(buffer));
+          }
           backRefFileId = -fileId;
           dedicatedAttributeId = buffer.getInt(DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET);
           //no entries in a dedicated record => no need for entry.reset(...)
@@ -407,6 +404,15 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
      */
     public boolean isValid() {
       return hasDirectory() || hasDedicatedAttribute();
+    }
+
+    public void checkBackrefFile(int attributesRecordId, int fileId) throws CorruptedException {
+      if (backRefFileId != fileId) {
+        throw new CorruptedException("record(" + attributesRecordId + "): " +
+                                     "fileId(" + fileId + ") != backref fileId(" + backRefFileId + "), " +
+                                     this
+        );
+      }
     }
 
     public int fileId() {
@@ -994,8 +1000,8 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
                             final int attributeId) throws IOException {
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
-      assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + "), " + attributesRecord;
+      attributesRecord.checkBackrefFile(attributesRecordId, fileId);
+
 
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
         return null;
@@ -1025,8 +1031,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
                            final ByteBufferReader<R> reader) throws IOException {
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
-      assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + "), " + attributesRecord;
+      attributesRecord.checkBackrefFile(attributesRecordId, fileId);
 
       if (!attributesRecord.findAttributeInDirectoryRecord(attributeId)) {
         return null;
@@ -1061,8 +1066,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     }
     return storage.readRecord(attributesRecordId, buffer -> {
       final AttributesRecord attributesRecord = new AttributesRecord(buffer);
-      assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                        " != backref fileId(" + attributesRecord.backRefFileId + ")";
+      attributesRecord.checkBackrefFile(attributesRecordId, fileId);
       if (!attributesRecord.hasDirectory()) {
         throw new IllegalArgumentException("record(" + attributesRecordId + ") is not a directory record: " +
                                            "(" + attributesRecord.backRefFileId + ", " + attributesRecord.dedicatedAttributeId + ")");
@@ -1097,8 +1101,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
       // lock escalation).
       storage.writeToRecord(attributesRecordId, buffer -> {
         final AttributesRecord attributesRecord = new AttributesRecord(buffer);
-        assert attributesRecord.backRefFileId == fileId : "record(" + attributesRecordId + ").fileId(" + fileId + ")" +
-                                                          " != backref fileId(" + attributesRecord.backRefFileId + ")";
+        attributesRecord.checkBackrefFile(attributesRecordId, fileId);
         for (final AttributeEntry entry = attributesRecord.currentEntry();
              entry.isValid();
              entry.moveToNextEntry()) {
@@ -1142,13 +1145,27 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   private static byte[] readDedicatedRecordPayload(final int dedicatedAttributeRecordId,
                                                    final int fileId,
                                                    final int attributeId,
-                                                   final ByteBuffer dedicatedRecordBuffer) {
+                                                   final ByteBuffer dedicatedRecordBuffer) throws IOException {
+    if (dedicatedRecordBuffer.remaining() < AttributesRecord.DEDICATED_RECORD_HEADER_SIZE) {
+      throw new CorruptedException(
+        "record(" + dedicatedAttributeRecordId + ", fileId: " + fileId + ", " + attributeId + ") is too short for dedicated record: " +
+        dedicatedRecordBuffer.remaining() + " b in buffer < " + AttributesRecord.DEDICATED_RECORD_HEADER_SIZE + " b header"
+      );
+    }
     final int backRefFileId = -dedicatedRecordBuffer.getInt(AttributesRecord.RECORD_FILE_ID_OFFSET);
     final int backRefAttributeId = dedicatedRecordBuffer.getInt(AttributesRecord.DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET);
-    assert backRefFileId == fileId : "record(" + dedicatedAttributeRecordId + ").fileId(" + fileId + ") " +
-                                     "!= backref fileId(" + backRefFileId + ")";
-    assert backRefAttributeId == attributeId : "record(" + attributeId + ").attributeId(" + attributeId + ") " +
-                                               "!= backref attributeId(" + backRefAttributeId + ")";
+    if (backRefFileId != fileId) {
+      throw new CorruptedException("record(" + dedicatedAttributeRecordId + ").fileId(" + fileId + ") " +
+                                   "!= backref fileId(" + backRefFileId + "), buffer remains: " +
+                                   IOUtil.toHexString(dedicatedRecordBuffer)
+      );
+    }
+    if (backRefAttributeId != attributeId) {
+      throw new CorruptedException("record(" + dedicatedAttributeRecordId + ").attributeId(" + attributeId + ") " +
+                                   "!= backref attributeId(" + backRefAttributeId + "), buffer remains: " +
+                                   IOUtil.toHexString(dedicatedRecordBuffer)
+      );
+    }
 
     final int valueLength = dedicatedRecordBuffer.remaining() - AttributesRecord.DEDICATED_RECORD_HEADER_SIZE;
     final byte[] entryValue = new byte[valueLength];
@@ -1159,13 +1176,21 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   private static ByteBuffer readDedicatedRecordPayloadAsSlice(final int dedicatedAttributeRecordId,
                                                               final int fileId,
                                                               final int attributeId,
-                                                              final ByteBuffer dedicatedRecordBuffer) {
+                                                              final ByteBuffer dedicatedRecordBuffer) throws IOException {
     final int backRefFileId = -dedicatedRecordBuffer.getInt(AttributesRecord.RECORD_FILE_ID_OFFSET);
     final int backRefAttributeId = dedicatedRecordBuffer.getInt(AttributesRecord.DEDICATED_RECORD_ATTRIBUTE_ID_OFFSET);
-    assert backRefFileId == fileId : "record(" + dedicatedAttributeRecordId + ").fileId(" + fileId + ") " +
-                                     "!= backref fileId(" + backRefFileId + ")";
-    assert backRefAttributeId == attributeId : "record(" + attributeId + ").attributeId(" + attributeId + ") " +
-                                               "!= backref attributeId(" + backRefAttributeId + ")";
+    if (backRefFileId != fileId) {
+      throw new CorruptedException("record(" + dedicatedAttributeRecordId + ").fileId(" + fileId + ") " +
+                                   "!= backref fileId(" + backRefFileId + "), buffer remains: " +
+                                   IOUtil.toHexString(dedicatedRecordBuffer)
+      );
+    }
+    if (backRefAttributeId != attributeId) {
+      throw new CorruptedException("record(" + attributeId + ").attributeId(" + attributeId + ") " +
+                                   "!= backref attributeId(" + backRefAttributeId + "), buffer remains: " +
+                                   IOUtil.toHexString(dedicatedRecordBuffer)
+      );
+    }
 
     final int valueLength = dedicatedRecordBuffer.remaining() - AttributesRecord.DEDICATED_RECORD_HEADER_SIZE;
     return dedicatedRecordBuffer.slice(AttributesRecord.DEDICATED_RECORD_HEADER_SIZE, valueLength)
