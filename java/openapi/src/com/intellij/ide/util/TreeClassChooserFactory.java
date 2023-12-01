@@ -77,6 +77,10 @@ public abstract class TreeClassChooserFactory {
                                                                  ClassFilter classFilter,
                                                                  @Nullable Comparator<? super NodeDescriptor<?>> comparator);
 
+  /**
+   * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter)}
+   */
+  @Deprecated
   @NotNull
   public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                                     @Nullable PsiFile initialFile,
@@ -84,6 +88,10 @@ public abstract class TreeClassChooserFactory {
                                                     @Nullable TreeFileChooser.PsiFileFilter filter);
 
 
+  /**
+   * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter, boolean)}
+   */
+  @Deprecated
   @NotNull
   public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                                     @Nullable PsiFile initialFile,
@@ -91,7 +99,10 @@ public abstract class TreeClassChooserFactory {
                                                     @Nullable TreeFileChooser.PsiFileFilter filter,
                                                     boolean disableStructureProviders);
 
-
+  /**
+   * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter, boolean, boolean)}
+   */
+  @Deprecated
   @NotNull
   public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                                     @Nullable PsiFile initialFile,
