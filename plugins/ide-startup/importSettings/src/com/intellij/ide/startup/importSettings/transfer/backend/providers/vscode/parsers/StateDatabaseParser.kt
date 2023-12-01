@@ -8,9 +8,9 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.JsonNodeType
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.intellij.ide.startup.importSettings.models.Settings
+import com.intellij.ide.startup.importSettings.transfer.backend.LegacySettingsTransferWizard
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.concurrency.ThreadingAssertions
 import java.io.File
 import java.sql.Connection
 import java.sql.DriverManager
@@ -24,7 +24,7 @@ class StateDatabaseParser(private val settings: Settings) {
   private val recentsKey = "history.recentlyOpenedPathsList"
 
   fun process(file: File) {
-    ThreadingAssertions.assertBackgroundThread()
+    LegacySettingsTransferWizard.warnBackgroundThreadIfNotLegacy()
     try {
       Class.forName("org.sqlite.JDBC")
 
