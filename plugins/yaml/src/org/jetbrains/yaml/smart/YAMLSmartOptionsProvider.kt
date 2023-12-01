@@ -8,6 +8,6 @@ class YAMLSmartOptionsProvider : BeanConfigurable<YAMLEditorOptions>(
   YAMLEditorOptions.getInstance(), YAMLBundle.message("yaml.smartkeys.option.title")) {
 
   init {
-    checkBox(YAMLBundle.message("yaml.smartkeys.option.paste"), instance!!::isUseSmartPaste, instance!!::setUseSmartPaste)
+    checkBox(YAMLBundle.message("yaml.smartkeys.option.paste"), instance::isUseSmartPaste, instance::setUseSmartPaste)
   }
 }

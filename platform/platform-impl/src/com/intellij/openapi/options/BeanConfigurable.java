@@ -30,7 +30,7 @@ import java.util.function.Supplier;
  */
 public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors, UiDslUnnamedConfigurable {
 
-  private final T myInstance;
+  private final @NotNull T myInstance;
   private @NlsContexts.BorderTitle String myTitle;
 
   private final List<BeanField> myFields = new ArrayList<>();
@@ -45,8 +45,8 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   private abstract static class BeanPropertyAccessor {
-    abstract Object getBeanValue(Object instance);
-    abstract void setBeanValue(Object instance, @NotNull Object value);
+    abstract Object getBeanValue(@NotNull Object instance);
+    abstract void setBeanValue(@NotNull Object instance, @NotNull Object value);
   }
 
   private static final class BeanFieldAccessor extends BeanPropertyAccessor {
@@ -116,12 +116,12 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
 
     @Override
-    Object getBeanValue(Object instance) {
+    Object getBeanValue(@NotNull Object instance) {
       return myGetter.get();
     }
 
     @Override
-    void setBeanValue(Object instance, @NotNull Object value) {
+    void setBeanValue(@NotNull Object instance, @NotNull Object value) {
       //noinspection unchecked
       mySetter.set((T) value);
     }
@@ -135,12 +135,12 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     }
 
     @Override
-    Object getBeanValue(Object instance) {
+    Object getBeanValue(@NotNull Object instance) {
       return myProperty.get();
     }
 
     @Override
-    void setBeanValue(Object instance, @NotNull Object value) {
+    void setBeanValue(@NotNull Object instance, @NotNull Object value) {
       //noinspection unchecked
       myProperty.set((T)value);
     }
@@ -163,17 +163,17 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
 
     abstract @NotNull T createComponent();
 
-    boolean isModified(Object instance) {
+    boolean isModified(@NotNull Object instance) {
       final Object componentValue = getComponentValue();
       final Object beanValue = myAccessor.getBeanValue(instance);
       return !Comparing.equal(componentValue, beanValue);
     }
 
-    void apply(Object instance) {
+    void apply(@NotNull Object instance) {
       myAccessor.setBeanValue(instance, getComponentValue());
     }
 
-    void reset(Object instance) {
+    void reset(@NotNull Object instance) {
       setComponentValue(myAccessor.getBeanValue(instance));
     }
 
@@ -231,7 +231,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     myTitle = title;
   }
 
-  protected @Nullable T getInstance() {
+  protected @NotNull T getInstance() {
     return myInstance;
   }
 

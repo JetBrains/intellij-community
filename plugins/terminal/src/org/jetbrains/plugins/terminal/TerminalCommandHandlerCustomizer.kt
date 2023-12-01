@@ -33,7 +33,7 @@ internal class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
   class TerminalCommandHandlerConfigurable(project: Project) :
     BeanConfigurable<TerminalCommandHandlerOptions>(TerminalCommandHandlerOptions(project)) {
     init {
-      checkBox(TerminalBundle.message("settings.terminal.smart.command.handling"), { instance!!.enabled }, { instance!!.enabled = it })
+      checkBox(TerminalBundle.message("settings.terminal.smart.command.handling"), instance::enabled)
     }
   }
 
