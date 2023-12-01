@@ -1,12 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
+import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.psi.LombokDelegateMethod;
@@ -24,8 +25,11 @@ import java.util.stream.Collectors;
  */
 public final class DelegateHandler {
 
+  private static final String TYPES_PARAMETER = "types";
+  private static final String EXCLUDES_PARAMETER = "excludes";
+
   public static boolean validate(@NotNull PsiModifierListOwner psiModifierListOwner,
-                                 @NotNull PsiType psiType,
+                                 @NotNull PsiType delegateTargetType,
                                  @NotNull PsiAnnotation psiAnnotation,
                                  @NotNull ProblemSink problemSink) {
     boolean result = true;
@@ -35,8 +39,9 @@ public final class DelegateHandler {
       result = false;
     }
 
-    final Collection<PsiType> types = collectDelegateTypes(psiAnnotation, psiType);
+    final Collection<PsiType> types = collectDelegateTypes(psiAnnotation, delegateTargetType);
     result &= validateTypes(types, problemSink);
+    result &= validateTypesMethodsExistsInDelegateTargetType(types, delegateTargetType, problemSink);
 
     final Collection<PsiType> excludes = collectExcludeTypes(psiAnnotation);
     result &= validateTypes(excludes, problemSink);
@@ -44,8 +49,46 @@ public final class DelegateHandler {
     return result;
   }
 
+  private static boolean validateTypesMethodsExistsInDelegateTargetType(@NotNull Collection<PsiType> types,
+                                                                        @NotNull PsiType delegateTargetType,
+                                                                        @NotNull ProblemSink sink) {
+    boolean result = true;
+
+    final Set<PsiType> typesToCheck = new HashSet<>(types);
+    typesToCheck.remove(delegateTargetType);
+
+    if (!typesToCheck.isEmpty()) {
+      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(delegateTargetType);
+      final PsiClass psiDelegateTargetClass = resolveResult.getElement();
+      if (null != psiDelegateTargetClass) {
+        final Collection<MethodSignatureBackedByPsiMethod> delegateTargetSignatures =
+          ContainerUtil.map(psiDelegateTargetClass.getVisibleSignatures(),
+                            signature -> MethodSignatureBackedByPsiMethod.create(signature.getMethod(), resolveResult.getSubstitutor()));
+
+        for (PsiType psiType : typesToCheck) {
+          final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(psiType);
+          if (null != psiClass) {
+            final Collection<HierarchicalMethodSignature> methodSignatures = psiClass.getVisibleSignatures();
+
+            for (HierarchicalMethodSignature methodSignature : methodSignatures) {
+              final MethodSignatureBackedByPsiMethod matchingSignature =
+                ContainerUtil.find(delegateTargetSignatures,
+                                   signature -> MethodSignatureUtil.areSignaturesErasureEqual(signature, methodSignature));
+              if (matchingSignature == null) {
+                sink.addWarningMessage("inspection.message.delegate.unknown.type.method", methodSignature.getName())
+                  .withLocalQuickFixes(() -> LocalQuickFix.from(new DeleteElementFix(methodSignature.getMethod())));
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return result;
+  }
+
   private static Collection<PsiType> collectDelegateTypes(PsiAnnotation psiAnnotation, PsiType psiType) {
-    Collection<PsiType> types = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "types", PsiType.class);
+    Collection<PsiType> types = PsiAnnotationUtil.getAnnotationValues(psiAnnotation, TYPES_PARAMETER, PsiType.class);
     if (types.isEmpty()) {
       types = Collections.singletonList(psiType);
     }
@@ -86,26 +129,30 @@ public final class DelegateHandler {
   }
 
   private static Collection<PsiType> collectExcludeTypes(PsiAnnotation psiAnnotation) {
-    return PsiAnnotationUtil.getAnnotationValues(psiAnnotation, "excludes", PsiType.class);
+    return PsiAnnotationUtil.getAnnotationValues(psiAnnotation, EXCLUDES_PARAMETER, PsiType.class);
   }
 
   public static <T extends PsiMember & PsiNamedElement> void generateElements(@NotNull T psiElement,
-                                                                              @NotNull PsiType psiElementType,
+                                                                              @NotNull PsiType delegateTargetType,
                                                                               @NotNull PsiAnnotation psiAnnotation,
                                                                               @NotNull List<? super PsiElement> target) {
     if (!(psiElement.getContainingClass() instanceof PsiExtensibleClass containingPsiClass)) {
       return;
     }
 
-    final Collection<PsiType> includes = collectDelegateTypes(psiAnnotation, psiElementType);
+    final Collection<PsiType> includes = collectDelegateTypes(psiAnnotation, delegateTargetType);
 
     final Collection<Pair<PsiMethod, PsiSubstitutor>> includesMethods = new ArrayList<>();
-    addMethodsOfTypes(includes, includesMethods);
+    for (PsiType psiType : includes) {
+      addMethodsOfType(psiType, includesMethods);
+    }
 
     final Collection<PsiType> excludes = collectExcludeTypes(psiAnnotation);
 
     final Collection<Pair<PsiMethod, PsiSubstitutor>> excludeMethods = new ArrayList<>();
-    addMethodsOfTypes(excludes, excludeMethods);
+    for (PsiType psiType : excludes) {
+      addMethodsOfType(psiType, excludeMethods);
+    }
 
     // Add all already implemented methods to exclude list (includes methods from java.lang.Object too)
     collectAllOwnMethods(containingPsiClass, excludeMethods);
@@ -116,30 +163,16 @@ public final class DelegateHandler {
     }
   }
 
-  private static void addMethodsOfTypes(Collection<PsiType> types, Collection<Pair<PsiMethod, PsiSubstitutor>> results) {
-    for (PsiType type : types) {
-      addMethodsOfType(type, results);
-    }
-  }
-
   private static void addMethodsOfType(PsiType psiType, Collection<Pair<PsiMethod, PsiSubstitutor>> results) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(psiType);
     final PsiClass psiClass = resolveResult.getElement();
-    if (null != psiClass && psiType instanceof PsiClassType psiClassType) {
-      final PsiTypeParameter[] classTypeParameters = psiClass.getTypeParameters();
-      final PsiType[] parameters = psiClassType.getParameters();
-
-      PsiSubstitutor enrichedSubstitutor = PsiSubstitutor.EMPTY;
-      if (classTypeParameters.length == parameters.length) {
-        for (int i = 0; i < parameters.length; i++) {
-          enrichedSubstitutor = enrichedSubstitutor.put(classTypeParameters[i], parameters[i]);
-        }
-      }
+    if (null != psiClass) {
+      final PsiSubstitutor psiClassSubstitutor = resolveResult.getSubstitutor();
 
       for (Pair<PsiMethod, PsiSubstitutor> pair : psiClass.getAllMethodsAndTheirSubstitutors()) {
         final PsiMethod psiMethod = pair.getFirst();
         if (isAcceptableMethod(psiMethod)) {
-          final PsiSubstitutor psiSubstitutor = pair.getSecond().putAll(enrichedSubstitutor);
+          final PsiSubstitutor psiSubstitutor = pair.getSecond().putAll(psiClassSubstitutor);
           if (!isAlreadyPresent(psiMethod, psiSubstitutor, results)) {
             results.add(Pair.pair(psiMethod, psiSubstitutor));
           }
