@@ -515,11 +515,11 @@ public class GeneralCommandLine implements UserDataHolder {
   protected void setupEnvironment(@NotNull Map<String, String> environment) {
     environment.clear();
 
-    if (myParentEnvironmentType != ParentEnvironmentType.NONE) {
+    if (myParentEnvironmentType != ParentEnvironmentType.NONE && myIsEscapingForLocalRun) {
       environment.putAll(getParentEnvironment());
     }
 
-    if (SystemInfo.isUnix) {
+    if (SystemInfo.isUnix && myIsEscapingForLocalRun) {
       File workDirectory = getWorkDirectory();
       if (workDirectory != null) {
         environment.put("PWD", FileUtil.toSystemDependentName(workDirectory.getAbsolutePath()));
@@ -527,7 +527,7 @@ public class GeneralCommandLine implements UserDataHolder {
     }
 
     if (!myEnvParams.isEmpty()) {
-      if (SystemInfo.isWindows) {
+      if (SystemInfo.isWindows && myIsEscapingForLocalRun) {
         Map<String, String> envVars = CollectionFactory.createCaseInsensitiveStringMap();
         envVars.putAll(environment);
         envVars.putAll(myEnvParams);
