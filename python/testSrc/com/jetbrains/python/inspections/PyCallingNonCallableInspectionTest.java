@@ -95,7 +95,7 @@ public class PyCallingNonCallableInspectionTest extends PyInspectionTestCase {
 
   // PY-28626
   public void testFunctionDecoratedAsContextManager() {
-    doMultiFileTest();
+    doTest();
   }
 
   // PY-24161

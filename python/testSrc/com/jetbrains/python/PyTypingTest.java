@@ -4408,6 +4408,39 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-36444
+  public void testContextManagerDecorator() {
+    doTest("str",
+           """
+             from contextlib import contextmanager
+
+             @contextmanager
+             def generator_function():
+                 yield "some value"
+
+             with generator_function() as value:
+                 expr = value
+             """);
+  }
+
+  // PY-36444
+  public void testTextIOInferedWithContextManagerDecorator() {
+    doTest("TextIO",
+           """
+             from contextlib import contextmanager
+                             
+             @contextmanager
+             def open_file(name: str):
+                 f = open(name)
+                 yield f
+                 f.close()
+                             
+             cm = open_file(__file__)
+             with cm as file:
+                 expr = file
+             """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
