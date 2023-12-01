@@ -24,17 +24,19 @@ class ConfigurableBuilderHelper {
 
     @JvmStatic
     @ApiStatus.Internal
-    fun buildBeanPanel(@NlsContexts.BorderTitle title: String?, components: List<JComponent>): DialogPanel {
+    fun createBeanPanel(beanConfigurable: BeanConfigurable<*>, components: List<JComponent>): DialogPanel {
       return panel {
-        if (title != null) {
-          group(title) {
-            appendBeanFields(components)
-          }
-        }
-        else {
-          appendBeanFields(components)
-        }
+        appendBeanConfigurableContent(beanConfigurable, components)
       }
+    }
+
+    @JvmStatic
+    @ApiStatus.Internal
+    fun integrateBeanPanel(rootPanel: Panel, beanConfigurable: BeanConfigurable<*>, components: List<JComponent>) {
+      rootPanel.appendBeanConfigurableContent(beanConfigurable, components)
+      rootPanel.onApply { beanConfigurable.apply() }
+      rootPanel.onIsModified { beanConfigurable.isModified() }
+      rootPanel.onReset { beanConfigurable.reset() }
     }
 
     private fun Panel.appendFields(fields: List<ConfigurableBuilder.BeanField<*, *>>) {
@@ -45,6 +47,19 @@ class ConfigurableBuilderHelper {
             .onIsModified { field.isModified }
             .onReset { field.reset() }
         }
+      }
+    }
+
+    private fun Panel.appendBeanConfigurableContent(beanConfigurable: BeanConfigurable<*>, components: List<JComponent>) {
+      val title = beanConfigurable.title
+
+      if (title != null) {
+        group(title) {
+          appendBeanFields(components)
+        }
+      }
+      else {
+        appendBeanFields(components)
       }
     }
 

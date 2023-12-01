@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Setter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.dsl.builder.Panel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import kotlin.reflect.KMutableProperty0;
@@ -27,7 +28,8 @@ import java.util.function.Supplier;
 /**
  * See {@link ConfigurableBuilder} for {@link UiDslUnnamedConfigurable} alternative.
  */
-public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors {
+public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors, UiDslUnnamedConfigurable {
+
   private final T myInstance;
   private @NlsContexts.BorderTitle String myTitle;
 
@@ -303,8 +305,12 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
 
   @Override
   public JComponent createComponent() {
-    List<JComponent> components = ContainerUtil.map(myFields, field -> field.getComponent());
-    return ConfigurableBuilderHelper.buildBeanPanel(myTitle, components);
+    return ConfigurableBuilderHelper.createBeanPanel(this, getComponents());
+  }
+
+  @Override
+  public void createContent(@NotNull Panel rootPanel) {
+    ConfigurableBuilderHelper.integrateBeanPanel(rootPanel, this, getComponents());
   }
 
   @Override
@@ -327,5 +333,9 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     for (BeanField field : myFields) {
       field.reset(myInstance);
     }
+  }
+
+  private List<JComponent> getComponents() {
+    return ContainerUtil.map(myFields, field -> field.getComponent());
   }
 }
