@@ -4,6 +4,7 @@ package com.intellij;
 import com.intellij.idea.ExcludeFromTestDiscovery;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.idea.IgnoreJUnit3;
+import com.intellij.idea.IJIgnore;
 import com.intellij.nastradamus.NastradamusClient;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.teamcity.TeamCityClient;
@@ -448,6 +449,7 @@ public class TestCaseLoader {
     String className = testCaseClass.getName();
 
     return !myTestClassesFilter.matches(className, moduleName) ||
+           testCaseClass.isAnnotationPresent(IJIgnore.class) ||
            testCaseClass.isAnnotationPresent(IgnoreJUnit3.class) ||
            isExcludeFromTestDiscovery(testCaseClass);
   }

@@ -2,6 +2,7 @@
 package com.intellij;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.idea.IJIgnore;
 import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -84,7 +85,7 @@ public class TestAll implements Test {
   private static final Filter NOT_IGNORED = new Filter() {
     @Override
     public boolean shouldRun(Description description) {
-      return description.getAnnotation(IgnoreJUnit3.class) == null;
+      return description.getAnnotation(IgnoreJUnit3.class) == null && description.getAnnotation(IJIgnore.class) == null;
     }
 
     @Override
@@ -389,7 +390,7 @@ public class TestAll implements Test {
 
             Method method = findTestMethod((TestCase)test);
 
-            if (method != null && method.getAnnotation(IgnoreJUnit3.class) != null) {
+            if (method != null && (method.getAnnotation(IgnoreJUnit3.class) != null || method.getAnnotation(IJIgnore.class) != null)) {
               return;
             }
             doAddTest(test);
