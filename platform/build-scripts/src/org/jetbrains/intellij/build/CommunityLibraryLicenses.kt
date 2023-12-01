@@ -15,7 +15,7 @@ object CommunityLibraryLicenses {
   val LICENSES_LIST: List<LibraryLicense> = java.util.List.of(
     LibraryLicense(name = "A fast Java JSON schema validator", libraryName = "json-schema-validator",
                    url = "https://github.com/networknt/json-schema-validator")
-      .apache("https://github.com/networknt/json-schema-validator/LICENSE"),
+      .apache("https://github.com/networknt/json-schema-validator/blob/master/LICENSE"),
     LibraryLicense(name = "aalto-xml", libraryName = "aalto-xml", url = "https://github.com/FasterXML/aalto-xml/")
       .apache("https://github.com/FasterXML/aalto-xml/blob/master/LICENSE"),
     androidDependency(name = "AAPT Protos", libraryName = "aapt-proto"),
@@ -145,7 +145,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Apache Ant", version = "1.9", libraryName = "Ant", url = "https://ant.apache.org/")
       .apache("https://ant.apache.org/license.html"),
     LibraryLicense(name = "Apache Axis", libraryName = "axis-1.4", version = "1.4", url = "https://axis.apache.org/axis/")
-      .apache("http://svn.apache.org/viewvc/axis/axis1/java/trunk/LICENSE?view=markup"),
+      .apache("https://svn.apache.org/viewvc/axis/axis1/java/trunk/LICENSE?view=markup"),
     LibraryLicense(name = "Apache Commons CLI", libraryName = "commons-cli",
                    url = "https://commons.apache.org/proper/commons-cli/")
       .apache("https://gitbox.apache.org/repos/asf?p=commons-cli.git;a=blob_plain;f=LICENSE.txt;hb=HEAD"),
@@ -251,11 +251,11 @@ object CommunityLibraryLicenses {
     LibraryLicense(libraryName = "blockmap",
                    url = "https://github.com/JetBrains/plugin-blockmap-patches")
       .apache("https://github.com/JetBrains/plugin-blockmap-patches/blob/master/LICENSE"),
-    LibraryLicense(libraryName = "bouncy-castle-pgp", url = "https://bouncycastle.org")
-      .mit("https://bouncycastle.org/licence.html")
+    LibraryLicense(libraryName = "bouncy-castle-pgp", url = "https://www.bouncycastle.org")
+      .mit("https://www.bouncycastle.org/license.html")
       .suppliedByOrganizations("The Legion of the Bouncy Castle Inc."),
-    LibraryLicense(libraryName = "bouncy-castle-provider", url = "https://bouncycastle.org")
-      .mit("https://bouncycastle.org/licence.html")
+    LibraryLicense(libraryName = "bouncy-castle-provider", url = "https://www.bouncycastle.org")
+      .mit("https://www.bouncycastle.org/license.html")
       .suppliedByOrganizations("The Legion of the Bouncy Castle Inc."),
     LibraryLicense(name = "Byte Buddy agent", libraryName = "byte-buddy-agent",
                    url = "https://github.com/raphw/byte-buddy")
@@ -362,7 +362,7 @@ object CommunityLibraryLicenses {
     // for flatbuffers-java module library in android.sdktools.mlkit-common
     LibraryLicense(name = "FlatBuffers Java API", libraryName = "flatbuffers-java",
                    url = "https://google.github.io/flatbuffers/")
-      .apache("https://github.com/google/flatbuffers/blob/master/LICENSE.txt"),
+      .apache("https://github.com/google/flatbuffers/blob/master/LICENSE"),
     LibraryLicense(name = "FreeMarker", attachedTo = "intellij.java.coverage", version = "2.3.30",
                    url = "https://freemarker.apache.org")
       .apache("https://freemarker.apache.org/docs/app_license.html"),
@@ -698,7 +698,7 @@ object CommunityLibraryLicenses {
                    url = "https://json-schema.org/draft-07/schema#").simplifiedBsd(),
     LibraryLicense(libraryName = "jsoup", url = "https://jsoup.org").mit("https://jsoup.org/license"),
     LibraryLicense(libraryName = "jsr305", url = "https://code.google.com/p/jsr-305/")
-      .newBsd("http://www.opensource.org/licenses/bsd-license.php")
+      .newBsd("https://opensource.org/license/bsd-3-clause/")
       .suppliedByOrganizations("JSR305 expert group"),
     LibraryLicense(libraryName = "jsvg", url = "https://github.com/weisJ/jsvg").mit("https://github.com/weisJ/jsvg/blob/master/LICENSE")
       .suppliedByPersons("Jannis Weis"),
@@ -713,7 +713,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Juniversalchardet", libraryName = "juniversalchardet",
                    url = "https://code.google.com/archive/p/juniversalchardet",
                    license = "MPL 1.1", licenseUrl = "https://www.mozilla.org/MPL/MPL-1.1.html"),
-    LibraryLicense(libraryName = "jzlib", url = "https://www.jcraft.com/jzlib/").newBsd("https://www.jcraft.com/jzlib/LICENSE.txt"),
+    LibraryLicense(libraryName = "jzlib", url = "http://www.jcraft.com/jzlib/").newBsd("https://github.com/ymnk/jzlib/raw/master/LICENSE.txt"),
     LibraryLicense(name = "KInference",
                    libraryName = "kinference.core.jvm",
                    url = "https://packages.jetbrains.team/maven/p/ki/maven",
@@ -831,12 +831,12 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Language Tool", libraryName = "org.languagetool:languagetool-core",
                    url = "https://github.com/languagetool-org/languagetool",
                    license = "LGPL 2.1",
-                   licenseUrl = "https://www.gnu.org/licenses/lgpl-2.1.txt")
+                   licenseUrl = "https://github.com/languagetool-org/languagetool/blob/master/COPYING.txt")
       .suppliedByPersons("Daniel Naber", "Marcin Miłkowski"),
     LibraryLicense(name = "Language Tool (English)", libraryName = "org.languagetool:language-en",
                    url = "https://github.com/languagetool-org/languagetool",
                    license = "LGPL 2.1",
-                   licenseUrl = "https://www.gnu.org/licenses/lgpl-2.1.txt")
+                   licenseUrl = "https://github.com/languagetool-org/languagetool/blob/master/COPYING.txt")
       .suppliedByPersons("Daniel Naber", "Marcin Miłkowski"),
     LibraryLicense(name = "Log4j", libraryName = "Log4J",
                    url = "https://www.slf4j.org/legacy.html#log4j-over-slf4j").apache()
