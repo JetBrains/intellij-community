@@ -9,7 +9,7 @@ import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 @Suppress("GrUnresolvedAccess")
-class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImportingTest() {
+class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImportingTestCase() {
 
   @Test
   fun `test build script errors on Build`() {
