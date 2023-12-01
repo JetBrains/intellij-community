@@ -2,8 +2,8 @@
 package com.intellij.uiDesigner.propertyInspector.editors.string;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.ide.util.TreeFileChooser;
+import com.intellij.ide.util.TreeFileChooserFactory;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.PropertiesReferenceManager;
@@ -358,8 +358,8 @@ public final class StringEditorDialog extends DialogWrapper{
             PropertiesFile file = PropertiesUtilBase.getPropertiesFile(bundleNameText, myEditor.getModule(), myLocale);
             PsiFile initialPropertiesFile = file == null ? null : file.getContainingFile();
             final GlobalSearchScope moduleScope = GlobalSearchScope.moduleWithDependenciesScope(myEditor.getModule());
-            TreeFileChooser fileChooser = TreeClassChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
-                                                                                                         PropertiesFileType.INSTANCE, new TreeFileChooser.PsiFileFilter() {
+            TreeFileChooser fileChooser = TreeFileChooserFactory.getInstance(project).createFileChooser(UIDesignerBundle.message("title.choose.properties.file"), initialPropertiesFile,
+                                                                                                        PropertiesFileType.INSTANCE, new TreeFileChooser.PsiFileFilter() {
               @Override
               public boolean accept(PsiFile file) {
                 final VirtualFile virtualFile = file.getVirtualFile();
