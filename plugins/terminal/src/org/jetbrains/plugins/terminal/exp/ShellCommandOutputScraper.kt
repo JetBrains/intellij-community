@@ -3,23 +3,23 @@ package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.Alarm
-import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
 import com.jediterm.terminal.model.CharBuffer
+import com.jediterm.terminal.model.LinesBuffer
+import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalTextBuffer
+import com.jediterm.terminal.util.CharUtils
 import org.jetbrains.plugins.terminal.TerminalUtil
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class ShellCommandOutputScraper(private val session: TerminalSession,
                                          private val textBuffer: TerminalTextBuffer,
-                                         commandManager: ShellCommandManager,
                                          parentDisposable: Disposable) {
 
-  constructor(session: TerminalSession): this(session, session.model.textBuffer, session.commandManager, session)
+  constructor(session: TerminalSession): this(session, session.model.textBuffer, session)
 
-  private val listeners: CopyOnWriteArrayList<ShellCommandOutputListener> = CopyOnWriteArrayList()
-  private var runningCommand: String? = null
+  private val listeners: MutableList<ShellCommandOutputListener> = CopyOnWriteArrayList()
   private val contentChangedAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
   private val scheduled: AtomicBoolean = AtomicBoolean(false)
 
@@ -27,11 +27,6 @@ internal class ShellCommandOutputScraper(private val session: TerminalSession,
     TerminalUtil.addModelListener(textBuffer, parentDisposable) {
       onContentChanged()
     }
-    commandManager.addListener(object: ShellCommandListener {
-      override fun commandStarted(command: String) {
-        runningCommand = command
-      }
-    }, parentDisposable)
   }
 
   fun addListener(listener: ShellCommandOutputListener, parentDisposable: Disposable) {
@@ -57,59 +52,77 @@ internal class ShellCommandOutputScraper(private val session: TerminalSession,
 
   fun scrapeOutput(): StyledCommandOutput {
     session.model.withContentLock {
-      return computeCommandOutput()
+      val outputBuilder = OutputBuilder(textBuffer.width)
+      if (!textBuffer.isUsingAlternateBuffer) {
+        outputBuilder.addLines(textBuffer.historyBuffer)
+      }
+      outputBuilder.addLines(textBuffer.screenBuffer)
+      return outputBuilder.build()
+    }
+  }
+}
+
+private class OutputBuilder(private val columns: Int) {
+  private val output: StringBuilder = StringBuilder()
+  private val styles: MutableList<StyleRange> = mutableListOf()
+  private var pendingNewLines: Int = 0
+  private var pendingNuls: Int = 0
+
+  fun addLines(linesBuffer: LinesBuffer) {
+    for (i in 0 until linesBuffer.lineCount) {
+      addLine(linesBuffer.getLine(i))
     }
   }
 
-  private fun computeCommandOutput(): StyledCommandOutput {
-    val baseOffset = 0
-    val builder = StringBuilder()
-    val highlightings = mutableListOf<StyleRange>()
-    val consumer = object : StyledTextConsumer {
-
-      private var pendingNewLines: Int = 0
-      private var pendingNuls: Int = 0
-
-      override fun consume(x: Int,
-                           y: Int,
-                           style: TextStyle,
-                           characters: CharBuffer,
-                           startRow: Int) {
-        val text = characters.toString()
-        if (text.isNotEmpty()) {
-          repeat(pendingNewLines) {
-            val startOffset = baseOffset + builder.length
-            builder.append("\n")
-            highlightings.add(StyleRange(startOffset, startOffset + 1, TextStyle.EMPTY))
-          }
-          pendingNewLines = 0
-          repeat(pendingNuls) {
-            builder.append(' ')
-          }
-          pendingNuls = 0
-          val startOffset = baseOffset + builder.length
-          builder.append(text)
-          highlightings.add(StyleRange(startOffset, baseOffset + builder.length, style))
+  private fun addLine(line: TerminalLine) {
+    var addedLength = 0
+    line.forEachEntry { entry ->
+      val charBuffer: CharBuffer = entry.text
+      val length = charBuffer.length
+      addedLength += length
+      if (length > 0) {
+        if (entry.isNul) {
+          pendingNuls += length
+        }
+        else {
+          addTextChunk(charBuffer.normalize(), entry.style)
         }
       }
+    }
+    if (line.isWrapped) {
+      pendingNuls += (columns - addedLength).coerceAtLeast(0)
+    }
+    else {
+      pendingNewLines++
+      pendingNuls = 0
+    }
+  }
 
-      override fun consumeNul(x: Int,
-                              y: Int,
-                              nulIndex: Int,
-                              style: TextStyle,
-                              characters: CharBuffer,
-                              startRow: Int) {
-        pendingNuls += characters.length
+  private fun CharBuffer.normalize(): String {
+    val s = this.toString()
+    return if (s.contains(CharUtils.DWC)) s.filterTo(StringBuilder(s.length - 1)) { it != CharUtils.DWC }.toString() else s
+  }
+
+  private fun addTextChunk(text: String, style: TextStyle) {
+    if (text.isNotEmpty()) {
+      repeat(pendingNewLines) {
+        output.append("\n")
       }
-
-      override fun consumeQueue(x: Int, y: Int, nulIndex: Int, startRow: Int) {
-        pendingNewLines++
-        pendingNuls = 0
+      pendingNewLines = 0
+      repeat(pendingNuls) {
+        output.append(' ')
+      }
+      pendingNuls = 0
+      val startOffset = output.length
+      output.append(text)
+      if (style != TextStyle.EMPTY) {
+        styles.add(StyleRange(startOffset, startOffset + text.length, style))
       }
     }
-    val historyLinesCount = textBuffer.historyLinesCount
-    textBuffer.processHistoryAndScreenLines(-historyLinesCount, historyLinesCount + textBuffer.height, consumer)
-    return StyledCommandOutput(builder.toString(), highlightings)
+  }
+
+  fun build(): StyledCommandOutput {
+    return StyledCommandOutput(output.toString(), styles)
   }
 }
 

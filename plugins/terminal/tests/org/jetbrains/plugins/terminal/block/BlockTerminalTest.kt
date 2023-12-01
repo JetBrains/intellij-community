@@ -64,16 +64,16 @@ class BlockTerminalTest(private val shellPath: String) {
     val termSize = TermSize(20, 10)
     val session = startBlockTerminalSession(termSize)
     val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
-    val items = listOf(SimpleTextRepeater.Item("Hello, World", termSize.rows * 3),
-                       SimpleTextRepeater.Item("Done", 1))
+    val items = listOf(SimpleTextRepeater.Item("Hello, World", false, true, termSize.rows * 3),
+                       SimpleTextRepeater.Item("Done", false, true, 1))
     session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommandLine(items))
     assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
   }
 
   @Test
   fun `test large output`() {
-    val items = listOf(SimpleTextRepeater.Item(UUID.randomUUID().toString(), 10_000),
-                       SimpleTextRepeater.Item("Done", 1))
+    val items = listOf(SimpleTextRepeater.Item(UUID.randomUUID().toString(), false, true, 10_000),
+                       SimpleTextRepeater.Item("Done", false, true, 1))
     setTerminalBufferMaxLines(items.sumOf { it.count })
     val session = startBlockTerminalSession(TermSize(200, 100))
     PlatformTestUtil.startPerformanceTest("large output is read", 30000) {
@@ -105,6 +105,17 @@ class BlockTerminalTest(private val shellPath: String) {
         println("#$stepId Done in ${startTime.elapsedNow().inWholeMilliseconds}ms")
       }
     }
+  }
+
+  @Test
+  fun `long output lines without line breaks`() {
+    val termSize = TermSize(20, 10)
+    val session = startBlockTerminalSession(termSize)
+    val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+    val items = listOf(SimpleTextRepeater.Item("_", true, false, termSize.columns),
+                       SimpleTextRepeater.Item.NEW_LINE /* finish with a new line to get rid of trailing '%' in zsh */)
+    session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommandLine(items))
+    assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
   }
 
   private fun createCommandSentDeferred(session: TerminalSession): CompletableDeferred<Unit> {

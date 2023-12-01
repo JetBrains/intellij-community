@@ -7,31 +7,45 @@ object SimpleTextRepeater {
 
   @JvmStatic
   fun main(arg: Array<String>) {
-    val chunks: MutableList<Item> = mutableListOf()
-    check(arg.size % 2 == 0) { "Even argument list size is expected, got " + arg.size }
-    for (i in 0..<arg.size / 2) {
-      chunks.add(Item(arg[i * 2], arg[i * 2 + 1].toInt()))
+    check(arg.size % 4 == 0) { "Even argument list size is expected, got " + arg.size }
+    val items: List<Item> = (0 until arg.size / 4).map {
+      Item.fromCommandline(arg.slice(it * 4 until (it + 1) * 4))
     }
-    for (chunk in chunks) {
-      repeat(chunk.count) {
-        println(chunk.lineText)
+    for (item in items) {
+      for (i in 1..item.count) {
+        print(item.getTextToPrint(i))
       }
     }
   }
 
-  data class Item(val lineText: String, val count: Int)
+  class Item(private val prefix: String, private val withIncrementingId: Boolean, private val withNewLine: Boolean, val count: Int) {
+    fun getTextToPrint(id: Int): String {
+      return prefix + (if (withIncrementingId) id.toString() else "") + (if (withNewLine) System.lineSeparator() else "")
+    }
+
+    fun toCommandline(): List<String> {
+      return listOf(prefix, withIncrementingId.toString(), withNewLine.toString(), count.toString())
+    }
+
+    companion object {
+      val NEW_LINE = Item("", false, true, 1)
+
+      fun fromCommandline(arg: List<String>): Item {
+        return Item(arg[0], arg[1].toBooleanStrict(), arg[2].toBooleanStrict(), arg[3].toInt())
+      }
+    }
+  }
 
   object Helper {
     fun generateCommandLine(items: List<Item>): String {
-      val args: Array<String> = items.flatMap { listOf(it.lineText, it.count.toString()) }.toTypedArray()
+      val args: Array<String> = items.flatMap { it.toCommandline() }.toTypedArray()
       return TerminalSessionTestUtil.getJavaShellCommand(SimpleTextRepeater::class.java, *args)
     }
 
     fun getExpectedOutput(items: List<Item>): String {
-      val expectedLines = items.flatMap { item ->
-        MutableList(item.count) { item.lineText }
-      }
-      return expectedLines.joinToString("\n", postfix = "\n")
+      return items.flatMap { item ->
+        (1..item.count).map { item.getTextToPrint(it) }
+      }.joinToString("")
     }
   }
 }
