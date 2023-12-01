@@ -23,6 +23,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShLanguage;
 import com.intellij.sh.ShNotificationDisplayIds;
 import com.intellij.sh.settings.ShSettings;
@@ -31,6 +32,8 @@ import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.FileDownloader;
 import com.intellij.util.system.CpuArch;
+import com.intellij.util.text.SemVer;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShBundle.messagePointer;
@@ -184,9 +188,16 @@ public final class ShShfmtFormatterUtil {
 
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (!isNewVersionAvailable()) return;
-    Notification notification = NOTIFICATION_GROUP.createNotification(message("sh.shell.script"), message("sh.fmt.update.question"),
-                                                 NotificationType.INFORMATION);
+    Pair<String, String> newVersionAvailable = getVersionUpdate();
+    if (newVersionAvailable == null) return;
+
+    String currentVersion = newVersionAvailable.first;
+    String newVersion = newVersionAvailable.second;
+
+    Notification notification = NOTIFICATION_GROUP.createNotification(
+      message("sh.shell.script"),
+      message("sh.fmt.update.question", currentVersion, newVersion),
+      NotificationType.INFORMATION);
     notification.setSuggestionType(true);
     notification.setDisplayId(ShNotificationDisplayIds.UPDATE_FORMATTER);
     notification.addAction(
@@ -210,23 +221,50 @@ public final class ShShfmtFormatterUtil {
     Notifications.Bus.notify(notification, project);
   }
 
-  private static boolean isNewVersionAvailable() {
+  /**
+   * @return pair of old and new versions or null if there's no update
+   */
+  private static Pair<String, String> getVersionUpdate() {
+    final String updateVersion = StringsKt.removePrefix(SHFMT_VERSION, "v");
+    final SemVer updateVersionVer = SemVer.parseFromText(updateVersion);
+    if (updateVersionVer == null) return null;
+    if (ShSettings.getSkippedShfmtVersion().equals(updateVersion)) return null;
+
     String path = ShSettings.getShfmtPath();
-    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return false;
+    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return null;
     File file = new File(path);
-    if (!file.canExecute()) return false;
-    if (!file.getName().contains(SHFMT)) return false;
+    if (!file.canExecute()) return null;
+    if (!file.getName().contains(SHFMT)) return null;
     try {
       GeneralCommandLine commandLine = new GeneralCommandLine().withExePath(path).withParameters("--version");
       ProcessOutput processOutput = ExecUtil.execAndGetOutput(commandLine, 3000);
 
       String stdout = processOutput.getStdout();
-      return !stdout.contains(SHFMT_VERSION) && !ShSettings.getSkippedShfmtVersion().equals(SHFMT_VERSION);
+      String current = getVersionFromStdOut(stdout);
+      if (current == null) {
+        current = "unknown";
+        return Pair.create(current, updateVersion);
+      }
+      SemVer currentVersion = SemVer.parseFromText(current);
+      if (currentVersion == null || updateVersionVer.isGreaterOrEqualThan(currentVersion)) {
+        return Pair.create(current, updateVersion);
+      }
+      return null;
     }
     catch (ExecutionException e) {
       LOG.debug("Exception in process execution", e);
     }
-    return false;
+    return null;
+  }
+
+  private static String getVersionFromStdOut(String stdout) {
+    String[] lines = StringUtil.splitByLines(stdout);
+    for (String line : lines) {
+      line = line.trim().toLowerCase(Locale.ENGLISH);
+      if (line.isEmpty()) continue;
+      if (Character.isDigit(line.charAt(0))) return line;
+    }
+    return null;
   }
 
   @NotNull
