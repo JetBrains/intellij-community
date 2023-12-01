@@ -102,7 +102,7 @@ final class CommonCodeStyleSettingsManager {
   private void initNonReadSettings() {
     for (final LanguageCodeStyleProvider provider : CodeStyleSettingsService.getInstance().getLanguageCodeStyleProviders()) {
       Language target = provider.getLanguage();
-      if (!myCommonSettingsMap.containsKey(target.getID())) {
+      if (!myCommonSettingsMap.containsKey(target.getID()) && !provider.useBaseLanguageCommonSettings()) {
         CommonCodeStyleSettings initialSettings = safelyGetDefaults(provider);
         if (initialSettings != null) {
           init(initialSettings, target.getID());

@@ -3,6 +3,7 @@ package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.cache.CodeStyleCachingService;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -107,7 +108,8 @@ public final class CodeStyle {
       }
       return localOrTempSettings;
     }
-    PsiFile settingsFile = getSettingsPsi(file);
+    PsiFile topLevel = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+    PsiFile settingsFile = getSettingsPsi(topLevel != null ? topLevel : file);
     if (settingsFile == null) {
       return getSettings(project);
     }
@@ -338,7 +340,7 @@ public final class CodeStyle {
    * <code>project</code>. This effect is limited to current thread.
    *
    * @param project The current project.
-   * @param localSettings The local settings. 
+   * @param localSettings The local settings.
    * @param runnable The runnable.
    */
   public static void runWithLocalSettings(@NotNull Project project,

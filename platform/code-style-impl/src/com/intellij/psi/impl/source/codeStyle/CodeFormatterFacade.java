@@ -70,7 +70,7 @@ public final class CodeFormatterFacade {
     final boolean delegateToTopLevel = shouldDelegateToTopLevel(document, file);
 
     PsiElement elementToFormat = delegateToTopLevel ? InjectedLanguageManager
-          .getInstance(file.getProject()).getTopLevelFile(file) : psiElement;
+      .getInstance(file.getProject()).getTopLevelFile(file) : psiElement;
     final PsiFile fileToFormat = elementToFormat.getContainingFile();
 
 
@@ -180,9 +180,10 @@ public final class CodeFormatterFacade {
             return;
           }
 
-            TextRange formattingModelRange = ObjectUtils.notNull(ranges.getBoundRange(), file.getTextRange());
+          TextRange formattingModelRange = ObjectUtils.notNull(ranges.getBoundRange(), file.getTextRange());
 
-          final FormattingModel originalModel = CoreFormatterUtil.buildModel(builder, file, formattingModelRange, mySettings, FormattingMode.REFORMAT);
+          final FormattingModel originalModel =
+            CoreFormatterUtil.buildModel(builder, file, formattingModelRange, mySettings, FormattingMode.REFORMAT);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel,
                                                                          document,
                                                                          project, mySettings, file.getFileType(), file);
@@ -326,8 +327,7 @@ public final class CodeFormatterFacade {
             // Allow only range expansion (not reduction) for injected context.
             if ((initialInjectedRange.getStartOffset() > injectedRange.getStartOffset() && initialInjectedRange.getStartOffset() > 0)
                 || (initialInjectedRange.getEndOffset() < injectedRange.getEndOffset()
-                    && initialInjectedRange.getEndOffset() < injected.getTextLength()))
-            {
+                    && initialInjectedRange.getEndOffset() < injected.getTextLength())) {
               range = TextRange.create(
                 range.getStartOffset() + injectedRange.getStartOffset() - initialInjectedRange.getStartOffset(),
                 range.getEndOffset() + initialInjectedRange.getEndOffset() - injectedRange.getEndOffset());
@@ -338,7 +338,7 @@ public final class CodeFormatterFacade {
     }
 
     if (!mySettings.FORMATTER_TAGS_ENABLED) {
-      for (PreFormatProcessor processor: PreFormatProcessor.EP_NAME.getExtensionList()) {
+      for (PreFormatProcessor processor : PreFormatProcessor.EP_NAME.getExtensionList()) {
         if (processor.changesWhitespacesOnly() || !myCanChangeWhitespaceOnly) {
           result = processor.process(node, result);
         }
