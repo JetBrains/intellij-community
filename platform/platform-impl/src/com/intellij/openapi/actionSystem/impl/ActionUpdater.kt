@@ -70,6 +70,7 @@ private const val OLD_EDT_MSG_SUFFIX = ". Revise AnAction.getActionUpdateThread 
 private const val OP_expandActionGroup = "expandedChildren"
 private const val OP_groupChildren = "children"
 private const val OP_actionPresentation = "presentation"
+private const val OP_groupPostProcess = "postProcessChildren"
 
 private val ourToolbarJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
 private val ourOtherJobs: MutableSet<Job> = ConcurrentCollectionFactory.createConcurrentSet()
@@ -347,7 +348,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         .awaitAll()
         .flatten()
     }
-    val actions = group.postProcessVisibleChildren(result, asUpdateSession())
+    val actions = postProcessGroupChildren(group, result)
     for (action in actions) {
       if (action is InlineActionsHolder) {
         for (inlineAction in action.getInlineActions()) {
@@ -356,6 +357,19 @@ internal class ActionUpdater @JvmOverloads constructor(
       }
     }
     actions
+  }
+
+  private suspend fun postProcessGroupChildren(group: ActionGroup, result: List<AnAction>): List<AnAction> {
+    try {
+      val updateSession = asUpdateSession()
+      return retryOnAwaitSharedData { // no data-context, no RA
+        group.postProcessVisibleChildren(result, updateSession)
+      }
+    }
+    catch (ex: Throwable) {
+      handleException(group, OP_groupPostProcess, null, ex, RecursionElement.isNested())
+      return result
+    }
   }
 
   /** same event/retry/intercept/cache logic as in [updateAction] */
