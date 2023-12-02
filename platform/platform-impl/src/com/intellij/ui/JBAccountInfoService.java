@@ -5,8 +5,6 @@ import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ServiceConfigurationError;
-import java.util.ServiceLoader;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -33,7 +31,7 @@ public interface JBAccountInfoService {
   }
 
   default @NotNull Future<String> getAccessToken() {
-    return new Future<String>() {
+    return new Future<>() {
       @Override
       public boolean cancel(boolean mayInterruptIfRunning) {
         return false;
@@ -64,11 +62,6 @@ public interface JBAccountInfoService {
   void invokeJBALogin(@Nullable Consumer<? super String> userIdConsumer, @Nullable Runnable onFailure);
 
   static @Nullable JBAccountInfoService getInstance() {
-    try {
-      return ServiceLoader.load(JBAccountInfoService.class).findFirst().orElse(null);
-    }
-    catch (ServiceConfigurationError ignored) {
-      return null;
-    }
+    return JBAccountInfoServiceHolder.INSTANCE;
   }
 }
