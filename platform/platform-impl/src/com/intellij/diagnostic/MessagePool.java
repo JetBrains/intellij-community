@@ -117,14 +117,18 @@ public final class MessagePool {
         attachment.setIncluded(true);
       }
     }
-    if (SlowOperations.isMyMessage(message.getThrowable().getMessage()) || shouldMarkMessageAsRead(message)) {
+    if (shallAddSilently(message)) {
       message.setRead(true);
     }
     myErrors.add(message);
     notifyEntryAdded();
   }
 
-  private static boolean shouldMarkMessageAsRead(@NotNull AbstractMessage message) {
+  private static boolean shallAddSilently(@NotNull AbstractMessage message) {
+    if (SlowOperations.isMyMessage(message.getThrowable().getMessage())) {
+      return true;
+    }
+
     // https://youtrack.jetbrains.com/issue/RUST-12889
     if (PlatformUtils.isRustRover()) {
       IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(PluginUtil.getInstance().findPluginId(message.getThrowable()));
