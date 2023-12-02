@@ -352,6 +352,8 @@ sealed class K2MoveRenameUsageInfo(
          * Ad-hoc implementation of bulk shortening that should be replaced by some better API in the future.
          */
         private fun shortenReferences(file: KtFile, qualifiedElements: Map<PsiElement, KtNamedDeclaration>) {
+            fun PsiElement.isInsideOf(another: PsiElement): Boolean = another.textRange.contains(textRange)
+
             fun FqName.proximityTo(other: FqName): Int {
                 val segments = pathSegments()
                 val otherSegments = other.pathSegments()
@@ -362,14 +364,17 @@ sealed class K2MoveRenameUsageInfo(
                 return proximity
             }
 
+            val nonNestedElems = qualifiedElements.filter { (elem, _) ->
+                qualifiedElements.keys.none { otherElem -> elem != otherElem && elem.isInsideOf(otherElem) }
+            }
             val fileFqn = file.packageFqName
-            val sortedElements = qualifiedElements.keys.sortedByDescending { ref ->
-                val newDecl = qualifiedElements[ref]
+            val sortedElements = nonNestedElems.keys.sortedByDescending { ref ->
+                val newDecl = nonNestedElems[ref]
                 newDecl?.fqName?.proximityTo(fileFqn)
             }
             sortedElements.forEach { qualifiedElem ->
                 analyze(file) {
-                    val shortening = collectPossibleReferenceShortenings(file, qualifiedElem.textRange)
+                    val shortening = collectPossibleReferenceShorteningsInElement(qualifiedElem as KtElement)
                     shortening.invokeShortening()
                 }
             }
