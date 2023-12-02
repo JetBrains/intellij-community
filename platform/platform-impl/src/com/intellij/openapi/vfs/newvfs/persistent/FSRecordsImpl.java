@@ -1187,7 +1187,12 @@ public final class FSRecordsImpl implements Closeable {
   /** must be called under r or w lock */
   private @Nullable AttributeInputStream readAttribute(int fileId,
                                                        @NotNull FileAttribute attribute) throws IOException {
-    return attributeAccessor.readAttribute(fileId, attribute);
+    try {
+      return attributeAccessor.readAttribute(fileId, attribute);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
   @NotNull
