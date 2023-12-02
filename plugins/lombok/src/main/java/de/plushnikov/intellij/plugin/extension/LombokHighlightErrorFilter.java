@@ -7,7 +7,6 @@ import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemDescriptorUtil;
 import com.intellij.codeInspection.QuickFix;
-import com.intellij.java.JavaBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -16,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.handler.FieldNameConstantsHandler;
 import de.plushnikov.intellij.plugin.handler.LazyGetterHandler;
 import de.plushnikov.intellij.plugin.handler.OnXAnnotationHandler;
@@ -182,21 +180,6 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
     },
 
     // WARNINGS HANDLERS
-    //see com.intellij.java.lomboktest.LombokHighlightingTest.testBuilderWithDefaultRedundantInitializer
-    VARIABLE_INITIALIZER_IS_REDUNDANT(HighlightSeverity.WARNING, CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES) {
-      private final Pattern pattern = Pattern.compile(
-        JavaBundle.message("inspection.unused.assignment.problem.descriptor2", "(.+)", "(.+)"));
-
-      @Override
-      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
-        return description != null && pattern.matcher(description).matches();
-      }
-
-      @Override
-      public boolean accept(@NotNull PsiElement highlightedElement) {
-        return !BuilderHandler.isDefaultBuilderValue(highlightedElement);
-      }
-    },
 
     // field should have lazy getter and should be initialized in constructors
     //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyInvocationProduceNPE
