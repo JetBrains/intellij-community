@@ -984,7 +984,7 @@ public class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImpl {
 
   private void affectModule(DifferentiateContext context, Utils utils, JvmModule mod) {
     debug("Affecting module ", mod.getName());
-    for (NodeSource source : filter(utils.getNodeSources(mod.getReferenceID()), context.getParams().affectionFilter()::test)) {
+    for (NodeSource source : utils.getNodeSources(mod.getReferenceID())) {
       context.affectNodeSource(source);
       debug("Affected source ", source.getPath());
     }

@@ -5,10 +5,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.dependency.BackDependencyIndex;
-import org.jetbrains.jps.dependency.Graph;
-import org.jetbrains.jps.dependency.NodeSource;
-import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.*;
 import org.jetbrains.jps.dependency.diff.DiffCapable;
 import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.javac.Iterators;
@@ -21,21 +18,22 @@ import static org.jetbrains.jps.javac.Iterators.*;
 
 public final class Utils {
 
+  private final @NotNull DifferentiateContext myContext;
   private final @NotNull Graph myGraph;
-  
   private final @Nullable Graph myDelta;
 
   private final @NotNull BackDependencyIndex myDirectSubclasses;
 
-  public Utils(Graph graph, @Nullable Graph delta) {
-    myGraph = graph;
-    myDelta = delta;
-    myDirectSubclasses = Objects.requireNonNull(graph.getIndex(SubclassesIndex.NAME));
+  public Utils(@NotNull DifferentiateContext context, boolean isDelta) {
+    myContext = context;
+    myGraph = context.getGraph();
+    myDelta = isDelta? context.getDelta() : null;
+    myDirectSubclasses = Objects.requireNonNull(myGraph.getIndex(SubclassesIndex.NAME));
   }
 
   public Iterable<NodeSource> getNodeSources(ReferenceID nodeId) {
     Iterable<NodeSource> sources = myDelta != null? myDelta.getSources(nodeId) : null;
-    return !isEmpty(sources)? sources : myGraph.getSources(nodeId);
+    return sources != null? sources : filter(myGraph.getSources(nodeId), myContext.getParams().affectionFilter()::test);
   }
 
   public Iterable<JvmClass> getClassesByName(@NotNull String name) {
@@ -94,15 +92,16 @@ public final class Utils {
     if (id instanceof JvmNodeReferenceID && "".equals(((JvmNodeReferenceID)id).getNodeName())) {
       return Collections.emptyList();
     }
+    Predicate<? super NodeSource> srcFilter = myContext.getParams().affectionFilter();
     Iterable<T> allNodes;
     if (myDelta != null) {
       Set<NodeSource> deltaSources = collect(myDelta.getSources(id), new HashSet<>());
       allNodes = flat(
-        flat(map(deltaSources, src -> myDelta.getNodes(src, selector))), flat(map(filter(myGraph.getSources(id), src -> !deltaSources.contains(src)), src -> myGraph.getNodes(src, selector)))
+        flat(map(deltaSources, src -> myDelta.getNodes(src, selector))), flat(map(filter(myGraph.getSources(id), src -> !deltaSources.contains(src) && srcFilter.test(src)), src -> myGraph.getNodes(src, selector)))
       );
     }
     else {
-      allNodes = flat(map(myGraph.getSources(id), src -> myGraph.getNodes(src, selector)));
+      allNodes = flat(map(filter(myGraph.getSources(id), srcFilter::test), src -> myGraph.getNodes(src, selector)));
     }
     return uniqueBy(filter(allNodes, n -> id.equals(n.getReferenceID())), () -> new Iterators.BooleanFunction<>() {
       Set<T> visited;

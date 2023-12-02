@@ -31,8 +31,8 @@ public final class GeneralJvmDifferentiateStrategy implements DifferentiateStrat
 
   @Override
   public boolean differentiate(DifferentiateContext context, Iterable<Node<?, ?>> nodesBefore, Iterable<Node<?, ?>> nodesAfter) {
-    Utils future = new Utils(context.getGraph(), context.getDelta());
-    Utils present = new Utils(context.getGraph(), null);
+    Utils future = new Utils(context, true);
+    Utils present = new Utils(context, false);
 
     Difference.Specifier<JvmClass, JvmClass.Diff> classesDiff = Difference.deepDiff(
       Graph.getNodesOfType(nodesBefore, JvmClass.class), Graph.getNodesOfType(nodesAfter, JvmClass.class)
