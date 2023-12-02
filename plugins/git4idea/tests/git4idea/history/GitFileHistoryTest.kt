@@ -22,6 +22,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
   override fun makeInitialCommit(): Boolean = false
 
+  @Throws(VcsException::class)
   fun `test commit message with escape sequence`() {
     touch("a.txt")
     add()
@@ -33,7 +34,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   // Inspired by IDEA-89347
-  @Throws(Exception::class)
+  @Throws(VcsException::class, IOException::class)
   fun `test cyclic rename`() {
     val commits = ArrayList<TestCommit>()
 
@@ -62,7 +63,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commits, history)
   }
 
-  @Throws(Exception::class)
+  @Throws(VcsException::class, IOException::class)
   fun `test history`() {
     val commits = ArrayList<TestCommit>()
 
@@ -81,7 +82,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commits, history)
   }
 
-  @Throws(Exception::class)
+  @Throws(VcsException::class, IOException::class)
   fun `test appendable history`() {
     val commits = ArrayList<TestCommit>()
 
@@ -104,7 +105,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commits, history)
   }
 
-  @Throws(Exception::class)
+  @Throws(VcsException::class, IOException::class)
   fun `test history through merged rename`() {
     add("initial.txt", ourCurrentDir(), "initial commit")
 
@@ -128,7 +129,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commits, history)
   }
 
-  @Throws(Exception::class)
+  @Throws(VcsException::class, IOException::class)
   fun `test history through non-trivial merge`() {
     val commits = ArrayList<TestCommit>()
 
@@ -154,7 +155,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commits, history)
   }
 
-  @Throws(Exception::class)
+  @Throws(VcsException::class, IOException::class)
   fun `test history through trivial merge`() {
     val commits = ArrayList<TestCommit>()
 
@@ -176,7 +177,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commits, history)
   }
 
-  @Throws(Exception::class)
+  @Throws(VcsException::class, IOException::class)
   fun `test history through reverting merge`() {
     val commits = ArrayList<TestCommit>()
 
@@ -202,7 +203,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commits, history)
   }
 
-  @Throws(Exception::class)
+  @Throws(VcsException::class)
   fun `test history through monorepo merge`() {
     val repo1Commits = ArrayList<TestCommit>()
     val repo2Commits = ArrayList<TestCommit>()
@@ -233,7 +234,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(repo2Commits.asReversed(), collectFileHistory(repo2MovedFile))
   }
 
-  @Throws(Exception::class)
+  @Throws(VcsException::class)
   fun `test history through submodule merge`() {
     val commits = ArrayList<TestCommit>()
 
@@ -255,7 +256,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     assertSameHistory(commits.asReversed(), collectFileHistory(file, full = true))
   }
 
-  @Throws(Exception::class)
+  @Throws(VcsException::class, IOException::class)
   fun `test history through parallel renames`() {
     val commits = ArrayList<TestCommit>()
 
