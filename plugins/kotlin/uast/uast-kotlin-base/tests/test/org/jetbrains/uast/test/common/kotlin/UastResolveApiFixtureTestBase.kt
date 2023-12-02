@@ -2087,6 +2087,61 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         mockLibraryFacility.tearDown(myFixture.module)
     }
 
+    fun checkResolveInnerInlineFromLibrary(myFixture: JavaCodeInsightTestFixture) {
+        val mockLibraryFacility = myFixture.configureLibraryByText(
+            "Dependency.kt", """
+                package test
+                
+                class Mock {
+                  companion object {
+                    inline fun <reified T : Any> mock(): T = TODO()
+                  }
+                }
+                
+                class AnotherMock {
+                  companion object Named {
+                    inline fun <reified T : Any> mock(): T = TODO()
+                  }
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                import test.Mock
+                import test.AnotherMock
+
+                class MyClass
+
+                fun test(): Boolean {
+                  val instance1 = Mock.mock<MyClass>()
+                  val instance2 = AnotherMock.mock<MyClass>()
+                  return instance1 == instance2
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(object : AbstractUastVisitor() {
+            var first: Boolean = true
+
+            override fun visitCallExpression(node: UCallExpression): Boolean {
+                val resolved = node.resolve()
+                TestCase.assertNotNull(resolved)
+                TestCase.assertEquals("mock", resolved!!.name)
+                if (first) {
+                    TestCase.assertEquals("Companion", resolved.containingClass?.name)
+                    first = false
+                } else {
+                    TestCase.assertEquals("Named", resolved.containingClass?.name)
+                }
+
+                return super.visitCallExpression(node)
+            }
+        })
+
+        mockLibraryFacility.tearDown(myFixture.module)
+    }
+
     private fun JavaCodeInsightTestFixture.configureLibraryByText(
         fileName: String,
         text: String,
