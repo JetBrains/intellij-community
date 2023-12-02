@@ -83,6 +83,9 @@ internal class IndexingStampStorageOverFastAttributes : IndexingStampStorage {
       return persistence.readEnumerated(fileId)
     }
     catch (e: IOException) {
+      //TODO RC: why we blame VFS if there is something wrong with storages unrelated to VFS?
+      //         It may make sense for IndexingStampStorageOverRegularAttributes there VFS file attributes
+      //         are used to store indexing stamps -- but fast attributes storage are unrelated to VFS
       throw FSRecords.handleError(e)
     }
   }

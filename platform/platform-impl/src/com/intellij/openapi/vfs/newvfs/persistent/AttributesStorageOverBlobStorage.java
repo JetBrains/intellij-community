@@ -793,6 +793,9 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
       }
       catch (Throwable t) {
         LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
+        //FIXME RC: don't use static method -- use specific VFS instance to handle the error
+        //          Even better: setup error processing in FSRecordsImpl.writeAttribute() -- wrap returned stream,
+        //          and add exception handling into the .close() method.
         throw FSRecords.handleError(t);
       }
       finally {
