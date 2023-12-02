@@ -1,38 +1,27 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight
 
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.openapi.options.ConfigurableBuilder;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.jetbrains.python.PyBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.openapi.options.BeanConfigurable
+import com.intellij.openapi.options.SearchableConfigurable
+import com.jetbrains.python.PyBundle
 
+class PySmartKeysOptions : BeanConfigurable<PyCodeInsightSettings>(PyCodeInsightSettings.getInstance()), SearchableConfigurable {
 
-public class PySmartKeysOptions extends ConfigurableBuilder implements SearchableConfigurable {
-  public PySmartKeysOptions() {
+  init {
     //CodeInsightSettings.getInstance().REFORMAT_ON_PASTE = CodeInsightSettings.NO_REFORMAT;   //TODO: remove combobox from settings
-    CodeInsightSettings commonSettings = CodeInsightSettings.getInstance();
-    checkBox(PyBundle.message("form.edit.smart.indent.pasted.lines"), () -> commonSettings.INDENT_TO_CARET_ON_PASTE,
-             v -> commonSettings.INDENT_TO_CARET_ON_PASTE = v);
-    PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
-    checkBox(PyBundle.message("smartKeys.wrap.in.parentheses.instead.of.backslash"), () -> settings.PARENTHESISE_ON_ENTER,
-             v -> settings.PARENTHESISE_ON_ENTER = v);
-    checkBox(PyBundle.message("smartKeys.insert.self.in.method"), () -> settings.INSERT_SELF_FOR_METHODS,
-             v -> settings.INSERT_SELF_FOR_METHODS = v);
-    checkBox(PyBundle.message("smartKeys.insert.type.placeholder.in.docstring.stub"), () -> settings.INSERT_TYPE_DOCSTUB,
-             v -> settings.INSERT_TYPE_DOCSTUB = v);
+    val commonSettings = CodeInsightSettings.getInstance()
+    checkBox(PyBundle.message("form.edit.smart.indent.pasted.lines"), commonSettings::INDENT_TO_CARET_ON_PASTE)
+    checkBox(PyBundle.message("smartKeys.wrap.in.parentheses.instead.of.backslash"), instance::PARENTHESISE_ON_ENTER)
+    checkBox(PyBundle.message("smartKeys.insert.self.in.method"), instance::INSERT_SELF_FOR_METHODS)
+    checkBox(PyBundle.message("smartKeys.insert.type.placeholder.in.docstring.stub"), instance::INSERT_TYPE_DOCSTUB)
   }
 
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @Override
-  public String getDisplayName() {
-    return PyBundle.message("configurable.PySmartKeysOptions.display.name");
+  override fun getDisplayName(): String {
+    return PyBundle.message("configurable.PySmartKeysOptions.display.name")
   }
 
-  @NotNull
-  @Override
-  public String getId() {
-    return "editor.preferences.pyOptions";
+  override fun getId(): String {
+    return "editor.preferences.pyOptions"
   }
 }

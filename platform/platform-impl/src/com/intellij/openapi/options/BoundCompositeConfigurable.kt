@@ -8,10 +8,16 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 
+/**
+ * Composite configurable that contains several configurables.
+ *
+ * @see [UiDslUnnamedConfigurable]
+ */
 abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   @NlsContexts.ConfigurableName displayName: String,
   helpTopic: String? = null
 ) : BoundConfigurable(displayName, helpTopic) {
+
   abstract fun createConfigurables(): List<T>
 
   private val lazyConfigurables: Lazy<List<T>> = lazy { createConfigurables() }
