@@ -472,7 +472,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   public void manySmallRecordInserted_AreAllReportedExistInStorage_AndCouldBeReadBack() throws IOException {
     final int inlineAttributeSize = INLINE_ATTRIBUTE_SMALLER_THAN - 1;
     final int fileId = ARBITRARY_FILE_ID;
-    final AttributeRecord[] records = IntStream.range(0, 100)
+    final AttributeRecord[] records = IntStream.range(1, 101)
       .mapToObj(attributeId -> newAttributeRecord(fileId, attributeId)
         .withRandomAttributeBytes(inlineAttributeSize))
       .toArray(AttributeRecord[]::new);

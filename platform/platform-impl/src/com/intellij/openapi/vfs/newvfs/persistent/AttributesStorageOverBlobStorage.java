@@ -213,7 +213,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
                entry.moveToNextEntry(), entryNo++) {
             int attributeId = entry.attributeId();
             if (entry.isValueInlined()) {
-              if (attributeId <= DataEnumerator.NULL_ID || attributeId > MAX_SUPPORTED_ATTRIBUTE_ID) {
+              if (!validAttributeId(attributeId)) {
                 String valueAsHex = IOUtil.toHexString(entry.inlinedValueAsSlice());
                 throw new IllegalStateException(
                   "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
@@ -1273,9 +1273,13 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   }
 
   private static void checkAttributeId(final int attributeId) {
-    if (attributeId < 0 || attributeId > MAX_SUPPORTED_ATTRIBUTE_ID) {
+    if (!validAttributeId(attributeId)) {
       throw new IllegalArgumentException(
-        "attributeId(=" + attributeId + ") must be in [0.." + MAX_SUPPORTED_ATTRIBUTE_ID + "]");
+        "attributeId(=" + attributeId + ") must be in (0.." + MAX_SUPPORTED_ATTRIBUTE_ID + "]");
     }
+  }
+
+  private static boolean validAttributeId(int attributeId) {
+    return DataEnumerator.NULL_ID < attributeId && attributeId <= MAX_SUPPORTED_ATTRIBUTE_ID;
   }
 }
