@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
-import de.plushnikov.intellij.plugin.handler.FieldNameConstantsHandler;
 import de.plushnikov.intellij.plugin.handler.LazyGetterHandler;
 import de.plushnikov.intellij.plugin.handler.OnXAnnotationHandler;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
@@ -163,19 +162,6 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
       @Override
       public boolean accept(@NotNull PsiElement highlightedElement) {
         return !LazyGetterHandler.isLazyGetterHandled(highlightedElement);
-      }
-    },
-
-    //see com.intellij.java.lomboktest.LombokHighlightingTest.testFieldNameConstantsExample
-    CONSTANT_EXPRESSION_REQUIRED(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
-      @Override
-      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
-        return JavaErrorBundle.message("constant.expression.required").equals(description);
-      }
-
-      @Override
-      public boolean accept(@NotNull PsiElement highlightedElement) {
-        return !FieldNameConstantsHandler.isFiledNameConstants(highlightedElement);
       }
     },
 
