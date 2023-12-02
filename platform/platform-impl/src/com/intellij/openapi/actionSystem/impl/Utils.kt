@@ -371,10 +371,17 @@ object Utils {
 
   fun <T> computeWithProgressIcon(dataContext: DataContext,
                                   place: String,
-                                  task: suspend () -> T): T = runBlockingForActionExpand(CoroutineName("computeWithProgressIcon")) {
+                                  task: suspend () -> T): T {
     val component = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext)
     val loadingIconPoint = if (component == null) null
     else JBPopupFactory.getInstance().guessBestPopupLocation(dataContext)
+    return computeWithProgressIcon(loadingIconPoint, component, place, task)
+  }
+
+  fun <T> computeWithProgressIcon(loadingIconPoint: RelativePoint?,
+                                  component: Component?,
+                                  place: String,
+                                  task: suspend () -> T): T = runBlockingForActionExpand(CoroutineName("computeWithProgressIcon")) {
     val mainJob = coroutineContext.job
     val loopJob = launch {
       runEdtLoop(mainJob, null, component, null)
