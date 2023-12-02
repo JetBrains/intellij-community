@@ -51,7 +51,9 @@ object ConfigFactory {
     val languageName = map.getAs<String>("language")
     return Config.build(map.handleEnv("projectPath"), languageName) {
       outputDir = map.handleEnv("outputDir")
-      projectName = map.handleEnv("projectName")
+      if (map.containsKey("projectName")) {
+        projectName = map.handleEnv("projectName")
+      }
       deserializeStrategy(map.getIfExists("strategy"), strategySerializer, languageName, this)
       deserializeActionsGeneration(map.getIfExists("actions"), languageName, this)
       deserializeActionsInterpretation(map.getIfExists("interpret"), this)
