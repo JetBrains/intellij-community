@@ -8,9 +8,9 @@ import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
-import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.Util.logEvaluationFeedbackDialogCanceled
-import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.Util.logEvaluationFeedbackDialogShown
-import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.Util.logEvaluationFeedbackSent
+import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackDialogCanceled
+import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackDialogShown
+import com.intellij.platform.feedback.general.evaluation.EvaluationFeedbackCountCollector.logEvaluationFeedbackSent
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import javax.swing.Action
 

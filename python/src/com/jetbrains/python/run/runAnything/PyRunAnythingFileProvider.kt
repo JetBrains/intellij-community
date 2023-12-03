@@ -4,7 +4,7 @@ package com.jetbrains.python.run.runAnything
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
 import com.intellij.execution.configurations.RuntimeConfigurationException
-import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector.Companion.logAddNew
+import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector.logAddNew
 import com.intellij.ide.actions.runAnything.RunAnythingAction
 import com.intellij.ide.actions.runAnything.RunAnythingUtil
 import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandLineProvider

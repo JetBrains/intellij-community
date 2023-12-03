@@ -7,16 +7,15 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import org.jetbrains.kotlin.idea.base.plugin.isK2Plugin
 
+internal class K2MetricsFUSCollector : ApplicationUsagesCollector() {
 
-class K2MetricsFUSCollector : ApplicationUsagesCollector() {
-    override fun getGroup(): EventLogGroup {
-        return eventLogGroup
-    }
+    private val eventLogGroup = EventLogGroup("kotlin.k.two.metrics", 2)
+    private val isK2EnabledField = EventFields.Boolean("is_k2_enabled")
+    private val isK2EnabledEvent = eventLogGroup.registerEvent("enabled", isK2EnabledField)
+
+    override fun getGroup(): EventLogGroup = eventLogGroup
+
     override fun getMetrics(): Set<MetricEvent> {
         return setOf(isK2EnabledEvent.metric(isK2Plugin()))
     }
 }
-
-private val eventLogGroup = EventLogGroup("kotlin.k.two.metrics", 2)
-private val isK2EnabledField = EventFields.Boolean("is_k2_enabled")
-private val isK2EnabledEvent = eventLogGroup.registerEvent("enabled", isK2EnabledField)

@@ -45,7 +45,6 @@ import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.PROGRESS_FRACTIO
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.PROGRESS_FRACTION_MODIFICATIONS
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.PROGRESS_FRACTION_POST
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
-import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitProblemPlace
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.lang.Runnable

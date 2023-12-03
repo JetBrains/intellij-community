@@ -20,9 +20,9 @@ import com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService
-import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Util.logDisableNotificationActionInvoked
-import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Util.logRequestNotificationShown
-import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Util.logRespondNotificationActionInvoked
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.logDisableNotificationActionInvoked
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.logRequestNotificationShown
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.logRespondNotificationActionInvoked
 import com.intellij.platform.feedback.kafka.bundle.KafkaFeedbackBundle
 import com.intellij.platform.feedback.kafka.dialog.KafkaConsumerFeedbackDialog
 import com.intellij.platform.feedback.kafka.dialog.KafkaProducerFeedbackDialog
@@ -279,7 +279,8 @@ enum class IdleFeedbackTypes {
     private fun checkNotificationNumberNotExceeded(state: KafkaConsumerProducerInfoState): Boolean {
       return state.numberNotificationShowed < maxNumberNotificationShowed
     }
-  }, PYCHARM_CE_FEEDBACK {
+  },
+  PYCHARM_CE_FEEDBACK {
     override val fusFeedbackId: String = "pycharm_ce_feedback"
     override val suitableIdeVersion: String = "2023.3"
     override fun getWebFormUrl(): String {
@@ -291,7 +292,7 @@ enum class IdleFeedbackTypes {
       return "https://surveys.jetbrains.com/s3/pc-ccs-23-3?os=${os}&country=${country}&lang=${lang}&ver=${ver}"
     }
 
-    private val firstDayCollectFeedback: LocalDate = LocalDate(2023, Month.DECEMBER,  5)
+    private val firstDayCollectFeedback: LocalDate = LocalDate(2023, Month.DECEMBER, 5)
     private val lastDayCollectFeedback: LocalDate = LocalDate(2023, Month.DECEMBER, 20)
 
     private val maxNumberNotificationShowed: Int = 1

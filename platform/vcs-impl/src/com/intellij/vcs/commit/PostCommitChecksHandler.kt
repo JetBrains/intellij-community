@@ -28,7 +28,6 @@ import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitProblemPlace
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent

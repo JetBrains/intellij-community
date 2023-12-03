@@ -10,8 +10,8 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.vcs.commit.CommitOption
 import com.intellij.vcs.commit.CommitSessionCollector
-import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import com.intellij.vcs.commit.commitProperty
 import git4idea.GitVcs
 import git4idea.i18n.GitBundle

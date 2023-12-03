@@ -19,7 +19,6 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.vcs.commit.*
-import com.intellij.vcs.commit.CommitSessionCounterUsagesCollector.CommitOption
 import com.intellij.vcs.log.VcsUser
 import com.intellij.vcs.log.VcsUserEditor
 import com.intellij.vcs.log.VcsUserEditor.Companion.getAllUsers

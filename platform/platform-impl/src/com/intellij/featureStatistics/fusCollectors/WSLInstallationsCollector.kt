@@ -9,9 +9,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.diagnostic.logger
 import java.io.IOException
-import java.lang.IllegalStateException
-
-private val LOG = logger<WSLInstallationsCollector>()
 
 internal class WSLInstallationsCollector : ApplicationUsagesCollector() {
   private val group = EventLogGroup("wsl.installations", 1)
@@ -28,11 +25,11 @@ internal class WSLInstallationsCollector : ApplicationUsagesCollector() {
       WslDistributionManager.getInstance().loadInstalledDistributionsWithVersions()
     }
     catch (e: IOException) {
-      LOG.warn("Failed to load installed WSL distributions: " + e.message)
+      logger<WSLInstallationsCollector>().warn("Failed to load installed WSL distributions: " + e.message)
       return emptySet()
     }
     catch (e: IllegalStateException) {
-      LOG.error(e)
+      logger<WSLInstallationsCollector>().error(e)
       return emptySet()
     }
 

@@ -27,10 +27,10 @@ import com.intellij.usages.UsageView
 import com.intellij.usages.impl.UsageViewImpl
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
 import com.intellij.usages.similarity.clustering.UsageCluster
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMoreSnippetsLoadedInClustersPreview
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMostCommonUsagePatternsRefreshClicked
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logMostCommonUsagePatternsShown
-import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.Companion.logShowSimilarUsagesLinkClicked
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logMoreSnippetsLoadedInClustersPreview
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logMostCommonUsagePatternsRefreshClicked
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logMostCommonUsagePatternsShown
+import com.intellij.usages.similarity.statistics.SimilarUsagesCollector.logShowSimilarUsagesLinkClicked
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.scroll.BoundedRangeModelThresholdListener.Companion.install
