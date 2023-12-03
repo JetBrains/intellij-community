@@ -12,20 +12,32 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
+import com.intellij.testFramework.TestIndexingModeSupporter;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.util.*;
 
+@SuppressWarnings("NewClassNamingConvention")
 public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
+  public static Test suite() {
+    TestSuite suite = new TestSuite();
+    suite.addTestSuite(ChooseByNameTest.class);
+    TestIndexingModeSupporter.addTest(ChooseByNameTest.class, new TestIndexingModeSupporter.FullIndexSuite(), suite);
+    return suite;
+  }
+
   public void test_goto_class_order_by_matching_degree() {
     PsiClass startMatch = myFixture.addClass("class UiUtil {}");
     PsiClass wordSkipMatch = myFixture.addClass("class UiAbstractUtil {}");
@@ -318,9 +330,15 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
                                             public void run() { }
                                           }""");
     PsiMethod ourRun = clazz.getMethods()[0];
-    PsiMethod sdkRun = ourRun.getContainingClass().getInterfaces()[0].getMethods()[0];
-    PsiMethod sdkRun2 = myFixture.findClass("java.security.PrivilegedAction").getMethods()[0];
-    PsiMethod sdkRun3 = myFixture.findClass("java.security.PrivilegedExceptionAction").getMethods()[0];
+    PsiMethod sdkRun = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+      () -> ourRun.getContainingClass().getInterfaces()[0].getMethods()[0]
+    );
+    PsiMethod sdkRun2 = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+      () -> myFixture.findClass("java.security.PrivilegedAction").getMethods()[0]
+    );
+    PsiMethod sdkRun3 = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+      () -> myFixture.findClass("java.security.PrivilegedExceptionAction").getMethods()[0]
+    );
 
     List<PsiElement> withLibs = filterJavaOnly(gotoSymbol("run ", true));
     withLibs.remove(sdkRun2);
@@ -367,7 +385,9 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void test_out_of_project_content_files() {
-    PsiFile file = myFixture.findClass(CommonClassNames.JAVA_LANG_OBJECT).getContainingFile();
+    PsiFile file = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+      () -> myFixture.findClass(CommonClassNames.JAVA_LANG_OBJECT).getContainingFile()
+    );
     List<PsiFile> elements = gotoFile("Object.class", true);
     assertContainsElements(elements, file);
   }
@@ -422,7 +442,9 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void test_show_longer_suffix_matches_from_jdk_and_shorter_from_project() {
     PsiFile seq = addEmptyFile("langc/Sequence.java");
-    PsiClass charSeq = myFixture.findClass(CharSequence.class.getName());
+    PsiClass charSeq = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+      () -> myFixture.findClass(CharSequence.class.getName())
+    );
     assertOrderedEquals(gotoFile("langcsequence", true), Arrays.asList(charSeq.getContainingFile(), seq));
   }
 
@@ -506,8 +528,12 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void test_show_prefix_matches_first_when_asterisk_is_in_the_middle() {
-    PsiClass sb = myFixture.findClass(StringBuilder.class.getName());
-    PsiClass asb = myFixture.findClass("java.lang.AbstractStringBuilder");
+    PsiClass sb = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+      () -> myFixture.findClass(StringBuilder.class.getName())
+    );
+    PsiClass asb = DumbService.getInstance(myFixture.getProject()).computeWithAlternativeResolveEnabled(
+      () -> myFixture.findClass("java.lang.AbstractStringBuilder")
+    );
     assertOrderedEquals(gotoClass("Str*Builder", true), Arrays.asList(sb, asb));
     assertOrderedEquals(gotoClass("java.Str*Builder", true), Arrays.asList(sb, asb));
   }
