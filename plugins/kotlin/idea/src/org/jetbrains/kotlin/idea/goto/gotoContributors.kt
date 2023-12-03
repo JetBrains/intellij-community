@@ -11,6 +11,7 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import com.intellij.util.indexing.DumbModeAccessType
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
@@ -36,7 +37,7 @@ abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
         }
     }
 
-    override fun isDumbAware(): Boolean = true
+    override fun isDumbAware(): Boolean = FileBasedIndex.isIndexAccessDuringDumbModeEnabled()
 
     override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
         val project = parameters.project
