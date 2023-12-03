@@ -445,7 +445,7 @@ internal fun isToolbarInHeader(isFullscreen: Boolean): Boolean {
       return true
     }
   }
-  if (IdeRootPane.hideNativeLinuxTitle && !UISettings.getInstance().separateMainMenu) {
+  if (IdeRootPane.hideNativeLinuxTitle && !UISettings.getInstance().separateMainMenu && !isFullscreen) {
     return true
   }
   return false

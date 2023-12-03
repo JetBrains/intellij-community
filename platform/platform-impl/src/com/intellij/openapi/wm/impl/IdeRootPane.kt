@@ -460,13 +460,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       }
     }
     else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
-      if (toolbar != null) {
-        val isNewToolbar = ExperimentalUI.isNewUI()
-        toolbar!!.isVisible = !fullScreen && ((!isCompactHeader {
-          computeMainActionGroups(CustomActionsSchema.getInstance())
-        } && isNewToolbar && !isToolbarInHeader()) ||
-                                              (!isNewToolbar && UISettings.getInstance().showMainToolbar))
-      }
+      toolbar?.isVisible = isToolbarVisible { computeMainActionGroups(CustomActionsSchema.getInstance()) }
     }
 
     updateMainMenuVisibility()
