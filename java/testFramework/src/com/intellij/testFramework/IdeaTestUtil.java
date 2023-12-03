@@ -35,6 +35,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertTrue;
 
@@ -128,7 +129,11 @@ public final class IdeaTestUtil {
     return null;
   }
 
-  public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
+  public static @NotNull Sdk createMockJdk(
+    @NotNull String name,
+    @NotNull String path,
+    Consumer<SdkModificator> sdkModificatorCustomizer
+  ) {
     Sdk fromLegacyPath = createMockJdkFromLegacyPath(path);
     if (fromLegacyPath != null) {
       return fromLegacyPath;
@@ -157,6 +162,9 @@ public final class IdeaTestUtil {
     }
     sdkModificator.setHomePath(sdkPath);
     sdkModificator.setVersionString(name);
+    if (sdkModificatorCustomizer != null) {
+      sdkModificatorCustomizer.accept(sdkModificator);
+    }
 
     // only Mock JDKs 1.4/1.7 have src.zip
     if (path.endsWith("mockJDK-1.7") || path.endsWith("mockJDK-1.4")) {
@@ -174,6 +182,10 @@ public final class IdeaTestUtil {
       application.invokeAndWait(() -> application.runWriteAction(runnable));
     }
     return sdk;
+  }
+
+  public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
+    return createMockJdk(name, path, null);
   }
 
   // it's JDK 1.4, not 14
