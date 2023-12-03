@@ -25,7 +25,7 @@ public class GetterLazyInvocationProduceNPE {
     @Getter(lazy = true)
     private final String barString = bar.sayHello();
 
-    //with warining!
+    //with warning!
     @Getter
     private final String carString = car.<warning descr="Method invocation 'sayHello' will produce 'NullPointerException'">sayHello</warning>();
 
