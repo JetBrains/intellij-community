@@ -150,21 +150,6 @@ public class LombokHighlightErrorFilter implements HighlightInfoFilter {
   }
 
   private enum LombokHighlightFilter {
-    // ERROR HANDLERS
-
-    //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyVariableNotInitialized
-    VARIABLE_MIGHT_NOT_BEEN_INITIALIZED(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES) {
-      @Override
-      public boolean descriptionCheck(@Nullable String description, PsiElement highlightedElement) {
-        return JavaErrorBundle.message("variable.not.initialized", highlightedElement.getText()).equals(description);
-      }
-
-      @Override
-      public boolean accept(@NotNull PsiElement highlightedElement) {
-        return !LazyGetterHandler.isLazyGetterHandled(highlightedElement);
-      }
-    },
-
     // WARNINGS HANDLERS
 
     // field should have lazy getter and should be initialized in constructors
