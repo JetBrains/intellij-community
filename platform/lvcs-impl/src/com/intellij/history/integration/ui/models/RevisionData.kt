@@ -6,6 +6,7 @@ import com.intellij.history.core.RevisionsCollector
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.core.changes.ChangeVisitor
 import com.intellij.history.core.changes.StructuralChange
+import com.intellij.history.core.revisions.CurrentRevision
 import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.IdeaGateway
 import com.intellij.openapi.application.runReadAction
@@ -31,9 +32,9 @@ internal fun collectRevisionData(project: Project,
 
     val path = gateway.getPathOrUrl(file)
     val root = gateway.createTransientRootEntry()
-    val all = RevisionsCollector(facade, root, path, project.getLocationHash(), filter, before).result
+    val revisions = RevisionsCollector(facade, root, path, project.getLocationHash(), filter, before).result
 
-    RevisionData(all[0], mergeLabelsWithRevisions(all.subList(1, all.size)))
+    RevisionData(CurrentRevision(root, path), mergeLabelsWithRevisions(revisions))
   }
 }
 

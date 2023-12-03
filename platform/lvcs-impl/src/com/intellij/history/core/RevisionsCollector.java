@@ -18,7 +18,6 @@ package com.intellij.history.core;
 
 import com.intellij.history.core.changes.ChangeSet;
 import com.intellij.history.core.revisions.ChangeRevision;
-import com.intellij.history.core.revisions.CurrentRevision;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.openapi.util.Pair;
@@ -53,12 +52,6 @@ public final class RevisionsCollector extends ChangeSetsProcessor {
   public @NotNull List<Revision> getResult() {
     process();
     return myResult;
-  }
-
-  @Override
-  protected void process() {
-    myResult.add(new CurrentRevision(myRoot, myPath));
-    super.process();
   }
 
   @Override

@@ -3,6 +3,7 @@
 package com.intellij.history.core;
 
 import com.intellij.history.core.changes.*;
+import com.intellij.history.core.revisions.CurrentRevision;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.core.storage.TestContent;
 import com.intellij.history.core.tree.Entry;
@@ -15,6 +16,7 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AfterClass;
@@ -154,7 +156,9 @@ public abstract class LocalHistoryTestCase extends Assert {
   }
 
   public static @NotNull List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {
-    return new RevisionsCollector(facade, root, path, projectId, pattern).getResult();
+    CurrentRevision currentRevision = new CurrentRevision(root, path);
+    List<Revision> revisions = new RevisionsCollector(facade, root, path, projectId, pattern).getResult();
+    return ContainerUtil.concat(Arrays.asList(currentRevision), revisions);
   }
 
   public static List<ChangeSet> collectChanges(LocalHistoryFacade facade, String path, String projectId, String pattern) {
