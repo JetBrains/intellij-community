@@ -320,8 +320,8 @@ open class CodeVisionHost(val project: Project) {
     var recalculateWhenVisible = false
 
     var previousLenses: List<Pair<TextRange, CodeVisionEntry>> = context.zombies
-    val openTime = System.nanoTime()
-    editor.putUserData(editorTrackingStart, openTime)
+    val openTimeNs = System.nanoTime()
+    editor.putUserData(editorTrackingStart, openTimeNs)
     val mergingQueueFront = MergingUpdateQueue(CodeVisionHost::class.simpleName!!, 100, true, null, editorLifetime.createNestedDisposable(),
                                                null, Alarm.ThreadToUse.POOLED_THREAD)
     mergingQueueFront.isPassThrough = false
@@ -418,8 +418,7 @@ open class CodeVisionHost(val project: Project) {
 
       var everyProviderReadyToUpdate = true
       val inlaySettingsEditor = isInlaySettingsEditor(editor)
-      val editorOpenTime = editor.getUserData(editorTrackingStart)
-      val watcher = project.service<CodeVisionProvidersWatcher>()
+      val editorOpenTimeNs = editor.getUserData(editorTrackingStart)
       providers.forEach {
         @Suppress("UNCHECKED_CAST")
         it as CodeVisionProvider<Any?>
@@ -443,22 +442,18 @@ open class CodeVisionHost(val project: Project) {
         providerWhoWantToUpdate.add(it.id)
         runSafe("computeCodeVision for ${it.id}") {
           val state = it.computeCodeVision(editor, precalculatedUiThings[it.id])
-          if (state.isReady.not()) {
-            if (editorOpenTime != null) {
-              watcher.reportProvider(it.groupId, System.nanoTime() - editorOpenTime)
-              if (watcher.shouldConsiderProvider(it.groupId)) {
-                everyProviderReadyToUpdate = false
-              }
-            }
-            else {
-              everyProviderReadyToUpdate = false
-            }
-          }
-          else {
-            watcher.dropProvider(it.groupId)
+          if (state.isReady) {
             results.addAll(state.result)
           }
+          else if (editorOpenTimeNs == null || shouldConsiderProvider(editorOpenTimeNs)) {
+            everyProviderReadyToUpdate = false
+          }
         }
+      }
+
+      if (!everyProviderReadyToUpdate || providerWhoWantToUpdate.isEmpty()) {
+        context.discardPending()
+        return@executeOnPooledThread
       }
 
       val previewData = CodeVisionGroupDefaultSettingModel.isEnabledInPreview(editor)
@@ -470,17 +465,6 @@ open class CodeVisionHost(val project: Project) {
           it.first to entry
         }.toMutableList()
       }
-
-      if (!everyProviderReadyToUpdate) {
-        context.discardPending()
-        return@executeOnPooledThread
-      }
-
-      if (providerWhoWantToUpdate.isEmpty()) {
-        context.discardPending()
-        return@executeOnPooledThread
-      }
-
 
       if (!inTestSyncMode) {
         application.invokeLater({
@@ -540,5 +524,10 @@ open class CodeVisionHost(val project: Project) {
     calculateFrontendLenses(testRootDisposable.createLifetime(), editor, inTestSyncMode = true) { lenses, _ ->
       editor.lensContext?.setResults(lenses)
     }
+  }
+
+  private fun shouldConsiderProvider(editorOpenTimeNs: Long): Boolean {
+    val oneMinute = 60_000_000_000
+    return System.nanoTime() - editorOpenTimeNs < oneMinute
   }
 }
