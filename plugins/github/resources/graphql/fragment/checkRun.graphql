@@ -1,5 +1,6 @@
 fragment checkRun on CheckRun {
   name
   conclusion
+  isRequired
   url
 }

@@ -1,5 +1,6 @@
 fragment commitStatusContext on StatusContext {
   context
   state
+  isRequired
   targetUrl
 }

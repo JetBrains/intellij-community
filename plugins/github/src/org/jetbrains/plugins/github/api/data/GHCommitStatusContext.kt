@@ -8,5 +8,5 @@ class GHCommitStatusContext(
   val context: String,
   val state: GHCommitStatusContextState,
   val isRequired: Boolean,
-  val targetUrl: String
+  val targetUrl: String?
 )

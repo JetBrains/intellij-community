@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.api.data
 
 import com.intellij.collaboration.api.dto.GraphQLFragment
 
-@GraphQLFragment("/graphql/fragment/commitStatusContext.graphql")
+@GraphQLFragment("/graphql/fragment/checkRun.graphql")
 class GHCommitCheckRunStatus(
   val name: String,
   val conclusion: GHCommitCheckSuiteConclusion?,
