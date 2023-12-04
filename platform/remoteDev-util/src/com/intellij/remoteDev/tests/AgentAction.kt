@@ -8,8 +8,7 @@ import kotlin.time.Duration
  * Represents a single test action in a distributed test
  */
 @ApiStatus.Internal
-class AgentAction(val title: String,
-                  val timeout: Duration,
+class AgentAction(val timeout: Duration,
                   val coroutineContext: CoroutineContext,
                   val syncBeforeStart: Boolean,
                   val action: suspend (AgentContext) -> String?)

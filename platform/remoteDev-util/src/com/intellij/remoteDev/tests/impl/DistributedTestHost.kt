@@ -132,7 +132,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Tell test we are running it inside an agent
           val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
-          val queue = testClassObject.initAgent(agentInfo)
+          val map = testClassObject.initAgent(agentInfo)
 
           // Play test method
           val testMethod = testClass.getMethod(session.testMethodName)
@@ -140,9 +140,9 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           testMethod.invoke(testClassObject)
 
           // Advice for processing events
-          session.runNextAction.setSuspendPreserveClientId { _, _ ->
+          session.runNextAction.setSuspendPreserveClientId { _, actionTitle ->
+            val queue = map[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
             val action = queue.remove()
-            val actionTitle = action.title
             val timeout = action.timeout
             val syncBeforeStart = action.syncBeforeStart
             try {
