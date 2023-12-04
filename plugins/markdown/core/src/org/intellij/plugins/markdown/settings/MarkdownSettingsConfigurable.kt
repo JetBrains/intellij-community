@@ -6,6 +6,7 @@ import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorSettings
@@ -25,6 +26,7 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
@@ -87,6 +89,9 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
             renderer = SimpleListCellRenderer.create("", ::presentSplitLayout)
           ).bindItem(settings::isVerticalSplit.toNullableProperty()).widthGroup(comboBoxWidthGroup)
         }.bottomGap(BottomGap.SMALL)
+        row(label = MarkdownBundle.message("markdown.settings.preview.font.size")) {
+          previewFontSizeField()
+        }
         row {
           checkBox(MarkdownBundle.message("markdown.settings.preview.auto.scroll.checkbox"))
             .bindSelected(settings::isAutoScrollEnabled)
@@ -151,6 +156,17 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
         .bindItem(settings::previewPanelProviderInfo.toNullableProperty())
         .widthGroup(comboBoxWidthGroup)
     }
+  }
+
+  private fun Row.previewFontSizeField(): Cell<JBTextField> {
+    return intTextField(range = 0..300).bindIntText(
+      getter = { service<MarkdownPreviewSettings>().state.fontSize },
+      setter = { value ->
+        service<MarkdownPreviewSettings>().update { settings ->
+          settings.state.fontSize = value
+        }
+      }
+    )
   }
 
   private fun validateCustomStylesheetPath(builder: ValidationInfoBuilder, textField: TextFieldWithBrowseButton): ValidationInfo? {

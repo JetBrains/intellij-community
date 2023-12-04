@@ -1,17 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefScrollbarsHelper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import java.awt.Color
 
 internal object PreviewLAFThemeStyles {
@@ -21,7 +22,7 @@ internal object PreviewLAFThemeStyles {
   }
 
   val defaultFontSize: Int
-    get() = EditorUtil.getEditorFont().size + 1
+    get() = service<MarkdownPreviewSettings>().state.fontSize
 
   /**
    * This method will generate stylesheet with colors and other attributes matching current LAF settings of the IDE.

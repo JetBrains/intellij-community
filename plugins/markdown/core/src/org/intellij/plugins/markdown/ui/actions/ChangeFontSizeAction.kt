@@ -29,15 +29,7 @@ internal sealed class ChangeFontSizeAction(private val transform: (Int) -> Int):
     val currentSize = preview.getUserData(FontSize) ?: PreviewLAFThemeStyles.defaultFontSize
     val newSize = transform(currentSize)
     preview.putUserData(FontSize, newSize)
-    val size = JBCefApp.normalizeScaledSize(newSize)
-    // language=JavaScript
-    val code = """
-    |(function() {
-    |  const styles = document.querySelector(":root").style;
-    |  styles.setProperty("${PreviewLAFThemeStyles.Variables.FontSize}", "${size}px");
-    |})();
-    """.trimMargin()
-    preview.executeJavaScript(code)
+    preview.changeFontSize(newSize)
   }
 
   override fun update(event: AnActionEvent) {
@@ -48,4 +40,19 @@ internal sealed class ChangeFontSizeAction(private val transform: (Int) -> Int):
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT
   }
+}
+
+/**
+ * @param size Unscaled font size.
+ */
+internal fun MarkdownJCEFHtmlPanel.changeFontSize(size: Int) {
+  val scaled = JBCefApp.normalizeScaledSize(size)
+  // language=JavaScript
+  val code = """
+  |(function() {
+  |  const styles = document.querySelector(":root").style;
+  |  styles.setProperty("${PreviewLAFThemeStyles.Variables.FontSize}", "${scaled}px");
+  |})();
+  """.trimMargin()
+  executeJavaScript(code)
 }
