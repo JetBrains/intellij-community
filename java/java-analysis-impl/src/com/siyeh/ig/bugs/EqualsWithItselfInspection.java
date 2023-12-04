@@ -11,6 +11,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.LibraryUtil;
@@ -41,9 +42,9 @@ public class EqualsWithItselfInspection extends BaseInspection {
   );
 
   private static final CallMatcher ASSERT_ARGUMENT_COMPARISON = CallMatcher.anyOf(
-    CallMatcher.staticCall("org.junit.Assert", "assertEquals", "assertArrayEquals", "assertIterableEquals",
+    CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assertEquals", "assertArrayEquals", "assertIterableEquals",
                            "assertLinesMatch", "assertNotEquals"),
-    CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertEquals", "assertArrayEquals", "assertIterableEquals",
+    CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertEquals", "assertArrayEquals", "assertIterableEquals",
                            "assertLinesMatch", "assertNotEquals"),
     CallMatcher.staticCall("org.testng.Assert", "assertEquals", "assertEqualsDeep", "assertEqualsNoOrder", "assertNotEquals",
                            "assertNotEqualsDeep"),
@@ -52,8 +53,8 @@ public class EqualsWithItselfInspection extends BaseInspection {
   );
 
   private static final CallMatcher ASSERT_ARGUMENTS_THE_SAME = CallMatcher.anyOf(
-    CallMatcher.staticCall("org.junit.Assert", "assertSame", "assertNotSame"),
-    CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertSame", "assertNotSame"),
+    CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assertSame", "assertNotSame"),
+    CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertSame", "assertNotSame"),
     CallMatcher.staticCall("org.testng.Assert", "assertSame", "assertNotSame"),
     CallMatcher.staticCall("org.testng.AssertJUnit", "assertSame", "assertNotSame")
   );

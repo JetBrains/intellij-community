@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
 /**
  * Implementation of <a href="https://en.wikipedia.org/wiki/Extendible_hashing">Extendible hash map</a>
  * Basically, it is a durable map that unions N=2^k fixed-size open-addressing hash maps (segments) and
@@ -71,17 +73,18 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
   /** 1M page ~= 64K (key,value) pairs per page */
   public static final int DEFAULT_STORAGE_PAGE_SIZE = DEFAULT_SEGMENT_SIZE * DEFAULT_SEGMENTS_PER_PAGE;
 
+  private static final boolean MARK_SAFELY_CLOSED_ON_FLUSH = getBooleanProperty("ExtendibleHashMap.MARK_SAFELY_CLOSED_ON_FLUSH", true);
 
-  //TODO RC: pruning of tombstones (see comment in a .split() method for details)
+  //TODO RC: unfinished work
+  //        1) prune tombstones (see comment in a .split() method for details)
+  //        2) .size() is now O(N), make it O(1)
+  //        3) Half-utilized segmentTable room (see HeaderLayout)
 
   private final MMappedFileStorage storage;
   private transient BufferSource bufferSource;
 
-  /**
-   * Modified flag is used avoid updating header.fileState on each modification -- instead we update it only once,
-   * on the first modification, and skip the update afterward relying on this flag.
-   */
-  private boolean storageModifiedSinceOpened = false;
+  /** Used avoid updating header.fileState on _each_ modification */
+  private boolean dirty = false;
 
   private final boolean wasProperlyClosed;
 
@@ -247,13 +250,28 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
   @Override
   public synchronized void flush() throws IOException {
-    //nothing to do
+    if (MARK_SAFELY_CLOSED_ON_FLUSH) {
+      //RC: It seems that since EHMap is non-concurrent (sync-ed), set .fileStatus(PROPERLY_CLOSED) in
+      //    .flush() is safe: nobody could modify EHMap content until .flush() finishes, which creates kind of
+      //    'safepoint'.
+      //    (On the contrary: data structures with concurrent updates doesn't have this property: their
+      //    content could be modified in between .flush() sets .dirty=false and .fileStatus=PROPERLY_CLOSED)
+
+      if (dirty) {
+        dirty = false;
+        header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
+      }
+    }
+  }
+
+  public synchronized boolean isDirty() {
+    return dirty;
   }
 
   @Override
   public synchronized void close() throws IOException {
-    if(storage.isOpen()) {
-      if (storageModifiedSinceOpened) {
+    if (storage.isOpen()) {
+      if (dirty) {
         header.fileStatus(HeaderLayout.FILE_STATUS_PROPERLY_CLOSED);
       }
       storage.close();
@@ -294,8 +312,8 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
 
   //@GuardedBy(this)
   private void markModified() {
-    if (!storageModifiedSinceOpened) {
-      storageModifiedSinceOpened = true;
+    if (!dirty) {
+      dirty = true;
       header.fileStatus(HeaderLayout.FILE_STATUS_OPENED);
     }
   }
@@ -911,7 +929,7 @@ public class ExtendibleHashMap implements DurableIntToMultiIntMap, Unmappable {
     public boolean put(@NotNull HashTableData table,
                        int key,
                        int value) {
-      //FIXME RC: check hash(key) has correct hashSuffix -- but this violates an abstraction of HashAlgo,
+      //MAYBE RC: check hash(key) has correct hashSuffix -- but this violates an abstraction of HashAlgo,
       //          so this check is better to be moved to HashSegment?
       checkNotNoValue("key", key);
       checkNotNoValue("value", value);

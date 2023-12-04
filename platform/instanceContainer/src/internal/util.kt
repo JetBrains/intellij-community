@@ -44,7 +44,7 @@ suspend fun InstanceContainerInternal.preloadAllInstances() {
   val holders = instanceHolders()
   for (holder in holders) {
     try {
-      holder.getInstanceInCallerDispatcher(keyClass = null)
+      holder.getInstanceInCallerContext(keyClass = null)
     }
     catch (ce: CancellationException) {
       throw ce

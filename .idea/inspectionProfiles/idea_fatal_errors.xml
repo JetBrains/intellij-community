@@ -3420,7 +3420,7 @@
     <inspection_tool class="StreamToLoop" enabled="false" level="INFORMATION" enabled_by_default="false" />
     <inspection_tool class="StringBufferField" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="StringBufferMustHaveInitialCapacity" enabled="false" level="WARNING" enabled_by_default="false" />
-    <inspection_tool class="StringBufferReplaceableByString" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="StringBufferReplaceableByString" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="StringBufferReplaceableByStringBuilder" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="StringBufferToStringInConcatenation" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="StringCompareTo" enabled="false" level="WARNING" enabled_by_default="false" />
@@ -4072,6 +4072,7 @@
     <inspection_tool class="UseOfProcessBuilder" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UseOfPropertiesAsHashtable" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UseOfSunClasses" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="UsePlatformProcessAwaitExit" enabled="true" level="ERROR" enabled_by_default="true" />
     <inspection_tool class="UsePluginIdEquals" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="UsePrimitiveTypes" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="UsePropertyAccessSyntax" enabled="false" level="WEAK WARNING" enabled_by_default="false" />

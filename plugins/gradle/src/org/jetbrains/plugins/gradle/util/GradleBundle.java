@@ -28,12 +28,12 @@ public class GradleBundle extends DynamicBundle {
   private static final GradleBundle BUNDLE = new GradleBundle();
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
-    return BUNDLE.getMessage(key, params);
+    return BUNDLE.containsKey(key) ? BUNDLE.getMessage(key, params) : GradleDeprecatedMessagesBundle.message(key, params);
   }
 
   @NotNull
   public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {
-    return BUNDLE.getLazyMessage(key, params);
+    return BUNDLE.containsKey(key) ? BUNDLE.getLazyMessage(key, params) : GradleDeprecatedMessagesBundle.messagePointer(key, params);
   }
 
   public GradleBundle() {

@@ -19,7 +19,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.actions.bytecode.KotlinBytecodeToolWindow
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.jvmDecompiler.KotlinBytecodeDecompiler
@@ -37,17 +36,29 @@ import java.io.File
 class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     @TestMetadata("kotlin/collections/GroupingKt.kotlin_metadata")
     fun testKotlinCollectionsGroupingKtKotlinMetadata() {
-        doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibCommon, FileHighlightingSetting.SKIP_INSPECTION)
+        doTestWithLibraryFile(
+            TestKotlinArtifacts.kotlinStdlibCommon,
+            FileHighlightingSetting.SKIP_INSPECTION,
+            expectedDuplicatedHighlighting = true
+        )
     }
 
     @TestMetadata("kotlin/time/TimeSource.class")
     fun testKotlinTimeTimeSourceClass() {
-        doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlib, FileHighlightingSetting.SKIP_INSPECTION)
+        doTestWithLibraryFile(
+            TestKotlinArtifacts.kotlinStdlib,
+            FileHighlightingSetting.SKIP_INSPECTION,
+            expectedDuplicatedHighlighting = true
+        )
     }
 
     @TestMetadata("default/linkdata/package_kotlin.io/0_io.knm")
     fun testKotlinNativeLinkdataPackageKotlinIO0ioKnm() {
-        doTestWithLibraryFile(TestKotlinArtifacts.kotlinStdlibNative, FileHighlightingSetting.SKIP_INSPECTION)
+        doTestWithLibraryFile(
+            TestKotlinArtifacts.kotlinStdlibNative,
+            FileHighlightingSetting.SKIP_INSPECTION,
+            expectedDuplicatedHighlighting = true
+        )
     }
 
     @TestMetadata("kotlin/annotations/OptIn.kt")
@@ -71,6 +82,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
     private fun doTestWithLibraryFile(
         libraryFile: File,
         expectedHighlightingSetting: FileHighlightingSetting,
+        expectedDuplicatedHighlighting: Boolean = false,
         openFileAction: (VirtualFile) -> VirtualFile = { it }
     ) {
         val libraryVirtualFile =
@@ -89,7 +101,7 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
             val highlightingSetting = HighlightingSettingsPerFile.getInstance(project).getHighlightingSettingForRoot(openedPsiFile)
             assertEquals(expectedHighlightingSetting, highlightingSetting)
             myFixture.openFileInEditor(fileToOpen)
-            doTest()
+            doTest(expectedDuplicatedHighlighting)
         }
     }
 
@@ -105,15 +117,21 @@ class CompiledFilesHighlightingTest: KotlinLightCodeInsightFixtureTestCase() {
         }
     }
 
-    private fun doTest() {
+    private fun doTest(expectedDuplicatedHighlighting: Boolean) {
         val fileText = FileUtil.loadFile(File(dataFilePath(fileName().replace('/', '.') + ".txt")), true)
         try {
             withCustomCompilerOptions(fileText, project, module) {
-                (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(false)
+                val fixture = myFixture as CodeInsightTestFixtureImpl
+                fixture.canChangeDocumentDuringHighlighting(false)
                 val data = ExpectedHighlightingData(DocumentImpl(fileText), true, true, true)
                 data.checkSymbolNames()
                 data.init()
-                (myFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(data)
+                val check: () -> Unit = { fixture.collectAndCheckHighlighting(data) }
+                if (expectedDuplicatedHighlighting) {
+                    ExpectedHighlightingData.expectedDuplicatedHighlighting(check)
+                } else {
+                    check()
+                }
             }
         } catch (e: FileComparisonFailure) {
             val highlights =

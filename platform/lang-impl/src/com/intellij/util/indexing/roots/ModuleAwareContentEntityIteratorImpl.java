@@ -19,7 +19,7 @@ public final class ModuleAwareContentEntityIteratorImpl extends RootHolderIterat
                                               @NotNull IndexingRootHolder roots,
                                               @Nullable IndexableIteratorPresentation presentation) {
     super(entityReference, roots, presentation != null ? presentation : IndexableIteratorPresentation.create(
-      "Content roots from module " + module.getName() + " from entity (" + roots.getRootsDebugStr() + ")",
+      "Content roots from module " + module.getName() + " from entity (" + roots.getDebugDescription() + ")",
       IndexingBundle.message("indexable.files.provider.indexing.content"),
       IndexingBundle.message("indexable.files.provider.scanning.content")));
     this.module = module;

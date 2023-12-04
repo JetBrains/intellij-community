@@ -20,15 +20,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator, Disposable {
+public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, SdkModificator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectJdkImpl.class);
   private String myName;
   private String myVersionString;
@@ -148,19 +150,16 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   }
 
   public void readExternal(@NotNull Element element) {
-    readExternal(element, null);
+    readExternal(element, ProjectJdkTable.getInstance()::getSdkTypeByName);
   }
 
-  public void readExternal(@NotNull Element element, @Nullable ProjectJdkTable projectJdkTable) throws InvalidDataException {
+  public void readExternal(@NotNull Element element, @NotNull Function<String, SdkTypeId> sdkTypeByNameFunction) throws InvalidDataException {
     Element elementName = assertNotMissing(element, ELEMENT_NAME);
     myName = elementName.getAttributeValue(ATTRIBUTE_VALUE);
     final Element typeChild = element.getChild(ELEMENT_TYPE);
     final String sdkTypeName = typeChild != null ? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
     if (sdkTypeName != null) {
-      if (projectJdkTable == null) {
-        projectJdkTable = ProjectJdkTable.getInstance();
-      }
-      mySdkType = projectJdkTable.getSdkTypeByName(sdkTypeName);
+      mySdkType = sdkTypeByNameFunction.apply(sdkTypeName);
     }
     final Element version = element.getChild(ELEMENT_VERSION);
 
@@ -269,9 +268,10 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     dest.myRootProvider.rootsChanged();
   }
 
+  @Override
   @ApiStatus.Internal
   public void changeType(@NotNull SdkTypeId newType, @Nullable Element additionalDataElement) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    ThreadingAssertions.assertWriteAccess();
     mySdkType = newType;
     myAdditionalData = additionalDataElement != null ? mySdkType.loadAdditionalData(this, additionalDataElement) : null;
   }
@@ -316,6 +316,11 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     copyTo(myOrigin);
     myOrigin = null;
     Disposer.dispose(this);
+  }
+
+  @Override
+  public void applyChangesWithoutWriteAction() {
+    commitChanges();
   }
 
   @Override

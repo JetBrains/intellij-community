@@ -40,6 +40,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.MouseMovementTracker;
+import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.Alarm;
@@ -173,7 +174,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
           myCurrentProgress = null;
           if (info == null ||
-              !topLevelEditor.getContentComponent().isShowing() ||
+              !UIUtil.isShowing(topLevelEditor.getContentComponent()) ||
               (!forceShowing && isPopupDisabled(topLevelEditor))) {
             return;
           }
@@ -191,6 +192,8 @@ public class EditorMouseHoverPopupManager implements Disposable {
             else {
               AbstractPopup hint = createHint(component, popupBridge, requestFocus);
               showHintInEditor(hint, topLevelEditor, position);
+              CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+              if (floatingToolbar != null) floatingToolbar.hideOnPopupConflict(hint);
               myPopupReference = new WeakReference<>(hint);
               myCurrentEditor = new WeakReference<>(topLevelEditor);
             }
@@ -317,7 +320,11 @@ public class EditorMouseHoverPopupManager implements Disposable {
   }
 
   @Nullable
-  private Context createContext(@NotNull Editor editor, int offset, long startTimestamp, boolean showImmediately, boolean showDocumentation) {
+  private static Context createContext(@NotNull Editor editor,
+                                       int offset,
+                                       long startTimestamp,
+                                       boolean showImmediately,
+                                       boolean showDocumentation) {
     Project project = Objects.requireNonNull(editor.getProject());
 
     HighlightInfo info = null;
@@ -407,7 +414,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       .expireWhen(() -> editor.isDisposed())
       .finishOnUiThread(ModalityState.any(), context -> {
         myPreparationTask = null;
-        if (context == null || !editor.getContentComponent().isShowing()) {
+        if (context == null || !UIUtil.isShowing(editor.getContentComponent())) {
           closeHint();
           return;
         }

@@ -1,15 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.containers
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap
 import it.unimi.dsi.fastutil.ints.Int2IntMaps
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.Consumer
 
 internal class ImmutableIntIntUniqueBiMap internal constructor(
-  override val key2Value: Int2IntMap,
-  override val value2Key: Int2IntMap
+  override val key2Value: Int2IntWithDefaultMap,
+  override val value2Key: Int2IntWithDefaultMap
 ) : IntIntUniqueBiMap() {
 
   override fun toImmutable(): ImmutableIntIntUniqueBiMap = this
@@ -18,30 +16,22 @@ internal class ImmutableIntIntUniqueBiMap internal constructor(
 }
 
 internal class MutableIntIntUniqueBiMap private constructor(
-  override var key2Value: Int2IntMap,
-  override var value2Key: Int2IntMap,
+  override var key2Value: Int2IntWithDefaultMap,
+  override var value2Key: Int2IntWithDefaultMap,
   private var freezed: Boolean
 ) : IntIntUniqueBiMap() {
 
-  constructor() : this(Int2IntOpenHashMap(), Int2IntOpenHashMap(), false)
-  constructor(key2Value: Int2IntMap, value2Key: Int2IntMap) : this(key2Value, value2Key, true)
+  constructor() : this(Int2IntWithDefaultMap(), Int2IntWithDefaultMap(), false)
+  constructor(key2Value: Int2IntWithDefaultMap, value2Key: Int2IntWithDefaultMap) : this(key2Value, value2Key, true)
 
-  fun putForce(key: Int, value: Int) {
-    startWrite()
-
-    if (key2Value.containsKey(key)) {
-      val existingValue = key2Value[key]
-      key2Value.remove(key)
-      value2Key.remove(existingValue)
-    }
-    if (value2Key.containsKey(value)) {
-      val existingKey = value2Key[value]
-      value2Key.remove(value)
-      key2Value.remove(existingKey)
-    }
-    put(key, value)
-  }
-
+  /**
+   * Put the key-value pair to the map
+   *
+   * Since the map is unique, no existing key or existing value is allowed in the map.
+   * [IllegalStateException] will be thrown if trying to add existing values.
+   * If you're not sure if these values already exist in the map, you can remove the previous values
+   *   with [removeKey] and [removeValue] functions.
+   */
   fun put(key: Int, value: Int) {
     if (key2Value.containsKey(key)) error("Key $key already exists in the map")
     if (value2Key.containsKey(value)) error("Value $value already exists in the map")
@@ -52,18 +42,26 @@ internal class MutableIntIntUniqueBiMap private constructor(
     key2Value.put(key, value)
   }
 
-  fun removeKey(key: Int) {
-    if (!key2Value.containsKey(key)) return
+  /**
+   * Returns removed value or null if the key didn't exist in this map
+   */
+  fun removeKey(key: Int): Int? {
+    if (!key2Value.containsKey(key)) return null
     startWrite()
     val value = key2Value.remove(key)
     value2Key.remove(value)
+    return value
   }
 
-  fun removeValue(value: Int) {
-    if (!value2Key.containsKey(value)) return
+  /**
+   * Returns removed key or null if the value didn't exist in this map
+   */
+  fun removeValue(value: Int): Int? {
+    if (!value2Key.containsKey(value)) return null
     startWrite()
     val key = value2Key.remove(value)
     key2Value.remove(key)
+    return key
   }
 
   fun remove(key: Int, value: Int) {
@@ -81,8 +79,8 @@ internal class MutableIntIntUniqueBiMap private constructor(
 
   private fun startWrite() {
     if (!freezed) return
-    key2Value = Int2IntOpenHashMap(key2Value)
-    value2Key = Int2IntOpenHashMap(value2Key)
+    key2Value = Int2IntWithDefaultMap.from(key2Value)
+    value2Key = Int2IntWithDefaultMap.from(value2Key)
     freezed = false
   }
 
@@ -94,8 +92,8 @@ internal class MutableIntIntUniqueBiMap private constructor(
 
 internal sealed class IntIntUniqueBiMap {
 
-  protected abstract val key2Value: Int2IntMap
-  protected abstract val value2Key: Int2IntMap
+  protected abstract val key2Value: Int2IntWithDefaultMap
+  protected abstract val value2Key: Int2IntWithDefaultMap
 
   val keys: IntSet
     get() = key2Value.keys
@@ -104,7 +102,7 @@ internal sealed class IntIntUniqueBiMap {
     get() = value2Key.keys
 
   inline fun forEachKey(crossinline action: (Int, Int) -> Unit) {
-    Int2IntMaps.fastForEach(`access$key2Value`, Consumer { action(it.intKey, it.intValue) })
+    Int2IntMaps.fastForEach(key2Value.backingMap, Consumer { action(it.intKey, it.intValue) })
   }
 
   fun containsKey(key: Int) = key2Value.containsKey(key)
@@ -134,9 +132,4 @@ internal sealed class IntIntUniqueBiMap {
     result = 31 * result + value2Key.hashCode()
     return result
   }
-
-  @Suppress("PropertyName")
-  @PublishedApi
-  internal val `access$key2Value`: Int2IntMap
-    get() = key2Value
 }

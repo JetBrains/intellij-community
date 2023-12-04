@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.fir.uast.test
 
 import com.intellij.openapi.project.Project
@@ -108,6 +108,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveLocalDefaultConstructor(myFixture)
     }
 
+    fun testResolveJavaDefaultConstructor() {
+        checkResolveJavaDefaultConstructor(myFixture)
+    }
+
+    fun testResolveKotlinDefaultConstructor() {
+        checkResolveKotlinDefaultConstructor(myFixture)
+    }
+
     fun testResolveJavaClassAsAnonymousObjectSuperType() {
         checkResolveJavaClassAsAnonymousObjectSuperType(myFixture)
     }
@@ -188,6 +196,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveKotlinPropertyAccessor(myFixture)
     }
 
+    fun testResolveBackingField() {
+        checkResolveBackingField(myFixture)
+    }
+
+    fun testResolveBackingFieldInCompanionObject() {
+        checkResolveBackingFieldInCompanionObject(myFixture)
+    }
+
     fun testResolveStaticImportFromObject() {
         checkResolveStaticImportFromObject(myFixture)
     }
@@ -198,6 +214,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveEnumEntrySuperType() {
         checkResolveEnumEntrySuperType(myFixture)
+    }
+
+    fun testResolveFunInterfaceSamWithValueClassInSignature() {
+        checkResolveFunInterfaceSamWithValueClassInSignature(myFixture, isK2 = true)
     }
 
     fun testResolveLambdaInvoke() {
@@ -225,7 +245,14 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     }
 
     fun testCompanionConstantAsVarargAnnotationValue() {
-        // TODO(KT-61497): remove the flag
-        checkCompanionConstantAsVarargAnnotationValue(myFixture, isK2 = true)
+        checkCompanionConstantAsVarargAnnotationValue(myFixture)
+    }
+
+    fun testResolveThisExpression() {
+        checkResolveThisExpression(myFixture)
+    }
+
+    fun testResolveThisExpressionAsLambdaReceiver() {
+        checkResolveThisExpressionAsLambdaReceiver(myFixture)
     }
 }

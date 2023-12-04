@@ -1,11 +1,19 @@
-from typing import Any
+from collections.abc import Iterator
+from typing import ClassVar
+from typing_extensions import TypedDict
 
 from jmespath.exceptions import EmptyExpressionError as EmptyExpressionError, LexerError as LexerError
 
+class _LexerTokenizeResult(TypedDict):
+    type: str
+    value: str
+    start: int
+    end: int
+
 class Lexer:
-    START_IDENTIFIER: Any
-    VALID_IDENTIFIER: Any
-    VALID_NUMBER: Any
-    WHITESPACE: Any
-    SIMPLE_TOKENS: Any
-    def tokenize(self, expression) -> None: ...
+    START_IDENTIFIER: ClassVar[set[str]]
+    VALID_IDENTIFIER: ClassVar[set[str]]
+    VALID_NUMBER: ClassVar[set[str]]
+    WHITESPACE: ClassVar[set[str]]
+    SIMPLE_TOKENS: ClassVar[dict[str, str]]
+    def tokenize(self, expression: str) -> Iterator[_LexerTokenizeResult]: ...

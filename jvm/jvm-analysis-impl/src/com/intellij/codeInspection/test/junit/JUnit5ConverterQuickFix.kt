@@ -2,14 +2,20 @@
 package com.intellij.codeInspection.test.junit
 
 import com.intellij.analysis.JvmAnalysisBundle
+import com.intellij.codeInsight.TestFrameworks
 import com.intellij.codeInspection.*
 import com.intellij.codeInspection.actions.CleanupInspectionUtil
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
+import com.intellij.jvm.analysis.quickFix.CompositeModCommandQuickFix
+import com.intellij.lang.jvm.JvmModifier
+import com.intellij.lang.jvm.actions.createModifierActions
+import com.intellij.lang.jvm.actions.modifierRequest
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.refactoring.RefactoringManager
@@ -20,7 +26,10 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.ArrayUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UClass
+import org.jetbrains.uast.getContainingUFile
+import org.jetbrains.uast.getParentOfType
+import org.jetbrains.uast.toUElement
 
 class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
   override fun getFamilyName(): String = JvmAnalysisBundle.message("jvm.inspections.junit5.converter.quickfix")
@@ -30,7 +39,7 @@ class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     descriptor.psiElement.toUElement()?.getParentOfType<UClass>(false)?.let { uClass ->
       RefactoringManager.getInstance(project).migrateManager.findMigrationMap("JUnit (4.x -> 5.0)")?.let { migrationMap ->
-        uClass.getContainingUFile()?.let { JUnit5MigrationProcessor(project, migrationMap, setOf(it)).run() }
+        JUnit5MigrationProcessor(project, migrationMap, setOf(uClass)).run()
       }
     }
   }
@@ -41,23 +50,27 @@ class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
     psiElementsToIgnore: MutableList<PsiElement>,
     refreshViews: Runnable?
   ) {
-    val files = descriptors.mapNotNull { descriptor ->
-      (descriptor as ProblemDescriptor).psiElement?.toUElement()?.getContainingUFile()
-    }.toSet()
-    if (files.isNotEmpty()) {
+    val uClasses = descriptors.mapNotNull { descriptor ->
+      (descriptor as ProblemDescriptor).psiElement?.toUElement()
+    }.filterIsInstance<UClass>().toSet()
+    if (uClasses.isNotEmpty()) {
       RefactoringManager.getInstance(project).migrateManager.findMigrationMap("JUnit (4.x -> 5.0)")?.let { migrationMap ->
-        JUnit5MigrationProcessor(project, migrationMap, files).run()
+        JUnit5MigrationProcessor(project, migrationMap, uClasses).run()
         refreshViews?.run()
       }
     }
   }
 
-  private class JUnit5MigrationProcessor(project: Project, migrationMap: MigrationMap, private val files: Set<UFile>)
+  private class JUnit5MigrationProcessor(project: Project,
+                                         migrationMap: MigrationMap,
+                                         private val classes: Set<UClass>)
     : MigrationProcessor(
     project,
     migrationMap,
-    GlobalSearchScope.filesWithoutLibrariesScope(project, files.map { it.sourcePsi.virtualFile })
+    GlobalSearchScope.filesWithoutLibrariesScope(project, classes.mapNotNull { it.getContainingUFile()?.sourcePsi?.virtualFile }.toSet())
   ) {
+    private val files = classes.mapNotNull { it.getContainingUFile() }.toSet()
+
     private class DescriptionBasedUsageInfo(val descriptor: ProblemDescriptor) : UsageInfo(descriptor.psiElement)
 
     override fun findUsages(): Array<UsageInfo> {
@@ -96,6 +109,22 @@ class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
       return showConflicts(conflicts, refUsages.get())
     }
 
+    private fun changeVisibilityForTestClasses() {
+      classes.forEach { uClass ->
+        val file = uClass.getContainingUFile()?.sourcePsi ?: return@forEach
+        CompositeModCommandQuickFix.performActions(createModifierActions(uClass, modifierRequest(JvmModifier.PUBLIC, false)), file)
+        changeVisibilityForTestMethods(uClass, file)
+      }
+    }
+
+    private fun changeVisibilityForTestMethods(uClass: UClass, file: PsiFile) {
+      uClass.methods.forEach {
+        if (TestFrameworks.getInstance().isTestMethod(it)) {
+          CompositeModCommandQuickFix.performActions(createModifierActions(it, modifierRequest(JvmModifier.PUBLIC, false)), file)
+        }
+      }
+    }
+
     override fun performRefactoring(usages: Array<out UsageInfo>) {
       val migrateUsages = mutableListOf<UsageInfo>()
       val descriptions = mutableListOf<ProblemDescriptor>()
@@ -106,6 +135,7 @@ class JUnit5ConverterQuickFix : LocalQuickFix, BatchQuickFix {
         }
       }
       super.performRefactoring(migrateUsages.toTypedArray())
+      changeVisibilityForTestClasses()
       CleanupInspectionUtil.getInstance().applyFixes(
         myProject,
         JvmAnalysisBundle.message("jvm.inspections.junit5.converter.quickfix.presentation.text"),

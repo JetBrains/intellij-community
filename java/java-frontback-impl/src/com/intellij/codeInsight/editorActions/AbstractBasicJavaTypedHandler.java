@@ -116,10 +116,11 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
       // Normal RBrace handler doesn't work with \{}, because braces in string template are not separate tokens
       int offset = editor.getCaretModel().getOffset();
       
-      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset-1);
+      HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
       CharSequence sequence = editor.getDocument().getCharsSequence();
-      if (!iterator.atEnd() && iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_BEGIN &&
-          iterator.getEnd() == offset && sequence.subSequence(iterator.getStart(), iterator.getEnd()).toString().equals("\\{")) {
+      if (!iterator.atEnd() && iterator.getStart() == offset && 
+          (iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_END || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END ||
+           iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_MID || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID)) {
         if (sequence.length() > offset && sequence.charAt(offset) == '}') {
           editor.getCaretModel().moveToOffset(offset + 1);
           return Result.STOP;

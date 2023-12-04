@@ -27,7 +27,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -80,6 +79,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   private static final Ref<Boolean> SHOW_BREAKPOINT_AD = new Ref<>(true);
 
   public static final DataKey<Integer> LINE_NUMBER = DataKey.create("x.debugger.line.number");
+  public static final DataKey<Integer> OFFSET = DataKey.create("x.debugger.offset");
 
   @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
@@ -139,6 +139,38 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
                                                                                                   final boolean temporary) {
     XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
     return toggleAndReturnLineBreakpoint(project, Collections.singletonList(type), position, temporary, null, true);
+  }
+
+  /**
+   * Get non-empty list of variants assuming that given list of types is non-empty too.
+   */
+  public static List<? extends XLineBreakpointType.XLineBreakpointVariant>
+  getLineBreakpointVariantsSync(@NotNull final Project project,
+                                @NotNull List<? extends XLineBreakpointType> types,
+                                @NotNull final XSourcePosition position) {
+    if (types.isEmpty()) {
+      throw new IllegalArgumentException("non-empty types are expected");
+    }
+
+    boolean multipleTypes = types.size() > 1;
+    List<XLineBreakpointType.XLineBreakpointVariant> allVariants = new SmartList<>();
+    for (XLineBreakpointType type : types) {
+      var variants = type.computeVariants(project, position);
+      if (variants.isEmpty() && multipleTypes) {
+        // We have multiple types, but no non-default variants for this type. So we just create one.
+        allVariants.add(createDefaultBreakpointVariant(position, type));
+      }
+      else {
+        allVariants.addAll(variants);
+      }
+    }
+
+    if (allVariants.isEmpty()) {
+      assert !multipleTypes;
+      return Collections.singletonList(createDefaultBreakpointVariant(position, types.get(0)));
+    } else {
+      return allVariants;
+    }
   }
 
   /**
@@ -244,8 +276,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
 
     Promise<List<? extends XLineBreakpointType.XLineBreakpointVariant>> variantsAsync = getLineBreakpointVariants(project, types, position);
-    if (Registry.is("debugger.show.breakpoints.inline")) {
-      return variantsAsync.then(variants -> {
+    if (areInlineBreakpointsEnabled()) {
+      return variantsAsync.then(variantsWithAll -> {
+        var variants = variantsWithAll.stream().filter(v -> !InlineBreakpointInlayManager.isAllVariant(v)).toList();
 
         var breakpointOrVariant = getBestMatchingBreakpoint(caretOffset,
                                                             Stream.concat(
@@ -267,7 +300,6 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         assert !variants.isEmpty();
         XLineBreakpointType.XLineBreakpointVariant variant;
         if (variants.size() > 1) {
-          assert editor != null; // FIXME: it's absolutely not true, but I want to look at this use cases
           variant = breakpointOrVariant instanceof XLineBreakpointType.XLineBreakpointVariant v ? v : variants.get(0);
         } else {
           variant = variants.get(0);
@@ -545,6 +577,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     Integer lineNumber = LINE_NUMBER.getData(context);
     if (lineNumber != null) {
       return XSourcePositionImpl.create(editor.getVirtualFile(), lineNumber);
+    }
+    Integer offsetFromDataContext = OFFSET.getData(context);
+    if (offsetFromDataContext != null) {
+      return XSourcePositionImpl.createByOffset(editor.getVirtualFile(), offsetFromDataContext);
     }
 
     final Document document = editor.getDocument();

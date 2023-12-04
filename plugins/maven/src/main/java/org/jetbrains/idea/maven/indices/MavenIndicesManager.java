@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.server.MavenServerConnector;
 import org.jetbrains.idea.maven.server.MavenServerDownloadListener;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
+import org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
@@ -171,7 +172,7 @@ public final class MavenIndicesManager implements Disposable {
     }, this);
   }
 
-  public void addArchetype(@NotNull MavenArchetype archetype) {
+  public static void addArchetype(@NotNull MavenArchetype archetype) {
     MavenArchetypeManager.addArchetype(archetype, getUserArchetypesFile());
   }
 
@@ -246,7 +247,7 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   @NotNull
-  private Path getUserArchetypesFile() {
+  private static Path getUserArchetypesFile() {
     return MavenSystemIndicesManager.getInstance().getIndicesDir().resolve("UserArchetypes.xml");
   }
 
@@ -263,6 +264,7 @@ public final class MavenIndicesManager implements Disposable {
     }
 
     public void fixIndex(@NotNull File file) {
+      MavenIndexUsageCollector.ADD_ARTIFACT_FROM_POM.log(myProject);
       if (stopped.get()) return;
 
       queueToAdd.add(file);

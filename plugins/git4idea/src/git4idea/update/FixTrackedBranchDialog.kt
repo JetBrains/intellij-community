@@ -28,6 +28,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.config.UpdateMethod
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.FlatComboBoxUI
+import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import net.miginfocom.layout.AC
@@ -175,17 +176,21 @@ internal class FixTrackedBranchDialog(private val project: Project) : DialogWrap
 
   private fun showRepositoryField() = repositories.size > 1
 
-  private fun createRemoteField() = ComboBox(MutableCollectionComboBoxModel(repositories[0].remotes.toMutableList())).apply {
-    preferredSize = JBDimension(125, 30)
-    renderer = SimpleListCellRenderer.create("") { remote ->
-      remote.name
-    }
-    setUI(FlatComboBoxUI(border = Insets(1, 1, 1, 0),
-                         outerInsets = Insets(BW.get(), if (showRepositoryField()) 0 else BW.get(), BW.get(), 0)))
-    addItemListener { e ->
-      if (e.stateChange == ItemEvent.SELECTED
-          && e.item != null) {
-        updateBranchField()
+  private fun createRemoteField(): ComboBox<GitRemote> {
+    val remotes = repositories.firstOrNull()?.remotes?.toMutableList() ?: mutableListOf<GitRemote>()
+    return ComboBox(
+      MutableCollectionComboBoxModel(remotes)).apply {
+      preferredSize = JBDimension(125, 30)
+      renderer = SimpleListCellRenderer.create("") { remote ->
+        remote.name
+      }
+      setUI(FlatComboBoxUI(border = Insets(1, 1, 1, 0),
+                           outerInsets = Insets(BW.get(), if (showRepositoryField()) 0 else BW.get(), BW.get(), 0)))
+      addItemListener { e ->
+        if (e.stateChange == ItemEvent.SELECTED
+            && e.item != null) {
+          updateBranchField()
+        }
       }
     }
   }

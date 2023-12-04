@@ -28,7 +28,7 @@ open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>,
   override fun readExternal(keymapElement: Element) {
     super.readExternal(keymapElement)
 
-    if (KeymapManager.DEFAULT_IDEA_KEYMAP == name && !SystemInfo.isXWindow) {
+    if (KeymapManager.DEFAULT_IDEA_KEYMAP == name && (SystemInfo.isWindows || SystemInfo.isMac)) {
       addShortcut(IdeActions.ACTION_GOTO_DECLARATION, MouseShortcut(MouseEvent.BUTTON2, 0, 1))
     }
   }

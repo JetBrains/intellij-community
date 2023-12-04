@@ -158,7 +158,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       });
     }
 
-    private PsiElement getPasteTarget(@NotNull DataContext dataContext, @Nullable Module module) {
+    private static PsiElement getPasteTarget(@NotNull DataContext dataContext, @Nullable Module module) {
       PsiElement target = LangDataKeys.PASTE_TARGET_PSI_ELEMENT.getData(dataContext);
       if (module != null && target instanceof PsiDirectoryContainer) {
         final PsiDirectory[] directories = ((PsiDirectoryContainer)target).getDirectories(GlobalSearchScope.moduleScope(module));
@@ -170,7 +170,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
     }
 
     @Nullable
-    private PsiDirectory getTargetDirectory(@Nullable Module module, @Nullable PsiElement target) {
+    private static PsiDirectory getTargetDirectory(@Nullable Module module, @Nullable PsiElement target) {
       PsiDirectory targetDirectory = target instanceof PsiDirectory ? (PsiDirectory)target : null;
       if (targetDirectory == null && target instanceof PsiDirectoryContainer) {
         final PsiDirectory[] directories = module == null ? ((PsiDirectoryContainer)target).getDirectories()
@@ -248,7 +248,7 @@ public class CopyPasteDelegator implements CopyPasteSupport {
       return false;
     }
 
-    private boolean isDefaultPasteEnabled(final DataContext dataContext) {
+    private static boolean isDefaultPasteEnabled(final DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) {
         return false;

@@ -57,6 +57,7 @@ internal class ProjectIndexingHistoryFusReporterListener : ProjectIndexingActivi
       times.separateValueApplicationVisibleTime.toMillis(),
       history.providerStatistics.sumOf { statistics -> statistics.totalNumberOfIndexedFiles },
       history.providerStatistics.sumOf { statistics -> statistics.totalNumberOfFilesFullyIndexedByExtensions },
+      // JsonFileProviderIndexStatistics#totalNumberOfNotEvaluatedFiles is not yet reported
       times.wasInterrupted
     )
   }

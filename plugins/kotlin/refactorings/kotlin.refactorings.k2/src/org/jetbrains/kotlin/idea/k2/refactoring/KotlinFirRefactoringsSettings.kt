@@ -17,10 +17,12 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var RENAME_SEARCH_IN_COMMENTS_FOR_CLASS: Boolean = false
     var RENAME_SEARCH_IN_COMMENTS_FOR_PARAMETER: Boolean = false
 
+    var renameFileNames: Boolean = true
     var renameVariables: Boolean = true
     var renameParameterInHierarchy: Boolean = true
     var renameInheritors: Boolean = true
     var renameOverloads: Boolean = true
+    var renameTestMethods: Boolean = true
 
     var MOVE_PREVIEW_USAGES: Boolean = true
     var MOVE_SEARCH_IN_COMMENTS: Boolean = true
@@ -29,6 +31,13 @@ class KotlinFirRefactoringsSettings : PersistentStateComponent<KotlinFirRefactor
     var MOVE_MPP_DECLARATIONS: Boolean = true
     var INTRODUCE_DECLARE_WITH_VAR: Boolean = false
     var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean = false
+
+    var INLINE_METHOD_THIS: Boolean = false
+    var INLINE_LOCAL_THIS: Boolean = false
+    var INLINE_TYPE_ALIAS_THIS: Boolean = false
+    var INLINE_METHOD_KEEP: Boolean = false
+    var INLINE_PROPERTY_KEEP: Boolean = false
+    var INLINE_TYPE_ALIAS_KEEP: Boolean = false
 
     override fun getState() = this
 

@@ -14,7 +14,6 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
@@ -143,6 +142,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   private ListPluginComponent myShowComponent;
 
+  private @NotNull PluginsViewCustomizer.PluginDetailsCustomizer myCustomizer;
+
   private SelectionBasedPluginModelAction.OptionButtonController<PluginDetailsPageComponent> myEnableDisableController;
 
   public static boolean isMultiTabs() {
@@ -167,6 +168,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     else {
       myNameAndButtons = new BaselinePanel();
     }
+
+    myCustomizer = PluginsViewCustomizerKt.getPluginsViewCustomizer().getPluginDetailsCustomizer(myPluginModel);
+
     createPluginPanel();
     select(1, true);
     setEmptyState(EmptyState.NONE_SELECTED);
@@ -448,6 +452,8 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     for (Component component : myNameAndButtons.getButtonComponents()) {
       component.setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
     }
+
+    myCustomizer.processPluginNameAndButtonsComponent(myNameAndButtons);
   }
 
   public void setOnlyUpdateMode() {
@@ -913,6 +919,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
             }
           });
         }
+        else if (!node.isConverted() && !myMarketplace) {
+          component.setInstalledPluginMarketplaceNode(node);
+        }
       }
       else if (!descriptor.isBundled() && component.getInstalledPluginMarketplaceNode() == null) {
         syncLoading = false;
@@ -1008,10 +1017,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   public void showPluginImpl(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable IdeaPluginDescriptor updateDescriptor) {
     myPlugin = pluginDescriptor;
-    PluginManagerFilters org = PluginManagerFilters.getInstance();
-    myUpdateDescriptor = updateDescriptor != null && org.isPluginAllowed(!myMarketplace, updateDescriptor) ? updateDescriptor : null;
+    PluginManagementPolicy policy = PluginManagementPolicy.getInstance();
+    myUpdateDescriptor = updateDescriptor != null && policy.canEnablePlugin(updateDescriptor) ? updateDescriptor : null;
     myIsPluginCompatible = PluginManagerCore.INSTANCE.getIncompatiblePlatform(pluginDescriptor) == null;
-    myIsPluginAvailable = myIsPluginCompatible && org.isPluginAllowed(!myMarketplace, pluginDescriptor);
+    myIsPluginAvailable = myIsPluginCompatible && policy.canEnablePlugin(updateDescriptor);
     if (myMarketplace && myMultiTabs) {
       myInstalledDescriptorForMarketplace = PluginManagerCore.findPlugin(myPlugin.getPluginId());
       myNameAndButtons.setProgressDisabledButton(myUpdateDescriptor == null ? myInstallButton : myUpdateButton);
@@ -1027,6 +1036,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       if (suggestedCommercialIde != null) {
         myInstallButton.setVisible(false);
       }
+    }
+
+    if (myPlugin != null) {
+      myCustomizer.processShowPlugin(myPlugin);
     }
 
     mySuggestedIdeBanner.suggestIde(suggestedCommercialIde, myPlugin.getPluginId());
@@ -1666,6 +1679,10 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         return notes;
       }
     }
+    String notes = myPlugin.getChangeNotes();
+    if (!Strings.isEmptyOrSpaces(notes)) {
+      return notes;
+    }
     PluginNode node = getInstalledPluginMarketplaceNode();
     if (node != null) {
       String changeNotes = node.getChangeNotes();
@@ -1673,8 +1690,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         return changeNotes;
       }
     }
-    String notes = myPlugin.getChangeNotes();
-    return Strings.isEmptyOrSpaces(notes) ? null : notes;
+    return null;
   }
 
   private static @NotNull BorderLayoutPanel createNotificationPanel(@NotNull Icon icon, @NotNull @Nls String message) {
@@ -1691,10 +1707,9 @@ public final class PluginDetailsPageComponent extends MultiPanel {
 
   private static @NotNull BorderLayoutPanel createBaseNotificationPanel() {
     BorderLayoutPanel panel = new BorderLayoutPanel();
-    Border customLine = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
+    Border customLine = JBUI.Borders.customLine(JBUI.CurrentTheme.Banner.INFO_BACKGROUND, 1, 0, 1, 0);
     panel.setBorder(JBUI.Borders.merge(JBUI.Borders.empty(10), customLine, true));
-    panel.setBackground(JBUI.CurrentTheme.Notification.BACKGROUND);
-    panel.setForeground(JBUI.CurrentTheme.Notification.FOREGROUND);
+    panel.setBackground(JBUI.CurrentTheme.Banner.INFO_BACKGROUND);
     return panel;
   }
 

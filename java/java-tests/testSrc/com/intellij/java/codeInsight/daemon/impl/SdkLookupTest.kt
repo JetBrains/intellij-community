@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.daemon.impl
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -603,7 +604,9 @@ class SdkLookupTest : BareTestFixtureTestCase() {
   private fun newUnregisteredSdk(sdkName: String,
                                  version: String = "1.2.3"): Sdk {
     val sdk = ProjectJdkTable.getInstance().createSdk(sdkName, sdkType)
-    sdk.sdkModificator.also { it.versionString = version }.commitChanges()
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.versionString = version
+    runWriteAction { sdkModificator.commitChanges() }
     if (sdk is Disposable) {
       Disposer.register(testRootDisposable, sdk)
     }

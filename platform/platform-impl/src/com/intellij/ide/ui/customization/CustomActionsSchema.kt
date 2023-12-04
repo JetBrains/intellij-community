@@ -26,9 +26,9 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.util.IconUtil
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.containers.UnmodifiableHashMap
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.toPersistentMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -75,7 +75,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   private var idToName: PersistentMap<String, String>
 
   @Volatile
-  private var idToActionGroup = persistentHashMapOf<String, ActionGroup>()
+  private var idToActionGroup = UnmodifiableHashMap.empty<String, ActionGroup>()
   private val extGroupIds = HashSet<String>()
   private val actions = ArrayList<ActionUrl>()
   private var isFirstLoadState = true
@@ -171,7 +171,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
 
   fun copyFrom(result: CustomActionsSchema) {
     synchronized(lock) {
-      idToActionGroup = idToActionGroup.clear()
+      idToActionGroup = UnmodifiableHashMap.empty<String, ActionGroup>()
       actions.clear()
       val ids = java.util.List.copyOf(iconCustomizations.keys)
       iconCustomizations.clear()
@@ -207,7 +207,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
   override fun loadState(element: Element) {
     var reload: Boolean
     synchronized(lock) {
-      idToActionGroup = idToActionGroup.clear()
+      idToActionGroup = UnmodifiableHashMap.empty()
       actions.clear()
       iconCustomizations.clear()
       var schElement = element
@@ -310,7 +310,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
       idToActionGroup.get(id)?.let {
         return it
       }
-      idToActionGroup = idToActionGroup.put(id, corrected)
+      idToActionGroup = idToActionGroup.with(id, corrected)
     }
     return corrected
   }
@@ -340,7 +340,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     for ((key, value) in idToName) {
       val actionGroup = (actionManager.getAction(key) as? ActionGroup) ?: continue
       //J2EE/Commander plugin was disabled
-      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, value, null, null, true, null, false)))
+      root.add(ActionsTreeUtil.createNode(ActionsTreeUtil.createGroup(actionGroup, value, null, true, null, false)))
     }
   }
 

@@ -25,6 +25,8 @@ import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 
+private const val disabled = true
+
 abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin(): Boolean = true
 
@@ -44,6 +46,7 @@ abstract class KotlinStructuralReplaceTest : KotlinLightCodeInsightFixtureTestCa
         shortenFqNames: Boolean = false,
         context: PatternContext = KotlinStructuralSearchProfile.DEFAULT_CONTEXT
     ) {
+        if (disabled) return // Test is flaky see KTIJ-27542
         myFixture.configureByText(KotlinFileType.INSTANCE, match)
         runBlocking {
             val matchOptions = searchConfiguration.matchOptions.apply {

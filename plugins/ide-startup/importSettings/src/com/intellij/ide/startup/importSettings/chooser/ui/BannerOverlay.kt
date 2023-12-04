@@ -10,7 +10,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.OverlayLayout
 
-class BannerOverlay {
+internal class BannerOverlay {
   private val container = JPanel(VerticalFlowLayout(0, 0)).apply { isOpaque = false }
 
   fun showError(notification: NotificationData) {

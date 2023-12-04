@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vcs.history.VcsFileRevisionEx
@@ -17,12 +18,16 @@ import com.intellij.vcs.log.impl.VcsFileStatusInfo
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitRevisionNumber
+import git4idea.GitVcs
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.commands.GitLineHandlerListener
 
-class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHandler {
+open class GitLogHistoryHandler(private val project: Project) : VcsLogFileHistoryHandler {
+
+  override val supportedVcs: VcsKey = GitVcs.getKey()
+
 
   @Throws(VcsException::class)
   override fun getHistoryFast(root: VirtualFile, filePath: FilePath, hash: Hash?, commitCount: Int): List<VcsFileRevisionEx> {

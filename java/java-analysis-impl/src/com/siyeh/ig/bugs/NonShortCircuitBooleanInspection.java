@@ -58,16 +58,14 @@ public class NonShortCircuitBooleanInspection extends BaseInspection {
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      if (element instanceof PsiPolyadicExpression) {
-        doReplacePolyadicExpression((PsiPolyadicExpression)element);
+      if (element instanceof PsiPolyadicExpression polyadic) {
+        doReplacePolyadicExpression(polyadic);
       }
-      else if (element instanceof PsiAssignmentExpression) {
-        PsiElement assignmentExpression = PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression((PsiAssignmentExpression)element);
-        if (assignmentExpression instanceof PsiAssignmentExpression) {
-          PsiExpression expression = ((PsiAssignmentExpression)assignmentExpression).getRExpression();
-          if (expression instanceof PsiPolyadicExpression) {
-            doReplacePolyadicExpression((PsiPolyadicExpression)expression);
-          }
+      else if (element instanceof PsiAssignmentExpression assignment) {
+        PsiAssignmentExpression replaced = PsiReplacementUtil.replaceOperatorAssignmentWithAssignmentExpression(assignment);
+        PsiExpression expression = replaced.getRExpression();
+        if (expression instanceof PsiPolyadicExpression polyadic) {
+          doReplacePolyadicExpression(polyadic);
         }
       }
     }

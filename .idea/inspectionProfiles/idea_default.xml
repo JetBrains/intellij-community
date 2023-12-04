@@ -1140,6 +1140,36 @@
       <replaceConfiguration name="Disposable instance by lambda" description="It's not safe to instantiate Disposable via lambda because lambdas does not guarantee their identity." text="Disposable { }" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.openapi.util.Disposer.newDisposable()">
         <constraint name="__context__" within="" contains="" />
       </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" description="It's very easy to forget to set the default return value&#10;Use the map that guarantee the default map like Int2IntWithDefaultMap&#10;See IDEA-338250 as issue example" suppressId="NoMapsWithPrimitiveValue" text="Int2IntMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Int2IntOpenHashMap()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Int2IntOpenHashMap($source$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap.from($source$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="source" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2IntOpenHashMap($source$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap.from($source$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="source" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2IntOpenHashMap()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2IntMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2IntWithDefaultMap">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2LongMap" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2LongOpenHashMap()" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap()">
+        <constraint name="__context__" within="" contains="" />
+      </replaceConfiguration>
+      <replaceConfiguration name="Do not use maps with primitive value" text="Object2LongOpenHashMap($source$)" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.platform.workspace.storage.impl.containers.Object2LongWithDefaultMap.from($source$)">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="source" within="" contains="" />
+      </replaceConfiguration>
       <replaceConfiguration name="Don't read channels with for, use consume/consumeEach" suppressId="CHAN_WITH_FOR" text="for ($Item$ in $Collection$) {&#10;  $Statement$&#10;}" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="false" replacement="$Collection$.consumeEach { $Item$ -&gt;&#10;  $Statement$&#10;}">
         <constraint name="__context__" within="" contains="" />
         <constraint name="Item" within="" contains="" />
@@ -1503,6 +1533,10 @@
         <constraint name="__context__" within="" contains="" />
         <constraint name="QUALIFIER" nameOfExprType="com\.intellij\.psi\.PsiManager" minCount="0" within="" contains="" />
       </replaceConfiguration>
+      <searchConfiguration name="Raw coroutine scope creation" uuid="e11e9d2f-7cc2-3359-a78a-24f67cbe0850" description="Coroutine scope should be created:&#10;&lt;ul&gt;&#10;&lt;li&gt;by a coroutine builder (&lt;code&gt;launch&lt;/code&gt;, &lt;code&gt;async&lt;/code&gt;, &lt;code&gt;runBlockingCancellable&lt;/code&gt;);&lt;/li&gt;&#10;&lt;li&gt;by a scoping function (&lt;code&gt;withContext&lt;/code&gt;, &lt;code&gt;coroutineScope&lt;/code&gt;, &lt;code&gt;supervisorScope&lt;/code&gt;);&lt;/li&gt;&#10;&lt;li&gt;by injecting it into a service constructor;&lt;/li&gt;&#10;&lt;li&gt;by explicitly creating a child scope (&lt;code&gt;childScope&lt;/code&gt;, &lt;code&gt;namedChildScope&lt;/code&gt;)&lt;/li&gt;&#10;&lt;/ul&gt; " suppressId="RAW_SCOPE_CREATION" problemDescriptor="Raw scope might not be linked to any parent unintentionally (if passed context does not have any &lt;code&gt;Job&lt;/code&gt;, or if passed &lt;code&gt;Job&lt;/code&gt; does not have any parent). Use &lt;code&gt;namedChildScope()&lt;/code&gt; on some existing scope instead. If no parent is actually intended, use &lt;code&gt;GlobalScope.namedScope()&lt;/code&gt;." text="CoroutineScope($args$)" recursive="true" caseInsensitive="true" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="args" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="Raw runBlocking" description="Standard library `runBlocking` may block indefinitely because does not take thread context `Job` or thread `ProgressIndicator` into account.&#10;Use `com.intellij.openapi.progress.runBlockingCancellable` instead. Read its doc if it fails with an error that there is no job or indicator in the current thread." suppressId="RAW_RUN_BLOCKING" problemDescriptor="Use `runBlockingCancellable` instead" text="runBlocking {&#10;  $statement$&#10;}&#10;" recursive="false" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="true" replacement="com.intellij.openapi.progress.runBlockingCancellable {&#10;  $statement$&#10;}&#10;">
         <constraint name="__context__" within="" contains="" />
         <constraint name="statement" minCount="0" maxCount="2147483647" within="" contains="" />
@@ -2535,6 +2569,9 @@
     <inspection_tool class="XsltTemplateInvocation" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="XsltUnusedDeclaration" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="XsltVariableShadowing" enabled="false" level="WARNING" enabled_by_default="false" />
+    <inspection_tool class="acb41802-9e8a-3e32-8b29-0e1d0a2aa770" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="EntityStorage" level="WARNING" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="osmorcClassInDefaultPackage" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="osmorcNonOsgiMavenDependency" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="osmorcUnknownManifestPackage" enabled="false" level="ERROR" enabled_by_default="false" />

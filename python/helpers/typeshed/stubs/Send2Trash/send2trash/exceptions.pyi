@@ -1,2 +1,5 @@
+from typing import Any
+
 class TrashPermissionError(PermissionError):
-    def __init__(self, filename) -> None: ...
+    # Typed the same as `filename` in `PermissionError`:
+    def __init__(self, filename: Any) -> None: ...

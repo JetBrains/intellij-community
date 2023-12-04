@@ -1,40 +1,40 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
-import com.intellij.collaboration.async.mapCaching
+import com.intellij.collaboration.async.mapDataToModel
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
-import org.jetbrains.plugins.gitlab.api.getResultOrThrow
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.addDraftReplyNote
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.changeMergeRequestDiscussionResolve
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.createReplyNote
-import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.util.*
 
 interface GitLabDiscussion {
-  val id: String
+  val id: GitLabId
 
   val createdAt: Date
   val notes: Flow<List<GitLabNote>>
-  val canAddNotes: Boolean
+  val canAddDraftNotes: Boolean
 
   val resolvable: Boolean
   val canResolve: Boolean
+  val canAddNotes: Flow<Boolean>
   val resolved: Flow<Boolean>
 
   suspend fun changeResolvedState()
 
   suspend fun addNote(body: String)
+  suspend fun addDraftNote(body: String)
 }
 
 val GitLabMergeRequestDiscussion.firstNote: Flow<GitLabMergeRequestNote?>
@@ -51,8 +51,10 @@ class LoadedGitLabDiscussion(
   parentCs: CoroutineScope,
   private val project: Project,
   private val api: GitLabApi,
+  glMetadata: GitLabServerMetadata?,
   private val glProject: GitLabProjectCoordinates,
   private val eventSink: suspend (GitLabDiscussionEvent) -> Unit,
+  private val draftNotesEventSink: suspend (GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
   private val mr: GitLabMergeRequest,
   discussionData: GitLabDiscussionDTO,
   draftNotes: Flow<List<GitLabMergeRequestDraftNote>>
@@ -63,8 +65,7 @@ class LoadedGitLabDiscussion(
 
   private val dataState = MutableStateFlow(discussionData)
 
-  override val id: String = discussionData.id
-  private val apiId = discussionData.id
+  override val id: GitLabGid = discussionData.id
   override val createdAt: Date = discussionData.createdAt
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
@@ -102,17 +103,19 @@ class LoadedGitLabDiscussion(
 
   override val notes: Flow<List<GitLabMergeRequestNote>> =
     loadedNotes
-      .mapCaching(
+      .mapDataToModel(
         GitLabNoteDTO::id,
-        { note -> MutableGitLabMergeRequestNote(this, project, api, glProject, mr, noteEvents::emit, note) },
-        MutableGitLabMergeRequestNote::destroy,
+        { note -> MutableGitLabMergeRequestNote(this, project, api, mr, noteEvents::emit, note) },
         MutableGitLabMergeRequestNote::update
       ).combine(draftNotes) { notes, draftNotes ->
         notes + draftNotes
       }
       .modelFlow(cs, LOG)
 
-  override val canAddNotes: Boolean = mr.details.value.userPermissions.createNote
+  override val canAddNotes: Flow<Boolean> = draftNotes.map { it.isEmpty() && mr.details.value.userPermissions.createNote }
+  override val canAddDraftNotes: Boolean =
+    mr.details.value.userPermissions.createNote &&
+    (glMetadata?.let { GitLabVersion(16, 3) <= it.version } ?: false)
 
   // a little cheat that greatly simplifies the implementation
   override val resolvable: Boolean = discussionData.notes.first().resolvable
@@ -126,32 +129,40 @@ class LoadedGitLabDiscussion(
       operationsGuard.withLock {
         val resolved = resolved.first()
         val result = withContext(Dispatchers.IO) {
-          api.graphQL.changeMergeRequestDiscussionResolve(apiId, !resolved).getResultOrThrow()
+          api.graphQL.changeMergeRequestDiscussionResolve(id.gid, !resolved).getResultOrThrow()
         }
         noteEvents.emit(GitLabNoteEvent.Changed(result.notes))
       }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.CHANGE_DISCUSSION_RESOLVE)
   }
 
   override suspend fun addNote(body: String) {
     withContext(cs.coroutineContext) {
+      val newDiscussion = withContext(Dispatchers.IO) {
+        api.graphQL.createReplyNote(mr.gid, id.gid, body).getResultOrThrow()
+      }
+
+      withContext(NonCancellable) {
+        noteEvents.emit(GitLabNoteEvent.Added(newDiscussion))
+      }
+    }
+  }
+
+  override suspend fun addDraftNote(body: String) {
+    withContext(cs.coroutineContext) {
       withContext(Dispatchers.IO) {
-        api.graphQL.createReplyNote(mr.gid, id, body).getResultOrThrow()
-      }.also {
+        api.rest.addDraftReplyNote(glProject, mr.iid, id.guessRestId(), body).body()
+      }?.also {
         withContext(NonCancellable) {
-          noteEvents.emit(GitLabNoteEvent.Added(it))
+          draftNotesEventSink(GitLabNoteEvent.Added(it))
         }
       }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.ADD_DISCUSSION_NOTE)
   }
 
   fun update(data: GitLabDiscussionDTO) {
     dataState.value = data
   }
-
-  suspend fun destroy() = cs.cancelAndJoinSilently()
 
   override fun toString(): String =
     "LoadedGitLabDiscussion(id='$id', createdAt=$createdAt, canAddNotes=$canAddNotes, resolvable=$resolvable, canResolve=$canResolve)"

@@ -18,8 +18,9 @@ class TerminalShowDocAction : DumbAwareAction(), HintManagerImpl.ActionToIgnore 
     val lookup = LookupManager.getActiveLookup(e.editor) as? LookupImpl ?: return
     val currentItem = lookup.currentItem ?: return
     TerminalDocumentationManager.getInstance(project).showDocumentationForItem(lookup, currentItem,
+                                                                               parentDisposable = lookup,
                                                                                allowEmpty = true,
-                                                                               parentDisposable = lookup)
+                                                                               hideLookupOnCancel = false)
   }
 
   override fun update(e: AnActionEvent) {

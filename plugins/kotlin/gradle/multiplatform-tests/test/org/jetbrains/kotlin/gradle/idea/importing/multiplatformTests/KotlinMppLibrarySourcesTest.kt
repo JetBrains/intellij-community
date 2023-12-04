@@ -13,6 +13,7 @@ import kotlin.test.Test
 class KotlinMppLibrarySourcesTest : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         checkLibrarySources = true
+        renderLineMarkersTargetIcons = true
         onlyCheckers(HighlightingChecker)
     }
 
@@ -21,6 +22,15 @@ class KotlinMppLibrarySourcesTest : AbstractKotlinMppGradleImportingTest() {
     fun testExpectActualInLibrarySources() {
         doTest {
             publish("lib")
+
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.9.20+")
+    fun testExpectActualInStdlibSources() {
+        doTest {
+            publish("stdlib", "kotlin-test")
         }
     }
 }

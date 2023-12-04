@@ -6,8 +6,10 @@ import com.intellij.ide.projectWizard.NewProjectWizardTestCase
 import com.intellij.ide.wizard.Step
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -20,6 +22,10 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.closeOpenedProjectsIfFail
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.replaceService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import java.util.function.Consumer
 
 abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
@@ -95,5 +101,23 @@ abstract class MavenNewProjectWizardTestCase : NewProjectWizardTestCase() {
       ApplicationManager.getApplication().replaceService(NewProjectWizardFactory::class.java, factory, disposable)
       return action()
     }
+  }
+
+  suspend fun waitForProjectCreation(createProject: () -> Project): Project {
+    val project = withContext(Dispatchers.EDT) { createProject() }
+
+    // hack to wait for all the pending updates on newly created project
+    MavenProjectsManager.getInstance(project).updateAllMavenProjects(MavenImportSpec(false, false, false))
+
+    return project
+  }
+
+  suspend fun waitForModuleCreation(createModule: () -> Module): Module {
+    val module = withContext(Dispatchers.EDT) { createModule() }
+
+    // hack to wait for all the pending updates
+    MavenProjectsManager.getInstance(module.project).updateAllMavenProjects(MavenImportSpec(false, false, false))
+
+    return module
   }
 }

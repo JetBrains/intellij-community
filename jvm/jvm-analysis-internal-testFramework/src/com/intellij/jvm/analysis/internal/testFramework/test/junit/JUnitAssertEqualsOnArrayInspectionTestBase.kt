@@ -20,5 +20,5 @@ abstract class JUnitAssertEqualsOnArrayInspectionTestBase : JvmInspectionTestBas
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 }

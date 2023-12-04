@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.ide.IdeBundle
@@ -102,7 +104,7 @@ open class TextEditorProvider : DefaultPlatformFileEditorProvider, TextBasedFile
     }
     else {
       state.CARETS = Array(caretElements.size) { i ->
-        readCaretInfo(caretElements[i])
+        readCaretInfo(caretElements.get(i))
       }
     }
     state.relativeCaretPosition = StringUtilRt.parseInt(element.getAttributeValue(RELATIVE_CARET_POSITION_ATTR), 0)

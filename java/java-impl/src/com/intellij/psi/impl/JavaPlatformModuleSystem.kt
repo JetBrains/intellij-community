@@ -3,19 +3,19 @@ package com.intellij.psi.impl
 
 import com.intellij.codeInsight.JavaModuleSystemEx
 import com.intellij.codeInsight.JavaModuleSystemEx.ErrorWithFixes
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.JavaErrorBundle
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExportsDirectiveFix
 import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.java.JavaBundle
-import com.intellij.openapi.editor.Editor
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModCommand
+import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -28,13 +28,16 @@ import com.intellij.util.indexing.DumbModeAccessType
 import org.jetbrains.annotations.NonNls
 import java.util.regex.Pattern
 
+private const val MAIN = "main"
+private val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
+
 /**
  * Checks package accessibility according to JLS 7 "Packages and Modules".
  *
  * @see <a href="https://docs.oracle.com/javase/specs/jls/se9/html/jls-7.html">JLS 7 "Packages and Modules"</a>
  * @see <a href="http://openjdk.org/jeps/261">JEP 261: Module System</a>
  */
-class JavaPlatformModuleSystem : JavaModuleSystemEx {
+internal class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName(): String = JavaBundle.message("java.platform.module.system.name")
 
   override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean =
@@ -61,11 +64,11 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
               val moduleScope = module.getModuleWithDependenciesAndLibrariesScope(test)
               val dirs = target.getDirectories(moduleScope)
               if (dirs.isEmpty()) {
-                if (target.getFiles(moduleScope).isEmpty()) {
-                  return if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("package.not.found", target.qualifiedName))
+                return if (target.getFiles(moduleScope).isEmpty()) {
+                  if (quick) ERR else ErrorWithFixes(JavaErrorBundle.message("package.not.found", target.qualifiedName))
                 }
                 else {
-                  return null
+                  null
                 }
               }
               val error = checkAccess(dirs[0], useFile, target.qualifiedName, quick)
@@ -116,7 +119,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
             return if (quick) ERR
             else ErrorWithFixes(
               JavaErrorBundle.message("module.access.not.in.graph", packageName, targetName),
-              listOf(AddModulesOptionFix(module, targetName)))
+              listOf(AddModulesOptionFix(module, targetName).asIntention()))
           }
         }
       }
@@ -128,7 +131,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         if (quick) return ERR
         val fixes = when {
           packageName.isEmpty() -> emptyList()
-          targetModule is PsiCompiledElement && module != null -> listOf(AddExportsOptionFix(module, targetName, packageName, useName))
+          targetModule is PsiCompiledElement && module != null -> listOf(AddExportsOptionFix(module, targetName, packageName, useName).asIntention())
           targetModule !is PsiCompiledElement && useModule != null -> listOf(AddExportsDirectiveFix(targetModule, packageName, useName).asIntention())
           else -> emptyList()
         }
@@ -232,33 +235,22 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
 
   private fun isUnnamedModule(module: PsiJavaModule?) = module == null || module is LightJavaModule
 
-  private abstract class CompilerOptionFix(private val module: Module) : IntentionAction {
+  private abstract class CompilerOptionFix(private val module: Module) : ModCommandAction {
     @NonNls override fun getFamilyName() = "Fix compiler option" // not visible
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) = !module.isDisposed
-
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-      if (isAvailable(project, editor, file)) {
-        val options = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module).toMutableList()
-        update(options)
-        JavaCompilerConfigurationProxy.setAdditionalOptions(module.project, module, options)
-        PsiManager.getInstance(project).dropPsiCaches()
-        DaemonCodeAnalyzer.getInstance(project).restart()
-      }
+    override fun getPresentation(context: ActionContext): Presentation? {
+      if (module.isDisposed) return null
+      return Presentation.of(getText())
     }
 
-    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-      val origOptions = JavaCompilerConfigurationProxy.getAdditionalOptions(module.project, module)
-      val options = origOptions.toMutableList()
-      update(options)
-      return IntentionPreviewInfo.addListOption(options, JavaBundle.message("compiler.options")) { opt -> !origOptions.contains(opt) }
+    override fun perform(context: ActionContext): ModCommand {
+      return ModCommand.updateOptionList(context.file, "JavaCompilerConfiguration.additionalOptions", ::update)
     }
 
     protected abstract fun update(options: MutableList<String>)
-
-    override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = null
-
-    override fun startInWriteAction() = true
+    
+    @IntentionName
+    protected abstract fun getText(): String
   }
 
   private class AddExportsOptionFix(module: Module, targetName: String, packageName: String, private val useName: String) : CompilerOptionFix(module) {
@@ -311,8 +303,4 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
     }
   }
 
-  private companion object {
-    const val MAIN = "main"
-    val javaVersionPattern: Pattern by lazy { Pattern.compile("java\\d+") }
-  }
 }

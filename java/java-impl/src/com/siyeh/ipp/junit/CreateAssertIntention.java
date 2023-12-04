@@ -24,6 +24,7 @@ import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -136,7 +137,7 @@ public class CreateAssertIntention extends MCIntention {
     builder.append(')');
     final String text = builder.toString();
 
-    final String qualifier = isJUnit5(context) ? "org.junit.jupiter.api.Assertions" : "org.junit.Assert";
+    final String qualifier = isJUnit5(context) ? JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS : JUnitCommonClassNames.ORG_JUNIT_ASSERT;
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)factory.createExpressionFromText(text, context);
     final PsiMethod method = methodCallExpression.resolveMethod();
     if (isJUnitMethod(method) || hasStaticImports(context) && ImportUtils.addStaticImport(qualifier, memberName, context)) {
@@ -169,7 +170,7 @@ public class CreateAssertIntention extends MCIntention {
       return false;
     }
     final String qualifiedName = containingClass.getQualifiedName();
-    return "org.junit.Assert".equals(qualifiedName) || "junit.framework.TestCase".equals(qualifiedName);
+    return JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) || JUnitCommonClassNames.JUNIT_FRAMEWORK_TEST_CASE.equals(qualifiedName);
   }
 
   private static boolean hasStaticImports(PsiElement element) {

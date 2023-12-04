@@ -8,9 +8,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -79,6 +81,17 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * @param suggestedNames names to suggest (user is free to type any other name as well)
    */
   void rename(@NotNull PsiNameIdentifierOwner element, @NotNull List<@NotNull String> suggestedNames);
+
+  /**
+   * Displays the UI to rename a given element. Does nothing when executed non-interactively. 
+   * The current file may be changed if the element is located in the different file.
+   *
+   * @param element element to rename
+   * @param nameIdentifier a descendant of element which represents the name identifier leaf.
+   *                       Supplying null is discouraged, as some executors may not support it, and in this case rename will not start
+   * @param suggestedNames names to suggest (user is free to type any other name as well)
+   */
+  void rename(@NotNull PsiNamedElement element, @Nullable PsiElement nameIdentifier, @NotNull List<@NotNull String> suggestedNames);
 
   /**
    * Tracks subsequent changes in a given declaration (e.g., method) and produce a command to 

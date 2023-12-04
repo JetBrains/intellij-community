@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer.impl
 
-import com.intellij.openapi.ui.NewUIComboBoxRenderer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
@@ -21,12 +20,14 @@ import java.awt.Color
 import java.awt.Component
 import java.util.function.Supplier
 import javax.accessibility.Accessible
+import javax.accessibility.AccessibleContext
+import javax.accessibility.AccessibleRole
 import javax.swing.*
 import javax.swing.plaf.basic.BasicComboPopup
 import kotlin.math.max
 
 @ApiStatus.Internal
-internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, NewUIComboBoxRenderer {
+public open class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRow<T>, ListCellRenderer<T>, ExperimentalUI.NewUIComboBoxRenderer {
 
   private var listCellRendererParams: ListCellRendererParams<T>? = null
 
@@ -67,6 +68,15 @@ internal class LcrRowImpl<T>(private val renderer: LcrRow<T>.() -> Unit) : LcrRo
       for (cell in cells) {
         cell.lcrCell.component.foreground = fg
       }
+    }
+
+    override fun getAccessibleContext(): AccessibleContext {
+      if (accessibleContext == null) {
+        accessibleContext = object : AccessibleJPanel() {
+          override fun getAccessibleRole(): AccessibleRole = AccessibleRole.LABEL
+        }
+      }
+      return accessibleContext
     }
   }
 

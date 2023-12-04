@@ -364,9 +364,18 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
         analyzeForUast(ktExpression) {
             val resolvedTargetSymbol = when (ktExpression) {
+                is KtInstanceExpressionWithLabel -> {
+                    // A subtype of [KtExpressionWithLabel], including [KtThisExpression]/[KtSuperExpression]
+                    // Therefore, it must be handled *before* that super type.
+                    val reference =
+                        // `this@withLabel`
+                        ktExpression.getTargetLabel()?.mainReference
+                            // just `this` without label
+                            ?: ktExpression.instanceReference.mainReference
+                    reference.resolveToSymbol()
+                }
                 is KtExpressionWithLabel -> {
                     ktExpression.getTargetLabel()?.mainReference?.resolveToSymbol()
-
                 }
 
                 is KtCallExpression -> {
@@ -387,8 +396,19 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
             val project = ktExpression.project
 
-            val resolvedTargetElement = psiForUast(resolvedTargetSymbol, project)
-
+            val resolvedTargetElement =
+                when (resolvedTargetSymbol) {
+                    is KtBackingFieldSymbol -> {
+                        // [KtBackingFieldSymbol] itself has `null` psi, and thus going to
+                        // the below default logic, [psiForUast], will return `null` too.
+                        // Use the owning property's psi and let [getMaybeLightElement] find
+                        // the corresponding [PsiField] for the backing field.
+                        resolvedTargetSymbol.owningProperty.psi
+                    }
+                    else -> {
+                        psiForUast(resolvedTargetSymbol, project)
+                    }
+                }
 
             // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
             //   we can return it early here (to avoid expensive follow-up steps: module retrieval and light element conversion).
@@ -466,6 +486,31 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                     )?.let { return it }
                 }
 
+                is KtTypeReference -> {
+                    if (resolvedTargetSymbol is KtReceiverParameterSymbol) {
+                        // Explicit `this` resolved to type reference if it belongs to an extension callable
+                        when (val callable = resolvedTargetSymbol.owningCallableSymbol) {
+                            is KtFunctionLikeSymbol -> {
+                                val psiMethod = toPsiMethod(callable, ktExpression)
+                                psiMethod?.parameterList?.parameters?.firstOrNull()?.let { return it }
+                            }
+                            is KtPropertySymbol -> {
+                                val getter = callable.getter?.let { toPsiMethod(it, ktExpression) }
+                                getter?.parameterList?.parameters?.firstOrNull()?.let { return it }
+                            }
+                            else -> {}
+                        }
+                    } else {
+                        val ktType = resolvedTargetElement.getKtType()
+                        toPsiClass(
+                            ktType,
+                            ktExpression.toUElement(),
+                            resolvedTargetElement,
+                            resolvedTargetElement.typeOwnerKind
+                        )?.let { return it }
+                    }
+                }
+
                 is KtFunctionLiteral -> {
                     // Implicit lambda parameter `it`
                     if ((resolvedTargetSymbol as? KtValueParameterSymbol)?.isImplicitLambdaParameter == true) {
@@ -473,6 +518,17 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         val lambda = resolvedTargetElement.toUElementOfType<ULambdaExpression>()
                         // and return javaPsi of the corresponding lambda implicit parameter
                         lambda?.valueParameters?.singleOrNull()?.javaPsi?.let { return it }
+                    }
+                    val isLambdaReceiver =
+                        // Implicit `this` as the lambda receiver
+                        resolvedTargetSymbol is KtAnonymousFunctionSymbol ||
+                                // Explicit `this`
+                                resolvedTargetSymbol is KtReceiverParameterSymbol
+                    if (isLambdaReceiver) {
+                        // From its containing lambda (of function literal), build ULambdaExpression
+                        val lambda = resolvedTargetElement.toUElementOfType<ULambdaExpression>()
+                        // and return javaPsi of the corresponding lambda receiver
+                        lambda?.parameters?.firstOrNull()?.javaPsi?.let { return it }
                     }
                 }
             }

@@ -110,13 +110,13 @@ public abstract class MavenImporter {
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void getSupportedDependencyScopes(Collection<? super String> result) { }
 
   /**
    * @deprecated this API is not supported anymore, and there is no replacement
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable Pair<String, String> getExtraArtifactClassifierAndExtension(MavenArtifact artifact, MavenExtraArtifactType type) {
     return null;
   }
@@ -203,5 +203,10 @@ public abstract class MavenImporter {
   protected @Nullable String findGoalConfigValue(MavenProject p, @NonNls String goal, @NonNls String path) {
     return MavenJDOMUtil.findChildValueByPath(getGoalConfig(p, goal), path);
   }
+
+  /**
+   * Override this method if you'd like control over properties used by Maven, e.g. for pom interpolation.
+   */
+  public void customizeUserProperties(@NotNull Project project, @NotNull MavenProject mavenProject, @NotNull Properties properties) { }
 
 }

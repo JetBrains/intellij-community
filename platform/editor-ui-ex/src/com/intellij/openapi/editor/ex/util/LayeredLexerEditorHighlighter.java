@@ -22,13 +22,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.ObjectIntHashMap;
-import com.intellij.util.containers.ObjectIntMap;
 import com.intellij.util.text.MergingCharSequence;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -243,9 +243,12 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
     }
 
     @Override
+    @SuppressWarnings("SSBasedInspection")
     public void remove(int startIndex, int endIndex) {
-      ObjectIntMap<Mapper> mins = new ObjectIntHashMap<>(endIndex - startIndex);
-      ObjectIntMap<Mapper> maxs = new ObjectIntHashMap<>(endIndex - startIndex);
+      Object2IntOpenHashMap<Mapper> mins = new Object2IntOpenHashMap<>(endIndex - startIndex);
+      mins.defaultReturnValue(-1);
+      Object2IntOpenHashMap<Mapper> maxs = new Object2IntOpenHashMap<>(endIndex - startIndex);
+      maxs.defaultReturnValue(-1);
 
       for (int i = startIndex; i < endIndex; i++) {
         MappedRange range = myRanges[i];
@@ -259,11 +262,11 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
         myRanges[i] = null;
       }
-      for (ObjectIntMap.Entry<Mapper> entry : maxs.entries()) {
+      for (Object2IntMap.Entry<Mapper> entry : maxs.object2IntEntrySet()) {
         Mapper mapper = entry.getKey();
-        int max = entry.getValue();
+        int max = entry.getIntValue();
         freezeHighlighter(mapper);
-        int min = mins.get(mapper);
+        int min = mins.getInt(mapper);
         mapper.doc.deleteString(min - mapper.mySeparator.length(), max);
       }
 

@@ -2,12 +2,17 @@
 package com.intellij.ide.warmup
 
 import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus.Internal
 
 sealed interface WarmupStatus {
   companion object {
     private val key = Key<WarmupStatus>("intellij.warmup.status")
+
+    fun isWarmupInProgress(): Boolean {
+      return currentStatus(ApplicationManager.getApplication()) == InProgress
+    }
 
     fun currentStatus(app: Application): WarmupStatus {
       return app.getUserData(key) ?: NotStarted

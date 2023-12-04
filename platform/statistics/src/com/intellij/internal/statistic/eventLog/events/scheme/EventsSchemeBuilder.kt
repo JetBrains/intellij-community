@@ -97,7 +97,7 @@ object EventsSchemeBuilder {
         if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
           val collector = ApplicationManager.getApplication().instantiateClass<FeatureUsagesCollector>(
             counterUsageCollectorEP.implementationClass, descriptor)
-          counterCollectors.add(FeatureUsageCollectorInfo(collector, collectorPlugin))
+          counterCollectors.add(FeatureUsageCollectorInfo(collector, PluginSchemeDescriptor(collectorPlugin)))
         }
       }
     }
@@ -107,13 +107,13 @@ object EventsSchemeBuilder {
     UsageCollectors.APPLICATION_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, collectorPlugin))
+        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     UsageCollectors.PROJECT_EP_NAME.processWithPluginDescriptor { bean, descriptor ->
       val collectorPlugin = descriptor.pluginId.idString
       if ((pluginId == null && !brokenPluginIds.contains(collectorPlugin)) || pluginId == collectorPlugin) {
-        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, collectorPlugin))
+        stateCollectors.add(FeatureUsageCollectorInfo(bean.collector, PluginSchemeDescriptor(collectorPlugin)))
       }
     }
     result.addAll(collectGroupsFromExtensions("state", stateCollectors, recorder))
@@ -139,7 +139,8 @@ object EventsSchemeBuilder {
       val eventsDescriptors = existingScheme + group.events.groupBy { it.eventId }
         .map { (eventName, events) -> EventDescriptor(eventName, buildFields(events, eventName, group.id)) }
         .toSet()
-      result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name, group.recorder, plugin)
+      result[group.id] = GroupDescriptor(group.id, groupType, group.version, eventsDescriptors, collectorClass.name,
+                                         group.recorder, PluginSchemeDescriptor(plugin.id))
     }
     return result.values
   }
@@ -177,7 +178,7 @@ object EventsSchemeBuilder {
   }
 
   data class FeatureUsageCollectorInfo(val collector: FeatureUsagesCollector,
-                                       val pluginId: String)
+                                       val plugin: PluginSchemeDescriptor)
 }
 
 internal class IllegalMetadataSchemeStateException(message: String) : Exception(message)

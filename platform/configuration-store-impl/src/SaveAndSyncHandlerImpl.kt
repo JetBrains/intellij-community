@@ -3,6 +3,7 @@ package com.intellij.configurationStore
 
 import com.intellij.CommonBundle
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.conversion.ConversionService
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdleTracker
@@ -23,9 +24,9 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.vfs.newvfs.ManagingFS
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile
-import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.newvfs.*
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -37,25 +38,28 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import java.util.*
+import java.util.concurrent.TimeUnit.NANOSECONDS
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-private val LISTEN_DELAY = 15.milliseconds
-
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
 internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope) : SaveAndSyncHandler() {
+  private val LISTEN_DELAY = 15.milliseconds
+
   private val refreshRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val saveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val blockSaveOnFrameDeactivationCount = AtomicInteger()
   private val blockSyncOnFrameActivationCount = AtomicInteger()
 
-  @Volatile
-  private var refreshSessionId = -1L
+  private val refreshSession = AtomicReference<RefreshSession?>()
+  private var bgRefreshJob: Job? = null
+  @Volatile private var bgRefreshSession: RefreshSession? = null
 
+  private val saveAppAndProjectsSettingsTask = SaveTask()
   private val saveQueue = ArrayDeque<SaveTask>()
   private val currentJob = AtomicReference<Job?>()
 
@@ -65,65 +69,64 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   private val forceExecuteImmediatelyState = AtomicBoolean()
 
   init {
+    coroutineScope.launch(CoroutineName("refresh requests flow processing") + ModalityState.nonModal().asContextElement()) {
+      // not collectLatest - wait for previous execution
+      refreshRequests
+        .debounce(300.milliseconds)
+        .collect {
+          val eventPublisher = eventPublisher
+          withContext(Dispatchers.EDT) {
+            blockingContext {
+              eventPublisher.beforeRefresh()
+              refreshOpenFiles()
+              maybeRefresh(ModalityState.nonModal())
+            }
+          }
+        }
+    }
+
+    coroutineScope.launch(CoroutineName("save requests flow processing")) {
+      // not collectLatest - wait for previous execution
+      saveRequests
+        .collect {
+          val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
+          if (!forceExecuteImmediately) {
+            delay(300.milliseconds)
+          }
+
+          if (blockSaveOnFrameDeactivationCount.get() != 0) {
+            return@collect
+          }
+
+          val job = currentJob.updateAndGet { oldJob ->
+            oldJob?.cancel()
+            launch(start = CoroutineStart.LAZY) { processTasks(forceExecuteImmediately = forceExecuteImmediately) }
+          }!!
+          try {
+            if (job.start()) {
+              job.join()
+            }
+          }
+          catch (_: CancellationException) { }
+          finally {
+            currentJob.compareAndSet(job, null)
+          }
+        }
+    }
+
     coroutineScope.launch {
-      launch(CoroutineName("refresh requests flow processing") + ModalityState.nonModal().asContextElement()) {
-        // not collectLatest - wait for previous execution
-        refreshRequests
-          .debounce(300.milliseconds)
-          .collect {
-            val eventPublisher = eventPublisher
-            withContext(Dispatchers.EDT) {
-              blockingContext {
-                eventPublisher.beforeRefresh()
-                refreshOpenFiles()
-                maybeRefresh(ModalityState.nonModal())
-              }
-            }
-          }
-      }
-      launch(CoroutineName("save requests flow processing")) {
-        // not collectLatest - wait for previous execution
-        saveRequests
-          .collect {
-            val forceExecuteImmediately = forceExecuteImmediatelyState.compareAndSet(true, false)
-            if (!forceExecuteImmediately) {
-              delay(300.milliseconds)
-            }
-
-            if (blockSaveOnFrameDeactivationCount.get() != 0) {
-              return@collect
-            }
-
-            val job = currentJob.updateAndGet { oldJob ->
-              oldJob?.cancel()
-              launch(start = CoroutineStart.LAZY) { processTasks(forceExecuteImmediately = forceExecuteImmediately) }
-            }!!
-            try {
-              if (job.start()) {
-                job.join()
-              }
-            }
-            catch (ignore: CancellationException) {
-            }
-            finally {
-              currentJob.compareAndSet(job, null)
-            }
-          }
-      }
-
       listenIdleAndActivate()
     }
 
     coroutineScope.awaitCancellationAndInvoke {
-      if (refreshSessionId != -1L) {
-        RefreshQueue.getInstance().cancelSession(refreshSessionId)
-      }
+      bgRefreshSession?.cancel()
+      refreshSession.get()?.cancel()
     }
   }
 
   /**
-   * If there is already running job, it doesn't mean that queue is processed - maybe paused on delay.
-   * But even if `forceExecuteImmediately = true` specified, job is not re-added.
+   * If there is already running a job, it doesn't mean that queue is processed - maybe paused on delay.
+   * But even if `forceExecuteImmediately = true` specified, the job is not re-added.
    * That's ok - client doesn't expect that `forceExecuteImmediately` means "executes immediately", it means "do save without regular delay".
    */
   private fun requestSave(forceExecuteImmediately: Boolean = false) {
@@ -179,19 +182,24 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
       .subscribe(ApplicationActivationListener.TOPIC, object : ApplicationActivationListener {
         override fun applicationDeactivated(ideFrame: IdeFrame) {
           externalChangesModificationTracker.incModificationCount()
-          if (!settings.isSaveOnFrameDeactivation || !canSyncOrSave()) {
-            return
+
+          if (settings.isSaveOnFrameDeactivation && canSyncOrSave()) {
+            // for many tasks (compilation, web development, etc.), it is important to save documents on frame deactivation ASAP
+            (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
+            if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
+              requestSave()
+            }
           }
 
-          // for web development, it is crucially important to save documents on frame deactivation as early as possible
-          (FileDocumentManager.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-
-          if (addToSaveQueue(saveAppAndProjectsSettingsTask)) {
-            requestSave()
+          if (settings.isBackgroundSync) {
+            bgRefreshJob = startBackgroundSync()
           }
         }
 
         override fun applicationActivated(ideFrame: IdeFrame) {
+          bgRefreshJob?.cancel()
+          bgRefreshJob = null
+
           if (settings.isSyncOnFrameActivation) {
             scheduleRefresh()
           }
@@ -213,10 +221,8 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   }
 
   private suspend fun executeOnIdle() {
-    withContext(Dispatchers.EDT) {
-      ClientId.withClientId(ClientId.ownerId) {
+    withContext(Dispatchers.EDT + ClientId.ownerId.asContextElement()) {
         (FileDocumentManagerImpl.getInstance() as FileDocumentManagerImpl).saveAllDocuments(false)
-      }
     }
   }
 
@@ -286,7 +292,7 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
         if (project != null && !ApplicationManager.getApplication().isUnitTestMode) {
           val stateStore = project.stateStore
           val path = if (stateStore.storageScheme == StorageScheme.DIRECTORY_BASED) stateStore.projectBasePath else stateStore.projectFilePath
-          // update last modified for all project files that were modified between project open and close
+          // update last modified for all project files modified between project open and close
           withContext(Dispatchers.IO) {
             blockingContext {
               ConversionService.getInstance()?.saveConversionResult(path)
@@ -302,8 +308,38 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     return isSavedSuccessfully
   }
 
-  private fun canSyncOrSave(): Boolean {
-    return !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
+  private fun canSyncOrSave(): Boolean =
+    !LaterInvocator.isInModalContext() && !ProgressManager.getInstance().hasModalProgressIndicator()
+
+  private fun startBackgroundSync(): Job {
+    LOG.debug("starting background VFS sync")
+    val t = System.nanoTime()
+    val sessions = AtomicInteger()
+    val events = AtomicInteger()
+    val job = coroutineScope.launch(CoroutineName("background sync")) {
+      val roots = listOf(*ManagingFS.getInstance().localRoots)
+      val queue = RefreshQueue.getInstance() as RefreshQueueImpl
+      val interval = Registry.intValue("vfs.background.refresh.interval", 15).coerceIn(0, Int.MAX_VALUE).seconds
+      while (true) {
+        delay(interval)
+        if (roots.any { it is NewVirtualFile && it.isDirty }) {
+          val session = queue.createBackgroundRefreshSession(roots)
+          bgRefreshSession = session
+          blockingContext {
+            session.launch()
+          }
+          bgRefreshSession = null
+          sessions.incrementAndGet()
+          events.addAndGet(session.metric("events") as Int)
+        }
+      }
+    }
+    job.invokeOnCompletion {
+      if (coroutineScope.isActive) {
+        VfsUsageCollector.logBackgroundRefresh(NANOSECONDS.toMillis(System.nanoTime() - t), sessions.get(), events.get())
+      }
+    }
+    return job
   }
 
   override fun scheduleRefresh() {
@@ -314,31 +350,25 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
   override fun maybeRefresh(modalityState: ModalityState) {
     if (blockSyncOnFrameActivationCount.get() != 0 || !GeneralSettings.getInstance().isSyncOnFrameActivation) {
       LOG.debug {
-        "vfs refresh rejected, blocked: ${blockSyncOnFrameActivationCount.get() != 0}, " +
-        "isSyncOnFrameActivation: ${GeneralSettings.getInstance().isSyncOnFrameActivation}"
+        "VFS refresh rejected: blocked=${blockSyncOnFrameActivationCount.get() != 0}" +
+        " isSyncOnFrameActivation=${GeneralSettings.getInstance().isSyncOnFrameActivation}"
       }
       return
     }
 
-    val queue = RefreshQueue.getInstance()
-    queue.cancelSession(refreshSessionId)
-
-    val session = queue.createSession(true, true, null, modalityState)
+    val session = RefreshQueue.getInstance().createSession(true, true, null, modalityState)
     session.addAllFiles(*ManagingFS.getInstance().localRoots)
-    refreshSessionId = session.id
+    refreshSession.getAndSet(session)?.cancel()
     session.launch()
-    LOG.debug("vfs refreshed")
+    LOG.debug("VFS refresh started")
   }
 
   override fun refreshOpenFiles() {
     val files = getOpenedProjects()
-      .flatMap { project ->
-        FileEditorManager.getInstance(project).selectedEditors.asSequence()
-      }
+      .flatMap { FileEditorManager.getInstance(it).selectedEditors.asSequence() }
       .flatMap { it.filesToRefresh }
       .filter { it is NewVirtualFile }
       .toList()
-
     if (files.isNotEmpty()) {
       // refresh open files synchronously, so it doesn't wait for a potentially longish refresh request in the queue to finish
       RefreshQueue.getInstance().refresh(false, false, null, files)
@@ -374,22 +404,16 @@ internal class SaveAndSyncHandlerImpl(private val coroutineScope: CoroutineScope
     blockSyncOnFrameActivationCount.decrementAndGet()
     LOG.debug("sync unblocked")
   }
-}
 
-private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
+  @NlsContexts.ProgressTitle
+  private fun getProgressTitle(componentManager: ComponentManager): String =
+    if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
 
-@NlsContexts.ProgressTitle
-private fun getProgressTitle(componentManager: ComponentManager): String {
-  return if (componentManager is Application) CommonBundle.message("title.save.app") else CommonBundle.message("title.save.project")
-}
-
-private fun <T> generalSettingFlow(settings: GeneralSettings,
-                                   name: GeneralSettings.PropertyNames,
-                                   getter: (GeneralSettings) -> T): Flow<T> {
-  return merge(
-    settings.propertyChangedFlow
-      .filter { it == name }
-      .map { getter(GeneralSettings.getInstance()) },
-    flowOf(getter(GeneralSettings.getInstance())),
-  )
+  private fun <T> generalSettingFlow(settings: GeneralSettings, name: GeneralSettings.PropertyNames, getter: (GeneralSettings) -> T): Flow<T> =
+    merge(
+      settings.propertyChangedFlow
+        .filter { it == name }
+        .map { getter(GeneralSettings.getInstance()) },
+      flowOf(getter(GeneralSettings.getInstance())),
+    )
 }

@@ -28,7 +28,7 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
     String returnType = PsiReflectionAccessUtil.getAccessibleReturnType(myCallExpression, resolveMethodReturnType(expression, method));
     if (returnType == null) {
       LOG.warn("Could not resolve method return type. java.lang.Object will be used instead");
-      returnType = "java.lang.Object";
+      returnType = CommonClassNames.JAVA_LANG_OBJECT;
     }
     myAccessibleReturnType = returnType;
   }
@@ -59,7 +59,7 @@ public class MethodDescriptor implements ItemToReplaceDescriptor {
     ReflectionAccessMethodBuilder methodBuilder = new ReflectionAccessMethodBuilder(newMethodName);
     PsiMethod newMethod = methodBuilder.accessedMethod(containingClassName, myMethod.getName())
       .setStatic(outerClass.hasModifierProperty(PsiModifier.STATIC))
-      .addParameter("java.lang.Object", "object")
+      .addParameter(CommonClassNames.JAVA_LANG_OBJECT, "object")
       .addParameters(myMethod.getParameterList())
       .setReturnType(myAccessibleReturnType)
       .build(elementFactory, outerClass);

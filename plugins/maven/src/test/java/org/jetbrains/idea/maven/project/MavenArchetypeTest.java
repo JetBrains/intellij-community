@@ -48,7 +48,7 @@ public class MavenArchetypeTest extends MavenMultiVersionImportingTestCase {
     assumeVersion("bundled");
 
     var embedder = myManager.getEmbedder(MavenEmbeddersManager.FOR_FOLDERS_RESOLVE, myDir.getPath());
-    var archetypes = embedder.getRemoteArchetypes("https://repo1.maven.org/maven2/");
+    var archetypes = embedder.getRemoteArchetypes("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/");
     var filtered = archetypes.stream()
       .filter(archetype ->
                 "org.apache.maven.archetypes".equals(archetype.groupId) &&
@@ -68,7 +68,7 @@ public class MavenArchetypeTest extends MavenMultiVersionImportingTestCase {
       "maven-archetype-archetype",
       "1.0",
       List.of(),
-      "https://repo1.maven.org/maven2/");
+      "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/");
     assertNotNull(descriptorMap);
   }
 }

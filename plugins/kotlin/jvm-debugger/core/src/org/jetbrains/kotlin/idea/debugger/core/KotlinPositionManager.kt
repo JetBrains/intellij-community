@@ -44,6 +44,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
@@ -241,7 +242,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 
     private fun Location.hasFinallyBlockInParent(psiFile: PsiFile): Boolean {
-        val elementAt = psiFile.getLineStartOffset(lineNumber())?.let { psiFile.findElementAt(it) }
+        val elementAt = psiFile.getLineStartOffset(getZeroBasedLineNumber())?.let { psiFile.findElementAt(it) }
         return elementAt?.parentOfType<KtFinallySection>() != null
     }
 
@@ -572,6 +573,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use 'ClassNameProvider' directly")
     fun originalClassNamesForPosition(position: SourcePosition): List<String> {
         return runReadAction {
@@ -672,12 +674,21 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
     }
 }
 
-internal fun PsiElement.getContainingMethod(excludingElement: Boolean = true): PsiElement? =
+fun PsiElement.getContainingMethod(excludingElement: Boolean = true): KtExpression? =
     PsiTreeUtil.getParentOfType(this, excludingElement,
                                 KtFunction::class.java,
                                 KtClassInitializer::class.java,
                                 KtPropertyAccessor::class.java,
                                 KtScript::class.java)
+
+fun PsiElement.getContainingBody(excludingElement: Boolean = true): KtExpression? =
+    when (val method = getContainingMethod(excludingElement)) {
+        null -> null
+        is KtDeclarationWithBody -> method.bodyExpression
+        is KtAnonymousInitializer -> method.body
+        is KtScript -> method.blockExpression
+        else -> error("Unexpected method type, $method")
+    }
 
 // Kotlin compiler generates private final static <outer-method>$lambda$0 method
 // per each lambda that takes lambda (kotlin.jvm.functions.FunctionN) as the first parameter

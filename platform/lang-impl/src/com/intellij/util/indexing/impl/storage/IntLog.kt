@@ -66,33 +66,29 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
       if (isReadAction) {
         ProgressManager.checkCanceled()
       }
-      withLock(true) {
-        if (!myKeyHashToVirtualFileMapping.processAll { _, key ->
-            if (isReadAction) {
-              ProgressManager.checkCanceled()
-            }
-            val inputId = key[1]
-            val data = key[0]
-
-            if (!processor.process(data, inputId)) {
-              return@processAll false
-            }
-
-            val isPresent = uniqueInputs.get(inputId)
-            if (isPresent) {
-              uselessRecords++
-            }
-            else {
-              uniqueInputs.set(inputId)
-              usefulRecords++
-            }
-
-            true
-          }) {
-          return@withLock false
+      val notAllProcessed = !myKeyHashToVirtualFileMapping.processAll { _, key ->
+        if (isReadAction) {
+          ProgressManager.checkCanceled()
         }
+        val inputId = key[1]
+        val data = key[0]
+
+        if (!processor.process(data, inputId)) {
+          return@processAll false
+        }
+
+        val isPresent = uniqueInputs.get(inputId)
+        if (isPresent) {
+          uselessRecords++
+        }
+        else {
+          uniqueInputs.set(inputId)
+          usefulRecords++
+        }
+
         true
       }
+
       if (uselessRecords >= usefulRecords) {
         setRequiresCompaction()
       }
@@ -217,8 +213,8 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
                                                                     storageLockContext,
                                                                     IOUtil.MiB,
                                                                     true,
-                                                                    IntPairInArrayKeyDescriptor)
-      oldMapping.lockRead()
+                                                                    IntPairInArrayKeyDescriptor
+      )
       try {
         oldMapping.processAll { _, key: IntArray ->
           val inputId = key[1]
@@ -242,11 +238,17 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
           }
           true
         }
-        oldMapping.close()
       }
       finally {
-        oldMapping.unlockRead()
+        oldMapping.lockRead()
+        try {
+          oldMapping.close()
+        }
+        finally {
+          oldMapping.unlockRead()
+        }
       }
+
       val dataFileName = oldDataFile.fileName.toString()
       val newDataFileName = "new.$dataFileName"
       val newDataFile = oldDataFile.resolveSibling(newDataFileName)
@@ -255,22 +257,26 @@ class IntLog @Throws(IOException::class) constructor(private val baseStorageFile
                                                                     storageLockContext,
                                                                     IOUtil.MiB,
                                                                     true,
-                                                                    IntPairInArrayKeyDescriptor)
+                                                                    IntPairInArrayKeyDescriptor
+      )
       newMapping.lockWrite()
       try {
-        for (entry in data.int2ObjectEntrySet()) {
-          val keyHash = entry.intKey
-          val inputIdIterator = entry.value.iterator()
-          while (inputIdIterator.hasNext()) {
-            val inputId = inputIdIterator.nextInt()
-            newMapping.append(intArrayOf(keyHash, inputId))
+        newMapping.use { newMapping ->
+          for (entry in data.int2ObjectEntrySet()) {
+            val keyHash = entry.intKey
+            val inputIdIterator = entry.value.iterator()
+            while (inputIdIterator.hasNext()) {
+              val inputId = inputIdIterator.nextInt()
+              newMapping.append(intArrayOf(keyHash, inputId))
+            }
           }
         }
-        newMapping.close()
       }
       finally {
         newMapping.unlockWrite()
       }
+
+
       IOUtil.deleteAllFilesStartingWith(oldDataFile)
       Files.newDirectoryStream(newDataFile.parent).use { paths ->
         for (path in paths) {

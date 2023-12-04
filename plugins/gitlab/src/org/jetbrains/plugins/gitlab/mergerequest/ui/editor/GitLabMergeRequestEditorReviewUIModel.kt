@@ -1,63 +1,96 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.editor.EditorMapped
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
-import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.LineRange
+import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.vcs.ex.*
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.ex.DocumentTracker
+import com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource
+import com.intellij.openapi.vcs.ex.LineStatusTrackerBase
+import com.intellij.openapi.vcs.ex.LstRange
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 
 /**
- * A wrapper over [GitLabMergeRequestChangeViewModel] to encapsulate LST integration
+ * A wrapper over [GitLabMergeRequestEditorReviewFileViewModel] to encapsulate LST integration
  */
 internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   cs: CoroutineScope,
-  private val fileVm: GitLabMergeRequestChangeViewModel,
-  private val lst: LocalLineStatusTracker<*>
+  private val fileVm: GitLabMergeRequestEditorReviewFileViewModel,
+  document: Document
 ) : LineStatusMarkerRangesSource<LstRange> {
+
+  private val reviewHeadDocument = LineStatusTrackerBase.createVcsDocument(document)
+  private val documentTracker = DocumentTracker(reviewHeadDocument, document)
+  private var trackerInitialized = false
 
   val avatarIconsProvider: IconsProvider<GitLabUserDTO> = fileVm.avatarIconsProvider
 
-  private val localRanges = MutableStateFlow<List<LstRange>>(emptyList())
+  private val postReviewRanges = MutableStateFlow<List<Range>>(emptyList())
 
-  private val reviewRanges = fileVm.changedRanges.map { LstRange(it.start2, it.end2, it.start1, it.end1) }
   private val _shiftedReviewRanges = MutableStateFlow<List<LstRange>>(emptyList())
   val shiftedReviewRanges: StateFlow<List<LstRange>> get() = _shiftedReviewRanges
 
-  private val _commentableRanges = MutableStateFlow<List<LineRange>>(emptyList())
-  val commentableRanges: StateFlow<List<LineRange>> get() = _commentableRanges
+  private val _nonCommentableRanges = MutableStateFlow<List<LineRange>>(emptyList())
+  val nonCommentableRanges: StateFlow<List<LineRange>> get() = _nonCommentableRanges
 
-  val newDiscussions: Flow<List<MappedNewDiscussion>> = fileVm.newDiscussions.map {
-    it.map { (location, vm) -> MappedNewDiscussion(location, vm) }
+  private fun updateRanges() {
+    if (!trackerInitialized) return
+    postReviewRanges.value = documentTracker.blocks.map { it.range }
+    _shiftedReviewRanges.value = ExcludingApproximateChangedRangesShifter
+      .shift(fileVm.changedRanges, postReviewRanges.value).map(Range::asLst)
+    _nonCommentableRanges.value = postReviewRanges.value.map(Range::getAfterLines)
   }
-  val draftDiscussions: Flow<List<MappedDiscussion>> = fileVm.draftDiscussions.map {
-    it.map(::MappedDiscussion)
-  }
-  val discussions: Flow<List<MappedDiscussion>> = fileVm.discussions.map {
-    it.map(::MappedDiscussion)
+
+  private fun setReviewHeadContent(content: CharSequence) {
+    documentTracker.doFrozen(Side.LEFT) {
+      reviewHeadDocument.setReadOnly(false)
+      try {
+        CommandProcessor.getInstance().runUndoTransparentAction {
+          reviewHeadDocument.setText(content)
+        }
+      }
+      finally {
+        reviewHeadDocument.setReadOnly(true)
+      }
+    }
+    trackerInitialized = true
   }
 
   init {
-    val lstListener = ForwardingLineStatusTrackerListener(lst) { lstRanges ->
-      localRanges.value = lstRanges
-      _shiftedReviewRanges.value = ExcludingApproximateChangedRangesShifter.shift(reviewRanges, lstRanges)
-      _commentableRanges.value = lstRanges.getUnchangedLineRanges(lst.document)
+    cs.launch {
+      val originalContent = fileVm.getOriginalContent()
+      setReviewHeadContent(originalContent)
+      updateRanges()
     }
-    lst.addListener(lstListener)
+
+    documentTracker.addHandler(object : DocumentTracker.Handler {
+      override fun afterBulkRangeChange(isDirty: Boolean) {
+        updateRanges()
+      }
+    })
     cs.awaitCancellationAndInvoke {
-      lst.removeListener(lstListener)
+      Disposer.dispose(documentTracker)
     }
+  }
+
+  val newDiscussions: Flow<List<GitLabMergeRequestEditorNewDiscussionViewModel>> = fileVm.newDiscussions.map {
+    it.map(::ShiftedNewDiscussion)
+  }
+  val draftDiscussions: Flow<List<GitLabMergeRequestEditorDiscussionViewModel>> = fileVm.draftDiscussions.map {
+    it.map(::ShiftedDiscussion)
+  }
+  val discussions: Flow<List<GitLabMergeRequestEditorDiscussionViewModel>> = fileVm.discussions.map {
+    it.map(::ShiftedDiscussion)
   }
 
   override fun isValid(): Boolean = true
@@ -70,130 +103,77 @@ internal class GitLabMergeRequestEditorReviewUIModel internal constructor(
   }
 
   fun requestNewDiscussion(lineIdx: Int, focus: Boolean) {
-    val location = mapLine(localRanges.value, lineIdx) ?: return
-    fileVm.requestNewDiscussion(location, focus)
+    val originalLine = transferLineFromAfter(postReviewRanges.value, lineIdx)?.takeIf { it >= 0 } ?: return
+    fileVm.requestNewDiscussion(originalLine, focus)
   }
 
-  fun cancelNewDiscussion(location: DiffLineLocation) {
-    fileVm.cancelNewDiscussion(location)
+  fun cancelNewDiscussion(originalLine: Int) {
+    fileVm.cancelNewDiscussion(originalLine)
   }
 
   fun getOriginalContent(lines: LineRange): String? {
     return fileVm.getOriginalContent(lines)
   }
 
-  inner class MappedDiscussion(val vm: GitLabMergeRequestDiffDiscussionViewModel) : EditorMapped {
+  fun showDiff(lineIdx: Int?) {
+    val originalLine = lineIdx?.let { transferLineFromAfter(postReviewRanges.value, it, true) }?.takeIf { it >= 0 }
+    fileVm.showDiff(originalLine)
+  }
+
+  private inner class ShiftedDiscussion(private val vm: GitLabMergeRequestEditorDiscussionViewModel)
+    : GitLabMergeRequestEditorDiscussionViewModel by vm {
     override val isVisible: Flow<Boolean> = vm.isVisible
-    override val line: Flow<Int?> = localRanges.combine(vm.location) { ranges, location ->
-      location?.let {
-        mapLocation(ranges, it)
-      }
+    override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
+      line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
     }
   }
 
-  inner class MappedNewDiscussion(val location: DiffLineLocation, val vm: NewGitLabNoteViewModel) : EditorMapped {
+  private inner class ShiftedNewDiscussion(private val vm: GitLabMergeRequestEditorNewDiscussionViewModel)
+    : GitLabMergeRequestEditorNewDiscussionViewModel by vm {
     override val isVisible: Flow<Boolean> = flowOf(true)
-    override val line: Flow<Int?> = localRanges.map { ranges -> mapLocation(ranges, location) }
+    override val line: Flow<Int?> = postReviewRanges.combine(vm.line) { ranges, line ->
+      line?.let { transferLineToAfter(ranges, it) }?.takeIf { it >= 0 }
+    }
+  }
+
+  companion object {
+    val KEY: Key<GitLabMergeRequestEditorReviewUIModel> = Key.create("GitLab.MergeRequest.Editor.Review.UIModel")
   }
 }
 
-private fun mapLocation(ranges: List<LstRange>, location: DiffLineLocation): Int? {
-  val (side, line) = location
-  return if (side == Side.RIGHT) transferLineToAfter(ranges, line).takeIf { it >= 0 } else null
-}
-
-private fun transferLineToAfter(ranges: List<LstRange>, line: Int): Int {
+private fun transferLineToAfter(ranges: List<Range>, line: Int): Int {
   if (ranges.isEmpty()) return line
   var result = line
   for (range in ranges) {
-    if (line in range.vcsLine1 until range.vcsLine2) {
-      return (range.line2 - 1).coerceAtLeast(0)
+    if (line in range.start1 until range.end1) {
+      return (range.end2 - 1).coerceAtLeast(0)
     }
 
-    if (range.vcsLine2 > line) return result
+    if (range.end1 > line) return result
 
-    val length1 = range.vcsLine2 - range.vcsLine1
-    val length2 = range.line2 - range.line1
+    val length1 = range.end1 - range.start1
+    val length2 = range.end2 - range.start2
     result += length2 - length1
   }
   return result
 }
 
-private fun mapLine(ranges: List<LstRange>, lineIdx: Int): DiffLineLocation? {
-  val oldLine = transferLineFromAfter(ranges, lineIdx)?.takeIf { it >= 0 } ?: return null
-  return Side.RIGHT to oldLine
-}
-
-private fun transferLineFromAfter(ranges: List<LstRange>, line: Int): Int? {
+private fun transferLineFromAfter(ranges: List<Range>, line: Int, approximate: Boolean = false): Int? {
   if (ranges.isEmpty()) return line
   var result = line
   for (range in ranges) {
-    if (line < range.line1) return result
+    if (line < range.start2) return result
 
-    if (line in range.line1 until range.line2) {
-      return null
+    if (line in range.start2 until range.end2) {
+      return if (approximate) range.end1 else null
     }
 
-    val length1 = range.vcsLine2 - range.vcsLine1
-    val length2 = range.line2 - range.line1
+    val length1 = range.end1 - range.start1
+    val length2 = range.end2 - range.start2
     result -= length2 - length1
   }
   return result
 }
 
-private fun List<LstRange>.getUnchangedLineRanges(document: Document): List<LineRange> {
-  val lineCount = DiffUtil.getLineCount(document)
-  if (isEmpty()) return listOf(LineRange(0, lineCount))
-  val result = mutableListOf<LineRange>()
-  var lastChangeEnd: Int? = null
-
-  forEach {
-    val lastEnd = lastChangeEnd
-    if (lastEnd == null) {
-      if (it.line1 != 0) {
-        result.add(LineRange(0, it.line1))
-      }
-      lastChangeEnd = it.line2
-    }
-    else if (it.line1 == lastEnd) {
-      lastChangeEnd = it.line2
-    }
-    else {
-      result.add(LineRange(lastEnd, it.line1))
-      lastChangeEnd = it.line2
-    }
-  }
-
-  val lastEnd = lastChangeEnd!!
-  if (lastEnd != lineCount) {
-    result.add(LineRange(lastEnd, lineCount))
-  }
-  return result
-}
-
-/**
- * Listens to [lineStatusTracker] and sends updated ranges to [onRangesChanged]
- */
-private class ForwardingLineStatusTrackerListener(
-  private val lineStatusTracker: LineStatusTrackerI<*>,
-  private val onRangesChanged: (List<LstRange>) -> Unit
-) : LineStatusTrackerListener {
-  init {
-    val ranges = lineStatusTracker.getRanges()
-    onRangesChanged(ranges.orEmpty())
-  }
-
-  override fun onOperationalStatusChange() {
-    val ranges = lineStatusTracker.getRanges()
-    if (ranges != null) {
-      onRangesChanged(ranges)
-    }
-  }
-
-  override fun onRangesChanged() {
-    val ranges = lineStatusTracker.getRanges()
-    if (ranges != null) {
-      onRangesChanged(ranges)
-    }
-  }
-}
+private fun Range.getAfterLines(): LineRange = LineRange(start2, end2)
+private fun Range.asLst(): LstRange = LstRange(start2, end2, start1, end1)

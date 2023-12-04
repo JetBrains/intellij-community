@@ -5,10 +5,11 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -221,8 +222,7 @@ public abstract class AbstractExternalSystemSettings<
   }
 
   protected void loadState(@NotNull State<PS> state) {
-    ExternalSystemInProgressService trackingService = myProject.getService(ExternalSystemInProgressService.class);
-    trackingService.trackConfigurationActivityBlocking(() -> {
+    TrackingUtil.trackActivity(myProject, ExternalSystemActivityKey.INSTANCE, () -> {
       Set<PS> settings = state.getLinkedExternalProjectsSettings();
       if (settings != null) {
         setLinkedProjectsSettings(settings, new ExternalSystemSettingsListener<>() {
@@ -242,7 +242,6 @@ public abstract class AbstractExternalSystemSettings<
           }
         });
       }
-      return null;
     });
   }
 

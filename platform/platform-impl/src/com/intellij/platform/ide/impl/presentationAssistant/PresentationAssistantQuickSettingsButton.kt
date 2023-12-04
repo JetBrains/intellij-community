@@ -12,6 +12,7 @@ import com.intellij.openapi.observable.util.addMouseListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.platform.ide.impl.presentationAssistant.ActionInfoPopupGroup.Companion.setBorderColorIfNeeded
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.scale.JBUIScale
@@ -133,6 +134,7 @@ internal class PresentationAssistantQuickSettingsButton(private val project: Pro
 
   private fun createSettingsButtonPopup(): JBPopup {
     val popup = with(JBPopupFactory.getInstance().createComponentPopupBuilder(this, this)) {
+      setBorderColorIfNeeded(appearance.theme)
       setFocusable(true)
       setBelongsToGlobalPopupStack(false)
       setCancelKeyEnabled(false)

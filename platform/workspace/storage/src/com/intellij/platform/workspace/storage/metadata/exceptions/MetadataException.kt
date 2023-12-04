@@ -2,10 +2,12 @@
 package com.intellij.platform.workspace.storage.metadata.exceptions
 
 
-public abstract class MissingMetadataException(metadataType: String): Exception("Metadata for the $metadataType was not collected")
+public abstract class MissingMetadataException(message: String): Exception(message)
 
 
-public class MissingTypeMetadataException(fqName: String): MissingMetadataException("type $fqName")
+public class MissingTypeMetadataException(fqName: String): MissingMetadataException("Metadata for the $fqName was not collected")
+
+public class MissingTypeMetadataHashException(fqName: String): MissingMetadataException("Metadata hash for the $fqName was not collected")
 
 
 public class MissingMetadataStorage(metadataStorageFqn: String): Exception("Metadata storage $metadataStorageFqn was not found")

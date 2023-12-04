@@ -34,12 +34,12 @@ abstract class JUnitMalformedDeclarationInspectionTestBase(protected val junit5V
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel, junit5Version)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST, junit5Version)
 
-  protected fun addAutomaticExtension(service: String) {
+  protected fun addAutomaticExtension(text: String) {
     val servicesDir = createServiceResourceDir()
     runWriteAction {
-      servicesDir.createFile(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSION).also { file -> file.writeText(service) }
+      servicesDir.createFile(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_EXTENSION).also { file -> file.writeText(text) }
     }
   }
 

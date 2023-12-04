@@ -25,13 +25,10 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
    */
   private static final List<String> WIP_INSPECTIONS =
     List.of("ExtensionClassShouldBeFinalAndNonPublic",
-            "ActionPresentationInstantiatedInCtor",
             "CancellationCheckInLoops",
             "ThreadingConcurrency",
             "CallingMethodShouldBeRequiresBlockingContext",
-            "IncorrectProcessCanceledExceptionHandling",
-            "StaticInitializationInExtensions",
-            "UsePlatformProcessAwaitExit");
+            "IncorrectProcessCanceledExceptionHandling");
 
   /**
    * Validates all DevKit inspections that are disabled by default match the expected known set.

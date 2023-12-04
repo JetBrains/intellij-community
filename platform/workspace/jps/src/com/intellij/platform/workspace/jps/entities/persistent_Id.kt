@@ -106,3 +106,8 @@ data class LibraryId(val name: String, val tableId: LibraryTableId) : SymbolicEn
     return result
   }
 }
+
+data class SdkId(val name: @NlsSafe String, val type: @NonNls String) : SymbolicEntityId<SdkEntity> {
+  override val presentableName: String
+    get() = name
+}

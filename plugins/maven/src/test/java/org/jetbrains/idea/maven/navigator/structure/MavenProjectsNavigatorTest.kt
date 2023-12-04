@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.navigator.structure
 import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
@@ -21,17 +20,12 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.importing.FilesList
-import org.jetbrains.idea.maven.project.importing.MavenImportFlow
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
 class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
   private var myNavigator: MavenProjectsNavigator? = null
   private var myStructure: MavenProjectsStructure? = null
-
-  override fun runInDispatchThread() = false
 
   override fun setUp() = runBlocking {
     super.setUp()
@@ -188,7 +182,6 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
                        <version>1</version>
                        """.trimIndent())
     readFiles(myProjectPom)
-    resolveDependenciesAndImport()
     assertEquals(1, rootNodes.size)
     MavenUtil.cleanAllRunnables()
 
@@ -266,20 +259,18 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
     readFiles(myProjectPom, m)
 
-    projectsManager.waitForPluginResolution()
-
     projectsManager.projectsTree.ignoredFilesPaths = listOf(m.getPath())
 
     myNavigator!!.showIgnored = true
     assertTrue(rootNodes[0].isVisible())
     val childNodeNamesBefore = rootNodes[0].children.map { it.name }.toSet()
-    assertEquals(setOf("Lifecycle", "Plugins", "m"), childNodeNamesBefore)
+    assertEquals(setOf("Lifecycle", "Plugins", "Repositories", "m"), childNodeNamesBefore)
 
     myNavigator!!.showIgnored = false
     assertTrue(rootNodes[0].isVisible())
     waitForPluginNodesUpdated()
     val childNodeNamesAfter = rootNodes[0].children.map { it.name }.toSet()
-    assertEquals(setOf("Lifecycle", "Plugins"), childNodeNamesAfter)
+    assertEquals(setOf("Lifecycle", "Plugins", "Repositories"), childNodeNamesAfter)
   }
 
   private suspend fun waitForPluginNodesUpdated() = withContext(Dispatchers.EDT) {
@@ -486,28 +477,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
   }
 
   private suspend fun readFiles(vararg files: VirtualFile) {
-    if (isNewImportingProcess) {
-      val flow = MavenImportFlow()
-      val allFiles: MutableList<VirtualFile> = ArrayList(projectsManager.getProjectsFiles())
-      allFiles.addAll(listOf(*files))
-      val initialImportContext =
-        flow.prepareNewImport(myProject,
-                              FilesList(allFiles),
-                              mavenGeneralSettings,
-                              mavenImporterSettings,
-                              emptyList(), emptyList())
-
-
-      ApplicationManager.getApplication().executeOnPooledThread {
-        val readContext = flow.readMavenFiles(initialImportContext, mavenProgressIndicator)
-        flow.updateProjectManager(readContext)
-        myNavigator!!.scheduleStructureUpdate()
-      }[10, TimeUnit.SECONDS]
-
-    }
-    else {
-      projectsManager.addManagedFilesWithProfilesAndUpdate(listOf(*files), MavenExplicitProfiles.NONE, null, null)
-    }
+    projectsManager.addManagedFilesWithProfilesAndUpdate(listOf(*files), MavenExplicitProfiles.NONE, null, null)
   }
 
   private val rootNodes: List<ProjectNode>

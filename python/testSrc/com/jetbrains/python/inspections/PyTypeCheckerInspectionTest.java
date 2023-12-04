@@ -765,7 +765,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
                            f(A, 1)
                            f(B, 2)
-                           f(<warning descr="Expected type 'Type[T]', got 'Type[C]' instead">C</warning>, 3)""")
+                           f(<warning descr="Expected type 'Type[T ≤: Union[A, B]]', got 'Type[C]' instead">C</warning>, 3)""")
     );
   }
 
@@ -779,7 +779,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            F = TypeVar('F', bound=int)
 
                            def deco(func: F) -> F:
-                               return <warning descr="Expected type 'F', got 'LiteralString' instead">""</warning>""")
+                               return <warning descr="Expected type 'F ≤: int', got 'str' instead">""</warning>""")
     );
   }
 
@@ -961,7 +961,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            a: Literal["22"] = f"22"
                            b: Literal["22"] = <warning descr="Expected type 'Literal[\\"22\\"]', got 'Literal[f\\"32\\"]' instead">f"32"</warning>
                            two = "2"
-                           c: Literal["22"] = <warning descr="Expected type 'Literal[\\"22\\"]', got 'LiteralString' instead">f"2{two}"</warning>""")
+                           c: Literal["22"] = <warning descr="Expected type 'Literal[\\"22\\"]', got 'str' instead">f"2{two}"</warning>""")
     );
   }
 
@@ -990,7 +990,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                    pass
 
                            def foo(cb: Callback[int]):
-                               cb(<warning descr="Expected type 'int' (matched generic type '_T'), got 'LiteralString' instead">"42"</warning>)""")
+                               cb(<warning descr="Expected type 'int' (matched generic type '_T'), got 'str' instead">"42"</warning>)""")
     );
   }
 
@@ -1057,17 +1057,17 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            class Point(TypedDict):
                                x: int
                                y: int
-                           p1: Point = {'x': 0, 'y': <warning descr="Expected type 'int', got 'LiteralString' instead">'a'</warning>}
-                           p2: NotPoint = {'x': <warning descr="Expected type 'int', got 'LiteralString' instead">'x'</warning>, 'y': <warning descr="Expected type 'str', got 'int' instead">42</warning>}
+                           p1: Point = {'x': 0, 'y': <warning descr="Expected type 'int', got 'str' instead">'a'</warning>}
+                           p2: NotPoint = {'x': <warning descr="Expected type 'int', got 'str' instead">'x'</warning>, 'y': <warning descr="Expected type 'str', got 'int' instead">42</warning>}
                            p3: Point = <warning descr="Expected type 'Point', got 'NotPoint' instead">p2</warning>
                            p4: Point = <warning descr="TypedDict 'Point' has missing keys: 'x', 'y'">{}</warning>
                            p5: Point = {'x': 0, 'y': 0, <warning descr="Extra key 'z' for TypedDict 'Point'">'z': 123</warning>, <warning descr="Extra key 'k' for TypedDict 'Point'">'k': 6</warning>}
                            p6: Point = <warning descr="TypedDict 'Point' has missing key: 'x'">{'y': 123}</warning>
                            p7: Movie = dict(name='Alien', year=1979)
-                           p8: Movie = dict(name='Alien', year=<warning descr="Expected type 'int', got 'LiteralString' instead">'1979'</warning>)
+                           p8: Movie = dict(name='Alien', year=<warning descr="Expected type 'int', got 'str' instead">'1979'</warning>)
                            p9: Movie = dict(name='Alien', year=1979, <warning descr="Extra key 'director' for TypedDict 'Movie'">director='Ridley Scott'</warning>)
                            p10 = {'x': 'x', 'y': 42, 'z': 42}
-                           p11: Point = <warning descr="Expected type 'Point', got 'dict[LiteralString, LiteralString | int]' instead">p10</warning>"""
+                           p11: Point = <warning descr="Expected type 'Point', got 'dict[str, str | int]' instead">p10</warning>"""
       ));
   }
 
@@ -1079,9 +1079,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            from typing import TypedDict
                            Movie = TypedDict('Movie', {'name': str, 'year': int})
                            m1: Movie = dict(name='Alien', year=1979)
-                           m2: Movie = dict(name='Alien', year=<warning descr="Expected type 'int', got 'LiteralString' instead">'1979'</warning>)
+                           m2: Movie = dict(name='Alien', year=<warning descr="Expected type 'int', got 'str' instead">'1979'</warning>)
                            m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))
-                           m4: Movie = {'name': 'Alien', 'year': <warning descr="Expected type 'int', got 'LiteralString' instead">'1979'</warning>}
+                           m4: Movie = {'name': 'Alien', 'year': <warning descr="Expected type 'int', got 'str' instead">'1979'</warning>}
                            m5 = Movie(name='Garden State', year=2004)"""));
   }
 
@@ -1147,8 +1147,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            movie2 = Movie2()
                            s: str = movie['address'][0]
                            s: str = movie2['address'][0]
-                           s: str = movie['address'][<warning descr="Unexpected type(s):(LiteralString)Possible type(s):(int)(slice)">'i'</warning>]
-                           s2: str = movie2['address'][<warning descr="Unexpected type(s):(LiteralString)Possible type(s):(int)(slice)">'i'</warning>]
+                           s: str = movie['address'][<warning descr="Unexpected type(s):(str)Possible type(s):(int)(slice)">'i'</warning>]
+                           s2: str = movie2['address'][<warning descr="Unexpected type(s):(str)Possible type(s):(int)(slice)">'i'</warning>]
                            """));
   }
 
@@ -1300,7 +1300,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def accepts_anything(x: str) -> None:
                                pass
 
-                           func(<warning descr="Expected type '(Any) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead">accepts_anything</warning>)
+                           func(<warning descr="Expected type '(T ≤: int) -> None', got '(x: str) -> None' instead">accepts_anything</warning>)
                            """)
     );
   }
@@ -1414,13 +1414,13 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            z = {'foo': 'bar'}
                            n = {"foo": "", "quux": 3}
                            f(<warning descr="Expected type 'C', got 'dict' instead">y</warning>)
-                           f(<warning descr="Expected type 'C', got 'dict[LiteralString, int | LiteralString]' instead">n</warning>)
+                           f(<warning descr="Expected type 'C', got 'dict[str, int | str]' instead">n</warning>)
                            f(z)
                            f(x=<warning descr="Expected type 'C', got 'dict' instead">y</warning>)
-                           f(x=<warning descr="Expected type 'C', got 'dict[LiteralString, int | LiteralString]' instead">n</warning>)
+                           f(x=<warning descr="Expected type 'C', got 'dict[str, int | str]' instead">n</warning>)
                            f(x=z)
                            z2: C = <warning descr="Expected type 'C', got 'dict' instead">y</warning>
-                           z2: C = <warning descr="Expected type 'C', got 'dict[LiteralString, int | LiteralString]' instead">n</warning>
+                           z2: C = <warning descr="Expected type 'C', got 'dict[str, int | str]' instead">n</warning>
                            z2: C = z""")
     );
   }
@@ -1433,7 +1433,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            class Foo(TypedDict):
                                foo: Literal['bar']
                            a: Foo = {'foo': 'bar'}
-                           b: Foo = {'foo': <warning descr="Expected type 'Literal['bar']', got 'LiteralString' instead">'baz'</warning>}""")
+                           b: Foo = {'foo': <warning descr="Expected type 'Literal['bar']', got 'str' instead">'baz'</warning>}""")
     );
   }
 
@@ -1473,8 +1473,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                    0: 'zero',
                                }
                            }
-                           s: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[LiteralString, dict[int, LiteralString] | LiteralString]' instead">t</warning>}
-                           s1: HardDict = <warning descr="Expected type 'HardDict', got 'dict[LiteralString, dict[int, LiteralString] | LiteralString]' instead">t</warning>
+                           s: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, dict[int, str] | str]' instead">t</warning>}
+                           s1: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, dict[int, str] | str]' instead">t</warning>
                            t1 = {
                                'a': 'xx',
                                'd': {
@@ -1482,8 +1482,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                    'd': {}
                                }
                            }
-                           s2: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[LiteralString, dict[LiteralString, dict | int] | LiteralString]' instead">t1</warning>}
-                           s3: HardDict = <warning descr="Expected type 'HardDict', got 'dict[LiteralString, dict[LiteralString, dict | int] | LiteralString]' instead">t1</warning>
+                           s2: HardDict = {'a': 'xx', 'd': <warning descr="Expected type 'NotSoHardDict', got 'dict[str, dict[str, dict | int] | str]' instead">t1</warning>}
+                           s3: HardDict = <warning descr="Expected type 'HardDict', got 'dict[str, dict[str, dict | int] | str]' instead">t1</warning>
                            s4: HardDict = <warning descr="TypedDict 'HardDict' has missing key: 'a'">{
                                'd': {
                                    'a': 'a',
@@ -1513,7 +1513,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                group: list[T]
                            class GroupWithOtherKey(Group, Generic[T1]):
                                some_other_key: T1
-                           group: GroupWithOtherKey[str, int] = {"key": <warning descr="Expected type 'str', got 'int' instead">1</warning>, "group": [], "some_other_key": <warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>}""")
+                           group: GroupWithOtherKey[str, int] = {"key": <warning descr="Expected type 'str', got 'int' instead">1</warning>, "group": [], "some_other_key": <warning descr="Expected type 'int', got 'str' instead">''</warning>}""")
     );
   }
 
@@ -1528,6 +1528,32 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                                def __init__(self) -> NoReturn:
                                    raise Exception()
                                                       
+                           """)
+    );
+  }
+
+  // PY-61883
+  public void testTypeParameterBoundWithPEP695Syntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> doTestByText("""
+                           def foo[T: str](p: T):
+                               return p
+                                                      
+                           expr = foo(<warning descr="Expected type 'T ≤: str', got 'int' instead">42</warning>)
+                           """)
+    );
+  }
+
+  // PY-61883
+  public void testTypeParameterConstraintsWithPEP695Syntax() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON312,
+      () -> doTestByText("""
+                           def foo[T: (str, bool)](p: T):
+                               return p
+                                                      
+                           expr = foo(<warning descr="Expected type 'T ≤: str | bool', got 'int' instead">42</warning>)
                            """)
     );
   }

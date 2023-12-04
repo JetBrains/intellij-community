@@ -14,6 +14,7 @@ import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
@@ -21,6 +22,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SmartList
 import kotlinx.coroutines.*
 import java.io.IOException
@@ -48,8 +50,7 @@ internal class IdeaFreezeReporter : PerformanceListener {
       throw ExtensionNotApplicableException.create()
     }
 
-    @Suppress("DEPRECATION")
-    app.coroutineScope.launch {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       app.messageBus.simpleConnect().subscribe(AppLifecycleListener.TOPIC, object : AppLifecycleListener {
         override fun appWillBeClosed(isRestart: Boolean) {
           appClosing = true

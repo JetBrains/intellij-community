@@ -30,9 +30,9 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -119,10 +119,10 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
     fun createTextEditor(project: Project, file: VirtualFile): EditorImpl {
       val document = FileDocumentManager.getInstance().getDocument(file, project)
       val factory = EditorFactory.getInstance() as EditorFactoryImpl
-      return factory.createMainEditor(document!!, project, file)
+      return factory.createMainEditor(document!!, project, file, null)
     }
 
-    suspend fun setHighlighterToEditor(project: Project,
+    private suspend fun setHighlighterToEditor(project: Project,
                                        file: VirtualFile,
                                        document: Document,
                                        editorSupplier: suspend () -> EditorEx) {
@@ -142,7 +142,6 @@ open class TextEditorImpl @Internal constructor(@JvmField protected val project:
         editor.highlighter = highlighter
       }
     }
-
   }
 
   protected open fun createEditorComponent(project: Project, file: VirtualFile, editor: EditorImpl): TextEditorComponent {

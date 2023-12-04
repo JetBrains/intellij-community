@@ -35,7 +35,7 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
     }
   }
 
-  private Level getLogLevel(String level) {
+  private static Level getLogLevel(String level) {
     switch (level) {
       case "error":
         return Level.SEVERE;
@@ -63,7 +63,7 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
       }
       MavenIdeaIndexerImpl result = null;
       try {
-        result = new MavenIdeaIndexerImpl(getPlexusContainer());
+        result = new MavenIdeaAsyncIndexerImpl(getPlexusContainer());
         UnicastRemoteObject.exportObject(result, 0);
         myIndexerRef = result;
       }
@@ -75,7 +75,6 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
         }
         catch (Exception unexportException) {
           RuntimeException re = wrapToSerializableRuntimeException(e);
-          re.addSuppressed(re);
           throw re;
         }
 
@@ -92,7 +91,6 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
       final DefaultContainerConfiguration config = new DefaultContainerConfiguration();
       config.setClassPathScanning(PlexusConstants.SCANNING_INDEX);
       myPlexusContainer = new DefaultPlexusContainer(config);
-
     }
     return myPlexusContainer;
   }

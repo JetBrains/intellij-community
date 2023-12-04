@@ -4,9 +4,7 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.observable.util.transform
 import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.add.target.createDetectedSdk
 import kotlinx.coroutines.CoroutineScope
 
 class PythonAddInterpreterState(
@@ -15,26 +13,11 @@ class PythonAddInterpreterState(
   val scope: CoroutineScope,
   val basePythonSdks: ObservableMutableProperty<List<Sdk>>,
   val allExistingSdks: ObservableMutableProperty<List<Sdk>>,
-  val basePythonVersion: ObservableMutableProperty<Sdk?>,
+  val installableSdks: ObservableMutableProperty<List<Sdk>>,
+  val selectedVenv: ObservableMutableProperty<Sdk?>,
   val condaExecutable: ObservableMutableProperty<String>,
 ) {
-  val basePythonHomePath = basePythonVersion.transform({ sdk -> sdk?.homePath ?: "" },
-                                                       { path -> basePythonSdks.get().find { it.homePath == path }!! })
+  internal val allSdks: ObservableMutableProperty<List<Sdk>> = propertyGraph.property(initial = allExistingSdks.get())
 
-  val basePythonHomePaths = transformSdksToHomePath(basePythonSdks)
-  val allValidSdkPaths = transformSdksToHomePath(allExistingSdks)
-
-
-
-
-
-  private fun transformSdksToHomePath(sdkList: ObservableMutableProperty<List<Sdk>>): ObservableMutableProperty<List<String>> {
-    return sdkList.transform({ sdks -> sdks.map { it.homePath!! } },
-                             { paths ->
-                               val existing = sdkList.get()
-                               paths.map { path ->
-                                 existing.find { it.homePath == path } ?: createDetectedSdk(path, isLocal = true)
-                               }
-                             })
-  }
+  val selectedVenvPath: ObservableMutableProperty<String?> = selectedVenv.transformToHomePathProperty(allSdks)
 }

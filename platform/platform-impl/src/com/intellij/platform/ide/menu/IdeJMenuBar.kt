@@ -15,6 +15,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.plaf.beg.IdeaMenuUI
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
@@ -137,7 +138,7 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
   internal val isActivated: Boolean
     get() {
       val index = selectionModel.selectedIndex
-      return index != -1 && getMenu(index).isPopupMenuVisible
+      return index != -1 && getMenu(index).isTryingToShowPopupMenu()
     }
 
   override fun getPreferredSize(): Dimension {
@@ -215,7 +216,10 @@ open class IdeJMenuBar internal constructor(@JvmField internal val coroutineScop
 
   internal open fun doInstallAppMenuIfNeeded(frame: JFrame) {}
 
-  open fun onToggleFullScreen(isFullScreen: Boolean) {}
+  // it contradicts to our principle of avoiding EDT, but for the sake of simplicity and a reliable implementation, we do exclusion here,
+  // it is an internal method, and we do control all implementations
+  @RequiresEdt
+  internal open fun onToggleFullScreen(isFullScreen: Boolean) {}
 }
 
 private val LOG: Logger
@@ -264,3 +268,9 @@ internal fun installAppMenuIfNeeded(frame: JFrame) {
     LOG.info("The menu bar '$menuBar of frame '$frame' isn't instance of IdeMenuBar")
   }
 }
+
+private fun JMenu.isTryingToShowPopupMenu(): Boolean =
+  if (this is ActionMenu)
+    isTryingToShowPopupMenu
+  else
+    isPopupMenuVisible

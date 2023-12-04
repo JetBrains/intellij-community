@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
@@ -466,6 +467,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   public void testMetaClassMembers() {
+    ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true);
     doTest();
   }
 
@@ -913,6 +915,19 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-48012
   public void testUnresolvedKeywordPattern() {
     runWithLanguageLevel(LanguageLevel.PYTHON310, this::doTest);
+  }
+
+  // PY-63361
+  public void testParametrizationOfClassWithTypeParameterListIsNotReported() {
+    runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
+      doTestByText("""
+                   class MyGeneric[T]:
+                       pass
+                   
+                   class Sub(MyGeneric[int]):
+                       pass
+                   """);
+    });
   }
 
   @NotNull

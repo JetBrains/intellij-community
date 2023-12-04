@@ -128,7 +128,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         val explicitReceiverText = weigherContext.explicitReceiver?.text
         return when (callableWeight?.kind) {
             // Make the text bold if it's immediate member of the receiver
-            CallableMetadataProvider.CallableKind.ThisClassMember, CallableMetadataProvider.CallableKind.ThisTypeExtension ->
+            CallableMetadataProvider.CallableKind.THIS_CLASS_MEMBER, CallableMetadataProvider.CallableKind.THIS_TYPE_EXTENSION ->
                 object : LookupElementDecorator<LookupElement>(this) {
                     override fun renderElement(presentation: LookupElementPresentation) {
                         super.renderElement(presentation)
@@ -137,7 +137,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                 }
 
             // Make the text gray and insert type cast if the receiver type does not match.
-            is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
+            CallableMetadataProvider.CallableKind.RECEIVER_CAST_REQUIRED -> object : LookupElementDecorator<LookupElement>(this) {
                 override fun renderElement(presentation: LookupElementPresentation) {
                     super.renderElement(presentation)
                     presentation.itemTextForeground = KOTLIN_CAST_REQUIRED_COLOR

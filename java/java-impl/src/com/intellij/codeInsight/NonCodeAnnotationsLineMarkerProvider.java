@@ -215,7 +215,7 @@ public abstract class NonCodeAnnotationsLineMarkerProvider extends LineMarkerPro
              action instanceof DeannotateIntentionAction ||
              action.getClass().getName().equals("com.intellij.codeInspection.dataFlow.EditContractIntention") ||
              action instanceof MakeInferredAnnotationExplicit ||
-             action instanceof MakeExternalAnnotationExplicit;
+             action.asModCommandAction() instanceof MakeExternalAnnotationExplicit;
     }
   }
 }

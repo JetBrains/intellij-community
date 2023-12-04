@@ -787,6 +787,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       super(VCS_LOG_TEXT_FILTER_HISTORY);
       myTextFilterModel = model;
       setText(myTextFilterModel.getText());
+      getTextEditor().getEmptyText().setText(VcsLogBundle.message("vcs.log.filter.text.hash.empty.text"));
       getTextEditor().addActionListener(e -> applyFilter(true));
       addDocumentListener(new DocumentAdapter() {
         @Override

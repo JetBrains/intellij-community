@@ -31,6 +31,8 @@ import org.junit.Test
 import java.io.IOException
 
 class ResourceFilteringTest : MavenCompilingTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testBasic() = runBlocking {
     createProjectSubFile("resources/file.properties", """
@@ -741,13 +743,8 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val1")
 
-    if (isNewImportingProcess) {
-      importProjectWithProfiles("two")
-    }
-    else {
-      projectsManager.explicitProfiles = MavenExplicitProfiles(mutableListOf("two"))
-      updateAllProjects()
-    }
+    projectsManager.explicitProfiles = MavenExplicitProfiles(mutableListOf("two"))
+    updateAllProjects()
 
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val2")

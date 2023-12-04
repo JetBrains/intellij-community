@@ -57,7 +57,7 @@ class ComboBoxWithActionsModel<T>
     })
   }
 
-  override fun getSelectedItem(): Item.Wrapper<T>? = itemsModel.selectedItem?.let { Item.Wrapper(it as T) }
+  override fun getSelectedItem(): Item.Wrapper<T>? = itemsModel.selectedItem.asSafely<Item.Wrapper<T>>()
 
   override fun setSelectedItem(item: Any?) {
     if (item is Item.Action<*>) {

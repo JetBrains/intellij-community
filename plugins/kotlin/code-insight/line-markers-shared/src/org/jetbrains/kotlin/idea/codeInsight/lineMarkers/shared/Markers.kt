@@ -2,26 +2,32 @@
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared
 
 import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
-import com.intellij.openapi.application.runReadAction
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.createSmartPointer
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
-import org.jetbrains.kotlin.idea.stubindex.*
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.idea.base.facet.isHMPPEnabled
+import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoVariantsService
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibrarySourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.searching.kmp.findAllActualForExpect
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
+import javax.swing.Icon
 
 val KtNamedDeclaration.expectOrActualAnchor: PsiElement
     @ApiStatus.Internal
@@ -119,9 +125,60 @@ fun KtNamedDeclaration.areMarkersForbidden(
     return false
 }
 
-class ActualExpectedPsiElementCellRenderer : PsiTargetPresentationRenderer<PsiElement>() {
-    override fun getContainerText(element: PsiElement): String = ""
+private class ActualExpectedPsiElementCellRenderer(private val onlyModuleNames: Boolean) : PsiTargetPresentationRenderer<PsiElement>() {
+    override fun getContainerText(element: PsiElement): String? = if (onlyModuleNames) null else element.moduleName()
+
+    override fun getIcon(element: PsiElement): Icon = when (element.moduleInfo) {
+        is LibrarySourceInfo, is LibraryInfo -> AllIcons.Nodes.PpLibFolder
+        else -> AllIcons.Nodes.Module
+    }
+
+    override fun getElementText(element: PsiElement): String = if (onlyModuleNames) element.moduleName() else super.getElementText(element)
+
+    @Nls
+    private fun PsiElement.moduleName() = moduleInfo.nameForTooltip()
 }
+
+@Nls
+@Suppress("HardCodedStringLiteral")
+fun ModuleInfo.nameForTooltip(): String {
+    when (this) {
+        /* For hmpp modules, prefer the module name, if present */
+        is ModuleSourceInfo -> takeIf { module.isHMPPEnabled }?.module?.name?.let { return it }
+
+        /* For libraries, we're trying to show artifact variant name */
+        is LibrarySourceInfo -> library.extractVariantName(binariesModuleInfo as? LibraryInfo)?.let { return it }
+        is LibraryInfo -> library.extractVariantName(this)?.let { return it }
+    }
+
+    stableName?.asStringStripSpecialMarkers()?.let { return it }
+
+    // We want to represent actual descriptors, so let's represent them by platform
+    return platform.componentPlatforms.joinToString(", ", "{", "}") { it.platformName }
+}
+
+/*
+    Supported formats:
+
+    <groupId>:<artifactId>:<variant>:<version>
+    <groupId>:<artifactId>-<variant>:<version>
+ */
+private fun Library.extractVariantName(binariesModuleInfo: LibraryInfo?): String? {
+    binariesModuleInfo?.let(LibraryInfoVariantsService::bundledLibraryVariant)?.displayName?.let { return it }
+
+    val split = name.orEmpty().split(":")
+    if (split.size != 3 && split.size != 4) {
+        return null
+    }
+
+    return when (split.size) {
+        3 -> split[1].substringAfterLast('-')
+        4 -> split[2]
+        else -> null
+    }
+}
+
+private fun Collection<KtDeclaration>.hasUniqueModuleNames() = distinctBy { it.moduleInfo.nameForTooltip() }.size == size
 
 @ApiStatus.Internal
 fun buildNavigateToActualDeclarationsPopup(element: PsiElement?, allNavigatableActualDeclarations: KtDeclaration.() -> Collection<KtDeclaration>): NavigationPopupDescriptor? {
@@ -133,7 +190,7 @@ fun buildNavigateToActualDeclarationsPopup(element: PsiElement?, allNavigatableA
             navigatableActualDeclarations,
             KotlinLineMarkersSharedBundle.message("highlighter.title.choose.actual.for", name),
             KotlinLineMarkersSharedBundle.message("highlighter.title.actuals.for", name),
-            ActualExpectedPsiElementCellRenderer()
+            ActualExpectedPsiElementCellRenderer(onlyModuleNames = navigatableActualDeclarations.hasUniqueModuleNames())
         )
     }
 }
@@ -148,7 +205,7 @@ fun buildNavigateToExpectedDeclarationsPopup(element: PsiElement?, allNavigatabl
             navigatableExpectedDeclarations,
             KotlinLineMarkersSharedBundle.message("highlighter.title.choose.expected.for", name),
             KotlinLineMarkersSharedBundle.message("highlighter.title.expected.for", name),
-            ActualExpectedPsiElementCellRenderer()
+            ActualExpectedPsiElementCellRenderer(onlyModuleNames = navigatableExpectedDeclarations.hasUniqueModuleNames())
         )
     }
 }
@@ -185,65 +242,7 @@ internal fun KtDeclaration.expectedDeclarationIfAny(): List<SmartPsiElementPoint
     }
 }
 
-@RequiresBackgroundThread(generateAssertion = false)
-internal fun KtDeclaration.findAllExpectForActual(searchScope: SearchScope = runReadAction { useScope }): Sequence<SmartPsiElementPointer<KtDeclaration>> {
-    val declaration = this
-    val scope = searchScope as? GlobalSearchScope ?: return emptySequence()
-    val containingClassOrObjectOrSelf = containingClassOrObjectOrSelf()
-    // covers cases like classes, class functions and class properties
-    containingClassOrObjectOrSelf?.fqName?.let { fqName ->
-        val fqNameAsString = fqName.asString()
-        val targetDeclarations: List<KtDeclaration> = KotlinFullClassNameIndex.getAllElements(fqNameAsString, project, scope, filter = {
-            it.matchesWithActual(containingClassOrObjectOrSelf)
-        }) + KotlinTopLevelTypeAliasFqNameIndex.getAllElements(fqNameAsString, project, scope, filter = {
-            it.matchesWithActual(containingClassOrObjectOrSelf)
-        })
-
-        return targetDeclarations.asSequence().mapNotNull { targetDeclaration ->
-            when (declaration) {
-                is KtClassOrObject -> targetDeclaration
-                is KtNamedDeclaration ->
-                    when (targetDeclaration) {
-                        is KtClassOrObject -> targetDeclaration.declarations.firstOrNull {
-                            it is KtNamedDeclaration && it.name == declaration.name && it.matchesWithActual(declaration)
-                        }
-                        else -> null
-                    }
-
-                else -> null
-            }?.createSmartPointer()
-        }
-    }
-    // top level functions
-    val packageFqName = declaration.containingKtFile.packageFqName
-    val name = declaration.name ?: return emptySequence()
-    val topLevelFqName = packageFqName.child(Name.identifier(name!!)).asString()
-    return when (declaration) {
-        is KtNamedFunction -> {
-            KotlinTopLevelFunctionFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
-                it.matchesWithActual(declaration)
-            }.asSequence().map(KtNamedFunction::createSmartPointer)
-        }
-
-        is KtProperty -> {
-            KotlinTopLevelPropertyFqnNameIndex.getAllElements(topLevelFqName, project, scope) {
-                it.matchesWithActual(declaration)
-            }.asSequence().map(KtProperty::createSmartPointer)
-        }
-
-        else -> emptySequence()
-    }
-}
-
-private fun KtDeclaration.matchesWithActual(actualDeclaration: KtDeclaration): Boolean {
-    val declaration = this
-    return declaration.hasActualModifier() && analyze(declaration) {
-        val symbol: KtDeclarationSymbol = declaration.getSymbol()
-        return symbol.getExpectsForActual().any { it.psi == actualDeclaration }
-    }
-}
-
 fun KtDeclaration.allNavigatableActualDeclarations(): Collection<SmartPsiElementPointer<KtDeclaration>> =
-    findAllExpectForActual().toSet() + findMarkerBoundDeclarations().flatMap { it.findAllExpectForActual() }
+    findAllActualForExpect().toSet() + findMarkerBoundDeclarations().flatMap { it.findAllActualForExpect() }
 
 fun KtElement.containingClassOrObjectOrSelf(): KtClassOrObject? = parentOfType(withSelf = true)

@@ -199,7 +199,7 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
                                  myXmlFormattingPolicy.getKeepBlankLines());
   }
 
-  private boolean isEntityRef(final ASTNode node) {
+  private static boolean isEntityRef(final ASTNode node) {
     return node.getElementType() == XmlElementType.XML_ENTITY_REF || node.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
@@ -209,10 +209,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     return myXmlFormattingPolicy.getShouldAddSpaceAroundTagName();
   }
 
-  private boolean isSpaceInText(final boolean firstIsTag,
-                                final boolean secondIsTag,
-                                final boolean firstIsText,
-                                final boolean secondIsText) {
+  private static boolean isSpaceInText(final boolean firstIsTag,
+                                       final boolean secondIsTag,
+                                       final boolean firstIsText,
+                                       final boolean secondIsText) {
     return
       (firstIsText && secondIsText)
       || (firstIsTag && secondIsTag)

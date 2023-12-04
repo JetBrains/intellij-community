@@ -4,10 +4,8 @@ package com.intellij.openapi.projectRoots.impl;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.project.RootsChangeRescanningInfo;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.RootProvider;
@@ -29,7 +27,13 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Supplier;
 
+/**
+ * @deprecated The key difference between `MockSdk` and real SDK in root provider and absent of `SdkModificator`, so
+ * it doesn't make sense to use in at all. Please use regular API {@link ProjectJdkTable}. All usages from the
+ * platform were removed, so the class will be removed in a couple of months.
+ */
 @TestOnly
+@Deprecated
 public class MockSdk implements Sdk, SdkModificator {
   private String myName;
   private String myHomePath;
@@ -43,20 +47,12 @@ public class MockSdk implements Sdk, SdkModificator {
                  @NotNull String homePath,
                  @NotNull String versionString,
                  @NotNull MultiMap<OrderRootType, VirtualFile> roots,
-                 @NotNull Supplier<? extends SdkTypeId> sdkType) {
+                 @NotNull SdkTypeId sdkType) {
     myName = name;
     myHomePath = homePath;
     myVersionString = versionString;
     myRoots = roots;
-    mySdkType = sdkType;
-  }
-
-  public MockSdk(@NotNull String name,
-                 @NotNull String homePath,
-                 @NotNull String versionString,
-                 @NotNull MultiMap<OrderRootType, VirtualFile> roots,
-                 @NotNull SdkTypeId sdkType) {
-    this(name, homePath, versionString, roots, () -> sdkType);
+    mySdkType = () -> sdkType;
   }
 
   @NotNull
@@ -176,7 +172,7 @@ public class MockSdk implements Sdk, SdkModificator {
     WriteAction.run(myRootProvider::fireRootSetChanged);
     for (Project project : ProjectManager.getInstance().getOpenProjects()) {
       WriteAction.run(() -> {
-        BuildableRootsChangeRescanningInfo info = BuildableRootsChangeRescanningInfo.newInstance().addSdk(this);
+        RootsChangeRescanningInfo info = BuildableRootsChangeRescanningInfo.newInstance().addSdk(this).buildInfo();
         ((ProjectRootManagerEx)ProjectRootManager.getInstance(project)).makeRootsChange(EmptyRunnable.getInstance(), info);
       });
     }

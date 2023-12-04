@@ -11,9 +11,9 @@ import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
+import static kotlinx.collections.immutable.ExtensionsKt.persistentListOf;
 
 public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<EditorHighlighterProvider> {
   public static final ExtensionPointName<KeyedLazyInstance<EditorHighlighterProvider>> EP_NAME = ExtensionPointName.create("com.intellij.editorHighlighterProvider");
@@ -40,7 +40,7 @@ public final class FileTypeEditorHighlighterProviders extends FileTypeExtension<
             SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, virtualFile), colors);
         }
       };
-      return Collections.singletonList(defaultProvider);
+      return persistentListOf(defaultProvider);
     }
     return fromEP;
   }

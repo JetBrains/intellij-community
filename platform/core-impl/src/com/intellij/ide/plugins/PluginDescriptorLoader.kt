@@ -21,6 +21,7 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import kotlinx.coroutines.*
 import org.codehaus.stax2.XMLStreamReader2
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -34,6 +35,7 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
@@ -482,6 +484,7 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
 }
 
 @Internal
+@ApiStatus.ScheduledForRemoval
 @Deprecated("do not use")
 fun loadDescriptorsForDeprecatedWizard(): PluginLoadingResult {
   return runBlocking {
@@ -830,6 +833,13 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
     )
   }, isMainProcess()), overrideUseIfCompatible = false, productBuildNumber = buildNumber)
   return result.enabledPlugins
+}
+
+fun loadCustomDescriptorsFromDir(scope: CoroutineScope,
+                                 dir: Path,
+                                 context: DescriptorListLoadingContext,
+                                 pool: ZipFilePool?): List<Deferred<IdeaPluginDescriptorImpl?>> {
+  return scope.loadDescriptorsFromDir(dir, context, false, pool)
 }
 
 internal fun CoroutineScope.loadDescriptorsFromDir(dir: Path,

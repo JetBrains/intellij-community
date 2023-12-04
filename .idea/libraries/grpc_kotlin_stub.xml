@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="grpc-kotlin-stub" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="io.grpc:grpc-kotlin-stub:1.3.1">
+    <properties include-transitive-deps="false" maven-id="io.grpc:grpc-kotlin-stub:1.4.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.3.1/grpc-kotlin-stub-1.3.1.jar">
-          <sha256sum>0e281d1b82870f4b57f3cff81959223756f78589a812a4b9a18242cdbf8e1130</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.4.0/grpc-kotlin-stub-1.4.0.jar">
+          <sha256sum>554b5b71ad63f755ee033d8fed120b5a5a8121902fefc6db555bedb8725e841a</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.3.1/grpc-kotlin-stub-1.3.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.4.0/grpc-kotlin-stub-1.4.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.3.1/grpc-kotlin-stub-1.3.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-kotlin-stub/1.4.0/grpc-kotlin-stub-1.4.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

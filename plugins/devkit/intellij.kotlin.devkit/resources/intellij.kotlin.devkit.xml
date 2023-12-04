@@ -43,7 +43,7 @@
                      projectType="INTELLIJ_PLUGIN"
                      groupBundle="messages.DevKitBundle"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="false" level="ERROR"
+                     enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.UsePlatformProcessAwaitExitInspection"
                      key="inspection.use.platform.process.await.exit.display.name"/>
 
@@ -79,5 +79,8 @@
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtUElementAsPsiCheckProvider"/>
     <staticInitializationInExtensionsVisitorProvider language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtStaticInitializationInExtensionsVisitorProvider"/>
+    <methodNameProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtMethodNameProvider"/>
   </extensions>
 </idea-plugin>

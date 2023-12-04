@@ -12,15 +12,15 @@ class Argument:
     attr_name: Any
     def __init__(
         self,
-        name=...,
-        names=...,
+        name=None,
+        names=(),
         kind=...,
-        default=...,
-        help=...,
-        positional: bool = ...,
-        optional: bool = ...,
-        incrementable: bool = ...,
-        attr_name=...,
+        default=None,
+        help=None,
+        positional: bool = False,
+        optional: bool = False,
+        incrementable: bool = False,
+        attr_name=None,
     ) -> None: ...
     @property
     def name(self): ...
@@ -32,6 +32,6 @@ class Argument:
     def value(self): ...
     @value.setter
     def value(self, arg) -> None: ...
-    def set_value(self, value, cast: bool = ...): ...
+    def set_value(self, value, cast: bool = True): ...
     @property
     def got_value(self): ...

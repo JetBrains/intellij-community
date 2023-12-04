@@ -17,5 +17,11 @@ abstract class IconDeferrer {
    */
   abstract fun <T : Any> defer(base: Icon?, param: T, evaluator: (T) -> Icon?): Icon
 
+  /**
+   * @param param Unique key that WILL BE USED to cache the icon instance.
+   * Prefer passing unique objects over [String] or [Integer] to avoid accidental clashes with another module.
+   */
+  abstract fun <T : Any> deferAsync(base: Icon?, param: T, evaluator: suspend (T) -> Icon?): Icon
+
   abstract fun clearCache()
 }

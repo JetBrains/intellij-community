@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.progress;
 
 import com.intellij.compiler.CompilerManagerImpl;
@@ -133,20 +133,25 @@ public final class CompilerTask extends Task.Backgroundable {
     Semaphore semaphore = ((CompilerManagerImpl)CompilerManager.getInstance(myProject)).getCompilationSemaphore();
     boolean acquired = false;
     try {
-      try {
-        while (!acquired) {
-          acquired = semaphore.tryAcquire(300, TimeUnit.MILLISECONDS);
-          if (!acquired && !myWaitForPreviousSession) {
-            return;
-          }
-          if (indicator.isCanceled()) {
-            // give up obtaining the semaphore,
-            // let compile work begin in order to stop gracefuly on cancel event
-            break;
+      if (!myCompilationStartedAutomatically || !isHeadless()) {
+        // Do not acquire the semaphore for the automatically launched headless tasks.
+        // Because of that Build UI controls will not be disabled and would allow the user to start build explicitly.
+        // Such builds will be queued and executed after any currently running tasks.
+        try {
+          while (!acquired) {
+            acquired = semaphore.tryAcquire(300, TimeUnit.MILLISECONDS);
+            if (!acquired && !myWaitForPreviousSession) {
+              return;
+            }
+            if (indicator.isCanceled()) {
+              // give up obtaining the semaphore,
+              // let compile work begin in order to stop gracefuly on cancel event
+              break;
+            }
           }
         }
-      }
-      catch (InterruptedException ignored) {
+        catch (InterruptedException ignored) {
+        }
       }
 
       if (!isHeadless()) {

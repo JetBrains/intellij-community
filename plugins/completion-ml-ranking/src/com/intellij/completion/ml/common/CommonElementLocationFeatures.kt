@@ -42,8 +42,7 @@ class CommonElementLocationFeatures : ElementFeatureProvider {
     return result
   }
 
-  companion object {
-    // For the TurboComplete plugin, to not confuse the ML model with new unknown contributors
-    val LOOKUP_ORIGINAL_ELEMENT_CONTRIBUTOR_TYPE = Key<Class<*>>("original contributor of the element")
-  }
 }
+
+// For the TurboComplete plugin, to not confuse the ML model with new unknown contributors
+val LOOKUP_ORIGINAL_ELEMENT_CONTRIBUTOR_TYPE = Key<Class<*>>("original contributor of the element")

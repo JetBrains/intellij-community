@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.ide.JavaUiBundle;
@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBoxItem;
@@ -56,7 +57,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                      @Nullable Condition<? super Sdk> sdkFilter,
                      @Nullable Condition<? super SdkTypeId> creationFilter,
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
-    this(project, sdkModel, sdkTypeFilter, sdkFilter, null, creationFilter, onNewSdkAdded);
+    this(project, sdkModel, sdkTypeFilter, sdkFilter, null, creationFilter == null ? null : creationFilter::test, onNewSdkAdded);
   }
 
   /**
@@ -78,6 +79,21 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     this(project,
          new SdkListModelBuilder(project, sdkModel, sdkTypeFilter, SimpleJavaSdkType.notSimpleJavaSdkType(creationFilter), sdkFilter, suggestedSdkFilter, null),
          onNewSdkAdded);
+  }
+
+  public static @NotNull JdkComboBox createCombobox(@Nullable Project project,
+                                                    @NotNull ProjectSdksModel sdkModel,
+                                                    @Nullable Predicate<? super SdkTypeId> sdkTypeFilter,
+                                                    @Nullable Predicate<? super Sdk> sdkFilter,
+                                                    @Nullable Predicate<? super SdkListItem.SuggestedItem> suggestedSdkFilter,
+                                                    @Nullable Predicate<? super SdkTypeId> creationFilter) {
+    return new JdkComboBox(project,
+                           sdkModel,
+                           sdkTypeFilter == null ? null : sdkTypeFilter::test,
+                           sdkFilter == null ? null : sdkFilter::test,
+                           suggestedSdkFilter == null ? null : suggestedSdkFilter::test,
+                           creationFilter == null ? null : creationFilter::test,
+                           null);
   }
 
   /**

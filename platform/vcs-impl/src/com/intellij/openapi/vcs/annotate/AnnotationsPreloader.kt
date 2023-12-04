@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.annotate
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
@@ -103,7 +103,7 @@ internal class AnnotationsPreloader(private val project: Project) {
     internal fun isEnabled(): Boolean {
       if (PowerSaveMode.isEnabled()) return false
       val enabledInSettings = if (Registry.`is`("editor.codeVision.new")) {
-        CodeVisionSettings.instance().isProviderEnabled(VcsCodeVisionProvider.id)
+        CodeVisionSettings.getInstance().isProviderEnabled(VcsCodeVisionProvider.id)
       } else {
         false
       }

@@ -38,11 +38,13 @@ public final class InspectionMetaDataDialog extends DialogWrapper {
   private boolean showCleanupOption = false;
 
   public InspectionMetaDataDialog(@NotNull Project project,
+                                  @NotNull String profileName,
                                   @NotNull Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator) {
-    this(project, nameValidator, null, null, null, null);
+    this(project, profileName, nameValidator, null, null, null, null);
   }
 
   public InspectionMetaDataDialog(@NotNull Project project,
+                                  @NotNull String profileName,
                                   @NotNull Function<String, @Nullable @NlsContexts.DialogMessage String> nameValidator,
                                   @NlsSafe String name,
                                   @NlsSafe String description,
@@ -60,7 +62,7 @@ public final class InspectionMetaDataDialog extends DialogWrapper {
     mySuppressIdTextField = new JTextField(suppressId);
     myCleanupCheckbox = new JBCheckBox(InspectionsBundle.message("checkbox.cleanup.inspection"));
     myNameValidator = nameValidator;
-    setTitle(InspectionsBundle.message("dialog.title.user.defined.inspection"));
+    setTitle(InspectionsBundle.message("dialog.title.user.defined.inspection", profileName));
   }
 
   @Override

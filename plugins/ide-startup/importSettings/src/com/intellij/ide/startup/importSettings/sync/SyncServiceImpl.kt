@@ -10,14 +10,14 @@ import com.intellij.ui.JBAccountInfoService
 import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.CoroutineScope
 import java.time.Duration
-import java.util.*
+import java.time.LocalDate
 import javax.swing.Icon
 
 private val logger = logger<SyncServiceImpl>()
 
 private data class ProductInfo(
   override val version: String,
-  override val lastUsage: Date,
+  override val lastUsage: LocalDate,
   override val id: String,
   override val name: String
 ) : Product {

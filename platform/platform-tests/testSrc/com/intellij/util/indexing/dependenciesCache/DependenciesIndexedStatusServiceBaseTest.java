@@ -19,6 +19,8 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.workspace.VirtualFileUrls;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.rules.ProjectModelRule;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -730,7 +732,11 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       List<VirtualFile> actualRoots = new ArrayList<>();
       for (IndexableIteratorBuilder builder : builders) {
         assertInstanceOf(builder, ModuleRootsFileBasedIteratorBuilder.class);
-        actualRoots.addAll(((ModuleRootsFileBasedIteratorBuilder)builder).getFiles().getRoots());
+        List<VirtualFileUrl> urls = ((ModuleRootsFileBasedIteratorBuilder)builder).getFiles().getRoots();
+        for (VirtualFileUrl url : urls) {
+          VirtualFile file = VirtualFileUrls.getVirtualFile(url);
+          actualRoots.add(file);
+        }
       }
       assertContainsElements(actualRoots, roots);
 

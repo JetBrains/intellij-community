@@ -23,6 +23,7 @@ import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.util.VcsLogUtil;
+import com.intellij.vcs.log.visible.CompoundVisibleGraph;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -81,7 +82,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   public void setVisiblePack(@NotNull VisiblePack pack) {
     ThreadingAssertions.assertEventDispatchThread();
 
-    boolean permGraphChanged = myVisiblePack.getDataPack() != pack.getDataPack();
+    boolean permGraphChanged =
+      pack.getVisibleGraph() instanceof CompoundVisibleGraph
+      || myVisiblePack.getDataPack() != pack.getDataPack();
 
     myVisiblePack = pack;
 

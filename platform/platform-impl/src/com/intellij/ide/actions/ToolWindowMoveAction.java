@@ -144,7 +144,8 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
   private final @NotNull Anchor myAnchor;
 
   public ToolWindowMoveAction(@NotNull Anchor anchor) {
-    super(anchor.toString(), null, anchor.getIcon());
+    super(() -> anchor.toString(), null, () -> anchor.getIcon());
+
     myAnchor = anchor;
   }
 
@@ -184,14 +185,14 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     }
 
     @NotNull
-    private List<? extends AnAction> generateActions() {
+    private static List<? extends AnAction> generateActions() {
       return Arrays.stream(Anchor.values())
         .filter(x -> isAllowed(x))
         .map(x -> new ToolWindowMoveAction(x))
         .toList();
     }
 
-    private boolean isAllowed(Anchor anchor) {
+    private static boolean isAllowed(Anchor anchor) {
       if (ExperimentalUI.isNewUI()) {
         return anchor != Anchor.TopLeft && anchor != Anchor.TopRight;
       }

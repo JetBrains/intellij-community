@@ -40,7 +40,7 @@ fun sourceFromPresentation(presentation: LookupElementPresentation): SuggestionS
   return when {
     icon is CachedImageIcon && icon.originalPath == "/icons/codota-color-icon.png" -> SuggestionSource.CODOTA
     typeText == "@tab-nine" -> SuggestionSource.TAB_NINE
-    typeText == "full-line" -> SuggestionSource.INTELLIJ
+    typeText == "Full Line" -> SuggestionSource.INTELLIJ
     else -> SuggestionSource.STANDARD
   }
 }

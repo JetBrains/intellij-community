@@ -76,11 +76,11 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
           val historyBefore = beforePath?.let { fileHistoriesByLastKnownFilePath.remove(it) }
           val fileHistory = (historyBefore ?: MutableLinearGitFileHistory(commitsHashes)).apply {
+            append(previousCommitSha, beforePath)
             append(commitSha, patch)
           }
-          if (afterPath != null) {
-            fileHistoriesByLastKnownFilePath[afterPath] = fileHistory
-          }
+          val path = (afterPath ?: beforePath)!!
+          fileHistoriesByLastKnownFilePath[path] = fileHistory
 
           patch.beforeVersionId = previousCommitSha
           patch.afterVersionId = commitSha
@@ -103,7 +103,7 @@ class GitBranchComparisonResultImpl(private val project: Project,
         val filePath = patch.filePath
         val fileHistory = fileHistoriesBySummaryFilePath[filePath]
         if (fileHistory == null) {
-          LOG.debug("Unable to find file history for cumulative patch for $filePath")
+          LOG.warn("Unable to find file history for cumulative patch for $filePath")
           continue
         }
         patch.beforeVersionId = baseSha
@@ -149,6 +149,31 @@ class GitBranchComparisonResultImpl(private val project: Project,
 
     return beforeName?.let { VcsUtil.getFilePath(vcsRoot, it) } to afterName?.let { VcsUtil.getFilePath(vcsRoot, it) }
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as GitBranchComparisonResultImpl
+
+    if (project != other.project) return false
+    if (vcsRoot != other.vcsRoot) return false
+    if (baseSha != other.baseSha) return false
+    if (mergeBaseSha != other.mergeBaseSha) return false
+    if (headSha != other.headSha) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = project.hashCode()
+    result = 31 * result + vcsRoot.hashCode()
+    result = 31 * result + baseSha.hashCode()
+    result = 31 * result + mergeBaseSha.hashCode()
+    result = 31 * result + headSha.hashCode()
+    return result
+  }
+
 
   companion object {
     private val LOG = logger<GitBranchComparisonResult>()

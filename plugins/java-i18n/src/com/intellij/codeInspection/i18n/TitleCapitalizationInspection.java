@@ -65,7 +65,9 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
                                                titleValue, getCapitalizationName(capitalization));
             }
             else {
-              fix = titleValue.canFix() && element instanceof PsiExpression ? new TitleCapitalizationFix(titleValue, capitalization) : null;
+              fix = titleValue.canFix() &&
+                    (element instanceof PsiExpression || uElement instanceof UCallExpression call && getPropertyArgument(call) != null) ? 
+                    new TitleCapitalizationFix(titleValue, capitalization) : null;
               message = JavaI18nBundle.message("inspection.title.capitalization.description",
                                                titleValue, getCapitalizationName(capitalization));
             }
@@ -184,9 +186,9 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
                                            problemElement);
         literal.replace(newExpression);
       }
-      if (problemElement instanceof PsiMethodCallExpression call) {
+      if (UastContextKt.toUElement(problemElement) instanceof UCallExpression call) {
         final Property property = updater.getWritable(getPropertyArgument(call));
-        Value value = Value.of(property, call.getArgumentList().getExpressionCount() > 1);
+        Value value = Value.of(property, call.getValueArgumentCount() > 1);
         if (value == null) return;
         property.setValue(value.fixCapitalization(myCapitalization));
       }
@@ -209,15 +211,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
         if (variable.hasModifierProperty(PsiModifier.FINAL)) {
           return ObjectUtils.tryCast(variable.getInitializer(), PsiLiteralExpression.class);
         }
-      }
-      return null;
-    }
-
-    @Nullable
-    private static Property getPropertyArgument(PsiMethodCallExpression arg) {
-      PsiExpression[] args = arg.getArgumentList().getExpressions();
-      if (args.length > 0) {
-        return JavaI18nUtil.resolveProperty(args[0]);
       }
       return null;
     }

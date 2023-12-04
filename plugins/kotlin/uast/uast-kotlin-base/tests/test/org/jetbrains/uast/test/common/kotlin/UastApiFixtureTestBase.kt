@@ -142,11 +142,14 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 interface State<out T> {
                     val value: T
                 }
+                
+                typealias NullableString = String?
 
                 @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
                 fun before(
                     i : Int?,
                     s : String?,
+                    ns : NullableString,
                     vararg vs : Any,
                 ): State<String> {
                     return object : State<String> {
@@ -157,6 +160,7 @@ interface UastApiFixtureTestBase : UastPluginSelection {
                 fun after(
                     i : Int?,
                     s : String?,
+                    ns : NullableString,
                     vararg vs : Any,
                 ): State<String> {
                     return object : State<String> {
@@ -208,6 +212,109 @@ interface UastApiFixtureTestBase : UastPluginSelection {
             .orFail("cant convert to UMethod: readCharacteristicAfter")
 
         compareDeprecatedHidden(readBefore, readAfter, NotNull::class.java.name)
+    }
+
+    fun checkTypesOfDeprecatedHiddenProperty_noAccessor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+                    var pOld_noAccessor: String = "42"
+                    var pNew_noAccessor: String = "42"
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val test = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+        compareDeprecatedHiddenProperty(test, NotNull::class.java.name)
+    }
+
+    fun checkTypesOfDeprecatedHiddenProperty_getter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+                    var pOld_getter: String? = null
+                        get() = field ?: "null?"
+                    var pNew_getter: String? = null
+                        get() = field ?: "null?"
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val test = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+        compareDeprecatedHiddenProperty(test, Nullable::class.java.name)
+    }
+
+    fun checkTypesOfDeprecatedHiddenProperty_setter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+                    var pOld_setter: String? = null
+                        set(value) {
+                            if (field == null) {
+                                field = value
+                            }
+                        }
+                    var pNew_setter: String? = null
+                        set(value) {
+                            if (field == null) {
+                                field = value
+                            }
+                        }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val test = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+        compareDeprecatedHiddenProperty(test, Nullable::class.java.name)
+    }
+
+    fun checkTypesOfDeprecatedHiddenProperty_accessors(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "main.kt", """
+                class Test {
+                    @Deprecated(level = DeprecationLevel.HIDDEN, "no more property")
+                    var pOld_accessors: String? = null
+                        get() = field ?: "null?"
+                        set(value) {
+                            if (field == null) {
+                                field = value
+                            }
+                        }
+                    var pNew_accessors: String? = null
+                        get() = field ?: "null?"
+                        set(value) {
+                            if (field == null) {
+                                field = value
+                            }
+                        }
+                }
+            """.trimIndent()
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val test = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
+        compareDeprecatedHiddenProperty(test, Nullable::class.java.name)
+    }
+
+    private fun compareDeprecatedHiddenProperty(test: UClass, nullness: String) {
+        val old_getter = test.methods.find { it.name.startsWith("getPOld") }
+            .orFail("cant find old getter")
+        val old_setter = test.methods.find { it.name.startsWith("setPOld") }
+            .orFail("cant find old setter")
+
+        val new_getter = test.methods.find { it.name.startsWith("getPNew") }
+            .orFail("cant find new getter")
+        val new_setter = test.methods.find { it.name.startsWith("setPNew") }
+            .orFail("cant find new setter")
+
+        compareDeprecatedHidden(old_getter, new_getter, nullness)
+        compareDeprecatedHidden(old_setter, new_setter, nullness)
     }
 
     private fun compareDeprecatedHidden(before: UMethod, after: UMethod, nullness: String) {

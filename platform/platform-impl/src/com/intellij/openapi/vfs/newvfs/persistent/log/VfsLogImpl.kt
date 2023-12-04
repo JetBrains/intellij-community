@@ -19,8 +19,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteAr
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode.*
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.ExtendedVfsSnapshot
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.SystemProperties
-import com.intellij.util.childScope
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.delete

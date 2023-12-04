@@ -4,7 +4,7 @@ package com.intellij.util;
 import org.jetbrains.annotations.NotNull;
 
 public interface KeyedLazyInstance<T> {
-  String getKey();
+  @NotNull String getKey();
 
   @NotNull
   T getInstance();

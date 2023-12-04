@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
+import com.intellij.ide.ui.AntiFlickeringPanel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.SelectionEvent;
@@ -79,6 +80,13 @@ public abstract class XVariablesViewBase extends XDebugView {
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();
+    Container treeParent = tree.getParent();
+    if (treeParent instanceof AntiFlickeringPanel antiFlickeringPanel) {
+      int delay = Registry.intValue("debugger.anti.flickering.delay", 0);
+      if (delay > 0) {
+        antiFlickeringPanel.freezePainting(delay);
+      }
+    }
     tree.setSourcePosition(position);
     createNewRootNode(stackFrame);
     XVariablesView.InlineVariablesInfo.set(getSession(tree), new XVariablesView.InlineVariablesInfo());

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.MultiMap
@@ -18,12 +19,13 @@ import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.impl.facade.*
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.isAncestor
-import com.intellij.vcsUtil.VcsFileUtil
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.BiConsumer
 
+@ApiStatus.Internal
 class FileHistory internal constructor(val commitsToPathsMap: Map<Int, MaybeDeletedFilePath>,
                                        internal val processedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
                                        internal val unmatchedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
@@ -445,6 +447,7 @@ internal class Rename(val parentPath: FilePath, val childPath: FilePath, val par
   }
 }
 
+@ApiStatus.Internal
 class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
   constructor(filePath: FilePath) : this(filePath, false)
 
@@ -493,6 +496,6 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 }
 
 @JvmField
-internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = VcsFileUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
+internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
 data class EdgeData<T>(@JvmField val parent: T, @JvmField val child: T)

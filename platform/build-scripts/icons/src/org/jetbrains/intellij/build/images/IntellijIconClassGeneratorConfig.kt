@@ -80,6 +80,16 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
 
       "intellij.protoeditor.core" -> IntellijIconClassGeneratorModuleConfig(className = "ProtoeditorCoreIcons", packageName = "com.intellij.protobuf")
 
+      "intellij.ide.startup.importSettings" -> IntellijIconClassGeneratorModuleConfig(
+        className = "StartupImportIcons",
+        packageName = "com.intellij.ide.startup.importSettings"
+      )
+
+      "intellij.pest" -> IntellijIconClassGeneratorModuleConfig(
+        className = "PestIcons",
+        packageName = "com.pestphp.pest"
+      )
+
       else -> super.getConfigForModule(moduleName)
     }
   }

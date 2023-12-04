@@ -31,6 +31,7 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
 
   // Leave the folder locked until we exit. Store reference to keep CleanerFactory from releasing the file channel.
   @SuppressWarnings("unused") private static FileLock ourConfigLock;
+  private static volatile boolean enabled;
 
   @Override
   public CustomPaths customizePaths() {
@@ -83,8 +84,12 @@ public final class PerProcessPathCustomizer implements PathCustomizer {
       e.printStackTrace();
     }
     Path startupScriptDir = PathManager.getSystemDir().resolve("startup-script");
-
+    enabled = true;
     return new CustomPaths(newConfig.toString(), newSystem.toString(), PathManager.getPluginsPath(), newLog.toString(), startupScriptDir);
+  }
+
+  public static boolean isEnabled() {
+    return enabled;
   }
 
   private static @Nullable Path computeLogDirPath(Path baseLogDir, int directoryCounter) {

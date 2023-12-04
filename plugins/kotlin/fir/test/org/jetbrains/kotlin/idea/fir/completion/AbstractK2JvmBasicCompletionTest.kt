@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.fir.completion
 
 import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTestBase
-import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 import org.jetbrains.kotlin.idea.completion.test.firFileName
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.test.utils.IgnoreTests
@@ -13,9 +12,6 @@ abstract class AbstractK2JvmBasicCompletionTest : AbstractJvmBasicCompletionTest
     override val captureExceptions: Boolean = false
 
     override fun isFirPlugin(): Boolean = true
-
-    override val ignoreProperties: Collection<String> =
-        listOf(ExpectedCompletionUtils.CompletionProposal.PRESENTATION_TEXT_ATTRIBUTES)
 
     override fun fileName(): String = firFileName(super.fileName(), testDataDirectory)
 

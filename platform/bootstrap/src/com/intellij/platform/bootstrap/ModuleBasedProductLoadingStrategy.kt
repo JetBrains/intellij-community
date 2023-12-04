@@ -3,6 +3,7 @@ package com.intellij.platform.bootstrap
 
 import com.intellij.ide.plugins.*
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.runtime.repository.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleGroup
 import com.intellij.platform.runtime.repository.RuntimeModuleId
@@ -71,14 +72,26 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
   private fun loadPluginDescriptorFromRuntimeModule(pluginModuleGroup: RuntimeModuleGroup,
                                                     context: DescriptorListLoadingContext,
                                                     zipFilePool: ZipFilePool?): IdeaPluginDescriptorImpl? {
-    val resourceRoots = pluginModuleGroup.includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }
-    val resourceRoot = resourceRoots.singleOrNull()  
-                       ?: error("Plugins with multiple resource roots aren't supported for now, so '${pluginModuleGroup}' ($resourceRoots) cannot be loaded")
-    return if (Files.isDirectory(resourceRoot)) {
+    val includedModules = pluginModuleGroup.includedModules
+    //we rely on the fact that PluginXmlReader.loadPluginModules adds the main module to the beginning of the list  
+    val mainModule = includedModules.firstOrNull()
+    if (mainModule == null) {
+      thisLogger().warn("No modules are included in $pluginModuleGroup, the plugin won't be loaded")
+      return null
+    }
+    
+    val mainResourceRoot = mainModule.moduleDescriptor.resourceRootPaths.singleOrNull()
+    if (mainResourceRoot == null) {
+      thisLogger().warn("Main plugin module must have single resource root, so '${mainModule.moduleDescriptor.moduleId.stringId}' with roots ${mainModule.moduleDescriptor.resourceRootPaths} won't be loaded")
+      return null
+    }
+
+    val allResourceRoots = includedModules.flatMapTo(LinkedHashSet()) { it.moduleDescriptor.resourceRootPaths }.toList()
+    val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       loadDescriptorFromDir(
-        file = resourceRoot,
+        file = mainResourceRoot,
         descriptorRelativePath = PluginManagerCore.PLUGIN_XML_PATH,
-        pluginPath = resourceRoot,
+        pluginPath = mainResourceRoot,
         context = context,
         isBundled = true,
         isEssential = false,
@@ -88,19 +101,19 @@ class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeMo
     }
     else {
       loadDescriptorFromJar(
-        file = resourceRoot,
+        file = mainResourceRoot,
         fileName = PluginManagerCore.PLUGIN_XML,
-        pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+        pathResolver = ModuleBasedPluginXmlPathResolver(allResourceRoots, includedModules),
         parentContext = context,
         isBundled = true,
         isEssential = false,
         useCoreClassLoader = false,
-        pluginPath = resourceRoot.parent.parent,
+        pluginPath = mainResourceRoot.parent.parent,
         pool = zipFilePool
-      ).also {
-        it?.jarFiles = listOf(resourceRoot)
-      }
+      )
     }
+    descriptor?.jarFiles = allResourceRoots
+    return descriptor
   }
 
   override val shouldLoadDescriptorsFromCoreClassPath: Boolean

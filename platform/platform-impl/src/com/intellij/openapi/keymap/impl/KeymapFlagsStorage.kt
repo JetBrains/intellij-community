@@ -10,7 +10,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 private val logger = logger<KeymapFlagsStorage>()
 
 class KeymapFlagsStorageListener : KeymapManagerListener {
-  private val mgr get() = service<KeymapFlagsStorage>()
+  private val mgr get() = KeymapFlagsStorage.getInstance()
 
   override fun shortcutChanged(keymap: Keymap, actionId: String, fromSettings: Boolean): Unit = mgr.removeOutdatedFlags(keymap, actionId, fromSettings)
   override fun keymapRemoved(keymap: Keymap): Unit = mgr.removeFlagsForKeymap(keymap)

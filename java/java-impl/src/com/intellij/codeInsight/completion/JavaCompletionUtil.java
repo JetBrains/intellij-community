@@ -820,7 +820,7 @@ public final class JavaCompletionUtil {
           return isPartOfLambda(token) ? null : token;
         }
 
-        private boolean isPartOfLambda(PsiElement token) {
+        private static boolean isPartOfLambda(PsiElement token) {
           return token != null && token.getParent() instanceof PsiExpressionList &&
                  PsiUtilCore.getElementType(PsiTreeUtil.nextVisibleLeaf(token.getParent())) == JavaTokenType.ARROW;
         }

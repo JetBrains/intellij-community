@@ -110,7 +110,7 @@ class ConditionColumn(
         val panel = createPopupPanel(content, actions)
         return JBPopupFactory.getInstance()
           .createComponentPopupBuilder(panel, null)
-          .setMinSize(Dimension(JBUI.scale(350), JBUI.scale(275)))
+          .setMinSize(Dimension(JBUI.scale(350), JBUI.scale(20)))
           .setRequestFocus(true)
           .addListener(object : JBPopupListener {
             override fun beforeShown(event: LightweightWindowEvent) {
@@ -126,7 +126,7 @@ class ConditionColumn(
 
       private fun createContentPanel() = panel {
         buttonsGroup(ExecutionBundle.message("run.configurations.multilaunch.condition.launch.when"), indent = true) {
-          ConditionTemplate.EP_NAME.getExtensionList(viewModel.project).forEach { template ->
+          ConditionTemplate.EP_NAME.extensionList.forEach { template ->
             val rowCondition = executableRow.condition
             val condition = when {
               rowCondition != null && template.type == rowCondition.template.type -> rowCondition

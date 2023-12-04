@@ -1,14 +1,11 @@
 package com.intellij.execution.multilaunch.execution.executables
 
-import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.execution.multilaunch.MultiLaunchConfiguration
+import com.intellij.execution.multilaunch.execution.executables.impl.RunConfigurationExecutableManager
+import com.intellij.execution.multilaunch.state.ExecutableSnapshot
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.execution.multilaunch.MultiLaunchConfiguration
-import com.intellij.execution.multilaunch.execution.executables.ExecutableTemplate
-import com.intellij.execution.multilaunch.execution.executables.TaskExecutableTemplate
-import com.intellij.execution.multilaunch.execution.executables.impl.RunConfigurationExecutableManager
-import com.intellij.execution.multilaunch.state.ExecutableSnapshot
 import java.util.*
 
 @Service(Service.Level.PROJECT)
@@ -21,14 +18,14 @@ class ExecutableFactory(private val project: Project) {
   fun create(configuration: MultiLaunchConfiguration, snapshot: ExecutableSnapshot): Executable? {
     val templates = buildList {
       add(RunConfigurationExecutableManager.getInstance(project))
-      addAll(TaskExecutableTemplate.EP_NAME.getExtensionList(project))
+      addAll(TaskExecutableTemplate.EP_NAME.extensionList)
     }.associateBy { it.type }
 
     val (type, executableId) = snapshot.id?.split(":", limit = 2) ?: return null
     val template = templates[type] ?: return null
-    return template.createExecutable(configuration, executableId)?.apply { loadAttributes(snapshot) }
+    return template.createExecutable(project, configuration, executableId)?.apply { loadAttributes(snapshot) }
   }
 
-  fun create(configuration: MultiLaunchConfiguration, template: ExecutableTemplate) = template.createExecutable(configuration, generateUniqueId())
+  fun create(configuration: MultiLaunchConfiguration, template: ExecutableTemplate) = template.createExecutable(project, configuration, generateUniqueId())
 }
 

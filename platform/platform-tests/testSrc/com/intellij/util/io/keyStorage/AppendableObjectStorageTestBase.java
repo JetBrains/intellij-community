@@ -24,7 +24,7 @@ public abstract class AppendableObjectStorageTestBase<V> {
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private AppendableObjectStorage<V> appendableStorage;
+  protected AppendableObjectStorage<V> appendableStorage;
 
 
   // ================= simple single-value tests: =====================================================
@@ -70,28 +70,25 @@ public abstract class AppendableObjectStorageTestBase<V> {
     V valueAppended = generateValue();
 
 
+    final int valueIdAppended;
     appendableStorage.lockWrite();
     try {
-      int valueIdAppended = appendableStorage.append(valueAppended);
-
-      //RC: must flush data before .processAll()!
-      appendableStorage.force();
-
-      List<Pair<Integer, V>> valuesAndValueIds = new ArrayList<>();
-      appendableStorage.processAll((valueId, value) -> {
-        valuesAndValueIds.add(Pair.pair(valueId, value));
-        return true;
-      });
-
-      assertThat(
-        "Value appended must be read back as-is by .processAll()",
-        valuesAndValueIds,
-        contains(Pair.pair(valueIdAppended, valueAppended))
-      );
+      valueIdAppended = appendableStorage.append(valueAppended);
     }
     finally {
       appendableStorage.unlockWrite();
     }
+    List<Pair<Integer, V>> valuesAndValueIds = new ArrayList<>();
+    appendableStorage.processAll((valueId, value) -> {
+      valuesAndValueIds.add(Pair.pair(valueId, value));
+      return true;
+    });
+
+    assertThat(
+      "Value appended must be read back as-is by .processAll()",
+      valuesAndValueIds,
+      contains(Pair.pair(valueIdAppended, valueAppended))
+    );
   }
 
   // ================= multi-value property-based tests: ===========================================

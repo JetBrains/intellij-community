@@ -26,6 +26,7 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
             psiFile is KtFile ->
                 when {
                     psiFile.isCompiled -> FileHighlightingSetting.SKIP_INSPECTION
+                    psiFile.isScript() -> null
                     RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
                     else -> null
                 }

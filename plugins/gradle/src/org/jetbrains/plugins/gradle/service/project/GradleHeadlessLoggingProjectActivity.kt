@@ -11,7 +11,6 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.awaitCancellationAndInvoke
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gradle.GradleWarmupConfigurator
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager
 
@@ -44,20 +43,16 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
       }
     })
     progressManager.addNotificationListener(listener)
-    scope.launch {
-      awaitCancellationAndInvoke {
-        progressManager.removeNotificationListener(listener)
-      }
+    scope.awaitCancellationAndInvoke {
+      progressManager.removeNotificationListener(listener)
     }
   }
 
   private fun addStateNotificationListener(project: Project, progressManager: ExternalSystemProgressNotificationManager) {
     val notificationListener = GradleWarmupConfigurator.StateNotificationListener(project, scope)
     progressManager.addNotificationListener(notificationListener)
-    scope.launch {
-      awaitCancellationAndInvoke {
-        progressManager.removeNotificationListener(notificationListener)
-      }
+    scope.awaitCancellationAndInvoke {
+      progressManager.removeNotificationListener(notificationListener)
     }
   }
 
@@ -66,10 +61,8 @@ class GradleHeadlessLoggingProjectActivity(val scope: CoroutineScope) : ProjectA
     val externalAnnotationsProgressListener = GradleWarmupConfigurator.StateExternalAnnotationNotificationListener()
 
     externalAnnotationsNotificationManager.addNotificationListener(externalAnnotationsProgressListener)
-    scope.launch {
-      awaitCancellationAndInvoke {
-        externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
-      }
+    scope.awaitCancellationAndInvoke {
+      externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
     }
   }
 }

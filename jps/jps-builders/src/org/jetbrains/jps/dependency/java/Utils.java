@@ -6,25 +6,34 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.diff.DiffCapable;
+import org.jetbrains.jps.dependency.impl.Containers;
 import org.jetbrains.jps.javac.Iterators;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-public final class Utils {
-  public static final String OBJECT_CLASS_NAME = "java/lang/Object";
+import static org.jetbrains.jps.javac.Iterators.*;
 
+public final class Utils {
+
+  private final @NotNull DifferentiateContext myContext;
   private final @NotNull Graph myGraph;
-  
   private final @Nullable Graph myDelta;
 
   private final @NotNull BackDependencyIndex myDirectSubclasses;
 
-  public Utils(Graph graph, @Nullable Graph delta) {
-    myGraph = graph;
-    myDelta = delta;
-    myDirectSubclasses = Objects.requireNonNull(graph.getIndex(SubclassesIndex.NAME));
+  public Utils(@NotNull DifferentiateContext context, boolean isDelta) {
+    myContext = context;
+    myGraph = context.getGraph();
+    myDelta = isDelta? context.getDelta() : null;
+    myDirectSubclasses = Objects.requireNonNull(myGraph.getIndex(SubclassesIndex.NAME));
+  }
+
+  public Iterable<NodeSource> getNodeSources(ReferenceID nodeId) {
+    Iterable<NodeSource> sources = myDelta != null? myDelta.getSources(nodeId) : null;
+    return sources != null? sources : filter(myGraph.getSources(nodeId), myContext.getParams().affectionFilter()::test);
   }
 
   public Iterable<JvmClass> getClassesByName(@NotNull String name) {
@@ -40,6 +49,7 @@ public final class Utils {
     if (id instanceof JvmNodeReferenceID) {
       return ((JvmNodeReferenceID)id).getNodeName();
     }
+    //noinspection unchecked
     Iterable<JVMClassNode> nodes = getNodes(id, JVMClassNode.class);
     for (var node : nodes) {
       return node.getName();
@@ -47,19 +57,21 @@ public final class Utils {
     return null;
   }
 
-  // test if a ClassRepr is a SAM interface
+  // test if a JvmClass is a SAM interface
   public boolean isLambdaTarget(ReferenceID classId) {
-    for (JvmClass cls : getNodes(classId, JvmClass.class)) {
-      if (cls.isInterface()) {
-        int amFound = 0;
-        for (JvmMethod method : allMethodsRecursively(cls)) {
-          if (method.isAbstract() && ++amFound > 1) {
-            break;
-          }
+    return !isEmpty(filter(getNodes(classId, JvmClass.class), this::isLambdaTarget));
+  }
+
+  public boolean isLambdaTarget(JvmClass cls) {
+    if (cls.isInterface()) {
+      int amFound = 0;
+      for (JvmMethod method : allMethodsRecursively(cls)) {
+        if (method.isAbstract() && ++amFound > 1) {
+          break;
         }
-        if (amFound == 1) {
-          return true;
-        }
+      }
+      if (amFound == 1) {
+        return true;
       }
     }
     return false;
@@ -67,11 +79,9 @@ public final class Utils {
 
   // return all methods of this class including all inherited methods recursively
   public Iterable<JvmMethod> allMethodsRecursively(JvmClass cls) {
-    return Iterators.flat(collectRecursively(cls, c -> c.getMethods()));
-  }
-
-  private <T> Iterable<T> collectRecursively(JvmClass cls, Function<? super JvmClass, ? extends T> mapper) {
-    return Iterators.map(Iterators.recurse(cls, c -> Iterators.flat(Iterators.map(c.getSuperTypes(), st -> getClassesByName(st))), true), mapper::apply);
+    return flat(
+      map(recurse(cls, c -> flat(map(c.getSuperTypes(), st -> getClassesByName(st))), true), c -> c.getMethods())
+    );
   }
 
   /**
@@ -82,80 +92,121 @@ public final class Utils {
     if (id instanceof JvmNodeReferenceID && "".equals(((JvmNodeReferenceID)id).getNodeName())) {
       return Collections.emptyList();
     }
+    Predicate<? super NodeSource> srcFilter = myContext.getParams().affectionFilter();
     Iterable<T> allNodes;
     if (myDelta != null) {
-      Set<NodeSource> deltaSources = Iterators.collect(myDelta.getSources(id), new HashSet<>());
-      allNodes = Iterators.flat(
-        Iterators.flat(Iterators.map(deltaSources, src -> myDelta.getNodes(src, selector))), Iterators.flat(Iterators.map(Iterators.filter(myGraph.getSources(id), src -> !deltaSources.contains(src)), src -> myGraph.getNodes(src, selector)))
+      Set<NodeSource> deltaSources = collect(myDelta.getSources(id), new HashSet<>());
+      allNodes = flat(
+        flat(map(deltaSources, src -> myDelta.getNodes(src, selector))), flat(map(filter(myGraph.getSources(id), src -> !deltaSources.contains(src) && srcFilter.test(src)), src -> myGraph.getNodes(src, selector)))
       );
     }
     else {
-      allNodes = Iterators.flat(Iterators.map(myGraph.getSources(id), src -> myGraph.getNodes(src, selector)));
+      allNodes = flat(map(filter(myGraph.getSources(id), srcFilter::test), src -> myGraph.getNodes(src, selector)));
     }
-    return Iterators.unique(Iterators.filter(allNodes, n -> id.equals(n.getReferenceID())));
+    return uniqueBy(filter(allNodes, n -> id.equals(n.getReferenceID())), () -> new Iterators.BooleanFunction<>() {
+      Set<T> visited;
+      @Override
+      public boolean fun(T t) {
+        if (visited == null) {
+          visited = Containers.createCustomPolicySet(DiffCapable::isSame, DiffCapable::diffHashCode);
+        }
+        return visited.add(t);
+      }
+    });
   }
 
   public Iterable<JvmNodeReferenceID> allDirectSupertypes(JvmNodeReferenceID classId) {
-    return Iterators.unique(Iterators.flat(Iterators.map(getNodes(classId, JvmClass.class), cl -> Iterators.map(cl.getSuperTypes(), st -> new JvmNodeReferenceID(st)))));
+    return unique(flat(map(getNodes(classId, JvmClass.class), cl -> map(cl.getSuperTypes(), st -> new JvmNodeReferenceID(st)))));
   }
 
   public Iterable<JvmNodeReferenceID> allSupertypes(JvmNodeReferenceID classId) {
     //return Iterators.recurseDepth(className, s -> allDirectSupertypes(s), false);
-    return Iterators.recurse(classId, s -> allDirectSupertypes(s), false);
+    return recurse(classId, s -> allDirectSupertypes(s), false);
   }
 
   @NotNull
   public Iterable<ReferenceID> withAllSubclasses(ReferenceID from) {
-    return Iterators.recurse(from, myDirectSubclasses::getDependencies, true);
+    return recurse(from, myDirectSubclasses::getDependencies, true);
   }
 
   @NotNull
   public Iterable<ReferenceID> allSubclasses(ReferenceID from) {
-    return Iterators.recurse(from, myDirectSubclasses::getDependencies, false);
+    return recurse(from, myDirectSubclasses::getDependencies, false);
   }
 
-  public Set<JvmNodeReferenceID> collectSubclassesWithoutField(JvmNodeReferenceID classId, String fieldName) {
-    return collectSubclassesWithoutMember(classId, f -> fieldName.equals(f.getName()), cls -> cls.getFields());
+  public Set<JvmNodeReferenceID> collectSubclassesWithoutField(JvmNodeReferenceID classId, JvmField field) {
+    return collectSubclassesWithoutMember(classId, f -> Objects.equals(field.getName(), f.getName()), JvmClass::getFields);
   }
 
   public Set<JvmNodeReferenceID> collectSubclassesWithoutMethod(JvmNodeReferenceID classId, JvmMethod method) {
-    return collectSubclassesWithoutMember(classId, m -> method.equals(m), cls -> cls.getMethods());
+    return collectSubclassesWithoutMember(classId, method::isSame, JvmClass::getMethods);
   }
 
   // propagateMemberAccess
   private <T extends ProtoMember> Set<JvmNodeReferenceID> collectSubclassesWithoutMember(JvmNodeReferenceID classId, Predicate<? super T> isSame, Function<JvmClass, Iterable<T>> membersGetter) {
-    Predicate<ReferenceID> containsMember = id -> Iterators.isEmpty(Iterators.filter(getNodes(id, JvmClass.class), cls -> Iterators.isEmpty(Iterators.filter(membersGetter.apply(cls), isSame::test))));
+    Predicate<ReferenceID> containsMember = id -> isEmpty(filter(getNodes(id, JvmClass.class), cls -> isEmpty(filter(membersGetter.apply(cls), isSame::test))));
     //stop further traversal, if nodes corresponding to the subclassName contain matching member
-    Set<JvmNodeReferenceID> result = collectNodeData(
+    Iterable<JvmNodeReferenceID> result = getNodesData(
       (ReferenceID)classId,
       id -> myDirectSubclasses.getDependencies(id),
       id -> id instanceof JvmNodeReferenceID && !containsMember.test(id)? (JvmNodeReferenceID)id : null,
       Objects::nonNull,
-      false,
-      new HashSet<>()
+      false
     );
-    result.remove(null);
-    return result;
+    return collect(filter(result, notNullFilter()), new HashSet<>());
+  }
+
+  public Iterable<Pair<JvmClass, JvmField>> getOverriddenFields(JvmClass fromCls, JvmField field) {
+    Function<JvmClass, Iterable<Pair<JvmClass, JvmField>>> dataGetter = cl -> collect(
+      map(filter(cl.getFields(), f -> Objects.equals(f.getName(), field.getName()) && isVisibleInHierarchy(cl, f, fromCls)), ff -> Pair.create(cl, ff)),
+      new SmartList<>()
+    );
+    return flat(
+      getNodesData(fromCls, cl -> flat(map(cl.getSuperTypes(), st -> getClassesByName(st))), dataGetter, result -> isEmpty(result), false)
+    );
   }
 
   public Iterable<Pair<JvmClass, JvmMethod>> getOverriddenMethods(JvmClass fromCls, Predicate<JvmMethod> searchCond) {
-    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cl -> Iterators.collect(
-      Iterators.map(Iterators.filter(cl.getMethods(), m -> searchCond.test(m) && isVisibleIn(cl, m, fromCls)), mm -> Pair.create(cl, mm)),
+    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cl -> collect(
+      map(filter(cl.getMethods(), m -> searchCond.test(m) && isVisibleInHierarchy(cl, m, fromCls)), mm -> Pair.create(cl, mm)),
       new SmartList<>()
     );
-    // todo: previous implementation also added a mock pair(null, null), if no nodes were found in the graph for a given superclass name
-    return Iterators.flat(
-      collectNodeData(fromCls, cl -> Iterators.flat(Iterators.map(cl.getSuperTypes(), st -> getNodes(new JvmNodeReferenceID(st), JvmClass.class))), dataGetter, result -> Iterators.isEmpty(result), false, new SmartList<>())
+    return flat(
+      getNodesData(fromCls, cl -> flat(map(cl.getSuperTypes(), st -> getClassesByName(st))), dataGetter, result -> isEmpty(result), false)
     );
   }
 
   public Iterable<Pair<JvmClass, JvmMethod>> getOverridingMethods(JvmClass fromCls, JvmMethod method, Predicate<JvmMethod> searchCond) {
-    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cl -> isVisibleIn(fromCls, method, cl)? Iterators.collect(
-      Iterators.map(Iterators.filter(cl.getMethods(), searchCond::test), mm -> Pair.create(cl, mm)),
+    Function<JvmClass, Iterable<Pair<JvmClass, JvmMethod>>> dataGetter = cl -> isVisibleInHierarchy(fromCls, method, cl)? collect(
+      map(filter(cl.getMethods(), searchCond::test), mm -> Pair.create(cl, mm)),
       new SmartList<>()
     ) : Collections.emptyList();
-    return Iterators.flat(
-      collectNodeData(fromCls, cl -> Iterators.flat(Iterators.map(myDirectSubclasses.getDependencies(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> Iterators.isEmpty(result), false, new SmartList<>())
+    return flat(
+      getNodesData(fromCls, cl -> flat(map(myDirectSubclasses.getDependencies(cl.getReferenceID()), st -> getNodes(st, JvmClass.class))), dataGetter, result -> isEmpty(result), false)
+    );
+  }
+
+  public static final class OverloadDescriptor {
+    final JVMFlags accessScope;
+    final JvmMethod overloadMethod;
+    final JvmClass owner;
+
+    OverloadDescriptor(JVMFlags accessScope, JvmMethod overloadMethod, JvmClass owner) {
+      this.accessScope = accessScope;
+      this.overloadMethod = overloadMethod;
+      this.owner = owner;
+    }
+  }
+
+  public Iterable<OverloadDescriptor> findAllOverloads(final JvmClass cls, Function<? super JvmMethod, JVMFlags> correspondenceFinder) {
+    Function<JvmClass, Iterable<OverloadDescriptor>> mapper = c -> filter(map(c.getMethods(), m -> {
+      JVMFlags accessScope = correspondenceFinder.apply(m);
+      return accessScope != null? new OverloadDescriptor(accessScope, m, c) : null;
+    }), notNullFilter());
+
+    return flat(
+      flat(map(recurse(cls, cl -> flat(map(cl.getSuperTypes(), st -> getClassesByName(st))), true), cl -> mapper.apply(cl))),
+      flat(map(allSubclasses(cls.getReferenceID()), id -> flat(map(getNodes(id, JvmClass.class), cl -> mapper.apply(cl)))))
     );
   }
 
@@ -164,29 +215,45 @@ public final class Utils {
    Further traversal for the current "subtree" stops, if the continuationCon predicate is 'false' for the dataGetter's result obtained on the subtree's root.
    Collected data is stored to the specified container
    */
-  private static <N, V, C extends Collection<? super V>> C collectNodeData(
-    N fromNode, Function<? super N, ? extends Iterable<? extends N>> step, Function<N, V> dataGetter, Predicate<V> continuationCond, boolean includeHead, C acc
+  private static <N, V> Iterable<V> getNodesData(
+    N fromNode, Function<? super N, ? extends Iterable<? extends N>> step, Function<N, V> dataGetter, Predicate<V> continuationCond, boolean includeHead
   ) {
     Function<N, V> mapper = cachingFunction(dataGetter);
-    return Iterators.collect(
-      Iterators.map(Iterators.recurseDepth(fromNode, node -> fromNode.equals(node) || continuationCond.test(mapper.apply(node))? step.apply(node): Collections.emptyList(), includeHead), mapper::apply),
-      acc
-    );
+    return map(recurseDepth(fromNode, node -> fromNode.equals(node) || continuationCond.test(mapper.apply(node))? step.apply(node): Collections.emptyList(), includeHead), mapper::apply);
   }
 
   public boolean hasOverriddenMethods(JvmClass cls, JvmMethod method) {
-    return !Iterators.isEmpty(getOverriddenMethods(cls, method::isSame)); // todo: ignore mock pair, if any
+    return !isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules)) || inheritsFromLibraryClass(cls) /*assume the method can override some method from the library*/;
   }
 
+  boolean isFieldVisible(final JvmClass cls, final JvmField field) {
+    return !isEmpty(filter(cls.getFields(), field::isSame)) || !isEmpty(getOverriddenFields(cls, field));
+  }
+  
   boolean isMethodVisible(final JvmClass cls, final JvmMethod method) {
-    return !Iterators.isEmpty(Iterators.filter(cls.getMethods(), method::isSame)) || hasOverriddenMethods(cls, method);
+    return !isEmpty(filter(cls.getMethods(), method::isSameByJavaRules)) || !isEmpty(getOverriddenMethods(cls, method::isSameByJavaRules));
   }
 
-  // tests visibility within a class hierarchy
-  private static boolean isVisibleIn(final JvmClass cls, final ProtoMember member, final JvmClass scope) {
-    final boolean privacy = member.isPrivate() && !Objects.equals(cls.getName(), scope.getName());
-    final boolean packageLocality = member.isPackageLocal() && !Objects.equals(cls.getPackageName(), scope.getPackageName());
-    return !privacy && !packageLocality;
+  private boolean isVisibleInHierarchy(final JvmClass cls, final ProtoMember clsMember, final JvmClass subClass) {
+    // optimized version, allows skipping isInheritor check
+    return clsMember.isProtected() || isVisibleIn(cls, clsMember, subClass);
+  }
+
+  public boolean isVisibleIn(final JvmClass cls, final ProtoMember clsMember, final JvmClass scope) {
+    if (clsMember.isPrivate()) {
+      return Objects.equals(cls.getReferenceID(), scope.getReferenceID());
+    }
+    if (clsMember.isPackageLocal()) {
+      return Objects.equals(cls.getPackageName(), scope.getPackageName());
+    }
+    if (clsMember.isProtected()) {
+      return Objects.equals(cls.getPackageName(), scope.getPackageName()) || isInheritorOf(scope, cls);
+    }
+    return true;
+  }
+
+  public boolean isInheritorOf(JvmClass who, JvmClass whom) {
+    return !isEmpty(filter(recurseDepth(who, cl -> flat(map(who.getSuperTypes(), st -> getClassesByName(st))), true), cl -> cl.getReferenceID().equals(whom.getReferenceID())));
   }
 
   public boolean inheritsFromLibraryClass(JvmClass cls) {
@@ -206,7 +273,7 @@ public final class Utils {
   }
 
   public @Nullable Boolean isInheritorOf(JvmNodeReferenceID who, final JvmNodeReferenceID whom) {
-    if (who.equals(whom) || !Iterators.isEmpty(Iterators.filter(allSupertypes(who), st -> st.equals(whom)))) {
+    if (who.equals(whom) || !isEmpty(filter(allSupertypes(who), st -> st.equals(whom)))) {
       return Boolean.TRUE;
     }
     return null;
@@ -249,7 +316,7 @@ public final class Utils {
 
       final String descr = whom.getDescriptor();
 
-      if (descr.equals("Ljava/lang/Cloneable") || descr.equals("Ljava/lang/Object") || descr.equals("Ljava/io/Serializable")) {
+      if ("Ljava/lang/Cloneable;".equals(descr) || "Ljava/lang/Object;".equals(descr) || "Ljava/io/Serializable;".equals(descr)) {
         return Boolean.TRUE;
       }
 
@@ -263,76 +330,21 @@ public final class Utils {
     return Boolean.FALSE;
   }
 
-
-  public boolean incrementalDecision(DifferentiateContext context, JvmClass owner, @Nullable JvmField field) {
-    // Public branch --- hopeless
-
-    if ((field != null? field : owner).isPublic()) {
-      debug("Public access, switching to a non-incremental mode");
-      return false;
-    }
-
-    // Protected branch
-
-    Set<NodeSource> toRecompile = new HashSet<>();
-    if ((field != null? field : owner).isProtected()) {
-      debug("Protected access, softening non-incremental decision: adding all relevant subclasses for a recompilation");
-      debug("Root class: " + owner.getName());
-
-      Set<JvmNodeReferenceID> propagated;
-      if (field != null) {
-        propagated = collectSubclassesWithoutField(owner.getReferenceID(), field.getName());
-      }
-      else {
-        JvmNodeReferenceID ownerID = owner.getReferenceID();
-        propagated = new HashSet<>();
-        for (ReferenceID id : withAllSubclasses(ownerID)) {
-          if (id instanceof JvmNodeReferenceID && !id.equals(ownerID)) {
-            propagated.add((JvmNodeReferenceID)id);
-          }
-        }
-      }
-      Iterators.collect(Iterators.flat(Iterators.map(propagated, id -> myGraph.getSources(id))), toRecompile);
-    }
-
-    // Package-local branch
-
-    String packageName = owner.getPackageName();
-    debug("Softening non-incremental decision: adding all package classes for a recompilation");
-    debug("Package name: " + packageName);
-
-    Iterators.collect(Iterators.flat(Iterators.map(
-      Iterators.filter(myGraph.getRegisteredNodes(), id -> id instanceof JvmNodeReferenceID && packageName.equals(JvmClass.getPackageName(((JvmNodeReferenceID)id).getNodeName()))),
-      id -> myGraph.getSources(id)
-    )), toRecompile);
-
-    for (NodeSource source : Iterators.filter(toRecompile, s -> !context.isCompiled(s) && !context.getDelta().getDeletedSources().contains(s))) {
-      context.affectNodeSource(source);
-    }
-
-    return true;
-  }
-
-  private void debug(String message) {
-    // todo
-  }
-
-  private static <T> Predicate<T> cachingPredicate(Predicate<? super T> pred) {
-    return new Predicate<>() {
-      private final Map<T, Boolean> cache = new HashMap<>();
-      @Override
-      public boolean test(T obj) {
-        return cache.computeIfAbsent(obj, pred::test);
-      }
-    };
-  }
   private static <K, V> Function<K, V> cachingFunction(Function<K, V> f) {
-    return new Function<>() {
-      private final Map<K, V> cache = new HashMap<>();
+    Map<K, V> cache = new HashMap<>();
+    return k -> cache.computeIfAbsent(k, f);
+  }
+
+  public static <V> Iterators.Provider<V> lazyValue(Iterators.Provider<V> provider) {
+    return new Iterators.Provider<>() {
+      private Object[] computed;
+
       @Override
-      public V apply(K k) {
-        return cache.computeIfAbsent(k, f);
+      public V get() {
+        //noinspection unchecked
+        return computed == null? (V)(computed = new Object[] {provider.get()})[0] : (V)computed[0];
       }
     };
   }
+
 }

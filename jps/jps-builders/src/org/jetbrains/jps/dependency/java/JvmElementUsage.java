@@ -2,19 +2,31 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.dependency.ReferenceID;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Usage;
+
+import java.io.IOException;
 
 abstract class JvmElementUsage implements Usage {
 
-  private final @NotNull ReferenceID myOwner;
+  private final @NotNull JvmNodeReferenceID myOwner;
 
-  JvmElementUsage(@NotNull ReferenceID owner) {
+  JvmElementUsage(@NotNull JvmNodeReferenceID owner) {
     myOwner = owner;
   }
 
+  JvmElementUsage(GraphDataInput in) throws IOException {
+    myOwner = new JvmNodeReferenceID(in);
+  }
+
   @Override
-  public @NotNull ReferenceID getElementOwner() {
+  public void write(GraphDataOutput out) throws IOException {
+    myOwner.write(out);
+  }
+
+  @Override
+  public @NotNull JvmNodeReferenceID getElementOwner() {
     return myOwner;
   }
 

@@ -118,8 +118,6 @@ class UnindexedFilesScannerExecutor(project: Project)
     fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()
 
     @JvmStatic
-    fun shouldScanInSmartMode(): Boolean {
-      return !isSynchronousTaskExecution && Registry.`is`("scanning.in.smart.mode", true)
-    }
+    fun shouldScanInSmartMode(): Boolean = !isSynchronousTaskExecution && Registry.`is`("scanning.in.smart.mode", true)
   }
 }

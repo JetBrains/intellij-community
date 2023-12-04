@@ -80,7 +80,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.addProperty("idea.system.path", "$dir/system")
     }
 
-    val runDir = Path.of("${configuration.workingDirectory}/out/dev-run/${productClassifier}")
+    val runDir = Path.of("${configuration.workingDirectory}/out/dev-run/${productClassifier}/${productClassifier}")
     for ((name, value) in getIdeSystemProperties(runDir)) {
       vmParameters.addProperty(name, value)
     }

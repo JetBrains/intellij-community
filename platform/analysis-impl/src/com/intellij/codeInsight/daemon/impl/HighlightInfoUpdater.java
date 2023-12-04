@@ -75,7 +75,8 @@ class HighlightInfoUpdater {
   void updateInspectionResult(@NotNull LocalInspectionToolWrapper tool,
                               @NotNull HighlightingSession session,
                               @NotNull Collection<? extends HighlightInfo> infos,
-                              @NotNull PsiFile psiFile) {
+                              @NotNull PsiFile psiFile,
+                              @NotNull TextRange restrictRange) {
     String shortName = tool.getShortName();
     List<? extends HighlightInfo> oldInfos = getList(shortName, psiFile);
     List<HighlightInfo> newInfos = new ArrayList<>(infos);
@@ -87,20 +88,23 @@ class HighlightInfoUpdater {
       MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
 
       TextRange hostRange = InjectedLanguageManager.getInstance(project).injectedToHost(psiFile, psiFile.getTextRange());
+      TextRange updateRange = ObjectUtils.chooseNotNull(hostRange.intersection(restrictRange), hostRange);
       if (LOG.isDebugEnabled()) {
         LOG.debug("updateInspectionResult: tool:" + shortName + "; infos:" + infos + "; oldInfos:" + oldInfos + "; psiFile:" + psiFile);
       }
-      setHighlightersInRange(hostRange, newInfos, markup, session, oldInfos);
+      newInfos = setHighlightersInRange(updateRange, newInfos, oldInfos, markup, session);
 
       data.put(Pair.create(shortName, psiFile), newInfos);
     }
   }
 
-  private static void setHighlightersInRange(@NotNull TextRange range,
-                                             @NotNull List<? extends HighlightInfo> infos,
-                                             @NotNull MarkupModelEx markup,
-                                             @NotNull HighlightingSession session,
-                                             @NotNull List<? extends HighlightInfo> toRemove) {
+  // return list of new HighlightInfos (old infos from outside `range` plus re-created infos inside)
+  @NotNull
+  private static List<HighlightInfo> setHighlightersInRange(@NotNull TextRange range,
+                                                            @NotNull List<? extends HighlightInfo> newInfos,
+                                                            @NotNull List<? extends HighlightInfo> oldInfos,
+                                                            @NotNull MarkupModelEx markup,
+                                                            @NotNull HighlightingSession session) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     PsiFile psiFile = session.getPsiFile();
@@ -110,18 +114,21 @@ class HighlightInfoUpdater {
     Document document = session.getDocument();
     Long2ObjectMap<RangeMarker> range2markerCache = new Long2ObjectOpenHashMap<>(10);
     boolean[] changed = {false};
-
+    List<HighlightInfo> result = new ArrayList<>(oldInfos.size());
     try {
-      for (HighlightInfo info : toRemove) {
-        RangeHighlighterEx highlighter = info.getHighlighter();
-        if (highlighter != null) {
+      for (HighlightInfo oldInfo : oldInfos) {
+        RangeHighlighterEx highlighter = oldInfo.getHighlighter();
+        if (highlighter != null && range.contains(highlighter)) {
           toReuse.recycleHighlighter(highlighter);
         }
+        else {
+          result.add(oldInfo);
+        }
       }
-      List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, infos);
-      ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS);
-      SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredInfos, processor);
-      List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredInfos.size());
+      List<HighlightInfo> filteredNewInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostFilter(project, newInfos);
+      ContainerUtil.quickSort(filteredNewInfos, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS);
+      SweepProcessor.Generator<HighlightInfo> generator = processor -> ContainerUtil.process(filteredNewInfos, processor);
+      List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredNewInfos.size());
       SweepProcessor.sweep(generator, (__, info, atStart, overlappingIntervals) -> {
         if (!atStart) {
           return true;
@@ -145,6 +152,7 @@ class HighlightInfoUpdater {
           BackgroundUpdateHighlightersUtil.createOrReuseHighlighterFor(info, session.getColorsScheme(), document, Pass.LOCAL_INSPECTIONS,
                                                                        psiFile, markup, toReuse, range2markerCache, severityRegistrar);
         }
+        result.add(info);
       }
       changed[0] |= UpdateHighlightersUtil.incinerateObsoleteHighlighters(toReuse, session);
     }
@@ -155,6 +163,7 @@ class HighlightInfoUpdater {
     if (changed[0]) {
       UpdateHighlightersUtil.clearWhiteSpaceOptimizationFlag(document);
     }
+    return result;
   }
 
 

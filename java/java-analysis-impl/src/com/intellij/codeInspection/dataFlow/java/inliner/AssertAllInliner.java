@@ -10,6 +10,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
 import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
@@ -20,8 +21,8 @@ import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
 public class AssertAllInliner implements CallInliner {
   private static final CallMatcher ASSERT_ALL =
     anyOf(
-      staticCall("org.junit.jupiter.api.Assertions", "assertAll").parameterTypes("org.junit.jupiter.api.function.Executable..."),
-      staticCall("org.junit.jupiter.api.Assertions", "assertAll")
+      staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertAll").parameterTypes("org.junit.jupiter.api.function.Executable..."),
+      staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertAll")
         .parameterTypes(CommonClassNames.JAVA_LANG_STRING, "org.junit.jupiter.api.function.Executable...")
     );
 

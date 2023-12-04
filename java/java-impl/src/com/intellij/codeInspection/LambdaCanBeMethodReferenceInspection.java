@@ -260,17 +260,16 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       }
       return new MethodReferenceCandidate(expression, true, true);
     }
-    else if (expression instanceof PsiMethodCallExpression) {
-      for (PsiExpression arg : ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()) {
+    else if (expression instanceof PsiMethodCallExpression call) {
+      for (PsiExpression arg : call.getArgumentList().getExpressions()) {
         if (!isMethodReferenceArgCandidate(arg)) return null;
       }
-      return new MethodReferenceCandidate(expression,
-                                          checkQualifier(((PsiMethodCallExpression)expression).getMethodExpression().getQualifier()), true);
+      return new MethodReferenceCandidate(expression, checkQualifier(call.getMethodExpression().getQualifier()), true);
     }
 
     JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(expression.getContainingFile());
-    if (expression instanceof PsiInstanceOfExpression) {
-      if (!isMethodReferenceArgCandidate(((PsiInstanceOfExpression)expression).getOperand())) return null;
+    if (expression instanceof PsiInstanceOfExpression instanceOfExpression) {
+      if (!isMethodReferenceArgCandidate(instanceOfExpression.getOperand())) return null;
       return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_INSTANCEOF_AND_CAST);
     }
     else if (expression instanceof PsiBinaryExpression binOp) {
@@ -283,9 +282,9 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
         return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_SUM);
       }
     }
-    else if (expression instanceof PsiTypeCastExpression) {
-      if (!isMethodReferenceArgCandidate(((PsiTypeCastExpression)expression).getOperand())) return null;
-      PsiTypeElement typeElement = ((PsiTypeCastExpression)expression).getCastType();
+    else if (expression instanceof PsiTypeCastExpression cast) {
+      if (!isMethodReferenceArgCandidate(cast.getOperand())) return null;
+      PsiTypeElement typeElement = cast.getCastType();
       if (typeElement != null) {
         PsiJavaCodeReferenceElement refs = typeElement.getInnermostComponentReferenceElement();
         if (refs != null && refs.getParameterList() != null && refs.getParameterList().getTypeParameterElements().length != 0) {
@@ -302,7 +301,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
 
   private static boolean isMethodReferenceArgCandidate(PsiExpression arg) {
     arg = PsiUtil.skipParenthesizedExprDown(arg);
-    return arg instanceof PsiReferenceExpression && ((PsiReferenceExpression)arg).getQualifier() == null;
+    return arg instanceof PsiReferenceExpression ref && ref.getQualifier() == null;
   }
 
   public static void replaceAllLambdasWithMethodReferences(PsiElement root) {

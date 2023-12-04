@@ -1,16 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.elements
 
-import com.intellij.codeInsight.inline.completion.render.InlineCompletionInsertPolicy
 import com.intellij.openapi.editor.Editor
 import java.awt.Rectangle
 
 class InlineCompletionSkipTextElement(override val text: String) : InlineCompletionElement {
-  override fun insertPolicy(): InlineCompletionInsertPolicy = InlineCompletionInsertPolicy.Skip(text.length)
-  override fun withSameContent(): InlineCompletionElement = InlineCompletionSkipTextElement(text)
-  override fun withTruncatedPrefix(length: Int): InlineCompletionElement? {
-    return if (text.length > length) InlineCompletionSkipTextElement(text.drop(length)) else null
-  }
 
   override fun toPresentable(): InlineCompletionElement.Presentable = Presentable(this)
 

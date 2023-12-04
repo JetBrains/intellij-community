@@ -11,13 +11,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class VFileCreateEvent extends VFileEvent {
-  private final @NotNull VirtualFile myParent;
+  private final VirtualFile myParent;
   private final boolean myDirectory;
   private final FileAttributes myAttributes;
   private final String mySymlinkTarget;
   private final ChildInfo[] myChildren;
   private final int myChildNameId;
   private VirtualFile myCreatedFile;
+
+  /** @deprecated use {@link VFileCreateEvent#VFileCreateEvent(Object, VirtualFile, String, boolean, FileAttributes, String, ChildInfo[])} */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("unused")
+  public VFileCreateEvent(Object requestor, @NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory,
+                          @Nullable FileAttributes attributes, @Nullable String symlinkTarget, boolean isFromRefresh,
+                          ChildInfo @Nullable [] children) {
+    super(requestor);
+    myParent = parent;
+    myDirectory = isDirectory;
+    myAttributes = attributes;
+    mySymlinkTarget = symlinkTarget;
+    myChildren = children;
+    myChildNameId = VirtualFileManager.getInstance().storeName(childName);
+  }
 
   @ApiStatus.Internal
   public VFileCreateEvent(Object requestor,
@@ -26,9 +42,8 @@ public final class VFileCreateEvent extends VFileEvent {
                           boolean isDirectory,
                           @Nullable("null means should read from the created file") FileAttributes attributes,
                           @Nullable String symlinkTarget,
-                          boolean isFromRefresh,
                           ChildInfo @Nullable("null means children not available (e.g. the created file is not a directory) or unknown") [] children) {
-    super(requestor, isFromRefresh);
+    super(requestor);
     myParent = parent;
     myDirectory = isDirectory;
     myAttributes = attributes;
@@ -57,7 +72,7 @@ public final class VFileCreateEvent extends VFileEvent {
     return mySymlinkTarget;
   }
 
-  /** @return true if the newly created file is a directory which has no children. */
+  /** @return {@code true} if the newly created file is a directory that has no children. */
   public boolean isEmptyDirectory() {
     return isDirectory() && myChildren != null && myChildren.length == 0;
   }

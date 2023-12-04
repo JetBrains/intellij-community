@@ -17,8 +17,6 @@ import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 
 class ReimportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   override fun setUp() = runBlocking {
     super.setUp()
     createProjectPom("""
@@ -66,7 +64,7 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
+    updateAllProjects()
     assertModules("project", "m1", "m2", "m3")
   }
 
@@ -372,7 +370,6 @@ class ReimportingTest : MavenMultiVersionImportingTestCase() {
     val counter = AtomicInteger()
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(false)
     importProjectAsync()
-    resolveDependenciesAndImport()
     if (null == MavenProjectLegacyImporter.getAnswerToDeleteObsoleteModulesQuestion()) {
       counter.incrementAndGet()
     }

@@ -355,19 +355,23 @@
       "messageForeground": "#bbbbbb",
       "errorIcon":{
         "os.windows": "AllIcons.General.ErrorDialog",
-        "os.linux": "AllIcons.General.ErrorDialog"
+        "os.linux": "AllIcons.General.ErrorDialog",
+        "os.mac": "AllIcons.General.ErrorDialog"
       },
       "warningIcon":{
         "os.windows": "AllIcons.General.WarningDialog",
-        "os.linux": "AllIcons.General.WarningDialog"
+        "os.linux": "AllIcons.General.WarningDialog",
+        "os.mac": "AllIcons.General.WarningDialog"
       },
       "informationIcon":{
         "os.windows": "AllIcons.General.InformationDialog",
-        "os.linux": "AllIcons.General.InformationDialog"
+        "os.linux": "AllIcons.General.InformationDialog",
+        "os.mac": "AllIcons.General.InformationDialog"
       },
       "questionIcon":{
         "os.windows": "AllIcons.General.QuestionDialog",
-        "os.linux": "AllIcons.General.QuestionDialog"
+        "os.linux": "AllIcons.General.QuestionDialog",
+        "os.mac": "AllIcons.General.QuestionDialog"
       }
     },
 
@@ -445,6 +449,9 @@
       "State": {
         "Background": "#45494A",
         "Foreground": "#8C8C8C"
+      },
+      "ChatItem":{
+        "Hover": "#4B4B4B33"
       },
       "Timeline.Thread.Diff.AnchorLine": "#544B2D"
     },

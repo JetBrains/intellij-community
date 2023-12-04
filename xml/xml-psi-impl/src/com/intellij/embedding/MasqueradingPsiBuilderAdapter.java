@@ -375,7 +375,7 @@ public class MasqueradingPsiBuilderAdapter extends PsiBuilderAdapter {
       super.error(message);
     }
 
-    private @NotNull Marker getDelegateOrThis(@NotNull Marker marker) {
+    private static @NotNull Marker getDelegateOrThis(@NotNull Marker marker) {
       if (marker instanceof DelegateMarker) {
         return ((DelegateMarker)marker).getDelegate();
       }

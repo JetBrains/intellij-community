@@ -16,23 +16,25 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 
-const val kotlincStdlibFileName = "kotlinc_kotlin_stdlib.xml"
-
 object TestKotlinArtifacts {
+    private val kotlinCLibrariesVersion by lazy {
+        val libraryNameToGetVersionFrom = "kotlinc_high_level_api.xml"
+        KotlinMavenUtils.findLibraryVersion(libraryNameToGetVersionFrom)
+    }
+
     private fun getLibraryFile(groupId: String, artifactId: String, libraryFileName: String): File {
         val version = KotlinMavenUtils.findLibraryVersion(libraryFileName)
         return KotlinMavenUtils.findArtifactOrFail(groupId, artifactId, version).toFile()
     }
 
     private fun getJar(artifactId: String): File =
-        downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName))
+        downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion)
 
     private fun getKlib(artifactId: String): File =
-        downloadOrReportUnavailability(artifactId, KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName), suffix = ".klib")
+        downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = ".klib")
 
     private fun getSourcesJar(artifactId: String): File {
-        val version = KotlinMavenUtils.findLibraryVersion(kotlincStdlibFileName)
-        return downloadOrReportUnavailability(artifactId, version, suffix = "-sources.jar")
+        return downloadOrReportUnavailability(artifactId, kotlinCLibrariesVersion, suffix = "-sources.jar")
             .copyTo(                                       // Some tests hardcode jar names in their test data
                 File(PathManager.getCommunityHomePath())   // (KotlinReferenceTypeHintsProviderTestGenerated).
                     .resolve("out")                        // That's why we need to strip version from the jar name
@@ -139,7 +141,8 @@ object TestKotlinArtifacts {
 
         if (!libFile.exists()) {
             val archiveFilePath = Paths.get(downloadOut)
-            downloadFile(downloadUrl, Paths.get(downloadOut))
+            Files.deleteIfExists(archiveFilePath)
+            downloadFile(downloadUrl, archiveFilePath)
             unpackPrebuildArchive(archiveFilePath, Paths.get("$baseDir/$prebuilt"))
             Files.deleteIfExists(archiveFilePath)
         }

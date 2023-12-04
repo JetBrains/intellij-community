@@ -8,15 +8,14 @@ import com.intellij.openapi.util.NlsActions;
 
 import javax.swing.*;
 
-
-public final class KeymapGroupFactoryImpl extends KeymapGroupFactory {
+final class KeymapGroupFactoryImpl extends KeymapGroupFactory {
   @Override
-  public KeymapGroup createGroup(final @NlsActions.ActionText String name) {
-    return new Group(name, null, null);
+  public KeymapGroup createGroup(@NlsActions.ActionText String name) {
+    return new Group(name);
   }
 
   @Override
-  public KeymapGroup createGroup(final @NlsActions.ActionText String name, final Icon icon) {
-    return new Group(name, icon);
+  public KeymapGroup createGroup(@NlsActions.ActionText String name, Icon icon) {
+    return new Group(name, null, () -> icon);
   }
 }

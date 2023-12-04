@@ -33,6 +33,8 @@
 
     <failedToDownloadJpsMavenArtifactSuggestedSolutionsContributor
             implementation="org.jetbrains.kotlin.idea.gradle.GradleFailedToDownloadSuggestedSolutionsContributor"/>
+
+      <projectStructureInsightsProvider implementation="org.jetbrains.kotlin.idea.gradle.GradleProjectStructureInsightsProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

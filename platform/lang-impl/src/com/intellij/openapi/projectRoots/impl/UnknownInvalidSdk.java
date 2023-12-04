@@ -6,10 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkModificator;
-import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix;
@@ -82,7 +79,7 @@ public final class UnknownInvalidSdk implements UnknownSdk {
 
     //for tests
     //noinspection TestOnlyProblems
-    if (ApplicationManager.getApplication().isUnitTestMode() && sdk instanceof MockSdk) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && MockSdkExtentionKt.isMockSdk(sdk)) {
       return null;
     }
 

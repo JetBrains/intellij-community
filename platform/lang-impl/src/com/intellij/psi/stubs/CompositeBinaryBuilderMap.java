@@ -57,7 +57,7 @@ final class CompositeBinaryBuilderMap {
     persistVersion(version, fileId);
   }
 
-  private void persistVersion(int version, int fileId) throws IOException {
+  private static void persistVersion(int version, int fileId) throws IOException {
     if (version == 0) return;
     VERSION_STAMP.writeInt(fileId, version);
   }

@@ -8,8 +8,8 @@ import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.belongsToScope
 import com.intellij.platform.diagnostic.telemetry.impl.CsvGzippedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.impl.MessageBusSpanExporter
+import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider
 import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.nio.file.Path
@@ -38,10 +38,9 @@ private class RdctExportersProvider : OpenTelemetryExporterProvider {
       null
     }
     fileToWrite?.let {
-      return listOf(
-        FilteredMetricsExporter(SynchronizedClearableLazy { CsvGzippedMetricsExporter(fileToWrite) }) { metric ->
-          metric.belongsToScope(RDCT)
-        })
+      return listOf(FilteredMetricsExporter(SynchronizedClearableLazy { CsvGzippedMetricsExporter(fileToWrite) }) { metric ->
+        metric.belongsToScope(RDCT)
+      })
     }
     return emptyList()
   }

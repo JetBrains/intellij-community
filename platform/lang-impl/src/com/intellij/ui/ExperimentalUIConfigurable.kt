@@ -71,12 +71,12 @@ open class ExperimentalUIConfigurable : BoundSearchableConfigurable(IdeBundle.me
             .enabledIf(newUiCheckBox.selected)
             .comment(IdeBundle.message("checkbox.compact.mode.description"))
         }
-        if (SystemInfo.isWindows || SystemInfo.isXWindow) {
+        if (!SystemInfo.isMac) {
           row {
             checkBox(IdeBundle.message("checkbox.main.menu.separate.toolbar"))
               .bindSelected(UISettings.getInstance()::separateMainMenu)
               .apply {
-                if (SystemInfo.isXWindow) {
+                if (SystemInfo.isUnix) {
                   comment(IdeBundle.message("ide.restart.required.comment"))
                 }
               }.enabledIf(newUiCheckBox.selected)

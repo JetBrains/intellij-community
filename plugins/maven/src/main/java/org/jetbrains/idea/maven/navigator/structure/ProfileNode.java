@@ -106,7 +106,7 @@ class ProfileNode extends MavenSimpleNode {
     return getNavigatable(profiles);
   }
 
-  private Navigatable getNavigatable(@NotNull final List<MavenDomProfile> profiles) {
+  private static Navigatable getNavigatable(@NotNull final List<MavenDomProfile> profiles) {
     if (profiles.size() > 1) {
       return new NavigatableAdapter() {
         @Override
@@ -149,7 +149,7 @@ class ProfileNode extends MavenSimpleNode {
   }
 
   @Nullable
-  private Navigatable getNavigatable(@Nullable final MavenDomProfile profile) {
+  private static Navigatable getNavigatable(@Nullable final MavenDomProfile profile) {
     if (profile == null) return null;
     XmlElement xmlElement = profile.getId().getXmlElement();
     return xmlElement instanceof Navigatable ? (Navigatable)xmlElement : null;

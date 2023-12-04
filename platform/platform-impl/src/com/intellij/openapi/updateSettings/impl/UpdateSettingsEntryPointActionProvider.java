@@ -193,6 +193,10 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     updateState();
   }
 
+  public static @Nullable Collection<PluginDownloader> getPendingUpdates() {
+    return myUpdatedPlugins;
+  }
+
   private static void newUpdatedPlugins(@Nullable Collection<PluginDownloader> updatedPlugins) {
     myUpdatedPlugins = ContainerUtil.isEmpty(updatedPlugins) ? null : updatedPlugins;
     updateState();
@@ -256,8 +260,8 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
                                    pluginResults);
               }
 
-              private @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
-                                                                              @NotNull ProgressIndicator indicator) {
+              private static @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
+                                                                                     @NotNull ProgressIndicator indicator) {
                 return UpdateChecker.getInternalPluginUpdates(loadedResult.getNewBuild().getApiVersion(),
                                                               indicator);
               }
@@ -295,7 +299,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       actions.add(new IdeUpdateAction(myPlatformUpdateInfo.getNewBuild().getVersion()));
     }
     // todo[AL/RS] separate action for plugins compatible with both old and new builds
-    else if (myUpdatedPlugins != null) {
+    else if (myUpdatedPlugins != null && !myUpdatedPlugins.isEmpty()) {
       int size = myUpdatedPlugins.size();
 
       actions.add(new UpdateAction(size == 1

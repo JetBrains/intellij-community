@@ -63,7 +63,7 @@ public final class FileRefresher implements Disposable {
    * @param recursive {@code true} if a file should be considered as root
    * @return an object that allows to stop watching the specified file
    */
-  private Object watch(VirtualFile file, boolean recursive) {
+  private static Object watch(VirtualFile file, boolean recursive) {
     VirtualFileSystem fs = file.getFileSystem();
     if (fs instanceof LocalFileSystem) {
       return LocalFileSystem.getInstance().addRootToWatch(file.getPath(), recursive);
@@ -76,7 +76,7 @@ public final class FileRefresher implements Disposable {
    *
    * @param watcher an object that allows to stop watching a file
    */
-  private void unwatch(Object watcher) {
+  private static void unwatch(Object watcher) {
     if (watcher instanceof LocalFileSystem.WatchRequest) {
       LocalFileSystem.getInstance().removeWatchedRoot((LocalFileSystem.WatchRequest)watcher);
     }
@@ -167,7 +167,7 @@ public final class FileRefresher implements Disposable {
     LOG.debug("dispose");
     if (!disposed.getAndSet(true)) {
       synchronized (watchers) {
-        watchers.forEach(this::unwatch);
+        watchers.forEach(FileRefresher::unwatch);
         watchers.clear();
       }
       RefreshSession session;
@@ -176,7 +176,7 @@ public final class FileRefresher implements Disposable {
         session = this.session;
         this.session = null;
       }
-      if (session != null) RefreshQueue.getInstance().cancelSession(session.getId());
+      if (session != null) session.cancel();
     }
   }
 }

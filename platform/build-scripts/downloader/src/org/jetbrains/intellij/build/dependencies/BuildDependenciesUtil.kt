@@ -128,6 +128,18 @@ object BuildDependenciesUtil {
   }
 
   @JvmStatic
+  fun getLibraryElement(root: Element, libraryName: String, iml: Path): Element {
+    val rootManager = getComponentElement(root, "NewModuleRootManager")
+    val library = getChildElements(rootManager, "orderEntry")
+                    .filter { it.getAttribute("type") == "module-library" }
+                    .map { getSingleChildElement(it, "library") }
+                    .singleOrNull { it.getAttribute("name") == libraryName }
+                  ?: error("Library '$libraryName' was not found in '$iml'")
+
+    return library
+  }
+
+  @JvmStatic
   @Throws(IOException::class)
   fun extractZip(archiveFile: Path, target: Path, stripRoot: Boolean) {
     ZipFile(FileChannel.open(archiveFile)).use { zipFile ->

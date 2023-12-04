@@ -217,7 +217,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
 
   private void registerDisposable(Project project, MavenServerConnector connector) {
     Disposer.register(MavenDisposable.getInstance(project), () -> {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> shutdownConnector(connector, true));
+      ApplicationManager.getApplication().executeOnPooledThread(() -> shutdownConnector(connector, false));
     });
   }
 

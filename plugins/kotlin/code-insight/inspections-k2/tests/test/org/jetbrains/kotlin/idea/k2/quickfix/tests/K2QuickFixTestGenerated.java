@@ -107,6 +107,329 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/changeSignature")
+    public static class ChangeSignature extends AbstractK2QuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("addConstructorParameter.kt")
+        public void testAddConstructorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addConstructorParameter.kt");
+        }
+
+        @TestMetadata("addConstructorParameterDataClassForConstantTypeMismatch.kt")
+        public void testAddConstructorParameterDataClassForConstantTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addConstructorParameterDataClassForConstantTypeMismatch.kt");
+        }
+
+        @TestMetadata("addConstructorParameterForConstantTypeMismatch.kt")
+        public void testAddConstructorParameterForConstantTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addConstructorParameterForConstantTypeMismatch.kt");
+        }
+
+        @TestMetadata("addConstructorParameterForInlineClass.kt")
+        public void testAddConstructorParameterForInlineClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addConstructorParameterForInlineClass.kt");
+        }
+
+        @TestMetadata("addConstructorParameterForValueClass.kt")
+        public void testAddConstructorParameterForValueClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addConstructorParameterForValueClass.kt");
+        }
+
+        @TestMetadata("addEnumConstructorParameter.kt")
+        public void testAddEnumConstructorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addEnumConstructorParameter.kt");
+        }
+
+        @TestMetadata("addEnumConstructorParameter2.kt")
+        public void testAddEnumConstructorParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addEnumConstructorParameter2.kt");
+        }
+
+        @TestMetadata("addEnumConstructorParameter3.kt")
+        public void testAddEnumConstructorParameter3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addEnumConstructorParameter3.kt");
+        }
+
+        @TestMetadata("addEnumConstructorParameter4.kt")
+        public void testAddEnumConstructorParameter4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addEnumConstructorParameter4.kt");
+        }
+
+        @TestMetadata("addEnumConstructorParameter5.kt")
+        public void testAddEnumConstructorParameter5() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addEnumConstructorParameter5.kt");
+        }
+
+        @TestMetadata("addExtensionFunctionParameterForTypeMismatch.kt")
+        public void testAddExtensionFunctionParameterForTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addExtensionFunctionParameterForTypeMismatch.kt");
+        }
+
+        @TestMetadata("addForItParameter.kt")
+        public void testAddForItParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addForItParameter.kt");
+        }
+
+        @TestMetadata("addFunctionParameter.kt")
+        public void testAddFunctionParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameter.kt");
+        }
+
+        @TestMetadata("addFunctionParameter2.kt")
+        public void testAddFunctionParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameter2.kt");
+        }
+
+        @TestMetadata("addFunctionParameter3.kt")
+        public void testAddFunctionParameter3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameter3.kt");
+        }
+
+        @TestMetadata("addFunctionParameterAndChangeTypes.kt")
+        public void testAddFunctionParameterAndChangeTypes() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterAndChangeTypes.kt");
+        }
+
+        @TestMetadata("addFunctionParameterAndChangeTypesWithReceiver.kt")
+        public void testAddFunctionParameterAndChangeTypesWithReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterAndChangeTypesWithReceiver.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForConstantTypeMismatch.kt")
+        public void testAddFunctionParameterForConstantTypeMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForConstantTypeMismatch.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForNullForNotnullType.kt")
+        public void testAddFunctionParameterForNullForNotnullType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForNullForNotnullType.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForReferencedArgument.kt")
+        public void testAddFunctionParameterForReferencedArgument() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForReferencedArgument.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForReferencedArgument2.kt")
+        public void testAddFunctionParameterForReferencedArgument2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForReferencedArgument2.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForReferencedArgument3.kt")
+        public void testAddFunctionParameterForReferencedArgument3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForReferencedArgument3.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForReferencedArgument4.kt")
+        public void testAddFunctionParameterForReferencedArgument4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForReferencedArgument4.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForReferencedArgument5.kt")
+        public void testAddFunctionParameterForReferencedArgument5() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForReferencedArgument5.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForTypeMismatch1.kt")
+        public void testAddFunctionParameterForTypeMismatch1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForTypeMismatch1.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForTypeMismatch2.kt")
+        public void testAddFunctionParameterForTypeMismatch2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForTypeMismatch2.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForTypeMismatch3.kt")
+        public void testAddFunctionParameterForTypeMismatch3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForTypeMismatch3.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForTypeMismatch4.kt")
+        public void testAddFunctionParameterForTypeMismatch4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForTypeMismatch4.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForTypeMismatch5.kt")
+        public void testAddFunctionParameterForTypeMismatch5() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForTypeMismatch5.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForTypeMismatchWithLambdaArgument.kt")
+        public void testAddFunctionParameterForTypeMismatchWithLambdaArgument() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForTypeMismatchWithLambdaArgument.kt");
+        }
+
+        @TestMetadata("addFunctionParameterLongNameRuntime.kt")
+        public void testAddFunctionParameterLongNameRuntime() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterLongNameRuntime.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithAnonymousFunction.kt")
+        public void testAddFunctionParameterWithAnonymousFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithAnonymousFunction.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithFunctionReference.kt")
+        public void testAddFunctionParameterWithFunctionReference() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithFunctionReference.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithLambda.kt")
+        public void testAddFunctionParameterWithLambda() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithLambda.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithSmartCast.kt")
+        public void testAddFunctionParameterWithSmartCast() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithSmartCast.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithSmartcastedArgument.kt")
+        public void testAddFunctionParameterWithSmartcastedArgument() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithSmartcastedArgument.kt");
+        }
+
+        @TestMetadata("addFunctionParameterWithSuspendFunctionReference.kt")
+        public void testAddFunctionParameterWithSuspendFunctionReference() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterWithSuspendFunctionReference.kt");
+        }
+
+        @TestMetadata("addNothingReturnType.kt")
+        public void testAddNothingReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addNothingReturnType.kt");
+        }
+
+        @TestMetadata("addParameterNotAvailableForBuiltins.kt")
+        public void testAddParameterNotAvailableForBuiltins() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addParameterNotAvailableForBuiltins.kt");
+        }
+
+        @TestMetadata("addParameterNotAvailableForLibrary.kt")
+        public void testAddParameterNotAvailableForLibrary() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addParameterNotAvailableForLibrary.kt");
+        }
+
+        @TestMetadata("addParameterToFakeOverride.kt")
+        public void testAddParameterToFakeOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addParameterToFakeOverride.kt");
+        }
+
+        @TestMetadata("changeAnnotationClassConstructor.kt")
+        public void testChangeAnnotationClassConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeAnnotationClassConstructor.kt");
+        }
+
+        @TestMetadata("changeClassConstructor.kt")
+        public void testChangeClassConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeClassConstructor.kt");
+        }
+
+        @TestMetadata("changeDataClassConstructor.kt")
+        public void testChangeDataClassConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeDataClassConstructor.kt");
+        }
+
+        @TestMetadata("changeFunctionLiteralParameters1.kt")
+        public void testChangeFunctionLiteralParameters1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeFunctionLiteralParameters1.kt");
+        }
+
+        @TestMetadata("changeFunctionLiteralParameters2.kt")
+        public void testChangeFunctionLiteralParameters2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeFunctionLiteralParameters2.kt");
+        }
+
+        @TestMetadata("changeFunctionLiteralParameters3.kt")
+        public void testChangeFunctionLiteralParameters3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeFunctionLiteralParameters3.kt");
+        }
+
+        @TestMetadata("changeFunctionLiteralParameters4.kt")
+        public void testChangeFunctionLiteralParameters4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeFunctionLiteralParameters4.kt");
+        }
+
+        @TestMetadata("changeParameterType.kt")
+        public void testChangeParameterType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/changeParameterType.kt");
+        }
+
+        @TestMetadata("complexHierarchy.kt")
+        public void testComplexHierarchy() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/complexHierarchy.kt");
+        }
+
+        @TestMetadata("complexHierarchyHead.kt")
+        public void testComplexHierarchyHead() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/complexHierarchyHead.kt");
+        }
+
+        @TestMetadata("complexHierarchyTail.kt")
+        public void testComplexHierarchyTail() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/complexHierarchyTail.kt");
+        }
+
+        @TestMetadata("fixExtensionLambdaSignature.kt")
+        public void testFixExtensionLambdaSignature() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/fixExtensionLambdaSignature.kt");
+        }
+
+        @TestMetadata("linearHierarchy.kt")
+        public void testLinearHierarchy() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/linearHierarchy.kt");
+        }
+
+        @TestMetadata("notAvailableForSynthesized.kt")
+        public void testNotAvailableForSynthesized() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/notAvailableForSynthesized.kt");
+        }
+
+        @TestMetadata("notEditable.kt")
+        public void testNotEditable() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/notEditable.kt");
+        }
+
+        @TestMetadata("removeConstructorParameter.kt")
+        public void testRemoveConstructorParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/removeConstructorParameter.kt");
+        }
+
+        @TestMetadata("removeFunctionFirstParameter.kt")
+        public void testRemoveFunctionFirstParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/removeFunctionFirstParameter.kt");
+        }
+
+        @TestMetadata("removeFunctionSecondParameter1.kt")
+        public void testRemoveFunctionSecondParameter1() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/removeFunctionSecondParameter1.kt");
+        }
+
+        @TestMetadata("removeFunctionSecondParameter2.kt")
+        public void testRemoveFunctionSecondParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/removeFunctionSecondParameter2.kt");
+        }
+
+        @TestMetadata("removeNamedParameter.kt")
+        public void testRemoveNamedParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/removeNamedParameter.kt");
+        }
+
+        @TestMetadata("removeParameterFromFakeOverride.kt")
+        public void testRemoveParameterFromFakeOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/removeParameterFromFakeOverride.kt");
+        }
+
+        @TestMetadata("removeParameterNotAvailableForBuiltins.kt")
+        public void testRemoveParameterNotAvailableForBuiltins() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/removeParameterNotAvailableForBuiltins.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/redundantModalityModifier")
     public static class RedundantModalityModifier extends AbstractK2QuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -1132,6 +1455,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("hasOptInAnnotationForClass2.kt")
         public void testHasOptInAnnotationForClass2() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/hasOptInAnnotationForClass2.kt");
+        }
+
+        @TestMetadata("invisibleAnnotation.kt")
+        public void testInvisibleAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/invisibleAnnotation.kt");
+        }
+
+        @TestMetadata("invisibleAnnotationFir.kt")
+        public void testInvisibleAnnotationFir() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/invisibleAnnotationFir.kt");
         }
 
         @TestMetadata("localFunction.kt")

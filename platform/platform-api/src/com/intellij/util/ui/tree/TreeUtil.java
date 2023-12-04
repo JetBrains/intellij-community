@@ -117,7 +117,7 @@ public final class TreeUtil {
     return hasManyNodes(treeTraverser(tree), threshold);
   }
 
-  public static boolean hasManyChildren(@NotNull TreeNode node, int threshold) {
+  public static boolean hasManyNodes(@NotNull TreeNode node, int threshold) {
     return hasManyNodes(treeNodeTraverser(node), threshold);
   }
 
@@ -153,8 +153,7 @@ public final class TreeUtil {
    */
   public static void repaintPath(@NotNull JTree tree, @Nullable TreePath path) {
     assert EventQueue.isDispatchThread();
-    Rectangle bounds = tree.getPathBounds(path);
-    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+    repaintBounds(tree, tree.getPathBounds(path));
   }
 
   /**
@@ -163,8 +162,12 @@ public final class TreeUtil {
    */
   public static void repaintRow(@NotNull JTree tree, int row) {
     assert EventQueue.isDispatchThread();
-    Rectangle bounds = tree.getRowBounds(row);
-    if (bounds != null) tree.repaint(0, bounds.y, tree.getWidth(), bounds.height);
+    repaintBounds(tree, tree.getRowBounds(row));
+  }
+
+  private static void repaintBounds(@NotNull JTree tree, @Nullable Rectangle bounds) {
+    // repaint extra below and above to avoid artifacts when using fractional scaling on Windows
+    if (bounds != null) tree.repaint(0, bounds.y - 1, tree.getWidth(), bounds.height + 2);
   }
 
   /**
@@ -2022,5 +2025,13 @@ public final class TreeUtil {
     TreePath path = tree.getPathForRow(row);
     if (path == null) throw new NullPointerException("path is not found at row " + row);
     return path;
+  }
+
+  /**
+   * @deprecated Use {@link #hasManyNodes} instead
+   */
+  @Deprecated(forRemoval = true)
+  public static boolean hasManyChildren(@NotNull TreeNode node, int threshold) {
+    return hasManyNodes(node, threshold);
   }
 }

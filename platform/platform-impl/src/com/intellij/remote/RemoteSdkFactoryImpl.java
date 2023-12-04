@@ -2,10 +2,12 @@
 package com.intellij.remote;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +31,17 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     final SdkType sdkType = getSdkType(data);
 
-    final ProjectJdkImpl sdk = createSdk(existingSdks, sdkType, data, name);
+    final Sdk sdk = createSdk(existingSdks, sdkType, data, name);
 
-    sdk.setVersionString(sdkVersion);
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setVersionString(sdkVersion);
+    Application application = ApplicationManager.getApplication();
+    Runnable runnable = () -> sdkModificator.commitChanges();
+    if (application.isDispatchThread()) {
+      application.runWriteAction(runnable);
+    } else {
+      application.invokeAndWait(() -> application.runWriteAction(runnable));
+    }
 
     data.setValid(true);
 
@@ -55,7 +65,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
 
     final SdkType sdkType = getSdkType(data);
 
-    final ProjectJdkImpl sdk = createSdk(existingSdks, sdkType, data, name);
+    final Sdk sdk = createSdk(existingSdks, sdkType, data, name);
 
     data.setValid(false);
 
@@ -74,7 +84,7 @@ public abstract class RemoteSdkFactoryImpl<T extends RemoteSdkAdditionalData> im
    * @param sdkName      the name of SDK
    * @return the SDK with the corresponding data
    */
-  protected abstract @NotNull ProjectJdkImpl createSdk(@NotNull Collection<Sdk> existingSdks,
+  protected abstract @NotNull Sdk createSdk(@NotNull Collection<Sdk> existingSdks,
                                               @NotNull SdkType sdkType,
                                               @NotNull T data,
                                               @Nullable String sdkName);

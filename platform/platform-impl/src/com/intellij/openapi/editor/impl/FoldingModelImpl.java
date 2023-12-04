@@ -33,6 +33,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -47,6 +48,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private static final Key<Boolean> DO_NOT_NOTIFY = Key.create("do.not.notify.on.region.disposal");
 
   static final Key<Boolean> HIDE_GUTTER_RENDERER_FOR_COLLAPSED = Key.create("FoldRegion.HIDE_GUTTER_RENDERER_FOR_COLLAPSED");
+
+  public static final Key<Boolean> ZOMBIE_REGION_KEY = Key.create("zombie fold region");
 
   private final List<FoldingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -70,6 +73,8 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
 
   final Set<CustomFoldRegionImpl> myAffectedCustomRegions = new HashSet<>();
+
+  private final AtomicBoolean isZombieRaised = new AtomicBoolean();
 
   FoldingModelImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -800,6 +805,11 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   @Override
   public long getModificationCount() {
     return myExpansionCounter.get();
+  }
+
+  @ApiStatus.Internal
+  public AtomicBoolean getIsZombieRaised() {
+    return isZombieRaised;
   }
 
   @TestOnly

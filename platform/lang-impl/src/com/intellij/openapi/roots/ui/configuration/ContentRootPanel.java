@@ -316,7 +316,7 @@ public abstract class ContentRootPanel extends JPanel {
       }
     }
 
-    private void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2) {
+    private static void drawDottedLine(Graphics2D g, int x1, int y1, int x2, int y2) {
       /*
       // TODO!!!
       final Color color = g.getColor();

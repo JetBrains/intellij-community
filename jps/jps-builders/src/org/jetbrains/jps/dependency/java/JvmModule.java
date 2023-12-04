@@ -2,10 +2,15 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.Usage;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.RW;
 
+import java.io.IOException;
 import java.util.Collections;
+import java.util.Objects;
 
 public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
@@ -15,10 +20,33 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
   public JvmModule(JVMFlags flags, String name, String outFilePath, String version, @NotNull Iterable<ModuleRequires> requires, @NotNull Iterable<ModulePackage> exports, @NotNull Iterable<Usage> usages) {
     super(flags, "", name, outFilePath, Collections.emptyList(), usages);
-    myVersion = version;
+    myVersion = version == null? "" : version;
     myRequires = requires;
     myExports = exports;
   }
+
+  public JvmModule(GraphDataInput in) throws IOException {
+    super(in);
+    myVersion = in.readUTF();
+    myRequires = RW.readCollection(in, () -> new ModuleRequires(in));
+    myExports = RW.readCollection(in, () -> new ModulePackage(in));
+  }
+
+  @Override
+  public void write(GraphDataOutput out) throws IOException {
+    super.write(out);
+    out.writeUTF(myVersion);
+    RW.writeCollection(out, myRequires, r -> r.write(out));
+    RW.writeCollection(out, myExports, p -> p.write(out));
+  }
+
+//@Override
+  //public Iterable<Usage> getUsages() {
+  //  return Iterators.unique(Iterators.flat(
+  //    super.getUsages(),
+  //    Iterators.map(Iterators.filter(getRequires(), r -> !Objects.equals(getName(), r.getName())), r -> new ModuleUsage(r.getName()))
+  //  ));
+  //}
 
   public String getVersion() {
     return myVersion;
@@ -32,12 +60,21 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
     return myExports;
   }
 
+  public boolean requiresTransitively(String requirementName) {
+    for (ModuleRequires require : getRequires()) {
+      if (Objects.equals(require.getName(), requirementName)) {
+        return require.getFlags().isTransitive();
+      }
+    }
+    return false;
+  }
+
   @Override
   public Diff difference(JvmModule past) {
     return new Diff(past);
   }
 
-  public final class Diff extends Proto.Diff<JvmModule> {
+  public final class Diff extends JVMClassNode<JvmModule, JvmModule.Diff>.Diff {
 
     public Diff(JvmModule past) {
       super(past);
@@ -45,7 +82,7 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
     @Override
     public boolean unchanged() {
-      return super.unchanged() && requires().unchanged() && exports().unchanged();
+      return super.unchanged() && !versionChanged() && requires().unchanged() && exports().unchanged();
     }
 
     public Specifier<ModuleRequires, ModuleRequires.Diff> requires() {
@@ -54,6 +91,10 @@ public final class JvmModule extends JVMClassNode<JvmModule, JvmModule.Diff>{
 
     public Specifier<ModulePackage, ModulePackage.Diff> exports() {
       return Difference.deepDiff(myPast.getExports(), getExports());
+    }
+
+    public boolean versionChanged() {
+      return !Objects.equals(myPast.getVersion(), getVersion());
     }
   }
 

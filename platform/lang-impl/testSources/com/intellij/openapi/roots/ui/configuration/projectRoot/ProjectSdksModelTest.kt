@@ -49,9 +49,11 @@ class ProjectSdksModelTest : LightPlatformTestCase() {
     Assert.assertNotNull(foundSdk)
     Assert.assertSame(foundSdk, sdk)
 
-    sdk.sdkModificator.apply {
-      name = "newName"
-    }.commitChanges()
+    val sdkModificator = sdk.sdkModificator
+    sdkModificator.name = "newName"
+    ApplicationManager.getApplication().runWriteAction {
+      sdkModificator.commitChanges()
+    }
 
     model.apply()
 

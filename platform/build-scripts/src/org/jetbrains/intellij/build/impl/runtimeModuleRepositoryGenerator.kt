@@ -12,6 +12,7 @@ import com.intellij.platform.runtime.repository.serialization.RawRuntimeModuleDe
 import com.intellij.platform.runtime.repository.serialization.RuntimeModuleRepositorySerialization
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.exists
+import io.opentelemetry.api.trace.Span
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
@@ -58,11 +59,11 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
 }
 
 /**
- * A variant of [generateRuntimeModuleRepository] which should be used for 'dev build', when all [entries] correspond to the current OS, 
+ * A variant of [generateRuntimeModuleRepository] which should be used for 'dev build', when all [entries] correspond to the current OS,
  * and distribution files are generated under [targetDirectory].
  */
 @ApiStatus.Internal
-fun generateRuntimeModuleRepositoryForDevBuild(entries: List<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
+fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
   val (repositoryForCompiledModulesPath, compiledModulesDescriptors) = loadForCompiledModules(context)
   val actualEntries = entries.mapNotNull { entry ->
     if (targetDirectory.isAncestor(entry.path, false)) {
@@ -76,14 +77,14 @@ fun generateRuntimeModuleRepositoryForDevBuild(entries: List<DistributionFileEnt
     }
   }
   generateRepositoryForDistribution(targetDirectory = targetDirectory,
-                                    entries = actualEntries,
+                                    entries = actualEntries.toList(),
                                     compiledModulesDescriptors = compiledModulesDescriptors,
                                     context = context,
                                     repositoryForCompiledModulesPath = repositoryForCompiledModulesPath)
 }
 
 private fun loadForCompiledModules(context: BuildContext): Pair<Path, Map<RuntimeModuleId, RawRuntimeModuleDescriptor>> {
-  //maybe it makes sense to produce the repository along with compiled classes and reuse it 
+  // maybe it makes sense to produce the repository along with compiled classes and reuse it
   CompilationTasks.create(context).generateRuntimeModuleRepository()
 
   val repositoryForCompiledModulesPath = context.classesOutputDirectory.resolve(JAR_REPOSITORY_FILE_NAME)
@@ -209,7 +210,7 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
       return mainLocation
     }
     val sorted = paths.sorted()
-    context.messages.warning("Cannot choose the main location for '${moduleId.stringId}' among $sorted, the first one will be used")
+    Span.current().addEvent("cannot choose the main location for '${moduleId.stringId}' among $sorted, the first one will be used")
     return sorted.first()
   }
 

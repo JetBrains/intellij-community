@@ -1,15 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion
 
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor
-import com.intellij.util.io.DataInputOutputUtil
+import org.jetbrains.annotations.ApiStatus.Internal
+import java.io.Closeable
+import java.nio.file.Path
 
-sealed interface IntFileAttribute {
+@Internal
+sealed interface IntFileAttribute : Closeable {
   companion object {
     @JvmStatic
     fun shouldUseFastAttributes(): Boolean {
@@ -26,12 +29,20 @@ sealed interface IntFileAttribute {
     }
 
     fun overRegularAttribute(attribute: FileAttribute): IntFileAttribute {
-      return IntFileAttributeOverFSAttribute(attribute)
+      return IntFileAttributeImpl(attribute, null)
     }
 
+    /**
+     * By default, file will be created in "PathManager.getIndexRoot()/fastAttributes/attribute.id"
+     */
     fun overFastAttribute(attribute: FileAttribute): IntFileAttribute {
+      val attributesFilePath = PathManager.getIndexRoot().resolve("fastAttributes").resolve(attribute.id)
+      return overFastAttribute(attribute, attributesFilePath)
+    }
+
+    fun overFastAttribute(attribute: FileAttribute, path: Path): IntFileAttribute {
       thisLogger().assertTrue(attribute.isFixedSize, "Should be fixed size: $attribute")
-      return IntFileAttributeOverFastMappedStorage(attribute)
+      return IntFileAttributeImpl(attribute, path)
     }
   }
 
@@ -39,9 +50,15 @@ sealed interface IntFileAttribute {
   fun writeInt(fileId: Int, value: Int)
 }
 
-class IntFileAttributeOverFastMappedStorage(private val attribute: FileAttribute) : IntFileAttribute {
+private class IntFileAttributeImpl(private val attribute: FileAttribute,
+                                   fastAttributesPathOrNullForRegularAttributes: Path?) : IntFileAttribute {
   private val attributeAccessor = AutoRefreshingOnVfsCloseRef<IntFileAttributeAccessor> { fsRecords ->
-    SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute)
+    if (fastAttributesPathOrNullForRegularAttributes != null) {
+      SpecializedFileAttributes.specializeAsFastInt(fsRecords, attribute, fastAttributesPathOrNullForRegularAttributes)
+    }
+    else {
+      SpecializedFileAttributes.specializeAsInt(fsRecords, attribute)
+    }
   }
 
   override fun readInt(fileId: Int): Int {
@@ -51,22 +68,8 @@ class IntFileAttributeOverFastMappedStorage(private val attribute: FileAttribute
   override fun writeInt(fileId: Int, value: Int) {
     attributeAccessor().write(fileId, value)
   }
-}
 
-class IntFileAttributeOverFSAttribute(private val attribute: FileAttribute) : IntFileAttribute {
-  override fun readInt(fileId: Int): Int {
-    var indexedVersion = 0
-    FSRecords.readAttributeWithLock(fileId, attribute).use { stream ->
-      if (stream != null) {
-        indexedVersion = DataInputOutputUtil.readINT(stream)
-      }
-    }
-    return indexedVersion
-  }
-
-  override fun writeInt(fileId: Int, value: Int) {
-    FSRecords.writeAttribute(fileId, attribute).use { stream ->
-      DataInputOutputUtil.writeINT(stream, value)
-    }
+  override fun close() {
+    attributeAccessor.close()
   }
 }

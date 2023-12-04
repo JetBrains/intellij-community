@@ -358,6 +358,23 @@ interface WebSymbol : WebSymbolsScope, Symbol, NavigatableSymbol {
     const val KIND_JS_SYMBOLS = "symbols"
     const val KIND_JS_STRING_LITERALS = "string-literals"
 
+    val HTML_ELEMENTS = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ELEMENTS)
+    val HTML_ATTRIBUTES = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES)
+    val HTML_ATTRIBUTE_VALUES = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_ATTRIBUTE_VALUES)
+    val HTML_SLOTS = WebSymbolQualifiedKind(NAMESPACE_HTML, KIND_HTML_SLOTS)
+
+    val CSS_PROPERTIES = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PROPERTIES)
+    val CSS_PSEUDO_ELEMENTS = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_ELEMENTS)
+    val CSS_PSEUDO_CLASSES = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PSEUDO_CLASSES)
+    val CSS_FUNCTIONS = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_FUNCTIONS)
+    val CSS_CLASSES = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_CLASSES)
+    val CSS_PARTS = WebSymbolQualifiedKind(NAMESPACE_CSS, KIND_CSS_PARTS)
+
+    val JS_EVENTS = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_EVENTS)
+    val JS_PROPERTIES = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_PROPERTIES)
+    val JS_SYMBOLS = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_SYMBOLS)
+    val JS_STRING_LITERALS = WebSymbolQualifiedKind(NAMESPACE_JS, KIND_JS_STRING_LITERALS)
+
     /**
      * Supported by `html/elements` and `html/attributes` symbols,
      * allows to inject the specified language into HTML element text or HTML attribute value.

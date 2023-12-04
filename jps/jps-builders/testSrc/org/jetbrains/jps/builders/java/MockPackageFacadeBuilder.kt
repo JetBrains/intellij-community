@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java
 
 import com.intellij.openapi.util.io.FileUtil
@@ -13,7 +13,10 @@ import com.intellij.util.io.java.ClassFileBuilder
 import com.intellij.util.io.java.classFile
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.DirtyFilesHolder
+import org.jetbrains.jps.builders.java.dependencyView.Mappings
 import org.jetbrains.jps.builders.storage.StorageProvider
+import org.jetbrains.jps.dependency.DependencyGraph
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID
 import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
 import org.jetbrains.jps.incremental.ModuleBuildTarget
@@ -23,7 +26,6 @@ import org.jetbrains.jps.incremental.storage.PathStringDescriptor
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.org.objectweb.asm.ClassReader
 import java.io.File
-import java.util.*
 import java.util.regex.Pattern
 
 /**
@@ -58,7 +60,20 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
       }
     }
 
-    val mappings = context.projectDescriptor.dataManager.mappings
+    val getSources: (String) -> Iterable<File> = {
+      val qName = StringUtil.getQualifiedName(it, "PackageFacade")
+      val mappings: Mappings? = context.projectDescriptor.dataManager.mappings
+      if (mappings != null) {
+        mappings.getClassSources(mappings.getName(qName))
+      }
+      else {
+        val graph: DependencyGraph = context.projectDescriptor.dataManager.dependencyGraph
+        val files = mutableListOf<File>()
+        graph.getSources(JvmNodeReferenceID(qName)).forEach { files.add(it.path.toFile()) }
+        files
+      }
+    }
+
     val callback = JavaBuilderUtil.getDependenciesRegistrar(context)
 
     fun generateClass(packageName: String, className: String, target: ModuleBuildTarget, sources: Collection<String>,
@@ -103,9 +118,7 @@ class MockPackageFacadeGenerator : ModuleLevelBuilder(BuilderCategory.SOURCE_PRO
 
       val getParentFile: (File) -> File = { it.parentFile }
       val dirsToCheck = filesToCompile[target].mapTo(FileCollectionFactory.createCanonicalFileSet(), getParentFile)
-      packagesFromDeletedFiles.flatMap {
-        mappings.getClassSources(mappings.getName(StringUtil.getQualifiedName(it, "PackageFacade"))) ?: emptyList()
-      }.map(getParentFile).filterNotNullTo(dirsToCheck)
+      packagesFromDeletedFiles.flatMap { getSources(StringUtil.getQualifiedName(it, "PackageFacade")) }.map(getParentFile).filterNotNullTo(dirsToCheck)
 
       for ((packageName, dirtyFiles) in packagesToGenerate) {
         val files = dirsToCheck.map { it.listFiles() }.filterNotNull().flatMap { it.toList() }.filter { isCompilable(it) && packageName == getPackageName(it) }

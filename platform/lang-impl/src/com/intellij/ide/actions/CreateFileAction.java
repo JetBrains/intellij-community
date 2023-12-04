@@ -41,18 +41,29 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
-
   public CreateFileAction() {
-    super(ActionsBundle.messagePointer("action.NewFile.text"), IdeBundle.messagePointer("action.create.new.file.description"), AllIcons.FileTypes.Text);
+    super(ActionsBundle.messagePointer("action.NewFile.text"), IdeBundle.messagePointer("action.create.new.file.description"), () -> AllIcons.FileTypes.Text);
   }
 
+  /**
+   * @deprecated Use {@link #CreateFileAction(Supplier, Supplier, Supplier)}
+   */
+  @Deprecated
   public CreateFileAction(@NlsActions.ActionText String text,
                           @NlsActions.ActionDescription String description,
-                          final Icon icon) {
+                          Icon icon) {
     super(text, description, icon);
   }
 
+  /**
+   * @deprecated Use {@link #CreateFileAction(Supplier, Supplier, Supplier)}
+   */
+  @Deprecated
   public CreateFileAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, final Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
+  public CreateFileAction(@NotNull Supplier<String> dynamicText, @NotNull Supplier<String> dynamicDescription, @Nullable Supplier<? extends @Nullable Icon> icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 

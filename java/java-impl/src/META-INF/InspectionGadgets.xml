@@ -70,10 +70,6 @@
                      key="inspection.type.may.be.weakened.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.abstraction.TypeMayBeWeakenedInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="UnresolvedClassReferenceRepair" bundle="messages.InspectionGadgetsBundle"
-                     key="unresolved.class.reference.repair.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.abstraction.issues" enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.siyeh.ig.abstraction.UnresolvedClassReferenceRepairInspection"/>
 
     <!--group.names.assignment.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AssignmentToCatchBlockParameter" bundle="messages.InspectionGadgetsBundle"
@@ -776,6 +772,10 @@
                      key="if.can.be.assertion.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.asserttoif.IfCanBeAssertionInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="WhileCanBeDoWhile" enabledByDefault="true" level="WEAK WARNING"
+                     bundle="messages.InspectionGadgetsBundle" key="inspection.while.can.be.replaced.with.do.while.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues"
+                     implementationClass="com.siyeh.ig.whileloop.WhileCanBeDoWhileInspection"/>
 
     <!--group.names.data.flow.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="BooleanVariableAlwaysNegated" bundle="messages.InspectionGadgetsBundle"
@@ -1433,10 +1433,6 @@
                      implementationClass="com.siyeh.ig.logging.StringConcatenationArgumentToLogCallInspection" cleanupTool="true"/>
 
     <!--group.names.code.maturity.issues-->
-    <localInspection groupPath="Java" language="JAVA" shortName="SuppressionAnnotation" bundle="messages.InspectionGadgetsBundle"
-                     key="inspection.suppression.annotation.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.maturity.SuppressionAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="UseOfSystemOutOrSystemErr" shortName="SystemOutErr" bundle="messages.InspectionGadgetsBundle"
                      key="use.system.out.err.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.maturity.issues" enabledByDefault="false" level="WARNING"

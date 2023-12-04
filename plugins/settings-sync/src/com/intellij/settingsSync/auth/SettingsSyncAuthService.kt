@@ -11,6 +11,7 @@ internal interface SettingsSyncAuthService {
   fun login()
   fun isLoggedIn(): Boolean
   fun getUserData(): JBAccountInfoService.JBAData?
+  fun getAccountInfoService(): JBAccountInfoService?
   fun isLoginAvailable(): Boolean
   fun invalidateJBA(userId: String)
 }

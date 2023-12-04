@@ -31,10 +31,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XExpression;
-import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -456,13 +453,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
   protected final Icon calculateSpecialIcon() {
     XDebugSessionImpl session = getBreakpointManager().getDebuggerManager().getCurrentSession();
     if (!isEnabled()) {
-      // disabled icon takes precedence to other to visually distinguish it and provide feedback then it is enabled/disabled
-      // (e.g. in case of mute-mode we would like to differentiate muted but enabled breakpoints from simply disabled ones)
-      if (session == null || !session.areBreakpointsMuted()) {
-        return getType().getDisabledIcon();
+      if (session != null && session.areBreakpointsMuted()) {
+        return getType().getMutedDisabledIcon();
       }
       else {
-        return getType().getMutedDisabledIcon();
+        return getType().getDisabledIcon();
       }
     }
 
@@ -634,11 +629,20 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       assert breakpoints.size() >= 2;
     }
 
+    private boolean areAllDisabled() {
+      return ContainerUtil.and(breakpoints, b -> !b.isEnabled());
+    }
+
     @Override
     public @NotNull Icon getIcon() {
-      // FIXME[inline-bp]: what about muted breakpoints?
-      // FIXME[inline-bp]: what about disabled breakpoints?
-      return AllIcons.Debugger.MultipleBreakpoints;
+      var session = breakpoints.get(0).getBreakpointManager().getDebuggerManager().getCurrentSession();
+      if (session != null && session.areBreakpointsMuted()) {
+        return AllIcons.Debugger.MultipleBreakpointsMuted;
+      } else if (areAllDisabled()) {
+        return AllIcons.Debugger.MultipleBreakpointsDisabled;
+      } else {
+        return AllIcons.Debugger.MultipleBreakpoints;
+      }
     }
 
     @NotNull
@@ -651,8 +655,12 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     private AnAction createToggleAction() {
       // This gutter's actions are not collected to any menu, so we use SimpleAction.
       return DumbAwareAction.create(e -> {
+        // Semantics:
+        // - disable all if any is enabled,
+        // - enable all if all are disabled.
+        var newEnabledValue = areAllDisabled();
         for (var b : breakpoints) {
-          b.setEnabled(!b.isEnabled());
+          b.setEnabled(newEnabledValue);
         }
       });
     }
@@ -758,7 +766,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     public @NotNull List<GutterMark> processMarkers(@NotNull List<GutterMark> marks) {
       // In general, it seems ok to merge breakpoints because they are drawn one over another in the new UI.
       // But we disable it in the old mode just for ease of regressions debugging.
-      if (!Registry.is("debugger.show.breakpoints.inline")) return marks;
+      if (!XDebuggerUtil.areInlineBreakpointsEnabled()) return marks;
 
       var breakpointCount = ContainerUtil.count(marks, m -> m instanceof CommonBreakpointGutterIconRenderer);
       if (breakpointCount <= 1) {

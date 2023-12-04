@@ -76,7 +76,7 @@ public class ReassignedVariableInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @NotNull
-    private String getReassignedMessage(PsiVariable variable) {
+    private static String getReassignedMessage(PsiVariable variable) {
       return JavaBundle.message(
         variable instanceof PsiLocalVariable ? "tooltip.reassigned.local.variable" : "tooltip.reassigned.parameter");
     }

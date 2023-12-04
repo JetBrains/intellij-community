@@ -31,4 +31,3 @@ private fun interface FlowCollector<in T> {
 }
 
 // IGNORE_K2
-// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR

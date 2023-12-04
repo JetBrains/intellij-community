@@ -59,7 +59,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem" exported="" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.maven.errorProne.compiler" scope="RUNTIME" />
@@ -103,6 +103,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="commons-lang3" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
   <component name="copyright">
     <Base>

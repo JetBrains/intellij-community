@@ -29,7 +29,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.diff.Diff;
@@ -54,6 +53,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public final class CustomizationUtil {
@@ -94,15 +94,15 @@ public final class CustomizationUtil {
   }
 
 
-  static AnAction[] getReordableChildren(ActionGroup group,
-                                         CustomActionsSchema schema,
+  static AnAction[] getReordableChildren(@NotNull ActionGroup group,
+                                         AnAction @NotNull[] children,
+                                         @NotNull CustomActionsSchema schema,
                                          String defaultGroupName,
-                                         String rootGroupName,
-                                         AnActionEvent e) {
+                                         String rootGroupName) {
     String text = group.getTemplatePresentation().getText();
     ActionManager actionManager = ActionManager.getInstance();
     final ArrayList<AnAction> reorderedChildren = new ArrayList<>();
-    ContainerUtil.addAll(reorderedChildren, group.getChildren(e));
+    ContainerUtil.addAll(reorderedChildren, children);
     for (ActionUrl actionUrl : schema.getActions()) {
       if (actionUrl.getParentGroup() == null) continue;
       if ((actionUrl.getParentGroup().equals(text) ||
@@ -148,7 +148,7 @@ public final class CustomizationUtil {
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
     //noinspection HardCodedStringLiteral
     @SuppressWarnings("DialogTitleCapitalization")
-    Group rootGroup = new Group("root", null, null);
+    Group rootGroup = new Group("root");
     DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     root.removeAllChildren();
     schema.fillActionGroups(root);
@@ -425,7 +425,7 @@ public final class CustomizationUtil {
 
     @NlsSafe
     String displayName = schema.getDisplayName(groupId);
-    return ActionsTreeUtil.createGroup(group, displayName, null, null, false, action -> true);
+    return ActionsTreeUtil.createGroup(group, displayName, null, false, action -> true);
   }
 
   /**
@@ -521,7 +521,7 @@ public final class CustomizationUtil {
 
     String actionID = "customize.toolbar." + groupID;
     DefaultActionGroup customizationGroup = new DefaultActionGroup(
-      new MyDumbAction(actionID, IdeBundle.message("action.customizations.customize.action"), AllIcons.General.GearPlain, event -> {
+      new MyDumbAction(actionID, IdeBundle.messagePointer("action.customizations.customize.action"), () -> AllIcons.General.GearPlain, event -> {
         Component src = popupInvoker.get();
         AnAction targetAction = src instanceof ActionButton ? ((ActionButton)src).getAction() : null;
         DialogWrapper dialogWrapper = createCustomizeGroupDialog(event.getProject(), groupID, groupName, targetAction);
@@ -529,13 +529,14 @@ public final class CustomizationUtil {
       })
     );
 
-    AnAction rollbackAction = ActionManager.getInstance().getAction(ToolbarSettings.ROLLBACK_ACTION_ID);
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction rollbackAction = actionManager.getAction(ToolbarSettings.ROLLBACK_ACTION_ID);
     if (rollbackAction != null) {
       customizationGroup.add(rollbackAction);
     }
 
-    customizationGroup.addAll((ActionGroup)ActionManager.getInstance().getAction("ToolbarPopupActions"));
-    AnAction additionalActions = ActionManager.getInstance().getAction("ToolbarPopupActions." + groupID);
+    customizationGroup.addAll((ActionGroup)actionManager.getAction("ToolbarPopupActions"));
+    AnAction additionalActions = actionManager.getAction("ToolbarPopupActions." + groupID);
     if (additionalActions instanceof ActionGroup) {
       customizationGroup.add(additionalActions);
     }
@@ -767,17 +768,18 @@ public final class CustomizationUtil {
     private final @NotNull Consumer<? super AnActionEvent> myActionPerformed;
 
     private MyDumbAction(@NotNull String id,
-                         @Nullable @NlsActions.ActionText String text,
-                         @Nullable Icon icon,
+                         @NotNull Supplier<@NlsActions.ActionText String> text,
+                         @Nullable Supplier<? extends @Nullable Icon> icon,
                          @NotNull Consumer<? super AnActionEvent> actionPerformed) {
       super(text, null, icon);
+
       this.id = id;
       myActionPerformed = actionPerformed;
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myActionPerformed.consume(e);
+      myActionPerformed.accept(e);
     }
 
     @Override

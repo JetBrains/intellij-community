@@ -19,5 +19,5 @@ abstract class HamcrestAssertionsConverterInspectionTestBase : JvmInspectionTest
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 }

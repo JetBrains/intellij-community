@@ -51,7 +51,7 @@ public final class MainMenuCollector {
     }
   }
 
-  private String getPathFromMenuSelectionManager(@NotNull AnAction action) {
+  private static String getPathFromMenuSelectionManager(@NotNull AnAction action) {
     List<String> groups = Arrays.stream(MenuSelectionManager.defaultManager().getSelectedPath())
       .filter(o -> o instanceof ActionMenu)
       .map(o -> ((ActionMenu)o).getAnAction().getTemplateText())
@@ -76,7 +76,7 @@ public final class MainMenuCollector {
     return StringUtil.join(menuItems, " -> ");
   }
 
-  private @NotNull String getPathFromMenuItem(AWTEvent e, AnAction action) {
+  private static @NotNull String getPathFromMenuItem(AWTEvent e, AnAction action) {
     Object src = e.getSource();
     ArrayList<String> items = new ArrayList<>();
     while (src instanceof MenuItem) {

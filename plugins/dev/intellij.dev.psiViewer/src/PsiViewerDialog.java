@@ -36,6 +36,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
@@ -101,7 +102,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   private final ViewerTreeStructure myTreeStructure;
 
   private JPanel myPanel;
-  private JComboBox<PsiViewerSourceWrapper> myFileTypeComboBox;
+  private ComboBox<PsiViewerSourceWrapper> myFileTypeComboBox;
   private JCheckBox myShowWhiteSpacesBox;
   private JCheckBox myShowTreeNodesCheckBox;
   private JBLabel myDialectLabel;
@@ -352,6 +353,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       }
     }
 
+    myFileTypeComboBox.setSwingPopup(false);
     myFileTypeComboBox.setModel(new CollectionComboBoxModel<>(new ArrayList<>(mySourceWrappers), lastUsed));
     myFileTypeComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
       if (value != null) {

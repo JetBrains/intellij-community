@@ -91,7 +91,6 @@ import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
-import com.intellij.util.text.DateFormatUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -132,6 +131,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
@@ -251,14 +252,14 @@ public final class BuildManager implements Disposable {
     for (File buildSystemDir : systemDirs) {
       File[] dirs = buildSystemDir.listFiles(pathname -> pathname.isDirectory() && !TEMP_DIR_NAME.equals(pathname.getName()));
       if (dirs != null) {
-        final Date now = new Date();
+        Instant now = Instant.now();
         for (File buildDataProjectDir : dirs) {
           File usageFile = getUsageFile(buildDataProjectDir);
           if (usageFile.exists()) {
             final Pair<Date, File> usageData = readUsageFile(usageFile);
             if (usageData != null) {
               final File projectFile = usageData.second;
-              if (projectFile != null && !projectFile.exists() || DateFormatUtil.getDifferenceInDays(usageData.first, now) > unusedThresholdDays) {
+              if (projectFile != null && !projectFile.exists() || Duration.between(usageData.first.toInstant(), now).toDays() > unusedThresholdDays) {
                 LOG.info("Clearing project build data because the project does not exist or was not opened for more than " + unusedThresholdDays + " days: " + buildDataProjectDir);
                 FileUtil.delete(buildDataProjectDir);
               }
@@ -1449,7 +1450,7 @@ public final class BuildManager implements Disposable {
       catch (IOException e) {
         LOG.warn("Failed to copy YK libraries", e);
       }
-      @SuppressWarnings("SpellCheckingInspection") 
+      @SuppressWarnings("SpellCheckingInspection")
       final StringBuilder parameters = new StringBuilder().append("-agentpath:").append(cmdLine.getYjpAgentPath(service)).append("=disablealloc,delay=10000,sessionname=ExternalBuild");
       final String buildSnapshotPath = System.getProperty("build.snapshots.path");
       if (buildSnapshotPath != null) {
@@ -1917,7 +1918,7 @@ public final class BuildManager implements Disposable {
           final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage compileMessage = _message.getCompileMessage();
           if (compileMessage.hasSourceFilePath()) {
             final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Builder builder = CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.newBuilder(compileMessage);
-            builder.setSourceFilePath(myPathMapper.apply(compileMessage.getSourceFilePath())); 
+            builder.setSourceFilePath(myPathMapper.apply(compileMessage.getSourceFilePath()));
             _message = CmdlineRemoteProto.Message.BuilderMessage.newBuilder(_message).setCompileMessage(builder).build();
           }
         }
@@ -1974,23 +1975,22 @@ public final class BuildManager implements Disposable {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return;
       }
-      final MessageBusConnection connection = project.getMessageBus().connect();
-      if (!project.isDefault()) {
-        connection.subscribe(WorkspaceModelTopics.CHANGED, new WSModelChangeListener(project));
 
-        connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
-          @Override
-          public void rootsChanged(@NotNull ModuleRootEvent event) {
-            if (!event.isCausedByWorkspaceModelChangesOnly()) {
-              // only process events that are not covered by events from the workspace model
-              final Object source = event.getSource();
-              if (source instanceof Project) {
-                getInstance().clearState((Project)source);
-              }
+      MessageBusConnection connection = project.getMessageBus().connect();
+      connection.subscribe(WorkspaceModelTopics.CHANGED, new WSModelChangeListener(project));
+
+      connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
+        @Override
+        public void rootsChanged(@NotNull ModuleRootEvent event) {
+          if (!event.isCausedByWorkspaceModelChangesOnly()) {
+            // only process events that are not covered by events from the workspace model
+            final Object source = event.getSource();
+            if (source instanceof Project) {
+              getInstance().clearState((Project)source);
             }
           }
-        });
-      }
+        }
+      });
       connection.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
         @Override
         public void processStarting(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
@@ -2094,7 +2094,7 @@ public final class BuildManager implements Disposable {
                 return candidates.stream().map(lfs::findFileByPath).filter(root -> root != null && fileIndex.isInSourceContent(root)).collect(Collectors.toSet());
 
               }).executeSynchronously();
-              
+
               if (!toRefresh.isEmpty()) {
                 lfs.refreshFiles(toRefresh, true, true, null);
               }

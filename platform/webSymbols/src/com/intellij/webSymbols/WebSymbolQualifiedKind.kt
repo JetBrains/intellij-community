@@ -7,13 +7,7 @@ data class WebSymbolQualifiedKind(
   val namespace: @NlsSafe SymbolNamespace,
   val kind: @NlsSafe SymbolKind,
 ) {
-  fun toQualifiedName(name: String) = WebSymbolQualifiedName(namespace, kind, name)
+  fun withName(name: String) = WebSymbolQualifiedName(namespace, kind, name)
 
-  fun matches(expectedNamespace: SymbolNamespace, expectedKind: SymbolKind): Boolean {
-    return namespace == expectedNamespace && kind == expectedKind
-  }
-
-  fun matches(expectedNamespace: SymbolNamespace, expectedKinds: List<SymbolKind>): Boolean {
-    return namespace == expectedNamespace && expectedKinds.any { kind == it }
-  }
+  override fun toString(): String = "/$namespace/$kind"
 }

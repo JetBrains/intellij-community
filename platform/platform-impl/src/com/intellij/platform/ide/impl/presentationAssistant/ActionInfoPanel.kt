@@ -11,11 +11,13 @@ import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBUI
+import java.awt.Dimension
 import java.awt.Font
 import java.awt.font.TextAttribute
 import javax.swing.JPanel
+import kotlin.math.max
 
 internal class ActionInfoPanel(textData: TextData, private val appearance: ActionInfoPopupGroup.Appearance) : JPanel() {
   private val titleLabel = JBLabel()
@@ -30,18 +32,17 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
     background = appearance.theme.background
 
     layout = GridLayout()
-    val titleSubtitleIntersection = if (appearance.titleSubtitleGap < 0) UnscaledGaps(bottom = -appearance.titleSubtitleGap) else UnscaledGaps.EMPTY
+    border = JBUI.Borders.empty(appearance.popupInsets)
+    val titleSubtitleIntersection = if (appearance.titleSubtitleGap < 0) UnscaledGaps(top = -appearance.titleSubtitleGap) else UnscaledGaps.EMPTY
 
     RowsGridBuilder(this)
-      .row(resizable = true).cell(component = titleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true, visualPaddings = titleSubtitleIntersection)
-      .row(resizable = true).cell(component = subtitleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
+      .row(resizable = true).cell(component = titleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
+      .row(resizable = true).cell(component = subtitleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true, visualPaddings = titleSubtitleIntersection)
 
-    titleLabel.border = JBEmptyBorder(appearance.titleInsets.unscaled)
     titleLabel.foreground = appearance.theme.foreground
 
-    subtitleLabel.border = JBEmptyBorder(appearance.subtitleInsets.unscaled.apply {
-      if (appearance.titleSubtitleGap > 0) top += appearance.titleSubtitleGap
-    })
+    subtitleLabel.border = JBUI.Borders.empty(max(appearance.titleSubtitleGap, 0), appearance.subtitleHorizontalInset,
+                                              0, appearance.subtitleHorizontalInset)
     subtitleLabel.foreground = appearance.theme.keymapLabel
     subtitleLabel.font = DEFAULT_FONT.deriveFont(JBUIScale.scale(appearance.subtitleFontSize))
 
@@ -54,8 +55,20 @@ internal class ActionInfoPanel(textData: TextData, private val appearance: Actio
       .deriveFont(JBUIScale.scale (appearance.titleFontSize))
       .deriveFont(mapOf(TextAttribute.WEIGHT to TextAttribute.WEIGHT_BOLD))
 
-    val subtitle = textData.subtitle
-    subtitleLabel.text = subtitle ?: " "
+    subtitleLabel.isVisible = textData.showSubtitle
+    subtitleLabel.text = textData.subtitle ?: " "
+  }
+
+  /** Preferred size of popup when both title and subtitle are shown */
+  fun getFullSize(): Dimension {
+    val oldSubtitleVisible = subtitleLabel.isVisible
+    return try {
+      subtitleLabel.isVisible = true
+      preferredSize
+    }
+    finally {
+      subtitleLabel.isVisible = oldSubtitleVisible
+    }
   }
 
   companion object {

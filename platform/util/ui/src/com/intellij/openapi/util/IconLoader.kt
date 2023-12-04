@@ -347,7 +347,7 @@ object IconLoader {
 
 @Internal
 fun findIconUsingNewImplementation(path: String, classLoader: ClassLoader, toolTip: Supplier<String?>? = null): Icon? {
-  return findIconByPath(path = path, classLoader = classLoader, cache = iconCache.asMap(), toolTip = toolTip)
+  return findIconByPath(path = path, classLoader = classLoader, cache = iconCache, toolTip = toolTip)
 }
 
 @Internal

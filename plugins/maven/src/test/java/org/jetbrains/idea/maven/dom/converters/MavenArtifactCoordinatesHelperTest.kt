@@ -9,6 +9,8 @@ import org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesHelper.ge
 import org.junit.Test
 
 class MavenArtifactCoordinatesHelperTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testGetPluginVersionFromParentPluginManagement() = runBlocking {
     val parentFile = createProjectPom("""

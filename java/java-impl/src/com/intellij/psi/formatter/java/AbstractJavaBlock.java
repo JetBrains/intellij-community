@@ -632,6 +632,11 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         Block block = createJavaBlock(child, mySettings, myJavaSettings, childIndent, wrap, alignmentStrategy, myFormattingMode);
         result.add(block);
       }
+      else if (nodeType == JavaElementType.CASE_LABEL_ELEMENT_LIST) {
+        Wrap wrap = Wrap.createWrap(getWrapType(mySettings.SWITCH_EXPRESSIONS_WRAP), false);
+        WrappingStrategy wrapStrategy = WrappingStrategy.createDoNotWrapCommaStrategy(wrap);
+        child = processSwitchExpression(result, child, wrapStrategy);
+      }
       else {
         Alignment alignment = alignmentStrategy.getAlignment(childType);
 
@@ -764,6 +769,22 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   @Nullable
+  private ASTNode processSwitchExpression(@NotNull final List<? super Block> result,
+                                          ASTNode child,
+                                          WrappingStrategy wrappingStrategy) {
+    AlignmentStrategy alignmentStrategy = AlignmentStrategy.wrap(createAlignment(true, null), JavaTokenType.COMMA);
+    while (child != null) {
+      if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
+        result.add(createJavaBlock(child, mySettings, myJavaSettings, Indent.getNoneIndent(),
+                                   wrappingStrategy.getWrap(child.getElementType()), alignmentStrategy,
+                                   myFormattingMode));
+      }
+      child = child.getTreeNext();
+    }
+    return child;
+  }
+
+  @Nullable
   private ASTNode processTernaryOperationRange(@NotNull final List<? super Block> result,
                                                @NotNull final ASTNode child,
                                                final Wrap defaultWrap,
@@ -802,29 +823,12 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   @NotNull
   private Block createMethodCallExpressionBlock(@NotNull ASTNode node, Wrap blockWrap, Alignment alignment, Indent indent) {
     final ArrayList<ASTNode> nodes = new ArrayList<>();
-    collectNodes(nodes, node);
+    JavaFormatterUtil.collectCallExpressionNodes(nodes, node);
     if (Registry.is(LegacyChainedMethodCallsBlockBuilder.COMPATIBILITY_KEY)) {
       return
         new LegacyChainedMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
     }
     return new ChainMethodCallsBlockBuilder(alignment, blockWrap, indent, mySettings, myJavaSettings, myFormattingMode).build(nodes);
-  }
-
-  private static void collectNodes(@NotNull List<? super ASTNode> nodes, @NotNull ASTNode node) {
-    ASTNode child = node.getFirstChildNode();
-    while (child != null) {
-      if (!FormatterUtil.containsWhiteSpacesOnly(child)) {
-        IElementType type = child.getElementType();
-        if (type == JavaElementType.METHOD_CALL_EXPRESSION ||
-            type == JavaElementType.REFERENCE_EXPRESSION) {
-          collectNodes(nodes, child);
-        }
-        else {
-          nodes.add(child);
-        }
-      }
-      child = child.getTreeNext();
-    }
   }
 
   private boolean shouldAlignChild(@NotNull final ASTNode child) {
@@ -1330,7 +1334,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
   }
 
   protected ChildAlignmentStrategyProvider getStrategyProvider() {
-    if (myNode.getElementType() == JavaElementType.CLASS) {
+    if (myNode.getElementType() == JavaElementType.CLASS || myNode.getElementType() == JavaElementType.ANONYMOUS_CLASS) {
       return new SubsequentClassMemberAlignment(mySettings);
     }
 

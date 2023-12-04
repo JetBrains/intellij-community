@@ -131,7 +131,7 @@ public final class ActionUrl implements JDOMExternalizable {
       final AnAction action = ActionManager.getInstance().getAction(attributeValue);
       Group group = action instanceof ActionGroup
                     ? ActionsTreeUtil.createGroup((ActionGroup)action, true, null)
-                    : new Group(attributeValue, attributeValue, null);
+                    : new Group(attributeValue, attributeValue);
       group.setForceShowAsPopup(Boolean.parseBoolean(element.getAttributeValue(FORCE_POPUP)));
       myComponent = group;
     }

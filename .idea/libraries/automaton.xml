@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="automaton" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="dk.brics:automaton:1.12-4">
+    <properties maven-id="dk.brics:automaton:1.12-4">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/dk/brics/automaton/1.12-4/automaton-1.12-4.jar">
           <sha256sum>3941b48f2e9281aab7234395c549cbb399b3dc80fed2e13999a80db47f94b041</sha256sum>

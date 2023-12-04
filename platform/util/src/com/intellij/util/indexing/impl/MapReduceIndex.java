@@ -417,6 +417,10 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         MapReduceIndex.this.requestRebuild(ex);
         return false;
       }
+      catch (Throwable t) {
+        LOG.error("An exception during updateWithMap(). Index " + myIndexId.getName(), t);
+        throw t;
+      }
       return true;
     }
   }

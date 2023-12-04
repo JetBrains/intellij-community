@@ -10,7 +10,7 @@ import org.junit.Test
 import java.nio.charset.StandardCharsets
 
 class MavenEncodingImportingTest : MavenMultiVersionImportingTestCase() {
-
+  override fun runInDispatchThread() = true
   @Test
   fun testShouldSetEncodingForNewProject() = runBlocking {
     val subFile = createProjectSubFile("src/main/java/MyClass.java")

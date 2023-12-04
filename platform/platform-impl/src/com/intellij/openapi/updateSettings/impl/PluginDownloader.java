@@ -8,7 +8,6 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceUrls;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.idea.AppMode;
 import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +40,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
-import static com.intellij.openapi.application.PathManager.getPluginsPath;
 
 public final class PluginDownloader {
 
@@ -197,9 +195,17 @@ public final class PluginDownloader {
       //store old plugins file
       descriptor = PluginManagerCore.getPlugin(myPluginId);
       LOG.assertTrue(descriptor != null);
-      if (myPluginVersion != null && compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor) <= 0) {
-        LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
-        return false;
+
+
+      if (myPluginVersion != null) {
+        int result = compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor);
+        if (result < 0 && isDowngradeAllowed(descriptor)) {
+          LOG.info("Preparing to downgrade plugin '" + myPluginId + "' : " + myPluginVersion + " -> " + descriptor.getVersion());
+        }
+        else if (result <= 0) {
+          LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
+          return false;
+        }
       }
       myOldFile = descriptor.isBundled() ? null : descriptor.getPluginPath();
     }
@@ -235,10 +241,16 @@ public final class PluginDownloader {
     }
 
     myPluginVersion = actualDescriptor.getVersion();
-    if (descriptor != null && compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor) <= 0) {
-      LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
-      reportError(IdeBundle.message("error.older.update", myPluginVersion, descriptor.getVersion()));
-      return false; //was not updated
+    if (descriptor != null) {
+      int result = compareVersionsSkipBrokenAndIncompatible(myPluginVersion, descriptor);
+      if (result < 0 && isDowngradeAllowed(descriptor)) {
+        LOG.info("Downgrading plugin '" + myPluginId + "' : " + myPluginVersion + " -> " + descriptor.getVersion());
+      }
+      else if (result <= 0) {
+        LOG.info("Plugin " + myPluginId + ": current version (max) " + myPluginVersion);
+        reportError(IdeBundle.message("error.older.update", myPluginVersion, descriptor.getVersion()));
+        return false; //was not updated
+      }
     }
 
     myDescriptor = actualDescriptor;
@@ -253,6 +265,10 @@ public final class PluginDownloader {
     }
 
     return true;
+  }
+
+  private boolean isDowngradeAllowed(IdeaPluginDescriptor localDescriptor) {
+    return PluginManagementPolicy.getInstance().isDowngradeAllowed(localDescriptor, myDescriptor);
   }
 
   private @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact() throws IOException {
@@ -304,14 +320,7 @@ public final class PluginDownloader {
   }
 
   public void install() throws IOException {
-    if (AppMode.isHeadless()) {
-      PluginInstaller.unpackPlugin(getFilePath(), Path.of(getPluginsPath()));
-    }
-    else {
-      PluginInstaller.installAfterRestartAndKeepIfNecessary(myDescriptor, getFilePath(),
-                                                            myOldFile
-      );
-    }
+    PluginInstaller.installAfterRestartAndKeepIfNecessary(myDescriptor, getFilePath(), myOldFile);
 
     if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
       InstalledPluginsState.getInstance().onPluginInstall(myDescriptor,
@@ -344,6 +353,7 @@ public final class PluginDownloader {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
+    LOG.info("tryDownloadPlugin: " + myPluginId + " | " + myPluginVersion + " | " + myPluginUrl);
     MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : new MarketplacePluginDownloadService();
     return myOldFile != null ?
            downloader.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :

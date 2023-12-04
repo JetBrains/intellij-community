@@ -44,9 +44,9 @@ import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
+import com.intellij.util.pico.DefaultPicoContainer;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.ComponentAdapter;
-import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
 import java.io.IOException;
@@ -98,7 +98,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     LightPlatformTestCase.closeAndDeleteProject();
     MockApplication app = MockApplication.setUp(getTestRootDisposable());
     this.app = app;
-    MutablePicoContainer appContainer = app.getPicoContainer();
+    DefaultPicoContainer appContainer = app.getPicoContainer();
     ComponentAdapter component = appContainer.getComponentAdapter(ProgressManager.class.getName());
     if (component == null) {
       appContainer.registerComponentInstance(ProgressManager.class.getName(), new ProgressManagerImpl());
@@ -147,7 +147,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     Language language = definition.getFileNodeType().getLanguage();
     myLangParserDefinition.registerExtension(new KeyedLazyInstance<>() {
       @Override
-      public String getKey() {
+      public @NotNull String getKey() {
         return language.getID();
       }
 
@@ -344,7 +344,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
         }
       }
 
-      private int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
+      private static int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
         assertEquals(child.getStartOffsetInParent(), childOffset);
         assertEquals(child.getStartOffset(), childOffset + parentOffset);
         int childLength = child.getTextLength();

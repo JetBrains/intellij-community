@@ -633,6 +633,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/iteratorOperator.before.Main.kt");
             }
 
+            @TestMetadata("ktij27440.test")
+            public void testKtij27440() throws Exception {
+                runTest("testData/quickfix/autoImports/ktij27440.test");
+            }
+
             @TestMetadata("memberImportFunction.test")
             public void testMemberImportFunction() throws Exception {
                 runTest("testData/quickfix/autoImports/memberImportFunction.test");
@@ -941,6 +946,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("unaryPlusOperator.before.Main.kt")
             public void testUnaryPlusOperator() throws Exception {
                 runTest("testData/quickfix/autoImports/unaryPlusOperator.before.Main.kt");
+            }
+
+            @TestMetadata("unresolvedImplicitReceiver.test")
+            public void testUnresolvedImplicitReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/unresolvedImplicitReceiver.test");
             }
 
             @TestMetadata("withSmartCastQualifier.before.Main.kt")

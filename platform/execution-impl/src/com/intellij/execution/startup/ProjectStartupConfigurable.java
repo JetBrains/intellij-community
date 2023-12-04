@@ -14,6 +14,7 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.NewRunConfigurationPopup;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -264,7 +265,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
       public Executor getExecutor() {
         return executor;
       }
-    }, false);
+    }, DataManager.getInstance().getDataContext(myTable), false);
     final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper<?> setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings settings) {

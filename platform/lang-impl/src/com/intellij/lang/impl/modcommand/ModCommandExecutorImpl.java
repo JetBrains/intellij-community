@@ -13,20 +13,23 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.*;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
-import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.LangBundle;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModChooseMember.SelectionMode;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -40,22 +43,18 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
-import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
+import com.intellij.refactoring.rename.*;
 import com.intellij.refactoring.suggested.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -77,11 +76,11 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   @Override
   public void executeInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
     if (!ensureWritable(context.project(), command)) return;
-    doExecuteInteractively(context, command, editor);
+    doExecuteInteractively(context, command, ModCommand.nop(), editor);
   }
 
   private static boolean ensureWritable(@NotNull Project project, @NotNull ModCommand command) {
-    Set<VirtualFile> files = command.modifiedFiles();
+    Collection<VirtualFile> files = ContainerUtil.filter(command.modifiedFiles(), f -> !(f instanceof LightVirtualFile));
     return files.isEmpty() || ReadonlyStatusHandler.ensureFilesWritable(project, files.toArray(VirtualFile.EMPTY_ARRAY));
   }
 
@@ -95,7 +94,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
 
   private BatchExecutionResult doExecuteInBatch(@NotNull ActionContext context, @NotNull ModCommand command) {
     Project project = context.project();
-    if (command instanceof ModNothing) {
+    if (command.isEmpty()) {
       return Result.NOTHING;
     }
     if (command instanceof ModUpdateFileText upd) {
@@ -125,14 +124,11 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       executeInBatch(context, nextCommand);
     }
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
-        command instanceof ModCopyToClipboard || command instanceof ModRenameSymbol ||
-        command instanceof ModStartTemplate || command instanceof ModUpdateInspectionOptions) {
+        command instanceof ModCopyToClipboard || command instanceof ModStartRename ||
+        command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions) {
       return Result.INTERACTIVE;
     }
-    if (command instanceof ModShowConflicts showConflicts) {
-      if (showConflicts.conflicts().isEmpty()) {
-        return executeInBatch(context, showConflicts.nextStep());
-      }
+    if (command instanceof ModShowConflicts) {
       return Result.CONFLICTS;
     }
     if (command instanceof ModDisplayMessage message) {
@@ -159,7 +155,8 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return executeInBatch(context, next);
   }
 
-  private boolean doExecuteInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @Nullable Editor editor) {
+  private boolean doExecuteInteractively(@NotNull ActionContext context, @NotNull ModCommand command, @NotNull ModCommand tail,
+                                         @Nullable Editor editor) {
     Project project = context.project();
     if (command instanceof ModUpdateFileText upd) {
       return executeUpdate(project, upd);
@@ -191,7 +188,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModDisplayMessage message) {
       return executeMessage(project, message);
     }
-    if (command instanceof ModRenameSymbol rename) {
+    if (command instanceof ModStartRename rename) {
       return executeRename(project, rename, editor);
     }
     if (command instanceof ModCreateFile create) {
@@ -201,12 +198,12 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
       return executeDelete(project, deleteFile);
     }
     if (command instanceof ModShowConflicts showConflicts) {
-      return executeShowConflicts(context, showConflicts, editor);
+      return executeShowConflicts(context, showConflicts, editor, tail);
     }
     if (command instanceof ModStartTemplate startTemplate) {
       return executeStartTemplate(context, startTemplate, editor);
     }
-    if (command instanceof ModUpdateInspectionOptions updateOptions) {
+    if (command instanceof ModUpdateSystemOptions updateOptions) {
       return executeUpdateInspectionOptions(context, updateOptions);
     }
     throw new IllegalArgumentException("Unknown command: " + command);
@@ -260,7 +257,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
-  private static boolean executeUpdateInspectionOptions(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options) {
+  private static boolean executeUpdateInspectionOptions(@NotNull ActionContext context, @NotNull ModUpdateSystemOptions options) {
     VirtualFile vFile = context.file().getVirtualFile();
     Project project = context.project();
     setOption(project, vFile, options, true);
@@ -278,27 +275,14 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
-  private static void setOption(@NotNull Project project, VirtualFile vFile, @NotNull ModUpdateInspectionOptions options, boolean newValue) {
+  private static void setOption(@NotNull Project project, VirtualFile vFile, @NotNull ModUpdateSystemOptions options, boolean newValue) {
     PsiFile file = PsiManager.getInstance(project).findFile(vFile);
     if (file == null) return;
-    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
-      InspectionToolWrapper<?, ?> tool = model.getInspectionTool(options.inspectionShortName(), file);
-      if (tool == null) {
-        throw new IllegalStateException("Inspection not found: " + options.inspectionShortName());
-      }
-      InspectionProfileEntry inspection = tool.getTool();
-      for (ModUpdateInspectionOptions.ModifiedInspectionOption option : options.options()) {
-        Object value = newValue ? option.newValue() : option.oldValue();
-        if (value instanceof List<?> list) {
-          @SuppressWarnings("unchecked")
-          List<Object> oldList = (List<Object>)Objects.requireNonNull(inspection.getOptionController().getOption(option.bindId()));
-          oldList.clear();
-          oldList.addAll(list);
-        } else {
-          inspection.getOptionController().setOption(option.bindId(), value);
-        }
-      }
-    });
+    for (ModUpdateSystemOptions.ModifiedOption option : options.options()) {
+      OptionController controller = OptionControllerProvider.rootController(file);
+      Object value = newValue ? option.newValue() : option.oldValue();
+      controller.setOption(option.bindId(), value);
+    }
   }
 
   private boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {
@@ -367,17 +351,14 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return true;
   }
 
-  private boolean executeShowConflicts(@NotNull ActionContext context, @NotNull ModShowConflicts conflicts, @Nullable Editor editor) {
-    MultiMap<PsiElement, String> conflictData = new MultiMap<>();
+  private boolean executeShowConflicts(@NotNull ActionContext context, @NotNull ModShowConflicts conflicts, @Nullable Editor editor,
+                                       @NotNull ModCommand tail) {
+    MultiMap<PsiElement, String> conflictData = new MultiMap<>(new LinkedHashMap<>());
     conflicts.conflicts().forEach((e, c) -> conflictData.put(e, c.messages()));
-    if (!conflictData.isEmpty()) {
-      var conflictsDialog =
-        new ConflictsDialog(context.project(), conflictData, () -> doExecuteInteractively(context, conflicts.nextStep(), editor));
-      if (!conflictsDialog.showAndGet()) {
-        return false;
-      }
-    }
-    return doExecuteInteractively(context, conflicts.nextStep(), editor);
+    if (conflictData.isEmpty()) return true;
+    var conflictsDialog =
+      new ConflictsDialog(context.project(), conflictData, () -> doExecuteInteractively(context, tail, ModCommand.nop(), editor));
+    return conflictsDialog.showAndGet();
   }
 
   private static boolean executeCopyToClipboard(@NotNull ModCopyToClipboard clipboard) {
@@ -416,79 +397,33 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     }
   }
 
-  private static boolean executeRename(@NotNull Project project, @NotNull ModRenameSymbol rename, @Nullable Editor editor) {
+  private static boolean executeRename(@NotNull Project project, @NotNull ModStartRename rename, @Nullable Editor editor) {
     VirtualFile file = actualize(rename.file());
     if (file == null) return false;
     PsiFile psiFile = PsiManagerEx.getInstanceEx(project).findFile(file);
     if (psiFile == null) return false;
-    PsiNameIdentifierOwner element =
-      PsiTreeUtil.getNonStrictParentOfType(psiFile.findElementAt(rename.symbolRange().range().getStartOffset()), PsiNameIdentifierOwner.class);
-    if (element == null) return false;
+    TextRange range = rename.symbolRange().range();
+    PsiElement injectedElement = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, range.getStartOffset());
+    PsiElement psiElement = injectedElement != null ? injectedElement : psiFile.findElementAt(range.getStartOffset());
+    PsiNamedElement namedElement = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiNamedElement.class);
+    if (namedElement == null) return false;
     Editor finalEditor = getEditor(project, editor, file);
     if (finalEditor == null) return false;
-    PsiElement nameIdentifier = element.getNameIdentifier();
-    if (nameIdentifier == null) return false;
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      int offset = nameIdentifier.getTextRange().getEndOffset();
-      return executeNavigate(project, new ModNavigate(file, offset, offset, offset));
-    }
-    finalEditor.getCaretModel().moveToOffset(nameIdentifier.getTextOffset());
-    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
-    if (!processor.isInplaceRenameSupported()) {
-      fallBackRename(project, rename, element, finalEditor);
-      return true;
-    }
-    processor.substituteElementToRename(element, finalEditor, new Pass<>() {
-      @Override
-      public void pass(PsiElement substitutedElement) {
-        final MemberInplaceRenamer renamer = new MemberInplaceRenamer(element, substitutedElement, finalEditor);
-        final LinkedHashSet<String> nameSuggestions = new LinkedHashSet<>(rename.nameSuggestions());
-        renamer.performInplaceRefactoring(nameSuggestions);
-      }
-    });
+    DataContext context = DataManager.getInstance().getDataContext(finalEditor.getComponent());
+    DataContext finalContext = SimpleDataContext.builder()
+      .setParent(context)
+      .add(CommonDataKeys.PSI_ELEMENT, namedElement)
+      .add(PsiElementRenameHandler.NAME_SUGGESTIONS, rename.nameSuggestions())
+      .build();
+    PsiElement anchor = namedElement instanceof PsiNameIdentifierOwner owner ? 
+                        requireNonNullElse(owner.getNameIdentifier(), namedElement) : namedElement;
+    finalEditor.getSelectionModel().removeSelection();
+    finalEditor.getCaretModel().moveToOffset(anchor.getTextOffset());
+    Renamer renamer = RenamerFactory.EP_NAME.getExtensionList().stream().flatMap(factory -> factory.createRenamers(finalContext).stream())
+      .findFirst().orElse(null);
+    if (renamer == null) return false;
+    renamer.performRename();
     return true;
-  }
-
-  private static void fallBackRename(@NotNull Project project,
-                                @NotNull ModRenameSymbol rename,
-                                PsiNameIdentifierOwner element,
-                                Editor finalEditor) {
-    SmartPsiElementPointer<PsiNameIdentifierOwner> pointer = SmartPointerManager.createPointer(element);
-    record RenameData(Collection<PsiReference> references, PsiElement scope, PsiNameIdentifierOwner nameOwner) {
-      static RenameData create(SmartPsiElementPointer<? extends PsiNameIdentifierOwner> pointer) {
-        PsiNameIdentifierOwner owner = pointer.getElement();
-        if (owner == null) return null;
-        PsiFile psiFile = owner.getContainingFile();
-        Collection<PsiReference> references = ReferencesSearch.search(owner, new LocalSearchScope(psiFile)).findAll();
-        PsiElement scope = PsiTreeUtil.findCommonParent(ContainerUtil.map(references, ref -> ref.getElement()));
-        if (scope != null) {
-          scope = PsiTreeUtil.findCommonParent(scope, owner);
-        }
-        if (scope == null) {
-          scope = psiFile;
-        }
-        return new RenameData(references, scope, owner);
-      }
-    }
-    ReadAction.nonBlocking(() -> RenameData.create(pointer)).expireWhen(() -> finalEditor.isDisposed())
-      .finishOnUiThread(ModalityState.defaultModalityState(), renameData -> {
-        final TextRange textRange = renameData.scope().getTextRange();
-        final int startOffset = textRange.getStartOffset();
-        final TemplateBuilderImpl builder = new TemplateBuilderImpl(renameData.scope());
-        final Expression nameExpression = new NameExpression(element.getName(), rename.nameSuggestions());
-        final PsiElement identifier = renameData.nameOwner().getNameIdentifier();
-        builder.replaceElement(identifier, "PATTERN", nameExpression, true);
-        for (PsiReference reference : renameData.references()) {
-          builder.replaceElement(reference, "PATTERN", "PATTERN", false);
-        }
-        CommandProcessor.getInstance().executeCommand(project, () -> {
-          final Template template = WriteAction.compute(builder::buildInlineTemplate);
-          finalEditor.getCaretModel().moveToOffset(startOffset);
-          final TemplateManager templateManager = TemplateManager.getInstance(project);
-          templateManager.startTemplate(finalEditor, template);
-        }, LangBundle.message("action.rename.text"), null);
-      })
-      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable
@@ -498,38 +433,6 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     return finalEditor;
   }
 
-  static class NameExpression extends Expression {
-    private final String myOrig;
-    private final LookupElement[] cachedLookupElements;
-
-    NameExpression(String orig, List<String> suggestions) {
-      myOrig = orig;
-      cachedLookupElements = suggestions.stream()
-        .map(LookupElementBuilder::create)
-        .toArray(LookupElement[]::new);
-    }
-
-    @Override
-    public boolean requiresCommittedPSI() {
-      return false;
-    }
-
-    @Override
-    public com.intellij.codeInsight.template.Result calculateResult(ExpressionContext context) {
-      return new TextResult(myOrig);
-    }
-
-    @Override
-    public @NotNull LookupFocusDegree getLookupFocusDegree() {
-      return LookupFocusDegree.UNFOCUSED;
-    }
-
-    @Override
-    public LookupElement[] calculateLookupItems(ExpressionContext context) {
-      return cachedLookupElements;
-    }
-  }
-  
   private static final class ErrorInTestException extends RuntimeException {
     private ErrorInTestException(String message) {
       super(message);
@@ -633,7 +536,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   private static boolean executeHighlight(Project project, ModHighlight highlight) {
-    VirtualFile file = actualize(highlight.virtualFile());
+    VirtualFile file = actualize(highlight.file());
     if (file == null) return false;
     FileEditor fileEditor = FileEditorManager.getInstance(project).getSelectedEditor(file);
     if (!(fileEditor instanceof TextEditor textEditor)) return false;
@@ -652,12 +555,42 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   private boolean executeComposite(@NotNull ActionContext context, ModCompositeCommand cmp, @Nullable Editor editor) {
-    for (ModCommand command : cmp.commands()) {
-      if (!doExecuteInteractively(context, command, editor)) {
+    List<@NotNull ModCommand> commands = cmp.commands();
+    int size = commands.size();
+    for (int i = 0; i < size; i++) {
+      ModCommand command = commands.get(i);
+      if (!doExecuteInteractively(context, command, new ModCompositeCommand(commands.subList(i + 1, size)), editor)) {
         return false;
       }
     }
     return true;
+  }
+
+  @Override
+  public void executeForFileCopy(@NotNull ModCommand command, @NotNull PsiFile file) {
+    for (ModCommand cmd : command.unpack()) {
+      if (cmd instanceof ModUpdateFileText updateFileText) {
+        if (!updateFileText.file().equals(file.getOriginalFile().getVirtualFile())) {
+          throw new UnsupportedOperationException("The command updates non-current file");
+        }
+        updateText(file.getProject(), file.getViewProvider().getDocument(), updateFileText);
+      }
+      else if (!(cmd instanceof ModNavigate) && !(cmd instanceof ModHighlight)) {
+        throw new UnsupportedOperationException("Unexpected command: " + command);
+      }
+    }
+  }
+
+  private static void updateText(@NotNull Project project, @NotNull Document document, @NotNull ModUpdateFileText upd)
+    throws IllegalStateException {
+    String oldText = upd.oldText();
+    if (!document.getText().equals(oldText)) {
+      throw new IllegalStateException("Old text doesn't match");
+    }
+    List<@NotNull Fragment> ranges = calculateRanges(upd);
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
+    applyRanges(document, ranges, upd.newText());
+    manager.commitDocument(document);
   }
 
   private static boolean executeUpdate(@NotNull Project project, @NotNull ModUpdateFileText upd) {
@@ -665,17 +598,20 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document == null) return false;
     String oldText = upd.oldText();
-    String newText = upd.newText();
     if (!document.getText().equals(oldText)) return false;
     List<@NotNull Fragment> ranges = calculateRanges(upd);
     return WriteAction.compute(() -> {
-      for (Fragment range : ranges) {
-        document.replaceString(range.offset(), range.offset() + range.oldLength(),
-                               newText.substring(range.offset(), range.offset() + range.newLength()));
-      }
+      applyRanges(document, ranges, upd.newText());
       PsiDocumentManager.getInstance(project).commitDocument(document);
       return true;
     });
+  }
+
+  private static void applyRanges(@NotNull Document document, List<@NotNull Fragment> ranges, String newText) {
+    for (Fragment range : ranges) {
+      document.replaceString(range.offset(), range.offset() + range.oldLength(),
+                             newText.substring(range.offset(), range.offset() + range.newLength()));
+    }
   }
   
   private static @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {

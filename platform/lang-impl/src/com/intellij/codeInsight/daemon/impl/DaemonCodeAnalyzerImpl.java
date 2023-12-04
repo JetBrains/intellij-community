@@ -519,7 +519,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
              ThreadDumper.dumpThreadsToString());
         }
 
-        ((HighlightingSessionImpl)session).waitForHighlightInfosApplied();
+        ((HighlightingSessionImpl)session).applyFileLevelHighlightsRequests();
         EDT.dispatchAllInvocationEvents();
         EDT.dispatchAllInvocationEvents();
         assert progress.isCanceled();
@@ -1203,6 +1203,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }), progress);
     }
     catch (ProcessCanceledException e) {
+      LOG.debug(e);
       stopProcess(true, "PCE in queuePassesCreation");
     }
     catch (Throwable e) {
@@ -1286,8 +1287,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       for (Editor editor : editors) {
         if (!editor.isDisposed()) {
           TextEditor textEditor = textEditorProvider.getTextEditor(editor);
-          VirtualFile virtualFile = textEditor.getFile();
-          if (textEditor.isValid() && virtualFile != null && virtualFile.isValid() && isInActiveProject(textEditor)) {
+          if (isValidEditor(textEditor)) {
+            VirtualFile virtualFile = textEditor.getFile();
             activeTextEditors.add(textEditor);
             files.add(virtualFile);
           }
@@ -1300,15 +1301,32 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
 
     // tests usually care about just one explicitly configured editor
-    Collection<FileEditor> tabEditors = ApplicationManager.getApplication().isUnitTestMode() ? Collections.emptyList() : getFileEditorManager().getSelectedEditorWithRemotes();
-    for (FileEditor tabEditor : tabEditors) {
-      VirtualFile tabFile = tabEditor.getFile();
-      if (tabFile != null && tabFile.isValid() && files.add(tabFile) && isInActiveProject(tabEditor)) {
-        activeTextEditors.add(tabEditor);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      for (FileEditor tabEditor : getFileEditorManager().getSelectedEditorWithRemotes()) {
+        if (!isValidEditor(tabEditor)) continue;
+
+        if (tabEditor instanceof FileEditorWithTextEditors delegate) {
+          TextEditorProvider textEditorProvider = TextEditorProvider.getInstance();
+
+          for (Editor embeddedEditor : delegate.getEmbeddedEditors()) {
+            TextEditor embeddedTextEditor = textEditorProvider.getTextEditor(embeddedEditor);
+            if (files.add(embeddedTextEditor.getFile()) && isValidEditor(embeddedTextEditor)) {
+              activeTextEditors.add(embeddedTextEditor);
+            }
+          }
+        }
+        else if (files.add(tabEditor.getFile())) {
+          activeTextEditors.add(tabEditor);
+        }
       }
     }
 
     return activeTextEditors;
+  }
+
+  private static boolean isValidEditor(@NotNull FileEditor editor) {
+    VirtualFile virtualFile = editor.getFile();
+    return virtualFile != null && virtualFile.isValid() && editor.isValid() && isInActiveProject(editor);
   }
 
   private static boolean isInActiveProject(@NotNull FileEditor editor) {

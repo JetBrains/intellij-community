@@ -74,8 +74,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         checkConflictsAndReplaceUsageInfos(element, allRenames, result)
         result += SmartList<UsageInfo>().also { collisions ->
           checkRedeclarationConflicts(declaration, newName, collisions)
-          renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-          renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+          renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
         }
     }
 
@@ -123,7 +122,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
 
         val canRename = try {
             PsiElementRenameHandler.canRename(element.project, editor, substitutedJavaElement)
-        } catch (e: CommonRefactoringUtil.RefactoringErrorHintException) {
+        } catch (_: CommonRefactoringUtil.RefactoringErrorHintException) {
             false
         }
 
@@ -232,19 +231,6 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             }
         }
         renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
-
-        val file = element.containingFile as? KtFile ?: return
-
-        if (file.declarations.singleOrNull() == element) {
-            file.virtualFile?.let { virtualFile ->
-                val nameWithoutExtensions = virtualFile.nameWithoutExtension
-                if (nameWithoutExtensions == originalName) {
-                    val newFileName = newName + "." + virtualFile.extension
-                    allRenames[file] = newFileName
-                    forElement(file).prepareRenaming(file, newFileName, allRenames)
-                }
-            }
-        }
     }
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<UsageInfo>, listener: RefactoringElementListener?) {

@@ -231,7 +231,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         List<ModCommandAction> subActions = List.of(
           new RemoveInitializerFix.SideEffectAwareRemove(initializer, var -> JoinDeclarationAndAssignmentAction.join(var)),
           action);
-        return new ModChooseAction(JavaBundle.message("inspection.join.declaration.and.assignment.fix.title"), subActions);
+        return ModCommand.chooseAction(JavaBundle.message("inspection.join.declaration.and.assignment.fix.title"), subActions);
       }
       else {
         return action.perform(ActionContext.from(descriptor));

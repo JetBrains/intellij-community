@@ -220,7 +220,7 @@ private fun LibrarySourceInfo.libraryVariantsDescriptors(onlyPlatformVariants: B
     val binariesModuleInfo = binariesModuleInfo as? LibraryInfo ?: return emptyList()
     return LibraryInfoVariantsService.getInstance(project)
         .variants(binariesModuleInfo)
-        .filter { !onlyPlatformVariants || it.isPlatformVariant() }
+        .filter { !onlyPlatformVariants || it.isPlatformVariant() || isBundledLibraryVariant() }
         .mapNotNull {
             KotlinCacheService.getInstance(project)
                 .getResolutionFacadeByModuleInfo(it, it.platform)?.moduleDescriptor
@@ -228,3 +228,8 @@ private fun LibrarySourceInfo.libraryVariantsDescriptors(onlyPlatformVariants: B
 }
 
 private fun LibraryInfo.isPlatformVariant() = platform.size == 1 && platform.first() !is NativePlatformUnspecifiedTarget
+
+private fun LibrarySourceInfo.isBundledLibraryVariant(): Boolean {
+    val binariesModuleInfo = binariesModuleInfo as? LibraryInfo ?: return false
+    return LibraryInfoVariantsService.bundledLibraryVariant(binariesModuleInfo) != null
+}

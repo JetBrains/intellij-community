@@ -58,7 +58,7 @@ public class OptionCompletionContributor extends CompletionContributor {
                }
              }
 
-             private String getPrefix(int offset, PsiFile file) {
+             private static String getPrefix(int offset, PsiFile file) {
                if (offset > 0) {
                  offset--;
                }

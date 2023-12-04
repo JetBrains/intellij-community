@@ -7,14 +7,12 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -47,7 +45,10 @@ import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.facet.*
+import org.jetbrains.kotlin.idea.facet.configureFacet
+import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
+import org.jetbrains.kotlin.idea.facet.noVersionAutoAdvance
+import org.jetbrains.kotlin.idea.facet.parseCompilerArgumentsToFacet
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 import org.jetbrains.kotlin.platform.IdePlatformKind
@@ -187,11 +188,7 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
 
         if (toBeDownloaded.isNotEmpty()) {
             val manager = MavenProjectsManager.getInstance(module.project)
-            ApplicationManager.getApplication().executeOnPooledThread {
-                runBlockingMaybeCancellable {
-                    manager.downloadArtifacts(listOf(mavenProject), toBeDownloaded, true, false)
-                }
-            }
+            manager.scheduleDownloadArtifacts(listOf(mavenProject), toBeDownloaded, true, false)
         }
     }
 
@@ -275,8 +272,8 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
                 arguments.sourceMap = configuration?.getChild("sourceMap")?.text?.trim()?.toBoolean() ?: false
                 arguments.sourceMapPrefix = configuration?.getChild("sourceMapPrefix")?.text?.trim() ?: ""
                 arguments.sourceMapEmbedSources = configuration?.getChild("sourceMapEmbedSources")?.text?.trim() ?: "inlining"
-                arguments.outputFile = configuration?.getChild("outputFile")?.text
-                arguments.metaInfo = configuration?.getChild("metaInfo")?.text?.trim()?.toBoolean() ?: false
+                arguments.outputDir = configuration?.getChild("outputFile")?.text?.let { File(it).parent }
+                arguments.moduleName = configuration?.getChild("outputFile")?.text?.let { File(it).nameWithoutExtension }
                 arguments.moduleKind = configuration?.getChild("moduleKind")?.text
                 arguments.main = configuration?.getChild("main")?.text
             }

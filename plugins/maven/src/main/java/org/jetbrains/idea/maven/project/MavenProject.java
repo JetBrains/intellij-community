@@ -106,10 +106,10 @@ public class MavenProject {
   @NotNull
   @ApiStatus.Internal
   public MavenProjectChanges set(@NotNull MavenProjectReaderResult readerResult,
-                          @NotNull MavenGeneralSettings settings,
-                          boolean updateLastReadStamp,
-                          boolean resetArtifacts,
-                          boolean resetProfiles) {
+                                 @NotNull MavenGeneralSettings settings,
+                                 boolean updateLastReadStamp,
+                                 boolean resetArtifacts,
+                                 boolean resetProfiles) {
     State newState = myState.clone();
 
     if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
@@ -1112,7 +1112,7 @@ public class MavenProject {
    * @deprecated this API was intended for internal use and will be removed after migration to WorkpsaceModel API
    */
   @ApiStatus.Internal
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull ModuleType<? extends ModuleBuilder> getModuleType() {
     final List<MavenImporter> importers = MavenImporter.getSuitableImporters(this);
     // getSuitableImporters() guarantees that all returned importers require the same module type
@@ -1260,12 +1260,19 @@ public class MavenProject {
   }
 
   public class Updater {
-    public void setDependencies(@NotNull List<MavenArtifact> dependencies) {
+    public Updater setDependencies(@NotNull List<MavenArtifact> dependencies) {
       myState.myDependencies = dependencies;
+      return this;
     }
 
-    public void setProperties(@NotNull Properties properties) {
+    public Updater setProperties(@NotNull Properties properties) {
       myState.myProperties = properties;
+      return this;
+    }
+
+    public void setPlugins(@NotNull List<MavenPlugin> plugins) {
+      myState.myPlugins.clear();
+      myState.myPlugins.addAll(plugins);
     }
   }
 

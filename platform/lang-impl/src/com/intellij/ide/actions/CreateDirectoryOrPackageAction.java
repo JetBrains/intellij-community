@@ -67,7 +67,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
 
   public CreateDirectoryOrPackageAction() {
     super(IdeBundle.messagePointer("action.create.new.directory.or.package"),
-          IdeBundle.messagePointer("action.create.new.directory.or.package"), null);
+          IdeBundle.messagePointer("action.create.new.directory.or.package"));
   }
 
   @Override

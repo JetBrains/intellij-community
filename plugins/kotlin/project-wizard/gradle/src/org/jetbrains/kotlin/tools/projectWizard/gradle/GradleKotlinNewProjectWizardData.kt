@@ -2,15 +2,11 @@
 package org.jetbrains.kotlin.tools.projectWizard.gradle
 
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
+import org.jetbrains.kotlin.tools.projectWizard.KotlinOnboardingProjectWizardData
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardData
 
-interface GradleKotlinNewProjectWizardData : GradleNewProjectWizardData {
-
-    val addSampleCodeProperty: GraphProperty<Boolean>
-
-    var addSampleCode: Boolean
+interface GradleKotlinNewProjectWizardData : GradleNewProjectWizardData, KotlinOnboardingProjectWizardData {
 
     companion object {
 

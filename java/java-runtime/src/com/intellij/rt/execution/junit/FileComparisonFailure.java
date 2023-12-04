@@ -5,11 +5,20 @@ import junit.framework.ComparisonFailure;
 
 import java.io.File;
 
+/**
+ * @deprecated Use {@link com.intellij.platform.testFramework.core.FileComparisonFailedError} instead.
+ */
+@SuppressWarnings("DeprecatedIsStillUsed")
+@Deprecated
 public class FileComparisonFailure extends ComparisonFailure implements FileComparisonData {
   private final String myExpected;
   private final String myActual;
   private final String myFilePath;
   private final String myActualFilePath;
+
+  public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual) {
+    this(message, expected, actual, null, null);
+  }
 
   public FileComparisonFailure(String message, /*@NotNull */String expected, /*@NotNull */String actual, String expectedFilePath) {
     this(message, expected, actual, expectedFilePath, null);
@@ -34,16 +43,6 @@ public class FileComparisonFailure extends ComparisonFailure implements FileComp
   @Override
   public String getActualFilePath() {
     return myActualFilePath;
-  }
-  
-  @Override
-  public String getExpected() {
-    return myExpected;
-  }
-
-  @Override
-  public String getActual() {
-    return myActual;
   }
 
   @Override

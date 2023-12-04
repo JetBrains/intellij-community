@@ -22,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun runInDispatchThread() = true
   @Test
   fun testCompleteFromAllAvailableModules() = runBlocking {
     createProjectPom("""

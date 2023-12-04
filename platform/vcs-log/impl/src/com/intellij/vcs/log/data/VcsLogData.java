@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogData;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.index.*;
@@ -28,6 +29,8 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
 import com.intellij.vcs.log.util.PersistentUtil;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -37,7 +40,6 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runSpanWithScope;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
@@ -123,7 +125,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     if (!VcsLogCachesInvalidator.getInstance().isValid()) {
       // this is not recoverable
       // restart won't help here
-      // and can not shut down ide because of this
+      // and cannot shut down ide because of this
       // so use memory storage (probably leading to out of memory at some point) + no index
 
       LOG.error("Could not delete caches at " + PersistentUtil.LOG_CACHE);
@@ -178,19 +180,22 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     synchronized (myLock) {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
-        Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Initialize.getName()).startSpan();
+        Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.Initializing.getName()).startSpan();
         Task.Backgroundable backgroundable = new Task.Backgroundable(myProject,
                                                                      VcsLogBundle.message("vcs.log.initial.loading.process"),
                                                                      false) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            runSpanWithScope(span, () -> {
-              indicator.setIndeterminate(true);
-              resetState();
-              readCurrentUser();
-              myRefresher.readFirstBlock();
-              fireDataPackChangeEvent(myRefresher.getCurrentDataPack());
-            });
+            try (Scope ignored = span.makeCurrent()) {
+              TraceKt.use(span, (Span __) -> {
+                indicator.setIndeterminate(true);
+                resetState();
+                readCurrentUser();
+                myRefresher.readFirstBlock();
+                fireDataPackChangeEvent(myRefresher.getCurrentDataPack());
+                return Unit.INSTANCE;
+              });
+            }
           }
 
           @Override
@@ -198,10 +203,10 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
             synchronized (myLock) {
               // Here be dragons:
               // VcsLogProgressManager can cancel us when it's getting disposed,
-              // and we can also get cancelled by invalid git executable.
+              // and we can also get canceled by invalid git executable.
               // Since we do not know what's up, we just restore the state,
               // and it is entirely possible to start another initialization after that.
-              // Eventually, everything gets cancelled for good in VcsLogData.dispose.
+              // Eventually, everything gets canceled for good in VcsLogData.dispose.
               // But still.
               if (myState.equals(State.INITIALIZED)) {
                 myState = State.CREATED;
@@ -239,7 +244,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private void readCurrentUser() {
-    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.ReadCurrentUser.getName()).startSpan();
+    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder(LogData.ReadingCurrentUser.getName()).startSpan();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();
       try {
@@ -281,7 +286,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @Override
   public @Nullable CommitId getCommitId(int commitIndex) {
-    VcsCommitMetadata cachedData = myMiniDetailsGetter.getCommitDataIfAvailable(commitIndex);
+    VcsCommitMetadata cachedData = myMiniDetailsGetter.getCachedData(commitIndex);
     if (cachedData != null) {
       return new CommitId(cachedData.getId(), cachedData.getRoot());
     }
@@ -327,19 +332,35 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   /**
    * Makes the log perform refresh for the given root.
-   * This refresh can be optimized, i.e. it can query VCS just for the part of the log.
+   * This refresh can be optimized, i.e., it can query VCS just for the part of the log.
+   *
+   * @param optimized - if request should be optimized see {@link VcsLogRefresher#refresh}
    */
-  public void refresh(@NotNull Collection<VirtualFile> roots) {
+  public void refresh(@NotNull Collection<VirtualFile> roots, boolean optimized) {
     initialize();
-    myRefresher.refresh(roots);
+    myRefresher.refresh(roots, optimized);
+  }
+
+  public void refresh(@NotNull Collection<VirtualFile> roots) {
+    refresh(roots, false);
   }
 
   public @NotNull CommitDetailsGetter getCommitDetailsGetter() {
     return myDetailsGetter;
   }
 
+  @Override
+  public @NotNull VcsLogCommitDataCache<VcsFullCommitDetails> getFullCommitDetailsCache() {
+    return getCommitDetailsGetter();
+  }
+
   public @NotNull MiniDetailsGetter getMiniDetailsGetter() {
     return myMiniDetailsGetter;
+  }
+
+  @Override
+  public @NotNull VcsLogCommitDataCache<VcsCommitMetadata> getCommitMetadataCache() {
+    return getMiniDetailsGetter();
   }
 
   @Override

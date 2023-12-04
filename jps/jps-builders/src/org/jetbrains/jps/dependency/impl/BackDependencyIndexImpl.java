@@ -1,12 +1,16 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency.impl;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 import org.jetbrains.jps.javac.Iterators;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   private final String myName;
@@ -14,7 +18,9 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
 
   protected BackDependencyIndexImpl(@NotNull String name, @NotNull MapletFactory cFactory) {
     myName = name;
-    myMap = cFactory.createSetMultiMaplet(name);
+    // important: if multiple implementations of ReferenceID are available, change to createMultitypeExternalizer
+    Externalizer<ReferenceID> ext = Externalizer.forGraphElement(JvmNodeReferenceID::new);
+    myMap = cFactory.createSetMultiMaplet(name, ext, ext);
   }
 
   /**
@@ -29,9 +35,13 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   }
 
   @Override
+  public Iterable<ReferenceID> getKeys() {
+    return myMap.getKeys();
+  }
+
+  @Override
   public @NotNull Iterable<ReferenceID> getDependencies(@NotNull ReferenceID id) {
-    Iterable<ReferenceID> nodes = myMap.get(id);
-    return nodes != null? nodes : Collections.emptyList();
+    return myMap.get(id);
   }
 
   @Override
@@ -43,11 +53,14 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
   }
 
   @Override
-  public void integrate(Iterable<Node<?, ?>> deletedNodes, Iterable<Node<?, ?>> updatedNodes, Iterable<Pair<ReferenceID, Iterable<ReferenceID>>> indexDelta) {
+  public void integrate(Iterable<Node<?, ?>> deletedNodes, Iterable<Node<?, ?>> updatedNodes, BackDependencyIndex deltaIndex) {
     Map<ReferenceID, Set<ReferenceID>> depsToRemove = new HashMap<>();
 
     for (var node : deletedNodes) {
       cleanupDependencies(node, depsToRemove);
+      // corner case, relevant to situations when keys in this index are actually real node IDs
+      // if a node gets deleted, corresponding index key gets deleted to: this allows to ensure there is no outdated information in the index
+      // If later a new node with the same ID is added, the previous index data for this ID will not interfere with the new state.
       myMap.remove(node.getReferenceID());
     }
 
@@ -55,16 +68,29 @@ public abstract class BackDependencyIndexImpl implements BackDependencyIndex {
       cleanupDependencies(node, depsToRemove);
     }
 
-    for (Pair<ReferenceID, Iterable<ReferenceID>> p : indexDelta) {
-      ReferenceID nodeID = p.getFirst();
-      Set<ReferenceID> deps = Iterators.collect(getDependencies(nodeID), new HashSet<>());
-      Iterable<ReferenceID> toRemove = depsToRemove.get(nodeID);
-      if (toRemove != null) {
-        for (ReferenceID d : toRemove) {
-          deps.remove(d);
+    for (ReferenceID id : Iterators.unique(Iterators.flat(deltaIndex.getKeys(), depsToRemove.keySet()))) {
+      Set<ReferenceID> toRemove = depsToRemove.get(id);
+      Iterable<ReferenceID> toAdd = deltaIndex.getDependencies(id);
+      if (!Iterators.isEmpty(toRemove)) {
+        if (toAdd instanceof Set) {
+          toRemove.removeAll((Set<?>)toAdd);
+        }
+        else {
+          for (ReferenceID refId : toAdd) {
+            toRemove.remove(refId);
+          }
         }
       }
-      myMap.put(nodeID, Iterators.collect(p.getSecond(), deps));
+      if (!Iterators.isEmpty(toRemove)) {
+        Set<ReferenceID> dataAfter = Iterators.collect(getDependencies(id), new HashSet<>());
+        dataAfter.removeAll(toRemove);
+        Iterators.collect(toAdd, dataAfter);
+
+        myMap.update(id, dataAfter, Difference::diff);
+      }
+      else {
+        myMap.appendValues(id, toAdd);
+      }
     }
   }
 

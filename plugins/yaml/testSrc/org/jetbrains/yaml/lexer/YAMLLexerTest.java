@@ -251,6 +251,10 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testExplicitMapsWithoutEmptyLine() {
+    doTest();
+  }
+
   // NOTE: check invalid syntax
   public void testEarlyDocumentEnd() {
     doTest();

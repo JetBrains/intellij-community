@@ -18,7 +18,6 @@ package com.intellij.ui;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -114,7 +113,7 @@ public class LanguageTextField extends EditorTextField {
   @Override
   protected @NotNull EditorEx createEditor() {
     EditorEx editor = super.createEditor();
-    if (myLanguage != null) {
+    if (myLanguage != null && !myProject.isDisposed()) {
       FileType fileType = myLanguage.getAssociatedFileType();
       editor.setHighlighter(HighlighterFactory.createHighlighter(myProject, fileType));
     }

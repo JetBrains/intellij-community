@@ -1,27 +1,27 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature
 import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.actions.*
 import com.intellij.lang.jvm.*
 import com.intellij.lang.jvm.actions.*
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.impl.light.LightRecordMember
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtil
-import com.intellij.refactoring.suggested.createSmartPointer
+import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
 import org.jetbrains.uast.UDeclaration
 import java.util.*
@@ -30,36 +30,25 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
   override fun createChangeModifierActions(target: JvmModifiersOwner, request: ChangeModifierRequest): List<IntentionAction> {
     val declaration = if (target is UDeclaration) target.javaPsi as PsiModifierListOwner else target as PsiModifierListOwner
     if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
-    return listOf(ChangeModifierFix(declaration, request))
+    return listOf(ChangeModifierFix(declaration, request).asIntention())
   }
 
   private open class RemoveAnnotationFix(private val fqn: String,
                                          element: PsiModifierListOwner,
                                          @IntentionName private val text: String,
-                                         @IntentionFamilyName private val familyName: String) : IntentionAction {
-    val pointer = element.createSmartPointer()
+                                         @IntentionFamilyName private val familyName: String) : 
+    PsiUpdateModCommandAction<PsiModifierListOwner>(element) {
 
-    override fun startInWriteAction(): Boolean = true
-
-    override fun getText(): String = text
+    override fun getPresentation(context: ActionContext, element: PsiModifierListOwner): Presentation? {
+      return Presentation.of(text)
+    }
 
     override fun getFamilyName(): String = familyName
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = pointer.element != null
-
-    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
-      PsiTreeUtil.findSameElementInCopy(pointer.element, file)?.deleteAnnotation()
-      return IntentionPreviewInfo.DIFF
-    }
-
-    override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-      pointer.element?.deleteAnnotation()
-    }
-
-    private fun PsiModifierListOwner.deleteAnnotation() {
-      getAnnotation(fqn)?.delete()
-      val file = this.containingFile as? PsiJavaFile ?: return
-      JavaCodeStyleManager.getInstance(project).removeRedundantImports(file)
+    override fun invoke(context: ActionContext, element: PsiModifierListOwner, updater: ModPsiUpdater) {
+      element.getAnnotation(fqn)?.delete()
+      val file = element.containingFile as? PsiJavaFile ?: return
+      JavaCodeStyleManager.getInstance(context.project).removeRedundantImports(file)
     }
   }
 
@@ -78,21 +67,18 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
       createAddAnnotationActions(target, annotationRequest(CommonClassNames.JAVA_LANG_OVERRIDE))
     }
     else {
-      listOf(RemoveOverrideAnnotationFix(psiElement))
+      listOf(RemoveOverrideAnnotationFix(psiElement).asIntention())
     }
   }
 
   internal class ChangeModifierFix(declaration: PsiModifierListOwner,
                                    @FileModifier.SafeFieldForPreview val request: ChangeModifierRequest) :
-    ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true, request.processHierarchy()) {
-    override fun isAvailable(): Boolean = request.isValid && super.isAvailable()
-
-    override fun isAvailable(project: Project,
-                             file: PsiFile,
-                             editor: Editor?,
-                             startElement: PsiElement,
-                             endElement: PsiElement): Boolean =
-      request.isValid && super.isAvailable(project, file, editor, startElement, endElement)
+    ModifierFix(declaration, request.modifier.toPsiModifier(), request.shouldBePresent(), true, 
+                if (request.processHierarchy()) ThreeState.UNSURE else ThreeState.NO) {
+    override fun getPresentation(context: ActionContext, element: PsiModifierListOwner): Presentation? {
+      if (!request.isValid) return null
+      return super.getPresentation(context, element)
+    }
   }
 
   override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
@@ -102,7 +88,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     if (!AddAnnotationPsiFix.isAvailable(declaration, request.qualifiedName)) {
       return emptyList()
     }
-    return listOf(CreateAnnotationAction(declaration, request))
+    return listOf(CreateAnnotationAction(declaration, request).asIntention())
   }
 
   override fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
@@ -111,7 +97,7 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     val shortName = StringUtilRt.getShortName(request.qualifiedName)
     val text = QuickFixBundle.message("remove.annotation.fix.text", shortName)
     val familyName = QuickFixBundle.message("remove.annotation.fix.family")
-    return listOf(RemoveAnnotationFix(request.qualifiedName, target, text, familyName))
+    return listOf(RemoveAnnotationFix(request.qualifiedName, target, text, familyName).asIntention())
   }
 
   override fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
@@ -121,16 +107,16 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
                                                       @IntentionFamilyName familyName: String): List<IntentionAction> {
     val psiAnnotation = annotation as? PsiAnnotation ?: return emptyList()
     if (psiAnnotation.language != JavaLanguage.INSTANCE) return emptyList()
-    return listOf(ChangeAnnotationAttributeAction(psiAnnotation, request, text, familyName))
+    return listOf(ChangeAnnotationAttributeAction(psiAnnotation, request, text, familyName).asIntention())
   }
 
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
 
-    val constantRequested = request.isConstant || javaClass.isInterface || javaClass.isRecord || request.modifiers.containsAll(
-      constantModifiers)
+    val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
+    if (javaClass.isRecord) request.modifiers += JvmModifier.STATIC
     val result = ArrayList<IntentionAction>()
-    if (canCreateEnumConstant(javaClass, request)) {
+    if (canCreateEnumConstant(javaClass)) {
       result += CreateEnumConstantAction(javaClass, request)
     }
     if (constantRequested || request.fieldName.uppercase(Locale.ENGLISH) == request.fieldName) {
@@ -149,10 +135,12 @@ class JavaElementActionsFactory : JvmElementActionsFactory() {
     val staticMethodRequested = JvmModifier.STATIC in requestedModifiers
 
     if (staticMethodRequested) {
-      // static method in interfaces are allowed starting with Java 8
-      if (javaClass.isInterface && !PsiUtil.isLanguageLevel8OrHigher(javaClass)) return emptyList()
-      // static methods in inner classes are disallowed: see JLS 8.1.3
-      if (javaClass.containingClass != null && !javaClass.hasModifierProperty(PsiModifier.STATIC)) return emptyList()
+      // static methods in interfaces are allowed starting with Java 8
+      if (javaClass.isInterface && !HighlightingFeature.STATIC_INTERFACE_CALLS.isAvailable(javaClass)) return emptyList()
+      // static methods in inner classes are disallowed before Java 16: see JLS 8.1.3
+      if (javaClass.containingClass != null &&
+          !javaClass.hasModifierProperty(PsiModifier.STATIC) &&
+          !HighlightingFeature.INNER_STATICS.isAvailable(javaClass)) return emptyList()
     }
 
     val result = ArrayList<IntentionAction>()

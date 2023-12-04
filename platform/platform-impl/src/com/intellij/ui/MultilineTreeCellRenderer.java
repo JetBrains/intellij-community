@@ -324,7 +324,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     }
   }
 
-  private int getChildIndent(JTree tree) {
+  private static int getChildIndent(JTree tree) {
     TreeUI newUI = tree.getUI();
     if (newUI instanceof BasicTreeUI btreeui) {
       return btreeui.getLeftChildIndent() + btreeui.getRightChildIndent();
@@ -334,7 +334,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     }
   }
 
-  private int getAvailableWidth(Object forValue, JTree tree) {
+  private static int getAvailableWidth(Object forValue, JTree tree) {
     DefaultMutableTreeNode node = (DefaultMutableTreeNode)forValue;
     int busyRoom = tree.getInsets().left + tree.getInsets().right + getChildIndent(tree) * node.getLevel();
     return tree.getVisibleRect().width - busyRoom - 2;

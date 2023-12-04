@@ -4,7 +4,10 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionFamilyName;
@@ -32,10 +35,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class IfCanBeSwitchInspection extends BaseInspection {
 
@@ -133,12 +133,9 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     PsiTypeElement type = targetInstanceOf.getCheckType();
     if (type == null) return;
 
-    List<PsiTypeCastExpression> relatedCastExpressions =
-      SyntaxTraverser.psiTraverser(ifStatement.getThenBranch())
-        .filter(PsiTypeCastExpression.class)
-        .filter(cast -> InstanceOfUtils.findPatternCandidate(cast) == targetInstanceOf)
-        .toList();
+    List<PsiTypeCastExpression> relatedCastExpressions = new ArrayList<>(getRelatesCastExpressions(ifStatement.getThenBranch(), targetInstanceOf));
 
+    processConditions(ifStatement, targetInstanceOf, relatedCastExpressions);
     PsiLocalVariable castedVariable = null;
     for (PsiTypeCastExpression castExpression : relatedCastExpressions) {
       castedVariable = findCastedLocalVariable(castExpression);
@@ -160,6 +157,39 @@ public class IfCanBeSwitchInspection extends BaseInspection {
       targetInstanceOf,
       ct.text(targetInstanceOf.getOperand()) + " instanceof " + ct.text(type) + " " + name
     );
+  }
+
+  private static void processConditions(PsiIfStatement ifStatement,
+                                        PsiInstanceOfExpression targetInstanceOf,
+                                        List<PsiTypeCastExpression> relatedCastExpressions) {
+    PsiElement current = targetInstanceOf;
+    while (true) {
+      PsiElement parent = current.getParent();
+      if (parent == null || parent == ifStatement) {
+        break;
+      }
+      if (!(parent instanceof PsiPolyadicExpression polyadicExpression) ||
+          polyadicExpression.getOperationTokenType() != JavaTokenType.ANDAND) {
+        break;
+      }
+      PsiExpression[] operands = polyadicExpression.getOperands();
+      int index = Arrays.asList(operands).indexOf(current);
+      if (index == -1 || index == operands.length - 1) {
+        break;
+      }
+      for (int i = index; i < operands.length; i++) {
+        relatedCastExpressions.addAll(getRelatesCastExpressions(operands[i], targetInstanceOf));
+      }
+      current = parent;
+    }
+  }
+
+  @NotNull
+  private static List<PsiTypeCastExpression> getRelatesCastExpressions(PsiElement expression, PsiInstanceOfExpression targetInstanceOf) {
+    return SyntaxTraverser.psiTraverser(expression)
+      .filter(PsiTypeCastExpression.class)
+      .filter(cast -> InstanceOfUtils.findPatternCandidate(cast) == targetInstanceOf)
+      .toList();
   }
 
   private static @Nullable PsiLocalVariable findCastedLocalVariable(PsiTypeCastExpression castExpression) {

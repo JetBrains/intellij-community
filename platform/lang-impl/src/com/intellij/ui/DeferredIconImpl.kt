@@ -103,7 +103,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
 
   @ApiStatus.Internal
-  constructor(baseIcon: Icon?, param: T, asyncEvaluator: suspend (T) -> Icon) {
+  constructor(baseIcon: Icon?, param: T, asyncEvaluator: suspend (T) -> Icon, listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
@@ -111,7 +111,7 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     this.evaluator = null
     this.asyncEvaluator = asyncEvaluator
     isNeedReadAction = false
-    evaluatedListener = null
+    evaluatedListener = listener
     checkDelegationDepth()
   }
 
@@ -159,6 +159,17 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     if (needScheduleEvaluation()) {
       scheduleEvaluation(c, x, y)
     }
+  }
+
+  fun currentlyPaintedIcon(): Icon {
+    var result = scaledDelegateIcon
+    if (result is DeferredIconImpl<*>) {
+      result = result.scaledDelegateIcon
+    }
+    if (result is DeferredIconImpl<*>) {
+      result = EMPTY_ICON // SOE protection, matches logic in 'paintIcon'
+    }
+    return result
   }
 
   override fun notifyPaint(c: Component, x: Int, y: Int) {

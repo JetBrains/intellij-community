@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.aether;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.testFramework.LoggedErrorProcessor;
 import org.junit.jupiter.api.Test;
 
 import static org.jetbrains.idea.maven.aether.RetryProvider.disabled;
@@ -60,7 +59,7 @@ class RetryProviderTest {
 
   @Test
   public void expBackOff_testRetry() throws Exception {
-    int attempts = retryWithExpBackOff.retry(new ThrowingSupplier<Integer>() {
+    int attempts = retryWithExpBackOff.retry(new ThrowingSupplier<>() {
       private int attempts = 0;
 
       @Override
@@ -88,14 +87,9 @@ class RetryProviderTest {
 
   @Test
   public void expBackOff_testRethrowsException() {
-    Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(
-      () -> {
-        String expected = "Value42";
-        assertThrows(Exception.class, () -> retryWithExpBackOff.retry(() -> {
-          throw new Exception(expected);
-        }, logger), expected);
-      });
-
-    assertNotNull(error);
+    String expected = "Value42";
+    assertThrows(Exception.class, () -> retryWithExpBackOff.retry(() -> {
+      throw new Exception(expected);
+    }, logger), expected);
   }
 }

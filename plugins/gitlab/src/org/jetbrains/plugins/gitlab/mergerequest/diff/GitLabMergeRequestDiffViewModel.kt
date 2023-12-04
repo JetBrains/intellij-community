@@ -1,35 +1,34 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
-import com.intellij.collaboration.async.associateBy
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.util.CODE_REVIEW_CHANGE_HASHING_STRATEGY
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.platform.util.coroutines.childScope
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffReviewViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffReviewViewModelImpl
+import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 
 internal interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewViewModel {
-  val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-
   // TODO: rework to hide details
   val changes: SharedFlow<GitLabMergeRequestChanges>
   val changesToShow: SharedFlow<ChangesSelection>
 
-  fun getViewModelFor(change: Change): Flow<GitLabMergeRequestChangeViewModel?>
+  fun getViewModelFor(change: Change): Flow<GitLabMergeRequestDiffReviewViewModel?>
 
   fun showChanges(changes: ChangesSelection)
 
@@ -41,41 +40,33 @@ internal interface GitLabMergeRequestDiffViewModel : GitLabMergeRequestReviewVie
 private val LOG = logger<GitLabMergeRequestDiffViewModel>()
 
 internal class GitLabMergeRequestDiffViewModelImpl(
-  private val project: Project,
   parentCs: CoroutineScope,
   currentUser: GitLabUserDTO,
-  mergeRequest: GitLabMergeRequest,
+  private val mergeRequest: GitLabMergeRequest,
   private val diffBridge: GitLabMergeRequestDiffBridge,
-  override val avatarIconsProvider: IconsProvider<GitLabUserDTO>
-) : GitLabMergeRequestReviewViewModelBase(parentCs, currentUser, mergeRequest),
-    GitLabMergeRequestDiffViewModel {
+  private val discussions: GitLabMergeRequestDiscussionsViewModels,
+  private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+) : GitLabMergeRequestDiffViewModel, GitLabMergeRequestReviewViewModelBase(
+  parentCs.childScope(CoroutineName("GitLab Merge Request Diff Review VM")),
+  currentUser, mergeRequest
+) {
 
   override val changes: SharedFlow<GitLabMergeRequestChanges> =
     mergeRequest.changes.modelFlow(cs, LOG)
   override val changesToShow: SharedFlow<ChangesSelection> =
     diffBridge.displayedChanges.modelFlow(cs, LOG)
 
-  private val vmsByChange: Flow<Map<Change, GitLabMergeRequestChangeViewModel>> =
-    createVmsByChangeFlow().modelFlow(cs, LOG)
-
-  private fun createVmsByChangeFlow(): Flow<Map<Change, GitLabMergeRequestChangeViewModel>> =
-    mergeRequest.changes
-      .map(GitLabMergeRequestChanges::getParsedChanges)
-      .map { it.patchesByChange.asIterable() }
-      .associateBy(
-        { (change, _) -> change },
-        { (_, diffData) ->
-          GitLabMergeRequestChangeViewModelImpl(project, this, currentUser, mergeRequest, diffData, avatarIconsProvider,
-                                                discussionsViewOption)
-        },
-        { destroy() },
-        customHashingStrategy = CODE_REVIEW_CHANGE_HASHING_STRATEGY
-      )
-
-  override fun getViewModelFor(change: Change): Flow<GitLabMergeRequestChangeViewModel?> =
-    vmsByChange.map { it[change] }
-
   override fun showChanges(changes: ChangesSelection) {
     diffBridge.setChanges(changes)
+  }
+
+  override fun getViewModelFor(change: Change): Flow<GitLabMergeRequestDiffReviewViewModel?> {
+    return mergeRequest.changes.map {
+      it.getParsedChanges()
+    }.map { parsedChanges ->
+      parsedChanges.patchesByChange[change]?.let { diffData ->
+        GitLabMergeRequestDiffReviewViewModelImpl(diffData, discussions, discussionsViewOption, avatarIconsProvider)
+      }
+    }.catch { emit(null) }
   }
 }

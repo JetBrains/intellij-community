@@ -4,13 +4,16 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionDocumentListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionFocusListener
 import com.intellij.codeInsight.inline.completion.listeners.InlineEditorMouseListener
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionUsageTracker.ShownEvents.FinishType
+import com.intellij.codeInsight.inline.completion.logs.TypingSpeedTracker
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
-import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 
 object InlineCompletion {
@@ -31,10 +34,11 @@ object InlineCompletion {
     editor.document.addDocumentListener(InlineCompletionDocumentListener(editor), disposable)
     editor.addFocusListener(InlineCompletionFocusListener(), disposable)
     editor.addEditorMouseListener(InlineEditorMouseListener(), disposable)
+    editor.contentComponent.addKeyListener(disposable, TypingSpeedTracker.KeyListener())
   }
 
   fun remove(editor: Editor) {
-    editor.getUserData(KEY)?.cancel()
+    editor.getUserData(KEY)?.cancel(FinishType.EDITOR_REMOVED)
     editor.putUserData(KEY, null)
   }
 }

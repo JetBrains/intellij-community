@@ -2,26 +2,42 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.add.WslContext
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 
-class PythonExistingEnvironmentSelector(state: PythonAddInterpreterState) : PythonAddEnvironment(state) {
-  private lateinit var versionComboBox: ComboBox<String>
-  private val selectedPath = propertyGraph.property("")
+class PythonExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
 
-  override fun buildOptions(panel: Panel) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.custom.python.path")) {
-        versionComboBox = pythonBaseInterpreterComboBox(state.allValidSdkPaths, selectedPath)
+        pythonInterpreterComboBox(presenter.state.selectedVenv,
+                                  presenter,
+                                  presenter.allSdksFlow,
+                                  presenter::addPythonInterpreter)
+          .align(Align.FILL)
       }
-    }
-    selectedPath.dependsOn(state.basePythonHomePath) {
-      state.basePythonHomePath.get()
     }
   }
 
   override fun getOrCreateSdk(): Sdk {
-    return state.allExistingSdks.get().find { it.homePath == selectedPath.get() }!!
+    val selectedSdk = state.selectedVenv.get() ?: error("Unknown sdk selected")
+    return setupSdkIfDetected(selectedSdk, state.allSdks.get())
+  }
+
+  override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
+    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    return InterpreterStatisticsInfo(InterpreterType.REGULAR,
+                                     statisticsTarget,
+                                     false,
+                                     false,
+                                     true,
+                                     InterpreterCreationMode.CUSTOM)
   }
 }

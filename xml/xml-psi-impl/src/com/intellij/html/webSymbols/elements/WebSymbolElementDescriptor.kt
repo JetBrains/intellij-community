@@ -14,10 +14,7 @@ import com.intellij.psi.impl.source.xml.XmlDescriptorUtil.wrapInDelegating
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
-import com.intellij.webSymbols.SymbolKind
-import com.intellij.webSymbols.SymbolNamespace
-import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.WebSymbolQualifiedName
+import com.intellij.webSymbols.*
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.nameSegments
@@ -47,23 +44,21 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
       .runNameMatchQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), virtualSymbols, abstractSymbols, strictScope,
                          listOf(symbol))
 
-  fun runListSymbolsQuery(namespace: SymbolNamespace,
-                          kind: SymbolKind,
+  fun runListSymbolsQuery(qualifiedKind: WebSymbolQualifiedKind,
                           expandPatterns: Boolean,
                           virtualSymbols: Boolean = true,
                           abstractSymbols: Boolean = false,
                           strictScope: Boolean = false): List<WebSymbol> =
     WebSymbolsQueryExecutorFactory.create(tag)
-      .runListSymbolsQuery(namespace, kind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
+      .runListSymbolsQuery(qualifiedKind, expandPatterns, virtualSymbols, abstractSymbols, strictScope, listOf(symbol))
 
-  fun runCodeCompletionQuery(namespace: SymbolNamespace,
-                             kind: SymbolKind,
+  fun runCodeCompletionQuery(qualifiedKind: WebSymbolQualifiedKind,
                              name: String,
                              /** Position to complete at in the last segment of the path **/
                              position: Int,
                              virtualSymbols: Boolean = true): List<WebSymbolCodeCompletionItem> =
     WebSymbolsQueryExecutorFactory.create(tag)
-      .runCodeCompletionQuery(listOf(WebSymbolQualifiedName(namespace, kind, name)), position, virtualSymbols, listOf(symbol))
+      .runCodeCompletionQuery(qualifiedKind, name, position, virtualSymbols, listOf(symbol))
 
   override fun getQualifiedName(): String {
     return name

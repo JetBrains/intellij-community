@@ -238,7 +238,13 @@ enum class MoveAction : AbstractMultifileRefactoringTest.RefactoringAction {
                 )
             }
 
-            val descriptor = MoveDeclarationsDescriptor(project, KotlinMoveSource(elementsToMove), moveTarget, KotlinMoveDeclarationDelegate.TopLevel)
+            val descriptor = MoveDeclarationsDescriptor(
+                project,
+                KotlinMoveSource(elementsToMove),
+                moveTarget,
+                KotlinMoveDeclarationDelegate.TopLevel,
+                deleteSourceFiles = true
+            )
             MoveKotlinDeclarationsProcessor(descriptor).run()
         }
     },

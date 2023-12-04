@@ -7,7 +7,7 @@ import java.nio.file.Path;
  * Represents a source (normally a text file) from which one or more nodes were produced.
  * One source can be associated with several Nodes and a Node can be produced basing on several sources
  */
-public interface NodeSource extends SerializableGraphElement {
+public interface NodeSource extends ExternalizableGraphElement {
   Path getPath();
 
   boolean equals(Object other);

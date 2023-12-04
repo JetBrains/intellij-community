@@ -304,7 +304,8 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
   public void testSwitchEnumLabel() {
     configureByFile("SwitchEnumLabel.java");
-    assertEquals("[A, B, C, null]", ContainerUtil.map(myItems, LookupElement::getLookupString).toString());
+    //first B is enum Field, second B is class. They have different presentations and handlers
+    assertEquals("[A, B, C, null, B, Object]", ContainerUtil.map(myItems, LookupElement::getLookupString).toString());
   }
 
   public void testSwitchCaseWithEnumConstant() { doTest(); }
@@ -341,6 +342,14 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     configureByFile("Annotation7.java");
     selectItem(myItems[0]);
     checkResultByFile("Annotation7_after.java");
+  }
+  
+  public void testAnnotationAttrBeforeExisting() {
+    doTest("\n");
+  }
+  
+  public void testAnnotationAttrBeforeExistingBool() {
+    doTest("\n");
   }
 
   public void testEnumInAnnotation() {
@@ -3006,6 +3015,37 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     LookupElementPresentation presentation = new LookupElementPresentation();
     listElement.renderElement(presentation);
     assertEquals("(Object paramName)", presentation.getTailText());
+  }
+
+  @NeedsIndex.Full
+  public void testResolveToSubclassMethod2() {
+    myFixture.configureByText("Test.java", """
+      public final class Complete {
+        public static void main(String[] args) {
+          SubClass instance;
+          instance.<caret>
+        }
+      
+        static class SuperClass<T> {
+          public List<? extends Object> list(String param) {
+            return null;
+          }
+        }
+      
+        static class SubClass extends SuperClass<String> {
+          @Override
+          public List<String> list(String paramName) {
+            return null;
+          }
+        }
+      }""");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    LookupElement listElement = StreamEx.of(elements).collect(MoreCollectors.onlyOne(e -> e.getLookupString().equals("list"))).orElseThrow();
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    listElement.renderElement(presentation);
+    assertEquals("(String paramName)", presentation.getTailText());
+    assertEquals("List<String>", presentation.getTypeText());
   }
 
   @NeedsIndex.ForStandardLibrary

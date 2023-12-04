@@ -59,7 +59,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   public static final Key<List<AnAction>> ACTIONS_KEY = Key.create("AnAction.shortcutSet");
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
 
-  private Presentation myTemplatePresentation;
+  private Presentation templatePresentation;
   private @NotNull ShortcutSet myShortcutSet = CustomShortcutSet.EMPTY;
   private boolean myEnabledInModalContext;
 
@@ -104,7 +104,10 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    *                    and the name of the menu item when the presentation is a menu item (with mnemonic)
    */
   public AnAction(@NotNull Supplier<@ActionText String> dynamicText) {
-    this(dynamicText, Presentation.NULL_STRING, null);
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(dynamicText);
+    presentation.setDescription(Presentation.NULL_STRING);
+    presentation.setIconSupplier(null);
   }
 
   /**
@@ -116,10 +119,27 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    *                    this description will appear on the status bar when the presentation has the focus
    * @param icon        the action's icon
    */
-  public AnAction(@Nullable @ActionText String text,
-                  @Nullable @ActionDescription String description,
-                  @Nullable Icon icon) {
+  public AnAction(@Nullable @ActionText String text, @Nullable @ActionDescription String description, @Nullable Icon icon) {
     this(() -> text, () -> description, icon);
+  }
+
+  @ApiStatus.Experimental
+  public AnAction(@NotNull @ActionText Supplier<String> text,
+                  @Nullable @ActionDescription Supplier<String> description,
+                  @Nullable Supplier<? extends @Nullable Icon> icon) {
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(text);
+    if (description != null) {
+      presentation.setDescription(description);
+    }
+    presentation.setIconSupplier(icon);
+  }
+
+  @ApiStatus.Experimental
+  public AnAction(@NotNull @ActionText Supplier<String> text, @NotNull @ActionDescription Supplier<String> description) {
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(text);
+    presentation.setDescription(description);
   }
 
   /**
@@ -131,7 +151,11 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * @param icon        the action's icon
    */
   public AnAction(@NotNull Supplier<@ActionText String> dynamicText, @Nullable Icon icon) {
-    this(dynamicText, Presentation.NULL_STRING, icon);
+    Presentation presentation = getTemplatePresentation();
+    presentation.setText(dynamicText);
+    if (icon != null) {
+      presentation.setIcon(icon);
+    }
   }
 
   /**
@@ -150,7 +174,9 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     Presentation presentation = getTemplatePresentation();
     presentation.setText(dynamicText);
     presentation.setDescription(dynamicDescription);
-    presentation.setIcon(icon);
+    if (icon != null) {
+      presentation.setIcon(icon);
+    }
   }
 
   @Override
@@ -172,7 +198,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     return ActionUpdateThreadAware.super.getActionUpdateThread();
   }
 
-  private boolean updateNotOverridden() {
+  @ApiStatus.Internal
+  final boolean updateNotOverridden() {
     if (myUpdateNotOverridden != null) {
       return myUpdateNotOverridden;
     }
@@ -317,16 +344,16 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * a new presentation of the action is needed.
    */
   public final @NotNull Presentation getTemplatePresentation() {
-    Presentation presentation = myTemplatePresentation;
+    Presentation presentation = templatePresentation;
     if (presentation == null) {
       presentation = createTemplatePresentation();
       LOG.assertTrue(presentation.isTemplate(), "Not a template presentation");
-      myTemplatePresentation = presentation;
-      if (this instanceof ActionGroup) {
+      templatePresentation = presentation;
+      if (this instanceof ActionGroup group) {
         // init group flags from deprecated methods
         //myTemplatePresentation.setPopupGroup(((ActionGroup)this).isPopup());
-        myTemplatePresentation.setHideGroupIfEmpty(((ActionGroup)this).hideIfNoVisibleChildren());
-        myTemplatePresentation.setDisableGroupIfEmpty(((ActionGroup)this).disableIfNoVisibleChildren());
+        templatePresentation.setHideGroupIfEmpty(group.hideIfNoVisibleChildren());
+        templatePresentation.setDisableGroupIfEmpty(group.disableIfNoVisibleChildren());
       }
     }
     return presentation;

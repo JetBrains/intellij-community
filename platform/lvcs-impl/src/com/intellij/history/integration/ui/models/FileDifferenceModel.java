@@ -63,7 +63,7 @@ public abstract class FileDifferenceModel {
     }
   }
 
-  private static @NlsContexts.Label String formatTitle(Entry e, boolean isAvailable) {
+  private static @NlsContexts.Label String formatTitle(@NotNull Entry e, boolean isAvailable) {
     String result = DateFormatUtil.formatDateTime(e.getTimestamp()) + " - " + e.getName();
     if (!isAvailable) {
       result += " - " + LocalHistoryBundle.message("content.not.available");

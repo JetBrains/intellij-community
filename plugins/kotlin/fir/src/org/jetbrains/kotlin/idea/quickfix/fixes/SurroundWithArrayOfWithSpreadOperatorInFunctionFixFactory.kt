@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.withInput
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.modCommandApplicator
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
@@ -40,10 +41,11 @@ object SurroundWithArrayOfWithSpreadOperatorInFunctionFixFactory {
             val newArgument = psiFactory.createArgument(surroundedWithArrayOf, argumentName)
 
             val replacedArgument = argument.replace(newArgument) as KtValueArgument
-            // Essentially this qualifier is always `kotlin` in `kotlin.arrayOf(...)`. We choose to shorten this part so that the argument
-            // is not touched by reference shortener.
-            val arrayOfQualifier = (replacedArgument.getArgumentExpression() as KtDotQualifiedExpression).receiverExpression
-            shortenReferences(arrayOfQualifier)
+            val qualifiedCallExpression = replacedArgument.getArgumentExpression() as KtDotQualifiedExpression
+
+            // We want to properly shorten the fully-qualified `kotlin.arrayOf(...)` call.
+            // To shorten only this call and avoid shortening the arguments, we pass only the selector part (`arrayOf`) to the shortener.
+            qualifiedCallExpression.getQualifiedElementSelector()?.let { shortenReferences(it) }
         }
     }
 

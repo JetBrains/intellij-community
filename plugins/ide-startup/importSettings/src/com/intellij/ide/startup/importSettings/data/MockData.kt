@@ -11,8 +11,10 @@ import com.jetbrains.rd.util.threading.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.util.*
 import javax.swing.Icon
+import kotlin.random.Random
 
 internal const val IMPORT_SERVICE = "ImportService"
 
@@ -21,23 +23,38 @@ class TestJbService : JbService {
 
     private val LOG = logger<TestJbService>()
 
-    val main = TestProduct("Main", "версия", Date(), "main")
-    val main2 = TestProduct("IdeaMain1", "версия", Date())
-    val enemy = TestProduct("IdeaMain1", "версия", Date())
+    val dM1 = LocalDate.now().minusMonths(1)
+    val dM6 = LocalDate.now().minusMonths(6)
+    val dD6 = LocalDate.now().minusDays(6)
+    val dD1 = LocalDate.now().minusDays(1)
+    val dY1 = LocalDate.now().minusYears(1)
+    val dY3 = LocalDate.now().minusYears(3)
+    val dd20 = LocalDate.now().minusDays(20)
+    val dd5 = LocalDate.now().minusDays(5)
+    val dd2 = LocalDate.now().minusDays(2)
 
-    val fresh = listOf(main,
-                       TestProduct("Idea222", "версия", Date()),
-                       TestProduct("Idea333", "версия", Date()),
-                       TestProduct("Idea444", "версия", Date()),
-                       TestProduct("Idea555", "версия", Date()),
-                       TestProduct("Idea666", "версия", Date()))
-    val empty = emptyList<Product>()
+
+    val main = TestProduct("Main", "версия", dM1, "main")
+    val main2 = TestProduct("IdeaMain1", "версия", LocalDate.now())
+
+    val fresh = listOf(
+      main,
+      TestProduct("Idea222", "версия", dM1),
+      TestProduct("Idea333", "версия", dM6),
+      TestProduct("Idea444", "версия", dD6),
+      TestProduct("Idea555", "версия", dD1),
+      TestProduct("Idea666", "версия", dY1),
+      TestProduct("Idea666", "версия", dY3),
+      TestProduct("Idea666", "версия", dd20),
+      TestProduct("Idea666", "версия", dd5),
+      TestProduct("Idea666", "версия", dd2),
+    )
     val old = listOf(
-      TestProduct("Idea222", "версия", Date()),
-      TestProduct("Idea333", "версия", Date()),
-      TestProduct("Idea444", "версия", Date()),
-      TestProduct("Idea555", "версия", Date()),
-      TestProduct("Idea666", "версия", Date()))
+      TestProduct("Idea222", "версия", LocalDate.now()),
+      TestProduct("Idea333", "версия", LocalDate.now()),
+      TestProduct("Idea444", "версия", LocalDate.now()),
+      TestProduct("Idea555", "версия", LocalDate.now()),
+      TestProduct("Idea666", "версия", LocalDate.now()))
 
 
     val children = listOf(
@@ -45,65 +62,145 @@ class TestJbService : JbService {
              TestChildrenSettings("Find Usages", null, "⇧F12"),
              TestChildrenSettings("Build Solution", null, "⇧F12"),
              TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
-      listOf(TestChildrenSettings("Go to Everything", "built-in", "⌘T"),
+      listOf(TestChildrenSettings("Go to Everything Everything"),
+             TestChildrenSettings("Go to Every thing", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everyt Everything", "built-in", "⇧F12"),
+             TestChildrenSettings("Go to Everything Go to Everything", "built-in", "⇧F12")),
+      listOf(TestChildrenSettings("1 Go to Everything Go to Everything Go to Everything Everyth iBBngEverything Go to Everything Everyth ingEverything 111", "built-in", "⌘T"),
              TestChildrenSettings("Find Usages", null, "⇧F12"),
              TestChildrenSettings("Build Solution", null, "⇧F12"),
-             TestChildrenSettings("Go to Everything", "built-in", "⇧F12")),
+             TestChildrenSettings("Go", "built-in", "⇧F12")),
+    )
+
+    val children1 = listOf(
+      listOf(TestChildrenSettings("Go to EverythingEve rything"),
+             TestChildrenSettings("Find ges"),
+             TestChildrenSettings("Build Solution"),
+             TestChildrenSettings("Go to Everything Go to Everything Go to Everything")),
+      listOf(TestChildrenSettings("Go to Ev"),
+             TestChildrenSettings("Go to Everything Go to Everything"),
+             TestChildrenSettings("2 Go to Everythi Go to Everything Go to Everything 2222 Everyth ingEverything Go to Everything Everyth ingEverything 222"),
+             TestChildrenSettings("Go to Everything")),
+      listOf(TestChildrenSettings("Go to rything rything"),
+             TestChildrenSettings("Find Usages"),
+             TestChildrenSettings("Build Solution"),
+             TestChildrenSettings("Go")),
+    )
+
+    val children2 = listOf(
+      listOf(TestChildrenSettings("Go to Everything"),
+             TestChildrenSettings("Find Usages"),
+             TestChildrenSettings("Build Solution"),
+             TestChildrenSettings("Go to Everything")),
+      listOf(TestChildrenSettings("Go to Eveing"),
+             TestChildrenSettings("3 Go to Everything"),
+             TestChildrenSettings("Go to Everything Everything"),
+             TestChildrenSettings("Go to ")),
+      listOf(TestChildrenSettings("Go to Everything Everyth ingEverything"),
+             TestChildrenSettings("Find Usages Go to"),
+             TestChildrenSettings("Build Solution"),
+             TestChildrenSettings("Go to Everything")),
+    )
+
+    val settings1 = listOf(
+      TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = emptyList()),
+
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = children),
     )
 
     val settings = listOf(
       TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
+      TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins", list = children),
+      TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
+
+      TestBaseSetting(AllIcons.General.ExternalTools, "UI Theme", "Light Theme"),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children2),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
                               "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
       TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
       TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
                               "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children2),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
-      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children),
+      TestMultipleSetting(AllIcons.General.ExternalTools, "Keymap", "macOS, 12 custom keys", children1),
       TestBaseSetting(AllIcons.General.ExternalTools, "Code settings", "Сode style, file types, live templates"),
       TestMultipleSetting(AllIcons.General.ExternalTools, "Plugins",
                           "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more", children),
+    )
 
-      )
 
-    val testChildConfig = TestConfigurableSetting(AllIcons.General.ExternalTools, "Plugins",
-                                                  "Grazie Pro, IdeaVim, JetBrains Academy, Solarized Theme, Gradianto, Nord, +3 more",
-                                                  children)
-    private val from = TestProduct("Visual Studio Code", "версия", Date())
-    private val to = TestProduct("IntelliJ IDEA", "версия", Date())
+    private val from = TestProduct("Visual Studio Code", "версия", LocalDate.now())
+    private val to = TestProduct("IntelliJ IDEA", "версия", LocalDate.now())
 
     val progress = TestImportProgress(Lifetime.Eternal)
 
-    val importFromProduct = TestImportFromProduct(DialogImportItem(from, AllIcons.TransferSettings.VS),
-                                                  DialogImportItem(to, AllIcons.TransferSettings.Xcode), progress)
+    val list = listOf(
+      listOf(
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.IU_20,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.IU_24,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.IU_48),
+      listOf(
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.MPS_20,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.MPS_24,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.MPS_48),
+      listOf(
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.PC_20,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.PC_24,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.PC_48),
+      listOf(
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.PS_20,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.PS_24,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.PS_48),
+      listOf(
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.RD_20,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.RD_24,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.RD_48),
+      listOf(
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.RM_20,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.RM_24,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.RM_48),
+      listOf(
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.AC_20,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.AC_24,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.AC_48),
+      listOf(
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.WS_20,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.WS_24,
+        com.intellij.ide.startup.importSettings.StartupImportIcons.IdeIcons.WS_48),
+    )
 
-    val importFromProduct_ = TestImportFromProduct(DialogImportItem(from, AllIcons.TransferSettings.VS),
-                                                   DialogImportItem(to, AllIcons.TransferSettings.Xcode), progress, null)
+    val icon
+      get() = list.get(Random.nextInt(list.size - 1))[2]
+    val importFromProduct = TestImportFromProduct(DialogImportItem(from, icon),
+                                                  DialogImportItem(to, icon), progress)
 
 
     val simpleImport = TestSimpleImport("From Config or Installation Directory", progress)
 
-    fun getProductIcon(size: IconProductSize): Icon {
+
+    private val map = mutableMapOf<String, List<Icon>>()
+
+    fun getProductIcon(itemId: String, size: IconProductSize): Icon {
+      val icons = map.getOrPut(itemId, { list.get(Random.nextInt(list.size - 1)) })
+
       return when (size) {
-        IconProductSize.SMALL -> AllIcons.TransferSettings.Resharper
-        IconProductSize.MIDDLE -> AllIcons.General.NotificationInfo
-        IconProductSize.LARGE -> AllIcons.General.SuccessLogin
+        IconProductSize.SMALL -> icons.get(0)
+        IconProductSize.MIDDLE -> icons.get(1)
+        IconProductSize.LARGE -> icons.get(2)
       }
     }
   }
 
   override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
     LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
-    return if (productId == getConfig().id) simpleImport else importFromProduct
+    return importFromProduct
   }
 
   override fun products(): List<Product> {
@@ -115,24 +212,15 @@ class TestJbService : JbService {
   }
 
   override fun getSettings(itemId: String): List<BaseSetting> {
-    return settings
+    return if (itemId == main.id) settings1 else settings
   }
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
-    return getProductIcon(size)
+    return TestJbService.getProductIcon(itemId, size)
   }
 
   override fun baseProduct(id: String): Boolean {
     return id == main.id
-  }
-
-  override fun getConfig(): Config {
-    return object : Config {
-      override val path: String = "/IntelliJ IDEA Ultimate 2023.2.1"
-
-      override val id: String = "Config"
-      override val name: String = "Config or Installation Directory"
-    }
   }
 }
 
@@ -149,7 +237,7 @@ class TestExternalService : ExternalService {
 
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
-    return TestJbService.getProductIcon(size)
+    return TestJbService.getProductIcon(itemId, size)
   }
 
   override fun getSettings(itemId: String): List<BaseSetting> {
@@ -197,7 +285,7 @@ class TestSyncService : SyncService {
     LOG.info("${IMPORT_SERVICE} generalSync")
   }
 
-  override fun getMainProduct(): Product? {
+  override fun getMainProduct(): Product {
     return TestJbService.main
   }
 
@@ -222,7 +310,7 @@ class TestSyncService : SyncService {
 class TestProduct(
   override val name: String,
   override val version: String,
-  override val lastUsage: Date,
+  override val lastUsage: LocalDate,
   override val id: String = UUID.randomUUID().toString()) : Product {
 
 }
@@ -241,7 +329,7 @@ class TestMultipleSetting(override val icon: Icon,
 
 class TestConfigurableSetting(override val icon: Icon,
                               override val name: String,
-                              override val comment: String?,
+                              override val comment: String? = null,
                               override val list: List<List<ChildSetting>>,
                               override val id: String = UUID.randomUUID().toString()) : Configurable
 
@@ -262,7 +350,8 @@ class TestImportProgress(lifetime: Lifetime) : ImportProgress {
   override val progress = OptProperty<Int>()
 
   private var value: Int = 0
-  private val list = listOf("Plugins: Docker", "Connect to WebApp", "Connect", "Show configuration on toolbar")
+  private val list = listOf("Plugins: Docker", "Show configuration on toolbar", "Connect to WebApp",
+                            "Show configuration on toolbar Show configuration on toolbar", "Connect", "Show configuration on toolbar")
   private var index = 0
 
   init {

@@ -11,8 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.ClassData;
 import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
@@ -62,15 +60,8 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   @Override
   @Nullable
   @Nls
-  public String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
-                                                @NotNull final CoverageSuitesBundle currentSuite,
-                                                @NotNull final CoverageDataManager manager) {
-    return getDirCoverageInformationString(directory.getVirtualFile(), currentSuite, manager);
-  }
-
-  @Nullable
-  @Nls
-  public String getDirCoverageInformationString(@NotNull VirtualFile dir,
+  public String getDirCoverageInformationString(@NotNull Project project,
+                                                @NotNull VirtualFile dir,
                                                 @NotNull CoverageSuitesBundle currentSuite,
                                                 @NotNull CoverageDataManager manager) {
     DirCoverageInfo coverageInfo = getDirCoverageInfo(dir, currentSuite);
@@ -115,21 +106,10 @@ public abstract class SimpleCoverageAnnotator extends BaseCoverageAnnotator {
   @Override
   @Nullable
   @Nls
-  public String getFileCoverageInformationString(@NotNull final PsiFile psiFile,
-                                                 @NotNull final CoverageSuitesBundle currentSuite,
-                                                 @NotNull final CoverageDataManager manager) {
-    VirtualFile file = psiFile.getVirtualFile().getCanonicalFile();
-    if (file == null) {
-      file = psiFile.getVirtualFile();
-    }
-
-    assert file != null;
-    return getFileCoverageInformationString(file, manager);
-  }
-
-  @Nullable
-  @Nls
-  public String getFileCoverageInformationString(@NotNull VirtualFile file, @NotNull CoverageDataManager manager) {
+  public String getFileCoverageInformationString(@NotNull Project project,
+                                                 @NotNull VirtualFile file,
+                                                 @NotNull CoverageSuitesBundle currentSuite,
+                                                 @NotNull CoverageDataManager manager) {
     final String path = normalizeFilePath(file.getPath());
 
     final FileCoverageInfo coverageInfo = myFileCoverageInfos.get(path);

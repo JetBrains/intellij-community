@@ -3,6 +3,11 @@ package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.ReplaceConstructorWithFactoryAction;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEx;
+import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
@@ -10,6 +15,7 @@ import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.Presentation;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +29,23 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   }
 
   public void testEmptyConstructor() { runTest("01", null); }
+  
+  public void testWithSelection() {
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    configureByFile("/refactoring/replaceConstructorWithFactory/beforeWithSelection.java");
+    ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
+    ActionContext context = ActionContext.from(getEditor(), getFile());
+    Presentation presentation = action.getPresentation(context);
+    assertNotNull(presentation);
+    ModCommand command = action.perform(context);
+    ModCommandExecutor.getInstance().executeInteractively(context, command, getEditor());
+    final LookupEx lookup = LookupManager.getActiveLookup(getEditor());
+    assertNotNull(lookup);
+    LookupElement newMain = ContainerUtil.find(lookup.getItems(), l -> l.getLookupString().equals("newMain"));
+    assertNotNull(newMain);
+    ((LookupImpl)lookup).finishLookup('\n', newMain);
+    checkResultByFile("/refactoring/replaceConstructorWithFactory/afterWithSelection.java");
+  }
 
   public void testSubclass() { runTest("02", null); }
 

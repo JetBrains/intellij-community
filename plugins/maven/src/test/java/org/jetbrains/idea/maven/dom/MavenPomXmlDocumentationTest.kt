@@ -6,6 +6,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPomXmlDocumentationTest : MavenDomTestCase() {
+  override fun runInDispatchThread() = true
+
   @Test
   fun testDocumentation() = runBlocking {
     createProjectPom(

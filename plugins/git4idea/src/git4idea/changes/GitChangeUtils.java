@@ -3,7 +3,6 @@ package git4idea.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -387,13 +386,9 @@ public final class GitChangeUtils {
 
   public static @NotNull List<FilePath> getUnmergedFiles(@NotNull GitRepository repository) throws VcsException {
     GitCommandResult result = Git.getInstance().getUnmergedFiles(repository);
-    if (!result.success()) {
-      throw new VcsException(result.getErrorOutputAsJoinedString());
-    }
-
     VirtualFile root = repository.getRoot();
 
-    String output = StringUtil.join(result.getOutput(), "\n");
+    String output = result.getOutputOrThrow();
     Set<FilePath> unmergedPaths = new HashSet<>();
     for (StringScanner s = new StringScanner(output); s.hasMoreData(); ) {
       if (s.isEol()) {

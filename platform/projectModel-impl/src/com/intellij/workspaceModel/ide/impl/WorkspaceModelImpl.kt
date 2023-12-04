@@ -492,7 +492,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
 
     init {
-      setupOpenTelemetryReporting(workspaceMetrics.meter)
+      setupOpenTelemetryReporting(workspaceModelMetrics.meter)
     }
   }
 }

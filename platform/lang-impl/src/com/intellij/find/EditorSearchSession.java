@@ -193,7 +193,7 @@ public final class EditorSearchSession implements SearchSession,
     FindUsagesCollector.triggerUsedOptionsStats(project, FindUsagesCollector.FIND_IN_FILE, findModel);
   }
 
-  private AnAction @NotNull [] createPrimarySearchActions() {
+  private static AnAction @NotNull [] createPrimarySearchActions() {
     if (ExperimentalUI.isNewUI()) {
       return new AnAction[]{
         new StatusTextAction(),

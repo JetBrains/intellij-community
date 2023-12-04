@@ -142,7 +142,8 @@ Supports Maven and Gradle projects.
 
     <actions>
         <action id="com.jetbrains.packagesearch.intellij.plugin.actions.AddDependencyAction"
-                class="com.jetbrains.packagesearch.intellij.plugin.actions.AddDependencyAction">
+                class="com.jetbrains.packagesearch.intellij.plugin.actions.AddDependencyAction"
+                icon="com.jetbrains.packagesearch.PackageSearchIcons.Artifact">
             <add-to-group group-id="GenerateGroup" anchor="first"/>
         </action>
         <action id="com.jetbrains.packagesearch.intellij.plugin.actions.PkgsToDAAction"

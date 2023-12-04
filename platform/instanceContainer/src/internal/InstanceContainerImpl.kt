@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.instanceContainer.InstanceContainer
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 import kotlinx.collections.immutable.PersistentMap
@@ -90,13 +91,17 @@ class InstanceContainerImpl(
       if (!registerDynamic || dynamicInstanceSupport == null) {
         return null
       }
-      val initializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass)
-      if (initializer == null) {
+      val dynamicInstanceInitializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass)
+      if (dynamicInstanceInitializer == null) {
         return null
       }
-      holder = DynamicInstanceHolder(scopeHolder.containerScope, initializer) // TODO intersect
+      val parentScope = scopeHolder.intersectScope(dynamicInstanceInitializer.registrationScope)
+      val initializer = dynamicInstanceInitializer.initializer
+      holder = DynamicInstanceHolder(parentScope, initializer)
       state.put(keyClass.name, holder)
     }
+    // the following can only execute in case `holder` was initialized and committed into `state`
+    dynamicInstanceSupport!!.dynamicInstanceRegistered(holder)
     return holder
   }
 
@@ -107,7 +112,7 @@ class InstanceContainerImpl(
       }.name
     }
     val debugString = if (scopeName == null) containerName else "($containerName x $scopeName)"
-    LOG.trace("$debugString : registration start")
+    LOG.trace { "$debugString : registration start" }
     val existingKeys = state().keys
     return InstanceRegistrarImpl(debugString, existingKeys) { actions ->
       register(debugString, registrationScope, actions)
@@ -120,18 +125,13 @@ class InstanceContainerImpl(
     actions: Map<String, RegistrationAction>,
   ): UnregisterHandle? {
     if (actions.isEmpty()) {
-      LOG.trace("$debugString : registration empty")
+      LOG.trace { "$debugString : registration empty" }
       return null
     }
-    LOG.trace("$debugString : registration")
-    val parentScope = if (registrationScope == null) {
-      scopeHolder.containerScope
-    }
-    else {
-      scopeHolder.intersectScope(registrationScope)
-    }
+    LOG.trace { "$debugString : registration" }
+    val parentScope = scopeHolder.intersectScope(registrationScope)
     return register(parentScope = parentScope, actions).also {
-      LOG.trace("$debugString : registration completed")
+      LOG.trace { "$debugString : registration completed" }
     }
   }
 
@@ -238,11 +238,11 @@ class InstanceContainerImpl(
     return existingHolder
   }
 
-  override fun unregister(keyClassName: String): InstanceHolder? {
+  override fun unregister(keyClassName: String, unregisterDynamic: Boolean): InstanceHolder? {
     lateinit var existingHolder: InstanceHolder
     updateState { state: InstanceHolders ->
       existingHolder = state[keyClassName]?.takeUnless {
-        it is DynamicInstanceHolder
+        it is DynamicInstanceHolder && !unregisterDynamic
       } ?: return null
       state.remove(keyClassName)
     }

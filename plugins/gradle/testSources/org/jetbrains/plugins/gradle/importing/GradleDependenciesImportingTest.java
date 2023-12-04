@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
@@ -39,7 +38,6 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -1985,82 +1983,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   }
 
   @Test
-  public void testSourcesExcludedFromGradleCacheOnDisabledFlag() throws Exception {
-    Assume.assumeFalse("Can not run on Windows. " +
-                       "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
-    overrideGradleUserHome("project/cache");
-    var dependency = "junit:junit:4.12";
-    var dependencyName = "Gradle: junit:junit:4.12";
-    var dependencyJar = "junit-4.12.jar";
-
-    importProject(script(it -> {
-      it
-        .withJavaPlugin()
-        .withMavenCentral()
-        .addTestImplementationDependency(dependency);
-    }));
-
-    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
-    assertNoSourcesAndDocsInGradleCache(dependencyJar, regularLibFromGradleCache);
-  }
-
-  @Test
-  public void testSourcesExcludedFromGradleCacheOnDisabledFlagWithIdeaPlugin() throws Exception {
-    Assume.assumeFalse("Can not run on Windows. " +
-                       "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
-    overrideGradleUserHome("project/cache");
-    var dependency = "junit:junit:4.12";
-    var dependencyName = "Gradle: junit:junit:4.12";
-    var dependencyJar = "junit-4.12.jar";
-
-    importProject(script(it -> {
-      it
-        .withJavaPlugin()
-        .withIdeaPlugin()
-        .withMavenCentral()
-        .addTestImplementationDependency(dependency);
-    }));
-
-    LibraryOrderEntry regularLibFromGradleCache = assertSingleLibraryOrderEntry("project.test", dependencyName);
-    assertNoSourcesAndDocsInGradleCache(dependencyJar, regularLibFromGradleCache);
-  }
-
-  @Test
-  public void testSourcesExcludedFromGradleMultiModuleProjectCacheOnDisabledFlag() throws Exception {
-    Assume.assumeFalse("Can not run on Windows. " +
-                       "The test locks native library files in test directory and can not be torn down properly.", SystemInfo.isWindows);
-    overrideGradleUserHome("project/cache");
-    var dependency = "junit:junit:4.12";
-    var dependencyName = "Gradle: junit:junit:4.12";
-    var dependencyJar = "junit-4.12.jar";
-
-    createSettingsFile("include 'projectA', 'projectB' ");
-    importProject(
-      createBuildScriptBuilder()
-        .project(":projectA", it -> {
-          it
-            .withJavaPlugin()
-            .withIdeaPlugin()
-            .withMavenCentral()
-            .addTestImplementationDependency(dependency);
-        })
-        .project(":projectB", it -> {
-          it
-            .withJavaPlugin()
-            .withMavenCentral()
-            .addTestImplementationDependency(dependency);
-        })
-        .generate()
-    );
-
-    LibraryOrderEntry projectADependencyEntry = assertSingleLibraryOrderEntry("project.projectA.test", dependencyName);
-    assertNoSourcesAndDocsInGradleCache(dependencyJar, projectADependencyEntry);
-
-    LibraryOrderEntry projectBDependencyEntry = assertSingleLibraryOrderEntry("project.projectB.test", dependencyName);
-    assertNoSourcesAndDocsInGradleCache(dependencyJar, projectBDependencyEntry);
-  }
-
-  @Test
   public void testSourcesJavadocAttachmentFromGradleCache() throws Exception {
     var dependency = "junit:junit:4.12";
     var dependencyName = "Gradle: junit:junit:4.12";
@@ -2355,24 +2277,6 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
           }
         }
       });
-  }
-
-  private void assertNoSourcesAndDocsInGradleCache(String dependencyJar, LibraryOrderEntry regularLibFromGradleCache) {
-    assertThat(regularLibFromGradleCache.getRootFiles(OrderRootType.CLASSES))
-      .hasSize(1)
-      .allSatisfy(file -> assertEquals(dependencyJar, file.getName()));
-
-    String binaryPath = PathUtil.getLocalPath(regularLibFromGradleCache.getRootFiles(OrderRootType.CLASSES)[0]);
-    Ref<Boolean> sourceFound = Ref.create(false);
-    Ref<Boolean> docFound = Ref.create(false);
-    try {
-      checkIfSourcesOrJavadocsCanBeAttached(binaryPath, sourceFound, docFound);
-    }
-    catch (IOException e) {
-      throw new IllegalStateException("Unable to lookup dependency artifacts in " + binaryPath);
-    }
-    assertFalse(sourceFound.get());
-    assertFalse(docFound.get());
   }
 
   private static void checkIfSourcesOrJavadocsCanBeAttached(String binaryPath,

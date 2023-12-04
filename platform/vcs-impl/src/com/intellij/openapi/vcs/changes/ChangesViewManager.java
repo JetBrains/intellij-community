@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DataManager;
@@ -14,6 +15,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,8 +28,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.InitialVfsRefreshService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectInitialActivitiesNotifier;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
@@ -91,7 +93,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import static com.intellij.openapi.actionSystem.EmptyAction.registerWithShortcutSet;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
@@ -775,10 +776,10 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     private static void registerShortcuts(@NotNull JComponent component) {
-      registerWithShortcutSet("ChangesView.Refresh", CommonShortcuts.getRerun(), component);
-      registerWithShortcutSet("ChangesView.NewChangeList", CommonShortcuts.getNew(), component);
-      registerWithShortcutSet("ChangesView.RemoveChangeList", CommonShortcuts.getDelete(), component);
-      registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), component);
+      ActionUtil.wrap("ChangesView.Refresh").registerCustomShortcutSet(CommonShortcuts.getRerun(), component);
+      ActionUtil.wrap("ChangesView.NewChangeList").registerCustomShortcutSet(CommonShortcuts.getNew(), component);
+      ActionUtil.wrap("ChangesView.RemoveChangeList").registerCustomShortcutSet(CommonShortcuts.getDelete(), component);
+      ActionUtil.wrap(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), component);
     }
 
     private @NotNull List<AnAction> createChangesToolbarActions(@NotNull TreeExpander treeExpander) {
@@ -807,11 +808,12 @@ public class ChangesViewManager implements ChangesViewEx,
       return actions;
     }
 
-    private void updateProgressComponent(@Nullable Factory<? extends JComponent> progress) {
+    private void updateProgressComponent(@NotNull List<Supplier<@Nullable JComponent>> progress) {
       invokeLaterIfNeeded(() -> {
         if (myDisposed) return;
-        JComponent component = progress != null ? progress.create() : null;
-        if (component != null) {
+        List<? extends @Nullable JComponent> components = ContainerUtil.mapNotNull(progress, it -> it.get());
+        if (!components.isEmpty()) {
+          JComponent component = DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP);
           myProgressLabel.setContent(new FixedSizeScrollPanel(component, new JBDimension(400, 100)));
         }
         else {
@@ -821,7 +823,7 @@ public class ChangesViewManager implements ChangesViewEx,
     }
 
     public void updateProgressText(@NlsContexts.Label String text, boolean isError) {
-      updateProgressComponent(createTextStatusFactory(text, isError));
+      updateProgressComponent(Collections.singletonList(createTextStatusFactory(text, isError)));
     }
 
     public void setBusy(final boolean b) {
@@ -857,7 +859,7 @@ public class ChangesViewManager implements ChangesViewEx,
         List<FilePath> unversionedFiles = changeListManager.getUnversionedFilesPaths();
 
         boolean shouldShowUntrackedLoading = unversionedFiles.isEmpty() &&
-                                             !myProject.getService(ProjectInitialActivitiesNotifier.class).isInitialVfsRefreshFinished() &&
+                                             !myProject.getService(InitialVfsRefreshService.class).isInitialVfsRefreshFinished() &&
                                              changeListManager.isUnversionedInUpdateMode();
 
         boolean skipSingleDefaultChangeList = Registry.is("vcs.skip.single.default.changelist") ||
@@ -891,7 +893,7 @@ public class ChangesViewManager implements ChangesViewEx,
           }
         }
 
-        DefaultTreeModel treeModel = treeModelBuilder.build();
+        DefaultTreeModel treeModel = treeModelBuilder.build(true);
 
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.checkCanceled();
@@ -1055,13 +1057,7 @@ public class ChangesViewManager implements ChangesViewEx,
         scheduleRefresh();
 
         ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-        VcsException updateException = changeListManager.getUpdateException();
-        if (updateException == null) {
-          updateProgressComponent(changeListManager.getAdditionalUpdateInfo());
-        }
-        else {
-          updateProgressText(VcsBundle.message("error.updating.changes", updateException.getMessage()), true);
-        }
+        updateProgressComponent(changeListManager.getAdditionalUpdateInfo());
       }
     }
 

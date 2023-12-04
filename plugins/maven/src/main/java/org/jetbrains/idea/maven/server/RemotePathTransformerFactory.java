@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,7 +19,7 @@ public interface RemotePathTransformerFactory {
     = new ExtensionPointName<>("org.jetbrains.idea.maven.remotePathTransformerFactory");
 
   static Transformer createForProject(@NotNull Project project) {
-    RemotePathTransformerFactory[] transformers = MAVEN_REMOTE_PATH_TRANSFORMER_EP_NAME.getExtensions();
+    List<RemotePathTransformerFactory> transformers = MAVEN_REMOTE_PATH_TRANSFORMER_EP_NAME.getExtensionList();
     List<RemotePathTransformerFactory> aTransformers = ContainerUtil.filter(transformers, factory -> factory.isApplicable(project));
     if (aTransformers.size() > 1) {
       Logger.getInstance(RemotePathTransformerFactory.class).warn("More than one RemotePathTransformer is applicable: " + aTransformers);

@@ -92,4 +92,15 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
                        })
     }
   }
+
+  override fun <T : Any> deferAsync(base: Icon?, param: T, evaluator: suspend (T) -> Icon?): Icon {
+    return iconCache.computeIfAbsent(param) {
+      DeferredIconImpl(baseIcon = base,
+                       param = param,
+                       asyncEvaluator = { evaluator(it) ?: DeferredIconImpl.EMPTY_ICON },
+                       listener = { source, icon ->
+                         iconCache.replace(source.param, source, icon)
+                       })
+    }
+  }
 }

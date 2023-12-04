@@ -253,6 +253,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return referenceInternal(base, onClickAction)
   }
 
+
   @Contract(pure = true)
   fun referenceOnHover(base: InlayPresentation, clickListener: ClickListener): InlayPresentation {
     val hovered = onClick(
@@ -306,6 +307,11 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
   @Contract(pure = true)
   fun withCursorOnHover(base: InlayPresentation, cursor: Cursor): InlayPresentation {
     return WithCursorOnHoverPresentation(base, cursor, editor)
+  }
+
+  @Contract(pure = true)
+  fun withCursorOnHoverWhenControlDown (base: InlayPresentation, cursor: Cursor): InlayPresentation {
+    return WithCursorOnHoverPresentation(base, cursor, editor) { isControlDown(it) }
   }
 
   @Contract(pure = true)

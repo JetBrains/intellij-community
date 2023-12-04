@@ -18,7 +18,7 @@ import java.util.Set;
  *  
  * @deprecated unused in ide.navBar.v2. If you do a change here, please also update v2 implementation
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public abstract class NavBarModelBuilder {
 
   public static NavBarModelBuilder getInstance() {

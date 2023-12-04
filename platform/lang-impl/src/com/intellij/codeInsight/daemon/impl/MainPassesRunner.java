@@ -8,11 +8,13 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -35,6 +37,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -71,7 +75,7 @@ public final class MainPassesRunner {
         @Override
         public void run(@NotNull ProgressIndicator progress) {
           try {
-            runMainPasses(filesToCheck, result, progress, minimumSeverity);
+            runMainPasses(filesToCheck, result, (ProgressIndicatorEx)progress, minimumSeverity);
           }
           catch (ProcessCanceledException e) {
             LOG.info("Code analysis canceled", e);
@@ -87,8 +91,8 @@ public final class MainPassesRunner {
         ExceptionUtil.rethrowAllAsUnchecked(exception.get());
       }
     }
-    else if (ProgressManager.getInstance().hasProgressIndicator()) {
-      runMainPasses(filesToCheck, result, ProgressManager.getInstance().getProgressIndicator(), minimumSeverity);
+    else if (ProgressManager.getInstance().getProgressIndicator() instanceof ProgressIndicatorEx indicator) {
+      runMainPasses(filesToCheck, result, indicator, minimumSeverity);
     }
     else {
       throw new RuntimeException("Must run from Event Dispatch Thread or with a progress indicator");
@@ -99,28 +103,31 @@ public final class MainPassesRunner {
 
   private void runMainPasses(@NotNull List<? extends VirtualFile> files,
                              @NotNull Map<? super Document, ? super List<HighlightInfo>> result,
-                             @NotNull ProgressIndicator progress,
+                             @NotNull ProgressIndicatorEx progress,
                              @Nullable HighlightSeverity minimumSeverity) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessNotAllowed();
     progress.setIndeterminate(false);
+    List<Pair<VirtualFile, DaemonProgressIndicator>> daemonIndicators = Collections.synchronizedList(new ArrayList<>(files.size()));
+    progress.addStateDelegate(new AbstractProgressIndicatorExBase() {
+      @Override
+      public void cancel() {
+        super.cancel();
+        daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel());
+      }
+    });
     while (true) {
-      List<Pair<VirtualFile, DaemonProgressIndicator>> daemonIndicators = ContainerUtil.map(files, file -> Pair.create(file, new DaemonProgressIndicator()));
+      daemonIndicators.clear();
+      daemonIndicators.addAll(ContainerUtil.map(files, file -> Pair.create(file, new DaemonProgressIndicator())));
       Disposable disposable = Disposer.newDisposable();
       try {
+        SensitiveProgressWrapper wrapper = new SensitiveProgressWrapper(progress);
         ReadAction.run(() -> {
-          ((ProgressIndicatorEx)progress).addStateDelegate(new AbstractProgressIndicatorExBase() {
-            @Override
-            public void cancel() {
-              super.cancel();
-              daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel());
-            }
-          });
           ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
             @Override
             public void beforeWriteActionStart(@NotNull Object action) {
-              if (!progress.isCanceled()) {
-                progress.cancel(); // that will cancel all daemonIndicators too
-              }
+              wrapper.cancel();
+              daemonIndicators.forEach(daemonIndicator -> daemonIndicator.getSecond().cancel());
             }
           }, disposable);
           // there is a chance we are racing with the write action, in which case just registered listener might not be called, retry.
@@ -130,13 +137,13 @@ public final class MainPassesRunner {
         });
 
         AtomicInteger filesCompleted = new AtomicInteger();
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(daemonIndicators, progress, pair -> {
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(daemonIndicators, wrapper, pair -> {
           VirtualFile file = pair.getFirst();
-          progress.setText(ReadAction.compute(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
+          wrapper.setText(ReadAction.compute(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
           DaemonProgressIndicator daemonIndicator = pair.getSecond();
           runMainPasses(file, result, daemonIndicator, minimumSeverity);
           int completed = filesCompleted.incrementAndGet();
-          progress.setFraction((double)completed / files.size());
+          wrapper.setFraction((double)completed / files.size());
           return true;
         });
         break;
@@ -145,11 +152,12 @@ public final class MainPassesRunner {
         if (progress.isCanceled()) {
           throw e;
         }
-        //retry if the daemonIndicator was canceled by started write action
+        //retry if one of the daemonIndicators was canceled by started write action
       }
       finally {
         Disposer.dispose(disposable);
       }
+      WriteAction.runAndWait(() -> {}); // wait until the current write action is finished
     }
   }
 
@@ -158,6 +166,7 @@ public final class MainPassesRunner {
                              @NotNull DaemonProgressIndicator daemonIndicator,
                              @Nullable HighlightSeverity minimumSeverity) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
+    daemonIndicator.checkCanceled();
     PsiFile psiFile = ReadAction.compute(() -> PsiManager.getInstance(myProject).findFile(file));
     Document document = ReadAction.compute(() -> FileDocumentManager.getInstance().getDocument(file));
     if (psiFile == null || document == null || !ReadAction.compute(() -> ProblemHighlightFilter.shouldProcessFileInBatch(psiFile))) {

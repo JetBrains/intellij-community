@@ -26,10 +26,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.*;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
-import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
-import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.colors.impl.*;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
@@ -344,7 +341,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean myScrollingToCaret;
 
-  EditorImpl(@NotNull Document document, boolean viewer, @Nullable Project project, @NotNull EditorKind kind, @Nullable VirtualFile file) {
+  EditorImpl(@NotNull Document document,
+             boolean viewer,
+             @Nullable Project project,
+             @NotNull EditorKind kind,
+             @Nullable VirtualFile file,
+             @Nullable EditorHighlighter highlighter) {
     assertIsDispatchThread();
     myProject = project;
     myDocument = (DocumentEx)document;
@@ -353,6 +355,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myState.refreshAll();
     myScheme = createBoundColorSchemeDelegate(null);
     myScrollPane = new MyScrollPane(); // create UI after scheme initialization
+    myScrollPane.setBackground(JBColor.lazy(this::getBackgroundColor));
     myState.setViewer(viewer);
     myKind = kind;
     mySettings = new SettingsImpl(this, kind, project);
@@ -377,7 +380,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         TextAttributes attributes = highlighter.getTextAttributes(getColorsScheme());
-        onHighlighterChanged(highlighter, myGutterComponent.canImpactSize(highlighter),
+        onHighlighterChanged(highlighter,
+                             myGutterComponent.canImpactSize(highlighter),
                              EditorUtil.attributesImpactFontStyle(attributes),
                              EditorUtil.attributesImpactForegroundColor(attributes));
       }
@@ -397,6 +401,65 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     };
 
+    myIndentsModel = new IndentsModelImpl(this);
+    myCaretCursor = new CaretCursor();
+
+    myState.setVerticalScrollBarOrientation(VERTICAL_SCROLLBAR_RIGHT);
+
+    setHighlighter(highlighter == null ? new NullEditorHighlighter() : highlighter);
+
+    new FoldingPopupManager(this);
+
+    myEditorComponent = new EditorComponentImpl(this);
+    myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
+    if (shouldScrollBarBeOpaque()) {
+      myVerticalScrollBar.setOpaque(true);
+    }
+    myPanel = new JPanel();
+
+    myPanel.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<? extends Component>)(Iterable<JComponent>)() -> {
+      JComponent component = getPermanentHeaderComponent();
+      if (component != null && component.getParent() == null) {
+        return Collections.singleton(component).iterator();
+      }
+      return Collections.emptyIterator();
+    });
+    myPanel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+
+    myHeaderPanel = new MyHeaderPanel();
+    myGutterComponent = new EditorGutterComponentImpl(this);
+    myGutterComponent.putClientProperty(ColorKey.FUNCTION_KEY, (Function<ColorKey, Color>)key -> getColorsScheme().getColor(key));
+    initComponent();
+
+    myView = new EditorView(this);
+    myView.reinitSettings();
+
+    myScheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
+
+    myGutterComponent.updateSize();
+    myEditorComponent.setSize(getPreferredSize());
+
+    updateCaretCursor();
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && SystemInfoRt.isMac && SystemInfo.isJetBrainsJvm) {
+      MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
+    }
+
+    myFocusModeModel = new FocusModeModel(this);
+    Disposer.register(myDisposable, myFocusModeModel);
+
+    myPopupHandlers.add(new DefaultPopupHandler());
+    PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null, () -> {
+      return ContextMenuPopupHandler.getGroupForId(myState.getContextMenuGroupId());
+    });
+
+    myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
+    Disposer.register(myDisposable, myScrollingPositionKeeper);
+
+    addListeners();
+  }
+
+  private void addListeners() {
     myMarkupModel.addErrorMarkerListener(new ErrorStripeListener() {
       @Override
       public void errorMarkerChanged(@NotNull ErrorStripeEvent e) {
@@ -418,8 +481,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myInlayModel.addListener(myFoldingModel, myCaretModel);
     myInlayModel.addListener(myCaretModel, myCaretModel);
 
-    myIndentsModel = new IndentsModelImpl(this);
     myCaretModel.addCaretListener(new IndentsModelCaretListener(this));
+
     myCaretModel.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -448,9 +511,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myCaretModel.addCaretListener(myMarkupModel, myCaretModel);
 
-    myCaretCursor = new CaretCursor();
-
-    myState.setVerticalScrollBarOrientation(VERTICAL_SCROLLBAR_RIGHT);
     mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListener() {
       @Override
       public void recalculationEnds() {
@@ -465,35 +525,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     });
 
-    EditorHighlighter highlighter = new NullEditorHighlighter();
-    setHighlighter(highlighter);
-
-    new FoldingPopupManager(this);
-
-    myEditorComponent = new EditorComponentImpl(this);
-    myVerticalScrollBar = (MyScrollBar)myScrollPane.getVerticalScrollBar();
-    if (shouldScrollBarBeOpaque()) {
-      myVerticalScrollBar.setOpaque(true);
-    }
-    myPanel = new JPanel();
-
-    myPanel.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, (Iterable<? extends Component>)(Iterable<JComponent>)() -> {
-      JComponent component = getPermanentHeaderComponent();
-      if (component != null && component.getParent() == null) {
-        return Collections.singleton(component).iterator();
-      }
-      return Collections.emptyIterator();
-    });
-    myPanel.putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
-
-    myHeaderPanel = new MyHeaderPanel();
-    myGutterComponent = new EditorGutterComponentImpl(this);
-    myGutterComponent.putClientProperty(ColorKey.FUNCTION_KEY, (Function<ColorKey, Color>)key -> getColorsScheme().getColor(key));
-    initComponent();
-
-    myView = new EditorView(this);
-    myView.reinitSettings();
-
     myInlayModel.addListener(new InlayModel.SimpleAdapter() {
       @Override
       public void onUpdated(@NotNull Inlay<?> inlay, int changeFlags) {
@@ -505,18 +536,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         onInlayBatchModeFinish();
       }
     }, myCaretModel);
-
-    myScheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledEditorFontSize());
-
-    myGutterComponent.updateSize();
-    Dimension preferredSize = getPreferredSize();
-    myEditorComponent.setSize(preferredSize);
-
-    updateCaretCursor();
-
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment() && SystemInfo.isMac && SystemInfo.isJetBrainsJvm) {
-      MacGestureSupportInstaller.installOnComponent(getComponent(), e -> myForcePushHappened = true);
-    }
 
     myScrollingModel.addVisibleAreaListener(this::moveCaretIntoViewIfCoveredByToolWindowBelow);
     myScrollingModel.addVisibleAreaListener(myMarkupModel);
@@ -531,15 +550,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     CodeStyleSettingsManager.getInstance(myProject).subscribe(this, myDisposable);
 
-    myFocusModeModel = new FocusModeModel(this);
-    Disposer.register(myDisposable, myFocusModeModel);
-    myPopupHandlers.add(new DefaultPopupHandler());
-    PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null,
-                               () -> ContextMenuPopupHandler.getGroupForId(myState.getContextMenuGroupId()));
-
-    myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
-    Disposer.register(myDisposable, myScrollingPositionKeeper);
-
     myState.addPropertyChangeListener((event) -> {
       switch (event.getPropertyName()) {
         case EditorState.isInsertModePropertyName -> isInsertModeChanged(event);
@@ -548,7 +558,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         case EditorState.isEmbeddedIntoDialogWrapperPropertyName -> isEmbeddedIntoDialogWrapperChanged(event);
         case EditorState.verticalScrollBarOrientationPropertyName -> verticalScrollBarOrientationChanged(event);
         case EditorState.isStickySelectionPropertyName -> isStickySelectionChanged(event);
-        case EditorState.myForcedBackgroundPropertyName -> forcedBackgroundChanged(event);
         case EditorState.myBorderPropertyName -> borderChanged(event);
       }
     }, myDisposable);
@@ -780,10 +789,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
     if (myProject != null && myVirtualFile != null) {
-      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
+      for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensionList()) {
         if (LightEdit.owns(myProject) && !(painter instanceof LightEditCompatible)) {
           continue;
         }
+
         Collection<LineExtensionInfo> extensions = painter.getLineExtensions(myProject, myVirtualFile, line);
         if (extensions != null) {
           for (LineExtensionInfo extension : extensions) {
@@ -1159,7 +1169,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           public void dragOver(@NotNull DropTargetDragEvent e) {
             Point location = e.getLocation();
 
-            getCaretModel().moveToVisualPosition(getTargetPosition(location.x, location.y, true));
+            final CaretImpl caret = getCaretModel().getCurrentCaret();
+            caret.moveToVisualPosition(getTargetPosition(location.x, location.y, true, caret));
             getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
             requestFocus();
           }
@@ -1357,7 +1368,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public @NotNull EditorHighlighter getHighlighter() {
-    assertReadAccess();
     return myHighlighter;
   }
 
@@ -1600,7 +1610,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      // We do repaint in case of equal offsets because there is a possible case that there is a soft wrap at the same offset,
+      // We do repaint in case of equal offsets. There is a possible case that there is a soft wrap at the same offset,
       // and it does occupy a particular amount of visual space that may be necessary to repaint.
       if (startOffset <= minEndOffset) {
         int startLine = myView.offsetToVisualLine(startOffset, false);
@@ -1934,6 +1944,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!Registry.is("editor.dumb.mode.available")) return;
     putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
+    if (rect.isEmpty()) return;
     // The LCD text loop is enabled only for opaque images
     BufferedImage image = UIUtil.createImage(myEditorComponent, rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
     Graphics imageGraphics = image.createGraphics();
@@ -1968,39 +1979,48 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (clip == null) {
       return;
     }
+
     Color bg = isReleased ? getDisposedBackground() : getBackgroundColor();
     g.setColor(bg);
     g.fillRect(clip.x, clip.y, clip.width, clip.height);
   }
 
   void paint(@NotNull Graphics2D g) {
-    ReadAction.run(() -> {
-      if (g.getClipBounds() == null) return;
-      BufferedImage buffer = Registry.is("editor.dumb.mode.available") ? getUserData(BUFFER) : null;
-      if (buffer != null) {
-        Rectangle rect = getContentComponent().getVisibleRect();
-        StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
-        return;
-      }
-      if (!shouldPaint()) {
-        fillPlaceholder(g);
-        return;
-      }
+    if (g.getClipBounds() == null) {
+      return;
+    }
+
+    BufferedImage buffer = Registry.is("editor.dumb.mode.available", true) ? getUserData(BUFFER) : null;
+    if (buffer != null) {
+      Rectangle rect = getContentComponent().getVisibleRect();
+      StartupUiUtil.drawImage(g, buffer, null, rect.x, rect.y);
+      return;
+    }
+
+    if (!shouldPaint()) {
+      fillPlaceholder(g);
+      return;
+    }
+
+    ApplicationManager.getApplication().runReadAction(() -> {
       if (myUpdateCursor && !myPurePaintingMode) {
         setCursorPosition();
         myUpdateCursor = false;
       }
-      if (myProject != null && myProject.isDisposed()) return;
+
+      if (myProject != null && myProject.isDisposed()) {
+        return;
+      }
 
       myView.paint(g);
-
-      boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
-      if (myBackgroundImageSet != isBackgroundImageSet) {
-        myBackgroundImageSet = isBackgroundImageSet;
-        updateOpaque(myScrollPane.getHorizontalScrollBar());
-        updateOpaque(myScrollPane.getVerticalScrollBar());
-      }
     });
+
+    boolean isBackgroundImageSet = IdeBackgroundUtil.isEditorBackgroundImageSet(myProject);
+    if (myBackgroundImageSet != isBackgroundImageSet) {
+      myBackgroundImageSet = isBackgroundImageSet;
+      updateOpaque(myScrollPane.getHorizontalScrollBar());
+      updateOpaque(myScrollPane.getVerticalScrollBar());
+    }
   }
 
   @NotNull Color getDisposedBackground() {
@@ -2075,10 +2095,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myState.setMyForcedBackground(color);
     }
-  }
-
-  private void forcedBackgroundChanged(ObservableStateListener.PropertyChangeEvent event) {
-    myScrollPane.setBackground(getBackgroundColor());
   }
 
   @NotNull
@@ -2245,7 +2261,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
      Another approach is to make scrollbars opaque, but only in the editor (as editor is a slow-to-draw component with large screen area).
      This is what "true smooth scrolling" option currently does. Interestingly, making the vertical scrollbar opaque might actually be
-     a good thing because on modern displays (size, aspect ratio) code rarely extends beyond the right screen edge, and even
+     a good thing. On modern displays (size, aspect ratio) code rarely extends beyond the right screen edge, and even
      when it does, its coupling with the navigation bar only reduces intelligibility of both the navigation bar and the code itself.
 
      Horizontal scrollbar is another story - a single long line of text forces horizontal scrollbar in the whole document,
@@ -2355,7 +2371,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return lineIndex;
   }
 
-  private @NotNull VisualPosition getTargetPosition(int x, int y, boolean trimToLineWidth) {
+  private @NotNull VisualPosition getTargetPosition(int x, int y, boolean trimToLineWidth, @Nullable Caret targetCaret) {
     if (myDocument.getLineCount() == 0) {
       return new VisualPosition(0, 0);
     }
@@ -2370,8 +2386,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       y = visualLineToY(Math.max(0, visualLineCount - 1));
     }
     VisualPosition visualPosition = xyToVisualPosition(new Point(x, y));
-    if (myState.isInsertMode() == mySettings.isBlockCursor() && !visualPosition.leansRight && visualPosition.column > 0) {
-      // adjustment for block caret
+    Caret caret = targetCaret != null ? targetCaret : getCaretModel().getPrimaryCaret();
+    if (EditorUtil.isBlockLikeCaret(caret) && !visualPosition.leansRight && visualPosition.column > 0) {
+      // Adjustment for block caret when clicking in the second half of the character
       visualPosition = new VisualPosition(visualPosition.line, visualPosition.column - 1, true);
     }
     if (trimToLineWidth && !mySettings.isVirtualSpace()) {
@@ -2611,7 +2628,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       VisualPosition oldVisLeadSelectionStart = leadCaret.getLeadSelectionPosition();
       int oldCaretOffset = getCaretModel().getOffset();
       boolean multiCaretSelection = columnSelectionDrag || toggleCaretEvent;
-      VisualPosition newVisualCaret = getTargetPosition(x, y, !multiCaretSelection);
+      VisualPosition newVisualCaret = getTargetPosition(x, y, !multiCaretSelection, leadCaret);
       LogicalPosition newLogicalCaret = visualToLogicalPosition(newVisualCaret);
       if (multiCaretSelection) {
         myMultiSelectionInProgress = true;
@@ -2661,7 +2678,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 oldVisLeadSelectionStart = selectionModel.getSelectionEndPosition();
               }
             }
-            else if (mySettings.isBlockCursor() && Registry.is("editor.block.caret.selection.vim-like")) {
+            else if (EditorUtil.isBlockLikeCaret(getCaretModel().getPrimaryCaret()) && Registry.is("editor.block.caret.selection.vim-like")) {
               // adjust selection range, so that it covers caret location
               if (mySelectionModel.hasSelection() && oldVisLeadSelectionStart.equals(mySelectionModel.getSelectionEndPosition())) {
                 oldVisLeadSelectionStart = prevSelectionVisualPosition(oldVisLeadSelectionStart);
@@ -4268,7 +4285,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                           isInsideGutterWhitespaceArea(e) ||
                           eventArea == EditorMouseEventArea.EDITING_AREA && !myLastPressWasAtBlockInlay;
       if (moveCaret) {
-        VisualPosition visualPosition = getTargetPosition(x, y, true);
+        // We don't know which caret we want to work with yet
+        VisualPosition visualPosition = getTargetPosition(x, y, true, null);
         LogicalPosition pos = visualToLogicalPosition(visualPosition);
         if (toggleCaret) {
           Caret caret = getCaretModel().getCaretAt(visualPosition);
@@ -4825,7 +4843,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
       reinitFonts();
-      reinitSettings();
+      reinitSettings(true, false);
     }
 
     void resetEditorFontSize() {
@@ -5415,7 +5433,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myScheme instanceof MyColorSchemeDelegate) {
       ((MyColorSchemeDelegate)myScheme).resetEditorFontSize();
     }
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null);
+    EditorColorsManagerImpl.fireGlobalSchemeChange(null);
   }
 
   private final class TablessBorder extends SideBorder {

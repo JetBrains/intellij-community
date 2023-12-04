@@ -11,7 +11,6 @@ import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil.Compone
 import com.intellij.collaboration.ui.codereview.CodeReviewTimelineUIUtil.Thread.Replies
 import com.intellij.collaboration.ui.codereview.timeline.TimelineDiffComponentFactory
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.icon.OverlaidOffsetIconsIcon
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
 import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.editor.EditorFactory
@@ -19,17 +18,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.HyperlinkAdapter
+import com.intellij.ui.OverlaidOffsetIconsIcon
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.containers.nullize
-import com.intellij.util.text.JBDateFormat
+import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -38,6 +37,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.filePath
 import org.jetbrains.plugins.gitlab.ui.comment.*
 import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteComponentFactory.createEditActionsConfig
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.Icon
@@ -47,33 +47,39 @@ import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
 
 @OptIn(ExperimentalCoroutinesApi::class)
-object GitLabMergeRequestTimelineDiscussionComponentFactory {
+internal object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   fun create(project: Project,
              cs: CoroutineScope,
              avatarIconsProvider: IconsProvider<GitLabUserDTO>,
              vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
     val contentPanel = createContent(project, cs, avatarIconsProvider, vm)
-    val actionsPanel = GitLabNoteComponentFactory.createActions(cs, vm.mainNote)
+    val actionsPanel = GitLabNoteComponentFactory.createActions(cs, vm.mainNote,
+                                                                project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
 
     val repliesPanel = ComponentListPanelFactory.createVertical(cs, vm.replies, GitLabNoteViewModel::id) { noteCs, noteVm ->
-      GitLabNoteComponentFactory.create(ComponentType.FULL_SECONDARY, project, noteCs, avatarIconsProvider, noteVm)
+      GitLabNoteComponentFactory.create(ComponentType.FULL_SECONDARY, project, noteCs, avatarIconsProvider, noteVm,
+                                        GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
     }.let {
       VerticalListPanel().apply {
         add(it)
 
-        val replyVm = vm.replyVm
-        if (replyVm != null) {
-          bindChildIn(cs, replyVm.newNoteVm) { newNoteVm ->
-            newNoteVm?.let {
-              GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, it, vm.resolveVm,
-                                                                avatarIconsProvider)
-            }
-          }
+        val combinedReplyVms = vm.replyVm
+          .flatMapLatest { replyVm -> replyVm?.newNoteVm?.map { replyVm to it } ?: flowOf(null to null) }
 
-          cs.launch(start = CoroutineStart.UNDISPATCHED) {
+        bindChildIn(cs, combinedReplyVms) { (replyVm, newNoteVm) ->
+          if (replyVm == null) return@bindChildIn null
+
+          newNoteVm?.let {
+            GitLabDiscussionComponentFactory.createReplyField(ComponentType.FULL_SECONDARY, project, this, it, vm.resolveVm,
+                                                              avatarIconsProvider, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
+          }
+        }
+
+        cs.launch {
+          vm.replyVm.collectLatest { replyVm ->
             vm.repliesFolded.collect {
-              if (!it) replyVm.startWriting()
+              if (!it) replyVm?.startWriting()
             }
           }
         }
@@ -84,7 +90,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
     val titlePanel = Wrapper().apply {
       bindContentIn(cs, vm.mainNote) { mainNote ->
-        GitLabNoteComponentFactory.createTitle(this, mainNote)
+        GitLabNoteComponentFactory.createTitle(this, mainNote, project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
       }
     }
 
@@ -108,21 +114,22 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
                             avatarIconsProvider: IconsProvider<GitLabUserDTO>,
                             vm: GitLabMergeRequestTimelineDiscussionViewModel): JPanel {
     val mainNoteVm = vm.mainNote
-    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm).apply {
+    val repliesActionsPanel = createRepliesActionsPanel(cs, avatarIconsProvider, vm, project).apply {
       border = JBUI.Borders.empty(Replies.ActionsFolded.VERTICAL_PADDING, 0)
       bindVisibilityIn(cs, vm.repliesFolded)
     }
     val textPanel = createDiscussionTextPane(cs, vm)
 
     // oh well... probably better to make a suitable API in EditableComponentFactory, but that would look ugly
-    val actionAndEditVmsFlow: Flow<Pair<GitLabNoteAdminActionsViewModel, GitLabNoteEditingViewModel>?> =
+    val actionAndEditVmsFlow: Flow<Pair<GitLabNoteAdminActionsViewModel, ExistingGitLabNoteEditingViewModel>?> =
       mainNoteVm.flatMapLatest { note ->
         val actionsVm = note.actionsVm
         actionsVm?.editVm?.map { it?.let { actionsVm to it } } ?: flowOf(null)
       }
 
     val textContentPanel = EditableComponentFactory.create(cs, textPanel, actionAndEditVmsFlow) { (actionsVm, editVm) ->
-      val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, createEditActionsConfig(actionsVm, editVm))
+      val actions = createEditActionsConfig(actionsVm, editVm, project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
+      val editor = GitLabNoteEditorComponentFactory.create(project, this, editVm, actions)
       editVm.requestFocus()
       editor
     }.let {
@@ -235,7 +242,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
 
   private fun createRepliesActionsPanel(cs: CoroutineScope,
                                         avatarIconsProvider: IconsProvider<GitLabUserDTO>,
-                                        vm: GitLabMergeRequestTimelineDiscussionViewModel): JComponent {
+                                        vm: GitLabMergeRequestTimelineDiscussionViewModel,
+                                        project: Project): JComponent {
     val authorsLabel = JLabel().apply {
       bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
 
@@ -253,7 +261,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       })
     }
 
-    val hasRepliesOrCanCreateNewFlow = vm.replies.map { it.isNotEmpty() || vm.replyVm != null }
+    val hasRepliesOrCanCreateNewFlow = vm.replies
+      .flatMapConcat { replies -> vm.replyVm.map { replyVm -> replies.isNotEmpty() || replyVm != null } }
 
     val repliesLink = LinkLabel<Any>("", null, LinkListener { _, _ ->
       vm.setRepliesFolded(false)
@@ -275,7 +284,7 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
     }.apply {
       bindVisibilityIn(cs, vm.replies.map { it.isNotEmpty() })
       bindTextIn(cs, vm.replies.mapNotNull { replies ->
-        replies.lastOrNull()?.createdAt?.let { JBDateFormat.getFormatter().formatPrettyDateTime(it) }
+        replies.lastOrNull()?.createdAt?.let { DateFormatUtil.formatPrettyDateTime(it) }
       })
     }
 
@@ -290,7 +299,8 @@ object GitLabMergeRequestTimelineDiscussionComponentFactory {
       add(repliesActions)
 
       vm.resolveVm?.takeIf { it.canResolve }?.let {
-        GitLabDiscussionComponentFactory.createUnResolveLink(cs, it).also(::add)
+        GitLabDiscussionComponentFactory.createUnResolveLink(cs, it, project, GitLabStatistics.MergeRequestNoteActionPlace.TIMELINE)
+          .also(::add)
       }
     }
   }

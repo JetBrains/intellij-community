@@ -40,7 +40,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
   fun initializeFacetBridge(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     val start = System.currentTimeMillis()
 
-    for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensions) {
+    for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
       val facetType = facetBridgeContributor.rootEntityType
       changes[facetType]?.asSequence()?.filterIsInstance<EntityChange.Added<*>>()?.forEach perFacet@{ facetChange ->
         fun createBridge(entity: ModuleSettingsBase): Facet<*> {
@@ -71,13 +71,13 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
     private val facetEntityChangeListener = getInstance(project)
 
     override fun beforeChanged(event: VersionedStorageChange) {
-      WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
+      for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
         facetEntityChangeListener.processBeforeChangeEvents(event, facetBridgeContributor)
       }
     }
 
     override fun changed(event: VersionedStorageChange) {
-      WorkspaceFacetContributor.EP_NAME.extensions.forEach { facetBridgeContributor ->
+      for (facetBridgeContributor in WorkspaceFacetContributor.EP_NAME.extensionList) {
         facetEntityChangeListener.processChangeEvents(event, facetBridgeContributor)
       }
     }
@@ -213,8 +213,8 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       }
     }
 
-    val entityTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensions.associateBy { it.rootEntityType }
-    changedFacets.forEach { (facet, rootEntity) ->
+    val entityTypeToSerializer = BaseIdeSerializationContext.CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList.associateBy { it.rootEntityType }
+    for ((facet, rootEntity) in changedFacets) {
       val serializer = entityTypeToSerializer[rootEntity.getEntityInterface()]
                        ?: error("Unavailable XML serializer for ${rootEntity.getEntityInterface()}")
       val rootElement = serializer.serializeIntoXml(rootEntity)

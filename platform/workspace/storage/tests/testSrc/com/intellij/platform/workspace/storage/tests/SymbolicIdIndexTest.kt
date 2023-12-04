@@ -5,7 +5,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntit
 import com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntity
 import com.intellij.platform.workspace.storage.testEntities.entities.SymbolicIdEntityImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.modifyEntity
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

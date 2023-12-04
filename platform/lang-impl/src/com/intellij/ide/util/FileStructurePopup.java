@@ -284,7 +284,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       .setCancelCallback(() -> {
         FileStructurePopupListener listener = myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC);
         listener.stateChanged(false);
-        listener.isLoading(false);
         return myCanClose;
       })
       .setAdvertiser(new SpeedSearchAdvertiser().addSpeedSearchAdvertisement())
@@ -292,14 +291,13 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     Disposer.register(myPopup, this);
     myTree.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
-    myProject.getMessageBus().syncPublisher(FileStructurePopupListener.TOPIC).isLoading(true);
     myPopup.showCenteredInCurrentWindow(myProject);
 
     ((AbstractPopup)myPopup).setShowHints(true);
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
 
-    return rebuildAndSelect(false, myInitialElement, null).onSuccess(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    return rebuildAndSelect(false, myInitialElement, null).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
       myProject.getService(FileStructurePopupLoadingStateUpdater.class).installUpdater(this::installUpdater, myProject, myTreeModel);
       showTime = System.nanoTime();
@@ -393,7 +391,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
           return myAsyncTreeModel.accept(visitor).thenAsync(this);
         }
         else {
-          TreePath adjusted = path == null ? state.getDeepestMatch() : path;
+          TreePath adjusted = path == null ? state.getBestMatch() : path;
           if (path == null && adjusted != null && !state.isExactMatch() && element instanceof PsiElement) {
             Object minChild = findClosestPsiElement((PsiElement)element, adjusted, myAsyncTreeModel);
             if (minChild != null) adjusted = adjusted.pathByAddingChild(minChild);

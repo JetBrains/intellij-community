@@ -7,11 +7,12 @@ import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
-import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
 
 public final class ShConfigurationType extends SimpleConfigurationType {
   ShConfigurationType() {
@@ -23,10 +24,8 @@ public final class ShConfigurationType extends SimpleConfigurationType {
   @Override
   public @NotNull RunConfiguration createTemplateConfiguration(@NotNull Project project) {
     ShRunConfiguration configuration = new ShRunConfiguration(project, this, ShLanguage.INSTANCE.getID());
-    String defaultShell = getDefaultShell();
-    if (defaultShell != null) {
-      configuration.setInterpreterPath(defaultShell);
-    }
+    String defaultShell = getDefaultShell(project);
+    configuration.setInterpreterPath(defaultShell);
     String projectPath = project.getBasePath();
     if (projectPath != null) {
       configuration.setScriptWorkingDirectory(projectPath);
@@ -43,7 +42,27 @@ public final class ShConfigurationType extends SimpleConfigurationType {
     return true;
   }
 
-  public static @Nullable String getDefaultShell() {
-    return EnvironmentUtil.getValue("SHELL");
+  public static @NotNull String getDefaultShell(@NotNull Project project) {
+    ShDefaultShellPathProvider shellPathProvider = project.getService(ShDefaultShellPathProvider.class);
+    if (shellPathProvider != null) {
+      return shellPathProvider.getDefaultShell();
+    } else {
+      return trivialDefaultShellDetection();
+    }
+  }
+
+  private static @NotNull String trivialDefaultShellDetection() {
+    String shell = System.getenv("SHELL");
+    if (shell != null && new File(shell).canExecute()) {
+      return shell;
+    }
+    if (SystemInfo.isUnix) {
+      String bashPath = "/bin/bash";
+      if (new File(bashPath).exists()) {
+        return bashPath;
+      }
+      return "/bin/sh";
+    }
+    return "powershell.exe";
   }
 }

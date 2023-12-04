@@ -69,7 +69,12 @@ import java.util.Objects;
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     ActionContext context = ActionContext.from(editor, file);
     ModCommand command = myAction.perform(context);
-    ModCommandExecutor.getInstance().executeInteractively(context, command, editor);
+    ModCommandExecutor instance = ModCommandExecutor.getInstance();
+    if (file.isPhysical()) {
+      instance.executeInteractively(context, command, editor);
+    } else {
+      instance.executeForFileCopy(command, file);
+    }
   }
 
   @Override

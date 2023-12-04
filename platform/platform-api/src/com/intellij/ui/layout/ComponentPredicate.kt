@@ -3,9 +3,20 @@ package com.intellij.ui.layout
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.properties.whenPropertyChanged
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.ui.DocumentAdapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.AbstractButton
 import javax.swing.JComboBox
 import javax.swing.JTextField
@@ -20,6 +31,18 @@ abstract class ComponentPredicate : () -> Boolean {
     val FALSE: ComponentPredicate = ConstantComponentPredicate(false)
 
     fun fromValue(value: Boolean) : ComponentPredicate = if (value) TRUE else FALSE
+    fun fromObservableProperty(property: ObservableProperty<Boolean>, parentDisposable: Disposable? = null): ComponentPredicate {
+      return object : ComponentPredicate() {
+        override fun invoke(): Boolean {
+          return property.get()
+        }
+        override fun addListener(listener: (Boolean) -> Unit) {
+          property.whenPropertyChanged(parentDisposable) {
+            listener(it)
+          }
+        }
+      }
+    }
   }
 }
 
@@ -83,6 +106,27 @@ private class TextComponentPredicate(private val component: JTextComponent, priv
 }
 
 fun <T> JComboBox<T>.selectedValueIs(value: T): ComponentPredicate = selectedValueMatches { it == value }
+
+@ApiStatus.Internal
+@ApiStatus.Experimental
+fun <T> StateFlow<T>.predicate(scope: CoroutineScope, predicate: (T) -> Boolean): ComponentPredicate {
+  return object : ComponentPredicate() {
+
+    override fun addListener(listener: (Boolean) -> Unit) {
+      scope.launch {
+        collect { value ->
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            listener(predicate(value))
+          }
+        }
+      }
+    }
+
+    override fun invoke(): Boolean {
+      return predicate(value)
+    }
+  }
+}
 
 infix fun ComponentPredicate.and(other: ComponentPredicate): ComponentPredicate {
   return AndPredicate(this, other)

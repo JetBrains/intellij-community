@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.*
 
@@ -21,24 +22,22 @@ private class KotlinCodeFragmentPatcher(val codeFragment: KtCodeFragment) {
         return this
     }
 
-    fun editCodeFragment(): Boolean {
-        val (expression, expressionText) = extractExpressionWithText() ?: return false
+    fun wrapFragmentExpressionIfNeeded(stats: CodeFragmentCompilationStats) {
+        val (expression, expressionText) = extractExpressionWithText() ?: return
 
-        var expressionWasWrapped = false
-        var newExpressionText = expressionText
-        runReadAction {
+        val newExpressionText = stats.startAndMeasureWrapAnalysisUnderReadAction {
+            var newExpressionText = expressionText
             for (wrapper in expressionWrappers) {
                 if (wrapper.isApplicable(expression)) {
-                    expressionWasWrapped = true
                     newExpressionText = wrapper.createWrappedExpressionText(newExpressionText)
                 }
             }
-        }
+            newExpressionText
+        }.getOrThrow()
 
-        if (expressionWasWrapped) {
+        if (newExpressionText != expressionText) {
             replaceExpression(expression, newExpressionText)
         }
-        return expressionWasWrapped
     }
 
     private fun replaceExpression(expression: KtExpression, newExpressionText: String) {
@@ -74,7 +73,7 @@ private class KotlinCodeFragmentPatcher(val codeFragment: KtCodeFragment) {
         }
 }
 
-internal fun patchCodeFragment(context: ExecutionContext, codeFragment: KtCodeFragment) {
+internal fun patchCodeFragment(context: ExecutionContext, codeFragment: KtCodeFragment, stats: CodeFragmentCompilationStats) {
     KotlinCodeFragmentPatcher(codeFragment)
         .addWrapper(KotlinToStringWrapper())
         .addWrapper(
@@ -83,5 +82,5 @@ internal fun patchCodeFragment(context: ExecutionContext, codeFragment: KtCodeFr
                 codeFragment.context,
                 (context.frameProxy as? CoroutineStackFrameProxyImpl)?.isCoroutineScopeAvailable() ?: false
             )
-        ).editCodeFragment()
+        ).wrapFragmentExpressionIfNeeded(stats)
 }

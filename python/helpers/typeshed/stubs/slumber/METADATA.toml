@@ -1,4 +1,3 @@
 version = "0.7.*"
-
-[tool.stubtest]
-ignore_missing_stub = false
+upstream_repository = "https://github.com/samgiles/slumber"
+requires = ["types-requests"]

@@ -9,7 +9,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.debounce

@@ -83,7 +83,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     return new Visitor(holder, ignoredPackages, PyInspectionVisitor.getContext(session));
   }
 
-  private boolean isPythonInTemplateLanguages(PsiFile psiFile) {
+  private static boolean isPythonInTemplateLanguages(PsiFile psiFile) {
     return StreamEx.of(psiFile.getViewProvider().getLanguages())
       .findFirst(x -> x.isKindOf(PythonLanguage.getInstance()))
       .isPresent();

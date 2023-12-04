@@ -19,5 +19,5 @@ abstract class JUnit3SuperTearDownInspectionTestBase : JvmInspectionTestBase() {
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 }

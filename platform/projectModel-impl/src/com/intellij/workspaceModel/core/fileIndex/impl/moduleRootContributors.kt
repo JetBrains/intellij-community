@@ -8,6 +8,7 @@ import com.intellij.java.workspace.entities.asJavaSourceRoot
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -21,11 +22,15 @@ class ContentRootFileIndexContributor : WorkspaceFileIndexContributor<ContentRoo
     get() = ContentRootEntity::class.java
 
   override fun registerFileSets(entity: ContentRootEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    val start = System.currentTimeMillis()
+
     val module = entity.module.findModule(storage)
     if (module != null) {
       registrar.registerFileSet(entity.url, WorkspaceFileKind.CONTENT, entity, ModuleContentRootData(module, null))
       registrar.registerExclusionPatterns(entity.url, entity.excludedPatterns, entity)
     }
+
+    WorkspaceFileIndexContributor.registerFileSetsTimeMs.addElapsedTimeMs(start)
   }
 }
 
@@ -34,6 +39,8 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
     get() = SourceRootEntity::class.java
 
   override fun registerFileSets(entity: SourceRootEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    val start = System.currentTimeMillis()
+
     val module = entity.contentRoot.module.findModule(storage)
     if (module != null) {
       val contentRoot = entity.contentRoot.url.virtualFile
@@ -47,6 +54,8 @@ class SourceRootFileIndexContributor : WorkspaceFileIndexContributor<SourceRootE
       registrar.registerFileSet(entity.url, kind, entity, ModuleSourceRootData(module, contentRoot, entity.rootType, packagePrefix, forGeneratedSources))
       registrar.registerExclusionPatterns(entity.url, entity.contentRoot.excludedPatterns, entity)
     }
+
+    WorkspaceFileIndexContributor.registerFileSetsTimeMs.addElapsedTimeMs(start)
   }
 
   override val dependenciesOnOtherEntities: List<DependencyDescription<SourceRootEntity>>

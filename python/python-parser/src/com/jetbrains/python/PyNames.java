@@ -97,6 +97,8 @@ public final class PyNames {
   public static final String STATICMETHOD = "staticmethod";
   public static final String OVERLOAD = "overload";
 
+  public static final String OVERRIDE = "override";
+
   public static final String PROPERTY = "property";
   public static final String SETTER = "setter";
   public static final String DELETER = "deleter";

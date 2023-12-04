@@ -5,20 +5,24 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import com.intellij.searchEverywhereMl.semantics.utils.RequestResult
 import com.intellij.searchEverywhereMl.semantics.utils.sendRequest
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 
 private val LOG = logger<ServerSemanticActionsProvider>()
 
-class ServerSemanticActionsProvider(model: GotoActionModel) : SemanticActionsProvider(model) {
+class ServerSemanticActionsProvider(model: GotoActionModel, presentationProvider: suspend (AnAction) -> Presentation) :
+  SemanticActionsProvider(model, presentationProvider) {
+
   private val mapper = jacksonObjectMapper()
 
   private val URL_BASE = Registry.stringValue("search.everywhere.ml.semantic.actions.server.host")
 
-  override fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+  override suspend fun search(pattern: String, similarityThreshold: Double?): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
     if (!SemanticSearchSettings.getInstance().enabledInActionsTab || pattern.isBlank()) return emptyList()
 
     val requestJson: String = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapOf(
@@ -41,8 +45,12 @@ class ServerSemanticActionsProvider(model: GotoActionModel) : SemanticActionsPro
     return modelResponse.nearestCandidates.mapNotNull { createItemDescriptor(it.actionId, it.similarityScore, pattern) }
   }
 
-  override fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
-    return search(pattern, similarityThreshold).asSequence()
+  override suspend fun streamSearch(pattern: String, similarityThreshold: Double?): Sequence<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
+    return searchIfEnabled(pattern, similarityThreshold).asSequence()
+  }
+
+  override fun isEnabled(): Boolean {
+    return SemanticSearchSettings.getInstance().enabledInActionsTab
   }
 
   companion object {

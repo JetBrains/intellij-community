@@ -7,7 +7,7 @@ internal class C {
         var result = i.string
         if (b) result = null
         if (result != null) {
-            print(result)
+            println(result)
         }
     }
 }

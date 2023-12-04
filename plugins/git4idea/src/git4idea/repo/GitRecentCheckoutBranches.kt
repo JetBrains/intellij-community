@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GitRecentCheckoutBranches")
+
 package git4idea.repo
 
 import com.intellij.openapi.util.registry.Registry
@@ -27,6 +28,8 @@ fun GitRepository.collectRecentCheckoutBranches(haveLocalBranch: (GitLocalBranch
     addParameters("--max-count", reflogEntriesCount.toString(), "--grep-reflog", "checkout:")
     endOptions()
   }
+  handler.isEnableInteractiveCallbacks = false // the method might be called in GitRepository constructor
+
   val result = Git.getInstance().runCommand(handler)
   if (!result.success()) return emptyList()
 

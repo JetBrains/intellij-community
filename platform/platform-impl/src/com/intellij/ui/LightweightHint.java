@@ -45,6 +45,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private @NlsContexts.PopupTitle String myTitle = null;
   private boolean myShouldReopenPopup = false;
   private boolean myCancelOnClickOutside = true;
+  private boolean myBelongsToGlobalPopupStack = true;
   private boolean myCancelOnOtherWindowOpen = true;
   private boolean myResizable;
 
@@ -86,6 +87,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public void setCancelOnClickOutside(final boolean b) {
     myCancelOnClickOutside = b;
+  }
+
+  public void setBelongsToGlobalPopupStack(final boolean b) {
+    myBelongsToGlobalPopupStack = b;
   }
 
   public void setCancelOnOtherWindowOpen(final boolean b) {
@@ -252,6 +257,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
       .setShowShadow(isRealPopup() && !isForceHideShadow())
       .setCancelKeyEnabled(false)
       .setCancelOnClickOutside(myCancelOnClickOutside)
+      .setBelongsToGlobalPopupStack(myBelongsToGlobalPopupStack)
       .setCancelCallback(() -> {
         onPopupCancel();
         return true;
@@ -441,7 +447,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public Point getLocationOn(JComponent c) {
     Point location;
-    if (isRealPopup() && !myPopup.isDisposed()) {
+    if (isRealPopup() && myPopup != null && !myPopup.isDisposed()) {
       location = myPopup.getLocationOnScreen();
       SwingUtilities.convertPointFromScreen(location, c);
     }

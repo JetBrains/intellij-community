@@ -195,7 +195,6 @@ private val servicesWhichRequireEdt = java.util.Set.of(
   "com.jetbrains.python.scientific.figures.PyPlotToolWindow",
   "com.intellij.analysis.pwa.analyser.PwaServiceImpl",
   "com.intellij.analysis.pwa.view.toolwindow.PwaProblemsViewImpl",
-  "com.android.tools.idea.gradle.project.upgrade.ui.ContentManagerImpl", // invokeAndWait in constructor
 )
 
 /**
@@ -253,7 +252,7 @@ private fun checkExtensions(
 private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecutor: (task: () -> Unit) -> Unit) {
   var extensionClass: Class<out Any> by notNull()
   taskExecutor {
-    extensionClass = extensionPoint.extensionClass
+    extensionClass = extensionPoint.getExtensionClass()
   }
 
   extensionPoint.checkImplementations { extension ->

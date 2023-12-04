@@ -166,7 +166,7 @@
     <completion.contributor language="Markdown"
                             implementationClass="org.intellij.plugins.markdown.editor.MarkdownCompletionContributor"/>
 
-    <fileEditorProvider implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
+    <fileEditorProvider id="markdown-preview-editor" implementation="org.intellij.plugins.markdown.ui.preview.MarkdownSplitEditorProvider"/>
     <textEditorCustomizer implementation="org.intellij.plugins.markdown.ui.floating.AddFloatingToolbarTextEditorCustomizer"/>
 
     <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
@@ -194,8 +194,6 @@
 
     <codeFoldingOptionsProvider instance="org.intellij.plugins.markdown.settings.MarkdownCodeFoldingOptionsProvider"/>
 
-    <!--suppress DeprecatedClassUsageInspection -->
-    <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceHtmlCache"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
     <lang.psiStructureViewFactory language="Markdown"
@@ -596,5 +594,13 @@
     <action id="Markdown.Layout.EditorOnly" class="org.intellij.plugins.markdown.ui.actions.ChangePreviewLayoutAction$EditorOnly"/>
     <action id="Markdown.Layout.EditorAndPreview" class="org.intellij.plugins.markdown.ui.actions.ChangePreviewLayoutAction$EditorAndPreview"/>
     <action id="Markdown.Layout.PreviewOnly" class="org.intellij.plugins.markdown.ui.actions.ChangePreviewLayoutAction$PreviewOnly"/>
+    <group id="Markdown.Preview.FontSize" popup="true" compact="true">
+      <action id="Markdown.Preview.IncreaseFontSize"
+              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Increase"/>
+      <action id="Markdown.Preview.DecreaseFontSize"
+              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Decrease"/>
+      <action id="Markdown.Preview.ResetFontSize"
+              class="org.intellij.plugins.markdown.ui.actions.ChangeFontSizeAction$Reset"/>
+    </group>
   </actions>
 </idea-plugin>

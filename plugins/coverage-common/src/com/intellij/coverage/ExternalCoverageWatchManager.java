@@ -27,8 +27,7 @@ public final class ExternalCoverageWatchManager {
       if (myCurrentSuiteRoots != null && VfsUtilCore.isUnder(fileOrDirectory.getPath(), myCurrentSuiteRoots)) {
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           CoverageDataManagerImpl manager = (CoverageDataManagerImpl) CoverageDataManager.getInstance(myProject);
-          CoverageSuitesBundle bundle = manager.getCurrentSuitesBundle();
-          if (bundle != null) {
+          for (CoverageSuitesBundle bundle : manager.activeSuites()) {
             bundle.restoreCoverageData();
             manager.updateCoverageData(bundle);
           }

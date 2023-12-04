@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -36,6 +37,7 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     return getConstructorOrClass(context.findLeaf()) != null
            ? Presentation.of(getFamilyName()).withIcon(AllIcons.Actions.RefactoringBulb)
            : null;
@@ -59,7 +61,7 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
           PsiIdentifier identifier = cls.getNameIdentifier();
           return identifier == null ? cls.getTextRange() : identifier.getTextRange();
         }));
-    return new ModChooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
+    return ModCommand.chooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
   }
 
   private static void invoke(@NotNull PsiClass cls,

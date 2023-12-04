@@ -40,19 +40,28 @@ internal class JUnitReferenceContributor : PsiReferenceContributor() {
 
   override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
     registrar.registerReferenceProvider(
-      getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE, "value"), object : PsiReferenceProvider() {
+      getElementPattern(
+        JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_METHOD_SOURCE,
+        PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
+      ), object : PsiReferenceProvider() {
       override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<MethodSourceReference> {
         return arrayOf(MethodSourceReference((element as PsiLanguageInjectionHost)))
       }
     })
     registrar.registerReferenceProvider(
-      getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF, "value"), object : PsiReferenceProvider() {
+      getElementPattern(
+        JUnitCommonClassNames.ORG_JUNIT_JUPITER_CONDITION_PROVIDER_ENABLED_IF,
+        PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
+      ), object : PsiReferenceProvider() {
       override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<DisabledIfEnabledIfReference> {
         return arrayOf(DisabledIfEnabledIfReference((element as PsiLanguageInjectionHost)))
       }
     })
     registrar.registerReferenceProvider(
-      getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_CONDITION_PROVIDER_DISABLED_IF, "value"), object : PsiReferenceProvider() {
+      getElementPattern(
+        JUnitCommonClassNames.ORG_JUNIT_JUPITER_CONDITION_PROVIDER_DISABLED_IF,
+        PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME
+      ), object : PsiReferenceProvider() {
       override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<DisabledIfEnabledIfReference> {
         return arrayOf(DisabledIfEnabledIfReference((element as PsiLanguageInjectionHost)))
       }

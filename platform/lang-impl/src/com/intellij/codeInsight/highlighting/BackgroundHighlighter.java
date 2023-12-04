@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -10,13 +9,20 @@ import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
+import com.intellij.find.EditorSearchSession;
+import com.intellij.find.FindManager;
+import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
+import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
@@ -27,8 +33,10 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
@@ -39,12 +47,16 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 
 /**
  * Listens for editor events and starts brace/identifier highlighting in the background
  */
 final class BackgroundHighlighter {
+  private static final Key<Collection<RangeHighlighter>> SELECTION_HIGHLIGHTS = new Key<>("SELECTION_HIGHLIGHTS");
   private final Alarm alarm = new Alarm();
 
   public void runActivity(@NotNull Project project) {
@@ -85,6 +97,8 @@ final class BackgroundHighlighter {
           return;
         }
 
+        highlightSelection(project, editor);
+
         TextRange oldRange = e.getOldRange();
         TextRange newRange = e.getNewRange();
         if (oldRange != null && newRange != null && oldRange.isEmpty() == newRange.isEmpty()) {
@@ -101,7 +115,7 @@ final class BackgroundHighlighter {
       public void documentChanged(@NotNull DocumentEvent e) {
         alarm.cancelAllRequests();
         EditorFactory.getInstance().editors(e.getDocument(), project).forEach(
-          editor -> submitUpdateHighlighted(project, editor, alarm)
+          editor -> updateHighlighted(project, editor, alarm)
         );
       }
     };
@@ -142,11 +156,80 @@ final class BackgroundHighlighter {
     if (editor.getProject() != project || selectionModel.hasSelection()) {
       return;
     }
-    submitUpdateHighlighted(project, editor, alarm);
+    updateHighlighted(project, editor, alarm);
   }
 
-  private static void submitUpdateHighlighted(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm) {
-    updateHighlighted(project, editor, alarm);
+  private static void highlightSelection(@NotNull Project project, @NotNull Editor editor) {
+    if (!Registry.is("editor.highlight.selected.text.occurrences") || !CodeInsightSettings.getInstance().HIGHLIGHT_IDENTIFIER_UNDER_CARET) {
+      return;
+    }
+    ThreadingAssertions.assertEventDispatchThread();
+    Document document = editor.getDocument();
+    long stamp = document.getModificationStamp();
+    if (document.isInBulkUpdate()) {
+      return;
+    }
+    if (!BackgroundHighlightingUtil.isValidEditor(editor)) {
+      return;
+    }
+    MarkupModel markupModel = editor.getMarkupModel();
+    Collection<RangeHighlighter> oldHighlighters = editor.getUserData(SELECTION_HIGHLIGHTS);
+    if (oldHighlighters != null) {
+      editor.putUserData(SELECTION_HIGHLIGHTS, null);
+      for (RangeHighlighter highlighter : oldHighlighters) {
+        markupModel.removeHighlighter(highlighter);
+      }
+    }
+    CaretModel caretModel = editor.getCaretModel();
+    if (caretModel.getCaretCount() > 1) {
+      return;
+    }
+    Caret caret = caretModel.getPrimaryCaret();
+    if (!caret.hasSelection()) {
+      return;
+    }
+    int start = caret.getSelectionStart();
+    int end = caret.getSelectionEnd();
+    CharSequence sequence = document.getCharsSequence();
+    String toFind = sequence.subSequence(start, end).toString();
+    if (toFind.trim().isEmpty()) {
+      return;
+    }
+    FindManager findManager = FindManager.getInstance(project);
+    FindModel findModel = new FindModel();
+    EditorSearchSession editorSearchSession = EditorSearchSession.get(editor);
+    if (editorSearchSession != null) {
+      findModel.copyFrom(findManager.getFindInFileModel());
+    }
+    findModel.setRegularExpressions(false);
+    findModel.setStringToFind(toFind);
+    ReadAction.nonBlocking(() -> {
+        int offset = 0;
+        FindResult result = findManager.findString(sequence, offset, findModel, null);
+        List<FindResult> results = new ArrayList<>();
+        int count = 0;
+        while (result.isStringFound() && count < LivePreviewController.MATCHES_LIMIT) {
+          count++;
+          results.add(result);
+          offset = result.getEndOffset();
+          result = findManager.findString(sequence, offset, findModel, null);
+        }
+        return results;
+      })
+      .coalesceBy(HighlightSelectionKey.class, editor)
+      .expireWhen(() -> document.getModificationStamp() != stamp || editor.isDisposed())
+      .finishOnUiThread(ModalityState.nonModal(), results -> {
+        if (document.getModificationStamp() != stamp || results.isEmpty()) {
+          return;
+        }
+        List<RangeHighlighter> highlighters = new ArrayList<>();
+        for (FindResult result : results) {
+          highlighters.add(markupModel.addRangeHighlighter(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES, result.getStartOffset(), result.getEndOffset(),
+                                                           HighlightManagerImpl.OCCURRENCE_LAYER, HighlighterTargetArea.EXACT_RANGE));
+        }
+        editor.putUserData(SELECTION_HIGHLIGHTS, highlighters);
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private static void updateHighlighted(@NotNull Project project, @NotNull Editor editor, @NotNull Alarm alarm) {
@@ -241,4 +324,6 @@ final class BackgroundHighlighter {
 
   private static final class HighlightIdentifiersKey {
   }
+
+  private static final class HighlightSelectionKey {}
 }

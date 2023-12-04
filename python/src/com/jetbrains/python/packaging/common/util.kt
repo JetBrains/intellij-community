@@ -21,40 +21,33 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 @Service(Service.Level.PROJECT)
 class PackageManagerHolder : Disposable {
-  private val cache = mutableMapOf<UUID, PythonPackageManager>()
+  private val cache = ConcurrentHashMap<UUID, PythonPackageManager>()
 
-  private val bridgeCache = mutableMapOf<UUID, PythonPackageManagementServiceBridge>()
+  private val bridgeCache = ConcurrentHashMap<UUID, PythonPackageManagementServiceBridge>()
 
   /**
    * Requires Sdk to be Python Sdk and have PythonSdkAdditionalData.
    */
   fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
     val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
-    if (cacheKey in cache) {
-      val manager = cache[cacheKey]!!
-      if (manager.project == project) return manager
+
+    return cache.computeIfAbsent(cacheKey) {
+     PythonPackageManagerProvider.EP_NAME.extensionList
+        .firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
     }
-
-    val manager = PythonPackageManagerProvider.EP_NAME.extensionList
-      .firstNotNullOf { it.createPackageManagerForSdk(project, sdk) }
-
-    cache[cacheKey] = manager
-    return manager
   }
 
   fun bridgeForSdk(project: Project, sdk: Sdk): PythonPackageManagementServiceBridge {
     val cacheKey = (sdk.sdkAdditionalData as PythonSdkAdditionalData).uuid
-    if (cacheKey in bridgeCache) {
-      val bridge = bridgeCache[cacheKey]
-      if (bridge?.project == project) return bridge
+    return bridgeCache.computeIfAbsent(cacheKey) {
+      val bridge = PythonPackageManagementServiceBridge(project, sdk)
+      Disposer.register(this@PackageManagerHolder, bridge)
+      bridge
     }
-    val bridge = PythonPackageManagementServiceBridge(project, sdk)
-    Disposer.register(this, bridge)
-    bridgeCache[cacheKey] = bridge
-    return bridge
   }
 
   override fun dispose() {

@@ -291,8 +291,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
       JRootPane root = ((RootPaneContainer)dialogWindow).getRootPane();
 
       IdeGlassPaneEx glass = (IdeGlassPaneEx)myDialog.getRootPane().getGlassPane();
-      new WindowResizeListenerEx(glass, root, JBUI.insets(4), null)
-        .install(myDisposable);
+      boolean toolkitCannotResizeUndecorated = !StartupUiUtil.isWaylandToolkit();
+      if (toolkitCannotResizeUndecorated) {
+        new WindowResizeListenerEx(glass, root, JBUI.insets(4), null)
+          .install(myDisposable);
+      }
 
       DumbAwareAction.create(e -> closeImmediately())
         .registerCustomShortcutSet(escape == null ? CommonShortcuts.ESCAPE : escape.getShortcutSet(), root, myDisposable);

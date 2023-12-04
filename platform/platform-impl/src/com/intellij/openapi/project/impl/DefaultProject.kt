@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.client.ClientAwareComponentManager
 import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ComponentManager
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -26,6 +27,7 @@ import com.intellij.serviceContainer.coroutineScopeMethodType
 import com.intellij.serviceContainer.emptyConstructorMethodType
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.SystemIndependent
@@ -35,7 +37,7 @@ import java.lang.invoke.MethodType
 
 private val LOG = logger<DefaultProject>()
 
-internal class DefaultProject : UserDataHolderBase(), Project {
+internal class DefaultProject : UserDataHolderBase(), Project, ComponentManagerEx {
   private val timedProject = object : DefaultProjectTimed(this) {
     public override fun compute(): Project {
       val app = ApplicationManager.getApplication()
@@ -160,6 +162,10 @@ internal class DefaultProject : UserDataHolderBase(), Project {
 
   override fun <T> getServiceIfCreated(serviceClass: Class<T>): T? = delegate.getServiceIfCreated(serviceClass)
 
+  override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
+    return (delegate as ComponentManagerEx).getServiceAsync(keyClass)
+  }
+
   @Deprecated("Deprecated in interface")
   override fun <T> getComponent(interfaceClass: Class<T>): T = delegate.getComponent(interfaceClass)
 
@@ -192,14 +198,12 @@ private class DefaultProjectImpl(
             ?: throw RuntimeException("Cannot find suitable constructor, expected (Project) or ()")) as T
   }
 
-  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
-    return listOf(
-      projectMethodType,
-      emptyConstructorMethodType,
-      projectAndScopeMethodType,
-      coroutineScopeMethodType,
-    )
-  }
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    projectMethodType,
+    emptyConstructorMethodType,
+    projectAndScopeMethodType,
+    coroutineScopeMethodType,
+  )
 
   override fun isParentLazyListenersIgnored(): Boolean = true
 

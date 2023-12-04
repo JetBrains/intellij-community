@@ -2,29 +2,35 @@
 package com.intellij.coverage
 
 import com.intellij.codeEditor.printing.ExportToHTMLSettings
-import com.intellij.coverage.analysis.Annotator
+import com.intellij.coverage.analysis.CoverageInfoCollector
 import com.intellij.coverage.analysis.JavaCoverageClassesAnnotator
 import com.intellij.coverage.analysis.JavaCoverageReportEnumerator
 import com.intellij.coverage.analysis.PackageAnnotator.*
-import com.intellij.coverage.xml.XMLReportAnnotator.Companion.getInstance
+import com.intellij.coverage.xml.XMLReportAnnotator
 import com.intellij.idea.ExcludeFromTestDiscovery
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
+import org.junit.Assert.*
 import java.io.File
 import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 
 @ExcludeFromTestDiscovery
 class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
+  fun `test ij statistics`(): Unit = runBlocking { actualAnnotatorTest(loadIJSuite()) }
+  fun `test jacoco statistics`(): Unit = runBlocking { actualAnnotatorTest(loadJaCoCoSuite()) }
+  fun `test xml statistics`(): Unit = runBlocking { actualAnnotatorTest(loadXMLSuite()) }
   fun testIJSuite() = assertHits(loadIJSuite())
 
   fun testXMLSuite() {
     val bundle = loadXMLSuite()
     val consumer = PackageAnnotationConsumer()
-    getInstance(myProject).annotate(bundle, CoverageDataManager.getInstance(myProject), consumer)
+    XMLReportAnnotator.getInstance(myProject).annotate(bundle, manager, consumer)
     assertHits(consumer, ignoreConstructor = false)
     assertEquals(3, consumer.myDirectoryCoverage.size)
   }
@@ -97,7 +103,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     openSuiteAndWait(suite)
 
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
+      manager.selectSubCoverage(suite, listOf("foo.bar.BarTest,testMethod3"))
     }
     run {
       val consumer = PackageAnnotationConsumer()
@@ -108,7 +114,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
 
     val fooPartCoverage = intArrayOf(1, 1, 2, 1, 2, 1, 2, 0)
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod1"))
+      manager.selectSubCoverage(suite, listOf("foo.FooTest,testMethod1"))
     }
     run {
       val consumer = PackageAnnotationConsumer()
@@ -118,7 +124,7 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
 
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
+      manager.selectSubCoverage(suite, listOf("foo.FooTest,testMethod2"))
     }
     run {
       val consumer = PackageAnnotationConsumer()
@@ -128,10 +134,64 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
     }
 
     waitSuiteProcessing {
-      CoverageDataManager.getInstance(myProject).restoreMergedCoverage(suite)
+      manager.restoreMergedCoverage(suite)
     }
     assertHits(suite)
-    closeSuite()
+    closeSuite(suite)
+  }
+
+  fun `test restoreCoverageData method causes reload`() {
+    val bundle = loadIJSuite()
+    val suite = bundle.suites[0] as BaseCoverageSuite
+    assertNull(suite.coverageData)
+    assertNotNull(suite.getCoverageData(null))
+    assertNotNull(suite.coverageData)
+
+    suite.restoreCoverageData()
+    assertNotNull(suite.coverageData)
+  }
+
+  fun `test xml and ij suites are independent`(): Unit = runBlocking {
+    val xmlSuite = loadXMLSuite()
+    val ijSuite = loadIJSuite()
+
+    assertAnnotator(xmlSuite, false)
+    assertAnnotator(ijSuite, false)
+
+    openSuiteAndWait(xmlSuite)
+    assertAnnotator(xmlSuite, true)
+    assertAnnotator(ijSuite, false)
+
+    openSuiteAndWait(ijSuite)
+    assertAnnotator(xmlSuite, true)
+    assertAnnotator(ijSuite, true)
+
+    closeSuite(ijSuite)
+    assertAnnotator(xmlSuite, true)
+    assertAnnotator(ijSuite, false)
+
+    closeSuite(xmlSuite)
+    assertAnnotator(xmlSuite, false)
+    assertAnnotator(ijSuite, false)
+  }
+
+  private suspend fun actualAnnotatorTest(bundle: CoverageSuitesBundle) {
+    openSuiteAndWait(bundle)
+    assertAnnotator(bundle, true)
+    closeSuite(bundle)
+  }
+
+  private suspend fun assertAnnotator(bundle: CoverageSuitesBundle, loaded: Boolean) {
+    val annotator = bundle.getAnnotator(myProject)
+    val classes = listOf("foo.FooClass", "foo.bar.UncoveredClass", "foo.bar.BarClass")
+    for (clazz in classes) {
+      readAction {
+        val psiClass = JavaPsiFacade.getInstance(myProject).findClass(clazz, GlobalSearchScope.projectScope(myProject))
+        val psiDir = psiClass!!.containingFile!!.containingDirectory
+        val info = annotator.getDirCoverageInformationString(psiDir, bundle, manager)
+        assertEquals(loaded, info != null)
+      }
+    }
   }
 
   private fun assertHits(suite: CoverageSuitesBundle, ignoreBranches: Boolean = false) {
@@ -142,25 +202,21 @@ class CoverageIntegrationTest : CoverageIntegrationBaseTest() {
   }
 }
 
-private class PackageAnnotationConsumer : Annotator {
+private class PackageAnnotationConsumer : CoverageInfoCollector {
   val myDirectoryCoverage: MutableMap<VirtualFile, PackageCoverageInfo> = HashMap()
   val myPackageCoverage: MutableMap<String, PackageCoverageInfo> = HashMap()
   val myFlatPackageCoverage: MutableMap<String, PackageCoverageInfo> = HashMap()
   val myClassCoverageInfo: MutableMap<String, ClassCoverageInfo> = ConcurrentHashMap()
 
-  override fun annotateSourceDirectory(virtualFile: VirtualFile, packageCoverageInfo: PackageCoverageInfo) {
+  override fun addSourceDirectory(virtualFile: VirtualFile, packageCoverageInfo: PackageCoverageInfo) {
     myDirectoryCoverage[virtualFile] = packageCoverageInfo
   }
 
-  override fun annotatePackage(packageQualifiedName: String, packageCoverageInfo: PackageCoverageInfo) {
-    myPackageCoverage[packageQualifiedName] = packageCoverageInfo
-  }
-
-  override fun annotatePackage(packageQualifiedName: String, packageCoverageInfo: PackageCoverageInfo, flatten: Boolean) {
+  override fun addPackage(packageQualifiedName: String, packageCoverageInfo: PackageCoverageInfo, flatten: Boolean) {
     (if (flatten) myFlatPackageCoverage else myPackageCoverage)[packageQualifiedName] = packageCoverageInfo
   }
 
-  override fun annotateClass(classQualifiedName: String, classCoverageInfo: ClassCoverageInfo) {
+  override fun addClass(classQualifiedName: String, classCoverageInfo: ClassCoverageInfo) {
     myClassCoverageInfo[classQualifiedName] = classCoverageInfo
   }
 }

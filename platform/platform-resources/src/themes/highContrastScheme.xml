@@ -563,6 +563,11 @@
       </value>
     </option>
     <option name="JAVA_KEYWORD" baseAttributes="DEFAULT_KEYWORD" />
+    <option name="JS.JSX_CLIENT_COMPONENT">
+      <value>
+        <option name="FOREGROUND" value="9C9CFF" />
+      </value>
+    </option>
     <option name="JSP_DIRECTIVE_NAME" baseAttributes="DEFAULT_KEYWORD" />
     <option name="KOTLIN_BACKING_FIELD_VARIABLE">
       <value />

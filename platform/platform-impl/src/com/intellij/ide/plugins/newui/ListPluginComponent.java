@@ -5,7 +5,6 @@ import com.intellij.accessibility.AccessibilityUtils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.internal.inspector.PropertyBean;
 import com.intellij.internal.inspector.UiInspectorContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
@@ -107,7 +106,7 @@ public final class ListPluginComponent extends JPanel {
     boolean compatible = plugin instanceof PluginNode // FIXME: dependencies not available here, hard coded for now
                          ? !"com.intellij.kmm".equals(plugin.getPluginId().getIdString()) || SystemInfoRt.isMac
                          : PluginManagerCore.INSTANCE.getIncompatiblePlatform(plugin) == null;
-    myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagerFilters.getInstance().isPluginAllowed(!marketplace, plugin);
+    myIsAvailable = (compatible || isInstalledAndEnabled()) && PluginManagementPolicy.getInstance().canEnablePlugin(plugin);
     pluginModel.addComponent(this);
 
     setOpaque(true);
@@ -146,6 +145,8 @@ public final class ListPluginComponent extends JPanel {
     putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, plugin.getName());
 
     UiInspectorUtil.registerProvider(this, new PluginIdUiInspectorContextProvider());
+
+    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processListPluginComponent(this);
   }
 
   @NotNull PluginsGroup getGroup() { return myGroup; }
@@ -319,6 +320,8 @@ public final class ListPluginComponent extends JPanel {
       });
       myAlignButton.setOpaque(false);
     }
+
+    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processCreateButtons(this);
   }
 
   private @NotNull InstallButton createInstallButton() {
@@ -789,6 +792,8 @@ public final class ListPluginComponent extends JPanel {
     if (myAlignButton != null) {
       myAlignButton.setVisible(true);
     }
+
+    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processRemoveButtons(this);
   }
 
   public void updateEnabledState() {
@@ -800,6 +805,8 @@ public final class ListPluginComponent extends JPanel {
     }
     updateErrors();
     setSelection(mySelection, false);
+
+    PluginsViewCustomizerKt.getListPluginComponentCustomizer().processUpdateEnabledState(this);
   }
 
   private void updateEnabledStateUI() {

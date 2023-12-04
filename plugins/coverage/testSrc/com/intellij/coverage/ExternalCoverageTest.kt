@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.rt.coverage.data.LineCoverage
 import com.intellij.rt.coverage.util.CoverageReport
@@ -12,13 +11,8 @@ import java.io.File
 
 class ExternalCoverageTest : CoverageIntegrationBaseTest() {
   fun `test watching externally added coverage`(): Unit = runBlocking {
-    val ijSuiteFile = FileUtil.createTempFile("coverage", ".ic").apply {
-      deleteOnExit()
-      val originalIJSuite = File(createCoverageFileProvider(SIMPLE_IJ_REPORT_PATH).coverageDataFilePath)
-      originalIJSuite.copyTo(this, overwrite = true)
-    }
-
-    val ijSuite = loadIJSuite(path = ijSuiteFile.absolutePath)
+    val  ijSuite = loadIJSuiteCopy()
+    val ijSuiteFile = File(ijSuite.suites[0].coverageDataFileProvider.coverageDataFilePath)
 
     openSuiteAndWait(ijSuite)
     ExternalCoverageWatchManager.getInstance(myProject).addRootsToWatch(ijSuite.suites.toList())

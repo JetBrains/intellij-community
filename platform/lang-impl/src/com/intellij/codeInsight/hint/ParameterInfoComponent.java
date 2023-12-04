@@ -279,7 +279,7 @@ public final class ParameterInfoComponent extends JPanel {
 
       final String resultedText =
         myPanels[i].setup(text, myEscapeFunction, highlightStartOffset, highlightEndOffset, isDisabled, strikeout,
-                          isDisabledBeforeHighlight, i == 0, isLastParameterOwner(), background);
+                          isDisabledBeforeHighlight, background);
       if (!mySimpleDesignMode) {
         myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       }
@@ -294,7 +294,14 @@ public final class ParameterInfoComponent extends JPanel {
       result.signatures.add(item);
 
       myPanels[i].setup(htmlText, getDefaultParameterColor());
-      if (!mySimpleDesignMode) {
+      if (mySimpleDesignMode) {
+        if (!isSingleParameterInfo() && isHighlighted() && myPanels.length > 1) {
+          if (htmlText.contains("<p>") || htmlText.contains("<p ")) { //NON-NLS
+            myPanels[i].setLineBorder(i > 0, !isLastParameterOwner());
+          }
+        }
+      }
+      else {
         myPanels[i].setBorder(isLastParameterOwner() || isSingleParameterInfo() ? EMPTY_BORDER : BOTTOM_BORDER);
       }
     }
@@ -409,9 +416,20 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     int length = myPanels.length;
+    boolean border = true;
     for (int i = 0; i < length; i++) {
       OneElementComponent panel = myPanels[i];
       int count = panel.getComponentCount();
+
+      if (length > 1) {
+        if (count > 1) {
+          panel.setLineBorder(i > 0 && border, i != length - 1);
+          border = false;
+        }
+        else {
+          border = true;
+        }
+      }
 
       if (i == length - 1) {
         if (count == 1) {
@@ -511,8 +529,6 @@ public final class ParameterInfoComponent extends JPanel {
                          boolean isDisabled,
                          boolean strikeout,
                          boolean isDisabledBeforeHighlight,
-                         boolean firstParameter,
-                         boolean lastParameter,
                          Color background) {
       StringBuilder buf = new StringBuilder(text.length());
       if (!mySimpleDesignMode) {
@@ -523,24 +539,6 @@ public final class ParameterInfoComponent extends JPanel {
                                         // disable splitting by width, to avoid depending on platform's font in tests
                                         ApplicationManager.getApplication().isUnitTestMode() ? Integer.MAX_VALUE : myWidthLimit,
                                         ',');
-
-      if (mySimpleDesignMode && lines.length > 1 && (firstParameter != lastParameter || !firstParameter)) {
-        setBorder(new CustomLineBorder(SEPARATOR_COLOR, firstParameter ? 0 : 13, 0, lastParameter ? 0 : 13, 0) {
-          @Override
-          public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
-            Insets insets = getBorderInsets(c);
-            int lineY = JBUI.scale(6);
-            int lineHeight = JBUI.scale(1);
-            g.setColor(getColor());
-            if (insets.top > 0) {
-              g.fillRect(x, y + lineY, w, lineHeight);
-            }
-            if (insets.bottom > 0) {
-              g.fillRect(x, y + h - lineY, w, lineHeight);
-            }
-          }
-        });
-      }
 
       int lineOffset = 0;
 
@@ -570,7 +568,7 @@ public final class ParameterInfoComponent extends JPanel {
     }
 
     @Contract(pure = true)
-    private String escapeString(String line, Function<? super String, String> escapeFunction) {
+    private static String escapeString(String line, Function<? super String, String> escapeFunction) {
       line = XmlStringUtil.escapeString(line);
       return escapeFunction == null ? line : escapeFunction.fun(line);
     }
@@ -630,6 +628,24 @@ public final class ParameterInfoComponent extends JPanel {
       buf.append(component.setup(escapeString(line.toString(), escapeFunction), flagsMap, background));
       trimComponents(index + 1);
       return buf.toString();
+    }
+
+    public void setLineBorder(boolean top, boolean bottom) {
+      setBorder(new CustomLineBorder(SEPARATOR_COLOR, top ? 13 : 0, 0, bottom ? 13 : 0, 0) {
+        @Override
+        public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
+          Insets insets = getBorderInsets(c);
+          int lineY = JBUI.scale(6);
+          int lineHeight = JBUI.scale(1);
+          g.setColor(getColor());
+          if (insets.top > 0) {
+            g.fillRect(x, y + lineY, w, lineHeight);
+          }
+          if (insets.bottom > 0) {
+            g.fillRect(x, y + h - lineY, w, lineHeight);
+          }
+        }
+      });
     }
   }
 
@@ -705,7 +721,8 @@ public final class ParameterInfoComponent extends JPanel {
 
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
     @Contract(pure = true)
-    private String buildLabelText(@NotNull final String text, @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
+    private static String buildLabelText(@NotNull final String text,
+                                         @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final Int2IntMap faultMap = new Int2IntOpenHashMap();
 

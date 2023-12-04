@@ -261,13 +261,14 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
     isHeadless = true;
   }
 
-  void setDataContext(@NotNull DataContext dataContext) {
+  @ApiStatus.Internal
+  public void setDataContext(@NotNull DataContext dataContext) {
     myDataContext = CustomizedDataContext.create(IdeUiService.getInstance().createAsyncDataContext(dataContext), dataId -> {
       if (PlatformCoreDataKeys.MODULE.is(dataId)) {
         Module module = null;
         if (myRunnerAndConfigurationSettings != null &&
-            myRunnerAndConfigurationSettings.getConfiguration() instanceof ModuleBasedConfiguration<?, ?>) {
-          module = ((ModuleBasedConfiguration<?, ?>)myRunnerAndConfigurationSettings.getConfiguration()).getConfigurationModule().getModule();
+            myRunnerAndConfigurationSettings.getConfiguration() instanceof ModuleBasedConfiguration<?, ?> configuration) {
+          module = configuration.getConfigurationModule().getModule();
         }
         return module == null ? CustomizedDataContext.EXPLICIT_NULL : module;
       }

@@ -1569,7 +1569,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       }
     }
 
-    private boolean needToShiftWhiteSpaces(final DocumentEvent e) {
+    private static boolean needToShiftWhiteSpaces(final DocumentEvent e) {
       return e.getOffset() > 0 && Character.isWhitespace(e.getDocument().getImmutableCharSequence().charAt(e.getOffset() - 1)) &&
              CharArrayUtil.containsOnlyWhiteSpaces(e.getNewFragment()) && !CharArrayUtil.containLineBreaks(e.getNewFragment());
     }

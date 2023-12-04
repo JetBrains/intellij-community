@@ -246,7 +246,7 @@ public final class ProblemDescriptorUtil {
       int startOffset = annotation.getStartOffset();
       int endOffset = annotation.getEndOffset();
 
-      String message = annotation.getMessage();
+      String message = StringUtil.notNullize(annotation.getMessage());
       boolean isAfterEndOfLine = annotation.isAfterEndOfLine();
       LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
 

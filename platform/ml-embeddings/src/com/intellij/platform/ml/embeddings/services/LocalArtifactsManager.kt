@@ -3,39 +3,42 @@ package com.intellij.platform.ml.embeddings.services
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ml.embeddings.EmbeddingsBundle
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.delete
+import kotlinx.coroutines.*
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
 
 /* Service that manages the artifacts for local semantic models */
+@OptIn(ExperimentalCoroutinesApi::class)
 @Service
 class LocalArtifactsManager {
   private val root = File(PathManager.getSystemPath())
     .resolve(SEMANTIC_SEARCH_RESOURCES_DIR)
     .resolve(MODEL_VERSION)
     .also { Files.createDirectories(it.toPath()) }
+
   private val modelArtifactsRoot = root.resolve(MODEL_ARTIFACTS_DIR)
-  private val mutex = ReentrantLock()
+
+  private val downloadContext = Dispatchers.IO.limitedParallelism(1)
   private var failNotificationShown = false
+  private var downloadCanceled = false
 
   init {
     root.parentFile.toPath().listDirectoryEntries().filter { it.name != MODEL_VERSION }.forEach { it.delete(recursively = true) }
@@ -44,12 +47,29 @@ class LocalArtifactsManager {
   fun getCustomRootDataLoader() = CustomRootDataLoader(modelArtifactsRoot.toPath())
 
   @RequiresBackgroundThread
-  fun downloadArtifactsIfNecessary() = mutex.withLock {
-    if (!checkArtifactsPresent()) {
-      logger.debug { "Semantic search artifacts are not present, starting the download..." }
-      val indicator = BackgroundableProcessIndicator(null, ARTIFACTS_DOWNLOAD_TASK_NAME, null, "", false)
-      ProgressManager.getInstance().runProcess(this::downloadArtifacts, indicator)
-      ApplicationManager.getApplication().invokeLater { Disposer.dispose(indicator) }
+  suspend fun downloadArtifactsIfNecessary(project: Project? = null,
+                                           retryIfCanceled: Boolean = true) = withContext(downloadContext) {
+    if (!checkArtifactsPresent() && (retryIfCanceled || !downloadCanceled)) {
+      logger.debug("Semantic search artifacts are not present, starting the download...")
+      if (project != null) {
+        withBackgroundProgress(project, ARTIFACTS_DOWNLOAD_TASK_NAME) {
+          withRawProgressReporter {
+            try {
+              coroutineToIndicator { // platform code relies on the existence of indicator
+                downloadArtifacts()
+              }
+            }
+            catch (e: CancellationException) {
+              logger.debug("Artifacts downloading was canceled")
+              downloadCanceled = true
+              throw e
+            }
+          }
+        }
+      }
+      else {
+        downloadArtifacts()
+      }
     }
   }
 
@@ -72,7 +92,7 @@ class LocalArtifactsManager {
       logger.debug { "Extracted model artifacts into the ${root.absoluteFile}" }
     }
     catch (e: IOException) {
-      logger.warn("Failed to download semantic search artifacts")
+      logger.warn("Failed to download semantic search artifacts: $e")
       if (!failNotificationShown) {
         showDownloadErrorNotification()
         failNotificationShown = true
@@ -88,19 +108,20 @@ class LocalArtifactsManager {
   companion object {
     const val SEMANTIC_SEARCH_RESOURCES_DIR = "semantic-search"
 
-    private val ARTIFACTS_DOWNLOAD_TASK_NAME = EmbeddingsBundle.getMessage("ml.embeddings.artifacts.download.name")
-
-    private val MODEL_VERSION = Registry.stringValue("search.everywhere.ml.semantic.model.version")
-    private val MAVEN_ROOT = "https://packages.jetbrains.team/maven/p/ml-search-everywhere/local-models/org/jetbrains/intellij/" +
-                             "searcheverywhereMl/semantics/semantic-text-search/$MODEL_VERSION/semantic-text-search-$MODEL_VERSION.jar"
+    private val ARTIFACTS_DOWNLOAD_TASK_NAME
+      get() = EmbeddingsBundle.getMessage("ml.embeddings.artifacts.download.name")
+    private val MODEL_VERSION
+      get() = Registry.stringValue("search.everywhere.ml.semantic.model.version")
+    private val MAVEN_ROOT
+      get() = Registry.stringValue("search.everywhere.ml.semantic.model.artifacts.link").replace("%MODEL_VERSION%", MODEL_VERSION)
 
     private const val MODEL_ARTIFACTS_DIR = "models"
     private const val ARCHIVE_NAME = "semantic-text-search.jar"
     private const val NOTIFICATION_GROUP_ID = "Semantic search"
 
-    private val logger by lazy { logger<LocalArtifactsManager>() }
+    private val logger = Logger.getInstance(LocalArtifactsManager::class.java)
 
-    fun getInstance() = service<LocalArtifactsManager>()
+    fun getInstance(): LocalArtifactsManager = service()
 
     private fun showDownloadErrorNotification() {
       NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP_ID)

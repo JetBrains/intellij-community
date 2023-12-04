@@ -4,28 +4,15 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.util.NlsContexts.ProgressText
-import com.intellij.platform.util.progress.*
 import com.intellij.platform.util.progress.durationStep
 import com.intellij.platform.util.progress.filterWithProgress
 import com.intellij.platform.util.progress.forEachWithProgress
 import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.mapWithProgress
-import com.intellij.platform.util.progress.progressReporter
 import com.intellij.platform.util.progress.progressStep
-import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.transformWithProgress
 import com.intellij.platform.util.progress.withRawProgressReporter
 import kotlinx.coroutines.CoroutineScope
-import kotlin.coroutines.CoroutineContext
-import com.intellij.openapi.progress.ProgressReporter as DeprecatedProgressReporter
-import com.intellij.openapi.progress.RawProgressReporter as DeprecatedRawProgressReporter
-
-@Deprecated("Moved to com.intellij.platform.util.progress", level = DeprecationLevel.ERROR)
-interface ProgressReporter : ProgressReporter {
-
-  @Deprecated("Moved to com.intellij.platform.util.progress.ProgressReporter")
-  override fun rawReporter(): DeprecatedRawProgressReporter
-}
 
 @Deprecated(
   "Moved to com.intellij.platform.util.progress",
@@ -111,47 +98,4 @@ suspend fun <T> Collection<T>.forEachWithProgress(concurrent: Boolean, action: s
 )
 suspend fun <X> withRawProgressReporter(action: suspend CoroutineScope.() -> X): X {
   return withRawProgressReporter(action)
-}
-
-@Deprecated(
-  "Moved to com.intellij.platform.util.progress",
-  ReplaceWith("progressReporter", "com.intellij.platform.util.progress.progressReporter"),
-  DeprecationLevel.ERROR,
-)
-val CoroutineContext.progressReporter: DeprecatedProgressReporter? get() = progressReporter?.asDeprecatedProgressReporter()
-
-@Deprecated(
-  "Moved to com.intellij.platform.util.progress",
-  ReplaceWith("progressReporter", "com.intellij.platform.util.progress.progressReporter"),
-  DeprecationLevel.ERROR,
-)
-val CoroutineScope.progressReporter: DeprecatedProgressReporter? get() = progressReporter?.asDeprecatedProgressReporter()
-
-@Suppress("HardCodedStringLiteral", "OVERRIDE_DEPRECATION")
-private fun ProgressReporter.asDeprecatedProgressReporter() = object : DeprecatedProgressReporter {
-  override fun step(endFraction: Double, text: String?) = this@asDeprecatedProgressReporter.step(endFraction, text)
-  override fun durationStep(duration: Double, text: String?) = this@asDeprecatedProgressReporter.durationStep(duration, text)
-  override fun close() = this@asDeprecatedProgressReporter.close()
-  override fun rawReporter() = this@asDeprecatedProgressReporter.rawReporter().asDeprecatedRawReporter()
-}
-
-@Deprecated(
-  "Moved to com.intellij.platform.util.progress",
-  ReplaceWith("rawProgressReporter", "com.intellij.platform.util.progress.rawProgressReporter"),
-  DeprecationLevel.ERROR,
-)
-val CoroutineContext.rawProgressReporter: DeprecatedRawProgressReporter? get() = rawProgressReporter?.asDeprecatedRawReporter()
-
-@Deprecated(
-  "Moved to com.intellij.platform.util.progress",
-  ReplaceWith("rawProgressReporter", "com.intellij.platform.util.progress.rawProgressReporter"),
-  DeprecationLevel.ERROR,
-)
-val CoroutineScope.rawProgressReporter: DeprecatedRawProgressReporter? get() = rawProgressReporter?.asDeprecatedRawReporter()
-
-@Suppress("HardCodedStringLiteral")
-private fun RawProgressReporter.asDeprecatedRawReporter() = object : DeprecatedRawProgressReporter {
-  override fun text(text: String?) = this@asDeprecatedRawReporter.text(text)
-  override fun details(details: String?) = this@asDeprecatedRawReporter.details(details)
-  override fun fraction(fraction: Double?) = this@asDeprecatedRawReporter.fraction(fraction)
 }

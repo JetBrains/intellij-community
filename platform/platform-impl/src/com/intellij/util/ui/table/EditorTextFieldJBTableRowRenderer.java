@@ -3,6 +3,7 @@ package com.intellij.util.ui.table;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class EditorTextFieldJBTableRowRenderer extends EditorTextFieldCellRenderer implements JBTableRowRenderer {
+
   /** @deprecated Use {@link EditorTextFieldJBTableRowRenderer#EditorTextFieldJBTableRowRenderer(Project, Language, Disposable)}*/
   @Deprecated(forRemoval = true)
   protected EditorTextFieldJBTableRowRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
@@ -46,5 +48,15 @@ public abstract class EditorTextFieldJBTableRowRenderer extends EditorTextFieldC
 
   protected @Nullable TextAttributes getTextAttributes(JTable table, int row) {
     return null;
+  }
+
+  @Override
+  protected @NotNull RendererComponent createRendererComponent(@Nullable Project project,
+                                                               @Nullable Language language,
+                                                               boolean inheritFontFromLaF) {
+    final RendererComponent renderer;
+    renderer = super.createRendererComponent(project, language, false);
+    renderer.setFont(EditorUtil.getEditorFont());
+    return renderer;
   }
 }

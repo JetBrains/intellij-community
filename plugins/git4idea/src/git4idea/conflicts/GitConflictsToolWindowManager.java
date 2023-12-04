@@ -73,9 +73,10 @@ public final class GitConflictsToolWindowManager {
     public void stagingAreaChanged(@NotNull GitRepository repository) {
       if (!Registry.is("git.merge.conflicts.toolwindow")) return;
 
+      Project project = repository.getProject();
       ApplicationManager.getApplication().invokeLater(() -> {
-        repository.getProject().getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
-      }, ModalityState.nonModal());
+        project.getMessageBus().syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged();
+      }, ModalityState.nonModal(), project.getDisposed());
     }
   }
 

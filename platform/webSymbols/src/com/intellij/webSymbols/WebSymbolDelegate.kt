@@ -98,8 +98,8 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
                                   scope: Stack<WebSymbolsScope>): List<WebSymbolCodeCompletionItem> =
     delegate.getCodeCompletions(qualifiedName, params, scope)
 
-  override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
-    delegate.isExclusiveFor(namespace, kind)
+  override fun isExclusiveFor(qualifiedKind: WebSymbolQualifiedKind): Boolean =
+    delegate.isExclusiveFor(qualifiedKind)
 
   override val searchTarget: WebSymbolSearchTarget?
     get() = when (delegate) {

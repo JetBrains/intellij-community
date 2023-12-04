@@ -132,6 +132,19 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     }
   }
 
+  /**
+   * Rebinds a document to a different virtualFile instance. This can be helpful in case when a virtual file has become invalid
+   * and then a new virtualFile appeared at the same path.
+   */
+  @ApiStatus.Internal
+  public static void rebindDocument(@NotNull Document document, @NotNull VirtualFile oldFile, @NotNull VirtualFile newFile) {
+    synchronized (lock) {
+      oldFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
+      document.putUserData(FILE_KEY, newFile);
+      newFile.putUserData(HARD_REF_TO_DOCUMENT_KEY, document);
+    }
+  }
+
   @Override
   public @Nullable VirtualFile getFile(@NotNull Document document) {
     return document instanceof FrozenDocument ? null : document.getUserData(FILE_KEY);

@@ -20,7 +20,6 @@ import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.options.OptionController;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,6 +34,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
@@ -85,8 +85,8 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   private static final CallMatcher TEST_OR_MOCK_CONTAINER_METHODS =
     CallMatcher.anyOf(
       CallMatcher.staticCall("org.assertj.core.api.Assertions", "assertThatThrownBy", "catchThrowable", "catchThrowableOfType"),
-      CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertDoesNotThrow", "assertThrows", "assertThrowsExactly"),
-      CallMatcher.staticCall("org.junit.Assert", "assertThrows"),
+      CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertDoesNotThrow", "assertThrows", "assertThrowsExactly"),
+      CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assertThrows"),
       CallMatcher.instanceCall("org.mockito.MockedStatic", "when", "verify")
     );
 
@@ -100,38 +100,38 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
 
   public IgnoreResultOfCallInspection() {
     myMethodMatcher = new MethodMatcher(true, "callCheckString")
-      .add("java.io.File", ".*")
+      .add(CommonClassNames.JAVA_IO_FILE, ".*")
       .add("java.io.InputStream","read|skip|available|markSupported")
       .add("java.io.Reader","read|skip|ready|markSupported")
-      .add("java.lang.AbstractStringBuilder", "capacity|codePointAt|codePointBefore|codePointCount|indexOf|lastIndexOf|offsetByCodePoints|substring|subSequence")
-      .add("java.lang.Boolean",".*")
-      .add("java.lang.Byte",".*")
-      .add("java.lang.Character",".*")
-      .add("java.lang.Double",".*")
-      .add("java.lang.Float",".*")
-      .add("java.lang.Integer",".*")
-      .add("java.lang.Long",".*")
-      .add("java.lang.Math",".*")
-      .add("java.lang.Object","equals|hashCode|toString")
-      .add("java.lang.Short",".*")
-      .add("java.lang.StrictMath",".*")
-      .add("java.lang.String",".*")
+      .add(CommonClassNames.JAVA_LANG_ABSTRACT_STRING_BUILDER, "capacity|codePointAt|codePointBefore|codePointCount|indexOf|lastIndexOf|offsetByCodePoints|substring|subSequence")
+      .add(CommonClassNames.JAVA_LANG_BOOLEAN,".*")
+      .add(CommonClassNames.JAVA_LANG_BYTE,".*")
+      .add(CommonClassNames.JAVA_LANG_CHARACTER,".*")
+      .add(CommonClassNames.JAVA_LANG_DOUBLE,".*")
+      .add(CommonClassNames.JAVA_LANG_FLOAT,".*")
+      .add(CommonClassNames.JAVA_LANG_INTEGER,".*")
+      .add(CommonClassNames.JAVA_LANG_LONG,".*")
+      .add(CommonClassNames.JAVA_LANG_MATH,".*")
+      .add(CommonClassNames.JAVA_LANG_OBJECT,"equals|hashCode|toString")
+      .add(CommonClassNames.JAVA_LANG_SHORT,".*")
+      .add(CommonClassNames.JAVA_LANG_STRICT_MATH,".*")
+      .add(CommonClassNames.JAVA_LANG_STRING,".*")
       .add("java.lang.Thread", "interrupted")
       .add("java.math.BigDecimal",".*")
       .add("java.math.BigInteger",".*")
       .add("java.net.InetAddress",".*")
-      .add("java.net.URI",".*")
+      .add(CommonClassNames.JAVA_NET_URI,".*")
       .add("java.nio.channels.AsynchronousChannelGroup",".*")
       .add("java.nio.channels.Channel","isOpen")
       .add("java.nio.channels.FileChannel","open|map|lock|tryLock|write")
       .add("java.nio.channels.ScatteringByteChannel","read")
       .add("java.nio.channels.SocketChannel","open|socket|isConnected|isConnectionPending")
-      .add("java.util.Arrays", ".*")
-      .add("java.util.Collections", "(?!addAll).*")
-      .add("java.util.List", "of")
-      .add("java.util.Map", "of|ofEntries|entry")
-      .add("java.util.Set", "of")
-      .add("java.util.UUID",".*")
+      .add(CommonClassNames.JAVA_UTIL_ARRAYS, ".*")
+      .add(CommonClassNames.JAVA_UTIL_COLLECTIONS, "(?!addAll).*")
+      .add(CommonClassNames.JAVA_UTIL_LIST, "of")
+      .add(CommonClassNames.JAVA_UTIL_MAP, "of|ofEntries|entry")
+      .add(CommonClassNames.JAVA_UTIL_SET, "of")
+      .add(CommonClassNames.JAVA_UTIL_UUID,".*")
       .add("java.util.concurrent.BlockingQueue", "offer|remove")
       .add("java.util.concurrent.CountDownLatch","await|getCount")
       .add("java.util.concurrent.ExecutorService","awaitTermination|isShutdown|isTerminated")
@@ -141,11 +141,11 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       .add("java.util.concurrent.locks.Lock","tryLock|newCondition")
       .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparentBounds|hasAnchoringBounds|hitEnd|requireEnd")
       .add("java.util.regex.Pattern",".*")
-      .add("java.util.stream.BaseStream",".*")
-      .add("java.util.stream.DoubleStream",".*")
-      .add("java.util.stream.IntStream",".*")
-      .add("java.util.stream.LongStream",".*")
-      .add("java.util.stream.Stream",".*")
+      .add(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM,".*")
+      .add(CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM,".*")
+      .add(CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM,".*")
+      .add(CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM,".*")
+      .add(CommonClassNames.JAVA_UTIL_STREAM_STREAM,".*")
       .finishDefault();
   }
 

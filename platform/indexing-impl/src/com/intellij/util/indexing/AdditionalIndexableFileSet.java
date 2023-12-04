@@ -12,16 +12,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
 public final class AdditionalIndexableFileSet implements IndexableFileSet {
   private final @Nullable Project myProject;
-  private final Supplier<IndexableSetContributor[]> myExtensions;
+  private final Supplier<List<IndexableSetContributor>> myExtensions;
 
   private final CachedValue<AdditionalIndexableRoots> myAdditionalIndexableRoots;
 
-  public AdditionalIndexableFileSet(@Nullable Project project, IndexableSetContributor @NotNull ... extensions) {
+  public AdditionalIndexableFileSet(@Nullable Project project, @NotNull List<IndexableSetContributor> extensions) {
     myProject = project;
     myExtensions = () -> extensions;
     myAdditionalIndexableRoots = new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(collectFilesAndDirectories(),
@@ -30,7 +31,7 @@ public final class AdditionalIndexableFileSet implements IndexableFileSet {
 
   public AdditionalIndexableFileSet(@Nullable Project project) {
     myProject = project;
-    myExtensions = () -> IndexableSetContributor.EP_NAME.getExtensions();
+    myExtensions = () -> IndexableSetContributor.EP_NAME.getExtensionList();
     myAdditionalIndexableRoots = new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(collectFilesAndDirectories(),
                                                                                               VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
                                                                                               IndexableSetContributorModificationTracker.getInstance()));

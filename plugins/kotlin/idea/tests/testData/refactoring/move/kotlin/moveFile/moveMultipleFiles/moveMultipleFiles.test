@@ -2,5 +2,5 @@
   "filesToMove": ["source/foo.kt", "source/bar.kt"],
   "type": "MOVE_FILES_WITH_DECLARATIONS",
   "targetDirectory": "target",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

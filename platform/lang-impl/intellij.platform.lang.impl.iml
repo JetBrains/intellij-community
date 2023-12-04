@@ -86,7 +86,7 @@
     <orderEntry type="library" name="kotlinx-html-jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
@@ -94,5 +94,6 @@
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" />
   </component>
 </module>

@@ -8,12 +8,13 @@ import com.intellij.vcs.log.VcsLogBranchFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.regex.Pattern;
 
+/**
+ * @see VcsLogFilterObject#fromBranch(String)
+ * @see VcsLogFilterObject#fromBranchPatterns 
+ */
 class VcsLogBranchFilterImpl implements VcsLogBranchFilter {
   private final @NotNull List<String> myBranches;
   private final @NotNull List<Pattern> myPatterns;

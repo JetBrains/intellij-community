@@ -19,6 +19,7 @@ import com.intellij.vcs.log.data.index.VcsLogIndex
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import it.unimi.dsi.fastutil.ints.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.EventQueue
 
 class MiniDetailsGetter internal constructor(project: Project,
@@ -42,10 +43,11 @@ class MiniDetailsGetter internal constructor(project: Project,
   private var currentTaskIndex: Long = 0
   private val loadingFinishedListeners = ArrayList<Runnable>()
 
-  override fun getCommitData(commit: Int): VcsCommitMetadata {
+  override fun getCachedDataOrPlaceholder(commit: Int): VcsCommitMetadata {
     return getCommitData(commit, emptySet())
   }
 
+  @ApiStatus.Internal
   fun getCommitData(commit: Int, commitsToLoad: Iterable<Int>): VcsCommitMetadata {
     val details = getFromCacheAndCleanOldPlaceholder(commit)
     if (details != null) return details
@@ -84,12 +86,12 @@ class MiniDetailsGetter internal constructor(project: Project,
     return topCommitsDetailsCache[commit]
   }
 
-  override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
+  override fun getCachedData(commit: Int): VcsCommitMetadata? {
     return cache.getIfPresent(commit).takeIf { it !is LoadingDetails } ?: topCommitsDetailsCache[commit]
   }
 
-  override fun getCommitDataIfAvailable(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
-    return commits.associateNotNull { getCommitDataIfAvailable(it) }
+  override fun getCachedData(commits: List<Int>): Int2ObjectMap<VcsCommitMetadata> {
+    return commits.associateNotNull { getCachedData(it) }
   }
 
   override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)

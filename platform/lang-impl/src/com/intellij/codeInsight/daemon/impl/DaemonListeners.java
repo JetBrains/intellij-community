@@ -58,8 +58,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -72,15 +70,14 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.io.storage.HeavyProcessLatch;
-import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.ui.EdtInvocationManager;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,23 +96,16 @@ public final class DaemonListeners implements Disposable {
   private boolean myEscPressed;
   volatile boolean cutOperationJustHappened;
   private List<Editor> myActiveEditors = Collections.emptyList();
-  private static final Key<Boolean> DAEMON_INITIALIZED = Key.create("DAEMON_INITIALIZED");
 
   DaemonListeners(@NotNull Project project, @NotNull DaemonCodeAnalyzerImpl daemonCodeAnalyzer) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
 
-    boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE);
-    if (!replaced) {
-      LOG.error("Daemon listeners already initialized for the project " + myProject);
-    }
-
-    MessageBus messageBus = myProject.getMessageBus();
     if (project.isDefault()) {
       return;
     }
 
-    SimpleMessageBusConnection connection = messageBus.simpleConnect();
+    SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
     connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
@@ -161,9 +151,9 @@ public final class DaemonListeners implements Disposable {
         myEscPressed = false; // clear "Escape was pressed" flag on each caret change
 
         Editor editor = e.getEditor();
-        if (UIUtil.isShowing(editor.getContentComponent()) && worthBothering(editor.getDocument(), editor.getProject())) {
+        if (ComponentUtil.isShowing(editor.getContentComponent(), true) && worthBothering(editor.getDocument(), editor.getProject())) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            if (!myProject.isDisposed() && UIUtil.isShowing(editor.getContentComponent())) {
+            if (!myProject.isDisposed() && ComponentUtil.isShowing(editor.getContentComponent(), true)) {
               IntentionsUI.getInstance(myProject).invalidateForEditor(editor);
             }
           }, ModalityState.current(), myProject.getDisposed());
@@ -204,7 +194,7 @@ public final class DaemonListeners implements Disposable {
         Editor editor = event.getEditor();
         Document document = editor.getDocument();
         Project editorProject = editor.getProject();
-        boolean showing = UIUtil.isShowing(editor.getContentComponent());
+        boolean showing = ComponentUtil.isShowing(editor.getContentComponent(), true);
         boolean worthBothering = worthBothering(document, editorProject);
         if (!showing || !worthBothering) {
           LOG.debug("Not worth bothering about editor created for: " + editor.getVirtualFile() + " because editor isShowing(): " +
@@ -490,8 +480,6 @@ public final class DaemonListeners implements Disposable {
   @Override
   public void dispose() {
     stopDaemonAndRestartAllFiles("Project closed");
-    boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, Boolean.TRUE, Boolean.FALSE);
-    LOG.assertTrue(replaced, "Daemon listeners already disposed for the project "+myProject);
   }
 
   /**
@@ -525,6 +513,7 @@ public final class DaemonListeners implements Disposable {
     PluginException.reportDeprecatedUsage("this method", "");
     return canChangeFileSilently(file, true, ThreeState.UNSURE);
   }
+
   @Deprecated
   public static boolean canChangeFileSilently(@NotNull PsiFileSystemItem file, boolean isInContent) {
     PluginException.reportDeprecatedUsage("this method", "");

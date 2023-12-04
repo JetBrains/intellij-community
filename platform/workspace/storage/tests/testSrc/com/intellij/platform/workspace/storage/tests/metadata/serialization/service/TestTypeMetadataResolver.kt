@@ -3,23 +3,27 @@ package com.intellij.platform.workspace.storage.tests.metadata.serialization.ser
 
 import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.impl.serialization.PluginId
+import com.intellij.platform.workspace.storage.metadata.MetadataHash
+import com.intellij.platform.workspace.storage.metadata.MetadataStorage
 import com.intellij.platform.workspace.storage.metadata.model.StorageTypeMetadata
 import com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolver
-import com.intellij.platform.workspace.storage.metadata.resolver.TypeMetadataResolverImpl
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.deserialization
 import com.intellij.platform.workspace.storage.tests.metadata.serialization.replaceCacheVersion
 
 internal class TestTypeMetadataResolver(
   private val typeMetadataResolver: TypeMetadataResolver
 ): TypeMetadataResolver {
+  override fun resolveTypeMetadata(metadataStorage: MetadataStorage, typeFqn: String): StorageTypeMetadata =
+    typeMetadataResolver.resolveTypeMetadata(metadataStorage, processTypeFqn(typeFqn))
 
-  override fun resolveTypeMetadataOrNull(typeFqn: String, pluginId: PluginId, typesResolver: EntityTypesResolver): StorageTypeMetadata? {
-    return typeMetadataResolver.resolveTypeMetadataOrNull(processTypeFqn(typeFqn), pluginId, typesResolver)
-  }
+  override fun resolveTypeMetadataHash(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash =
+    typeMetadataResolver.resolveTypeMetadataHash(metadataStorage, processTypeFqn(typeFqn))
 
-  override fun resolveTypeMetadata(typeFqn: String, pluginId: PluginId, typesResolver: EntityTypesResolver): StorageTypeMetadata {
-    return typeMetadataResolver.resolveTypeMetadata(processTypeFqn(typeFqn), pluginId, typesResolver)
-  }
+  override fun resolveTypeMetadataHashOrNull(metadataStorage: MetadataStorage, typeFqn: String): MetadataHash? =
+    typeMetadataResolver.resolveTypeMetadataHashOrNull(metadataStorage, processTypeFqn(typeFqn))
+
+  override fun resolveMetadataStorage(typesResolver: EntityTypesResolver, typeFqn: String, pluginId: PluginId): MetadataStorage =
+    typeMetadataResolver.resolveMetadataStorage(typesResolver, processTypeFqn(typeFqn), pluginId)
 
   private fun processTypeFqn(typeFqn: String): String = if (deserialization) typeFqn.replaceCacheVersion() else typeFqn
 }

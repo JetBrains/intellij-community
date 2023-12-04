@@ -3,7 +3,7 @@ package com.jetbrains.python.requirements
 
 import com.intellij.testFramework.ParsingTestCase
 
-class RequirementsParsingTest : ParsingTestCase("requirements", "requirements.txt", RequirementsParserDefinition()) {
+class RequirementsParsingTest : ParsingTestCase("requirements/parsing", "requirements.txt", RequirementsParserDefinition()) {
   fun testConstraint() {
     doTest(true)
   }

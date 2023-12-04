@@ -13,22 +13,26 @@ import com.intellij.openapi.components.ComponentConfig
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
+import com.intellij.openapi.project.impl.projectAndScopeMethodType
 import com.intellij.openapi.project.impl.projectMethodType
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.executeRegisterTaskForOldContent
 import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.messages.MessageBus
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
-private val LOG = logger<ClientSessionImpl>()
+private val LOG: Logger
+  get() = logger<ClientSessionImpl>()
 
 @OptIn(DelicateCoroutinesApi::class)
 @ApiStatus.Experimental
@@ -39,7 +43,6 @@ abstract class ClientSessionImpl(
   private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(
   parent = null,
-  setExtensionsRootArea = false,
   parentScope = GlobalScope,
   additionalContext = clientId.asContextElement2(),
 ), ClientSession {
@@ -57,11 +60,9 @@ abstract class ClientSessionImpl(
            ?: super.findConstructorAndInstantiateClass(lookup, aClass)
   }
 
-  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
-    return listOf(
-      sessionConstructorMethodType,
-    ) + super.supportedSignaturesOfLightServiceConstructors()
-  }
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    sessionConstructorMethodType,
+  ).addAll(super.supportedSignaturesOfLightServiceConstructors)
 
   fun registerServices() {
     registerComponents()
@@ -183,10 +184,22 @@ abstract class ClientAppSessionImpl(
     @Suppress("LeakingThis")
     registerServiceInstance(ClientAppSession::class.java, this, fakeCorePluginDescriptor)
   }
+
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    appSessionConstructorMethodType,
+    appSessionAndScopeConstructorMethodType
+  ).addAll(super.supportedSignaturesOfLightServiceConstructors)
 }
 
-private val sessionConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE, ClientAppSession::class.java)
-private val projectSessionConstructorMethodType: MethodType = MethodType.methodType(Void.TYPE, ClientProjectSession::class.java)
+private val sessionConstructorMethodType = MethodType.methodType(Void.TYPE, ClientAppSession::class.java)
+
+private val projectSessionConstructorMethodType = MethodType.methodType(Void.TYPE, ClientProjectSession::class.java)
+private val projectSessionAndScopeConstructorMethodType =
+  MethodType.methodType(Void.TYPE, ClientProjectSession::class.java, CoroutineScope::class.java)
+
+private val appSessionConstructorMethodType = MethodType.methodType(Void.TYPE, ClientAppSession::class.java)
+private val appSessionAndScopeConstructorMethodType =
+  MethodType.methodType(Void.TYPE, ClientAppSession::class.java, CoroutineScope::class.java)
 
 @Suppress("LeakingThis")
 @ApiStatus.Internal
@@ -208,12 +221,12 @@ open class ClientProjectSessionImpl(
            ?: super.findConstructorAndInstantiateClass(lookup, aClass)
   }
 
-  override fun supportedSignaturesOfLightServiceConstructors(): List<MethodType> {
-    return listOf(
-      projectMethodType,
-      projectSessionConstructorMethodType,
-    ) + super.supportedSignaturesOfLightServiceConstructors()
-  }
+  override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
+    projectMethodType,
+    projectAndScopeMethodType,
+    projectSessionConstructorMethodType,
+    projectSessionAndScopeConstructorMethodType,
+  ).addAll(super.supportedSignaturesOfLightServiceConstructors)
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor

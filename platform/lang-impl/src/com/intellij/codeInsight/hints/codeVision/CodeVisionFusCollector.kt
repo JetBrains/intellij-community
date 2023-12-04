@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId3
 import com.intellij.internal.statistic.eventLog.events.IntListEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
@@ -45,6 +46,7 @@ object CodeVisionFusCollector : CounterUsagesCollector() {
   internal val VCS_ANNOTATION_HISTOGRAM_KEY: Key<FusHistogramBuilder> = Key.create<FusHistogramBuilder>("vcs.annotation.histogram")
 
   internal fun reportCodeVisionProviderDuration(editor: Editor, language: Language, durationMs: Long, providerClass: Class<*>) {
+    if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return
     val fusProviderStorage = getProviderStorage(editor, language)
     fusProviderStorage.logProviderCollectionDuration(providerClass, durationMs)
   }
@@ -62,6 +64,7 @@ object CodeVisionFusCollector : CounterUsagesCollector() {
 
   @Internal
   fun reportVcsAnnotationDuration(psiFile: PsiFile, durationMs: Long) {
+    if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) return
     val histogramBuilder = getHistogramBuilder(psiFile)
     histogramBuilder.addValue(durationMs)
   }

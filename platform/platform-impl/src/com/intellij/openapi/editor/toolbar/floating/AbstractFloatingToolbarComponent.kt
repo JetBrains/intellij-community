@@ -21,6 +21,7 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
   private val transparentComponent = ToolbarTransparentComponent()
   private val componentAnimator = TransparentComponentAnimator(transparentComponent, parentDisposable)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use constructor with parentDisposable")
   constructor(
     actionGroup: ActionGroup

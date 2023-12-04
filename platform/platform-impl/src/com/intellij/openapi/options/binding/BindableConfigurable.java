@@ -4,12 +4,17 @@ package com.intellij.openapi.options.binding;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.UnnamedConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * @deprecated Use {@see com.intellij.openapi.options.BoundConfigurable} instead
  */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public abstract class BindableConfigurable implements UnnamedConfigurable {
 
   protected ControlBinder myBinder;

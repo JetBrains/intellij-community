@@ -114,4 +114,14 @@ class ClientExperimentStatus : ExperimentStatus {
     val buckets = 0 until 256
     return if (seed == null) buckets.toList() else buckets.shuffled(Random(seed))
   }
+
+  internal fun extractGroupsMapping(language: Language): List<Int> {
+    val languageSettings = experimentConfig.languages.find { language.id.equals(it.id, ignoreCase = true) }
+                           ?: throw IllegalArgumentException("Language ${language.id} not found")
+    val bucketsMapping = getBucketsMapping(experimentConfig.seed)
+    return 0.until(256).map {
+      val bucket = bucketsMapping[it] % languageSettings.experimentBucketsCount
+      if (languageSettings.includeGroups.size > bucket) languageSettings.includeGroups[bucket] else experimentConfig.version
+    }
+  }
 }

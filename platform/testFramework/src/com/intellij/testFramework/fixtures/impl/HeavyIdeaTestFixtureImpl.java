@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ModuleListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -70,7 +71,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
   private final String mySanitizedName;
   private final Path myProjectPath;
   private final boolean myIsDirectoryBasedProject;
-  private SdkLeakTracker myOldSdks;
+  private SdkLeakTracker mySdkLeakTracker;
 
   private AccessToken projectTracker;
 
@@ -96,7 +97,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     myEditorListenerTracker = new EditorListenerTracker();
     myThreadTracker = new ThreadTracker();
     InjectedLanguageManagerImpl.pushInjectors(getProject());
-    myOldSdks = new SdkLeakTracker();
+    mySdkLeakTracker = new SdkLeakTracker();
   }
 
   @Override
@@ -164,8 +165,8 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     });
     actions.add(() -> LightPlatformTestCase.checkEditorsReleased());
     actions.add(() -> {
-      if (myOldSdks != null) {
-        myOldSdks.checkForJdkTableLeaks();
+      if (mySdkLeakTracker != null) {
+        mySdkLeakTracker.checkForJdkTableLeaks();
       }
     });
     // project is disposed by now, no point in passing it

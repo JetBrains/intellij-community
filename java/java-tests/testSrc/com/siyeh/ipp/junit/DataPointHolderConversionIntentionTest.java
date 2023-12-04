@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,7 +75,7 @@ public class DataPointHolderConversionIntentionTest extends LightQuickFixTestCas
                        }
                                       
                    }""", actualText);
-    assertInstanceOf(commands.get(1), ModRenameSymbol.class);
+    assertInstanceOf(commands.get(1), ModStartRename.class);
   }
 
   @NotNull

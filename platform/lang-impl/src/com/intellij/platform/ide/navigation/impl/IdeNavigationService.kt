@@ -120,7 +120,7 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
   }
 
   withContext(Dispatchers.EDT) {
-    navigateNonSource(request = nonSourceRequest, options = options)
+    navigateNonSource(project = project, request = nonSourceRequest, options = options)
   }
   return true
 }
@@ -137,9 +137,7 @@ private suspend fun navigateToSource(project: Project, request: NavigationReques
     is RawNavigationRequest -> {
       if (request.canNavigateToSource) {
         withContext(Dispatchers.EDT) {
-          blockingContext {
-            request.navigatable.navigate(options.requestFocus)
-          }
+          IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
         }
         return true
       }
@@ -188,7 +186,7 @@ private suspend fun tryActivateOpenFile(project: Project, request: SourceNavigat
                             openOptions = FileEditorOpenOptions(requestFocus = options.requestFocus, reuseOpen = options.requestFocus))
 }
 
-private suspend fun navigateNonSource(request: NavigationRequest, options: NavigationOptions.Impl) {
+private suspend fun navigateNonSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl) {
   EDT.assertIsEdt()
 
   return when (request) {
@@ -199,9 +197,7 @@ private suspend fun navigateNonSource(request: NavigationRequest, options: Navig
     }
     is RawNavigationRequest -> {
       check(!request.canNavigateToSource)
-      blockingContext {
-        request.navigatable.navigate(options.requestFocus)
-      }
+      IdeNavigationServiceExecutor.getInstance(project).navigate(request, options.requestFocus)
     }
     else -> {
       error("Non-source request expected here, got: $request")

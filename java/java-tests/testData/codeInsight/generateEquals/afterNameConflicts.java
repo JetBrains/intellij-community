@@ -32,10 +32,8 @@ class A {
         if (a10 != a.a10) return false;
         if (Float.compare(a11, a.a11) != 0) return false;
         if (Double.compare(temp, a.temp) != 0) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(a1, a.a1)) return false;
         if (!Arrays.deepEquals(a2, a.a2)) return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(a3, a.a3)) return false;
         if (!Arrays.deepEquals(a4, a.a4)) return false;
         if (!Arrays.equals(a5, a.a5)) return false;
@@ -56,11 +54,11 @@ class A {
         result1 = 31 * result1 + Arrays.deepHashCode(a4);
         result1 = 31 * result1 + Arrays.hashCode(a5);
         result1 = 31 * result1 + Arrays.deepHashCode(a6);
-        result1 = 31 * result1 + (int) a7;
-        result1 = 31 * result1 + (int) a8;
+        result1 = 31 * result1 + a7;
+        result1 = 31 * result1 + a8;
         result1 = 31 * result1 + a9;
         result1 = 31 * result1 + (int) (a10 ^ (a10 >>> 32));
-        result1 = 31 * result1 + (a11 != 0.0f ? Float.floatToIntBits(a11) : 0);
+        result1 = 31 * result1 + Float.floatToIntBits(a11);
         temp1 = Double.doubleToLongBits(temp);
         result1 = 31 * result1 + (int) (temp1 ^ (temp1 >>> 32));
         result1 = 31 * result1 + result.hashCode();

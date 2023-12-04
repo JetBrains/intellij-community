@@ -6,6 +6,8 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.getVirtualFileUrlManager
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiJavaFile
@@ -15,20 +17,17 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
-import com.intellij.util.indexing.roots.origin.IndexingRootHolder
-import org.junit.Test
+import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import java.util.function.Consumer
 
 class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
 
-  @Test
   fun `test requesting content dependent index rebuild with partial indexing`() {
     doTestRequireRebuild(CountingFileBasedIndexExtension.registerCountingFileBasedIndex(testRootDisposable)) { fileA ->
       reindexFile(fileA)
     }
   }
 
-  @Test
   fun `test requesting content independent index rebuild with partial indexing`() {
     doTestRequireRebuild(CountingContentIndependentFileBasedIndexExtension.registerCountingFileBasedIndex(testRootDisposable)) { fileA ->
       reindexFile(fileA)
@@ -39,19 +38,18 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val moduleEntity = storage.entities(ModuleEntity::class.java).iterator().next()
     assertNotNull(moduleEntity)
-    val iterators = createIterators(moduleEntity, IndexingRootHolder.fromFile(fileA), storage)
+    val iterators = createIterators(moduleEntity, IndexingUrlRootHolder.fromUrl(fileA.toVirtualFileUrl(getVirtualFileUrlManager(project))),
+                                    storage)
     UnindexedFilesScanner(myFixture.project, ArrayList(iterators), null,
                           "Partial reindex of one of two indexable files").queue()
   }
 
-  @Test
   fun `test requesting content dependent index rebuild with changed file indexing`() {
     doTestRequireRebuild(CountingFileBasedIndexExtension.registerCountingFileBasedIndex(testRootDisposable)) { fileA ->
       updateFileContent(fileA)
     }
   }
 
-  @Test
   fun `test requesting content independent index rebuild with changed file indexing`() {
     doTestRequireRebuild(CountingContentIndependentFileBasedIndexExtension.registerCountingFileBasedIndex(testRootDisposable)) { fileA ->
       updateFileContent(fileA)
@@ -120,7 +118,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
        * Content-independent indexes should always be available, without any dumb mode.
        * An index that is considered inconsistent, and therefore marked as requiring rebuild,
        * should probably throw ServiceNotReadyException, but it has never been so, and clients may be not ready.
-       * For now, let's expect last indexed values to be returned
+       * For now, let's expect the last indexed values to be returned
        */
       val fileBasedIndex = FileBasedIndex.getInstance()
       for (file in files) {

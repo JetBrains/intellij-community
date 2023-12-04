@@ -22,15 +22,20 @@ internal inline fun ScopeHolder.use(action: (ScopeHolder) -> Unit) {
   }
 }
 
+internal inline fun InstanceContainerImpl.use(action: (InstanceContainerImpl) -> Unit) {
+  try {
+    action(this)
+  }
+  finally {
+    dispose()
+  }
+}
+
 internal suspend fun withContainer(containerName: String, test: suspend CoroutineScope.(InstanceContainerImpl) -> Unit) {
   coroutineScope {
     ScopeHolder(this, EmptyCoroutineContext, containerName).use { holder ->
-      val container = InstanceContainerImpl(holder, containerName, null, false)
-      try {
-        test(container)
-      }
-      finally {
-        container.dispose()
+      InstanceContainerImpl(holder, containerName, null, false).use {
+        test(it)
       }
     }
   }

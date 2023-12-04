@@ -5,6 +5,7 @@ import com.intellij.codeInsight.codeVision.codeVisionEntryMouseEventKey
 import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.codeInsight.codeVision.ui.model.RangeCodeVisionModel
 import com.intellij.codeInsight.codeVision.ui.model.SwingScheduler
+import com.intellij.codeInsight.codeVision.ui.model.ZombieCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.tooltipText
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionListPainter
 import com.intellij.codeInsight.codeVision.ui.renderers.painters.CodeVisionTheme
@@ -121,7 +122,12 @@ abstract class CodeVisionInlayRendererBase(theme: CodeVisionTheme = CodeVisionTh
   private fun getHoveredEntry(point: Point?): CodeVisionEntry? {
     val codeVisionListData = inlay.getUserData(CodeVisionListData.KEY)
     val state = codeVisionListData?.rangeCodeVisionModel?.state() ?: RangeCodeVisionModel.InlayState.NORMAL
-    return point?.let { painter.hoveredEntry(inlay.editor, state, codeVisionListData, it.x, it.y) }
+    val codeVisionEntry = point?.let { painter.hoveredEntry(inlay.editor, state, codeVisionListData, it.x, it.y) }
+    if (codeVisionEntry is ZombieCodeVisionEntry) {
+      // zombie is not hoverable
+      return null
+    }
+    return codeVisionEntry
   }
 
   override fun translatePoint(inlayPoint: Point): Point {

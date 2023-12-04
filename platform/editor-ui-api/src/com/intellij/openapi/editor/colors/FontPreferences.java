@@ -99,7 +99,7 @@ public class FontPreferences {
     if (SystemInfoRt.isMac) {
       return MAC_OS_DEFAULT_FONT_FAMILY;
     }
-    if (SystemInfo.isXWindow && !GraphicsEnvironment.isHeadless() && !ApplicationManager.getApplication().isCommandLine()) {
+    if (SystemInfoRt.isLinux && !GraphicsEnvironment.isHeadless() && !ApplicationManager.getApplication().isCommandLine()) {
       for (Font font : GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts()) {
         if (LINUX_DEFAULT_FONT_FAMILY.equals(font.getName())) {
           return font.getFontName();

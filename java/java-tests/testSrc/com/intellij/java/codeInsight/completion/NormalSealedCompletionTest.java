@@ -43,4 +43,12 @@ public class NormalSealedCompletionTest extends NormalCompletionTestCase {
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "AddUserError.NameIsEmpty", "AddUserError.NameIsTooLong");
   }
+
+  @NeedsIndex.Full
+  public void testNestedClassCompletion2() {
+    configure();
+    myFixture.completeBasic();
+    myFixture.assertPreferredCompletionItems(0, "AddUserError.NameIsEmpty", "AddUserError.NameIsTooLong.T", 
+                                             "AddUserError.NameIsEmpty.T4", "AddUserError.NameIsTooLong", "AddUserError.NameIsTooLong.T3");
+  }
 }

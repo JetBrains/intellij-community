@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteAr
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArrayImpl.Companion.LayoutHandler
 import com.intellij.util.io.ResilientFileChannel
 import com.intellij.util.io.createParentDirectories
+import com.intellij.util.runSuppressing
 import java.io.Flushable
 import java.io.IOException
 import java.nio.ByteBuffer
@@ -78,12 +79,7 @@ interface DurablePersistentByteArray : AutoCloseable {
           return DurablePersistentByteArrayImpl(path, mode, layout, lastStateIsInSecondInstance, lastState)
         }
         catch (e: Throwable) {
-          try {
-            fileHandler.close()
-          }
-          catch (closeE: Throwable) {
-            e.addSuppressed(closeE)
-          }
+          e.runSuppressing(fileHandler::close)
           throw e
         }
       }

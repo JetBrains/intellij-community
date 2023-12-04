@@ -14,6 +14,8 @@ interface GitLabMergeRequestViewModel {
   val descriptionHtml: SharedFlow<@Nls String>
   val url: String
 
+  fun reloadData()
+
   fun refreshData()
 
   companion object {

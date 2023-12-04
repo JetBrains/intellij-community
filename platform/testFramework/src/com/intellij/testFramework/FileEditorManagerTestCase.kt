@@ -15,11 +15,11 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
-import com.intellij.util.childScope
 import com.intellij.util.io.write
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 import java.nio.file.Path

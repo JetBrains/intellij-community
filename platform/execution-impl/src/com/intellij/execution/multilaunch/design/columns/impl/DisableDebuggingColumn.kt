@@ -33,9 +33,7 @@ class DisableDebuggingColumn : ExecutableTableColumn<Boolean>("") {
     .child(HtmlChunk.text(
       ExecutionBundle.message("run.configurations.multilaunch.table.column.disable.debugging.title")).bold().wrapWith(HtmlChunk.div()))
     .child(HtmlChunk.br())
-    .child(HtmlChunk.text(ExecutionBundle.message("run.configurations.multilaunch.table.column.disable.debugging.checked")).wrapWith(HtmlChunk.div()))
-    .child(HtmlChunk.br())
-    .child(HtmlChunk.text(ExecutionBundle.message("run.configurations.multilaunch.table.column.disable.debugging.unchecked")).wrapWith(HtmlChunk.div()))
+    .child(HtmlChunk.text(ExecutionBundle.message("run.configurations.multilaunch.table.column.disable.debugging.description")).wrapWith(HtmlChunk.div()))
     .toString()
 
   class ColumnRenderer(

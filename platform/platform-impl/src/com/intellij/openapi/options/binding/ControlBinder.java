@@ -5,6 +5,7 @@ package com.intellij.openapi.options.binding;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.EditorTextField;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.lang.reflect.Field;
@@ -13,7 +14,11 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
+ *
+ * @deprecated Use {@see com.intellij.openapi.options.BoundConfigurable} instead
  */
+@ApiStatus.Internal
+@Deprecated(forRemoval = true)
 public final class ControlBinder {
 
   private static final Logger LOG = Logger.getInstance(ControlBinder.class);
@@ -74,7 +79,7 @@ public final class ControlBinder {
     }
   }
 
-  private void apply(Pair<ControlValueAccessor, BeanValueAccessor> binding) {
+  private static void apply(Pair<ControlValueAccessor, BeanValueAccessor> binding) {
     if (!binding.first.isEnabled()) {
       return;
     }
@@ -107,7 +112,7 @@ public final class ControlBinder {
     return false;
   }
 
-  private Object convert(Object value, Class to) {
+  private static Object convert(Object value, Class to) {
     Class from = value.getClass();
     if (!to.isAssignableFrom(from)) {
       if (to.isPrimitive()) {

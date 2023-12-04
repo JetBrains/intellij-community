@@ -2,34 +2,49 @@
 package com.jetbrains.python.sdk.add.v2
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
+import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.text.nullize
 import com.jetbrains.python.PyBundle.message
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.poetry.detectPoetryExecutable
 import com.jetbrains.python.sdk.poetry.poetryPath
 import com.jetbrains.python.sdk.poetry.setupPoetrySdkUnderProgress
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class PoetryNewEnvironmentCreator(state: PythonAddInterpreterState) : PythonAddEnvironment(state) {
+class PoetryNewEnvironmentCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
 
   val executable = propertyGraph.property(UNKNOWN_EXECUTABLE)
-  private lateinit var poetryPathField: TextFieldWithBrowseButton
-  private lateinit var basePythonComboBox: ComboBox<String>
-  override fun buildOptions(panel: Panel) {
+  private val basePythonVersion = propertyGraph.property<Sdk?>(initial = null)
+  private lateinit var basePythonComboBox: ComboBox<Sdk?>
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        basePythonComboBox = pythonBaseInterpreterComboBox(state.basePythonHomePaths, state.basePythonHomePath)
+        basePythonComboBox = pythonInterpreterComboBox(basePythonVersion,
+                                                       presenter,
+                                                       presenter.basePythonSdksFlow,
+                                                       presenter::addBasePythonInterpreter)
+            .align(Align.FILL)
+            .component
       }
 
-      poetryPathField = executableSelector(message("sdk.create.custom.poetry.path"), executable,
-                                           message("sdk.create.custom.poetry.missing.text"))
+      executableSelector(executable,
+                         validationRequestor,
+                         message("sdk.create.custom.poetry.path"),
+                         message("sdk.create.custom.poetry.missing.text")).component
     }
   }
 
@@ -40,9 +55,9 @@ class PoetryNewEnvironmentCreator(state: PythonAddInterpreterState) : PythonAddE
     }
     else {
       val modalityState = ModalityState.current().asContextElement()
-      state.scope.launch(Dispatchers.Default + modalityState) {
+      state.scope.launch(Dispatchers.IO) {
         val poetryExecutable = detectPoetryExecutable()
-        withContext(Dispatchers.Main + modalityState) {
+        withContext(Dispatchers.EDT + modalityState) {
           poetryExecutable?.let { executable.set(it.path) }
         }
       }
@@ -52,9 +67,20 @@ class PoetryNewEnvironmentCreator(state: PythonAddInterpreterState) : PythonAddE
 
   override fun getOrCreateSdk(): Sdk {
     PropertiesComponent.getInstance().poetryPath = executable.get().nullize()
-    return setupPoetrySdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
-                                       state.basePythonVersion.get()!!.homePath, false)!!
+    val baseSdk = setupBaseSdk(basePythonVersion.get()!!, state.allSdks.get())
+    val newSdk = setupPoetrySdkUnderProgress(null, null, state.basePythonSdks.get(), state.projectPath.get(),
+                                             baseSdk.homePath, false)!!
+    SdkConfigurationUtil.addSdk(newSdk)
+    return newSdk
   }
-
-
+  
+  override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
+    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    return InterpreterStatisticsInfo(InterpreterType.POETRY,
+                                     statisticsTarget,
+                                     false,
+                                     false,
+                                     false,
+                                     InterpreterCreationMode.CUSTOM)
+  }
 }

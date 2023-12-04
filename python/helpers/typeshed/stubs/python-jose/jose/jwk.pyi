@@ -9,5 +9,5 @@ def register_key(algorithm: str, key_class: type[Key]) -> Literal[True]: ...
 def construct(
     # explicitly checks for key_data as dict instance, instead of a Mapping
     key_data: str | bytes | dict[str, Any] | Key,
-    algorithm: str | None = ...,
+    algorithm: str | None = None,
 ) -> Key: ...

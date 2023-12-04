@@ -2,11 +2,11 @@
 package com.intellij.openapi.client
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.throwAlreadyDisposedError
@@ -69,12 +69,12 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
     }
   }
 
-  override fun unloadServices(services: List<ServiceDescriptor>, pluginId: PluginId) {
-    super.unloadServices(services, pluginId)
+  override fun unloadServices(module: IdeaPluginDescriptor, services: List<ServiceDescriptor>) {
+    super.unloadServices(module, services)
 
     val sessionsManager = super.getService(ClientSessionsManager::class.java)!!
     for (session in sessionsManager.getSessions(ClientKind.ALL)) {
-      (session as? ClientSessionImpl)?.unloadServices(services, pluginId)
+      (session as? ClientSessionImpl)?.unloadServices(module, services)
     }
   }
 

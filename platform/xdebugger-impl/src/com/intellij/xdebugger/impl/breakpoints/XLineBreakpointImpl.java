@@ -14,7 +14,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -271,7 +270,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   }
 
   private void redrawInlineInlays(@Nullable VirtualFile file, int line) {
-    if (!Registry.is("debugger.show.breakpoints.inline")) return;
+    if (!XDebuggerUtil.areInlineBreakpointsEnabled()) return;
 
     if (file == null) return;
 
@@ -282,8 +281,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
     }
 
-    getBreakpointManager().getLineBreakpointManager().getInlineBreakpointInlayManager().
-      redrawLine(document, line);
+    InlineBreakpointInlayManager.getInstance(getProject()).redrawLine(document, line);
   }
 
   @Override
@@ -324,7 +322,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         return DragSource.DefaultMoveNoDrop;
       }
 
-      private boolean isCopyAction(int actionId) {
+      private static boolean isCopyAction(int actionId) {
         return (actionId & DnDConstants.ACTION_COPY) == DnDConstants.ACTION_COPY;
       }
     };

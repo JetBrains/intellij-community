@@ -1,6 +1,7 @@
 import json
-from _typeshed import Self
+from _typeshed import Incomplete
 from typing import Any
+from typing_extensions import Self
 
 from stripe import api_requestor as api_requestor
 
@@ -10,31 +11,31 @@ class StripeObject(dict[Any, Any]):
 
     def __init__(
         self,
-        id: Any | None = ...,
-        api_key: Any | None = ...,
-        stripe_version: Any | None = ...,
-        stripe_account: Any | None = ...,
-        last_response: Any | None = ...,
+        id: Incomplete | None = None,
+        api_key: Incomplete | None = None,
+        stripe_version: Incomplete | None = None,
+        stripe_account: Incomplete | None = None,
+        last_response: Incomplete | None = None,
         **params,
     ) -> None: ...
     @property
     def last_response(self): ...
     def update(self, update_dict): ...
-    def __setattr__(self, k, v): ...
-    def __getattr__(self, k): ...
-    def __delattr__(self, k): ...
+    def __setattr__(self, k: str, v) -> None: ...
+    def __getattr__(self, k: str): ...
+    def __delattr__(self, k: str) -> None: ...
     def __setitem__(self, k, v) -> None: ...
     def __getitem__(self, k): ...
     def __delitem__(self, k) -> None: ...
     def __reduce__(self): ...
     @classmethod
     def construct_from(
-        cls: type[Self],
+        cls,
         values: Any,
         key: str | None,
-        stripe_version: Any | None = ...,
-        stripe_account: Any | None = ...,
-        last_response: Any | None = ...,
+        stripe_version: Incomplete | None = None,
+        stripe_account: Incomplete | None = None,
+        last_response: Incomplete | None = None,
     ) -> Self: ...
     api_key: Any
     stripe_version: Any
@@ -42,16 +43,16 @@ class StripeObject(dict[Any, Any]):
     def refresh_from(
         self,
         values: Any,
-        api_key: Any | None = ...,
-        partial: bool = ...,
-        stripe_version: Any | None = ...,
-        stripe_account: Any | None = ...,
-        last_response: Any | None = ...,
+        api_key: Incomplete | None = None,
+        partial: bool = False,
+        stripe_version: Incomplete | None = None,
+        stripe_account: Incomplete | None = None,
+        last_response: Incomplete | None = None,
     ) -> None: ...
     @classmethod
     def api_base(cls) -> None: ...
-    def request(self, method, url, params: Any | None = ..., headers: Any | None = ...): ...
-    def request_stream(self, method, url, params: Any | None = ..., headers: Any | None = ...): ...
+    def request(self, method, url, params: Incomplete | None = None, headers: Incomplete | None = None): ...
+    def request_stream(self, method, url, params: Incomplete | None = None, headers: Incomplete | None = None): ...
     def to_dict(self): ...
     def to_dict_recursive(self): ...
     @property

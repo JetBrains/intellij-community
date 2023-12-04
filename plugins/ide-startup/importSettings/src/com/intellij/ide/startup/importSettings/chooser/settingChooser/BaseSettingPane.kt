@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.data.BaseSetting
 import com.intellij.ide.startup.importSettings.data.Configurable
 import com.intellij.ide.startup.importSettings.data.Multiple
@@ -9,8 +10,8 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -18,12 +19,14 @@ import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
 
-fun createSettingPane(setting: BaseSetting, configurable: Boolean): BaseSettingPane {
-  return if(setting is Multiple) {
-    MultipleSettingPane(createMultipleItem(setting, configurable))
-  } else {
-    BaseSettingPane(SettingItem(setting, configurable))
+fun createSettingPane(setting: BaseSetting, configurable: Boolean, changeHandler: () -> Unit): BaseSettingPane {
+  return if (setting is Multiple) {
+    MultipleSettingPane(createMultipleItem(setting, configurable), changeHandler)
+  }
+  else {
+    BaseSettingPane(SettingItem(setting, configurable), changeHandler)
   }
 }
 
@@ -41,10 +44,10 @@ private fun createMultipleItem(setting: Multiple, configurable: Boolean): Settin
     }
   }
 
-  return SettingItem(setting, configurable, childItems = list )
+  return SettingItem(setting, configurable, childItems = list)
 }
 
-open class BaseSettingPane(val item: SettingItem) {
+open class BaseSettingPane(val item: SettingItem, protected val changeHandler: () -> Unit) {
   val setting = item.setting
 
   private val pane by lazy {
@@ -55,13 +58,21 @@ open class BaseSettingPane(val item: SettingItem) {
           row {
             text(setting.name).customize(UnscaledGaps(0, 0, 2, 0)).resizableColumn()
             if (item.configurable) {
-              checkBox("").bindSelected(item::selected) { item.selected = it }.customize(UnscaledGaps(0, 0, 2, 0))
+              checkBox("")
+                .selected(item.selected)
+                .onChanged { cb ->
+                  item.selected = cb.isSelected
+                  changeHandler()
+                }
+                .customize(UnscaledGaps(0, 0, 2, 0))
             }
           }
 
           setting.comment?.let { addTxt ->
-            row {
-              comment(addTxt).customize(UnscaledGaps(0)).resizableColumn()
+            if (addTxt.isNotEmpty()) {
+              row {
+                comment(addTxt).customize(UnscaledGaps(0)).resizableColumn()
+              }
             }
           }
 
@@ -84,9 +95,9 @@ open class BaseSettingPane(val item: SettingItem) {
 }
 
 
-class MultipleSettingPane(item: SettingItem): BaseSettingPane(item) {
+class MultipleSettingPane(item: SettingItem, changeHandler: () -> Unit) : BaseSettingPane(item, changeHandler) {
 
-  val configurable = item.configurable && setting is Configurable
+  private val configurable = item.configurable && setting is Configurable
 
   private lateinit var actionLink: ActionLink
 
@@ -96,10 +107,10 @@ class MultipleSettingPane(item: SettingItem): BaseSettingPane(item) {
     if (item.childItems.isNotEmpty()) {
       pn.row {
         val text = if (configurable) {
-          "Configure"
+          ImportSettingsBundle.message("choose.settings.configure")
         }
         else {
-          "Show all"
+          ImportSettingsBundle.message("choose.settings.show_all")
         }
 
         actionLink = ActionLink(object : AbstractAction(text) {
@@ -118,17 +129,22 @@ class MultipleSettingPane(item: SettingItem): BaseSettingPane(item) {
   private fun showPopup() {
     item.childItems ?: return
 
-    val component = ChildSettingsList(item.childItems, configurable)
+    val component = ChildSettingsList(item.childItems, configurable, changeHandler)
 
     val panel = JPanel(BorderLayout())
     panel.border = JBUI.Borders.empty()
 
     val scrollPane = JBScrollPane(component)
+    scrollPane.horizontalScrollBarPolicy = HORIZONTAL_SCROLLBAR_NEVER
     panel.add(scrollPane, BorderLayout.CENTER)
-    scrollPane.border = JBUI.Borders.empty(7)
+    scrollPane.border = JBUI.Borders.empty(ChildSettingsList.SCROLL_PANE_INSETS, ChildSettingsList.SCROLL_PANE_INSETS,
+                                           ChildSettingsList.SCROLL_PANE_INSETS, 0)
     val chooserBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, component)
     chooserBuilder.createPopup().showUnderneathOf(actionLink)
   }
 }
 
-data class SettingItem(val setting: BaseSetting, val configurable: Boolean, var selected: Boolean = true, val childItems: List<ChildItem>? = null)
+data class SettingItem(val setting: BaseSetting,
+                       val configurable: Boolean,
+                       var selected: Boolean = true,
+                       val childItems: List<ChildItem>? = null)

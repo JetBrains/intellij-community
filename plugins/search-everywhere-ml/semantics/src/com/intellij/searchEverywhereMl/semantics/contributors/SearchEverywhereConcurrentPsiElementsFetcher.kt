@@ -9,27 +9,24 @@ import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereCo
 import com.intellij.searchEverywhereMl.semantics.utils.attachPsiPresentation
 import org.jetbrains.annotations.ApiStatus
 import com.intellij.searchEverywhereMl.semantics.contributors.SearchEverywhereConcurrentElementsFetcher.DescriptorPriority
-import java.util.concurrent.locks.ReentrantLock
-import kotlin.concurrent.withLock
 
 @ApiStatus.Experimental
 interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurrentElementsFetcher<PsiItemWithSimilarity<*>, Any> {
-
   val psiElementsRenderer: SearchEverywherePsiRenderer
 
-  override val useReadAction: Boolean
+  override val useReadAction
     get() = true
 
-  override fun getDesiredResultsCount() = DESIRED_RESULTS_COUNT
+  override val desiredResultsCount
+    get() = DESIRED_RESULTS_COUNT
 
-  override fun getPriorityThresholds() = PRIORITY_THRESHOLDS
+  override val priorityThresholds
+    get() = PRIORITY_THRESHOLDS
 
   override fun prepareStandardDescriptor(descriptor: FoundItemDescriptor<Any>,
-                                         knownItems: MutableList<FoundItemDescriptor<PsiItemWithSimilarity<*>>>,
-                                         mutex: ReentrantLock): FoundItemDescriptor<Any> {
+                                         knownItems: MutableList<FoundItemDescriptor<PsiItemWithSimilarity<*>>>): () -> FoundItemDescriptor<Any> {
     val item = PsiItemWithSimilarity(descriptor.item)
-
-    return mutex.withLock {
+    return {
       val equal = knownItems.firstOrNull { checkItemsEqual(it.item.value, item.value) }
       if (equal != null) {
         if (equal.item.shouldBeMergedIntoAnother()) {
@@ -47,13 +44,12 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
 
   override fun prepareSemanticDescriptor(descriptor: FoundItemDescriptor<PsiItemWithSimilarity<*>>,
                                          knownItems: MutableList<FoundItemDescriptor<PsiItemWithSimilarity<*>>>,
-                                         mutex: ReentrantLock,
-                                         durationMs: Long): FoundItemDescriptor<Any> {
+                                         durationMs: Long): () -> FoundItemDescriptor<Any> {
     val element = descriptor.item.value
     val foundElement = if (element is PsiElement) attachPsiPresentation(element, psiElementsRenderer) else element
     val newItem = PsiItemWithSimilarity(foundElement, descriptor.item.similarityScore)
 
-    return mutex.withLock {
+    return {
       val equal = knownItems.firstOrNull { checkItemsEqual(it.item.value, foundElement) }
       if (equal != null) {
         // slightly increase the weight to replace
@@ -73,7 +69,7 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
   }
 
   override fun FoundItemDescriptor<PsiItemWithSimilarity<*>>.findPriority(): DescriptorPriority {
-    return ORDERED_PRIORITIES.first { item.similarityScore!! > getPriorityThresholds()[it]!! }
+    return ORDERED_PRIORITIES.first { item.similarityScore!! > priorityThresholds[it]!! }
   }
 
   companion object {

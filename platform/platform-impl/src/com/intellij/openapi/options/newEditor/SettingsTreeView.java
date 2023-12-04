@@ -79,7 +79,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static final Color WRONG_CONTENT = JBColor.namedColor("Tree.errorForeground", JBColor.RED);
   private static final Color MODIFIED_CONTENT = JBColor.namedColor("Tree.modifiedItemForeground", JBColor.BLUE);
 
-  final SimpleTree myTree;
+  private final SimpleTree myTree;
 
   private final SettingsFilter myFilter;
   private final JScrollPane myScroller;
@@ -214,6 +214,11 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     myControl = null;
   }
 
+  @ApiStatus.Internal
+  public @NotNull SimpleTree getTree() {
+    return myTree;
+  }
+
   private Icon getIcon(@Nullable DefaultMutableTreeNode node, boolean selected) {
     if (myControl == null) myControl = new MyControl();
     if (node == null || 0 == node.getChildCount()) return myControl.empty;
@@ -321,7 +326,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return path;
   }
 
-  static Configurable getConfigurable(SimpleNode node) {
+  @ApiStatus.Internal
+  public static Configurable getConfigurable(SimpleNode node) {
     return node instanceof MyNode
            ? ((MyNode)node).myConfigurable
            : null;

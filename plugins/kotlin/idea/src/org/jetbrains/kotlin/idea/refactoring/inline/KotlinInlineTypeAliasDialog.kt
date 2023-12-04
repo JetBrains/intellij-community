@@ -7,7 +7,7 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.psi.PsiReference
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.HelpID
-import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtTypeAlias
 import kotlin.reflect.KMutableProperty1
 
@@ -21,8 +21,8 @@ class KotlinInlineTypeAliasDialog(
     }
 
     override fun doHelpAction() = HelpManager.getInstance().invokeHelp(HelpID.INLINE_VARIABLE)
-    override val inlineThisOption: KMutableProperty1<KotlinRefactoringSettings, Boolean> get() = KotlinRefactoringSettings::INLINE_TYPE_ALIAS_THIS
-    override val inlineKeepOption: KMutableProperty1<KotlinRefactoringSettings, Boolean> get() = KotlinRefactoringSettings::INLINE_TYPE_ALIAS_KEEP
+    override val inlineThisOption: KMutableProperty1<KotlinCommonRefactoringSettings, Boolean> get() = KotlinCommonRefactoringSettings::INLINE_TYPE_ALIAS_THIS
+    override val inlineKeepOption: KMutableProperty1<KotlinCommonRefactoringSettings, Boolean> get() = KotlinCommonRefactoringSettings::INLINE_TYPE_ALIAS_KEEP
     override fun createProcessor(): BaseRefactoringProcessor = KotlinInlineTypeAliasProcessor(
         declaration = declaration,
         reference = reference,

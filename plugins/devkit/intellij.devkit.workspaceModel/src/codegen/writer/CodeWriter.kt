@@ -26,6 +26,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.FactoryMap
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
+import com.intellij.workspaceModel.codegen.deft.meta.ObjModule
 import com.intellij.workspaceModel.codegen.engine.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -41,7 +42,7 @@ object CodeWriter {
   @RequiresEdt
   suspend fun generate(
     project: Project, module: Module, sourceFolder: VirtualFile,
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean,
     targetFolderGenerator: () -> VirtualFile?
   ) {
     val ktClasses = HashMap<String, KtClass>()
@@ -63,9 +64,10 @@ object CodeWriter {
       val title = DevKitWorkspaceModelBundle.message("progress.title.generating.code")
       ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(title, project, null) { indicator ->
         indicator.text = DevKitWorkspaceModelBundle.message("progress.text.collecting.classes.metadata")
-        val objModules = loadObjModules(ktClasses, module, processAbstractTypes, explicitApiEnabled)
+        val objModules = loadObjModules(ktClasses, module, processAbstractTypes)
         val codeGenerator = serviceLoader.get()
-        val results = objModules.map { codeGenerator.generate(it) }
+
+        val results = generate(codeGenerator, objModules, explicitApiEnabled, isTestModule)
         val generatedCode = results.flatMap { it.generatedCode }
         val problems = results.flatMap { it.problems }
         WorkspaceCodegenProblemsProvider.getInstance(project).reportProblems(problems)
@@ -135,18 +137,22 @@ object CodeWriter {
     }, DevKitWorkspaceModelBundle.message("command.name.generate.code.for.workspace.entities.in", sourceFolder.name), null)
   }
 
-  private fun loadObjModules(
-    ktClasses: HashMap<String, KtClass>, module: Module,
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
-  ): List<CompiledObjModule> {
+  private fun loadObjModules(ktClasses: HashMap<String, KtClass>, module: Module, processAbstractTypes: Boolean): List<CompiledObjModule> {
     val packages = ktClasses.values.mapTo(LinkedHashSet()) { it.containingKtFile.packageFqName.asString() }
 
     val metaModelProvider: WorkspaceMetaModelProvider = WorkspaceMetaModelProviderImpl(
-      explicitApiEnabled = explicitApiEnabled,
       processAbstractTypes = processAbstractTypes,
       module.project
     )
     return packages.map { metaModelProvider.getObjModule(it, module) }
+  }
+
+  private fun generate(codeGenerator: CodeGenerator, objModules: List<CompiledObjModule>,
+                       explicitApiEnabled: Boolean, isTestModule: Boolean): List<GenerationResult> {
+    val generatorSettings = GeneratorSettings(explicitApiEnabled = explicitApiEnabled, testModeEnabled = isTestModule)
+    val entitiesImplementations = objModules.map { codeGenerator.generateEntitiesImplementation(it, generatorSettings) }
+    val metadataStorageImplementation = codeGenerator.generateMetadataStoragesImplementation(objModules, generatorSettings)
+    return entitiesImplementations + metadataStorageImplementation
   }
 
   private fun removeGeneratedCode(ktClasses: Map<String, KtClass>, genFolder: VirtualFile) {
@@ -378,4 +384,14 @@ object CodeWriter {
   private fun Iterable<KtFile>.withoutBigFiles(): Iterable<KtFile> {
     return filterNot { it.name == GENERATED_METADATA_STORAGE_FILE }
   }
+
+  private val ObjModule.isTestEntitiesPackage: Boolean
+    get() = name == TestEntities.CACHE_VERSION_PACKAGE || name == TestEntities.CURRENT_VERSION_PACKAGE
+}
+
+private object TestEntities {
+  private const val TEST_ENTITIES_PACKAGE = "com.intellij.platform.workspace.storage.testEntities.entities"
+
+  const val CACHE_VERSION_PACKAGE = "$TEST_ENTITIES_PACKAGE.cacheVersion"
+  const val CURRENT_VERSION_PACKAGE = "$TEST_ENTITIES_PACKAGE.currentVersion"
 }

@@ -4,10 +4,14 @@ package com.intellij.codeInsight;
 import com.intellij.codeInsight.annoPackages.AnnotationPackageSupport;
 import com.intellij.codeInsight.annoPackages.Jsr305Support;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.dataFlow.HardcodedContracts;
+import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -17,6 +21,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
@@ -36,12 +41,13 @@ import java.util.function.Function;
 
 import static com.intellij.codeInsight.AnnotationUtil.NOT_NULL;
 import static com.intellij.codeInsight.AnnotationUtil.NULLABLE;
+import static com.intellij.codeInspection.options.OptPane.*;
 
 @State(name = "NullableNotNullManager")
 public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element>, ModificationTracker {
   private static final String INSTRUMENTED_NOT_NULLS_TAG = "instrumentedNotNulls";
 
-  private AnnotationPackageSupport[] myAnnotationSupports;
+  private List<AnnotationPackageSupport> myAnnotationSupports;
 
   private Map<String, AnnotationPackageSupport> myDefaultNullables;
   private Map<String, AnnotationPackageSupport> myDefaultNotNulls;
@@ -73,7 +79,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   }
 
   private void updateDefaults() {
-    myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensions();
+    myAnnotationSupports = AnnotationPackageSupport.EP_NAME.getExtensionList();
     myDefaultNullables = StreamEx.of(myAnnotationSupports)
       .cross(s -> s.getNullabilityAnnotations(Nullability.NULLABLE).stream()).invert().toMap();
     myDefaultNotNulls = StreamEx.of(myAnnotationSupports)
@@ -423,5 +429,43 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
       return getNullityDefault(module, targetTypes, element, false);
     }
     return null;
+  }
+  
+  public @NotNull OptionController getOptionController() {
+    return OptionController.fieldsOf(this)
+      .withRootPane(() -> pane(
+        tabs(
+          tab(NullableNotNullDialog.NULLABLE,
+              string("myDefaultNullable", JavaBundle.message("nullable.notnull.annotation.used.label")),
+              stringList("myNullables", JavaBundle.message("nullable.notnull.annotations.panel.title", "Nullable"),
+                         new JavaClassValidator().annotationsOnly())),
+          tab(NullableNotNullDialog.NOT_NULL,
+              string("myDefaultNotNull", JavaBundle.message("nullable.notnull.annotation.used.label")),
+              stringList("myNotNulls", JavaBundle.message("nullable.notnull.annotations.panel.title", "NotNull"),
+                         new JavaClassValidator().annotationsOnly())
+          ))));
+  }
+
+  /**
+   * Provides options to setup nullability annotations:
+   * <ul>
+   *   <li>NullableNotNullManager.myNullables - list of nullable annotation fqns</li>
+   *   <li>NullableNotNullManager.myNotNulls - list of notnull annotation fqns</li>
+   *   <li>NullableNotNullManager.myDefaultNullable - default nullable annotation fqn</li>
+   *   <li>NullableNotNullManager.myDefaultNotNull - default notnull annotation fqn</li>
+   * </ul>
+   */
+  public static class Provider implements OptionControllerProvider {
+    @Override
+    public @NotNull OptionController forContext(@NotNull PsiElement context) {
+      Project project = context.getProject();
+      return ((NullableNotNullManagerImpl)getInstance(project)).getOptionController()
+        .onValueSet((bindId, value) -> ProjectInspectionProfileManager.getInstance(project).fireProfileChanged());
+    }
+
+    @Override
+    public @NotNull String name() {
+      return "NullableNotNullManager";
+    }
   }
 }

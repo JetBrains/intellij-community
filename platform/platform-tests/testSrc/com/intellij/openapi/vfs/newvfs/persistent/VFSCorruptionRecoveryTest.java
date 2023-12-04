@@ -93,6 +93,12 @@ public class VFSCorruptionRecoveryTest {
       .filter(name -> !name.startsWith("records.dat"))
       .toList();
 
+    //contentHashes recovered by VFSContentStorage internally, without involving VFS Recoverers,
+    // hence this recovery is not reported in .recoverInfo()
+    List<String> vfsFilesSilentlyRecovering = vfsCrucialDataFilesNames.stream()
+      .filter(name -> name.startsWith("contentHashes.dat"))
+      .toList();
+
     List<String> filesCorruptionsVFSCantOvercome = new ArrayList<>();
     List<String> filesCorruptionsVFSCantDetect = new ArrayList<>();
     int vfsFilesCount = vfsFilesToTryCorrupt.size();
@@ -137,8 +143,9 @@ public class VFSCorruptionRecoveryTest {
       filesCorruptionsVFSCantOvercome.isEmpty()
     );
 
+    filesCorruptionsVFSCantDetect.removeAll(vfsFilesSilentlyRecovering);
     assertTrue(
-      "VFS must detect if any of " + filesCorruptionsVFSCantDetect + " is corrupted",
+      "VFS must DETECT corruptions in any of " + filesCorruptionsVFSCantDetect + " files (and recover, and report recovery)",
       filesCorruptionsVFSCantDetect.isEmpty()
     );
   }
@@ -194,7 +201,8 @@ public class VFSCorruptionRecoveryTest {
     }
 
     assertTrue(
-      "VFS is not rebuilt if one of " + filesNotLeadingToVFSRebuild + " is deleted",
+      "VFS must be rebuilt when each of it's crucial files is deleted" +
+      " -- but deleting of " + filesNotLeadingToVFSRebuild + " didn't lead to rebuild",
       filesNotLeadingToVFSRebuild.isEmpty()
     );
   }

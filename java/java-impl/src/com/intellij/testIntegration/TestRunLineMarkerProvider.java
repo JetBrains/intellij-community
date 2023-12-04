@@ -3,7 +3,10 @@ package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.TestStateStorage;
+import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.psi.PsiClass;
@@ -25,21 +28,36 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
   public Info getInfo(@NotNull PsiElement e) {
     if (isIdentifier(e)) {
       PsiElement element = e.getParent();
-      if (element instanceof PsiClass) {
-        if (!isTestClass((PsiClass)element)) return null;
-        String url = "java:suite://" + ClassUtil.getJVMClassName((PsiClass)element);
+      if (element instanceof PsiClass psiClass) {
+        if (!isTestClass(psiClass)) return null;
+        String url = "java:suite://" + ClassUtil.getJVMClassName(psiClass);
         TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
-        return getInfo(state, true, PsiMethodUtil.findMainInClass((PsiClass)element) != null ? 1 : 0);
+        return getInfo(state, true, PsiMethodUtil.findMainInClass(psiClass) != null ? 1 : 0);
       }
-      if (element instanceof PsiMethod) {
-        PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-        if (!isTestMethod(containingClass, (PsiMethod)element)) return null;
-        String url = "java:test://" + ClassUtil.getJVMClassName(containingClass) + "/" + ((PsiMethod)element).getName();
+      if (element instanceof PsiMethod psiMethod) {
+        PsiClass containingClass = PsiTreeUtil.getParentOfType(psiMethod, PsiClass.class);
+        if (!isTestMethod(containingClass, psiMethod)) return null;
+        if (isIgnoredForGradleConfiguration(containingClass, psiMethod)) return null;
+        String url = "java:test://" + ClassUtil.getJVMClassName(containingClass) + "/" + psiMethod.getName();
         TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
         return getInfo(state, false, 0);
       }
     }
     return null;
+  }
+
+  private static boolean isIgnoredForGradleConfiguration(@Nullable PsiClass psiClass, @Nullable PsiMethod psiMethod) {
+    if (psiClass == null || psiMethod == null) return false;
+    RunnerAndConfigurationSettings currentConfiguration = RunManager.getInstance(psiClass.getProject()).getSelectedConfiguration();
+    if (currentConfiguration == null) return false;
+    ConfigurationType configurationType = currentConfiguration.getType();
+    if (!configurationType.getId().equals("GradleRunConfiguration")) return false;
+    for (TestFramework testFramework : TestFramework.EXTENSION_NAME.getExtensionList()) {
+      if (testFramework.isTestClass(psiClass) && testFramework.isIgnoredMethod(psiMethod)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isTestClass(PsiClass clazz) {

@@ -1,9 +1,9 @@
 package sample
 
-<!ACTUAL_CLASSIFIER_MUST_HAVE_THE_SAME_MEMBERS_AS_NON_FINAL_EXPECT_CLASSIFIER_WARNING!>actual interface <!LINE_MARKER("descr='Has expects in common-2 module'")!>A_Common<!><!> {
+actual interface <!LINE_MARKER("descr='Has expects in common-2 module'")!>A_Common<!> {
     actual fun <!LINE_MARKER("descr='Has expects in common-2 module'")!>common_1_A<!>()
     actual fun <!LINE_MARKER("descr='Has expects in common-2 module'")!>common_2_A<!>()
-    fun <!NON_ACTUAL_MEMBER_DECLARED_IN_EXPECT_NON_FINAL_CLASSIFIER_ACTUALIZATION_WARNING!>jvm_A<!>()
+    fun jvm_A()
 }
 
 interface Case_2_3 : B {

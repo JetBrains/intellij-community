@@ -163,6 +163,7 @@
   <technology name="jetbrains-annotations" root="org.jetbrains.annotations"/>
   <technology name="jetbrains-compose" root="org.jetbrains.compose"/>
   <technology name="jhipster" root="io.github.jhipster"/>
+  <technology name="jhipster" root="tech.jhipster"/>
   <technology name="jmockit" root="mockit"/>
   <technology name="jodd-db" root="jodd.db"/>
   <technology name="jooby" root="org.jooby"/>

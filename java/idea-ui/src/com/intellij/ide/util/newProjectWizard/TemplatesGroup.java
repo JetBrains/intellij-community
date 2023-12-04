@@ -3,6 +3,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.projectWizard.ProjectCategory;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.PromoModuleBuilder;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.util.Comparing;
@@ -120,5 +121,9 @@ public final class TemplatesGroup implements Comparable<TemplatesGroup> {
 
   public void setPluginInfo(PluginInfo pluginInfo) {
     myPluginInfo = pluginInfo;
+  }
+
+  public boolean isPromo() {
+    return myModuleBuilder instanceof PromoModuleBuilder;
   }
 }

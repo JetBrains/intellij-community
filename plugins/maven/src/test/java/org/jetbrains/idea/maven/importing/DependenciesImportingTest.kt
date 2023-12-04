@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing
 
+import com.intellij.maven.testFramework.InstantImportCompatible
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
@@ -21,8 +22,7 @@ import java.io.File
 import java.util.*
 
 class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()
@@ -30,6 +30,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testLibraryDependency() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -145,6 +146,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testPreservingDependenciesOrder() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -169,6 +171,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testPreservingDependenciesOrderWithTestDependencies() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -241,6 +244,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testInterModuleDependencies() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -360,6 +364,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testInterModuleDependenciesWithoutModuleVersions() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -440,6 +445,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testInterModuleDependenciesWithoutModuleGroup() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -705,6 +711,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDependencyOnSelf() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -882,6 +889,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDependenciesAreNotExported() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -962,7 +970,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       """.trimIndent())
 
     importProjectAsync()
-    resolveDependenciesAndImport()
     assertModules("project", "m1", "m2")
 
     assertModuleLibDeps("m2", "Maven: group:id:1")
@@ -993,7 +1000,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                       </dependency>
                     </dependencies>
                     """.trimIndent())
-    resolveDependenciesAndImport()
 
     assertModules("project")
     assertModuleLibDep("project", "Maven: xml-apis:xml-apis:1.0.b2")
@@ -1179,6 +1185,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testPropertyInTheModuleDependency() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1343,6 +1350,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                            </dependency>
                          </dependencies>
                        </dependencyManagement>
+       
                        <modules>
                          <module>m</module>
                        </modules>
@@ -1495,6 +1503,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNotCreateSameLibraryTwice() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1552,6 +1561,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNotResetUserLibraryDependencies() = runBlocking {
     if (!supportsKeepingManualChanges()) return@runBlocking
 
@@ -1726,11 +1736,13 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0-javadoc.jar!/")
 
-    repositoryPath = File(myDir, "__repo").path
+    waitForImportWithinTimeout {
+      repositoryPath = File(myDir, "__repo").path
+      Unit
+    }
     projectsManager.embeddersManager.reset() // to recognize repository change
 
     updateAllProjects()
-    projectsManager.waitForPluginResolution()
 
     assertModuleLibDep("project", "Maven: junit:junit:4.0",
                        "jar://" + getRepositoryPath() + "/junit/junit/4.0/junit-4.0.jar!/",
@@ -1760,11 +1772,13 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-sources.jar!/",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-javadoc.jar!/")
 
-    repositoryPath = File(myDir, "__repo").path
+    waitForImportWithinTimeout {
+      repositoryPath = File(myDir, "__repo").path
+      Unit
+    }
     projectsManager.embeddersManager.reset() // to recognize repository change
 
     updateAllProjects()
-    projectsManager.waitForPluginResolution()
 
     assertModuleLibDep("project", "Maven: org.testng:testng:jdk15:5.8",
                        "jar://" + getRepositoryPath() + "/org/testng/testng/5.8/testng-5.8-jdk15.jar!/",
@@ -1773,6 +1787,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNotPopulateSameRootEntriesOnEveryImport() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -1976,6 +1991,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNoRemoveUnusedLibraryIfItWasChanged() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -2056,6 +2072,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
+  @InstantImportCompatible
   fun testDoNoRemoveUnusedUserProjectLibraries() = runBlocking {
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -2298,33 +2315,46 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
     repositoryPath = repoPath
 
     createProjectPom("""
-                       <groupId>test</groupId><artifactId>project</artifactId><version>1</version><packaging>pom</packaging><modules>  <module>m</module></modules>     <dependencyManagement>
-                                <dependencies>
-                                     <dependency>
-                                        <artifactId>asm</artifactId>
-                                        <groupId>asm</groupId>
-                                        <version>[2.2.1]</version>
-                                        <scope>runtime</scope>
-                                    </dependency>
-                                    <dependency>
-                                        <artifactId>asm-attrs</artifactId>
-                                        <groupId>asm</groupId>
-                                        <version>[2.2.1]</version>
-                                        <scope>runtime</scope>
-                                    </dependency>
-                                </dependencies>
-                            </dependencyManagement>
-                            """.trimIndent())
+      <groupId>test</groupId>
+      <artifactId>project</artifactId>
+      <version>1</version>
+      <packaging>pom</packaging>
+      <modules>
+        <module>m</module>
+      </modules>
+      <dependencyManagement>
+        <dependencies>
+          <dependency>
+            <artifactId>asm</artifactId>
+            <groupId>asm</groupId>
+            <version>[2.2.1]</version>
+            <scope>runtime</scope>
+          </dependency>
+          <dependency>
+            <artifactId>asm-attrs</artifactId>
+            <groupId>asm</groupId>
+            <version>[2.2.1]</version>
+            <scope>runtime</scope>
+          </dependency>
+        </dependencies>
+      </dependencyManagement>""".trimIndent())
 
     createModulePom("m", """
-      <groupId>test</groupId><artifactId>m</artifactId><version>1</version>    <parent>
-              <groupId>test</groupId>
-              <artifactId>project</artifactId>
-              <version>1</version>
-          </parent><dependencies>  <dependency>            <artifactId>asm-attrs</artifactId>
-                  <groupId>asm</groupId>
-                  <scope>test</scope>  </dependency></dependencies>
-                  """.trimIndent())
+      <groupId>test</groupId>
+      <artifactId>m</artifactId>
+      <version>1</version>    
+      <parent>
+        <groupId>test</groupId>
+        <artifactId>project</artifactId>
+        <version>1</version>
+      </parent>
+      <dependencies>
+        <dependency>
+          <artifactId>asm-attrs</artifactId>
+          <groupId>asm</groupId>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>""".trimIndent())
 
     importProjectAsync()
 
@@ -2436,8 +2466,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       rootModel.commit()
     }
 
-    resolveDependenciesAndImport()
-
     // JDK position was saved
     val orderEntries = ModuleRootManager.getInstance(getModule("m1")).getOrderEntries()
     assert(orderEntries.size == 4)
@@ -2481,8 +2509,6 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
       rootModel.rearrangeOrderEntries(arrayOf(orderEntries[2], orderEntries[3], orderEntries[0], orderEntries[1]))
       rootModel.commit()
     }
-
-    resolveDependenciesAndImport()
 
     // JDK position was saved
     val orderEntries = ModuleRootManager.getInstance(getModule("m1")).getOrderEntries()

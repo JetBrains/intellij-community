@@ -51,7 +51,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
     myView.setMinimumSize(new JBDimension(100, 100));
     myPanel = createPanel();
-    setOKButtonText(CommonBundle.getCancelButtonText());
+    setOKButtonText(CommonBundle.getCloseButtonText());
 
     init();
 

@@ -371,7 +371,7 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       }
     }
 
-    private void printText(@NotNull Printer printer, @NotNull String text, @NotNull ConsoleViewContentType contentType) {
+    private static void printText(@NotNull Printer printer, @NotNull String text, @NotNull ConsoleViewContentType contentType) {
       if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
         printer.printWithAnsiColoring(text, ProcessOutputTypes.STDOUT);
       }

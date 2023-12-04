@@ -1,86 +1,104 @@
-from typing import Any
+from _typeshed import Incomplete, Unused
+from typing import ClassVar
+from typing_extensions import Literal, TypeAlias
 
+from openpyxl import _VisibilityType
+from openpyxl.descriptors.base import Alias, Bool, Integer, NoneSet, String, Typed, _ConvertibleToBool, _ConvertibleToInt
+from openpyxl.descriptors.excel import ExtensionList
+from openpyxl.descriptors.nested import NestedString
 from openpyxl.descriptors.serialisable import Serialisable
+from openpyxl.workbook.defined_name import DefinedNameList
+from openpyxl.workbook.function_group import FunctionGroupList
+from openpyxl.workbook.properties import CalcProperties, FileVersion, WorkbookProperties
+from openpyxl.workbook.protection import FileSharing, WorkbookProtection
+from openpyxl.workbook.smart_tags import SmartTagList, SmartTagProperties
+from openpyxl.workbook.web import WebPublishing, WebPublishObjectList
+
+_WorkbookPackageConformance: TypeAlias = Literal["strict", "transitional"]
 
 class FileRecoveryProperties(Serialisable):
-    tagname: str
-    autoRecover: Any
-    crashSave: Any
-    dataExtractLoad: Any
-    repairLoad: Any
+    tagname: ClassVar[str]
+    autoRecover: Bool[Literal[True]]
+    crashSave: Bool[Literal[True]]
+    dataExtractLoad: Bool[Literal[True]]
+    repairLoad: Bool[Literal[True]]
     def __init__(
         self,
-        autoRecover: Any | None = ...,
-        crashSave: Any | None = ...,
-        dataExtractLoad: Any | None = ...,
-        repairLoad: Any | None = ...,
+        autoRecover: _ConvertibleToBool | None = None,
+        crashSave: _ConvertibleToBool | None = None,
+        dataExtractLoad: _ConvertibleToBool | None = None,
+        repairLoad: _ConvertibleToBool | None = None,
     ) -> None: ...
 
 class ChildSheet(Serialisable):
-    tagname: str
-    name: Any
-    sheetId: Any
-    state: Any
-    id: Any
-    def __init__(self, name: Any | None = ..., sheetId: Any | None = ..., state: str = ..., id: Any | None = ...) -> None: ...
-
-class PivotCache(Serialisable):
-    tagname: str
-    cacheId: Any
-    id: Any
-    def __init__(self, cacheId: Any | None = ..., id: Any | None = ...) -> None: ...
-
-class WorkbookPackage(Serialisable):
-    tagname: str
-    conformance: Any
-    fileVersion: Any
-    fileSharing: Any
-    workbookPr: Any
-    properties: Any
-    workbookProtection: Any
-    bookViews: Any
-    sheets: Any
-    functionGroups: Any
-    externalReferences: Any
-    definedNames: Any
-    calcPr: Any
-    oleSize: Any
-    customWorkbookViews: Any
-    pivotCaches: Any
-    smartTagPr: Any
-    smartTagTypes: Any
-    webPublishing: Any
-    fileRecoveryPr: Any
-    webPublishObjects: Any
-    extLst: Any
-    Ignorable: Any
-    __elements__: Any
+    tagname: ClassVar[str]
+    name: String[Literal[False]]
+    sheetId: Integer[Literal[False]]
+    state: NoneSet[_VisibilityType]
+    id: Incomplete
     def __init__(
         self,
-        conformance: Any | None = ...,
-        fileVersion: Any | None = ...,
-        fileSharing: Any | None = ...,
-        workbookPr: Any | None = ...,
-        workbookProtection: Any | None = ...,
-        bookViews=...,
-        sheets=...,
-        functionGroups: Any | None = ...,
-        externalReferences=...,
-        definedNames: Any | None = ...,
-        calcPr: Any | None = ...,
-        oleSize: Any | None = ...,
-        customWorkbookViews=...,
-        pivotCaches=...,
-        smartTagPr: Any | None = ...,
-        smartTagTypes: Any | None = ...,
-        webPublishing: Any | None = ...,
-        fileRecoveryPr: Any | None = ...,
-        webPublishObjects: Any | None = ...,
-        extLst: Any | None = ...,
-        Ignorable: Any | None = ...,
+        name: str,
+        sheetId: _ConvertibleToInt,
+        state: _VisibilityType | Literal["none"] | None = "visible",
+        id: Incomplete | None = None,
+    ) -> None: ...
+
+class PivotCache(Serialisable):
+    tagname: ClassVar[str]
+    cacheId: Integer[Literal[False]]
+    id: Incomplete
+    def __init__(self, cacheId: _ConvertibleToInt, id: Incomplete | None = None) -> None: ...
+
+class WorkbookPackage(Serialisable):
+    tagname: ClassVar[str]
+    conformance: NoneSet[_WorkbookPackageConformance]
+    fileVersion: Typed[FileVersion, Literal[True]]
+    fileSharing: Typed[FileSharing, Literal[True]]
+    workbookPr: Typed[WorkbookProperties, Literal[True]]
+    properties: Alias
+    workbookProtection: Typed[WorkbookProtection, Literal[True]]
+    bookViews: Incomplete
+    sheets: Incomplete
+    functionGroups: Typed[FunctionGroupList, Literal[True]]
+    externalReferences: Incomplete
+    definedNames: Typed[DefinedNameList, Literal[True]]
+    calcPr: Typed[CalcProperties, Literal[True]]
+    oleSize: NestedString[Literal[True]]
+    customWorkbookViews: Incomplete
+    pivotCaches: Incomplete
+    smartTagPr: Typed[SmartTagProperties, Literal[True]]
+    smartTagTypes: Typed[SmartTagList, Literal[True]]
+    webPublishing: Typed[WebPublishing, Literal[True]]
+    fileRecoveryPr: Typed[FileRecoveryProperties, Literal[True]]
+    webPublishObjects: Typed[WebPublishObjectList, Literal[True]]
+    extLst: Typed[ExtensionList, Literal[True]]
+    Ignorable: NestedString[Literal[True]]
+    __elements__: ClassVar[tuple[str, ...]]
+    def __init__(
+        self,
+        conformance: _WorkbookPackageConformance | Literal["none"] | None = None,
+        fileVersion: FileVersion | None = None,
+        fileSharing: FileSharing | None = None,
+        workbookPr: WorkbookProperties | None = None,
+        workbookProtection: WorkbookProtection | None = None,
+        bookViews=(),
+        sheets=(),
+        functionGroups: FunctionGroupList | None = None,
+        externalReferences=(),
+        definedNames: DefinedNameList | None = None,
+        calcPr: CalcProperties | None = None,
+        oleSize: object = None,
+        customWorkbookViews=(),
+        pivotCaches=(),
+        smartTagPr: SmartTagProperties | None = None,
+        smartTagTypes: SmartTagList | None = None,
+        webPublishing: WebPublishing | None = None,
+        fileRecoveryPr: FileRecoveryProperties | None = None,
+        webPublishObjects: WebPublishObjectList | None = None,
+        extLst: Unused = None,
+        Ignorable: Unused = None,
     ) -> None: ...
     def to_tree(self): ...
     @property
-    def active(self): ...
-    @property
-    def pivot_caches(self): ...
+    def active(self) -> int: ...

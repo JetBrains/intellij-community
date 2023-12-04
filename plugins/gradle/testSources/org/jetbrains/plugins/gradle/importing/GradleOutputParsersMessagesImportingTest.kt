@@ -1,50 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
-import com.intellij.openapi.externalSystem.importing.ImportSpec
-import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.UsefulTestCase
 import groovy.json.StringEscapeUtils.escapeJava
 import org.assertj.core.api.Assertions.assertThat
-import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.mavenRepository
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.junit.Test
 
 @Suppress("GrUnresolvedAccess")
-open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImportingTestCase() {
-
-  val itemLinePrefix by lazy { if (currentGradleVersion < GradleVersion.version("4.8")) " " else "-" }
-  val isPerTaskOutputSupported by lazy { currentGradleVersion >= GradleVersion.version("4.7") }
-  private var enableStackTraceImportingOption = false
-  private var quietLogLevelImportingOption = false
-
-  // do not inject repository
-  override fun injectRepo(config: String): String = config
-
-  override fun createImportSpec(): ImportSpec {
-    val baseImportSpec = super.createImportSpec()
-    val baseArguments = baseImportSpec.arguments
-    val importSpecBuilder = ImportSpecBuilder(baseImportSpec)
-    if (enableStackTraceImportingOption) {
-      if (baseArguments == null || !baseArguments.contains("--stacktrace")) {
-        importSpecBuilder.withArguments("${baseArguments} --stacktrace")
-      }
-    }
-    else {
-      if (baseArguments != null) {
-        importSpecBuilder.withArguments(baseArguments.replace("--stacktrace", ""))
-      }
-    }
-    if (quietLogLevelImportingOption) {
-      if (baseArguments == null || !baseArguments.contains("--quiet")) {
-        importSpecBuilder.withArguments("${baseArguments} --quiet")
-      }
-    }
-    return importSpecBuilder.build()
-  }
+class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImportingTestCase() {
 
   @Test
   fun `test build script errors on Sync`() {
@@ -55,14 +21,13 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                          "}")
     importProject("subprojects { apply plugin: 'java' }")
 
-    val expectedExecutionTree: String
-    when {
-      currentGradleVersion < GradleVersion.version("2.14") -> expectedExecutionTree =
+    val expectedExecutionTree = when {
+      isGradleOlderThan("2.14") ->
         "-\n" +
         " -failed\n" +
         "  -build.gradle\n" +
         "   Could not find method ghostConf() for arguments [project ':api'] on project ':impl'"
-      else -> expectedExecutionTree =
+      else ->
         "-\n" +
         " -failed\n" +
         "  -build.gradle\n" +
@@ -127,17 +92,17 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
     val className = if (isGradleNewerOrSameAs("6.8")) "class 'example.SomePlugin'." else "[class 'example.SomePlugin']"
 
-    val tryText = if (isGradleNewerOrSameAs("8.2")) {
+    val tryText = when {
+      isGradleNewerOrSameAs("8.2") ->
                               """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
                                  |> Run with --scan to get full insights.
                                  |> Get more help at https://help.gradle.org."""
-
-    } else if (isGradleNewerOrSameAs("7.4")) {
+      isGradleNewerOrSameAs("7.4") ->
                               """|> Run with --stacktrace option to get the stack trace.
                                  |> Run with --debug option to get more log output.
                                  |> Run with --scan to get full insights."""
-    } else {
+      else ->
       """|Run with --stacktrace option to get the stack trace. Run with --debug option to get more log output.$tryScanSuggestion"""
     }
     assertSyncViewSelectedNode("Something's wrong!",
@@ -257,6 +222,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     currentExternalProjectSettings.isResolveModulePerSourceSet = true
     // check unresolved dependency for disabled offline mode
     GradleSettings.getInstance(myProject).isOfflineWork = false
+    val itemLinePrefix = if (isGradleOlderThan("4.8")) " " else "-"
     importProject {
       withJavaPlugin()
       withRepository {
@@ -289,11 +255,11 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
   @Test
   fun `test unresolved build script dependencies errors on Sync`() {
-    val requiredByProject = if (currentGradleVersion < GradleVersion.version("3.1")) ":project:unspecified" else "project :"
+    val requiredByProject = if (isGradleOlderThan("3.1")) ":project:unspecified" else "project :"
     val artifacts = when {
-      currentGradleVersion < GradleVersion.version("4.0") -> "dependencies"
-      currentGradleVersion < GradleVersion.version("4.6") || currentGradleVersion >= GradleVersion.version("7.4") -> "files"
-      else -> "artifacts"
+      isGradleOlderThan("4.0") -> "dependencies"
+      isGradleNewerOrSameAs("4.6") && isGradleOlderThan("7.4") -> "artifacts"
+      else -> "files"
     }
 
     // check unresolved dependency w/o repositories
@@ -357,6 +323,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     assertSyncViewRerunActions() // quick fix above uses Sync view 'rerun' action to restart import with changes offline mode
 
     // check unresolved dependency for disabled offline mode
+    val itemLinePrefix = if (isGradleOlderThan("4.8")) " " else "-"
     GradleSettings.getInstance(myProject).isOfflineWork = false
     importProject {
       withBuildScriptRepository {
@@ -527,16 +494,6 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                   "Message with level LIFECYCLE",
                   "Message with level WARN",
                   "Message with level QUIET")
-    }
-  }
-
-  companion object {
-
-    @JvmStatic
-    protected val MAVEN_REPOSITORY = if (UsefulTestCase.IS_UNDER_TEAMCITY) {
-      "https://repo.labs.intellij.net/repo1"
-    } else {
-      "https://repo1.maven.org/maven2"
     }
   }
 }

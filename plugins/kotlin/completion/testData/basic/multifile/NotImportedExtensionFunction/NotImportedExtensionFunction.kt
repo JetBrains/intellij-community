@@ -9,5 +9,7 @@ fun firstFun() {
 // EXIST: helloFun
 // EXIST: helloWithParams
 // EXIST: helloFunGeneric
-// EXIST: helloDynamic
+// ABSENT: helloDynamic
 // ABSENT: helloFake
+// IGNORE_K1
+// Note: helloDynamic() is anyway not allowed to be called

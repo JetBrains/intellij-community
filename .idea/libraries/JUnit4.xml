@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="JUnit4" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="junit:junit:4.13.2">
+    <properties maven-id="junit:junit:4.13.2">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/junit/junit/4.13.2/junit-4.13.2.jar">
           <sha256sum>8e495b634469d64fb8acfa3495a065cbacc8a0fff55ce1e31007be4c16dc57d3</sha256sum>

@@ -6,7 +6,6 @@ import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBas
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
@@ -200,11 +199,11 @@ class AbstractEntitiesTest {
   @Test
   fun `entity changes visible in mutable storage`() {
     var builder = MutableEntityStorage.create()
-    val entity = ParentNullableEntity("ParentData", MySource)
+    val entity = ParentEntity("ParentData", MySource)
     builder.addEntity(entity)
 
     builder = MutableEntityStorage.from(builder.toSnapshot())
-    val resultEntity = builder.entities(ParentNullableEntity::class.java).single()
+    val resultEntity = builder.entities(ParentEntity::class.java).single()
     resultEntity.parentData
     var firstEntityData = (entity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
     var secondEntityData = (resultEntity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
@@ -214,7 +213,7 @@ class AbstractEntitiesTest {
     builder.modifyEntity(resultEntity) {
       this.parentData = "NewParentData"
     }
-    val anotherResult = builder.entities(ParentNullableEntity::class.java).single()
+    val anotherResult = builder.entities(ParentEntity::class.java).single()
     assertEquals(resultEntity.parentData, anotherResult.parentData)
 
     firstEntityData = (resultEntity as ModifiableWorkspaceEntityBase<*, *>).getEntityData()
@@ -225,7 +224,7 @@ class AbstractEntitiesTest {
     builder.modifyEntity(anotherResult) {
       this.parentData = "AnotherParentData"
     }
-    val oneMoreResult = builder.entities(ParentNullableEntity::class.java).single()
+    val oneMoreResult = builder.entities(ParentEntity::class.java).single()
     assertEquals(resultEntity.parentData, anotherResult.parentData)
     assertEquals(oneMoreResult.parentData, anotherResult.parentData)
     assertEquals(oneMoreResult.parentData, resultEntity.parentData)

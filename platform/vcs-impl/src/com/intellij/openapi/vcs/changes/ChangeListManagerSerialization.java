@@ -185,17 +185,13 @@ final class ChangeListManagerSerialization {
     String plainPath = changeNode.getAttributeValue(side.getPathKey());
     String escapedPath = changeNode.getAttributeValue(side.getEscapedPathKey());
     String path = escapedPath != null ? XmlStringUtil.unescapeIllegalXmlChars(escapedPath) : plainPath;
+    String isDirValue = changeNode.getAttributeValue(side.getIsDirKey());
     if (StringUtil.isEmpty(path)) return null;
 
-    String value = changeNode.getAttributeValue(side.getIsDirKey());
-    if (value != null) {
-      boolean isDirectory = Boolean.parseBoolean(value);
-      return new FakeRevision(project, VcsUtil.getFilePath(path, isDirectory));
-    }
-    else {
-      // old-style config. Will get "isDirectory" flag from VFS.
-      return new FakeRevision(project, VcsUtil.getFilePath(path));
-    }
+    boolean isCurrentRevision = side == RevisionSide.AFTER;
+    boolean isDirectory = isDirValue != null && Boolean.parseBoolean(isDirValue);
+    FilePath filePath = VcsUtil.getFilePath(path, isDirectory);
+    return new FakeRevision(project, filePath, isCurrentRevision);
   }
 
   private enum RevisionSide {

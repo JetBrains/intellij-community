@@ -103,12 +103,14 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
   protected fun generateAndCompare(
     dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path,
     pathToPackage: String = ".",
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean,
+    isTestModule: Boolean
   ) {
     val (srcRoot, genRoot) = generateCode(
       relativePathToEntitiesDirectory = ".",
       processAbstractTypes = processAbstractTypes,
-      explicitApiEnabled = explicitApiEnabled
+      explicitApiEnabled = explicitApiEnabled,
+      isTestModule = isTestModule
     )
 
     val srcPackageDir = srcRoot.findFileByRelativePath(pathToPackage) ?: error("Cannot find $pathToPackage under $srcRoot")
@@ -136,12 +138,17 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
 
   protected fun generateCode(
     relativePathToEntitiesDirectory: String,
-    processAbstractTypes: Boolean, explicitApiEnabled: Boolean
+    processAbstractTypes: Boolean, explicitApiEnabled: Boolean, isTestModule: Boolean
   ): Pair<VirtualFile, VirtualFile> {
     val srcRoot = myFixture.findFileInTempDir(relativePathToEntitiesDirectory)
     val genRoot = myFixture.tempDirFixture.findOrCreateDir("gen/$relativePathToEntitiesDirectory")
     runBlocking {
-      CodeWriter.generate(project, module, srcRoot, processAbstractTypes = processAbstractTypes, explicitApiEnabled = explicitApiEnabled) { genRoot }
+      CodeWriter.generate(
+        project, module, srcRoot,
+        processAbstractTypes = processAbstractTypes,
+        explicitApiEnabled = explicitApiEnabled,
+        isTestModule = isTestModule
+      ) { genRoot }
       FileDocumentManager.getInstance().saveAllDocuments()
     }
     return srcRoot to genRoot

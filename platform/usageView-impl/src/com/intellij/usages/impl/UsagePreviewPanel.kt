@@ -36,6 +36,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -51,7 +52,6 @@ import com.intellij.usages.UsageContextPanel
 import com.intellij.usages.UsageView
 import com.intellij.usages.UsageViewPresentation
 import com.intellij.usages.similarity.clustering.ClusteringSearchSession
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -504,6 +504,9 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     private val PREVIEW_EDITOR_FLAG = Key.create<UsagePreviewPanel>("PREVIEW_EDITOR_FLAG")
     @Contract("null -> !null")
     private fun cannotPreviewMessage(infos: List<UsageInfo>?): @NlsContexts.StatusText String? {
+      if (infos == null) {
+        return UsageViewBundle.message("usage.preview.isnt.available")
+      }
       if (ContainerUtil.isEmpty(infos)) {
         return UsageViewBundle.message("select.the.usage.to.preview")
       }
@@ -525,7 +528,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
     @RequiresReadLock
     @RequiresBackgroundThread
     @JvmStatic
-    fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>) = cannotPreviewMessage(infos) == null
+    fun isOneAndOnlyOnePsiFileInUsages(infos: List<UsageInfo>?) = cannotPreviewMessage(infos) == null
 
     private fun isOnlyGroupNodesSelected(infos: List<UsageInfo>, groupNodes: Set<GroupNode>): Boolean {
       return infos.isEmpty() && !groupNodes.isEmpty()

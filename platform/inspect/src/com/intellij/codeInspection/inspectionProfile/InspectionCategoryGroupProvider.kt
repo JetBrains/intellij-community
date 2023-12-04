@@ -16,7 +16,7 @@ class InspectionCategoryGroupProvider : InspectionGroupProvider {
 
       override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
         return try {
-          tool.groupPath.escapeToolGroupPath().joinToString("/").startsWith(category)
+          category.isAncestor(tool.groupPath.makeCategoryId())
         }
         catch (e: AssertionError) {
           false
@@ -26,12 +26,18 @@ class InspectionCategoryGroupProvider : InspectionGroupProvider {
   }
 }
 
-fun Array<String>.escapeToolGroupPath(): List<String> {
-  return map { escapeToolGroupPathElement(it) }
+private fun String.isAncestor(categoryId: String): Boolean {
+  if (this.isEmpty() || categoryId.isEmpty()) return false
+  val normalizedAncestor = this.removeSuffix("/") + "/"
+  val normalizedCategoryId = categoryId.removeSuffix("/") + "/"
+  return normalizedCategoryId.startsWith(normalizedAncestor)
 }
 
-private fun escapeToolGroupPathElement(path: String): String {
+fun Array<String>.makeCategoryId(): String {
+  return joinToString("/") { escapeToolGroupPathElement(it) }
+}
+
+fun escapeToolGroupPathElement(path: String): String {
   return path
-    .replace("""\""", """\\""")
-    .replace("""/""", """\/""")
+    .replace("/", "_")
 }

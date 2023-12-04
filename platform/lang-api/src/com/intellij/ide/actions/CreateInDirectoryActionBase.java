@@ -8,6 +8,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Supplier;
@@ -28,6 +29,12 @@ public abstract class CreateInDirectoryActionBase extends AnAction {
   protected CreateInDirectoryActionBase(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
                                         @NotNull Supplier<@NlsActions.ActionDescription String> dynamicDescription,
                                         Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
+
+  protected CreateInDirectoryActionBase(@NotNull Supplier<@NlsActions.ActionText String> dynamicText,
+                                        @Nullable Supplier<@NlsActions.ActionDescription String> dynamicDescription,
+                                        @Nullable Supplier<? extends @Nullable Icon> icon) {
     super(dynamicText, dynamicDescription, icon);
   }
 

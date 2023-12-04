@@ -26,8 +26,9 @@ internal class DocumentationToolWindowUI(
 
   val browser: DocumentationBrowser get() = ui.browser
 
-  val contentComponent: JComponent = JPanel(BorderLayout()).also {
-    it.add(ui.scrollPane, BorderLayout.CENTER)
+  val contentComponent: JComponent = JPanel(BorderLayout()).also { panel: JPanel ->
+    panel.add(ui.scrollPane, BorderLayout.CENTER)
+    ui.switcherToolbarComponent?.let { panel.add(it, BorderLayout.NORTH) }
   }
 
   val editorPane: DocumentationEditorPane get() = ui.editorPane
@@ -64,7 +65,6 @@ internal class DocumentationToolWindowUI(
     content.putUserData(TW_UI_KEY, this)
     Disposer.register(content, this)
     Disposer.register(this, ui)
-
     reusable = cs.updateContentTab(browser, content, asterisk = true).also {
       Disposer.register(this, it)
     }

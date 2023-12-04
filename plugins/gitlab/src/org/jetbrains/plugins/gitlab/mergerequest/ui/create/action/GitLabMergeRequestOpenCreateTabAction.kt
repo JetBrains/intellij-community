@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.gitlab.GitlabIcons
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
@@ -36,7 +37,11 @@ internal class GitLabMergeRequestOpenCreateTabAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    createMergeRequestAction(e)
+    val place = if (e.place == ActionPlaces.TOOLWINDOW_TITLE)
+      GitLabStatistics.ToolWindowOpenTabActionPlace.TOOLWINDOW
+    else
+      GitLabStatistics.ToolWindowOpenTabActionPlace.ACTION
+    openCreationTab(e, place)
   }
 }
 
@@ -45,12 +50,12 @@ internal class GitLabMergeRequestOpenCreateTabNotificationAction : NotificationA
   GitLabBundle.message("merge.request.create.notification.action.text")
 ) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-    createMergeRequestAction(e)
+    openCreationTab(e, GitLabStatistics.ToolWindowOpenTabActionPlace.NOTIFICATION)
   }
 }
 
-private fun createMergeRequestAction(event: AnActionEvent) {
+private fun openCreationTab(event: AnActionEvent, place: GitLabStatistics.ToolWindowOpenTabActionPlace) {
   event.project!!.service<GitLabToolWindowViewModel>().activateAndAwaitProject {
-    createMergeRequest()
+    showCreationTab(place)
   }
 }

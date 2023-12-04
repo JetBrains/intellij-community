@@ -377,7 +377,7 @@ public final class ActionUtil {
     }
     AnActionResult result = null;
     try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM);
-         AccessToken ignore2 = withActionThreadContext(actionId, event.getPlace(), event.getInputEvent())) {
+         AccessToken ignore2 = withActionThreadContext(actionId, event.getPlace(), event.getInputEvent(), component)) {
       performRunnable.run();
       result = AnActionResult.PERFORMED;
     }
@@ -572,6 +572,27 @@ public final class ActionUtil {
     };
   }
 
+  /**
+   * ActionManager.getInstance().getAction(id).registerCustomShortcutSet(shortcutSet, component) must not be used,
+   * because it erases shortcuts assigned to this action in keymap.
+   * <p>
+   * see {@link #wrap(AnAction)}
+   */
+  public static @NotNull AnAction wrap(@NotNull String actionId) {
+    AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action == null) throw new IllegalArgumentException("No action found with id='" + actionId + "'");
+    return action instanceof ActionGroup ? new ActionGroupWrapper((ActionGroup)action) :
+           new AnActionWrapper(action);
+  }
+
+  /**
+   * Wrapping allows altering template presentation and shortcut set without affecting the original action.
+   */
+  public static @NotNull AnAction wrap(@NotNull AnAction action) {
+    return action instanceof ActionGroup ? new ActionGroupWrapper((ActionGroup)action) :
+           new AnActionWrapper(action);
+  }
+
   public static @Nullable ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
     return KeymapUtil.getShortcutsForMnemonicCode(action.getTemplatePresentation().getMnemonic());
   }
@@ -662,16 +683,25 @@ public final class ActionUtil {
 
   @ApiStatus.Internal
   @RequiresBlockingContext
-  public static @Nullable String getActionThreadContext() {
-    ActionContextElement context = currentThreadContext().get(ActionContextElement.Companion);
-    return context == null ? null : context.getActionId();
+  public static @Nullable ActionContextElement getActionThreadContext() {
+    return currentThreadContext().get(ActionContextElement.Companion);
+  }
+
+  private static final Key<ActionContextElement> ACTION_CONTEXT_ELEMENT_KEY = Key.create("ACTION_CONTEXT_ELEMENT_KEY");
+
+  @ApiStatus.Internal
+  public static void initActionContextForComponent(@NotNull JComponent component) {
+    ClientProperty.put(component, ACTION_CONTEXT_ELEMENT_KEY, getActionThreadContext());
   }
 
   private static @NotNull AccessToken withActionThreadContext(@NotNull String actionId,
                                                               @NotNull String place,
-                                                              @Nullable InputEvent event) {
+                                                              @Nullable InputEvent event,
+                                                              @Nullable Component component) {
+    ActionContextElement parent = UIUtil.uiParents(component, false)
+      .filterMap(o -> ClientProperty.get(o, ACTION_CONTEXT_ELEMENT_KEY)).first();
     return installThreadContext(currentThreadContext().plus(
-      new ActionContextElement(actionId, place, event == null ? -1 : event.getID())), true);
+      new ActionContextElement(actionId, place, event == null ? -1 : event.getID(), parent)), true);
   }
 
   private static class InputEventDummyAction extends DumbAwareAction implements LightEditCompatible {

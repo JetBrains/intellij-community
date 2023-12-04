@@ -7,14 +7,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.AnnotationOrderRootType;
@@ -251,27 +249,42 @@ public final class JavaSdkImpl extends JavaSdk {
 
   @Override
   public void setupSdkPaths(@NotNull Sdk sdk) {
-    String homePath = sdk.getHomePath();
-    assert homePath != null : sdk;
-    Path jdkHome = Path.of(homePath);
-    SdkModificator sdkModificator = sdk.getSdkModificator();
+    Runnable sdkSetter = ()->{
+      String homePath = sdk.getHomePath();
+      assert homePath != null : sdk;
+      Path jdkHome = Path.of(homePath);
+      SdkModificator sdkModificator = sdk.getSdkModificator();
+      List<String> classes = findClasses(jdkHome, false);
+      Set<String> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getUrls(OrderRootType.CLASSES)));
+      sdkModificator.removeRoots(OrderRootType.CLASSES);
+      previousRoots.removeAll(new HashSet<>(classes));
+      for (String url : classes) {
+        sdkModificator.addRoot(url, OrderRootType.CLASSES);
+      }
+      for (String url : previousRoots) {
+        sdkModificator.addRoot(url, OrderRootType.CLASSES);
+      }
 
-    List<String> classes = findClasses(jdkHome, false);
-    Set<String> previousRoots = new LinkedHashSet<>(Arrays.asList(sdkModificator.getUrls(OrderRootType.CLASSES)));
-    sdkModificator.removeRoots(OrderRootType.CLASSES);
-    previousRoots.removeAll(new HashSet<>(classes));
-    for (String url : classes) {
-      sdkModificator.addRoot(url, OrderRootType.CLASSES);
-    }
-    for (String url : previousRoots) {
-      sdkModificator.addRoot(url, OrderRootType.CLASSES);
-    }
-
-    addSources(jdkHome, sdkModificator);
-    addDocs(jdkHome, sdkModificator, sdk);
-    attachJdkAnnotations(sdkModificator);
-
-    sdkModificator.commitChanges();
+      addSources(jdkHome, sdkModificator);
+      addDocs(jdkHome, sdkModificator, sdk);
+      attachJdkAnnotations(sdkModificator);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        ApplicationManager.getApplication().runWriteAction(() ->
+                                                             sdkModificator.commitChanges());
+      });
+    };
+    Application application = ApplicationManager.getApplication();
+      if (application.isDispatchThread()) {
+        //com.intellij.openapi.projectRoots.impl.UnknownMissingSdkFixLocal.applyLocalFix run everything in EDT,
+        //because some extensions need to show notifications
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+          sdkSetter.run();
+          return null;
+        }, ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdk.getName()), false, null);
+      }
+      else {
+        sdkSetter.run();
+      }
   }
 
   public static void attachJdkAnnotations(@NotNull SdkModificator modificator) {
@@ -445,7 +458,8 @@ public final class JavaSdkImpl extends JavaSdk {
     if (!Files.exists(jdkHomePath)) {
       throw new IllegalArgumentException(jdkHomePath.toAbsolutePath() + " doesn't exist");
     }
-    ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
+
+    Sdk jdk = ProjectJdkTable.getInstance().createSdk(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
 
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home));
@@ -458,8 +472,7 @@ public final class JavaSdkImpl extends JavaSdk {
     addDocs(jdkHomePath, sdkModificator, null);
     attachJdkAnnotations(sdkModificator);
 
-    sdkModificator.commitChanges();
-
+    sdkModificator.applyChangesWithoutWriteAction();
     return jdk;
   }
 

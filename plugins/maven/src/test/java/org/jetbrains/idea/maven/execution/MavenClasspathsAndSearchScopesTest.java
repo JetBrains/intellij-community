@@ -32,6 +32,11 @@ import java.util.Collection;
 import java.util.List;
 
 public class MavenClasspathsAndSearchScopesTest extends MavenMultiVersionImportingTestCase {
+  @Override
+  public boolean runInDispatchThread() {
+    return true;
+  }
+
   private enum Type {PRODUCTION, TESTS}
 
   private enum Scope {COMPILE, RUNTIME, MODULE}

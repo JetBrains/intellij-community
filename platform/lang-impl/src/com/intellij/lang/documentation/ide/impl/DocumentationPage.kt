@@ -3,8 +3,10 @@
 
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.lang.documentation.ide.ui.ExpandableDefinition
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.ide.ui.UIState
+import com.intellij.lang.documentation.ide.ui.createExpandableDefinition
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.platform.backend.documentation.ContentUpdater
 import com.intellij.platform.backend.documentation.DocumentationContentData
@@ -14,11 +16,13 @@ import com.intellij.platform.backend.documentation.impl.computeDocumentation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 
-internal class DocumentationPage(val request: DocumentationRequest) {
+internal class DocumentationPage(val requests: List<DocumentationRequest>) {
 
   private val myContentFlow = MutableStateFlow<DocumentationPageContent?>(null)
+  val request = requests.first()
   val contentFlow: SharedFlow<DocumentationPageContent?> = myContentFlow.asSharedFlow()
   val currentContent: DocumentationPageContent.Content? get() = myContentFlow.value as? DocumentationPageContent.Content
+  var expandableDefinition: ExpandableDefinition? = null
 
   /**
    * @return `true` if some content was loaded, `false` if content is empty
@@ -39,7 +43,8 @@ internal class DocumentationPage(val request: DocumentationRequest) {
       return
     }
     val uiState = data.anchor?.let(UIState::ScrollToAnchor) ?: UIState.Reset
-    myContentFlow.value = prepareContent(data.content, data.links, uiState)
+    expandableDefinition = createExpandableDefinition(data.content)
+    myContentFlow.value = prepareContent(data.content.copy(html = expandableDefinition?.getDecorated() ?: data.content.html), data.links, uiState)
     update(data.updates, data.links)
   }
 

@@ -60,29 +60,30 @@ class SortingExecutor(
       .addingCompletionKind(suggestionGenerator)
   }
 
-  private fun invokeCompletionKind(suggestionGenerator: SuggestionGenerator) {
+  private fun invokeCompletionKind(suggestionGenerator: SuggestionGenerator, removeFromNonExecuted: Boolean) {
     val policy = makeKindPolicy(suggestionGenerator)
     policyController.invokeWithPolicy(policy) {
       suggestionGenerator.generateCompletionVariants()
     }
     executedGenerators.add(suggestionGenerator)
-    nonExecutedGenerators.remove(suggestionGenerator)
+    if (removeFromNonExecuted) {
+      nonExecutedGenerators.remove(suggestionGenerator)
+    }
   }
 
   override fun executeAll() {
     if (nonExecutedGenerators.isEmpty()) return
-    val executionOrder = sorter.sortGenerators(nonExecutedGenerators.toList(), parameters)
-    executionOrder?.forEach {
-      invokeCompletionKind(it)
-    } ?: run {
-      nonExecutedGenerators.forEach { invokeCompletionKind(it) }
+    val executionOrder = sorter.sortGenerators(nonExecutedGenerators.toList(), parameters) ?: nonExecutedGenerators
+    executionOrder.forEach {
+      invokeCompletionKind(it, false)
     }
+    nonExecutedGenerators.removeAll(executionOrder)
   }
 
   override fun pass(suggestionGenerator: SuggestionGenerator) {
     nonExecutedGenerators.add(suggestionGenerator)
     if (mostRelevantKinds.getOrNull(0) == suggestionGenerator.kind) {
-      invokeCompletionKind(suggestionGenerator)
+      invokeCompletionKind(suggestionGenerator, true)
       mostRelevantKinds.removeFirst()
     }
   }

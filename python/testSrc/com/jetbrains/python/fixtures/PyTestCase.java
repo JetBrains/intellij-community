@@ -239,13 +239,6 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
-  protected void dumpSdkRoots() {
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    assertNotNull(sdk);
-    final String[] roots = sdk.getRootProvider().getUrls(OrderRootType.CLASSES);
-    System.out.println(StringUtil.join(roots, "\n"));
-  }
-
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
   }

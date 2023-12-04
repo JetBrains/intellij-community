@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteAr
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.AdvancingPositionTracker.AdvanceToken
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.CloseableAdvancingPositionTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.LockFreeAdvancingPositionTracker
+import com.intellij.util.runSuppressing
 import java.io.Closeable
 import java.io.Flushable
 import java.io.IOException
@@ -149,9 +150,10 @@ class AppendLogStorage(
   }
 
   override fun close() {
-    // TODO safe close()
-    storageIO.close()
-    atomicState.close()
+    runSuppressing(
+      storageIO::close,
+      atomicState::close
+    )
   }
 
   private fun pageName(id: Int): String = id.toString(PAGE_ENCODING_RADIX) + ".dat"

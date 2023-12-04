@@ -380,6 +380,16 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
             runTest("../completion/testData/weighers/basic/Callables.kt");
         }
 
+        @TestMetadata("ContravariantType.kt")
+        public void testContravariantType() throws Exception {
+            runTest("../completion/testData/weighers/basic/ContravariantType.kt");
+        }
+
+        @TestMetadata("CovariantType.kt")
+        public void testCovariantType() throws Exception {
+            runTest("../completion/testData/weighers/basic/CovariantType.kt");
+        }
+
         @TestMetadata("DelegateToOtherObject.kt")
         public void testDelegateToOtherObject() throws Exception {
             runTest("../completion/testData/weighers/basic/DelegateToOtherObject.kt");
@@ -423,6 +433,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("DslMemberCalls.kt")
         public void testDslMemberCalls() throws Exception {
             runTest("../completion/testData/weighers/basic/DslMemberCalls.kt");
+        }
+
+        @TestMetadata("ErrorImplicitReceiverType.kt")
+        public void testErrorImplicitReceiverType() throws Exception {
+            runTest("../completion/testData/weighers/basic/ErrorImplicitReceiverType.kt");
         }
 
         @TestMetadata("ExactMatchForKeyword.kt")
@@ -608,6 +623,11 @@ public abstract class HighLevelWeigherTestGenerated extends AbstractHighLevelWei
         @TestMetadata("RecursiveCall.kt")
         public void testRecursiveCall() throws Exception {
             runTest("../completion/testData/weighers/basic/RecursiveCall.kt");
+        }
+
+        @TestMetadata("StarProjection.kt")
+        public void testStarProjection() throws Exception {
+            runTest("../completion/testData/weighers/basic/StarProjection.kt");
         }
 
         @TestMetadata("StaticMembers.kt")

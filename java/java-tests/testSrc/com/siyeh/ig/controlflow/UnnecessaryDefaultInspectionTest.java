@@ -80,7 +80,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
     checkQuickFix("Remove 'default' branch",
                   """
                     class X {  void x(E e) {    switch (e) {
-                        case A,B:
+                        case A, B:
                             int x;
                             x = 2;        System.out.println(x);      }   }}""");
   }

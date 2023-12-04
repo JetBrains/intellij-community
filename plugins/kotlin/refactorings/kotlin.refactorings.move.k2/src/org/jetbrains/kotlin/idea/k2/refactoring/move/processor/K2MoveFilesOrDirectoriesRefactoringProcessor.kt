@@ -6,12 +6,12 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
 
 class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveDescriptor.Files) : MoveFilesOrDirectoriesProcessor(
-    descriptor.target.pkg.project,
-    descriptor.source.elements.toTypedArray(),
-    descriptor.target.directory,
-    descriptor.searchReferences,
-    descriptor.searchInComments,
-    descriptor.searchForText,
-    MoveCallback {  },
-    Runnable {  }
+  descriptor.project,
+  descriptor.source.elements.toTypedArray(),
+  descriptor.target.directory,
+  descriptor.searchReferences,
+  descriptor.searchInComments,
+  descriptor.searchForText,
+  MoveCallback {  },
+  Runnable {  }
 )

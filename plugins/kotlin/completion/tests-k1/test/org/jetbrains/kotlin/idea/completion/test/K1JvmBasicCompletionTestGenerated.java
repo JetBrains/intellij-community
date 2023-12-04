@@ -442,6 +442,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/boldOrGrayed/KT9835.kt");
             }
 
+            @TestMetadata("MemberAfterNullable.kt")
+            public void testMemberAfterNullable() throws Exception {
+                runTest("../testData/basic/common/boldOrGrayed/MemberAfterNullable.kt");
+            }
+
             @TestMetadata("NonPredictableSmartCast.kt")
             public void testNonPredictableSmartCast() throws Exception {
                 runTest("../testData/basic/common/boldOrGrayed/NonPredictableSmartCast.kt");
@@ -468,6 +473,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
         public static class CallableReference extends AbstractK1JvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("CompanionObjectMember.kt")
+            public void testCompanionObjectMember() throws Exception {
+                runTest("../testData/basic/common/callableReference/CompanionObjectMember.kt");
             }
 
             @TestMetadata("EmptyQualifier.kt")
@@ -682,6 +692,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("ImplicitReceiver.kt")
             public void testImplicitReceiver() throws Exception {
                 runTest("../testData/basic/common/extensionFunctionTypeValues/ImplicitReceiver.kt");
+            }
+
+            @TestMetadata("Property.kt")
+            public void testProperty() throws Exception {
+                runTest("../testData/basic/common/extensionFunctionTypeValues/Property.kt");
             }
 
             @TestMetadata("SafeCall.kt")
@@ -2245,6 +2260,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("DispatchReceiver.kt")
+            public void testDispatchReceiver() throws Exception {
+                runTest("../testData/basic/common/smartCast/DispatchReceiver.kt");
+            }
+
             @TestMetadata("functionWithContract.kt")
             public void testFunctionWithContract() throws Exception {
                 runTest("../testData/basic/common/smartCast/functionWithContract.kt");
@@ -2291,6 +2311,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
         public static class StaticMembers extends AbstractK1JvmBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("CompanionObjectMembers.kt")
+            public void testCompanionObjectMembers() throws Exception {
+                runTest("../testData/basic/common/staticMembers/CompanionObjectMembers.kt");
             }
 
             @TestMetadata("EnumWithoutCompanionObject.kt")
@@ -2763,6 +2788,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/ImportedEnumMembers.kt");
             }
 
+            @TestMetadata("ImportedExtensionFromObject.kt")
+            public void testImportedExtensionFromObject() throws Exception {
+                runTest("../testData/basic/common/ImportedExtensionFromObject.kt");
+            }
+
             @TestMetadata("ImportedMemberFromObject.kt")
             public void testImportedMemberFromObject() throws Exception {
                 runTest("../testData/basic/common/ImportedMemberFromObject.kt");
@@ -3021,6 +3051,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("KeywordsAreLowInParameterTypeCompletion4.kt")
             public void testKeywordsAreLowInParameterTypeCompletion4() throws Exception {
                 runTest("../testData/basic/common/KeywordsAreLowInParameterTypeCompletion4.kt");
+            }
+
+            @TestMetadata("LocalFunctions.kt")
+            public void testLocalFunctions() throws Exception {
+                runTest("../testData/basic/common/LocalFunctions.kt");
             }
 
             @TestMetadata("localInnerClass.kt")

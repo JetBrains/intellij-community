@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.withValue
 import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.useProjectAsync
@@ -28,7 +30,7 @@ import org.junit.jupiter.api.*
 import java.io.File
 
 /**
- * A test case for the Kotlin new project/module wizard.
+ * A test case for the Kotlin Gradle new project/module wizard.
  * Test cases can either generate a new project, or a new module in an existing projects.
  * Existing projects can be defined using the [projectInfo] DSL.
  * The tests work by asserting that certain generated files are created with the correct content,
@@ -67,6 +69,17 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
     private fun Project.findRelativeFile(path: String): File? {
         Assertions.assertNotNull(basePath)
         return File(this.basePath!!, path).takeIf { it.isFile }
+    }
+
+    private fun Project.findMainFileContent(modulePath: String? = null): String? {
+        val path = StringBuilder().apply {
+            if (modulePath != null) {
+                append(modulePath)
+                append("/")
+            }
+            append("src/main/kotlin/Main.kt")
+        }.toString()
+        return findRelativeFile(path)?.readText()
     }
 
     private fun Project.findKotlinVersion(useKotlinDsl: Boolean, modulePath: String? = null): String? {
@@ -145,6 +158,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
+        generateOnboardingTips: Boolean = false,
         parentData: ProjectData? = null
     ) {
         languageData!!.language = "Kotlin"
@@ -158,6 +172,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
         kotlinGradleData!!.artifactId = name
         kotlinGradleData!!.version = version
         kotlinGradleData!!.addSampleCode = addSampleCode
+        kotlinGradleData!!.generateOnboardingTips = generateOnboardingTips
     }
 
     private fun runNewProjectTestCase(
@@ -166,7 +181,9 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
         name: String = "project",
         groupId: String = "org.testcase",
         version: String = "1.0.0",
-        addSampleCode: Boolean = false
+        addSampleCode: Boolean = false,
+        generateOnboardingTips: Boolean = false,
+        additionalAssertions: (Project) -> Unit = {}
     ) {
 
         runBlocking {
@@ -178,11 +195,13 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
                     version = version,
                     parentData = null,
                     path = name,
-                    addSampleCode = addSampleCode
+                    addSampleCode = addSampleCode,
+                    generateOnboardingTips = generateOnboardingTips
                 )
             }.useProjectAsync { project ->
                 assertModules(project, expectedModules)
                 project.assertCorrectProjectFiles()
+                additionalAssertions(project)
             }
         }
     }
@@ -207,6 +226,80 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
         runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true)
     }
 
+    @Test
+    fun testOnboardingTips() {
+        Registry.get("doc.onboarding.tips.render").withValue(false) {
+            runNewProjectTestCase(addSampleCode = true, generateOnboardingTips = true) { project ->
+                val mainFileContent = project.findMainFileContent()
+                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+                Assertions.assertTrue(
+                    mainFileContent!!.contains("You can now see whitespace characters in your code."),
+                    "Main file did not contain onboarding tips"
+                )
+                Assertions.assertFalse(
+                    mainFileContent.contains("//TIP"),
+                    "Main file contained rendered onboarding tips"
+                )
+            }
+        }
+    }
+
+    // The onboarding tips have to be handled a bit more manually because the rendered text depends on the OS of the system
+    // because shortcuts are OS specific
+    @Test
+    fun testOnboardingTipsKts() {
+        Registry.get("doc.onboarding.tips.render").withValue(false) {
+            runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true, generateOnboardingTips = true) { project ->
+                val mainFileContent = project.findMainFileContent()
+                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+                Assertions.assertTrue(
+                    mainFileContent!!.contains("You can now see whitespace characters in your code."),
+                    "Main file did not contain onboarding tips"
+                )
+                Assertions.assertFalse(
+                    mainFileContent.contains("//TIP"),
+                    "Main file contained rendered onboarding tips"
+                )
+            }
+        }
+    }
+
+    @Test
+    fun testRenderedOnboardingTips() {
+        Registry.get("doc.onboarding.tips.render").withValue(true) {
+            runNewProjectTestCase(addSampleCode = true, generateOnboardingTips = true) { project ->
+                val mainFileContent = project.findMainFileContent()
+                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+                Assertions.assertTrue(
+                    mainFileContent!!.contains("You can now see whitespace characters in your code."),
+                    "Main file did not contain onboarding tips"
+                )
+                Assertions.assertTrue(
+                    mainFileContent.contains("//TIP"),
+                    "Main file contained rendered onboarding tips"
+                )
+            }
+        }
+    }
+
+    @Test
+    fun testRenderedOnboardingTipsKts() {
+        Registry.get("doc.onboarding.tips.render").withValue(true) {
+            runNewProjectTestCase(useKotlinDsl = true, addSampleCode = true, generateOnboardingTips = true) { project ->
+                val mainFileContent = project.findMainFileContent()
+                Assertions.assertNotNull(mainFileContent, "Could not find Main.kt file")
+                Assertions.assertTrue(
+                    mainFileContent!!.contains("You can now see whitespace characters in your code."),
+                    "Main file did not contain onboarding tips"
+                )
+                Assertions.assertTrue(
+                    mainFileContent.contains("//TIP"),
+                    "Main file contained rendered onboarding tips"
+                )
+            }
+        }
+    }
+
     private fun runNewModuleTestCase(
         expectedNewModules: List<String>,
         projectInfo: ProjectInfo,
@@ -216,6 +309,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
         groupId: String = "org.testcase",
         version: String = "1.0.0",
         addSampleCode: Boolean = false,
+        generateOnboardingTips: Boolean = false,
         independentHierarchy: Boolean = false,
         additionalAssertions: (Project) -> Unit = {}
     ) {
@@ -232,7 +326,8 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
                         version = version,
                         parentData = parentData.data.takeUnless { independentHierarchy },
                         path = "$parentPath/$name",
-                        addSampleCode = addSampleCode
+                        addSampleCode = addSampleCode,
+                        generateOnboardingTips = generateOnboardingTips
                     )
                 }
                 assertModules(project, existingModules + expectedNewModules)
@@ -255,7 +350,10 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
             expectedNewModules = listOf("project.module", "project.module.main", "project.module.test"),
             projectInfo = simpleJavaProject(false),
             addSampleCode = true
-        )
+        ) { project ->
+            val propertiesExist = project.findRelativeFile("module/gradle.properties")?.exists() == true
+            Assertions.assertFalse(propertiesExist, "Gradle properties file should not exist in modules")
+        }
     }
 
     @Test
@@ -265,7 +363,10 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase() {
             projectInfo = simpleJavaProject(true),
             addSampleCode = true,
             useKotlinDsl = true
-        )
+        ) { project ->
+            val propertiesExist = project.findRelativeFile("module/gradle.properties")?.exists() == true
+            Assertions.assertFalse(propertiesExist, "Gradle properties file should not exist in modules")
+        }
     }
 
     @Test

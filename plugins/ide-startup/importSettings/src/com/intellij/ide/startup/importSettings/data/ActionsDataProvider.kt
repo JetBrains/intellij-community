@@ -2,7 +2,12 @@
 package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
+import com.intellij.ide.startup.importSettings.data.ActionsDataProvider.Companion.toRelativeFormat
+import com.intellij.util.text.DateFormatUtil
 import org.jetbrains.annotations.Nls
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import javax.swing.Icon
 
 interface ActionsDataProvider<T : BaseService> {
@@ -13,11 +18,11 @@ interface ActionsDataProvider<T : BaseService> {
 
   companion object {
 
-    fun prepareMap(service: BaseJbService): Map<popUpPlace, List<Product>> {
+    fun prepareMap(service: JbService): Map<popUpPlace, List<Product>> {
       val fresh = service.products()
       val old = service.getOldProducts()
 
-      if(fresh.isEmpty()) {
+      if (fresh.isEmpty()) {
         return mutableMapOf<popUpPlace, List<Product>>().apply {
           this[popUpPlace.MAIN] = old
         }
@@ -28,21 +33,58 @@ interface ActionsDataProvider<T : BaseService> {
         this[popUpPlace.OTHER] = old
       }
     }
+
+    fun LocalDate.toRelativeFormat(suffix: String): String {
+      val now = LocalDate.now()
+      val daysBetween = ChronoUnit.DAYS.between(this, now)
+
+      return if (daysBetween == 0L) {
+        ImportSettingsBundle.message("date.format.today.$suffix")
+      }
+      else if (daysBetween == 1L) {
+        ImportSettingsBundle.message("date.format.yesterday.$suffix")
+      }
+      else if (daysBetween <= 6) {
+        ImportSettingsBundle.message("date.format.n.days.ago.$suffix", daysBetween)
+      }
+      else if (daysBetween <= 27) {
+        val weeks = daysBetween / 7
+        if (weeks == 1L) ImportSettingsBundle.message("date.format.n.weeks.ago.one.$suffix")
+        else
+          ImportSettingsBundle.message("date.format.n.weeks.ago.$suffix", weeks)
+      }
+      else if (daysBetween <= 345) {
+        val months = daysBetween / 30
+        if(months == 1L) {
+          ImportSettingsBundle.message("date.format.n.months.ago.one.$suffix")
+        } else ImportSettingsBundle.message("date.format.n.months.ago.$suffix", months)
+      }
+      else {
+        val years = daysBetween / 365
+        if(years == 1L) {
+          ImportSettingsBundle.message("date.format.n.years.ago.one.$suffix")
+        } else {
+          ImportSettingsBundle.message("date.format.n.years.ago.$suffix", years)
+        }
+      }
+    }
+
   }
+
   val settingsService
     get() = SettingsService.getInstance()
 
   val productService: T
   fun getProductIcon(productId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
-  fun getText(contributor: SettingsContributor): String
+  fun getText(contributor: SettingsContributor): @Nls String
   val title: String
 
-  fun getComment(contributor: SettingsContributor): String?
+  fun getComment(contributor: SettingsContributor): @Nls String?
   val main: List<Product>?
   val other: List<Product>?
 }
 
-class JBrActionsDataProvider private constructor(): ActionsDataProvider<JbService> {
+class JBrActionsDataProvider private constructor() : ActionsDataProvider<JbService> {
   companion object {
     private val provider = JBrActionsDataProvider()
     fun getInstance() = provider
@@ -67,11 +109,11 @@ class JBrActionsDataProvider private constructor(): ActionsDataProvider<JbServic
     get() = ImportSettingsBundle.message("jetbrains.ides")
 
   override fun getComment(contributor: SettingsContributor): String? {
-    if(contributor is Config) {
+    if (contributor is Config) {
       return contributor.path
     }
-    if(contributor is Product) {
-      return contributor.lastUsage.toString()
+    if (contributor is Product) {
+      return contributor.lastUsage.toRelativeFormat("used")
     }
     return null
   }
@@ -98,7 +140,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
 
   private fun updateSyncMap() {
     val service = settingsService.getSyncService()
-    if (!service.isLoggedIn()) {
+    if (!settingsService.isLoggedIn()) {
       map = null
       return
     }
@@ -107,7 +149,7 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
       map = mutableMapOf<ActionsDataProvider.popUpPlace, List<Product>>().apply {
         this[ActionsDataProvider.popUpPlace.MAIN] = listOf(it)
         val products = service.products()
-        if(products.isNotEmpty()) {
+        if (products.isNotEmpty()) {
           this[ActionsDataProvider.popUpPlace.OTHER] = products
         }
       }
@@ -126,8 +168,8 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
   }
 
   override fun getComment(contributor: SettingsContributor): String? {
-    if(contributor is Product) {
-      return contributor.lastUsage.toString()
+    if (contributor is Product) {
+      return contributor.lastUsage.toRelativeFormat("synced")
     }
     return null
   }
@@ -137,14 +179,14 @@ class SyncActionsDataProvider private constructor() : ActionsDataProvider<SyncSe
 
   override val main: List<Product>?
     get() {
-      if(map == null) {
+      if (map == null) {
         updateSyncMap()
       }
       return map?.get(ActionsDataProvider.popUpPlace.MAIN)
     }
   override val other: List<Product>?
     get() {
-      if(map == null) {
+      if (map == null) {
         updateSyncMap()
       }
       return map?.get(ActionsDataProvider.popUpPlace.OTHER)
@@ -157,6 +199,7 @@ class ExtActionsDataProvider private constructor() : ActionsDataProvider<Externa
     private val provider = ExtActionsDataProvider()
     fun getInstance() = provider
   }
+
   override val productService = settingsService.getExternalService()
 
   override fun getProductIcon(productId: String, size: IconProductSize): Icon? {

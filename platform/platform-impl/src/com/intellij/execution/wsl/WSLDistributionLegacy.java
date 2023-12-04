@@ -58,14 +58,14 @@ public final class WSLDistributionLegacy extends WSLDistribution {
   }
 
   @Override
-  public @Nullable String getWslPath(@NotNull String windowsPath) {
+  public @Nullable String getWslPath(@NotNull Path windowsPath) {
     String wslRootInHost = WSL_ROOT_IN_WINDOWS_PROVIDER.getValue();
     if (wslRootInHost == null) {
       return null;
     }
 
-    if (FileUtil.isAncestor(wslRootInHost, windowsPath, true)) {  // this is some internal WSL file
-      return FileUtil.toSystemIndependentName(windowsPath.substring(wslRootInHost.length()));
+    if (FileUtil.isAncestor(wslRootInHost, windowsPath.toString(), true)) {  // this is some internal WSL file
+      return FileUtil.toSystemIndependentName(windowsPath.toString().substring(wslRootInHost.length()));
     }
 
     return super.getWslPath(windowsPath);

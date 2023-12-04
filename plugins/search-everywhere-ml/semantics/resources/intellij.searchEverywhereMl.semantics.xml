@@ -15,41 +15,32 @@
     <searchEverywhereMl.searchEverywhereSessionPropertyProvider
       implementation="com.intellij.searchEverywhereMl.semantics.SearchEverywhereSemanticPropertyProvider"/>
 
-    <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.ActionSemanticSearchServiceInitializer"/>
-
-    <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.FileSemanticSearchServiceInitializer"/>
-
-    <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.SymbolSemanticSearchServiceInitializer"/>
-
-    <postStartupActivity
-      implementation="com.intellij.searchEverywhereMl.semantics.services.ClassSemanticSearchServiceInitializer"/>
 
     <applicationService
-      serviceInterface="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
-      serviceImplementation="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettingsImpl"/>
+      serviceInterface="com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings"
+      serviceImplementation="com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettingsImpl"
+      testServiceImplementation="com.intellij.platform.ml.embeddings.search.settings.MockSemanticSearchSettings"/>
 
     <advancedSetting default="false" id="search.everywhere.ml.semantic.actions.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
-                     service="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
+                     service="com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings"
                      property="enabledInActionsTab"/>
 
     <advancedSetting default="false" id="search.everywhere.ml.semantic.files.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
-                     service="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
+                     service="com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings"
                      property="enabledInFilesTab"/>
 
     <advancedSetting default="false" id="search.everywhere.ml.semantic.symbols.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
-                     service="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
+                     service="com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings"
                      property="enabledInSymbolsTab"/>
 
     <advancedSetting default="false" id="search.everywhere.ml.semantic.classes.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
-                     service="com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings"
+                     service="com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings"
                      property="enabledInClassesTab"/>
+    <postStartupActivity implementation="com.intellij.searchEverywhereMl.semantics.services.SemanticSearchInitializer"/>
 
     <registryKey defaultValue="false"
                  description="Use remote server for the Actions tab"
@@ -90,13 +81,12 @@
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.searcheverywhere.ml.fileIndexableEntitiesProvider"
-                    interface="com.intellij.searchEverywhereMl.semantics.indices.FileIndexableEntitiesProvider"
+                    interface="com.intellij.platform.ml.embeddings.search.indices.FileIndexableEntitiesProvider"
                     dynamic="true"/>
   </extensionPoints>
-
   <projectListeners>
     <listener
       class="com.intellij.searchEverywhereMl.semantics.services.IndexingLifecycleListener"
-      topic="com.intellij.searchEverywhereMl.semantics.listeners.SemanticIndexingFinishListener"/>
+      topic="com.intellij.platform.ml.embeddings.search.listeners.SemanticIndexingFinishListener"/>
   </projectListeners>
 </idea-plugin>

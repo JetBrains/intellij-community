@@ -52,8 +52,8 @@ public final class GradleTaskCache {
           "Tasks for " + GradleNegotiationUtil.getProjectDisplayName(project) + " wasn't collected. " +
           "All tasks should be collected during " + GradleModelFetchPhase.TASK_WARM_UP_PHASE + "."
         )
-        .withException(new IllegalStateException())
-        .withKind(Message.Kind.ERROR)
+        .withStackTrace()
+        .withKind(Message.Kind.INTERNAL)
         .reportMessage(project);
       return Collections.emptySet();
     }
@@ -68,14 +68,14 @@ public final class GradleTaskCache {
         .withGroup(Messages.TASK_CACHE_SET_GROUP)
         .withTitle("Task model redefinition")
         .withText("Tasks for " + GradleNegotiationUtil.getProjectDisplayName(project) + " was already collected.")
-        .withException(new IllegalStateException())
-        .withKind(Message.Kind.ERROR)
+        .withStackTrace()
+        .withKind(Message.Kind.INTERNAL)
         .reportMessage(project);
     }
   }
 
   /**
-   * Marks that project source set model is loaded with errors.
+   * Marks that a project task model is loaded with errors.
    * This mark means that error for {@code project} is already processed and reported.
    */
   public void markTaskModelAsError(@NotNull Project project) {

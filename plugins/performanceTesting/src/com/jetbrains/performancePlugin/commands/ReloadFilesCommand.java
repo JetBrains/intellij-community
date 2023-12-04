@@ -36,7 +36,7 @@ public final class ReloadFilesCommand extends AbstractCallbackBasedCommand {
 
   // Calls from driver
   @Suppress(names = "UNUSED")
-  public void synchronizeFiles(List<String> filePaths) {
+  public static void synchronizeFiles(List<String> filePaths) {
     synchronizeFiles(filePaths, ProjectManager.getInstance().getOpenProjects()[0]);
   }
 
@@ -47,7 +47,7 @@ public final class ReloadFilesCommand extends AbstractCallbackBasedCommand {
     callback.setDone();
   }
 
-  private void synchronizeFiles(List<String> filePaths, Project project) {
+  private static void synchronizeFiles(List<String> filePaths, Project project) {
     VirtualFile[] files = filePaths.stream().map(path -> {
       var file = findFile(path, project);
       if (file == null) {

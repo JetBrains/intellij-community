@@ -69,7 +69,7 @@ class SearchEverywhereStateFeaturesProvider {
       features.add(SEARCH_SCOPE_DATA_KEY.with(scopeId))
     }
 
-    if (project != null && tabId == TextSearchContributor::class.java.simpleName) {
+    if (project != null && isTabWithTextContributor(tabId)) {
       features.addAll(getTextContributorFeatures(project))
     }
 
@@ -94,6 +94,12 @@ class SearchEverywhereStateFeaturesProvider {
 
   private fun hasSuitableContributor(currentTabId: String, featuresTab: String): Boolean {
     return currentTabId == featuresTab || currentTabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID
+  }
+
+  private fun isTabWithTextContributor(tabId: String) = when(tabId) {
+    TextSearchContributor::class.java.simpleName -> true
+    SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID -> true
+    else -> false
   }
 
   private fun CharSequence.isCamelCase(): Boolean {

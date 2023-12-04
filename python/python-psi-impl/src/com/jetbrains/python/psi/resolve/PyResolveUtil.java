@@ -267,20 +267,20 @@ public final class PyResolveUtil {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
     final List<? extends RatedResolveResult> unqualifiedResults;
-    if (scopeOwner instanceof PyiFile) {
+    if (scopeOwner instanceof PyiFile fileScope) {
       // pyi-stubs are special cased because
       // `resolveMember` delegates to `multiResolveName(..., true)` and
       // it skips elements that are imported without `as`
-      unqualifiedResults = ((PyiFile)scopeOwner).multiResolveName(firstName, false);
+      unqualifiedResults = fileScope.multiResolveName(firstName, false);
     }
-    else if (scopeOwner instanceof PyFunction) {
+    else if (scopeOwner instanceof PyFunction functionScope) {
       final Stream<PsiNamedElement> targets = StreamEx
         .of(PsiTreeUtil.getStubChildrenOfTypeAsList(scopeOwner, PyTargetExpression.class))
         .filter(it -> !it.isQualified())
         .select(PsiNamedElement.class);
 
       final Stream<PsiNamedElement> parameters = StreamEx
-        .of(((PyFunction)scopeOwner).getParameterList().getParameters())
+        .of(functionScope.getParameterList().getParameters())
         .select(PsiNamedElement.class);
 
       unqualifiedResults = StreamEx
@@ -288,13 +288,22 @@ public final class PyResolveUtil {
         .append(parameters)
         .filter(it -> firstName.equals(it.getName()))
         .map(it -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, it))
+        .append(resolveTypeParameters(functionScope, firstName))
         .toList();
+    }
+    else if (scopeOwner instanceof PyTypeAliasStatement) {
+      unqualifiedResults = resolveTypeParameters((PyTypeParameterListOwner)scopeOwner, firstName);
     }
     else {
       final PyType scopeType = context.getType((PyTypedElement)scopeOwner);
       if (scopeType == null) return Collections.emptyList();
-
-      unqualifiedResults = scopeType.resolveMember(firstName, null, AccessDirection.READ, resolveContext);
+      List<? extends RatedResolveResult> typeMembers = scopeType.resolveMember(firstName, null, AccessDirection.READ, resolveContext);
+      if (scopeOwner instanceof PyClass pyClass) {
+        unqualifiedResults = ContainerUtil.concat(ContainerUtil.notNullize(typeMembers), resolveTypeParameters(pyClass, firstName));
+      }
+      else {
+        unqualifiedResults = typeMembers;
+      }
     }
 
     final StreamEx<RatedResolveResult> initialResults;
@@ -519,5 +528,19 @@ public final class PyResolveUtil {
     }
 
     return reference.resolve();
+  }
+
+  @NotNull
+  private static List<RatedResolveResult> resolveTypeParameters(@NotNull PyTypeParameterListOwner typeParameterListOwner,
+                                                                @NotNull String name) {
+    if (typeParameterListOwner.getTypeParameterList() != null) {
+      return StreamEx.of(typeParameterListOwner.getTypeParameterList().getTypeParameters())
+        .filter(it -> name.equals(it.getName()))
+        .map(it -> new RatedResolveResult(RatedResolveResult.RATE_NORMAL, it))
+        .toList();
+    }
+    else {
+      return Collections.emptyList();
+    }
   }
 }

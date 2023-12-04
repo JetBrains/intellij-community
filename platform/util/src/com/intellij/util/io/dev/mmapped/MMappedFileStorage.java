@@ -47,6 +47,18 @@ public final class MMappedFileStorage implements Closeable, Unmappable, Cleanabl
   private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, 1000);
 
+  /**
+   * Use fsync() on .flush() by default? <br/>
+   * Under normal conditions, there is no need to issue .fsync() on mapped storages -- OS is responsible
+   * for page flushing even if an app crashes.<br/>
+   * The only reason for doing .fsync() is to prevent data loss on OS crash/power outage, which is
+   * a) quite rare cases
+   * b) I doubt our persistent data structures really <i>could</i> provide reliability in such cases anyway
+   * -- so the flag is false by default.<br/>
+   * The flag seems quite generic, so made public, for all memory-mapped storages to refer.
+   */
+  public static final boolean FSYNC_ON_FLUSH_BY_DEFAULT = getBooleanProperty("MMappedFileStorage.FSYNC_BY_DEFAULT_ON_FLUSH", false);
+
 
   //Explicit 'unmap' vs rely on JVM which will unmap pages eventually, as they are collected by GC?
   //  Explicit unmap allows to 'clean after yourself', but carries a risk of JVM crash if somebody still tries

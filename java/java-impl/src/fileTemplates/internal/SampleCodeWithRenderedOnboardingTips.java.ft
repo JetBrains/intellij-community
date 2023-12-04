@@ -3,14 +3,13 @@ package ${PACKAGE_NAME};
 
 #end
 #parse("File Header.java")
-
 //TIP ${RunComment1}
 // ${RunComment2}
 public class Main {
     public static void main(String[] args) {
         //TIP ${ShowIntentionComment1}
         // ${ShowIntentionComment2}
-        System.out.println("Hello and welcome!");
+        System.out.printf("Hello and welcome!");
 
         for (int i = 1; i <= 5; i++) {
             //TIP ${DebugComment1}

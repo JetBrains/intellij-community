@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="rd-text" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2023.3.2">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2024.1.1-preview3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.2/rd-text-2023.3.2.jar">
-          <sha256sum>1b20aa1af7ea2e51803e455cffadc94a776571b52995a8b10ab948678fc189df</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2024.1.1-preview3/rd-text-2024.1.1-preview3.jar">
+          <sha256sum>d14a5276159c588086dcbab55b6b727725200e0a63303b6df34f1d43de318b61</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.2/rd-text-2023.3.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2024.1.1-preview3/rd-text-2024.1.1-preview3.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.2/rd-text-2023.3.2-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2024.1.1-preview3/rd-text-2024.1.1-preview3-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.2/rd-text-2023.3.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2024.1.1-preview3/rd-text-2024.1.1-preview3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

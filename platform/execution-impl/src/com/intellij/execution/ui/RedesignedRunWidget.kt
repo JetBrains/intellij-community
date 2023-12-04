@@ -8,6 +8,7 @@ import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.StopAction
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
@@ -18,6 +19,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -25,7 +27,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -40,7 +41,6 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.getHeaderBackgroundColor
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.lightThemeDarkHeaderDisableFilter
 import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.*
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.TextHoledIcon
@@ -127,7 +127,7 @@ class RunWidgetResumeManager(private val project: Project) {
   }
 }
 
-private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean): ActionToolbar {
+private fun createRunActionToolbar(): ActionToolbar {
   val toolbarId = "RunToolbarMainActionGroup"
   return ActionManager.getInstance().createActionToolbar(
     ActionPlaces.NEW_UI_RUN_TOOLBAR,
@@ -142,8 +142,8 @@ private fun createRunActionToolbar(isCurrentConfigurationRunning: () -> Boolean)
       setMinimumButtonSize {
         JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
       }
-      setActionButtonBorder(2, JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
-      setCustomButtonLook(RunWidgetButtonLook(isCurrentConfigurationRunning))
+      setActionButtonBorder(JBUI.CurrentTheme.RunWidget.toolbarBorderDirectionalGap(), JBUI.CurrentTheme.RunWidget.toolbarBorderHeight())
+      setCustomButtonLook(RunWidgetButtonLook())
       border = null
     }
   }
@@ -157,9 +157,7 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val toolbar = createRunActionToolbar {
-      presentation.getClientProperty(runToolbarDataKey) ?: false
-    }
+    val toolbar = createRunActionToolbar()
     toolbar.component.border = JBUI.Borders.empty(0, 12, 0, 16)
     return toolbar.component
   }
@@ -178,14 +176,11 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
     }
 
     if (selectedConfiguration == null) {
-      if (!RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project) || DumbService.isDumb(project)) {
-        // cannot get current PSI file for the Run Current configuration in dumb mode
+      if (!RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {
         return false
       }
-      val editor = e.getData(CommonDataKeys.EDITOR) ?: return false
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return false
-      val runConfigsForCurrentFile = ExecutorRegistryImpl.ExecutorAction.getRunConfigsForCurrentFile(psiFile, false)
-      val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors { runConfigsForCurrentFile.contains(it) }
+      val runningDescriptors = ExecutionManagerImpl.getInstance(project)
+        .getRunningDescriptors { (it as? RunnerAndConfigurationSettingsImpl)?.filePathIfRunningCurrentFile != null }
       return !runningDescriptors.isEmpty()
     }
     else {
@@ -251,10 +246,11 @@ private class PreparedIcon(private val width: Int, private val height: Int, priv
   }
 }
 
-private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () -> Boolean) : IdeaActionButtonLook() {
+private class RunWidgetButtonLook : IdeaActionButtonLook() {
   override fun getStateBackground(component: JComponent, state: Int): Color? {
+    val isDisabled = (component as? ActionButton)?.presentation?.isEnabled == false
     val isStopButton = isStopButton(component)
-    if (!isStopButton && (!buttonIsRunning(component) || !isCurrentConfigurationRunning())) {
+    if (isDisabled || (!isStopButton && !buttonIsRunning(component))) {
       return getHeaderBackgroundColor(component, state)
     }
 
@@ -300,7 +296,7 @@ private class RunWidgetButtonLook(private val isCurrentConfigurationRunning: () 
       return
     }
     else if (resultIcon !is PreparedIcon) {
-      val executionAction = (actionButton as? ActionButton)?.action is RunWidgetExecutionActionMarker
+      val executionAction = isRunWidgetExecutionAction(actionButton)
       val iconWithBackground = executionAction && buttonIsRunning(actionButton) || isStopButton(actionButton)
       resultIcon = toStrokeIcon(icon = resultIcon, resultColor = when {
         iconWithBackground -> JBUI.CurrentTheme.RunWidget.RUNNING_ICON_COLOR
@@ -337,8 +333,10 @@ abstract class TogglePopupAction : ToggleAction {
     val component = e.inputEvent?.component as? JComponent ?: return
     val project = e.project ?: return
     project.coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
-      val popup = createPopup(e)
-      popup?.showUnderneathOf(component)
+      val start = System.nanoTime()
+      val popup = createPopup(e) ?: return@launch
+      Utils.showPopupElapsedMillisIfConfigured(start, popup.content)
+      popup.showUnderneathOf(component)
     }
   }
 
@@ -529,9 +527,19 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
   }
 }
 
-private fun buttonIsRunning(component: Any): Boolean {
-  return (component as? ActionButton)?.presentation?.getClientProperty(ExecutorRegistryImpl.EXECUTOR_ACTION_STATUS) ==
-    ExecutorRegistryImpl.ExecutorActionStatus.RUNNING
+private fun isRunWidgetExecutionAction(component: Any): Boolean {
+  return getExecutionActionStatus(component) != null
 }
 
-private fun isStopButton(component: Any): Boolean = (component as? ActionButton)?.action is StopAction
+private fun buttonIsRunning(component: Any): Boolean {
+  return getExecutionActionStatus(component) == ExecutorActionStatus.RUNNING
+}
+
+private fun getExecutionActionStatus(component: Any): ExecutorActionStatus? {
+  return (component as? ActionButton)?.presentation?.getClientProperty(ExecutorActionStatus.KEY)
+}
+
+private fun isStopButton(component: Any): Boolean {
+  val action = (component as? ActionButton)?.action ?: return false
+  return action is StopAction || ActionManager.getInstance().getId(action) == IdeActions.ACTION_STOP_PROGRAM
+}

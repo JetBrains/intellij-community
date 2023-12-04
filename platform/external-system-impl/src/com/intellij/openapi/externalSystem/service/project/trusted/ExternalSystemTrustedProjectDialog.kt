@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.trusted
 
 import com.intellij.ide.IdeBundle
@@ -19,12 +19,8 @@ object ExternalSystemTrustedProjectDialog {
     return TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProjectAsync(
       projectRoot,
       project,
-      IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectRoot.fileName),
-      IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
-      IdeBundle.message("untrusted.project.dialog.trust.button"),
-      IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-      IdeBundle.message("untrusted.project.link.dialog.cancel.button")
-    )
+      title = IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectRoot.fileName),
+      cancelButtonText = IdeBundle.message("untrusted.project.link.dialog.cancel.button"))
   }
 
   suspend fun confirmLoadingUntrustedProjectAsync(
@@ -34,7 +30,7 @@ object ExternalSystemTrustedProjectDialog {
     return confirmLoadingUntrustedProjectAsync(project, listOf(systemId))
   }
 
-  suspend fun confirmLoadingUntrustedProjectAsync(
+  private suspend fun confirmLoadingUntrustedProjectAsync(
     project: Project,
     systemIds: Collection<ProjectSystemId>
   ): Boolean {

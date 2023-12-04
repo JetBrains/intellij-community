@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import java.io.File
 
 abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
     override fun isFirPlugin() = true
@@ -26,4 +27,13 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
         get() = ".k2Inspection"
 
     override fun checkForUnexpectedErrors() {}
+
+    override fun getAfterFileName(beforeFileName: String): String {
+        val firAfterFile = File(dataFilePath(beforeFileName.replace(".kt", ".fir.kt.after")))
+        return if (firAfterFile.exists()) {
+            firAfterFile.name
+        } else {
+            super.getAfterFileName(beforeFileName)
+        }
+    }
 }

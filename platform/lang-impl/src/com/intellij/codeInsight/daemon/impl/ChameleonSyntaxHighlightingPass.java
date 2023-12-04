@@ -81,8 +81,8 @@ final class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
     for (PsiElement e : s) {
       (e.getTextRange().intersects(myPriorityRange) ? lazyInside : lazyOutside).add(e);
     }
-    HighlightInfoHolder holderInside = new HighlightInfoHolder(myFile);
-    HighlightInfoHolder holderOutside = new HighlightInfoHolder(myFile);
+    HighlightInfoHolder holderInside = new HighlightInfoHolder(myFile, List.of());
+    HighlightInfoHolder holderOutside = new HighlightInfoHolder(myFile, List.of());
     for (PsiElement e : lazyInside) {
       collectHighlights(e, holderInside, holderOutside, myPriorityRange);
     }

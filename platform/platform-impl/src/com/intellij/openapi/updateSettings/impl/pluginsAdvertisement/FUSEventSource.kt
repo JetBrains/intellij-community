@@ -17,7 +17,7 @@ class PluginAdvertiserUsageCollector : CounterUsagesCollector() {
 
 private const val FUS_GROUP_ID = "plugins.advertiser"
 
-private val GROUP = EventLogGroup(FUS_GROUP_ID, 7)
+private val GROUP = EventLogGroup(FUS_GROUP_ID, 9)
 
 private val SOURCE_FIELD = EventFields.Enum(
   "source",
@@ -78,12 +78,23 @@ private val IGNORE_UNKNOWN_FEATURES_EVENT = GROUP.registerEvent(
   SOURCE_FIELD,
 )
 
+private val SUGGESTED_PLUGIN_EVENT = GROUP.registerEvent(
+  "suggestion.shown",
+  SOURCE_FIELD,
+  PLUGIN_FIELD
+)
+
 enum class FUSEventSource {
   EDITOR,
   NOTIFICATION,
-  SEARCH,
+  PLUGINS_SEARCH,
+  PLUGINS_SUGGESTED_GROUP,
   ACTIONS,
-  SETTINGS;
+  SETTINGS,
+  NEW_PROJECT_WIZARD,
+
+  @Deprecated("Use PLUGINS_SEARCH instead")
+  SEARCH;
 
   fun doIgnoreUltimateAndLog(project: Project? = null) {
     isIgnoreIdeSuggestion = true
@@ -128,4 +139,9 @@ enum class FUSEventSource {
 
   @JvmOverloads
   fun logIgnoreUnknownFeatures(project: Project? = null): Unit = IGNORE_UNKNOWN_FEATURES_EVENT.log(project, this)
+
+  @JvmOverloads
+  fun logPluginSuggested(project: Project? = null, pluginId: PluginId?) {
+    SUGGESTED_PLUGIN_EVENT.log(project, this, pluginId?.idString)
+  }
 }

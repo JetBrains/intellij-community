@@ -1,3 +1,4 @@
+<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M7.25 7.5C7.11193 7.5 7 7.38807 7 7.25V4.25C7 4.11193 7.11193 4 7.25 4C7.38807 4 7.5 4.11193 7.5 4.25V7.25C7.5 7.38807 7.38807 7.5 7.25 7.5Z" fill="#6C707E"/>
 <path d="M5 8.25C5 8.38807 5.11193 8.5 5.25 8.5C5.38807 8.5 5.5 8.38807 5.5 8.25V5.75C5.5 5.61193 5.38807 5.5 5.25 5.5C5.11193 5.5 5 5.61193 5 5.75V8.25Z" fill="#6C707E"/>

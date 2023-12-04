@@ -4,16 +4,20 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
+import org.intellij.markdown.ast.getParentOfType
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.SimpleTagProvider
+import org.intellij.plugins.markdown.lang.MarkdownElementType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader.Companion.createUniqueAnchorText
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader.Companion.replaceEntities
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class HeaderGeneratingProvider(headerTag: String): SimpleTagProvider(headerTag) {
   override fun openTag(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
-    val anchorText = buildAnchorText(node, text)
+    val anchorText = buildUniqueAnchorText(node, text)
     if (anchorText == null) {
       return super.openTag(visitor, text, node)
     }
@@ -50,12 +54,25 @@ class HeaderGeneratingProvider(headerTag: String): SimpleTagProvider(headerTag) 
           count += 1
         }
       }
-      val replaced = text.lowercase().replace(MarkdownHeader.garbageRegex, "").replace(" ", "-")
+      val replaced = replaceEntities(text).lowercase().replace(MarkdownHeader.garbageRegex, "").replace(" ", "-")
 
       return when {
         AdvancedSettings.getBoolean("markdown.squash.multiple.dashes.in.header.anchors") -> replaced.replace(Regex("-{2,}"), "-")
         else -> replaced
       }
+    }
+
+    private fun buildUniqueAnchorText(node: ASTNode, fileText: String): String? {
+      val anchorText = buildAnchorText(node, fileText) ?: return null
+      val number = calculateUniqueNumber(node, fileText, anchorText)
+      return createUniqueAnchorText(anchorText, number)
+    }
+
+    private fun calculateUniqueNumber(node: ASTNode, fileText: String, rawAnchorText: String): Int {
+      val file = node.getParentOfType(MarkdownElementTypes.MARKDOWN_FILE) ?: return 0
+      val headers = file.traverse().filter { MarkdownElementType.isHeaderElementType(it.type) }
+      val sameHeaders = headers.filter { buildAnchorText(it, fileText) == rawAnchorText }
+      return sameHeaders.takeWhile { it != node }.count()
     }
 
     private fun obtainLinkTextElements(node: ASTNode): Sequence<ASTNode> {

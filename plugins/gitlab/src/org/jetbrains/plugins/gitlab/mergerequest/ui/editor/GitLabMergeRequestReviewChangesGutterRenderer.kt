@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -80,7 +81,8 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
     val actions = mutableListOf<AnAction>(
       ShowPrevChangeMarkerAction(range),
       ShowNextChangeMarkerAction(range),
-      CopyLineStatusRangeAction(range)
+      CopyLineStatusRangeAction(range),
+      ShowDiffAction(range)
     )
     if (preferences != null) {
       actions.add(ToggleByWordDiffAction(preferences))
@@ -207,6 +209,23 @@ internal class GitLabMergeRequestReviewChangesGutterRenderer(private val model: 
     override fun actionPerformed(editor: Editor, range: Range) {
       val content = model.getOriginalContent(LineRange(range.vcsLine1, range.vcsLine2))
       CopyPasteManager.getInstance().setContents(StringSelection(content))
+    }
+  }
+
+  private inner class ShowDiffAction(range: Range)
+    : LineStatusMarkerPopupActions.RangeMarkerAction(editor, rangesSource, range, "Vcs.ShowDiffChangedLines"), LightEditCompatible {
+    init {
+      setShortcutSet(CompositeShortcutSet(KeymapUtil.getActiveKeymapShortcuts("Vcs.ShowDiffChangedLines"),
+                                          KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_DIFF_COMMON)))
+      with(templatePresentation) {
+        text = GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Show.Diff.text")
+        description = GitLabBundle.message("action.GitLab.Merge.Request.Review.Editor.Show.Diff.description")
+      }
+    }
+
+    override fun isEnabled(editor: Editor, range: Range): Boolean = editor.getUserData(GitLabMergeRequestEditorReviewUIModel.KEY) != null
+    override fun actionPerformed(editor: Editor, range: Range) {
+      editor.getUserData(GitLabMergeRequestEditorReviewUIModel.KEY)?.showDiff(range.line1)
     }
   }
 

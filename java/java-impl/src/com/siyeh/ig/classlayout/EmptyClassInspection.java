@@ -17,6 +17,7 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -27,13 +28,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.ui.ExternalizableStringSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -83,14 +83,13 @@ public class EmptyClassInspection extends BaseInspection {
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final Object info = infos[0];
-    if (!(info instanceof PsiModifierListOwner)) {
+    if (!(info instanceof PsiModifierListOwner owner)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    LocalQuickFix[] fixes = AddToIgnoreIfAnnotatedByListQuickFix.build((PsiModifierListOwner)info, ignorableAnnotations);
-    if (info instanceof PsiAnonymousClass) {
-      return ArrayUtil.prepend(new ConvertEmptyAnonymousToNewFix(), fixes);
-    }
-    return fixes;
+    return StreamEx.of(SpecialAnnotationsUtilBase.createAddAnnotationToListFixes(owner, this, insp -> insp.ignorableAnnotations))
+      .prepend(info instanceof PsiAnonymousClass ? new ConvertEmptyAnonymousToNewFix() : null)
+      .nonNull()
+      .toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -191,7 +190,7 @@ public class EmptyClassInspection extends BaseInspection {
       registerClassError(aClass, aClass);
     }
 
-    private boolean hasTypeArguments(PsiReferenceList extendsList) {
+    private static boolean hasTypeArguments(PsiReferenceList extendsList) {
       if (extendsList == null) {
         return false;
       }

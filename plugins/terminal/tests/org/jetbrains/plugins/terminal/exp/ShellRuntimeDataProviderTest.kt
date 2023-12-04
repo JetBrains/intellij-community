@@ -67,7 +67,7 @@ class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
 
   private fun doGetFilesTest(shellPath: String) {
     Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
-    session = TerminalSessionTestUtil.startTerminalSession(project, shellPath, testRootDisposable)
+    session = TerminalSessionTestUtil.startBlockTerminalSession(project, shellPath, testRootDisposable)
     testDirectory = createTempDirectory(prefix = "runtime_data")
 
     val expected = listOf(
@@ -89,7 +89,7 @@ class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
 
   private fun doGetEnvironmentTest(shellPath: String) {
     Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
-    session = TerminalSessionTestUtil.startTerminalSession(project, shellPath, testRootDisposable)
+    session = TerminalSessionTestUtil.startBlockTerminalSession(project, shellPath, testRootDisposable)
 
     val env: ShellEnvironment = executeRuntimeDataRequest { provider ->
       provider.getShellEnvironment()

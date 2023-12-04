@@ -161,6 +161,8 @@ public final class WorkingContextManager {
       tasksFolder.mkdirs();
     }
     String projectName = FileUtil.sanitizeFileName(myProject.getName());
+    int maxNameLength = 240;
+    projectName = projectName.length() <= maxNameLength ? projectName : projectName.substring(0, maxNameLength); // make sure archive file name does not exceed 255
     return new File(tasksFolder, projectName + postfix);
   }
 

@@ -64,7 +64,7 @@ final class LombokBuildManagerListener implements BuildManagerListener {
       var scope = getScopeRestrictedByFileTypes(projectScope(project), JavaFileType.INSTANCE);
 
       CacheManager.getInstance(project).processFilesWithWord(processor, "lombok", UsageSearchContext.IN_CODE, scope, false);
-      return new Result<>(processor.isFound(), OuterModelsModificationTrackerManager.getInstance(project).getTracker());
+      return new Result<>(processor.isFound(), OuterModelsModificationTrackerManager.getTracker(project));
     });
   }
 

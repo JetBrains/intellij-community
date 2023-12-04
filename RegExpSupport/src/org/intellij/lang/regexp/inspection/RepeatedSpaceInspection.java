@@ -3,6 +3,8 @@ package org.intellij.lang.regexp.inspection;
 
 import com.intellij.codeInspection.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -86,7 +88,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
     }
   }
 
-  private static class RepeatedSpaceFix implements LocalQuickFix {
+  private static class RepeatedSpaceFix extends ModCommandQuickFix {
     private final int myCount;
 
     RepeatedSpaceFix(int count) {
@@ -108,10 +110,10 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof RegExpBranch)) {
-        return;
+        return ModCommand.nop();
       }
       final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
       final TextRange range = descriptor.getTextRangeInElement();
@@ -128,7 +130,7 @@ public class RepeatedSpaceInspection extends LocalInspectionTool {
         }
         child = child.getNextSibling();
       }
-      RegExpReplacementUtil.replaceInContext(element, text.toString());
+      return ModCommand.psiUpdate(element, e -> RegExpReplacementUtil.replaceInContext(e, text.toString()));
     }
   }
 }

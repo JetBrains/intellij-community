@@ -21,8 +21,8 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
 
   override fun resolveArtifacts(longRunningTaskId: String,
                                 requests: ArrayList<MavenArtifactResolutionRequest>,
-                                token: MavenToken?): ArrayList<MavenArtifact> {
-    return ArrayList()
+                                token: MavenToken?): MavenServerResponse<ArrayList<MavenArtifact>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun resolveArtifactsTransitively(artifacts: ArrayList<MavenArtifactInfo>,
@@ -34,15 +34,15 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
   override fun resolvePlugins(longRunningTaskId: String,
                               pluginResolutionRequests: ArrayList<PluginResolutionRequest>,
                               forceUpdateSnapshots: Boolean,
-                              token: MavenToken?): ArrayList<PluginResolutionResponse> {
-    return ArrayList()
+                              token: MavenToken?): MavenServerResponse<ArrayList<PluginResolutionResponse>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun executeGoal(longRunningTaskId: String,
                            requests: ArrayList<MavenGoalExecutionRequest>,
                            goal: String,
-                           token: MavenToken?): ArrayList<MavenGoalExecutionResult> {
-    return ArrayList()
+                           token: MavenToken?): MavenServerResponse<ArrayList<MavenGoalExecutionResult>> {
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
   override fun release(token: MavenToken?) {
@@ -81,21 +81,12 @@ abstract class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
 class UntrustedDummyEmbedder(myProject: Project) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
                                request: ProjectResolutionRequest,
-                               token: MavenToken?): ArrayList<MavenServerExecutionResult> {
-    MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
-      object : BuildIssue {
-        override val title = SyncBundle.message("maven.sync.not.trusted.title")
-        override val description = SyncBundle.message("maven.sync.not.trusted.description") +
-                                   "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
-        override val quickFixes: List<BuildIssueQuickFix> = listOf(TrustProjectQuickFix())
-
-        override fun getNavigatable(project: Project) = null
-
-      },
-      MessageEvent.Kind.WARNING
-    )
-    return ArrayList()
+                               token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
+    showUntrustedProjectNotification(myProject)
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
+
+
 }
 
 class MisconfiguredPlexusDummyEmbedder(myProject: Project,
@@ -105,7 +96,7 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
                                        private val myUnresolvedId: MavenId?) : DummyEmbedder(myProject) {
   override fun resolveProjects(longRunningTaskId: String,
                                request: ProjectResolutionRequest,
-                               token: MavenToken?): ArrayList<MavenServerExecutionResult> {
+                               token: MavenToken?): MavenServerResponse<ArrayList<MavenServerExecutionResult>> {
 
     MavenProjectsManager.getInstance(myProject).syncConsole.addBuildIssue(
       MavenCoreInitializationFailureIssue(myExceptionMessage,
@@ -115,7 +106,22 @@ class MisconfiguredPlexusDummyEmbedder(myProject: Project,
       ),
       MessageEvent.Kind.ERROR
     )
-    return ArrayList()
+    return MavenServerResponse(ArrayList(), LongRunningTaskStatus.EMPTY)
   }
 
+}
+
+fun showUntrustedProjectNotification(project: Project) {
+  MavenProjectsManager.getInstance(project).syncConsole.addBuildIssue(
+    object : BuildIssue {
+      override val title = SyncBundle.message("maven.sync.not.trusted.title")
+      override val description = SyncBundle.message("maven.sync.not.trusted.description") +
+                                 "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
+      override val quickFixes: List<BuildIssueQuickFix> = listOf(TrustProjectQuickFix())
+
+      override fun getNavigatable(project: Project) = null
+
+    },
+    MessageEvent.Kind.WARNING
+  )
 }

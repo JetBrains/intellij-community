@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 
 object JavaCoverageReportEnumerator {
   @JvmStatic
-  fun collectSummaryInReport(bundle: CoverageSuitesBundle, project: Project, annotator: Annotator) {
+  fun collectSummaryInReport(bundle: CoverageSuitesBundle, project: Project, collector: CoverageInfoCollector) {
     val projectData = bundle.coverageData ?: return
     val packageAnnotator = PackageAnnotator(bundle, project, projectData)
 
@@ -26,13 +26,13 @@ object JavaCoverageReportEnumerator {
       .forEach { (topLevelName, simpleNames) ->
         val packageVMName = AnalysisUtils.fqnToInternalName(StringUtil.getPackageName(topLevelName))
         val result = packageAnnotator.visitFiles(topLevelName, simpleNames, packageVMName) ?: return@forEach
-        annotator.annotateClass(topLevelName, result.info)
+        collector.addClass(topLevelName, result.info)
         flattenPackages.getOrPut(AnalysisUtils.internalNameToFqn(packageVMName)) { PackageCoverageInfo() }.append(result.info)
         flattenDirectories.getOrPut(result.directory) { PackageCoverageInfo() }.append(result.info)
       }
 
-    JavaCoverageClassesAnnotator.annotatePackages(flattenPackages, annotator)
-    JavaCoverageClassesAnnotator.annotateDirectories(flattenDirectories, annotator, collectSourceRoots(project))
+    JavaCoverageClassesAnnotator.annotatePackages(flattenPackages, collector)
+    JavaCoverageClassesAnnotator.annotateDirectories(flattenDirectories, collector, collectSourceRoots(project))
   }
 
   private fun collectSourceRoots(project: Project): Set<VirtualFile> {

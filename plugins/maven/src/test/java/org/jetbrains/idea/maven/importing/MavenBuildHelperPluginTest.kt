@@ -5,8 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenBuildHelperPluginTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = false
-  
+    
   @Test
   fun testCompletion() = runBlocking {
     importProjectAsync(

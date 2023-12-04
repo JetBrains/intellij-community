@@ -14,13 +14,14 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
+import com.intellij.webSymbols.WebSymbol.Companion.HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
-import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.completion.AsteriskAwarePrefixMatcher
 import com.intellij.webSymbols.completion.WebSymbolsCompletionProviderBase
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutor
+import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import com.intellij.webSymbols.utils.asSingleSymbol
 
 class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBase<XmlElement>() {
@@ -52,8 +53,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
     processCompletionQueryResults(
       queryExecutor,
       patchedResultSet,
-      NAMESPACE_HTML,
-      KIND_HTML_ATTRIBUTES,
+      HTML_ATTRIBUTES,
       name,
       position,
       context,
@@ -81,7 +81,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
 
             val fullName = name.substring(0, item.offset) + item.name
             val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName, scope = symbols)
-              .asSingleSymbol() ?: return@withInsertHandlerAdded
+                          .asSingleSymbol() ?: return@withInsertHandlerAdded
             val info = WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match)
             if (info.acceptsValue && !info.acceptsNoValue) {
               XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)

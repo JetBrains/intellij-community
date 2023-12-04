@@ -13,10 +13,10 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
-public class FocusTextFilterAction extends DumbAwareAction {
+public final class FocusTextFilterAction extends DumbAwareAction {
   public FocusTextFilterAction() {
     super(VcsLogBundle.messagePointer("action.FocusTextFilterAction.text"),
-          VcsLogBundle.messagePointer("action.FocusTextFilterAction.description"), null);
+          VcsLogBundle.messagePointer("action.FocusTextFilterAction.description"));
   }
 
   @Override

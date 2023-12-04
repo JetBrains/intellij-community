@@ -2,13 +2,16 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.icons.AllIcons
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 internal class GHPRCreatePullRequestAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -32,9 +35,18 @@ internal class GHPRCreatePullRequestAction : DumbAwareAction() {
     }
   }
 
-  override fun actionPerformed(e: AnActionEvent) {
-    e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowViewModel>().activateAndAwaitProject {
-      createPullRequest()
-    }
+  override fun actionPerformed(e: AnActionEvent) = tryToCreatePullRequest(e)
+}
+
+// NOTE: no need to register in plugin.xml
+internal class GHPRCreatePullRequestNotificationAction : NotificationAction(
+  GithubBundle.message("pull.request.notification.create.action")
+) {
+  override fun actionPerformed(e: AnActionEvent, notification: Notification) = tryToCreatePullRequest(e)
+}
+
+private fun tryToCreatePullRequest(e: AnActionEvent) {
+  return e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowViewModel>().activateAndAwaitProject {
+    createPullRequest()
   }
 }

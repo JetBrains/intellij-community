@@ -27,7 +27,7 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="library" exported="" name="http-client" level="project" />
     <orderEntry type="library" exported="" name="commons-logging" level="project" />
-    <orderEntry type="library" exported="" name="Slf4j" level="project" />
+    <orderEntry type="library" exported="" name="slf4j-api" level="project" />
     <orderEntry type="library" exported="" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
@@ -56,7 +56,7 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-http" type="repository">
-        <properties jar-repository-id="central-proxy" maven-id="org.apache.maven.resolver:maven-resolver-transport-http:1.4.2">
+        <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-http:1.4.2">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.4.2/maven-resolver-transport-http-1.4.2.jar">
               <sha256sum>465bbb05ee2e1504738d26a1bfeca0c85d133476f3f625ceb1c7eb57e39b15ac</sha256sum>
@@ -84,7 +84,7 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-connector-basic" type="repository">
-        <properties jar-repository-id="central-proxy" maven-id="org.apache.maven.resolver:maven-resolver-connector-basic:1.4.2">
+        <properties maven-id="org.apache.maven.resolver:maven-resolver-connector-basic:1.4.2">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.4.2/maven-resolver-connector-basic-1.4.2.jar">
               <sha256sum>50174586a20ab1d0082bafaa12939932592164fd0fecdcac2f60af26684b6e34</sha256sum>

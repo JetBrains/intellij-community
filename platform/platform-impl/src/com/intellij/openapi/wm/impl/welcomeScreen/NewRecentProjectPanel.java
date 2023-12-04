@@ -281,7 +281,7 @@ public final class NewRecentProjectPanel extends RecentProjectPanel {
             AccessibleContextUtil.setCombinedDescription(this, name, " - ", path);
           }
 
-          private Icon getGray(Icon icon) {
+          private static Icon getGray(Icon icon) {
             final int w = icon.getIconWidth();
             final int h = icon.getIconHeight();
             GraphicsEnvironment ge =

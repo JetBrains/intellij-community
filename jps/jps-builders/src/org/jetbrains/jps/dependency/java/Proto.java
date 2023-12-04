@@ -2,12 +2,17 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.ExternalizableGraphElement;
+import org.jetbrains.jps.dependency.GraphDataInput;
+import org.jetbrains.jps.dependency.GraphDataOutput;
 import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.dependency.impl.RW;
 import org.jetbrains.jps.dependency.java.TypeRepr.ClassType;
 
+import java.io.IOException;
 import java.util.Objects;
 
-public class Proto {
+public class Proto implements ExternalizableGraphElement {
   private final JVMFlags access;
   private final String signature;
   private final String name;
@@ -18,6 +23,21 @@ public class Proto {
     this.signature = signature == null? "" : signature;
     this.name = name == null? "" : name;
     this.annotations = annotations;
+  }
+
+  public Proto(GraphDataInput in) throws IOException {
+    access = new JVMFlags(in.readInt());
+    signature = in.readUTF();
+    name = in.readUTF();
+    annotations = RW.readCollection(in, () -> new ClassType(in.readUTF()));
+  }
+
+  @Override
+  public void write(GraphDataOutput out) throws IOException {
+    out.writeInt(access.getValue());
+    out.writeUTF(signature);
+    out.writeUTF(name);
+    RW.writeCollection(out, annotations, t -> out.writeUTF(t.getJvmName()));
   }
 
   public JVMFlags getFlags() {
@@ -94,6 +114,10 @@ public class Proto {
     return false;
   }
 
+  public boolean isWeakerAccessThan(Proto anotherProto) {
+    return getFlags().isWeakerAccess(anotherProto.getFlags());
+  }
+
   public class Diff<V extends Proto> implements Difference {
     protected final V myPast;
 
@@ -116,6 +140,18 @@ public class Proto {
 
     public JVMFlags getRemovedFlags() {
       return getFlags().deriveRemoved(myPast.getFlags());
+    }
+
+    public boolean becamePackageLocal() {
+      return !myPast.isPackageLocal() && isPackageLocal();
+    }
+
+    public boolean accessRestricted() {
+      return Proto.this.isWeakerAccessThan(myPast);
+    }
+
+    public boolean accessExpanded() {
+      return myPast.isWeakerAccessThan(Proto.this);
     }
 
     public boolean signatureChanged() {

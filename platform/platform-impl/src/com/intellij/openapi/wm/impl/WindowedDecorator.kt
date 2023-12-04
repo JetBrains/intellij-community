@@ -67,6 +67,7 @@ internal class WindowedDecorator(
 
   override fun setLocationRelativeTo(parentFrame: Component?) {
     getFrame().setLocationRelativeTo(parentFrame)
+    boundsHelper.bounds = getFrame().bounds
   }
 
   override var bounds: Rectangle

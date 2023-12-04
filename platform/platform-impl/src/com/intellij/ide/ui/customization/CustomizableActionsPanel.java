@@ -50,7 +50,7 @@ public class CustomizableActionsPanel {
   public CustomizableActionsPanel() {
     //noinspection HardCodedStringLiteral
     @SuppressWarnings("DialogTitleCapitalization")
-    Group rootGroup = new Group("root", null, null);
+    Group rootGroup = new Group("root");
     final DefaultMutableTreeNode root = new DefaultMutableTreeNode(rootGroup);
     MyActionsTreeModel model = new MyActionsTreeModel(root);
     myActionsTree = new Tree(model);

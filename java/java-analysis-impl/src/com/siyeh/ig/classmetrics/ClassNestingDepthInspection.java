@@ -73,7 +73,7 @@ public class ClassNestingDepthInspection
       registerClassError(aClass, Integer.valueOf(nestingLevel));
     }
 
-    private int getNestingLevel(PsiClass aClass) {
+    private static int getNestingLevel(PsiClass aClass) {
       PsiElement ancestor = aClass.getParent();
       int nestingLevel = 0;
       while (ancestor != null) {

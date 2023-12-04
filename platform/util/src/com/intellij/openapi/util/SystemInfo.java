@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.awt.*;
 import java.io.File;
 import java.util.List;
 import java.util.function.Supplier;
@@ -61,12 +60,17 @@ public final class SystemInfo {
   public static final boolean isWin10OrNewer = isWindows && isOsVersionAtLeast("10.0");
   public static final boolean isWin11OrNewer = isWindows && isOsVersionAtLeast("11.0");
 
-  public static final boolean isXWindow = SystemInfoRt.isXWindow;
-  public static final boolean isWayland, isGNOME, isKDE, isXfce, isI3;
+  /**
+   * Set to true if we are running in a Wayland environment, either through
+   * XWayland or using Wayland directly.
+   */
+  public static final boolean isWayland;
+  public static final boolean isXWindow = SystemInfoRt.isUnix && !SystemInfoRt.isMac;
+  public static final boolean isGNOME, isKDE, isXfce, isI3;
   static {
     // http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669
     // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
-    if (isXWindow) {
+    if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
       isWayland = System.getenv("WAYLAND_DISPLAY") != null;
       @SuppressWarnings("SpellCheckingInspection") String desktop = System.getenv("XDG_CURRENT_DESKTOP"), gdmSession = System.getenv("GDMSESSION");
       isGNOME = desktop != null && desktop.contains("GNOME") || gdmSession != null && gdmSession.contains("gnome");
@@ -79,21 +83,18 @@ public final class SystemInfo {
     }
   }
 
-  public static boolean isWaylandToolkit() {
-    Toolkit tk = Toolkit.getDefaultToolkit();
-    return "sun.awt.wl.WLToolkit".equals(tk.getClass().getName());
-  }
-
   public static final boolean isMacSystemMenu = isMac && (SystemInfoRt.isJBSystemMenu || Boolean.getBoolean("apple.laf.useScreenMenuBar"));
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
-  private static final Supplier<Boolean> ourHasXdgOpen = isXWindow ? PathExecLazyValue.create("xdg-open") : () -> false;
+  private static final Supplier<Boolean> ourHasXdgOpen = SystemInfoRt.isUnix && !SystemInfoRt.isMac
+                                                         ? PathExecLazyValue.create("xdg-open") : () -> false;
   public static boolean hasXdgOpen() {
     return ourHasXdgOpen.get();
   }
 
-  private static final Supplier<Boolean> ourHasXdgMime = isXWindow ? PathExecLazyValue.create("xdg-mime") : () -> false;
+  private static final Supplier<Boolean> ourHasXdgMime = SystemInfoRt.isUnix && !SystemInfoRt.isMac
+                                                         ? PathExecLazyValue.create("xdg-mime") : () -> false;
   public static boolean hasXdgMime() {
     return ourHasXdgMime.get();
   }
@@ -183,11 +184,9 @@ public final class SystemInfo {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings("Since15")
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
     return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
   }
@@ -195,7 +194,6 @@ public final class SystemInfo {
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings("Since15")
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }

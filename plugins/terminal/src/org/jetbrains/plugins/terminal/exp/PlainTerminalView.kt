@@ -30,8 +30,7 @@ class PlainTerminalView(
   private val view: SimpleTerminalView
 
   init {
-    val eventsHandler = TerminalEventsHandler(session, settings)
-    view = SimpleTerminalView(project, settings, session, eventsHandler)
+    view = SimpleTerminalView(project, settings, session)
     view.component.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent?) {
         val newSize = getTerminalSize() ?: return
@@ -60,6 +59,10 @@ class PlainTerminalView(
 
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
     session.addTerminationCallback(onTerminated, parentDisposable)
+  }
+
+  override fun sendCommandToExecute(shellCommand: String) {
+    session.sendCommandToExecute(shellCommand)
   }
 
   override fun dispose() {}

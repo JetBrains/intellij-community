@@ -111,7 +111,6 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
         <version>1</version>
         """.trimIndent())
     importProjects(m1, m2)
-    resolvePlugins()
 
     withVariantsFor("", "m1") { it: List<String>? ->
       assertContain(it, "war:help", "war:inplace", "war:exploded", "war:war")

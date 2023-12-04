@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -18,7 +17,6 @@ import java.util.Collections;
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class CleanupProcessor extends AbstractProcessor {
 
   public CleanupProcessor() {

@@ -17,13 +17,15 @@ import com.intellij.vcs.log.visible.CommitCountStage
 import com.intellij.vcs.log.visible.FilterKind
 
 object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("vcs.log.performance", 3)
+  private val GROUP = EventLogGroup("vcs.log.performance", 4)
 
   val FILE_HISTORY_COMPUTING = GROUP.registerEvent("file.history.computed",
-                                                   EventFields.String("vcs", listOf("Git", "hg4idea", "Perforce")),
+                                                   VcsLogRepoSizeCollector.VCS_FIELD,
                                                    EventFields.Boolean("with_index"),
                                                    EventFields.DurationMs)
-  val FILE_HISTORY_COLLECTING_RENAMES = GROUP.registerEvent("file.history.collected.renames", EventFields.DurationMs)
+  val FILE_HISTORY_COLLECTING_RENAMES = GROUP.registerEvent("file.history.collected.renames",
+                                                            VcsLogRepoSizeCollector.VCS_FIELD,
+                                                            EventFields.DurationMs)
 
   val VCS_LIST_FIELD = object : StringListEventField("vcs_list") {
     override val validationRule: List<String> get() = VcsLogRepoSizeCollector.getVcsValidationRule()

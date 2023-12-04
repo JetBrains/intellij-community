@@ -27,7 +27,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.ui.popup.*
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.NlsSafe
@@ -52,12 +54,12 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.*
+import java.awt.Component
+import java.awt.Point
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
-import javax.swing.*
-import kotlin.collections.ArrayList
+import javax.swing.JList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.math.max
@@ -594,6 +596,10 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
     _state = state
   }
 
+  fun reloadState() {
+    _state = State(_state.history, _state.pinned, _state.allConfigurationsExpanded)
+  }
+
   interface Listener {
     fun togglePin(setting: RunnerAndConfigurationSettings) {}
     fun register(setting: RunnerAndConfigurationSettings) {}
@@ -634,8 +640,8 @@ private class ExecutionReasonableHistoryManager : ProjectActivity {
       private fun onAnyChange(executorId: String, env: ExecutionEnvironment, reason: RunState) {
         getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
           RunStatusHistory.getInstance(env.project).changeState(conf, executorId, reason)
-          ActivityTracker.getInstance().inc() // Not sure is it needed at all
         }
+        ActivityTracker.getInstance().inc() // needed to update run toolbar
       }
     })
   }

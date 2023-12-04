@@ -5,13 +5,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.*;
 import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
-import com.intellij.util.io.storage.RefCountingContentStorage;
+import com.intellij.util.io.storage.VFSContentStorage;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.List;
 
@@ -38,17 +36,23 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       return;
     }
 
+    LOG.info(notClosedProperlyErrors.size() + " not-closed-properly-related issue(s) -> trying to fix");
+
     PersistentFSRecordsStorage records = loader.recordsStorage();
     ScannableDataEnumeratorEx<String> namesEnumerator = loader.namesStorage();
-    RefCountingContentStorage contentStorage = loader.contentsStorage();
-    ContentHashEnumerator contentHashEnumerator = loader.contentHashesEnumerator();
+    VFSContentStorage contentStorage = loader.contentsStorage();
     AbstractAttributesStorage attributesStorage = loader.attributesStorage();
     try {
       int accumulatedErrors = records.getErrorsAccumulated();
       if (accumulatedErrors > 0) {
+        //TODO RC: with more detailed recovery we could clear accumulatedErrors -- but current recovery procedures
+        //         are not very strict, they could miss the errors easily, so I don't trust them too much.
+        //         So if there were errors during the regular operations -> safer to fail the recovery, and rebuild VFS
+        LOG.warn(accumulatedErrors + " errors accumulated in previous session -> " +
+                 "stop the recovery because the chances to overlook crucial VFS errors are too big");
         loader.problemsRecoveryFailed(notClosedProperlyErrors,
                                       HAS_ERRORS_IN_PREVIOUS_SESSION,
-                                      accumulatedErrors + " errors accumulated in previous session -- too dangerous to recover");
+                                      accumulatedErrors + " errors accumulated in previous session -- too risky to recover");
       }
 
       int namesEnumeratorErrors = 0;
@@ -87,7 +91,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
         }
 
         if (contentId != DataEnumerator.NULL_ID) {
-          if (!contentResolvedSuccessfully(fileId, contentId, contentStorage, contentHashEnumerator)) {
+          if (!contentResolvedSuccessfully(fileId, contentId, contentStorage)) {
             contentEnumeratorErrors++;
             totalErrors++;
           }
@@ -100,13 +104,10 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       }
 
       if (namesEnumeratorErrors == 0 && attributesStorageErrors == 0 && contentEnumeratorErrors == 0) {
+        LOG.info("No critical errors found -> VFS looks +/- healthy");
         loader.problemsWereRecovered(notClosedProperlyErrors);
         return;
       }
-
-      //Fail-safe: if following recovery procedures fail to rebuild VFS -- on restart, we'll short-circuit
-      // the detailing checks
-      records.setErrorsAccumulated(accumulatedErrors + totalErrors);
 
       if (namesEnumeratorErrors > 0) {
         loader.problemsRecoveryFailed(notClosedProperlyErrors,
@@ -125,6 +126,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
       }
     }
     catch (Throwable t) {
+      LOG.warn("Unexpected error during VFS consistency scan: " + t.getMessage());
       loader.problemsRecoveryFailed(notClosedProperlyErrors,
                                     UNRECOGNIZED,
                                     "Unexpected error during VFS consistency scan", t);
@@ -146,24 +148,12 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
 
   private static boolean contentResolvedSuccessfully(int fileId,
                                                      int contentId,
-                                                     @NotNull RefCountingContentStorage contentStorage,
-                                                     @NotNull ContentHashEnumerator contentHashEnumerator) {
-    try (DataInputStream stream = contentStorage.readStream(contentId)) {
-      stream.readAllBytes();
-    }
-    catch (IOException e) {
-      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content fails to resolve. " + e.getMessage());
-      return false;
-    }
+                                                     @NotNull VFSContentStorage contentStorage) {
     try {
-      byte[] hash = contentHashEnumerator.valueOf(contentId);
-      if (hash == null) {
-        LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content hash fails to resolve (null)");
-        return false;
-      }
+      contentStorage.checkRecord(contentId, /* fast: */ false);
     }
-    catch (IOException e) {
-      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content hash fails to resolve. " + e.getMessage());
+    catch (Throwable t) {
+      LOG.warn("file[#" + fileId + "]: contentId(=" + contentId + ") content fails to resolve. " + t.getMessage());
       return false;
     }
 

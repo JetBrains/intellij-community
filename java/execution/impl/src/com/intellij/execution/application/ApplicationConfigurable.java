@@ -96,7 +96,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   }
 
   @NotNull
-  private String getInitialMainClassName(@NotNull ApplicationConfiguration configuration) {
+  private static String getInitialMainClassName(@NotNull ApplicationConfiguration configuration) {
     return configuration.getMainClassName() != null ? configuration.getMainClassName().replaceAll("\\$", "\\.") : "";
   }
 

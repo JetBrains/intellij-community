@@ -2,14 +2,25 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+
+import java.io.IOException;
 
 public final class ModuleUsage extends JvmElementUsage {
 
   public ModuleUsage(@NotNull String moduleName) {
-    super(new JvmNodeReferenceID(moduleName));
+    this(new JvmNodeReferenceID(moduleName));
   }
-  
+
+  public ModuleUsage(@NotNull JvmNodeReferenceID modId) {
+    super(modId);
+  }
+
+  public ModuleUsage(GraphDataInput in) throws IOException {
+    super(in);
+  }
+
   public String getModuleName() {
-    return ((JvmNodeReferenceID)getElementOwner()).getNodeName();
+    return getElementOwner().getNodeName();
   }
 }

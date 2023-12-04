@@ -6,10 +6,13 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.BlobStorageTes
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
+
+import static org.junit.Assert.*;
 
 public class AppendableObjectStorageBackedByResizableMappedFileTest extends AppendableObjectStorageTestBase<String> {
 
@@ -27,6 +30,26 @@ public class AppendableObjectStorageBackedByResizableMappedFileTest extends Appe
       /* valuesArePageAligned: */ false,
       EnumeratorStringDescriptor.INSTANCE
     );
+  }
+
+  @Test
+  public void processAll_failsIfCalledUnderReadLock() throws IOException {
+    appendableStorage.lockRead();
+    try {
+      appendableStorage.processAll((valueId, value) -> {
+        return true;
+      });
+      fail(".processAll() must fail under readLock");
+    }
+    catch (IllegalStateException e) {
+      assertTrue(
+        "Error message must be something ~ 'readLock must NOT be held', but [" + e.getMessage()+"]",
+        e.getMessage().contains("readLock must NOT")
+      );
+    }
+    finally {
+      appendableStorage.unlockRead();
+    }
   }
 
   @Override

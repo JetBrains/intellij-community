@@ -20,13 +20,16 @@ import org.jetbrains.jps.builders.java.dependencyView.Mappings;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 import org.jetbrains.jps.dependency.Delta;
 import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.dependency.DifferentiateParameters;
 import org.jetbrains.jps.dependency.DifferentiateResult;
+import org.jetbrains.jps.dependency.impl.DifferentiateParametersBuilder;
 import org.jetbrains.jps.dependency.impl.FileSource;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
@@ -416,10 +419,17 @@ public final class JavaBuilderUtil {
     boolean performIntegrate = true;
     boolean additionalPassRequired = false;
     final boolean errorsDetected = Utils.errorsDetected(context);
-    DependencyGraph graph = context.getProjectDescriptor().dataManager.getDependencyGraph();
-    DifferentiateResult diffResult = graph.differentiate(delta, context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context));
-
+    BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+    DependencyGraph graph = dataManager.getDependencyGraph();
     final ModulesBasedFileFilter moduleBasedFilter = new ModulesBasedFileFilter(context, chunk);
+    DifferentiateParametersBuilder params = DifferentiateParametersBuilder.create(chunk.getPresentableShortName())
+      .calculateAffected(context.shouldDifferentiate(chunk) && !isForcedRecompilationAllJavaModules(context))
+      .processConstantsIncrementally(dataManager.isProcessConstantsIncrementally())
+      .withAffectionFilter(s -> moduleBasedFilter.accept(s.getPath().toFile()))
+      .withChunkStructureFilter(s -> moduleBasedFilter.belongsToCurrentTargetChunk(s.getPath().toFile()));
+    DifferentiateParameters differentiateParams = params.get();
+    DifferentiateResult diffResult = graph.differentiate(delta, differentiateParams);
+
     final boolean compilingIncrementally = isCompileJavaIncrementally(context);
 
     if (diffResult.isIncremental()) {
@@ -428,9 +438,11 @@ public final class JavaBuilderUtil {
         new HashSet<>()
       );
 
-      final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", affectedFiles.size());
-      LOG.info(infoMessage);
-      context.processMessage(new ProgressMessage(infoMessage));
+      if (differentiateParams.isCalculateAffected()) {
+        final String infoMessage = JpsBuildBundle.message("progress.message.dependency.analysis.found.0.affected.files", affectedFiles.size());
+        LOG.info(infoMessage);
+        context.processMessage(new ProgressMessage(infoMessage));
+      }
 
       if (!affectedFiles.isEmpty()) {
         
@@ -672,13 +684,18 @@ public final class JavaBuilderUtil {
       if (rd == null) {
         return true;
       }
-      final ModuleBuildTarget targetOfFile = rd.target;
+      final BuildTarget<?> targetOfFile = rd.target;
       if (myChunkTargets.contains(targetOfFile)) {
         return true;
       }
       Set<BuildTarget<?>> targetOfFileWithDependencies = myCache.get(targetOfFile);
       if (targetOfFileWithDependencies == null) {
-        targetOfFileWithDependencies = myBuildTargetIndex.getDependenciesRecursively(targetOfFile, myContext);
+        targetOfFileWithDependencies = Iterators.collect(Iterators.recurseDepth(targetOfFile, new Iterators.Function<BuildTarget<?>, Iterable<? extends BuildTarget<?>>>() {
+          @Override
+          public Iterable<? extends BuildTarget<?>> fun(BuildTarget<?> t) {
+            return myBuildTargetIndex.getDependencies(t, myContext);
+          }
+        }, false), new LinkedHashSet<>());
         myCache.put(targetOfFile, targetOfFileWithDependencies);
       }
       return ContainerUtil.intersects(targetOfFileWithDependencies, myChunkTargets);

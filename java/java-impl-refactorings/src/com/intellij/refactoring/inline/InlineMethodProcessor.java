@@ -274,6 +274,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       return false;
     }
 
+    //kotlin j2k fails badly if moved under progress
     myInliners = GenericInlineHandler.initInliners(myMethod, usagesIn, new InlineHandler.Settings() {
       @Override
       public boolean isOnlyOneReferenceToInline() {

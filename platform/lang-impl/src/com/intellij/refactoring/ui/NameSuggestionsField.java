@@ -43,7 +43,7 @@ public class NameSuggestionsField extends JPanel {
     super(new BorderLayout());
     myProject = project;
     myComboBoxModel = new MyComboBoxModel();
-    final ComboBox comboBox = new ComboBox(myComboBoxModel,-1);
+    final ComboBox<String> comboBox = new ComboBox<>(myComboBoxModel,-1);
     myComponent = comboBox;
     add(myComponent, BorderLayout.CENTER);
     setupComboBox(comboBox, StdFileTypes.JAVA);
@@ -60,7 +60,7 @@ public class NameSuggestionsField extends JPanel {
       myComponent = createTextFieldForName(nameSuggestions, fileType);
     }
     else {
-      final ComboBox combobox = new ComboBox(nameSuggestions);
+      final ComboBox<String> combobox = new ComboBox<>(nameSuggestions);
       combobox.setSelectedIndex(0);
       setupComboBox(combobox, fileType);
       myComponent = combobox;
@@ -108,34 +108,31 @@ public class NameSuggestionsField extends JPanel {
 
   public void selectNameWithoutExtension() {
     SwingUtilities.invokeLater(() -> {
-      Editor editor = getEditor();
-      if (editor == null) return;
-      final int pos = editor.getDocument().getText().lastIndexOf('.');
+      EditorTextField textField = getEditorTextField();
+      if (textField == null) return;
+      final int pos = textField.getDocument().getText().lastIndexOf('.');
       if (pos > 0) {
-        editor.getSelectionModel().setSelection(0, pos);
-        editor.getCaretModel().moveToOffset(pos);
+        textField.select(TextRange.create(0, pos));
+        textField.setCaretPosition(pos);
       }
     });
-
   }
 
   public void select(final int start, final int end) {
     SwingUtilities.invokeLater(() -> {
-      Editor editor = getEditor();
-      if (editor == null) return;
-      editor.getSelectionModel().setSelection(start, end);
-      editor.getCaretModel().moveToOffset(end);
-
+      EditorTextField textField = getEditorTextField();
+      if (textField == null) return;
+      textField.select(TextRange.create(start, end));
+      textField.setCaretPosition(end);
     });
   }
 
   public void setSuggestions(final String[] suggestions) {
     if(myComboBoxModel == null) return;
-    JComboBox comboBox = (JComboBox) myComponent;
+    JComboBox<String> comboBox = (JComboBox<String>) myComponent;
     final String oldSelectedItem = (String)comboBox.getSelectedItem();
     final String oldItemFromTextField = (String) comboBox.getEditor().getItem();
-    final boolean shouldUpdateTextField =
-      oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.trim().length() == 0;
+    final boolean shouldUpdateTextField = oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.isBlank();
     myComboBoxModel.setSuggestions(suggestions);
     if(suggestions.length > 0 && shouldUpdateTextField) {
       if (oldSelectedItem != null) {
@@ -232,13 +229,17 @@ public class NameSuggestionsField extends JPanel {
     comboEditor.selectAll();
   }
 
-  public Editor getEditor() {
+  private EditorTextField getEditorTextField() {
     if (myComponent instanceof EditorTextField) {
-      return ((EditorTextField)myComponent).getEditor();
+      return ((EditorTextField)myComponent);
     }
     else {
-      return ((EditorTextField)((JComboBox<?>)myComponent).getEditor().getEditorComponent()).getEditor();
+      return ((EditorTextField)((JComboBox<?>)myComponent).getEditor().getEditorComponent());
     }
+  }
+
+  public Editor getEditor() {
+    return getEditorTextField().getEditor();
   }
 
   @FunctionalInterface

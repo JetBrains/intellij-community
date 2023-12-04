@@ -4,7 +4,7 @@ package com.intellij.openapi.vfs.newvfs.events;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class VFileMoveEvent extends VFileEvent {
@@ -12,8 +12,9 @@ public final class VFileMoveEvent extends VFileEvent {
   private final VirtualFile myOldParent;
   private final VirtualFile myNewParent;
 
-  public VFileMoveEvent(final Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) {
-    super(requestor, false);
+  @ApiStatus.Internal
+  public VFileMoveEvent(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent) {
+    super(requestor);
     myFile = file;
     myNewParent = newParent;
     myOldParent = file.getParent();
@@ -33,7 +34,7 @@ public final class VFileMoveEvent extends VFileEvent {
   }
 
   @Override
-  public @NonNls String toString() {
+  public String toString() {
     return "VfsEvent[move " + myFile.getName() +" from " + myOldParent + " to " + myNewParent + "]";
   }
 

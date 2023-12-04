@@ -24,6 +24,8 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
     public boolean USE_CREDENTIAL_HELPER = false;
     public boolean STAGING_AREA_ENABLED = false;
+
+    public boolean SHOW_DROP_COMMIT_DIALOG = true;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -89,6 +91,14 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setStagingAreaEnabled(boolean isStagingAreaEnabled) {
     myState.STAGING_AREA_ENABLED = isStagingAreaEnabled;
+  }
+
+  public boolean isShowDropCommitDialog() {
+    return myState.SHOW_DROP_COMMIT_DIALOG;
+  }
+
+  public void setShowDropCommitDialog(boolean isShowDropCommitDialog) {
+    myState.SHOW_DROP_COMMIT_DIALOG = isShowDropCommitDialog;
   }
 
   public enum AnnotateDetectMovementsOption {

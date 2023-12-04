@@ -1,14 +1,15 @@
+from _typeshed import Incomplete
 from typing import Any
 
 signals_available: bool
 
 class Namespace:
-    def signal(self, name, doc: Any | None = ...): ...
+    def signal(self, name, doc: Incomplete | None = None): ...
 
 class _FakeSignal:
     name: Any
     __doc__: Any
-    def __init__(self, name, doc: Any | None = ...) -> None: ...
+    def __init__(self, name, doc: Incomplete | None = None) -> None: ...
     send: Any
     connect: Any
     disconnect: Any

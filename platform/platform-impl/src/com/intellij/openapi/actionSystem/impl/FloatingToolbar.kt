@@ -51,7 +51,12 @@ abstract class FloatingToolbar(
   protected var hint: LightweightHint? = null
   private var buttonSize: Int by Delegates.notNull()
   private var lastSelection: String? = null
-  private var hintWasShownForSelection = false
+
+  /**
+   * Prevents toolbar to be shown again if it was already recently closed.
+   * At least mouse should be moved out of the selection first.
+   */
+  private var preventHintFromShowing = false
 
   private enum class HintRequest {
     Show,
@@ -98,7 +103,7 @@ abstract class FloatingToolbar(
 
   @RequiresEdt
   private suspend fun showIfHidden() {
-    hintWasShownForSelection = true
+    preventHintFromShowing = true
     if (isShown() || !isEnabled()) {
       return
     }
@@ -135,7 +140,7 @@ abstract class FloatingToolbar(
   }
 
   fun scheduleShow() {
-    if (isEnabled() && !hintWasShownForSelection) {
+    if (isEnabled() && !preventHintFromShowing) {
       check(hintRequests.tryEmit(HintRequest.Show))
     }
   }
@@ -177,6 +182,8 @@ abstract class FloatingToolbar(
     buttonSize = toolbar.maxButtonHeight
   }
 
+  open fun onHintShown() {}
+
   private fun showHint(hint: LightweightHint) {
     val hideByOtherHintsMask = when {
       hideByOtherHints() -> HintManager.HIDE_BY_OTHER_HINT
@@ -190,12 +197,13 @@ abstract class FloatingToolbar(
       0,
       true
     )
+    onHintShown()
   }
 
   @RequiresReadLock
   fun canBeShownAtCurrentSelection(): Boolean {
+    if (!isEnabled()) return false
     val selectionModel = editor.selectionModel
-    if (!selectionModel.hasSelection()) return false
     val file = PsiEditorUtil.getPsiFile(editor)
     val document = editor.document
     if (!PsiDocumentManager.getInstance(file.project).isCommitted(document)) {
@@ -204,6 +212,14 @@ abstract class FloatingToolbar(
     val elementAtStart = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionStart)
     val elementAtEnd = PsiUtilCore.getElementAtOffset(file, selectionModel.selectionEnd)
     return !(hasIgnoredParent(elementAtStart) || hasIgnoredParent(elementAtEnd))
+  }
+
+  /**
+   * Allow toolbar to be shown immediately even it was already closed before.
+   * @see [preventHintFromShowing]
+   */
+  fun allowInstantShowing(){
+    preventHintFromShowing = false
   }
 
   @RequiresReadLock
@@ -273,7 +289,7 @@ abstract class FloatingToolbar(
       if (hoverSelected) {
         scheduleShow()
       } else if (!isShown()){
-        hintWasShownForSelection = false
+        preventHintFromShowing = false
       }
     }
 
@@ -286,9 +302,9 @@ abstract class FloatingToolbar(
 
   private inner class EditorSelectionListener : SelectionListener {
     override fun selectionChanged(event: SelectionEvent) {
-      hintWasShownForSelection = false
+      preventHintFromShowing = false
       if (isIgnoredEvent(IdeEventQueue.getInstance().trueCurrentEvent)) {
-        hintWasShownForSelection = true
+        preventHintFromShowing = true
       }
     }
 
@@ -299,7 +315,7 @@ abstract class FloatingToolbar(
 
   private inner class DocumentChangeListener : BulkAwareDocumentListener {
     override fun documentChanged(event: DocumentEvent) {
-      hintWasShownForSelection = false
+      preventHintFromShowing = false
       if (!shouldSurviveDocumentChange()) {
         scheduleHide()
       }

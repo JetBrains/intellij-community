@@ -13,5 +13,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.performanceTesting" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics" />
+    <orderEntry type="module" module-name="intellij.platform.ml.embeddings" />
   </component>
 </module>

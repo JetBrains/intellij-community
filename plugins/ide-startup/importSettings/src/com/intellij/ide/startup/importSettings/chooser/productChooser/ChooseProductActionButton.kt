@@ -22,7 +22,7 @@ abstract class ChooseProductActionButton(text: @NlsActions.ActionText String? = 
   : DumbAwareAction(text, description, icon), CustomComponentAction {
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    val button = createButton(presentation)
+    val button = createButton()
     button.isOpaque = false
     button.addActionListener {
       performAction(button, place, presentation)
@@ -36,7 +36,7 @@ abstract class ChooseProductActionButton(text: @NlsActions.ActionText String? = 
     return ButtonHolder(button)
   }
 
-  protected fun performAction(component: JComponent, place: String, presentation: Presentation) {
+  private fun performAction(component: JComponent, place: String, presentation: Presentation) {
     val dataContext = ActionToolbar.getDataContextFor(component)
     val event = AnActionEvent.createFromInputEvent(null, place, presentation, dataContext)
 
@@ -56,7 +56,7 @@ abstract class ChooseProductActionButton(text: @NlsActions.ActionText String? = 
     }
   }
 
-  protected open fun createButton(presentation: Presentation): JButton {
+  protected open fun createButton(): JButton {
     return ProductChooserButton().getComponent()
   }
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeBuilder;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -333,6 +334,11 @@ public final class GitVcs extends AbstractVcs {
   @Override
   public boolean needsCaseSensitiveDirtyScope() {
     return true;
+  }
+
+  @Override
+  public @NotNull VcsDirtyScopeBuilder createDirtyScope() {
+    return new GitVcsDirtyScope(myProject);
   }
 
   @Override

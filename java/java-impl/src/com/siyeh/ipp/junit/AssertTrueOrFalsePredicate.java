@@ -16,6 +16,7 @@
 package com.siyeh.ipp.junit;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NonNls;
@@ -46,9 +47,9 @@ class AssertTrueOrFalsePredicate implements PsiElementPredicate {
       return false;
     }
     final String qualifiedName = targetClass.getQualifiedName();
-    if (!"junit.framework.Assert".equals(qualifiedName) &&
-        !"org.junit.Assert".equals(qualifiedName) &&
-        !"org.junit.jupiter.api.Assertions".equals(qualifiedName)) {
+    if (!JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT.equals(qualifiedName) &&
+        !JUnitCommonClassNames.ORG_JUNIT_ASSERT.equals(qualifiedName) &&
+        !JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS.equals(qualifiedName)) {
       return false;
     }
     return !ErrorUtil.containsError(element);

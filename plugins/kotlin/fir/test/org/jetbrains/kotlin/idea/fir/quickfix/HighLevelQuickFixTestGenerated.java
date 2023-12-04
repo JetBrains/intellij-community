@@ -3393,6 +3393,99 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch")
+    public static class ParameterTypeMismatch extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("changeFunctionParameterType1.kt")
+        public void testChangeFunctionParameterType1() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType1.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterType2.kt")
+        public void testChangeFunctionParameterType2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType2.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterType3.kt")
+        public void testChangeFunctionParameterType3() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType3.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterType4.kt")
+        public void testChangeFunctionParameterType4() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType4.kt");
+        }
+
+        @TestMetadata("changeFunctionParameterTypeWithComment.kt")
+        public void testChangeFunctionParameterTypeWithComment() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeWithComment.kt");
+        }
+
+        @TestMetadata("changeParameterTypeLongNameRuntime.kt")
+        public void testChangeParameterTypeLongNameRuntime() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changeParameterTypeLongNameRuntime.kt");
+        }
+
+        @TestMetadata("changePrimaryConstructorParameterType.kt")
+        public void testChangePrimaryConstructorParameterType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterType.kt");
+        }
+
+        @TestMetadata("changePrimaryConstructorParameterTypeOnPropertyDelegate.kt")
+        public void testChangePrimaryConstructorParameterTypeOnPropertyDelegate() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/changePrimaryConstructorParameterTypeOnPropertyDelegate.kt");
+        }
+
+        @TestMetadata("convertKClassToJavaClass.kt")
+        public void testConvertKClassToJavaClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClass.kt");
+        }
+
+        @TestMetadata("convertKClassToJavaClassSubtype.kt")
+        public void testConvertKClassToJavaClassSubtype() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassSubtype.kt");
+        }
+
+        @TestMetadata("convertKClassToJavaClassTypeMismatch.kt")
+        public void testConvertKClassToJavaClassTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassTypeMismatch.kt");
+        }
+
+        @TestMetadata("convertKClassToJavaClassVariable.kt")
+        public void testConvertKClassToJavaClassVariable() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/convertKClassToJavaClassVariable.kt");
+        }
+
+        @TestMetadata("genericType.kt")
+        public void testGenericType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/genericType.kt");
+        }
+
+        @TestMetadata("genericType2.kt")
+        public void testGenericType2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/genericType2.kt");
+        }
+
+        @TestMetadata("multiFakeOverride.kt")
+        public void testMultiFakeOverride() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/multiFakeOverride.kt");
+        }
+
+        @TestMetadata("stdlibFunction.kt")
+        public void testStdlibFunction() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/stdlibFunction.kt");
+        }
+
+        @TestMetadata("unsigned.kt")
+        public void testUnsigned() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterTypeMismatch/unsigned.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression")
     public abstract static class TypeMismatchOnReturnedExpression extends AbstractHighLevelQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
@@ -3594,6 +3687,497 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             public void testTypeMismatchInReturnStatement() throws Exception {
                 runTest("../idea/tests/testData/quickfix/typeMismatch/typeMismatchOnReturnedExpression/typeMismatchInReturnStatement.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive")
+    public static class WrongPrimitive extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("doubleToIntDecimalPlaces.kt")
+        public void testDoubleToIntDecimalPlaces() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/doubleToIntDecimalPlaces.kt");
+        }
+
+        @TestMetadata("doubleToLongNotInRange.kt")
+        public void testDoubleToLongNotInRange() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/doubleToLongNotInRange.kt");
+        }
+
+        @TestMetadata("doubleToShortNotInRange.kt")
+        public void testDoubleToShortNotInRange() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/doubleToShortNotInRange.kt");
+        }
+
+        @TestMetadata("floatToDoubleWithDecimal.kt")
+        public void testFloatToDoubleWithDecimal() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/floatToDoubleWithDecimal.kt");
+        }
+
+        @TestMetadata("floatToInt.kt")
+        public void testFloatToInt() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/floatToInt.kt");
+        }
+
+        @TestMetadata("floatToInt2.kt")
+        public void testFloatToInt2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/floatToInt2.kt");
+        }
+
+        @TestMetadata("floatToLong.kt")
+        public void testFloatToLong() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/floatToLong.kt");
+        }
+
+        @TestMetadata("hexToFloat.kt")
+        public void testHexToFloat() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/hexToFloat.kt");
+        }
+
+        @TestMetadata("intToFloat.kt")
+        public void testIntToFloat() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/intToFloat.kt");
+        }
+
+        @TestMetadata("intToUnsigned.kt")
+        public void testIntToUnsigned() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/intToUnsigned.kt");
+        }
+
+        @TestMetadata("longToDouble.kt")
+        public void testLongToDouble() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/longToDouble.kt");
+        }
+
+        @TestMetadata("longToInt.kt")
+        public void testLongToInt() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/longToInt.kt");
+        }
+
+        @TestMetadata("longToIntBinary.kt")
+        public void testLongToIntBinary() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/longToIntBinary.kt");
+        }
+
+        @TestMetadata("unsignedToInt.kt")
+        public void testUnsignedToInt() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrongPrimitive/unsignedToInt.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/typeMismatch")
+    public static class TypeMismatch extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("accessibleLocalClassInReturn.kt")
+        public void testAccessibleLocalClassInReturn() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/accessibleLocalClassInReturn.kt");
+        }
+
+        @TestMetadata("addArrayOfType.kt")
+        public void testAddArrayOfType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/addArrayOfType.kt");
+        }
+
+        @TestMetadata("addArrayOfTypeForNamedParameter.kt")
+        public void testAddArrayOfTypeForNamedParameter() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/addArrayOfTypeForNamedParameter.kt");
+        }
+
+        @TestMetadata("addIntArrayOf.kt")
+        public void testAddIntArrayOf() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/addIntArrayOf.kt");
+        }
+
+        @TestMetadata("anonymousObjectInCall.kt")
+        public void testAnonymousObjectInCall() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/anonymousObjectInCall.kt");
+        }
+
+        @TestMetadata("anonymousObjectInInfixCall.kt")
+        public void testAnonymousObjectInInfixCall() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/anonymousObjectInInfixCall.kt");
+        }
+
+        @TestMetadata("anonymousObjectInInitializer.kt")
+        public void testAnonymousObjectInInitializer() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/anonymousObjectInInitializer.kt");
+        }
+
+        @TestMetadata("anonymousObjectInReturn.kt")
+        public void testAnonymousObjectInReturn() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/anonymousObjectInReturn.kt");
+        }
+
+        @TestMetadata("anyInReturn.kt")
+        public void testAnyInReturn() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/anyInReturn.kt");
+        }
+
+        @TestMetadata("changeFunctionLiteralParameterTypeToFunctionType.kt")
+        public void testChangeFunctionLiteralParameterTypeToFunctionType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeFunctionLiteralParameterTypeToFunctionType.kt");
+        }
+
+        @TestMetadata("changeFunctionLiteralParameterTypeToFunctionTypeLongNameRuntime.kt")
+        public void testChangeFunctionLiteralParameterTypeToFunctionTypeLongNameRuntime() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeFunctionLiteralParameterTypeToFunctionTypeLongNameRuntime.kt");
+        }
+
+        @TestMetadata("changeFunctionReturnTypeToMatchExpectedTypeOfCall.kt")
+        public void testChangeFunctionReturnTypeToMatchExpectedTypeOfCall() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeFunctionReturnTypeToMatchExpectedTypeOfCall.kt");
+        }
+
+        @TestMetadata("changeFunctionReturnTypeToMatchExpectedTypeOfCallLongNameRuntime.kt")
+        public void testChangeFunctionReturnTypeToMatchExpectedTypeOfCallLongNameRuntime() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeFunctionReturnTypeToMatchExpectedTypeOfCallLongNameRuntime.kt");
+        }
+
+        @TestMetadata("changeReturnTypeForTypeInference.kt")
+        public void testChangeReturnTypeForTypeInference() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeForTypeInference.kt");
+        }
+
+        @TestMetadata("changeReturnTypeForTypeMismatch.kt")
+        public void testChangeReturnTypeForTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeForTypeMismatch.kt");
+        }
+
+        @TestMetadata("changeReturnTypeNoFqNameForAnonymousObject.kt")
+        public void testChangeReturnTypeNoFqNameForAnonymousObject() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeNoFqNameForAnonymousObject.kt");
+        }
+
+        @TestMetadata("changeReturnTypeNoFqNameForCompanionObject.kt")
+        public void testChangeReturnTypeNoFqNameForCompanionObject() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeNoFqNameForCompanionObject.kt");
+        }
+
+        @TestMetadata("changeReturnTypeNoFqNameForLocalClass.kt")
+        public void testChangeReturnTypeNoFqNameForLocalClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeNoFqNameForLocalClass.kt");
+        }
+
+        @TestMetadata("changeReturnTypeNoFqNameForNestedClass.kt")
+        public void testChangeReturnTypeNoFqNameForNestedClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeNoFqNameForNestedClass.kt");
+        }
+
+        @TestMetadata("changeReturnTypeNoFqNameForTopLevelClass.kt")
+        public void testChangeReturnTypeNoFqNameForTopLevelClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeNoFqNameForTopLevelClass.kt");
+        }
+
+        @TestMetadata("changeReturnTypeToSpecificNullable.kt")
+        public void testChangeReturnTypeToSpecificNullable() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeToSpecificNullable.kt");
+        }
+
+        @TestMetadata("changeReturnTypeWhenFunctionNameIsMissing.kt")
+        public void testChangeReturnTypeWhenFunctionNameIsMissing() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeWhenFunctionNameIsMissing.kt");
+        }
+
+        @TestMetadata("changeReturnTypeWhenValueParameterListIsAbsent.kt")
+        public void testChangeReturnTypeWhenValueParameterListIsAbsent() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/changeReturnTypeWhenValueParameterListIsAbsent.kt");
+        }
+
+        @TestMetadata("compareToTypeMismatch.kt")
+        public void testCompareToTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/compareToTypeMismatch.kt");
+        }
+
+        @TestMetadata("constantTypeMismatch.kt")
+        public void testConstantTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/constantTypeMismatch.kt");
+        }
+
+        @TestMetadata("convertStringToCharLiteral.kt")
+        public void testConvertStringToCharLiteral() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/convertStringToCharLiteral.kt");
+        }
+
+        @TestMetadata("dontChangeOverriddenPropertyTypeToErrorType.kt")
+        public void testDontChangeOverriddenPropertyTypeToErrorType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/dontChangeOverriddenPropertyTypeToErrorType.kt");
+        }
+
+        @TestMetadata("expectedParameterTypeMismatch.kt")
+        public void testExpectedParameterTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/expectedParameterTypeMismatch.kt");
+        }
+
+        @TestMetadata("expectedParameterTypeMismatchLongNameRuntime.kt")
+        public void testExpectedParameterTypeMismatchLongNameRuntime() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/expectedParameterTypeMismatchLongNameRuntime.kt");
+        }
+
+        @TestMetadata("functionExtensionType.kt")
+        public void testFunctionExtensionType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/functionExtensionType.kt");
+        }
+
+        @TestMetadata("functionNestedType.kt")
+        public void testFunctionNestedType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/functionNestedType.kt");
+        }
+
+        @TestMetadata("functionNestedType2.kt")
+        public void testFunctionNestedType2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/functionNestedType2.kt");
+        }
+
+        @TestMetadata("functionReflectType.kt")
+        public void testFunctionReflectType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/functionReflectType.kt");
+        }
+
+        @TestMetadata("functionReflectTypeFir.kt")
+        public void testFunctionReflectTypeFir() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/functionReflectTypeFir.kt");
+        }
+
+        @TestMetadata("functionType.kt")
+        public void testFunctionType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/functionType.kt");
+        }
+
+        @TestMetadata("hasNextFunctionReturnTypeMismatch.kt")
+        public void testHasNextFunctionReturnTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/hasNextFunctionReturnTypeMismatch.kt");
+        }
+
+        @TestMetadata("intToShortTypeMismatch.kt")
+        public void testIntToShortTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/intToShortTypeMismatch.kt");
+        }
+
+        @TestMetadata("kt17404.kt")
+        public void testKt17404() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/kt17404.kt");
+        }
+
+        @TestMetadata("kt25928.kt")
+        public void testKt25928() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/kt25928.kt");
+        }
+
+        @TestMetadata("letClassImplementAdditionalInterface.kt")
+        public void testLetClassImplementAdditionalInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letClassImplementAdditionalInterface.kt");
+        }
+
+        @TestMetadata("letClassImplementGenericInterface.kt")
+        public void testLetClassImplementGenericInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letClassImplementGenericInterface.kt");
+        }
+
+        @TestMetadata("letClassImplementGenericInterfaceTwice.kt")
+        public void testLetClassImplementGenericInterfaceTwice() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letClassImplementGenericInterfaceTwice.kt");
+        }
+
+        @TestMetadata("letClassImplementGenericStarInterface.kt")
+        public void testLetClassImplementGenericStarInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letClassImplementGenericStarInterface.kt");
+        }
+
+        @TestMetadata("letClassImplementIndirectlyInheritedInterface.kt")
+        public void testLetClassImplementIndirectlyInheritedInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letClassImplementIndirectlyInheritedInterface.kt");
+        }
+
+        @TestMetadata("letClassImplementInterface.kt")
+        public void testLetClassImplementInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letClassImplementInterface.kt");
+        }
+
+        @TestMetadata("letClassImplementInterfaceNullable.kt")
+        public void testLetClassImplementInterfaceNullable() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letClassImplementInterfaceNullable.kt");
+        }
+
+        @TestMetadata("letInterfaceExtendInterface.kt")
+        public void testLetInterfaceExtendInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letInterfaceExtendInterface.kt");
+        }
+
+        @TestMetadata("letObjectImplementAdditionalInterface.kt")
+        public void testLetObjectImplementAdditionalInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letObjectImplementAdditionalInterface.kt");
+        }
+
+        @TestMetadata("letObjectLiteralImplementInterface.kt")
+        public void testLetObjectLiteralImplementInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letObjectLiteralImplementInterface.kt");
+        }
+
+        @TestMetadata("letStringImplementInterface.kt")
+        public void testLetStringImplementInterface() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/letStringImplementInterface.kt");
+        }
+
+        @TestMetadata("localClassInReturn1.kt")
+        public void testLocalClassInReturn1() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/localClassInReturn1.kt");
+        }
+
+        @TestMetadata("localClassInReturn2.kt")
+        public void testLocalClassInReturn2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/localClassInReturn2.kt");
+        }
+
+        @TestMetadata("longToDoubleTypeMismatch.kt")
+        public void testLongToDoubleTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/longToDoubleTypeMismatch.kt");
+        }
+
+        @TestMetadata("longToIntTypeMismatch.kt")
+        public void testLongToIntTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/longToIntTypeMismatch.kt");
+        }
+
+        @TestMetadata("makeReturnTypeNullable.kt")
+        public void testMakeReturnTypeNullable() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/makeReturnTypeNullable.kt");
+        }
+
+        @TestMetadata("noReturnInFunctionWithBlockBody.kt")
+        public void testNoReturnInFunctionWithBlockBody() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/noReturnInFunctionWithBlockBody.kt");
+        }
+
+        @TestMetadata("nullArgumentForNonNullParameter.kt")
+        public void testNullArgumentForNonNullParameter() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/nullArgumentForNonNullParameter.kt");
+        }
+
+        @TestMetadata("paramTypeLambdaMatch.kt")
+        public void testParamTypeLambdaMatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/paramTypeLambdaMatch.kt");
+        }
+
+        @TestMetadata("paramTypeLambdaMatchInt.kt")
+        public void testParamTypeLambdaMatchInt() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/paramTypeLambdaMatchInt.kt");
+        }
+
+        @TestMetadata("paramTypeLambdaMatchNullable.kt")
+        public void testParamTypeLambdaMatchNullable() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/paramTypeLambdaMatchNullable.kt");
+        }
+
+        @TestMetadata("paramTypeLambdaMatchSubclass.kt")
+        public void testParamTypeLambdaMatchSubclass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/paramTypeLambdaMatchSubclass.kt");
+        }
+
+        @TestMetadata("paramTypeLambdaMatchSuspend.kt")
+        public void testParamTypeLambdaMatchSuspend() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/paramTypeLambdaMatchSuspend.kt");
+        }
+
+        @TestMetadata("paramTypeLambdaMismatch.kt")
+        public void testParamTypeLambdaMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/paramTypeLambdaMismatch.kt");
+        }
+
+        @TestMetadata("paramTypeLambdaMismatchNull.kt")
+        public void testParamTypeLambdaMismatchNull() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/paramTypeLambdaMismatchNull.kt");
+        }
+
+        @TestMetadata("parameterDefaultValue.kt")
+        public void testParameterDefaultValue() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/parameterDefaultValue.kt");
+        }
+
+        @TestMetadata("propertyTypeMismatch.kt")
+        public void testPropertyTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/propertyTypeMismatch.kt");
+        }
+
+        @TestMetadata("propertyTypeMismatchLongNameRuntime.kt")
+        public void testPropertyTypeMismatchLongNameRuntime() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/propertyTypeMismatchLongNameRuntime.kt");
+        }
+
+        @TestMetadata("resolvableTypeParams.kt")
+        public void testResolvableTypeParams() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/resolvableTypeParams.kt");
+        }
+
+        @TestMetadata("returnTypeMismatch.kt")
+        public void testReturnTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/returnTypeMismatch.kt");
+        }
+
+        @TestMetadata("shortToByteTypeMismatch.kt")
+        public void testShortToByteTypeMismatch() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/shortToByteTypeMismatch.kt");
+        }
+
+        @TestMetadata("tooManyArgumentsException.kt")
+        public void testTooManyArgumentsException() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/tooManyArgumentsException.kt");
+        }
+
+        @TestMetadata("unresolvableTypeParams.kt")
+        public void testUnresolvableTypeParams() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/unresolvableTypeParams.kt");
+        }
+
+        @TestMetadata("variableInitializedWithNull.kt")
+        public void testVariableInitializedWithNull() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/variableInitializedWithNull.kt");
+        }
+
+        @TestMetadata("variableInitializedWithNull2.kt")
+        public void testVariableInitializedWithNull2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/variableInitializedWithNull2.kt");
+        }
+
+        @TestMetadata("variableInitializedWithNull3.kt")
+        public void testVariableInitializedWithNull3() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/variableInitializedWithNull3.kt");
+        }
+
+        @TestMetadata("variableInitializedWithNull4.kt")
+        public void testVariableInitializedWithNull4() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/variableInitializedWithNull4.kt");
+        }
+
+        @TestMetadata("variableInitializedWithNullProperty.kt")
+        public void testVariableInitializedWithNullProperty() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/variableInitializedWithNullProperty.kt");
+        }
+
+        @TestMetadata("when.kt")
+        public void testWhen() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/when.kt");
+        }
+
+        @TestMetadata("when2.kt")
+        public void testWhen2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/when2.kt");
+        }
+
+        @TestMetadata("when3.kt")
+        public void testWhen3() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/when3.kt");
+        }
+
+        @TestMetadata("wrapWithArrayLiteral.kt")
+        public void testWrapWithArrayLiteral() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/wrapWithArrayLiteral.kt");
         }
     }
 
@@ -3878,4 +4462,306 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/supertypeInitialization/vararg4.kt");
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 }

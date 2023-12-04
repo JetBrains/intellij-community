@@ -30,7 +30,7 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 
   @RequiresEdt
-  fun createBlock(command: String?): CommandBlock {
+  fun createBlock(command: String?, directory: String?): CommandBlock {
     closeLastBlock()
 
     if (document.textLength > 0) {
@@ -38,7 +38,7 @@ class TerminalOutputModel(val editor: EditorEx) {
     }
     val marker = document.createRangeMarker(document.textLength, document.textLength)
     marker.isGreedyToRight = true
-    val block = CommandBlock(command, marker)
+    val block = CommandBlock(command, directory, marker)
     blocks.add(block)
     return block
   }
@@ -74,6 +74,15 @@ class TerminalOutputModel(val editor: EditorEx) {
     decorations.remove(block)
     highlightings.remove(block)
     blockStates.remove(block)
+  }
+
+  @RequiresEdt
+  fun clearBlocks() {
+    val blocksCopy = blocks.reversed()
+    for (block in blocksCopy) {
+      removeBlock(block)
+    }
+    editor.document.setText("")
   }
 
   fun getLastBlock(): CommandBlock? {
@@ -160,13 +169,18 @@ class TerminalOutputModel(val editor: EditorEx) {
   }
 }
 
-data class CommandBlock(val command: String?, val range: RangeMarker) {
+data class CommandBlock(val command: String?, val prompt: String?, val range: RangeMarker) {
   val startOffset: Int
     get() = range.startOffset
   val endOffset: Int
     get() = range.endOffset
+  val commandStartOffset: Int
+    get() = range.startOffset + if (withPrompt) prompt!!.length + 1 else 0
   val outputStartOffset: Int
-    get() = range.startOffset + if (!command.isNullOrEmpty()) command.length + 1 else 0
+    get() = commandStartOffset + if (withCommand) command!!.length + 1 else 0
   val textRange: TextRange
     get() = range.textRange
+
+  val withPrompt: Boolean = !prompt.isNullOrEmpty()
+  val withCommand: Boolean = !command.isNullOrEmpty()
 }

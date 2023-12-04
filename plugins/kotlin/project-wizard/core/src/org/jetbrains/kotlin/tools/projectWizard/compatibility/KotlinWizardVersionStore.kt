@@ -22,6 +22,7 @@ internal object KotlinWizardVersionParser : IdeVersionedDataParser<KotlinWizardV
         versionData.foojayVersion = obj["foojayVersion"]?.asSafeString ?: return null
         versionData.failsafeVersion = obj["failsafeVersion"]?.asSafeString ?: return null
         versionData.surefireVersion = obj["surefireVersion"]?.asSafeString ?: return null
+        versionData.codehausMojoExecVersion = obj["codehausMojoExecVersion"]?.asSafeString ?: return null
 
         return versionData
     }
@@ -37,16 +38,19 @@ class KotlinWizardVersionState() : IdeVersionedDataState() {
         foojayVersion: String,
         failsafeVersion: String,
         surefireVersion: String,
-        gradleAndroidVersion: String
+        gradleAndroidVersion: String,
+        codehausMojoExecVersion: String
     ) : this() {
         this.kotlinPluginVersion = kotlinPluginVersion
         this.kotlinForComposeVersion = kotlinForComposeVersion
         this.composeCompilerExtension = composeCompilerExtension
         this.minGradleFoojayVersion = minGradleFoojayVersion
+        this.minKotlinFoojayVersion = minKotlinFoojayVersion
         this.foojayVersion = foojayVersion
         this.failsafeVersion = failsafeVersion
         this.surefireVersion = surefireVersion
         this.gradleAndroidVersion = gradleAndroidVersion
+        this.codehausMojoExecVersion = codehausMojoExecVersion
     }
 
 
@@ -59,6 +63,7 @@ class KotlinWizardVersionState() : IdeVersionedDataState() {
     var failsafeVersion by string()
     var surefireVersion by string()
     var gradleAndroidVersion by string()
+    var codehausMojoExecVersion by string()
 }
 
 @State(name = "KotlinWizardVersionStore", storages = [Storage("kotlin-wizard-data.xml")])
@@ -98,7 +103,8 @@ internal val DEFAULT_KOTLIN_WIZARD_VERSIONS = KotlinWizardVersionState(
     foojayVersion = "$foojayVersion",
     failsafeVersion = "$failsafeVersion",
     surefireVersion = "$surefireVersion",
-    gradleAndroidVersion = "$gradleAndroidVersion"
+    gradleAndroidVersion = "$gradleAndroidVersion",
+    codehausMojoExecVersion = "$codehausMojoExecVersion"
 )
 """.trimIndent()
 }

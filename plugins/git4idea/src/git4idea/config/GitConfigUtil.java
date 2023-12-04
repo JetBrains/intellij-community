@@ -28,6 +28,7 @@ public final class GitConfigUtil {
   public static final @NlsSafe String USER_EMAIL = "user.email";
   public static final @NlsSafe String CORE_AUTOCRLF = "core.autocrlf";
   public static final @NlsSafe String CREDENTIAL_HELPER = "credential.helper";
+  public static final @NlsSafe String CORE_SSH_COMMAND = "core.sshCommand";
   public static final @NlsSafe String LOG_OUTPUT_ENCODING = "i18n.logoutputencoding";
   public static final @NlsSafe String COMMIT_ENCODING = "i18n.commitencoding";
   public static final @NlsSafe String COMMIT_TEMPLATE = "commit.template";
@@ -43,11 +44,13 @@ public final class GitConfigUtil {
                                @Nullable @NonNls String keyMask,
                                @NotNull Map<String, String> result) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
+    h.setEnableInteractiveCallbacks(false);
     h.setSilent(true);
     h.addParameters("--null");
     if (keyMask != null) {
       h.addParameters("--get-regexp", keyMask);
-    } else {
+    }
+    else {
       h.addParameters("-l");
     }
     String output = Git.getInstance().runCommand(h).getOutputOrThrow();
@@ -66,12 +69,14 @@ public final class GitConfigUtil {
   }
 
 
-  public static @Nullable String getValue(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String key) throws VcsException {
+  public static @Nullable String getValue(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String key)
+    throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     return getValue(h, key);
   }
 
   private static @Nullable String getValue(@NotNull GitLineHandler h, @NotNull @NonNls String key) throws VcsException {
+    h.setEnableInteractiveCallbacks(false);
     h.setSilent(true);
     h.addParameters("--null", "--get", key);
     GitCommandResult result = Git.getInstance().runCommand(h);
@@ -85,6 +90,7 @@ public final class GitConfigUtil {
 
   /**
    * Converts the git config boolean value (which can be specified in various ways) to Java Boolean.
+   *
    * @return true if the value represents "true", false if the value represents "false", null if the value doesn't look like a boolean value.
    */
   public static @Nullable Boolean getBooleanValue(@Nullable @NonNls String value) {

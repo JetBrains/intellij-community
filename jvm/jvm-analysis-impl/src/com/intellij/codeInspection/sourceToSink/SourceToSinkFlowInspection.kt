@@ -213,6 +213,20 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
       OptPane.stringList("checkedTypes", JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.checked.types")),
 
+      OptPane.table(
+        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.qualifier.cleaner.table"),
+        OptPane.column("qualifierCleanerClass",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.qualifier.cleaner.classes"),
+                       JavaClassValidator()),
+        OptPane.column("qualifierCleanerMethod",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.qualifier.cleaner.methods"),
+                       RegexValidator()),
+        OptPane.column("qualifierCleanerParams",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.qualifier.cleaner.arguments")),
+      ).comment(
+        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.qualifier.cleaner.comment")),
+
+
       OptPane.number("depthInside",
                      JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.depth.inside"),
                      1, 100),

@@ -8,16 +8,12 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.lang.Language;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ComponentUtil;
@@ -26,6 +22,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -92,6 +89,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     private DataContext myContext;
     private final PresentationFactory myPresentationFactory;
     private final @NotNull MyPopupMenuListener myListener;
+    private long myPopupTriggeredNanos;
 
     MyMenu(@NotNull String place, @NotNull ActionGroup group, @Nullable PresentationFactory factory) {
       myPlace = place;
@@ -115,6 +113,8 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       if (!component.isShowing()) {
         throw new IllegalArgumentException("component must be shown on the screen (" + component + ")");
       }
+      myPopupTriggeredNanos = IdeEventQueue.getInstance().getPopupTriggerTime();
+      Utils.showPopupElapsedMillisIfConfigured(myPopupTriggeredNanos, this);
 
       int x2 = Math.max(0, Math.min(x, component.getWidth() - 1)); // fit x into [0, width-1]
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
@@ -147,8 +147,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
     @Override
     public void addNotify() {
       super.addNotify();
-      long startedTime = IdeEventQueue.getInstance().getPopupTriggerTime();
-      long time = (startedTime > 0) ? System.currentTimeMillis() - startedTime : -1;
+      long time = myPopupTriggeredNanos > 0 ? TimeoutUtil.getDurationMillis(myPopupTriggeredNanos) : -1;
       PsiFile psiFile = (PsiFile)Utils.getRawDataIfCached(myContext, CommonDataKeys.PSI_FILE.getName());
       Language language = psiFile == null ? null : psiFile.getLanguage();
       boolean coldStart = SEEN_ACTION_GROUPS.add(Objects.hash(myGroup, language));
@@ -156,11 +155,6 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
                                                EventFields.ActionPlace.with(myPlace),
                                                UILatencyLogger.COLD_START.with(coldStart),
                                                EventFields.Language.with(language));
-      if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
-        //noinspection HardCodedStringLiteral
-        new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms",
-                         NotificationType.INFORMATION).notify(null);
-      }
     }
 
     @Override
@@ -171,7 +165,7 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
 
     private void updateChildren(@Nullable RelativePoint point) {
       removeAll();
-      Utils.fillPopupMenu(myGroup, this, myPresentationFactory, myContext, myPlace, point);
+      Utils.INSTANCE.fillPopupMenu(myGroup, this, myPresentationFactory, myContext, myPlace, point);
     }
 
     private void disposeMenu() {

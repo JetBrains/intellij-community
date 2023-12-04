@@ -173,7 +173,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     @Nullable
-    private PyClass getClassOwner(@Nullable PsiElement element) {
+    private static PyClass getClassOwner(@Nullable PsiElement element) {
       for (ScopeOwner owner = ScopeUtil.getScopeOwner(element); owner != null; owner = ScopeUtil.getScopeOwner(owner)) {
         if (owner instanceof PyClass) {
           return (PyClass)owner;

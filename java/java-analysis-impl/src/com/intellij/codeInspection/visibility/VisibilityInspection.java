@@ -62,7 +62,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
       checkbox("SUGGEST_PRIVATE_FOR_INNERS", JavaAnalysisBundle.message("inspection.visibility.private.inner.members")),
       checkbox("SUGGEST_FOR_CONSTANTS", JavaAnalysisBundle.message("inspection.visibility.option.constants"))
     ));
-    for (EntryPoint entryPoint : EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions()) {
+    for (EntryPoint entryPoint : EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList()) {
       if (entryPoint instanceof EntryPointWithVisibilityLevel epWithLevel) {
         checkboxes.add(checkbox(epWithLevel.getId(), epWithLevel.getTitle()).prefix("ep"));
       }
@@ -213,7 +213,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   @EntryPointWithVisibilityLevel.VisibilityLevelResult
   int getMinVisibilityLevel(@NotNull PsiMember member) {
     //noinspection MagicConstant
-    return StreamEx.of(EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensions())
+    return StreamEx.of(EntryPointsManagerBase.DEAD_CODE_EP_NAME.getExtensionList())
       .select(EntryPointWithVisibilityLevel.class)
       .filter(point -> isEntryPointEnabled(point))
       .mapToInt(point -> point.getMinVisibilityLevel(member))

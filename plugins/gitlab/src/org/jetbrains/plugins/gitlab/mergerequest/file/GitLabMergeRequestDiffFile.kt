@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.file
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.ide.actions.SplitAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolWindowViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
@@ -28,21 +30,16 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
 
   override fun enforcePresentableName() = true
 
-  override fun isValid(): Boolean = findProjectVm() != null
+  override fun isValid(): Boolean = findProjectVm(project, connectionId) != null
 
   override fun getPath(): String =
     (fileSystem as GitLabVirtualFileSystem).getPath(connectionId, project, glProject, mergeRequestIid, true)
 
-  override fun getPresentablePath(): String = "$glProject/mergerequests/${mergeRequestIid}.diff"
-
-  private fun findProjectVm() = project.serviceIfCreated<GitLabToolWindowViewModel>()
-    ?.projectVm?.value?.takeIf { it.connectionId == connectionId }
+  override fun getPresentablePath(): String = presentablePath(glProject, mergeRequestIid)
 
   override fun createProcessor(project: Project): DiffRequestProcessor {
-    val projectVm = findProjectVm() ?: error("Missing project view model for $this")
-    return createMergeRequestDiffRequestProcessor(project,
-                                                  projectVm,
-                                                  mergeRequestIid)
+    val projectVm = findProjectVm(project, connectionId) ?: error("Missing project view model for $this")
+    return project.service<GitLabMergeRequestDiffService>().createDiffRequestProcessor(projectVm, mergeRequestIid)
   }
 
   override fun getFileSystem(): VirtualFileSystem = GitLabVirtualFileSystem.getInstance()
@@ -74,3 +71,10 @@ class GitLabMergeRequestDiffFile(override val connectionId: String,
   override fun toString(): String =
     "GitLabMergeRequestDiffFile(connectionId='$connectionId', project=$project, glProject=$glProject, mergeRequestId=$mergeRequestIid)"
 }
+
+
+internal fun presentablePath(glProject: GitLabProjectCoordinates, mergeRequestIid: String): String =
+  "$glProject/mergerequests/${mergeRequestIid}.diff"
+
+internal fun findProjectVm(project: Project, connectionId: String): GitLabToolWindowProjectViewModel? =
+  project.serviceIfCreated<GitLabToolWindowViewModel>()?.projectVm?.value?.takeIf { it.connectionId == connectionId }

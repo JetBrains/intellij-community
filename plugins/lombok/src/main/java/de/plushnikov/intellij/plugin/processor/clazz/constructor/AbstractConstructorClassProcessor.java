@@ -65,10 +65,10 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return null != visibility;
   }
 
-  private static boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
+  private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     boolean result = true;
-    if (psiClass.isAnnotationType() || psiClass.isInterface()) {
-      builder.addErrorMessage("inspection.message.annotation.only.supported.on.class.or.enum.type");
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isRecord()) {
+      builder.addErrorMessage("inspection.message.annotation.only.supported.on.class.or.enum.type", StringUtil.getShortName(getSupportedAnnotationClasses()[0]));
       result = false;
     }
     return result;
@@ -306,7 +306,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       .withConstructor(true)
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
-      .withModifier(modifier);
+      .withModifier(modifier)
+      .withWriteAccess();
 
     LombokCopyableAnnotations.copyOnXAnnotations(psiAnnotation, constructorBuilder.getModifierList(), "onConstructor");
 
@@ -372,7 +373,8 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       .withContainingClass(psiClass)
       .withNavigationElement(psiAnnotation)
       .withModifier(methodModifier)
-      .withModifier(PsiModifier.STATIC);
+      .withModifier(PsiModifier.STATIC)
+      .withWriteAccess();
 
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
     if (psiClass.hasTypeParameters()) {

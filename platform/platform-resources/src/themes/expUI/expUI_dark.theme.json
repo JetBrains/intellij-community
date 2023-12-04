@@ -263,10 +263,11 @@
     "EditorTabs": {
       "underlineArc": 4,
       "underlineHeight": 4,
+      "unselectedAlpha": 0.75,
       "unselectedBlend": 0.7,
       "background": "Grey1",
       "hoverBackground": "#1E1F2200",
-      "inactiveHoverBackground": "#1E1F2200",
+      "hoverInactiveBackground": "#1E1F2200",
       "inactiveColoredFileBackground": "#1E1F2280",
       "underlinedTabBackground": "Grey1",
       "underTabsBorderColor":"Grey3"
@@ -290,7 +291,8 @@
         "successBackground": "Green1",
         "successBorder": "Green2",
         "warningBackground": "Yellow1",
-        "warningBorder": "Yellow2"
+        "warningBorder": "Yellow2",
+        "iconHoverBackground": "#FFFFFF1A"
       }
     },
 
@@ -444,8 +446,11 @@
         "Background.Hover": "Grey4"
       },
       "State": {
-        "Background": "Grey3",
-        "Foreground": "Grey7"
+        "Background": "Grey4",
+        "Foreground": "Grey8"
+      },
+      "ChatItem":{
+        "Hover": "#5A5D6333"
       }
     },
 
@@ -576,9 +581,11 @@
 
     "ValidationTooltip": {
       "errorBackground": "Red3",
-      "errorBorderColor": "Red3",
+      "errorBorderColor": "Red6",
+      "errorForeground": "Gray14",
       "warningBackground": "Yellow2",
-      "warningBorderColor": "Yellow2"
+      "warningBorderColor": "Yellow5",
+      "warningForeground": "Gray14"
     },
 
     "ToolWindow": {
@@ -900,16 +907,18 @@
     "PresentationAssistant": {
       "Bright": {
         "Popup": {
-          "background": "Blue4",
-          "foreground": "Grey14"
+          "foreground": "Grey14",
+          "border": "Blue4"
         },
+        "PopupBackground": "Blue4",
         "keymapLabel": "Blue11"
       },
       "Pale": {
         "Popup": {
-          "background": "Grey3",
-          "foreground": "Grey14"
+          "foreground": "Grey14",
+          "border": "Grey3"
         },
+        "PopupBackground": "Grey3",
         "keymapLabel": "Grey8"
       }
     },
@@ -940,7 +949,15 @@
       }
     },
 
-    "DataSummary.Chart.background": "Blue6"
+    "DataSummary.Chart.barColor": "Blue6",
+
+    "ManagedIdeBadgeBorder": "Grey5",
+    "ManagedIdeBadgeBackground": "Grey3",
+    "ManagedIdeBadgeBackgroundHover": "Grey4",
+    "ManagedIdeMenuItemHover": "Grey4",
+
+    "InlineBanner.hoverBackground": "#FFFFFF14",
+    "InlineBanner.pressedBackground": "#FFFFFF1E"
   },
 
   "icons": {

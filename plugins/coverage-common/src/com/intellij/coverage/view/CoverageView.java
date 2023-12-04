@@ -84,10 +84,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private boolean myHasFullyCoveredFilter = false;
 
 
-  public CoverageView(final Project project, final CoverageDataManager dataManager, CoverageViewManager.StateBean stateBean) {
+  public CoverageView(Project project, CoverageSuitesBundle bundle, CoverageViewManager.StateBean stateBean) {
     myProject = project;
     myStateBean = stateBean;
-    mySuitesBundle = dataManager.getCurrentSuitesBundle();
+    mySuitesBundle = bundle;
     myViewExtension = mySuitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, mySuitesBundle, myStateBean);
     myTreeStructure = new CoverageViewTreeStructure(project, mySuitesBundle, stateBean);
 
@@ -281,7 +281,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   @Override
   public void dispose() {
     if (!myProject.isDisposed()) {
-      CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
+      CoverageDataManager.getInstance(myProject).closeSuitesBundle(mySuitesBundle);
     }
   }
 

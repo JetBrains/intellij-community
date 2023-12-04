@@ -71,7 +71,7 @@ final class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
         }
       }
 
-      private void registerProblem(ProblemsHolder holder, HighlightInfo info, PsiElement e) {
+      private static void registerProblem(ProblemsHolder holder, HighlightInfo info, PsiElement e) {
         if (info.getSeverity() == HighlightSeverity.ERROR) {
           holder.registerProblem(e, info.getDescription());
         }

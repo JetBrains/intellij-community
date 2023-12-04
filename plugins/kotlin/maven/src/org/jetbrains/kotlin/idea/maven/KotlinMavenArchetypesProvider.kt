@@ -21,30 +21,6 @@ class KotlinMavenArchetypesProvider(private val kotlinPluginVersion: String, pri
     @Suppress("unused")
     constructor() : this(KotlinIdePlugin.version, null)
 
-    companion object {
-        private val VERSIONS_LIST_URL = mavenSearchUrl("org.jetbrains.kotlin", packaging = "maven-archetype", rowsLimit = 1000)
-
-        private fun mavenSearchUrl(
-            group: String,
-            artifactId: String? = null,
-            version: String? = null,
-            packaging: String? = null,
-            rowsLimit: Int = 20
-        ): String {
-            val q = listOf(
-                "g" to group,
-                "a" to artifactId,
-                "v" to version,
-                "p" to packaging
-            )
-                .filter { it.second != null }.joinToString(separator = " AND ") { "${it.first}:\"${it.second}\"" }
-
-            return "https://search.maven.org/solrsearch/select?q=${q.encodeURL()}&core=gav&rows=$rowsLimit&wt=json"
-        }
-
-        private fun String.encodeURL() = URLEncoder.encode(this, "UTF-8")
-    }
-
     private val versionPrefix by lazy { versionPrefix(kotlinPluginVersion) }
     private val fallbackVersion = "1.0.3"
     private val internalMode: Boolean
@@ -114,3 +90,25 @@ class KotlinMavenArchetypesProvider(private val kotlinPluginVersion: String, pri
 
     private fun versionPrefix(version: String) = """^\d+\.\d+\.""".toRegex().find(version)?.value
 }
+
+private val VERSIONS_LIST_URL: String = mavenSearchUrl("org.jetbrains.kotlin", packaging = "maven-archetype", rowsLimit = 1000)
+
+private fun mavenSearchUrl(
+    group: String,
+    artifactId: String? = null,
+    version: String? = null,
+    packaging: String? = null,
+    rowsLimit: Int = 20
+): String {
+    val q = listOf(
+        "g" to group,
+        "a" to artifactId,
+        "v" to version,
+        "p" to packaging
+    )
+        .filter { it.second != null }.joinToString(separator = " AND ") { "${it.first}:\"${it.second}\"" }
+
+    return "https://search.maven.org/solrsearch/select?q=${q.encodeURL()}&core=gav&rows=$rowsLimit&wt=json"
+}
+
+private fun String.encodeURL(): String = URLEncoder.encode(this, "UTF-8")

@@ -182,7 +182,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
       result.add(ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST));
     }
 
-    EmptyAction.registerWithShortcutSet(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST, CommonShortcuts.getMove(), myViewer);
+    ActionUtil.wrap(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST).registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
 
     result.add(createRollbackGroup(false));
 
@@ -470,7 +470,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     }
 
     @Nullable
-    private Object getUserObject(@NotNull AnActionEvent e) {
+    private static Object getUserObject(@NotNull AnActionEvent e) {
       Object object = e.getData(VcsDataKeys.CURRENT_CHANGE);
       if (object == null) object = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
       return object;

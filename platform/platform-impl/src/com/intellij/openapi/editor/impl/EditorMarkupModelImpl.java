@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -208,11 +209,24 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
 
       @Override
-      protected @NotNull ActionButton createToolbarButton(@NotNull AnAction action, ActionButtonLook look,
-                                                          @NotNull String place, @NotNull Presentation presentation,
-                                                          Supplier<? extends @NotNull Dimension> minimumSize) {
+      protected @NotNull ActionButtonWithText createTextButton(@NotNull AnAction action,
+                                                               @NotNull String place,
+                                                               @NotNull Presentation presentation,
+                                                               Supplier<? extends @NotNull Dimension> minimumSize) {
+        ActionButtonWithText button = super.createTextButton(action, place, presentation, minimumSize);
+        JBColor color = JBColor.lazy(() -> {
+          return ObjectUtils.notNull(editor.getColorsScheme().getColor(ICON_TEXT_COLOR), ICON_TEXT_COLOR.getDefaultColor());
+        });
+        button.setForeground(color);
+        return button;
+      }
 
-        ActionButton actionButton = new ActionButton(action, presentation, place, minimumSize) {
+      @Override
+      protected @NotNull ActionButton createIconButton(@NotNull AnAction action,
+                                                       @NotNull String place,
+                                                       @NotNull Presentation presentation,
+                                                       Supplier<? extends @NotNull Dimension> minimumSize) {
+        return new ActionButton(action, presentation, place, minimumSize) {
           @Override
           public void updateIcon() {
             super.updateIcon();
@@ -240,9 +254,6 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
             return size;
           }
         };
-
-        applyToolbarLook(look, presentation, actionButton);
-        return actionButton;
       }
 
       @Override

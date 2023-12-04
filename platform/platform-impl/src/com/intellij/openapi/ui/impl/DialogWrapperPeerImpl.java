@@ -553,7 +553,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     }
   }
 
-  private static final class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, Queryable, AbstractDialog {
+  private static final class MyDialog extends JDialog implements DialogWrapperDialog, DataProvider, Queryable, AbstractDialog, DisposableWindow {
     private final WeakReference<DialogWrapper> myDialogWrapper;
 
     /**
@@ -564,6 +564,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     private Dimension myInitialSize;
     private String myDimensionServiceKey;
     private boolean myOpened = false;
+    private boolean myDisposed = false;
 
     private MyDialog.MyWindowListener myWindowListener;
 
@@ -594,6 +595,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     @Override
     public JDialog getWindow() {
       return this;
+    }
+
+    @Override
+    public boolean isWindowDisposed() {
+      return myDisposed;
     }
 
     @Override
@@ -631,6 +637,16 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       if (myDialogWrapper == null) return; // this can be invoked from super constructor before this field is assigned
       final DialogWrapper wrapper = myDialogWrapper.get();
       if (wrapper != null) wrapper.fitToScreen(rect);
+    }
+
+    @Override
+    public void pack() {
+      super.pack();
+      // pack() already sets the size to the preferred size, but it may change during validation,
+      // which is performed after the size is set. This happens, for example, if there are components
+      // with soft wraps whose preferred height depends on their width.
+      var preferredSize = getPreferredSize();
+      super.setSize(preferredSize.width, preferredSize.height); // we don't want to call our own overload here
     }
 
     @Override
@@ -964,6 +980,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       DialogWrapper.cleanupRootPane(rootPane);
       DialogWrapper.cleanupWindowListeners(this);
       rootPane = null;
+      myDisposed = true;
 
     }
 

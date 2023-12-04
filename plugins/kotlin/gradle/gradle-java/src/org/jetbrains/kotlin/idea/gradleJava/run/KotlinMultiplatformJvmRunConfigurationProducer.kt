@@ -52,7 +52,7 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
     override fun isConfigurationFromContext(configuration: GradleRunConfiguration, context: ConfigurationContext): Boolean {
         val module = context.module.asJvmModule() ?: return false
         val location = context.location ?: return false
-        val function = location.psiElement.parentOfType<KtNamedFunction>() ?: return false
+        val function = location.psiElement.parentOfType<KtNamedFunction>(withSelf = true) ?: return false
         if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return false
         val runTask = KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) ?: return false
         if (runTask.taskName !in configuration.settings.taskNames) return false
@@ -66,7 +66,7 @@ class KotlinMultiplatformJvmRunConfigurationProducer : LazyRunConfigurationProdu
     ): Boolean {
         val module = context.module.asJvmModule() ?: return false
         if (module.isTestModule) return false
-        val function = sourceElement.get()?.parentOfType<KtNamedFunction>() ?: return false
+        val function = sourceElement.get()?.parentOfType<KtNamedFunction>(withSelf = true) ?: return false
         if (!KotlinMainFunctionDetector.getInstance().isMain(function)) return false
         val runTask = KotlinJvmRunTaskData.findSuitableKotlinJvmRunTask(module) ?: return false
 

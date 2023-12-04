@@ -13,5 +13,6 @@ enum class PluginsGroupType {
   TOP_DOWNLOADS,
   TOP_RATED,
   CUSTOM_REPOSITORY,
+  INTERNAL,
   SUGGESTED;
 }

@@ -160,12 +160,12 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  private fun findRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
+  fun findRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
     repository.remotes.find {
-      val url = it.firstUrl
-      url != null &&
-      GitHostingUrlUtil.match(remote.serverUri, url) &&
-      (url.removeSuffix("/").removeSuffix(GitUtil.DOT_GIT).endsWith(remote.path))
+      val absoluteUrl = it.firstUrl ?: return@find false
+      val url = absoluteUrl.removeSuffix("/").removeSuffix(GitUtil.DOT_GIT)
+      val pathWithOwner = "${remote.name}/${remote.path}"
+      GitHostingUrlUtil.match(remote.serverUri, absoluteUrl) && url.endsWith(pathWithOwner)
     }
 
   private fun shouldAddHttpRemote(repository: GitRepository): Boolean {

@@ -1260,6 +1260,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   /** @deprecated ambiguous w.r.t. to normalized UNC paths; consider using {@link OSAgnosticPathUtil} or {@link java.nio.file NIO2} instead */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static boolean isUnixAbsolutePath(@NotNull String path) {
     return path.startsWith("/");

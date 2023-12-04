@@ -287,7 +287,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
     }
 
     @Nullable
-    private GroupTreeNode findParentGroupTreeNode(@NotNull TreeNode treeNode) {
+    private static GroupTreeNode findParentGroupTreeNode(@NotNull TreeNode treeNode) {
       TreeNode currentNode = treeNode;
       while (currentNode != null && !(currentNode instanceof GroupTreeNode)) {
         currentNode = currentNode.getParent();

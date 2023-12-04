@@ -21,10 +21,10 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.*;
 
@@ -69,32 +69,35 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
   private boolean myHelper;
-  private Color myBackgroundColor = UNKNOWN_COLOR;
-  @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
+  private @Nullable Color myBackgroundColor = UNKNOWN_COLOR;
+  private final @NotNull UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   protected ChangesBrowserNode(T userObject) {
     super(userObject);
   }
 
-  @RequiresBackgroundThread
-  protected void preparePresentationDataCaches(@NotNull Project project) {
-    getBackgroundColorCached(project);
+  @ApiStatus.Internal
+  final @Nullable Color getBackgroundColorCached() {
+    Color backgroundColor = myBackgroundColor;
+    return backgroundColor == UNKNOWN_COLOR ? null : backgroundColor;
   }
 
-  /**
-   * see {@link TreeModelBuilder#precalculateFileColors(Project, ChangesBrowserNode)}
-   */
   @ApiStatus.Internal
-  final Color getBackgroundColorCached(@NotNull Project project) {
+  final boolean hasBackgroundColorCached() {
     Color backgroundColor = myBackgroundColor;
-    if (backgroundColor == UNKNOWN_COLOR) {
-      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-318216, EA-829418")) {
-        backgroundColor = getBackgroundColor(project);
-      }
-      myBackgroundColor = backgroundColor;
-    }
+    return backgroundColor != UNKNOWN_COLOR;
+  }
 
-    return backgroundColor;
+  @ApiStatus.Internal
+  final boolean cacheBackgroundColor(@NotNull Project project) {
+    Color backgroundColor = myBackgroundColor;
+    if (backgroundColor != UNKNOWN_COLOR) return false;
+
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-318216, EA-829418")) {
+      backgroundColor = getBackgroundColor(project);
+    }
+    myBackgroundColor = backgroundColor;
+    return backgroundColor != null;
   }
 
   @NotNull
@@ -390,7 +393,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   @Nullable
   private static VirtualFile getScopeVirtualFileFor(@NotNull FilePath filePath) {
     if (filePath.isNonLocal()) return null;
-    return ChangesUtil.findValidParentAccurately(filePath);
+    return VcsImplUtil.findValidParentAccurately(filePath);
   }
 
   public boolean shouldExpandByDefault() {

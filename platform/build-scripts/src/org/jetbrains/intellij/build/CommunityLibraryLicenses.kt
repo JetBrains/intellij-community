@@ -53,13 +53,12 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Archive Patcher (explainer)", libraryName = "explainer"),
     androidDependency(name = "Android Archive Patcher (generator)", libraryName = "generator"),
     androidDependency(name = "Android Archive Patcher (shared)", libraryName = "shared"),
-    androidDependency(name = "Android Baksmali", libraryName = "baksmali"),
+    androidDependency(name = "Android Baksmali", libraryName = "google-baksmali"),
     androidDependency(name = "Android Build Analysis Result Proto", libraryName = "build-analysis-results-proto"),
-    androidDependency(name = "Android Build Analyzer Common", libraryName = "precompiled-build-analyzer-common"),
+    androidDependency(name = "Android Build Analyzer", libraryName = "precompiled-build-analyzer.common"),
     androidDependency(name = "Android Builder Model", libraryName = "precompiled-builder-model"),
     androidDependency(name = "Android Chunkio", libraryName = "precompiled-chunkio"),
     androidDependency(name = "Android Common Library", libraryName = "precompiled-common"),
-    androidDependency(name = "Android Compiler Hosted", libraryName = "compiler-hosted", version = LibraryLicense.CUSTOM_REVISION),
     // for android-core-proto module library in intellij.android.core
     androidDependency(name = "Android Core Protos", libraryName = "libandroid-core-proto"),
     androidDependency(name = "Android Data Binding Base Library", libraryName = "precompiled-db-baseLibrary"),
@@ -85,10 +84,13 @@ object CommunityLibraryLicenses {
                    version = LibraryLicense.CUSTOM_REVISION).apache("https://source.android.com/setup/start/licenses")
       .suppliedByOrganizations(Suppliers.GOOGLE),
     androidDependency(name = "Android JdwpPacket", libraryName = "precompiled-jdwppacket"),
+    androidDependency(name = "Android JdwpsCache", libraryName = "precompiled-jdwpscache"),
     androidDependency(name = "Android JdwpTracer", libraryName = "precompiled-jdwptracer"),
     androidDependency(name = "Android Jetifier Core", libraryName = "jetifier-core"),
     LibraryLicense(name = "Android Jimfs library", libraryName = "jimfs", url = "https://github.com/google/jimfs")
       .apache("https://github.com/google/jimfs/blob/master/LICENSE"),
+    androidDependency(name = "Android Kotlin Multiplatform Models", libraryName = "precompiled-kotlin-multiplatform-models"),
+    androidDependency(name = "Android Kotlin Multiplatform Models Proto", libraryName = "kotlin-multiplatform-android-models-proto"),
     androidDependency(name = "Android Layout Api Library", libraryName = "precompiled-layoutlib-api"),
     androidDependency(name = "Android Layout Inspector (Skia Proto)", libraryName = "layoutinspector-skia-proto"),
     androidDependency(name = "Android Layout Inspector (View Proto)", libraryName = "layoutinspector-view-proto"),
@@ -101,7 +103,6 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Lint Checks (proto)", libraryName = "liblint-checks-proto"),
     androidDependency(name = "Android Lint Cli", libraryName = "precompiled-lint-cli"),
     androidDependency(name = "Android Lint Model", libraryName = "precompiled-lint-model"),
-    androidDependency(name = "Android Lint Test Infrastructure", libraryName = "precompiled-lint-testinfrastructure"),
     androidDependency(name = "Android Manifest Merger", libraryName = "precompiled-manifest-merger"),
     androidDependency(name = "Android Manifest Parser", libraryName = "precompiled-manifest-parser"),
     androidDependency(name = "Android MLKit Common Library", libraryName = "precompiled-mlkit-common"),
@@ -115,12 +116,13 @@ object CommunityLibraryLicenses {
     androidDependency(name = "Android Repository", libraryName = "precompiled-repository"),
     androidDependency(name = "Android Resource Repository", libraryName = "precompiled-resource-repository"),
     androidDependency(name = "Android Sdk Common", libraryName = "precompiled-sdk-common"),
+    androidDependency(name = "Android Sdk Common Gradle", libraryName = "precompiled-sdk-common.gradle"),
     androidDependency(name = "Android Sdk Lib", libraryName = "precompiled-sdklib"),
     androidDependency(name = "Android STracer", libraryName = "precompiled-tracer"),
     androidDependency(name = "Android Studio Driver (proto)", libraryName = "asdriver_proto"),
     androidDependency(name = "Android Threading Agent Callback", libraryName = "precompiled-threading-agent-callback"),
     androidDependency(name = "Android USB Devices", libraryName = "precompiled-usb-devices"),
-    androidDependency(name = "Android Version", libraryName = "android-libversion"),
+    androidDependency(name = "Android Version", libraryName = "libversion"),
     androidDependency(name = "Android Wizard Template", libraryName = "precompiled-wizardTemplate.impl"),
     androidDependency(name = "Android Wizard Template Plugin", libraryName = "precompiled-wizardTemplate.plugin"),
     androidDependency(name = "Android Zipflinger", libraryName = "precompiled-zipflinger"),
@@ -241,6 +243,8 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations("Atlassian Pty Ltd"),
     LibraryLicense(name = "Automaton", libraryName = "automaton", url = "https://www.brics.dk/automaton/")
       .simplifiedBsd("https://github.com/cs-au-dk/dk.brics.automaton/blob/master/COPYING"),
+    LibraryLicense(name = "Bash-Preexec", attachedTo = "intellij.terminal", url = "https://github.com/rcaloras/bash-preexec", version = "0.5.0")
+      .mit("https://github.com/rcaloras/bash-preexec/blob/master/LICENSE.md"),
     LibraryLicense(name = "batik", libraryName = "batik-transcoder", url = "https://xmlgraphics.apache.org/batik/")
       .apache("https://xmlgraphics.apache.org/batik/license.html")
       .suppliedByOrganizations("The Apache Software Foundation"),
@@ -267,6 +271,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "classgraph", libraryName = "classgraph", license = "codehaus",
                    url = "https://github.com/classgraph/classgraph",
                    licenseUrl = "https://github.com/codehaus/classworlds/blob/master/classworlds/LICENSE.txt"),
+    LibraryLicense(name = "Clikt", libraryName = "clikt", url = "https://github.com/ajalt/clikt")
+      .apache("https://github.com/ajalt/clikt/blob/master/LICENSE.txt")
+      .suppliedByOrganizations("AJ Alt"),
     LibraryLicense(name = "Command Line Interface Parser for Java", libraryName = "cli-parser",
                    url = "https://code.google.com/p/cli-parser/").apache(),
     LibraryLicense(name = "Common Annotations for the JavaTM Platform API", libraryName = "javax.annotation-api",
@@ -341,12 +348,7 @@ object CommunityLibraryLicenses {
       .simplifiedBsd("https://github.com/fb55/entities/blob/master/LICENSE"),
     LibraryLicense(name = "epydoc", attachedTo = "intellij.python", version = "3.0.1",
                    url = "https://epydoc.sourceforge.net/").mit(),
-    LibraryLicense(name = "error-prone-annotations", libraryName = "error-prone-annotations",
-                   url = "https://github.com/google/error-prone")
-      .apache("https://github.com/google/error-prone/blob/master/COPYING")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
-    LibraryLicense(name = "fastutil", libraryName = "fastutil-min",
-                   url = "https://github.com/vigna/fastutil")
+    LibraryLicense(name = "fastutil", libraryName = "fastutil-min", url = "https://github.com/vigna/fastutil")
       .apache("https://github.com/vigna/fastutil/blob/master/LICENSE-2.0")
       .suppliedByPersons("Sebastiano Vigna"),
     ffmpegLibraryLicense("ffmpeg"),
@@ -403,6 +405,7 @@ object CommunityLibraryLicenses {
                                                    "ai.grazie.utils.common",
                                                    "ai.grazie.utils.json",
                                                    "ai.grazie.utils.lucene.lt.compatibility",
+                                                   "ai.grazie.model.bdg.jvm",
                                                    "ai.grazie.model.common",
                                                    "ai.grazie.model.gec",
                                                    "ai.grazie.model.text",
@@ -427,6 +430,10 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Groovy XML", libraryName = "org.codehaus.groovy:groovy-xml",
                    url = "https://groovy-lang.org/")
       .apache("https://github.com/apache/groovy/blob/master/LICENSE"),
+
+    LibraryLicense(libraryName = "grpc-inprocess", url = "https://grpc.io/")
+      .apache("https://github.com/grpc/grpc-java/blob/master/LICENSE")
+      .suppliedByOrganizations("gRPC Authors"),
     LibraryLicense(name = "gRPC Kotlin: Stub", libraryName = "grpc-kotlin-stub", url = "https://grpc.io/")
       .apache("https://github.com/grpc/grpc-java/blob/master/LICENSE")
       .suppliedByOrganizations("gRPC Authors"),
@@ -442,6 +449,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "gRPC: Stub", libraryName = "grpc-stub", url = "https://grpc.io/")
       .apache("https://github.com/grpc/grpc-java/blob/master/LICENSE")
       .suppliedByOrganizations("gRPC Authors"),
+
     LibraryLicense(name = "Gson", libraryName = "gson", url = "https://github.com/google/gson")
       .apache("https://github.com/google/gson/blob/master/LICENSE"),
     LibraryLicense(libraryName = "Guava", url = "https://github.com/google/guava")
@@ -1028,7 +1036,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Skiko Runtime", libraryName = "jetbrains.skiko.awt.runtime.all",
                    url = "https://github.com/JetBrains/skiko/")
       .apache("https://github.com/JetBrains/skiko/blob/master/LICENSE"),
-    LibraryLicense(libraryName = "Slf4j", url = "https://slf4j.org/")
+    LibraryLicense(libraryName = "slf4j-api", url = "https://slf4j.org/")
       .mit("https://www.slf4j.org/license.html")
       .suppliedByOrganizations("QOS.ch Sarl"),
     LibraryLicense(libraryName = "slf4j-jdk14", url = "https://slf4j.org/")
@@ -1049,10 +1057,6 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "SourceCodePro", attachedTo = "intellij.platform.resources", version = "2.010", license = "OFL",
                    url = "https://github.com/adobe-fonts/source-code-pro",
                    licenseUrl = "https://github.com/adobe-fonts/source-code-pro/blob/master/LICENSE.md"),
-    LibraryLicense(name = "Spantable", libraryName = "spantable", version = "patched", license = "LGPL 2.1",
-                   licenseUrl = "https://www.gnu.org/licenses/lgpl.html",
-                   url = "https://android.googlesource.com/platform/prebuilts/tools/+/master/common/spantable/")
-      .suppliedByOrganizations(Suppliers.GOOGLE),
     LibraryLicense(name = "sphinxcontrib-napoleon", attachedTo = "intellij.python", version = "0.7",
                    url = "https://sphinxcontrib-napoleon.readthedocs.io/",
                    licenseUrl = "https://github.com/sphinx-contrib/napoleon/blob/master/LICENSE").simplifiedBsd(),
@@ -1093,7 +1097,7 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/Thriftpy/thriftpy2/")
       .mit("https://github.com/Thriftpy/thriftpy2/blob/master/LICENSE"),
     // for traceprocessor-proto module library in intellij.android.profilersAndroid
-    androidDependency(name = "TraceProcessor Daemon Protos", libraryName = "traceprocessor-proto"),
+    androidDependency(name = "TraceProcessor Daemon Protos", libraryName = "traceprocessor-protos"),
     LibraryLicense(name = "Trang", libraryName = "trang-core.jar",
                    url = "https://www.thaiopensource.com/relaxng/trang.html",
                    version = LibraryLicense.CUSTOM_REVISION)
@@ -1200,8 +1204,10 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-performance-kotlin"),
     jetbrainsLibrary("completion-ranking-cpp-exp"),
+    jetbrainsLibrary("completion-ranking-css-exp"),
     jetbrainsLibrary("completion-ranking-dart-exp"),
     jetbrainsLibrary("completion-ranking-go-exp"),
+    jetbrainsLibrary("completion-ranking-html-exp"),
     jetbrainsLibrary("completion-ranking-java"),
     jetbrainsLibrary("completion-ranking-java-exp"),
     jetbrainsLibrary("completion-ranking-java-exp2"),
@@ -1265,8 +1271,6 @@ object CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-scripting-common"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler-impl"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-jvm"),
-    jetbrainsLibrary("kotlinc.kotlin-stdlib"),
-    jetbrainsLibrary("kotlinc.kotlin-stdlib-minimal-for-test"),
     jetbrainsLibrary("kotlinc.kotlinx-serialization-compiler-plugin"),
     jetbrainsLibrary("kotlinc.lombok-compiler-plugin"),
     jetbrainsLibrary("kotlinc.low-level-api-fir"),

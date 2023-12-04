@@ -7,14 +7,18 @@ import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-private class ShowTipsAction : AnAction(), DumbAware {
+private class ShowTipsAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification {
+  override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.BackendOnly
+
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     @Suppress("DEPRECATION")

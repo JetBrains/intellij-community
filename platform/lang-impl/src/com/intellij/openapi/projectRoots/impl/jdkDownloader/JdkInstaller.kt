@@ -94,7 +94,7 @@ class JdkInstaller : JdkInstallerBase() {
   private fun wrap(d: WSLDistribution) = WSLDistributionForJdkInstallerImpl(d)
 
   private class WSLDistributionForJdkInstallerImpl(val d: WSLDistribution) : WSLDistributionForJdkInstaller {
-    override fun getWslPath(path: Path): String = d.getWslPath(path.toString()) ?: error("Failed to map $path to WSL")
+    override fun getWslPath(path: Path): String = d.getWslPath(path) ?: error("Failed to map $path to WSL")
 
     override fun executeOnWsl(command: List<String>, dir: String, timeout: Int): ProcessOutput {
       return d.executeOnWsl(command, WSLCommandLineOptions().setRemoteWorkingDirectory(dir), timeout, null)

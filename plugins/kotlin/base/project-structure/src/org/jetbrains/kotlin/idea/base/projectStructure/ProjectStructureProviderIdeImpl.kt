@@ -6,16 +6,13 @@ import com.intellij.java.library.JavaLibraryModificationTracker
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtScriptDependencyModule
-import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.analysis.project.structure.impl.KtCodeFragmentModuleImpl
 import org.jetbrains.kotlin.analysis.providers.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analyzer.ModuleInfo
@@ -23,6 +20,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureProviderI
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
+import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
@@ -36,6 +34,16 @@ interface KtModuleFactory {
     }
 
     fun createModule(moduleInfo: ModuleInfo): KtModule?
+}
+
+@ApiStatus.Internal
+interface ProjectStructureInsightsProvider {
+    companion object {
+        val EP_NAME: ExtensionPointName<ProjectStructureInsightsProvider> =
+            ExtensionPointName.create("org.jetbrains.kotlin.projectStructureInsightsProvider")
+    }
+
+    fun isInSpecialSrcDirectory(psiElement: PsiElement): Boolean
 }
 
 @ApiStatus.Internal
@@ -129,6 +137,9 @@ private fun createKtModuleByModuleInfo(moduleInfo: ModuleInfo): KtModule {
     }
 }
 
+private fun isInSpecialSrcDir(psiElement: PsiElement): Boolean =
+    ProjectStructureInsightsProvider.EP_NAME.extensionList.any { it.isInSpecialSrcDirectory(psiElement) }
+
 private fun <T> calculateKtModule(
     psiElement: PsiElement,
     contextualModule: T? = null
@@ -138,7 +149,7 @@ private fun <T> calculateKtModule(
     val project = psiElement.project
     val config = ModuleInfoProvider.Configuration(
         createSourceLibraryInfoForLibraryBinaries = false,
-        preferModulesFromExtensions = (contextualModule is KtScriptModule) || (virtualFile?.nameSequence?.endsWith(".kts") == true),
+        preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) && !isInSpecialSrcDir(psiElement),
         contextualModuleInfo = contextualModule?.ideaModuleInfo,
     )
 
@@ -160,3 +171,6 @@ private fun <T> calculateKtModule(
 
     return moduleByModuleInfo
 }
+
+private fun <T> isScriptOrItsDependency(contextualModule: T?, virtualFile: VirtualFile?) where T : KtModule, T : KtModuleByModuleInfoBase =
+    (contextualModule is KtScriptModule) || (virtualFile?.nameSequence?.endsWith(STD_SCRIPT_EXT) == true)

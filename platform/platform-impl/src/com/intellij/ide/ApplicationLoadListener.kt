@@ -16,5 +16,5 @@ interface ApplicationLoadListener {
     val EP_NAME: ExtensionPointName<ApplicationLoadListener> = ExtensionPointName("com.intellij.ApplicationLoadListener")
   }
 
-  fun beforeApplicationLoaded(application: Application, configPath: Path)
+  suspend fun beforeApplicationLoaded(application: Application, configPath: Path)
 }

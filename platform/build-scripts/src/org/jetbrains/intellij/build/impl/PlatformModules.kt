@@ -52,7 +52,7 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
   "intellij.platform.analysis.impl",
   "intellij.platform.diff.impl",
   "intellij.platform.editor.ex",
-  "intellij.platform.elevation",
+  "intellij.execution.process.elevation",
   "intellij.platform.externalProcessAuthHelper",
   "intellij.platform.inspect",
   // lvcs.xml - convert into product module
@@ -98,6 +98,8 @@ private val PLATFORM_IMPLEMENTATION_MODULES = persistentListOf(
 
   "intellij.platform.markdown.utils",
   "intellij.platform.util.commonsLangV2Shim",
+
+  "intellij.platform.ae.database"
 )
 
 internal val PLATFORM_CUSTOM_PACK_MODE: Map<String, LibraryPackMode> = persistentMapOf(
@@ -213,6 +215,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
   // make sure that all ktor libraries bundled into the platform
   layout.withProjectLibrary(libraryName = "ktor-client-content-negotiation")
   layout.withProjectLibrary(libraryName = "ktor-client-logging")
+  layout.withProjectLibrary(libraryName = "ktor-serialization-kotlinx-json")
 
   // used by intellij.database.jdbcConsole - put to a small util module
   layout.withProjectLibrary(libraryName = "jbr-api", jarName = UTIL_JAR)

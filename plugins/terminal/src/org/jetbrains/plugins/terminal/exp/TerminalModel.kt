@@ -5,17 +5,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.CursorShape
 import com.jediterm.terminal.StyledTextConsumer
-import com.jediterm.terminal.Terminal
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
-import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalLine
 import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.min
 
-class TerminalModel(internal val textBuffer: TerminalTextBuffer, val styleState: StyleState) {
+class TerminalModel(internal val textBuffer: TerminalTextBuffer) {
   val width: Int
     get() = textBuffer.width
   val height: Int
@@ -29,6 +27,12 @@ class TerminalModel(internal val textBuffer: TerminalTextBuffer, val styleState:
     private set
 
   var isCommandRunning: Boolean = false
+    set(value) {
+      if (value != field) {
+        field = value
+        terminalListeners.forEach { it.onCommandRunningChanged(value) }
+      }
+    }
 
   var cursorShape: CursorShape = CursorShape.BLINK_BLOCK
     set(value) {
@@ -144,14 +148,6 @@ class TerminalModel(internal val textBuffer: TerminalTextBuffer, val styleState:
 
   //-------------------MODIFICATION METHODS------------------------------------------------
 
-  fun clearAll() = textBuffer.clearAll()
-
-  fun clearAllAndMoveCursorToTopLeftCorner(terminal: Terminal) {
-    terminal.eraseInDisplay(2)
-    terminal.cursorPosition(1, 1)
-    textBuffer.clearHistory()
-  }
-
   fun lockContent() = textBuffer.lock()
 
   fun unlockContent() = textBuffer.unlock()
@@ -207,6 +203,8 @@ class TerminalModel(internal val textBuffer: TerminalTextBuffer, val styleState:
     fun onSizeChanged(width: Int, height: Int) {}
 
     fun onWindowTitleChanged(title: String) {}
+
+    fun onCommandRunningChanged(isRunning: Boolean) {}
 
     fun onAlternateBufferChanged(enabled: Boolean) {}
 

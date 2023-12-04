@@ -19,14 +19,9 @@ import com.intellij.util.CommonProcessors.FindProcessor
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
-import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
-import org.jetbrains.kotlin.analysis.project.structure.KtLibrarySourceModule
-import org.jetbrains.kotlin.analysis.project.structure.KtModule
-import org.jetbrains.kotlin.analysis.project.structure.KtNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
-import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
+import org.jetbrains.kotlin.analysis.project.structure.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.test.util.jarRoot
@@ -298,6 +293,46 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         assertKtModuleType<KtSourceModule>("Main.kt")
         assertKtModuleType<KtSourceModule>("Test.kt")
+    }
+
+    fun `test that buildSrc sources belong to KtSourceModule`() {
+        createModule(
+            moduleName = "buildSrc",
+            srcContentSpec = directoryContent {
+                dir("main") {
+                    dir("kotlin") {
+                        file("utils.kt", "fun callMeFromKtsFile() {}")
+                    }
+                }
+            }
+        )
+
+        createModule(
+            moduleName = "utils",
+            srcContentSpec = directoryContent {
+                file("build.gradle.kts", "callMeFromKtsFile()")
+            }
+        )
+
+        val dependency = getFile("utils.kt")
+        val scriptFile = getFile("build.gradle.kts")
+
+        ScriptConfigurationManager.updateScriptDependenciesSynchronously(scriptFile)
+
+        assertKtModuleType<KtSourceModule>(dependency, ktModule(scriptFile))
+    }
+
+    fun `test that script in buildSrc belong to KtScriptModule`() {
+        createModule(
+            moduleName = "buildSrc",
+            srcContentSpec = directoryContent {
+                file("build.gradle.kts", "")
+            }
+        )
+
+        val scriptFile = getFile("build.gradle.kts")
+        ScriptConfigurationManager.updateScriptDependenciesSynchronously(scriptFile)
+        assertKtModuleType<KtScriptModule>(scriptFile, ktModule(scriptFile))
     }
 
     fun `test module of source directory`() {

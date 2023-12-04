@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCacheDataProvider
 import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereContextFeaturesProvider
-import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereContributorStatistician
 import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereStatisticianService
+import com.intellij.searchEverywhereMl.ranking.features.statistician.increaseContributorUseCount
 import com.intellij.searchEverywhereMl.ranking.id.SearchEverywhereMlOrderedItemIdProvider
 import com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereModelProvider
 import com.intellij.searchEverywhereMl.ranking.performance.PerformanceTracker
@@ -88,7 +88,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
         if (state.tabId == SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID) {
           elementsProvider.invoke()
             .slice(indexes.asIterable())
-            .forEach { SearchEverywhereContributorStatistician.increaseUseCount(it.contributor.searchProviderId) }
+            .forEach { increaseContributorUseCount(it.contributor.searchProviderId) }
         }
       }
 

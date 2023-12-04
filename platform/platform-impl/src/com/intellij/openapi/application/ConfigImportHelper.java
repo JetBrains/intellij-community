@@ -14,7 +14,9 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.openapi.application.migrations.BigDataTools232;
+import com.intellij.openapi.application.migrations.HttpClientPostmanConverter233;
 import com.intellij.openapi.application.migrations.PresentationAssistant233;
+import com.intellij.openapi.application.migrations.RustUltimate241;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -36,6 +38,7 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.bootstrap.IdeStartupWizardKt;
 import com.intellij.platform.ide.bootstrap.StartupErrorReporter;
 import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
@@ -148,8 +151,21 @@ public final class ConfigImportHelper {
           log.error("Couldn't backup current config or delete current config directory", e);
         }
       }
-      else if (!Boolean.getBoolean("intellij.startup.wizard")) {
-        if (shouldAskForConfig()) {
+      else if (IdeStartupWizardKt.isIdeStartupWizardEnabled()) {
+        if (!guessedOldConfigDirs.isEmpty() && !shouldAskForConfig()) {
+          Pair<Path, FileTime> bestConfigGuess = guessedOldConfigDirs.getFirstItem();
+          if (!isConfigOld(bestConfigGuess.second)) {
+            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(bestConfigGuess.first);
+            if (oldConfigDirAndOldIdePath == null) {
+              log.info("Previous config directory was detected but not accepted: " + bestConfigGuess.first);
+              importScenarioStatistics = CONFIG_DIRECTORY_NOT_FOUND;
+            }
+          }
+        }
+      }
+      else {
+        boolean askForConfig = shouldAskForConfig();
+        if (askForConfig) {
           oldConfigDirAndOldIdePath = showDialogAndGetOldConfigPath(guessedOldConfigDirs.getPaths());
           importScenarioStatistics = SHOW_DIALOG_REQUESTED_BY_PROPERTY;
         }
@@ -268,7 +284,7 @@ public final class ConfigImportHelper {
     return null;
   }
 
-  private static boolean isConfigOld(FileTime time) {
+  public static boolean isConfigOld(FileTime time) {
     Instant deadline = Instant.now().minus(180, ChronoUnit.DAYS);
     return time.toInstant().compareTo(deadline) < 0;
   }
@@ -724,7 +740,7 @@ public final class ConfigImportHelper {
     return FileUtil.expandUserHome(StringUtilRt.unquoteString(dir, '"'));
   }
 
-  private static void doImport(Path oldConfigDir, Path newConfigDir, @Nullable Path oldIdeHome, Logger log, ConfigImportOptions importOptions) {
+  public static void doImport(Path oldConfigDir, Path newConfigDir, @Nullable Path oldIdeHome, Logger log, ConfigImportOptions importOptions) {
     if (oldConfigDir.equals(newConfigDir)) {
       log.info("New config directory is the same as the old one, no import needed.");
       return;
@@ -756,7 +772,7 @@ public final class ConfigImportHelper {
     }
   }
 
-  static final class ConfigImportOptions {
+  public static final class ConfigImportOptions {
     final Logger log;
     boolean headless;
     @Nullable ConfigImportSettings importSettings;
@@ -766,8 +782,44 @@ public final class ConfigImportHelper {
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = null;
     boolean mergeVmOptions = false;
 
-    ConfigImportOptions(Logger log) {
+    @Nullable
+    ProgressIndicator headlessProgressIndicator = null;
+
+    public ConfigImportOptions(Logger log) {
       this.log = log;
+    }
+
+    public boolean isHeadless() {
+      return headless;
+    }
+
+    public void setHeadless(boolean headless) {
+      this.headless = headless;
+    }
+
+    public boolean isMergeVmOptions() {
+      return mergeVmOptions;
+    }
+
+    public void setMergeVmOptions(boolean mergeVmOptions) {
+      this.mergeVmOptions = mergeVmOptions;
+    }
+
+    @Nullable
+    public ProgressIndicator getHeadlessProgressIndicator() {
+      return headlessProgressIndicator;
+    }
+
+    public void setHeadlessProgressIndicator(@Nullable ProgressIndicator headlessProgressIndicator) {
+      this.headlessProgressIndicator = headlessProgressIndicator;
+    }
+
+    public ConfigImportSettings getImportSettings() {
+      return importSettings;
+    }
+
+    public void setImportSettings(ConfigImportSettings importSettings) {
+      this.importSettings = importSettings;
     }
   }
 
@@ -801,6 +853,9 @@ public final class ConfigImportHelper {
         else if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
           NioFiles.createDirectories(target.getParent());
           Files.copy(file, target, LinkOption.NOFOLLOW_LINKS);
+        } else if (options.importSettings != null && options.importSettings.shouldForceCopy(file)) {
+          NioFiles.createDirectories(target.getParent());
+          Files.copy(file, target, LinkOption.NOFOLLOW_LINKS, StandardCopyOption.REPLACE_EXISTING);
         }
         return FileVisitResult.CONTINUE;
       }
@@ -848,7 +903,7 @@ public final class ConfigImportHelper {
     return List.of();
   }
 
-  private static void migratePlugins(Path oldPluginsDir,
+  public static void migratePlugins(Path oldPluginsDir,
                                      Path oldConfigDir,
                                      Path newPluginsDir,
                                      Path newConfigDir,
@@ -879,7 +934,14 @@ public final class ConfigImportHelper {
     catch (IOException e) {
       log.info("Non-existing plugins directory: " + oldPluginsDir, e);
     }
-
+    Path disabledPluginsFile = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
+    Set<PluginId> disabledPlugins =
+      Files.exists(disabledPluginsFile) ? DisabledPluginsState.Companion.loadDisabledPlugins(disabledPluginsFile) : Set.of();
+    for (IdeaPluginDescriptor pluginToMigrate : pluginsToMigrate) {
+      if (disabledPlugins.contains(pluginToMigrate.getPluginId())) {
+        pluginToMigrate.setEnabled(false);
+      }
+    }
     if (options.importSettings != null) {
       options.importSettings.processPluginsToMigrate(newConfigDir, oldConfigDir, pluginsToMigrate, pluginsToDownload);
     }
@@ -905,6 +967,8 @@ public final class ConfigImportHelper {
     var options = new PluginMigrationOptions(currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload);
     new BigDataTools232().migratePlugins(options);
     new PresentationAssistant233().migratePlugin(options);
+    new RustUltimate241().migratePlugins(options);
+    new HttpClientPostmanConverter233().migratePlugins(options);
   }
 
   private static void partitionNonBundled(Collection<? extends IdeaPluginDescriptor> descriptors,
@@ -982,7 +1046,9 @@ public final class ConfigImportHelper {
   private static void downloadUpdatesForIncompatiblePlugins(Path newPluginsDir,  ConfigImportOptions options, List<IdeaPluginDescriptor> incompatiblePlugins) {
     if (options.headless) {
       PluginDownloader.runSynchronouslyInBackground(() -> {
-        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, new EmptyProgressIndicator());
+        ProgressIndicator progressIndicator =
+          options.headlessProgressIndicator == null ? new EmptyProgressIndicator() : options.headlessProgressIndicator;
+        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, progressIndicator);
       });
     }
     else {

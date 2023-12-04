@@ -54,8 +54,8 @@ final class CombinedPopupLayout implements LayoutManager {
       highlightInfoComponent.setBounds(0, 0, width, height);
     }
     else {
-      int h1 = highlightInfoComponent.getPreferredSize().height;
-      int h2 = quickDocComponent.getPreferredSize().height;
+      int h1 = WidthBasedLayout.getPreferredHeight(highlightInfoComponent, width);
+      int h2 = WidthBasedLayout.getPreferredHeight(quickDocComponent, width);
 
       int h1Res;
       int h2Res;

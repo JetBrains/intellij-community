@@ -2,6 +2,7 @@
 package com.intellij.warmup
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.ui.playback.PlaybackContext
@@ -27,7 +28,12 @@ class CheckGitLogIndexedCommand(text: String, line: Int) : AbstractCommand(text,
 
     ApplicationManager.getApplication().messageBus.simpleConnect().subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosing(project: Project) {
-        val projectLogManager = VcsProjectLog.getInstance(project).logManager!!
+        @Suppress("RetrievingService") val projectLog = project.serviceIfCreated<VcsProjectLog>()
+        if (projectLog == null) {
+          callback.reject("Vcs log was not initialized")
+          return
+        }
+        val projectLogManager = projectLog.logManager!!
         ApplicationManager.getApplication().invokeAndWait {
           if (!projectLogManager.isLogUpToDate) {
             callback.reject("Vcs log is not up to date")

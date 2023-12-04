@@ -3,7 +3,6 @@ package training.learn.lesson.general.run
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.ui.RunConfigurationStartHistory
-import com.intellij.execution.ui.UIExperiment
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.text.ShortcutsRenderingUtil
 import com.intellij.idea.ActionsBundle
@@ -17,7 +16,9 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.tasks.TaskBundle
 import com.intellij.util.DocumentUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.*
+import com.intellij.xdebugger.impl.InlayRunToCursorEditorListener
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
@@ -41,6 +42,7 @@ import training.statistic.LessonStartingWay
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.WeakReferenceDelegator
+import java.awt.Rectangle
 import java.awt.event.KeyEvent
 
 abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name")) {
@@ -332,16 +334,30 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     val position = sample.getPosition(3)
     caret(position)
 
+    task {
+      if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled) triggerAndBorderHighlight {
+        limitByVisibleRect = false
+      }.componentPart l@{ ui: EditorComponentImpl ->
+        if (ui.editor != editor) return@l null
+        val line = editor.offsetToVisualLine(position.startOffset, true)
+        val actionButtonSize = InlayRunToCursorEditorListener.ACTION_BUTTON_SIZE
+        val y = editor.visualLineToY(line)
+        return@l Rectangle(JBUI.scale(InlayRunToCursorEditorListener.NEGATIVE_INLAY_PANEL_SHIFT - 1), y - JBUI.scale(1),
+                           JBUI.scale(actionButtonSize + 2), JBUI.scale(actionButtonSize + 2))
+      }
+    }
+
     actionTask("RunToCursor") {
       proposeRestore {
         checkPositionOfEditor(LessonSample(afterFixText, position))
       }
       val intro = LessonsBundle.message("debug.workflow.run.to.cursor.intro", code(debuggingMethodName), code("return"))
-      val actionPart = if (!UIExperiment.isNewDebuggerUIEnabled()) {
-        LessonsBundle.message("debug.workflow.run.to.cursor.press.or.click", action(it), icon(AllIcons.Actions.RunToCursor))
-      }
-      else LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
-      "$intro $actionPart"
+      val actionPart = LessonsBundle.message("debug.workflow.run.to.cursor.press", action(it))
+      val alternative = if (InlayRunToCursorEditorListener.isInlayRunToCursorEnabled)
+        " " + LessonsBundle.message("debug.workflow.run.to.cursor.alternative", LessonUtil.actionName(it))
+      else ""
+      val notePart = LessonsBundle.message("debug.workflow.run.to.cursor.note", LessonUtil.actionName(it))
+      "$intro $actionPart$alternative $notePart"
     }
   }
 

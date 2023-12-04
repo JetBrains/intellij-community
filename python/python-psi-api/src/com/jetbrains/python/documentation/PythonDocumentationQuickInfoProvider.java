@@ -17,6 +17,8 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,5 +39,15 @@ public interface PythonDocumentationQuickInfoProvider {
    * @return info (if exists) or null (if another provider should be checked)
    */
   @Nullable
-  @Nls String getQuickInfo(@NotNull PsiElement originalElement);
+  @Nls
+  default String getQuickInfo(@NotNull PsiElement originalElement) {
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  @Nullable
+  @Nls
+  default String getHoverAdditionalQuickInfo(@NotNull TypeEvalContext context, @Nullable PsiElement originalElement) {
+    return null;
+  }
 }

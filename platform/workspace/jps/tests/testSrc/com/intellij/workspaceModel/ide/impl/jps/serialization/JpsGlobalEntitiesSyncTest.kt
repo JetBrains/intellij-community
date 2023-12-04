@@ -7,23 +7,23 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryRoot
-import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
+import org.junit.Assume
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -49,9 +49,102 @@ class JpsGlobalEntitiesSyncTest {
   val disposableRule = DisposableRule()
 
   @Test
-  fun `test project and global storage sync`() {
-    copyAndLoadGlobalEntities(originalFile = "loading", expectedFile = "sync", testDir = temporaryFolder.newFolder(),
-                              parentDisposable = disposableRule.disposable) { entitySource ->
+  fun `test project and global storage sdk sync`() {
+    Assume.assumeTrue("Test has to be executed on the new implementation of SDK", GlobalSdkTableBridge.isEnabled())
+    copyAndLoadGlobalEntities(originalFile = "sdk/loading", expectedFile = "sdk/sync", testDir = temporaryFolder.newFolder(),
+                              parentDisposable = disposableRule.disposable, ) { _, entitySource ->
+      val sdkInfos = mutableListOf(SdkTestInfo("corretto-20", "Amazon Corretto version 20.0.2", "JavaSDK"),
+                            SdkTestInfo("jbr-17", "java version \"17.0.7\"", "JavaSDK"))
+      val sdkEntities = GlobalWorkspaceModel.getInstance().currentSnapshot.entities(SdkEntity::class.java).toList()
+      UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
+
+      val loadedProjects = listOf(loadProject(), loadProject())
+      // Check that global storage is the same after projects load
+      checkSdkInStorages(sdkInfos, loadedProjects)
+
+      ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+          GlobalWorkspaceModel.getInstance().updateModel("Test update") { builder ->
+            val sdkEntity = builder.entities(SdkEntity::class.java).first { it.name == "corretto-20" }
+            val sdkNameToRemove = sdkEntity.name
+            builder.removeEntity(sdkEntity)
+            sdkInfos.removeIf { it.name == sdkNameToRemove }
+          }
+        }
+      }
+      // Check global entities in sync at project storage
+      checkSdkInStorages(sdkInfos, loadedProjects)
+
+      // Check global entities in sync after removing entity via project storage
+      val project = loadedProjects.first()
+      ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+          WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
+            val sdkEntity = builder.entities(SdkEntity::class.java).first { it.name == "jbr-17" }
+            val sdkNameToRemove = sdkEntity.name
+            builder.removeEntity(sdkEntity)
+            sdkInfos.removeIf { it.name == sdkNameToRemove }
+          }
+        }
+      }
+      checkSdkInStorages(sdkInfos, loadedProjects)
+
+      // Check global entities in sync after adding entity via project storage
+      ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+          val virtualFileManager = VirtualFileUrlManager.getInstance(project)
+          WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
+            val projectSdkEntity = SdkEntity("oracle-1.8", "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home"),
+                                             listOf(SdkRoot(virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/oracle-1.8/Contents/Home!/java.base"), SdkRootTypeId("sourcePath"))),
+                                             "", entitySource) {
+              version = "1.8"
+            }
+            builder.addEntity(projectSdkEntity)
+            sdkInfos.add(SdkTestInfo(projectSdkEntity.name, projectSdkEntity.version!!, projectSdkEntity.type))
+          }
+        }
+      }
+      checkSdkInStorages(sdkInfos, loadedProjects)
+      ApplicationManager.getApplication().invokeAndWait {
+        (ProjectManager.getInstance() as ProjectManagerEx).closeAndDisposeAllProjects(false)
+      }
+    }
+  }
+
+  private fun checkSdkInStorages(sdkInfos: List<SdkTestInfo>, loadedProjects: List<Project>) {
+    val sdkBridges = ProjectJdkTable.getInstance().allJdks
+    UsefulTestCase.assertSameElements(sdkBridges.map { SdkTestInfo(it.name, it.versionString!!, it.sdkType.name) }, sdkInfos)
+
+    val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
+    val globalVirtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+
+    val sdkEntities = globalWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
+    UsefulTestCase.assertSameElements(sdkInfos, sdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
+
+    loadedProjects.forEach { loadedProject ->
+      val projectWorkspaceModel = WorkspaceModel.getInstance(loadedProject)
+      val projectVirtualFileUrlManager = VirtualFileUrlManager.getInstance(loadedProject)
+      projectWorkspaceModel as WorkspaceModelImpl
+      val projectSdkEntities = projectWorkspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()
+      UsefulTestCase.assertSameElements(sdkInfos, projectSdkEntities.map { SdkTestInfo(it.name, it.version!!, it.type) })
+
+      // Check VirtualFileUrls are from different managers but same url
+      projectSdkEntities.forEach libsLoop@{ projectSdk ->
+        val projectVfu = projectSdk.roots[0].url
+        val globalVfu = sdkEntities.find { it.name == projectSdk.name }!!.roots[0].url
+
+        assertEquals(globalVfu.url, projectVfu.url)
+        assertSame(projectVfu, projectVirtualFileUrlManager.fromUrl(projectVfu.url))
+        assertSame(globalVfu, globalVirtualFileUrlManager.fromUrl(globalVfu.url))
+        assertNotSame(globalVfu, projectVfu)
+      }
+    }
+  }
+
+  @Test
+  fun `test project and global storage library sync`() {
+    copyAndLoadGlobalEntities(originalFile = "libraries/loading", expectedFile = "libraries/sync", testDir = temporaryFolder.newFolder(),
+                              parentDisposable = disposableRule.disposable) { entitySource, _ ->
       val projectLibrariesNames = mutableListOf("spring", "junit", "kotlin")
       val globalLibrariesNames = mutableListOf("aws.s3", "org.maven.common", "com.google.plugin", "org.microsoft")
 
@@ -65,7 +158,7 @@ class JpsGlobalEntitiesSyncTest {
       ApplicationManager.getApplication().invokeAndWait {
         runWriteAction {
           GlobalWorkspaceModel.getInstance().updateModel("Test update") { builder ->
-            val libraryEntity = builder.entities(LibraryEntity::class.java).first()
+            val libraryEntity = builder.entities(LibraryEntity::class.java).first{ it.name == "aws.s3" }
             val libraryNameToRemove = libraryEntity.name
             builder.removeEntity(libraryEntity)
             globalLibrariesNames.remove(libraryNameToRemove)
@@ -81,7 +174,7 @@ class JpsGlobalEntitiesSyncTest {
         runWriteAction {
           val virtualFileManager = VirtualFileUrlManager.getInstance(project)
           WorkspaceModel.getInstance(project).updateProjectModel("Test update") { builder ->
-            val libraryEntity = builder.entities(LibraryEntity::class.java).first { globalLibrariesNames.contains(it.name) }
+            val libraryEntity = builder.entities(LibraryEntity::class.java).first { it.name == "com.google.plugin" }
             val libraryNameToRemove = libraryEntity.name
             builder.removeEntity(libraryEntity)
             globalLibrariesNames.remove(libraryNameToRemove)
@@ -145,4 +238,6 @@ class JpsGlobalEntitiesSyncTest {
     FileUtil.copyDir(projectDir, tmpFolder)
     return PlatformTestUtil.loadAndOpenProject(tmpFolder.toPath(), disposableRule.disposable)
   }
+
+  data class SdkTestInfo(val name: String, val version: String, val type: String)
 }

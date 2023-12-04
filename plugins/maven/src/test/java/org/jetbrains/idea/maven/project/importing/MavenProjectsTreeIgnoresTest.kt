@@ -11,8 +11,8 @@ class MavenProjectsTreeIgnoresTest : MavenProjectsTreeTestCase() {
   private var myLog = ""
   private var myRoots: List<MavenProject>? = null
   @Throws(Exception::class)
-  override fun setUpInWriteAction() {
-    super.setUpInWriteAction()
+  override fun setUp() {
+    super.setUp()
     tree.addListener(MyLoggingListener(), getTestRootDisposable())
     val m1 = createModulePom("m1",
                              """

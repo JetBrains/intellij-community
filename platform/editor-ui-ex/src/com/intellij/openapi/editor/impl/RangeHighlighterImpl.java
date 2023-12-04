@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -9,6 +10,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
@@ -217,6 +219,9 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
     }
     if (!Objects.equals(old, renderer)) {
       fireChanged(true, false, false);
+      if (old instanceof Disposable oldDisposableRenderer) {
+        Disposer.dispose(oldDisposableRenderer);
+      }
     }
   }
 
@@ -436,6 +441,15 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
     if (!isValid()) return;
     // we store highlighters in MarkupModel
     getMarkupModel().removeHighlighter(this);
+  }
+
+  @Override
+  public void dispose() {
+    super.dispose();
+    GutterIconRenderer renderer = getGutterIconRenderer();
+    if (renderer instanceof Disposable disposableRenderer) {
+      Disposer.dispose(disposableRenderer);
+    }
   }
 
   @Override

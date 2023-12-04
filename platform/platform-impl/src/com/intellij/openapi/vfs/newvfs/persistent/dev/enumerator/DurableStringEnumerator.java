@@ -117,7 +117,7 @@ public final class DurableStringEnumerator implements DurableDataEnumerator<Stri
 
   @Override
   public void force() throws IOException {
-    valuesLog.flush(true);
+    valuesLog.flush();
   }
 
   @Override

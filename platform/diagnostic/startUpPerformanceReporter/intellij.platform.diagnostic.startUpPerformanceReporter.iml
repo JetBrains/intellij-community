@@ -44,5 +44,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.http" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.impl" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
   </component>
 </module>

@@ -38,8 +38,7 @@ import java.io.IOException
 import java.util.function.Consumer
 
 class FoldersImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()

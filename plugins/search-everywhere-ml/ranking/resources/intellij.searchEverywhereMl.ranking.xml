@@ -15,19 +15,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <advancedSetting default="true" id="searcheverywhere.ml.sort.action"
-                     groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlBundle"/>
-    <advancedSetting default="true" id="searcheverywhere.ml.sort.files"
-                     groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlBundle"/>
-    <advancedSetting default="true" id="searcheverywhere.ml.sort.classes"
-                     groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlBundle"/>
-    <advancedSetting default="false" id="searcheverywhere.ml.sort.all"
-                     groupKey="advanced.setting.searcheverywhere.ml.name"
-                     bundle="messages.searchEverywhereMlBundle"/>
-
     <registryKey defaultValue="false"
                  description="When enabled ML experiments with actions order won't be performed"
                  key="search.everywhere.force.disable.experiment.action.ml"/>
@@ -129,6 +116,7 @@
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.NavigationItemKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TypoKeyProvider"/>
     <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.TextKeyProvider"/>
+    <elementKeyForIdProvider implementation="com.intellij.searchEverywhereMl.ranking.id.CalculatorKeyProvider"/>
 
     <rankingModelLoader
       implementation="com.intellij.searchEverywhereMl.ranking.model.SearchEverywhereActionsRankingModelLoader"/>

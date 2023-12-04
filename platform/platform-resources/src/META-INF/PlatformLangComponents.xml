@@ -39,10 +39,10 @@
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.WindowDressing$MyStartupActivity" />
 
     <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
-                        serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+                        serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="notHeadless"/>
 
     <projectService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
-                    serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+                    serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
@@ -113,11 +113,13 @@
     <projectService serviceInterface="com.intellij.openapi.fileEditor.ex.IdeDocumentHistory"
                     serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl" preload="await"/>
 
+    <projectService serviceImplementation="com.intellij.codeInsight.daemon.MarkupGraveSuppressor"/>
+
     <applicationService serviceImplementation="com.intellij.ide.actionMacro.ActionMacroManager"/>
     <!--suppress PluginXmlDynamicPlugin -->
     <actionConfigurationCustomizer implementation="com.intellij.ide.actionMacro.ActionMacroManager$MyActionTuner"/>
 
-    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlighterTextEditorInitializer"/>
+    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlighterTextEditorInitializer" order="first"/>
     <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FoldingTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionTextEditorInitializer"/>
     <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.InlayHintsEditorInitializer"/>

@@ -78,7 +78,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected void addExtraToolbar(JPanel toolBarPanel) {
+  protected void addExtraToolbar(@NotNull JPanel toolBarPanel) {
     mySearchTextArea = new SearchTextArea(new JTextArea(), true);
     mySearchTextArea.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     new NextOccurenceAction(true).registerCustomShortcutSet(Utils.shortcutSetOf(ContainerUtil.concat(
@@ -125,7 +125,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @RequiresEdt
-  private void applyFilterText(@Nullable String filter, LoadingDecorator decorator) {
+  private void applyFilterText(@Nullable String filter, @NotNull LoadingDecorator decorator) {
     decorator.stopLoading();
     if (myFilterFuture != null) {
       myFilterFuture.cancel(true);
@@ -213,7 +213,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   }
 
   @Override
-  protected Runnable doUpdateDiffs(final FileHistoryDialogModel model) {
+  protected Runnable doUpdateDiffs(final @NotNull FileHistoryDialogModel model) {
     final FileDifferenceModel diffModel = model.getDifferenceModel();
     return () -> myDiffPanel.setRequest(createDifference(diffModel));
   }

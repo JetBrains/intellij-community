@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
@@ -168,9 +167,13 @@ public final class PluginInstallOperation {
       if (Strings.areSameInstance(node.getRepositoryName(), PluginInstaller.UNKNOWN_HOST_MARKER)) {
         PluginNode descriptor = allPlugins.get(node.getPluginId());
         node.setRepositoryName(descriptor != null ? descriptor.getRepositoryName() : null);
+        String oldUrl = node.getDownloadUrl();
         if (descriptor != null) {
           node.setDownloadUrl(descriptor.getDownloadUrl());
         }
+        LOG.info("updateUrls for node: " +
+                 node.getPluginId() + " | " + node.getVersion() + " | " + oldUrl +
+                 " to: " + node.getRepositoryName() + " | " + node.getDownloadUrl());
       }
     }
   }
@@ -228,7 +231,7 @@ public final class PluginInstallOperation {
   private boolean prepareToInstall(@NotNull PluginNode pluginNode,
                                    @NotNull List<PluginId> pluginIds) throws IOException {
     if (!checkMissingDependencies(pluginNode, pluginIds)) return false;
-    if (!PluginManagerFilters.getInstance().allowInstallingPlugin(pluginNode)) {
+    if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginNode)) {
       LOG.warn("The plugin " + pluginNode.getPluginId() + " is not allowed to install for the organization");
       return false;
     }

@@ -36,7 +36,6 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   protected val blockOperations: LineStatusTrackerBlockOperations<R, Block> = MyBlockOperations(LOCK)
   protected val documentTracker: DocumentTracker
-  protected abstract val renderer: LineStatusMarkerRenderer
 
   final override var isReleased: Boolean = false
     private set
@@ -46,7 +45,7 @@ abstract class LineStatusTrackerBase<R : Range>(
 
   protected val blocks: List<Block> get() = documentTracker.blocks
 
-  private val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
+  protected val listeners = EventDispatcher.create(LineStatusTrackerListener::class.java)
 
   init {
     documentTracker = DocumentTracker(vcsDocument, document, LOCK)
@@ -90,7 +89,6 @@ abstract class LineStatusTrackerBase<R : Range>(
     if (!isInitialized) {
       isInitialized = true
       updateHighlighters()
-      listeners.multicaster.onOperationalStatusChange()
     }
   }
 
@@ -108,14 +106,12 @@ abstract class LineStatusTrackerBase<R : Range>(
         documentTracker.setFrozenState(emptyList())
       }
     }
-    listeners.multicaster.onOperationalStatusChange()
   }
 
   fun release() {
     val runnable = Runnable {
       if (isReleased) return@Runnable
       isReleased = true
-      listeners.multicaster.onOperationalStatusChange()
 
       Disposer.dispose(disposable)
     }
@@ -158,12 +154,10 @@ abstract class LineStatusTrackerBase<R : Range>(
   private inner class MyDocumentTrackerHandler : DocumentTracker.Handler {
     override fun afterBulkRangeChange(isDirty: Boolean) {
       updateHighlighters()
-      if (!isDirty) listeners.multicaster.onRangesChanged()
     }
 
     override fun onUnfreeze(side: Side) {
       updateHighlighters()
-      listeners.multicaster.onRangesChanged()
     }
   }
 
@@ -221,7 +215,7 @@ abstract class LineStatusTrackerBase<R : Range>(
   }
 
   protected fun updateHighlighters() {
-    renderer.scheduleUpdate()
+    listeners.multicaster.onRangesChanged()
   }
 
 
@@ -283,6 +277,8 @@ abstract class LineStatusTrackerBase<R : Range>(
   override fun removeListener(listener: LineStatusTrackerListener) {
     listeners.removeListener(listener)
   }
+
+  protected abstract val Block.ourData: DocumentTracker.BlockData
 
   companion object {
     @JvmStatic

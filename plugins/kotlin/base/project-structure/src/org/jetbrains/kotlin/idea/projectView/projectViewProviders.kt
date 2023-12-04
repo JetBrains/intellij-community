@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.projectView
 import com.intellij.ide.projectView.SelectableTreeStructureProvider
 import com.intellij.ide.projectView.TreeStructureProvider
 import com.intellij.ide.projectView.ViewSettings
+import com.intellij.ide.projectView.impl.nodes.FileNodeWithNestedFileNodes
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -34,17 +35,18 @@ class KotlinExpandNodeProjectViewProvider : TreeStructureProvider, DumbAware {
         for (child in children) {
             val value = child.value
             val ktFile = value?.asKtFile()
+            val nestedFileNodes = (child as? FileNodeWithNestedFileNodes)?.nestedFileNodes ?: emptyList()
 
             if (ktFile != null) {
                 val mainClass = KotlinIconProvider.getSingleClass(ktFile)
                 if (mainClass != null) {
-                    result.add(KtClassOrObjectTreeNode(ktFile.project, mainClass, settings))
+                    result.add(KtClassOrObjectTreeNode(ktFile.project, mainClass, settings, nestedFileNodes))
                 } else {
-                    result.add(KtFileTreeNode(ktFile.project, ktFile, settings))
+                    result.add(KtFileTreeNode(ktFile.project, ktFile, settings, nestedFileNodes))
                 }
             } else {
                 if (value is KtLightClass) {
-                    result.add(KtInternalFileTreeNode(value.project, value, settings))
+                    result.add(KtInternalFileTreeNode(value.project, value, settings, nestedFileNodes))
                 } else {
                     result.add(child)
                 }

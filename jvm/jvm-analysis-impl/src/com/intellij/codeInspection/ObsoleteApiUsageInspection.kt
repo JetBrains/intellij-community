@@ -6,12 +6,13 @@ import com.intellij.codeInspection.apiUsage.ApiUsageProcessor
 import com.intellij.codeInspection.apiUsage.ApiUsageUastVisitor
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 
+private inline val OBSOLETE_ANNOTATION_NAME get() = ApiStatus.Obsolete::class.java.canonicalName
+
+@VisibleForTesting
 class ObsoleteApiUsageInspection : LocalInspectionTool() {
-  private companion object {
-    private val OBSOLETE_ANNOTATION_NAME = ApiStatus.Obsolete::class.java.canonicalName
-  }
 
   private fun shouldInspect(file: PsiFile) = JavaPsiFacade.getInstance(file.project)
     .findClass(OBSOLETE_ANNOTATION_NAME, file.resolveScope) != null

@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="JUnit5" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.junit.jupiter:junit-jupiter-api:5.10.0">
+    <properties maven-id="org.junit.jupiter:junit-jupiter-api:5.10.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/junit/jupiter/junit-jupiter-api/5.10.0/junit-jupiter-api-5.10.0.jar">
           <sha256sum>108088fd7ea46a8e65a0ce7f5d75ae3ff7865606770a078715f5a6e5709e17d8</sha256sum>

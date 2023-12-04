@@ -14,10 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.documentation.LinkData
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -38,10 +35,9 @@ internal fun toolbarComponent(actions: ActionGroup, contextComponent: JComponent
   val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.JAVADOC_TOOLBAR, actions, true).also {
     it.setSecondaryActionsIcon(AllIcons.Actions.More, true)
     it.setTargetComponent(contextComponent)
+    it.setReservePlaceAutoPopupIcon(false)
   }
-  return toolbar.component.also {
-    it.border = IdeBorderFactory.createBorder(UIUtil.getTooltipSeparatorColor(), SideBorder.BOTTOM)
-  }
+  return toolbar.component
 }
 
 internal fun actionButton(actions: ActionGroup, contextComponent: JComponent): JComponent {

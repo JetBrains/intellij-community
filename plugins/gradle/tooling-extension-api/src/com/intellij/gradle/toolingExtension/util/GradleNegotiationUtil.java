@@ -5,8 +5,12 @@ import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier;
 import org.gradle.api.file.RegularFile;
+import org.gradle.api.internal.DynamicObjectAware;
+import org.gradle.api.internal.TaskInternal;
 import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
+import org.gradle.internal.metaobject.AbstractDynamicObject;
+import org.gradle.internal.metaobject.DynamicObject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +23,7 @@ public final class GradleNegotiationUtil {
   private static final boolean is33OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("3.3")) >= 0;
   private static final boolean is37OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("3.7")) >= 0;
   private static final boolean is45OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("4.5")) >= 0;
+  private static final boolean is49OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("4.9")) >= 0;
   private static final boolean is51OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("5.1")) >= 0;
 
   /**
@@ -59,6 +64,19 @@ public final class GradleNegotiationUtil {
       return "root project '" + project.getName() + "'";
     }
     return "project '" + project.getPath() + "'";
+  }
+
+  public static @Nullable Class<?> getTaskIdentityType(@NotNull TaskInternal task) {
+    if (is49OrBetter) {
+      return task.getTaskIdentity().type;
+    }
+    if (task instanceof DynamicObjectAware) {
+      DynamicObject dynamicObject = ((DynamicObjectAware)task).getAsDynamicObject();
+      if (dynamicObject instanceof AbstractDynamicObject) {
+        return ((AbstractDynamicObject)dynamicObject).getPublicType();
+      }
+    }
+    return null;
   }
 
   public static @Nullable File getTaskArchiveFile(@NotNull AbstractArchiveTask task) {

@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService.Companion.marketplaceIdeCodes
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.TimeoutCachedValue
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.*
@@ -43,6 +44,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.function.Supplier
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 import kotlin.io.path.exists
@@ -216,6 +219,14 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   @OptIn(ExperimentalCoroutinesApi::class)
   private val limitedDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1)
 
+  val marketplaceTagsSupplier: Supplier<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
+    getAllPluginsTags()
+  }
+
+  val marketplaceVendorsSupplier: Supplier<Set<String>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
+    getAllPluginsVendors()
+  }
+
   @Throws(IOException::class)
   fun getFeatures(param: Map<String, String>): List<FeatureImpl> {
     if (param.isEmpty()) {
@@ -377,7 +388,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return products.contains(product)
   }
 
-  fun getAllPluginsVendors(): List<String> {
+  private fun getAllPluginsVendors(): Set<String> {
     try {
       return HttpRequests
         .request(MarketplaceUrls.getSearchAggregationUrl("organizations"))
@@ -385,12 +396,12 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toList()
+          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toSet()
         }
     }
     catch (e: Exception) {
       LOG.infoOrDebug("Can not get organizations from Marketplace", e)
-      return emptyList()
+      return emptySet()
     }
   }
 
@@ -430,7 +441,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
     return brokenPluginsMap
   }
 
-  fun getAllPluginsTags(): List<String> {
+  private fun getAllPluginsTags(): Set<String> {
     try {
       return HttpRequests
         .request(MarketplaceUrls.getSearchAggregationUrl("tags"))
@@ -438,12 +449,12 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         .productNameAsUserAgent()
         .throwStatusCodeException(false)
         .connect {
-          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toList()
+          objectMapper.readValue(it.inputStream, AggregationSearchResponse::class.java).aggregations.keys.toSet()
         }
     }
     catch (e: Exception) {
       LOG.infoOrDebug("Can not get tags from Marketplace", e)
-      return emptyList()
+      return emptySet()
     }
   }
 

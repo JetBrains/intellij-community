@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.editor.impl.FoldingModelImpl.ZOMBIE_REGION_KEY;
+
 final class UpdateFoldRegionsOperation implements Runnable {
   enum ApplyDefaultStateMode { YES, EXCEPT_CARET_REGION, NO }
 
@@ -79,8 +81,9 @@ final class UpdateFoldRegionsOperation implements Runnable {
   public void run() {
     EditorFoldingInfo info = EditorFoldingInfo.get(myEditor);
     FoldingModelEx foldingModel = (FoldingModelEx)myEditor.getFoldingModel();
-    Map<TextRange,Boolean> rangeToExpandStatusMap = new HashMap<>();
+    removeZombieRegions(foldingModel);
 
+    Map<TextRange,Boolean> rangeToExpandStatusMap = new HashMap<>();
     removeInvalidRegions(info, foldingModel, rangeToExpandStatusMap);
 
     Map<FoldRegion, Boolean> shouldExpand = new HashMap<>();
@@ -329,6 +332,18 @@ final class UpdateFoldRegionsOperation implements Runnable {
     int regionEndLine = myEditor.getDocument().getLineNumber(region.getEndOffset());
     int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
     return caretLine >= regionStartLine && caretLine <= regionEndLine;
+  }
+
+  private static void removeZombieRegions(@NotNull FoldingModelEx foldingModel) {
+    if (!(foldingModel instanceof FoldingModelImpl) ||
+        (((FoldingModelImpl) foldingModel).getIsZombieRaised().compareAndSet(true, false))) {
+      FoldRegion[] regions = foldingModel.getAllFoldRegions();
+      for (FoldRegion region : regions) {
+        if (Boolean.TRUE.equals(region.getUserData(ZOMBIE_REGION_KEY))) {
+          foldingModel.removeFoldRegion(region);
+        }
+      }
+    }
   }
 
   private static final class FoldingMap extends MultiMap<PsiElement, FoldingUpdate.RegionInfo> {

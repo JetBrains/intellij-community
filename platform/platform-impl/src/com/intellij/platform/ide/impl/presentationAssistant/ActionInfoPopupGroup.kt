@@ -7,18 +7,18 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.observable.util.addMouseHoverListener
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.JBColor
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.util.width
 import com.intellij.util.Alarm
 import com.intellij.util.ui.Animator
 import com.intellij.util.ui.JBInsets
@@ -44,6 +44,14 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   }
   private val settingsButton = PresentationAssistantQuickSettingsButton(project, appearance) { isSettingsButtonForcedToBeShown = (it > 0) }
 
+  private val settingsButtonLocation: RelativePoint get() {
+    return actionBlocks.lastOrNull()?.popup?.let { popup ->
+      val location = popup.locationOnScreen
+      location.x += popup.width + appearance.spaceBetweenPopups
+      RelativePoint(location)
+    } ?: computeLocation(project, actionBlocks.size).popupLocation
+  }
+
   private var isPopupHovered: Boolean = false
     set(value) {
       val oldValue = field
@@ -51,7 +59,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
       if (oldValue != isPopupHovered) {
         if (isPopupHovered) {
-          settingsButton.acquireShownStateRequest(computeLocation(project, actionBlocks.size).popupLocation)
+          settingsButton.acquireShownStateRequest(settingsButtonLocation)
         }
         else {
           settingsButton.releaseShownStateRequest()
@@ -121,6 +129,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   private fun createPopup(panel: ActionInfoPanel, hiddenInitially: Boolean): JBPopup {
     val popup = with(JBPopupFactory.getInstance().createComponentPopupBuilder(panel, panel)) {
       if (hiddenInitially) setAlpha(1.0.toFloat())
+      setBorderColorIfNeeded(PresentationAssistantTheme.fromValueOrDefault(configuration.theme))
       setFocusable(false)
       setBelongsToGlobalPopupStack(false)
       setCancelKeyEnabled(false)
@@ -191,6 +200,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
     actionBlocks.mapIndexed { index, block ->
       block.panel.textData = textFragments[index]
+      getPopupWindow(block.popup)?.toFront()
     }
 
     updatePopupsBounds(project)
@@ -336,7 +346,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   private data class PopupLocationInfo(val popupLocation: RelativePoint, val groupSize: Dimension)
 
   private fun computeLocation(project: Project, index: Int?, ignoreDelta: Boolean = false): PopupLocationInfo {
-    val preferredSizes = actionBlocks.map { it.panel.preferredSize }
+    val preferredSizes = actionBlocks.map { it.panel.getFullSize() }
     val gap = JBUIScale.scale(appearance.spaceBetweenPopups)
     val popupGroupSize: Dimension = if (actionBlocks.isNotEmpty()) {
       val totalWidth = preferredSizes.sumOf { it.width } + (gap * (preferredSizes.size - 1))
@@ -390,20 +400,21 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
   internal data class Appearance(val titleFontSize: Float,
                                  val subtitleFontSize: Float,
-                                 val titleInsets: JBInsets,
-                                 val subtitleInsets: JBInsets,
+                                 val popupInsets: Insets,
+                                 val subtitleHorizontalInset: Int,
                                  val spaceBetweenPopups: Int,
                                  val titleSubtitleGap: Int,
                                  val settingsButtonWidth: Int,
                                  val theme: PresentationAssistantTheme)
 
   companion object {
+    @Suppress("UseDPIAwareInsets") // Values from insets will be scaled at the usage place
     private fun appearanceFromSize(popupSize: PresentationAssistantPopupSize,
                                    theme: PresentationAssistantTheme): Appearance = when(popupSize) {
       PresentationAssistantPopupSize.SMALL -> Appearance(22f,
                                                          12f,
-                                                         JBInsets(6, 12, 0, 12),
-                                                         JBInsets(0, 14, 6, 14),
+                                                         Insets(6, 12, 6, 12),
+                                                         2,
                                                          8,
                                                          1,
                                                          25,
@@ -411,8 +422,8 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
       PresentationAssistantPopupSize.MEDIUM -> Appearance(32f,
                                                           13f,
-                                                          JBInsets(6, 16, 0, 16),
-                                                          JBInsets(0, 18, 8, 18),
+                                                          Insets(6, 16, 8, 16),
+                                                          2,
                                                           12,
                                                           -2,
                                                           30,
@@ -420,12 +431,24 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
 
       PresentationAssistantPopupSize.LARGE -> Appearance(40f,
                                                          14f,
-                                                         JBInsets(6, 16, 0, 16),
-                                                         JBInsets(0, 18, 8, 18),
+                                                         Insets(6, 16, 8, 16),
+                                                         2,
                                                          12,
                                                          -2,
                                                          34,
                                                          theme)
+    }
+
+    /**
+     * Do not set the border color in New UI Light themes on macOS.
+     * Because otherwise the border will be painted by [com.intellij.ui.PopupBorder] and will be cut by the corners.
+     * In other cases the border is painted correctly using [com.intellij.ui.WindowRoundedCornersManager]
+     * or there are no rounded corners, and it is painted properly by [com.intellij.ui.PopupBorder].
+     */
+    fun ComponentPopupBuilder.setBorderColorIfNeeded(theme: PresentationAssistantTheme) {
+      if (!ExperimentalUI.isNewUI() || !SystemInfo.isMac || !JBColor.isBright()) {
+        setBorderColor(theme.border)
+      }
     }
   }
 }

@@ -9,6 +9,8 @@ import org.junit.Test
 import java.io.File
 
 class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun runInDispatchThread() = true
+
   override fun setUp() = runBlocking {
     super.setUp()
     importProjectAsync("""

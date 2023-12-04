@@ -108,12 +108,29 @@ class ShortcutPresenter : Disposable {
   fun showActionInfo(actionData: ActionData) {
     if (actionData.actionId == "UiInspector") return
 
+    val fragments = getActionFragments(actionData)
+
+    val realProject = actionData.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
+    if (realProject != null && !realProject.isDisposed && realProject.isOpen) {
+      lastPresentedActionData = actionData
+      if (infoPopupGroup == null || !infoPopupGroup!!.canBeReused(fragments.size)) {
+        infoPopupGroup?.close()
+        infoPopupGroup = ActionInfoPopupGroup(realProject, fragments, false)
+      }
+      else {
+        infoPopupGroup!!.updateText(realProject, fragments)
+      }
+    }
+    PresentationAssistant.INSTANCE.checkIfMacKeymapIsAvailable()
+  }
+
+  private fun getActionFragments(actionData: ActionData): List<TextData> {
     val configuration = PresentationAssistant.INSTANCE.configuration
 
     val actionId = actionData.actionId
     val parentGroupName = parentNames[actionId]
-    val actionText = (if (parentGroupName != null) "$parentGroupName ${MacKeymapUtil.RIGHT} " else "") + (actionData.actionText
-                                                                                                          ?: "").removeSuffix("...")
+    val actionText = (if (parentGroupName != null) "$parentGroupName ${MacKeymapUtil.RIGHT} " else "") +
+                     (actionData.actionText ?: "").removeSuffix("...")
 
     val fragments = ArrayList<TextData>()
     if (actionText.isNotEmpty()) {
@@ -133,18 +150,10 @@ class ShortcutPresenter : Disposable {
       }
     }
 
-    val realProject = actionData.project ?: ProjectManager.getInstance().openProjects.firstOrNull()
-    if (realProject != null && !realProject.isDisposed && realProject.isOpen) {
-      lastPresentedActionData = actionData
-      if (infoPopupGroup == null || !infoPopupGroup!!.canBeReused(fragments.size)) {
-        infoPopupGroup?.close()
-        infoPopupGroup = ActionInfoPopupGroup(realProject, fragments, false)
-      }
-      else {
-        infoPopupGroup!!.updateText(realProject, fragments)
-      }
+    return if (fragments.all { it.subtitle == null }) {
+      fragments.map { it.copy(showSubtitle = false) }
     }
-    PresentationAssistant.INSTANCE.checkIfMacKeymapIsAvailable()
+    else fragments
   }
 
   private fun getCustomShortcut(actionId: String, kind: KeymapKind): Array<KeyboardShortcut> {
@@ -244,4 +253,5 @@ class ShortcutPresenter : Disposable {
 
 internal data class TextData(@NlsSafe val title: String,
                              val titleFont: Font? = null,
-                             @NlsSafe val subtitle: String? = null)
+                             @NlsSafe val subtitle: String? = null,
+                             val showSubtitle: Boolean = true)

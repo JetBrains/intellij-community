@@ -31,9 +31,8 @@ import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory.Companion.extendWithTargetSpecificFields
 import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.target.TargetPanelExtension
-import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.createSdkForTarget
-import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkView
 import com.jetbrains.python.sdk.add.target.createDetectedSdk
+import com.jetbrains.python.sdk.configuration.createSdkForTarget
 import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import java.awt.BorderLayout
 import java.util.function.Supplier

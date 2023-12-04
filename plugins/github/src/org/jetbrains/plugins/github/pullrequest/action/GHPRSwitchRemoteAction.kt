@@ -7,7 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.model.GHPRToolWindowViewModel
 
 class GHPRSwitchRemoteAction : DumbAwareAction(GithubBundle.message("pull.request.change.remote.or.account")) {
 

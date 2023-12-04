@@ -342,7 +342,7 @@ public class MoveKotlinTopLevelDeclarationsDialog extends RefactoringDialog {
         );
     }
 
-    private boolean isMPPDeclarationInList(List<KtNamedDeclaration> declarations) {
+    private static boolean isMPPDeclarationInList(List<KtNamedDeclaration> declarations) {
         for (KtNamedDeclaration element : declarations) {
             if (ExpectActualUtilKt.isEffectivelyActual(element, true) ||
                 ExpectActualUtilKt.isExpectDeclaration(element)) {

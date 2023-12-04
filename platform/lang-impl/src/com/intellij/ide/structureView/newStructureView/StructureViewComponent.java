@@ -484,7 +484,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
           return myAsyncTreeModel.accept(visitor).thenAsync(this);
         }
         else {
-          TreePath adjusted = path == null ? state.getDeepestMatch() : path;
+          TreePath adjusted = path == null ? state.getBestMatch() : path;
           return adjusted == null ? Promises.rejectedPromise() : action.fun(adjusted);
         }
       }

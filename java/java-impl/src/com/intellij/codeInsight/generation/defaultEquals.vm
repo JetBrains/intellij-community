@@ -30,7 +30,7 @@ Object $paramName){
 }
 ##
 #macro(addPrimitiveFieldComparison $field)
- if($field.accessor != ${classInstanceName}.$field.accessor) return false;
+  if($field.accessor != ${classInstanceName}.$field.accessor) return false;
 #end
 ##
 #macro(addDoubleFieldComparison $field)
@@ -57,9 +57,6 @@ Object $paramName){
       // Compare nested arrays - values of $field.name here
     #end
     #break;
-  #end
-  #if ($field.objectArray)
-    // Probably incorrect - comparing Object[] arrays with Arrays.equals
   #end
   if(!java.util.Arrays.equals($field.accessor, ${classInstanceName}.$field.accessor)) return false;
 #end

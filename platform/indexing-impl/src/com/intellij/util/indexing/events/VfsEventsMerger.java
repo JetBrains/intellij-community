@@ -6,14 +6,15 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RollingFileHandler;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexEx;
+import com.intellij.util.indexing.*;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,14 +23,24 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.logging.Formatter;
 import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 public final class VfsEventsMerger {
-  private static final boolean DEBUG = FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE || Boolean.getBoolean("log.index.vfs.events");
+  private static final boolean DEBUG = FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES || Boolean.getBoolean("log.index.vfs.events");
   private static final Logger LOG = MyLoggerFactory.getLoggerInstance();
+
+  static {
+    if (LOG != null) {
+      LOG.info("-------------- VfsEventsMerger initialized --------------------");
+    }
+  }
 
   void recordFileEvent(@NotNull VirtualFile file, boolean contentChange) {
     tryLog(contentChange ? "FILE_CONTENT_CHANGED" : "FILE_ADDED", file);
@@ -88,27 +99,40 @@ public final class VfsEventsMerger {
   @VisibleForTesting
   public boolean processChanges(@NotNull VfsEventProcessor eventProcessor) {
     if (!myChangeInfos.isEmpty()) {
-      int[] fileIds = myChangeInfos.keys(); // snapshot of the keys
-      for (int fileId : fileIds) {
-        ProgressManager.checkCanceled();
-        ChangeInfo info = myChangeInfos.remove(fileId);
-        if (info == null) continue;
+      Throwable interruptReason = null;
 
-        try {
-          if (LOG != null) {
-            LOG.info("Processing " + info);
+      try {
+        int[] fileIds = myChangeInfos.keys(); // snapshot of the keys
+        for (int fileId : fileIds) {
+          ProgressManager.checkCanceled();
+          ChangeInfo info = myChangeInfos.remove(fileId);
+          if (info == null) continue;
+
+          try {
+            if (LOG != null) {
+              LOG.info("Processing " + info);
+            }
+            if (!eventProcessor.process(info)) {
+              eventProcessor.endBatch();
+              return false;
+            }
           }
-          if (!eventProcessor.process(info)) {
-            eventProcessor.endBatch();
-            return false;
+          catch (ProcessCanceledException pce) { // todo remove
+            ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(pce);
+            assert false;
           }
         }
-        catch (ProcessCanceledException pce) { // todo remove
-          ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(pce);
-          assert false;
+        eventProcessor.endBatch();
+      }
+      catch (Throwable t) {
+        interruptReason = t;
+        throw t;
+      }
+      finally {
+        if (LOG != null) {
+          LOG.info("Processing " + (interruptReason != null ? "interrupted: " + interruptReason : "finished"));
         }
       }
-      eventProcessor.endBatch();
     }
     return true;
   }
@@ -162,7 +186,7 @@ public final class VfsEventsMerger {
       builder.append("file: ").append(file.getPath()).append("; ")
         .append("operation: ");
       if ((eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0) builder.append("TRANSIENT_STATE_CHANGE ");
-      if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("UPDATE ");
+      if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("CONTENT_CHANGE ");
       if ((eventMask & FILE_REMOVED) != 0) builder.append("REMOVE ");
       if ((eventMask & FILE_ADDED) != 0) builder.append("ADD ");
       return builder.toString().trim();
@@ -203,9 +227,33 @@ public final class VfsEventsMerger {
   public static void tryLog(@NotNull String eventName, @NotNull VirtualFile file, @Nullable Supplier<String> additionalMessage) {
     tryLog(() -> {
       return "event=" + eventName +
-             ",f=" + file.getPath() +
-             (file instanceof VirtualFileWithId ? (",id=" + ((VirtualFileWithId)file).getId()) : "") +
+             (file instanceof VirtualFileWithId fileWithId ? (",id=" + fileWithId.getId()) : (",f=" + file.getPath())) +
+             ",flen=" + file.getLength() +
              (additionalMessage == null ? "" : ("," + additionalMessage.get()));
+    });
+  }
+
+  public static void tryLog(@NotNull String eventName, @NotNull IndexedFile indexedFile, @Nullable Supplier<String> additionalMessage) {
+    VirtualFile file = indexedFile.getFile();
+
+    tryLog(eventName, file, () -> {
+      String extra = "indexedFile@" + System.identityHashCode(indexedFile);
+
+      if (indexedFile instanceof FileContentImpl fileContentImpl) {
+        extra += ",transient=" + fileContentImpl.isTransientContent();
+      }
+
+      if (indexedFile instanceof FileContent fileContent) {
+        extra += ",contentLen(bytes)=" + fileContent.getContent().length;
+        FileType fileType = fileContent.getFileType();
+        extra += ",psiLen=" + (fileType instanceof LanguageFileType ? fileContent.getPsiFile().getTextLength() : -1);
+        extra += ",binary=" + fileType.isBinary();
+      }
+
+      if (additionalMessage != null) {
+        extra += "," + additionalMessage.get();
+      }
+      return extra;
     });
   }
 
@@ -237,6 +285,14 @@ public final class VfsEventsMerger {
       Path indexingDiagnosticDir = Paths.get(PathManager.getLogPath()).resolve("indexing-diagnostic");
       Path logPath = indexingDiagnosticDir.resolve("index-vfs-events.log");
       myAppender = new RollingFileHandler(logPath, 20000000, 50, false);
+      myAppender.setFormatter(new Formatter() {
+        @Override
+        public String format(LogRecord record) {
+          ZonedDateTime zdt = ZonedDateTime.ofInstant(record.getInstant(), ZoneId.systemDefault());
+          return String.format("%1$tY-%1$tm-%1$td %1$tH:%1$tM:%1$tS.%1$tL [%3$d] %2$s%n", zdt, record.getMessage(),
+                               record.getLongThreadID());
+        }
+      });
     }
 
     @Override

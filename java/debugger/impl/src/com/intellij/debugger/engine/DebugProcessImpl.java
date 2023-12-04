@@ -1079,6 +1079,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
 
     E start(EvaluationContextImpl evaluationContext, boolean internalEvaluate) throws EvaluateException {
+      ReferenceType lastLoadedClass = null;
       while (true) {
         try {
           return startInternal(evaluationContext, internalEvaluate);
@@ -1096,6 +1097,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           if (loadedClass == null) {
             throw EvaluateExceptionUtil.createEvaluateException(e);
           }
+          else if (loadedClass.equals(lastLoadedClass)) { // check for endless loading in the incorrect class loader, see IDEA-335672
+            throw EvaluateExceptionUtil.createEvaluateException(
+              "Loading class " + e.className() + " in the wrong classloader " + evaluationContext.getClassLoader());
+          }
+          lastLoadedClass = loadedClass;
         }
       }
     }
@@ -1214,7 +1220,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
             if (Patches.JDK_BUG_ID_21275177 && (ourTraceMask & VirtualMachine.TRACE_SENDS) != 0) {
               //noinspection ResultOfMethodCallIgnored
-              myArgs.forEach(Object::toString);
+              StreamEx.of(myArgs).nonNull().forEach(Object::toString);
             }
 
             // workaround for jdi hang in trace mode, see IDEA-183387
@@ -1275,7 +1281,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       return result.get();
     }
 
-    private void assertThreadSuspended(final ThreadReferenceProxyImpl thread, final SuspendContextImpl context) {
+    private static void assertThreadSuspended(final ThreadReferenceProxyImpl thread, final SuspendContextImpl context) {
       LOG.assertTrue(context.isEvaluating());
       try {
         final boolean isSuspended = thread.isSuspended();

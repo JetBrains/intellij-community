@@ -105,7 +105,7 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   @Override
-  protected void processTerminated(final int exitCode) { endCommandSpan(); }
+  protected void processTerminated(final int exitCode) { }
 
   public void addLineListener(GitLineHandlerListener listener) {
     super.addListener(listener);

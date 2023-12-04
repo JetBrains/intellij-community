@@ -14,7 +14,10 @@ import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -262,26 +265,26 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @DirtyUI
   @Override
   public void paintComponent(Graphics g) {
-    ReadAction.run(() -> {
-      myEditor.measureTypingLatency();
+    myEditor.measureTypingLatency();
 
-      Graphics2D gg = (Graphics2D)g;
-      if (myEditor.useEditorAntialiasing()) {
-        EditorUIUtil.setupAntialiasing(gg);
-      }
-      else {
-        UISettings.setupAntialiasing(gg);
-      }
-      gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
-      AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
-      myEditor.paint(gg);
-      if (origTx != null) gg.setTransform(origTx);
+    Graphics2D gg = (Graphics2D)g;
+    if (myEditor.useEditorAntialiasing()) {
+      EditorUIUtil.setupAntialiasing(gg);
+    }
+    else {
+      UISettings.setupAntialiasing(gg);
+    }
+    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
+    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.FLOOR);
+    myEditor.paint(gg);
+    if (origTx != null) {
+      gg.setTransform(origTx);
+    }
 
-      Project project = myEditor.getProject();
-      if (project != null) {
-        EditorsSplitters.Companion.stopOpenFilesActivity(project);
-      }
-    });
+    Project project = myEditor.getProject();
+    if (project != null) {
+      EditorsSplitters.Companion.stopOpenFilesActivity(project);
+    }
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {
@@ -352,7 +355,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   // Fixes behavior of JTextComponent caret API.
   // Without this, changes of caret(s) position(s) are not reported to the caret listeners added
   //   via JTextComponent.addCaretListener.
-  // This is required for proper working of JBR-2041.
+  // This is required for proper working of JBR-2460.
   // -----------------------------------------------------------------------------------------------
   private EditorSwingCaretUpdatesCourier myEditorSwingCaretUpdatesCourier = null;
 

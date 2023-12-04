@@ -20,7 +20,7 @@ object ActualAnnotationsNotMatchExpectFixFactoryCommon {
         KtPropertyAccessor::class,
         KtTypeParameter::class,
         KtParameter::class,
-        // TODO: add KtTypeReference after it is supported in compiler (KT-60671)
+        KtTypeReference::class,
     )
 
     fun createRemoveAnnotationFromExpectFix(expectAnnotationEntry: KtAnnotationEntry): QuickFixActionBase<*>? {

@@ -2,14 +2,25 @@
 package org.jetbrains.jps.dependency.java;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.GraphDataInput;
+
+import java.io.IOException;
 
 public final class ImportStaticOnDemandUsage extends JvmElementUsage {
 
   public ImportStaticOnDemandUsage(@NotNull String importedClassName) {
-    super(new JvmNodeReferenceID(importedClassName));
+    this(new JvmNodeReferenceID(importedClassName));
   }
-  
+
+  public ImportStaticOnDemandUsage(@NotNull JvmNodeReferenceID importedClassId) {
+    super(importedClassId);
+  }
+
+  public ImportStaticOnDemandUsage(GraphDataInput in) throws IOException {
+    super(in);
+  }
+
   public String getImportedClassName() {
-    return ((JvmNodeReferenceID)getElementOwner()).getNodeName();
+    return getElementOwner().getNodeName();
   }
 }

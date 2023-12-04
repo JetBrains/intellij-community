@@ -5,22 +5,28 @@ package com.intellij.openapi.extensions
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.impl.AdapterWithCustomAttributes
 import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeIfAbsent
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.computeSafeIfAny
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.findFirstSafe
-import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.forEachExtensionSafe
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByGroupingKey
 import com.intellij.openapi.extensions.impl.ExtensionProcessingHelper.getByKey
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.ThreeState
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CancellationException
-import java.util.function.*
+import java.util.function.Consumer
 import java.util.function.Function
+import java.util.function.Predicate
+import java.util.function.Supplier
 import java.util.stream.Stream
+import kotlin.streams.asStream
 
 /**
  * Provides access to an [extension point](https://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extension_points.html). Instances of this class can be safely stored in static final fields.
@@ -37,6 +43,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   /**
    * Consider using [.getExtensionList].
    */
+  @get:Obsolete
   val extensions: Array<T>
     get() = getPointImpl(null).extensions
 
@@ -47,15 +54,17 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * Invokes the given consumer for each extension registered in this extension point. Logs exceptions thrown by the consumer.
    */
   fun forEachExtensionSafe(consumer: Consumer<in T>) {
-    forEachExtensionSafe(iterable = getPointImpl(areaInstance = null), extensionConsumer = consumer)
+    getPointImpl(areaInstance = null).processWithPluginDescriptor(shouldBeSorted = true) { adapter, _ ->
+      consumer.accept(adapter)
+    }
   }
 
   fun findFirstSafe(predicate: Predicate<in T>): T? {
-    return findFirstSafe(predicate, getPointImpl(null))
+    return findFirstSafe(predicate = predicate, sequence = getPointImpl(null).asSequence())
   }
 
   fun <R> computeSafeIfAny(processor: Function<T, out R>): R? {
-    return computeSafeIfAny(processor = processor, iterable = getPointImpl(null))
+    return computeSafeIfAny(processor = processor::apply, sequence = getPointImpl(null).asSequence())
   }
 
   val extensionsIfPointIsRegistered: List<T>
@@ -68,54 +77,45 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   @Deprecated("Use {@code getExtensionList().stream()}", ReplaceWith("getExtensionList().stream()"), DeprecationLevel.ERROR)
-  fun extensions(): Stream<T> {
-    return getPointImpl(null).extensions()
+  fun extensions(): Stream<T> = getPointImpl(null).asSequence().asStream()
+
+  fun hasAnyExtensions(): Boolean {
+    @Suppress("DEPRECATION")
+    return (Extensions.getRootArea().getExtensionPointIfRegistered<T>(name) ?: return false).size() != 0
   }
 
-  fun hasAnyExtensions(): Boolean = getPointImpl(null).size() != 0
-
   /**
-   * Consider using [ProjectExtensionPointName.getExtensions]
+   * Do not use project-level or module-level extensions.
    */
+  @Obsolete
   fun getExtensionList(areaInstance: AreaInstance?): List<T> = getPointImpl(areaInstance).extensionList
 
   /**
    * Consider using [ProjectExtensionPointName.getExtensions]
    */
+  @Obsolete
   fun getExtensions(areaInstance: AreaInstance?): Array<T> = getPointImpl(areaInstance).extensions
 
-  @Deprecated("Use app-level app extension point.", level = DeprecationLevel.ERROR)
-  fun extensions(areaInstance: AreaInstance?): Stream<T> {
-    return getPointImpl(areaInstance).extensionList.stream()
-  }
-
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("""use {@link #getPoint()} to access application-level extensions and {@link ProjectExtensionPointName#getPoint(AreaInstance)}
-    to access project-level and module-level extensions""")
+  @Deprecated("Do not use project-level or module-level extensions.")
   fun getPoint(areaInstance: AreaInstance?): ExtensionPoint<T> = getPointImpl(areaInstance)
 
   val point: ExtensionPoint<T>
     get() = getPointImpl(null)
 
   fun <V : T> findExtension(instanceOf: Class<V>): V? {
-    return getPointImpl(null).findExtension(instanceOf, false, ThreeState.UNSURE)
-  }
-
-  @ApiStatus.Internal
-  fun <V> findExtensions(instanceOf: Class<V>): List<T> {
-    return getPointImpl(null).findExtensions(instanceOf)
+    return getPointImpl(null).findExtension(aClass = instanceOf, isRequired = false, strictMatch = ThreeState.UNSURE)
   }
 
   fun <V : T> findExtensionOrFail(exactClass: Class<V>): V {
-    return getPointImpl(null).findExtension(exactClass, true, ThreeState.UNSURE)!!
+    return getPointImpl(null).findExtension(aClass = exactClass, isRequired = true, strictMatch = ThreeState.UNSURE)!!
   }
 
   fun <V : T> findFirstAssignableExtension(instanceOf: Class<V>): V? {
-    return getPointImpl(null).findExtension(instanceOf, true, ThreeState.NO)
+    return getPointImpl(null).findExtension(aClass = instanceOf, isRequired = true, strictMatch = ThreeState.NO)
   }
 
   /**
-   * Do not use it if there is any extension point listener, because in this case behaviour is not predictable -
+   * Do not use it if there is any extension point listener, because in this case behavior is not predictable -
    * events will be fired during iteration, and probably it will be not expected.
    *
    * Use only for interface extension points, not for bean.
@@ -127,29 +127,31 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    * 1. Conditional iteration (no need to create all extensions if iteration is stopped due to some condition).
    * 2. Iterated only once per application (no need to cache an extension list internally).
    */
-  @ApiStatus.Internal
-  fun getIterable(): Iterable<T?> = getPointImpl(null)
+  @Internal
+  fun getIterable(): Iterable<T?> = getPointImpl(null).asSequence().asIterable()
 
-  @ApiStatus.Internal
+  @Internal
   fun lazySequence(): Sequence<T> {
-    return getPointImpl(null).iterator().asSequence().filterNotNull()
+    return getPointImpl(null).asSequence()
   }
 
-  @ApiStatus.Internal
-  fun processWithPluginDescriptor(consumer: BiConsumer<in T, in PluginDescriptor>) {
-    getPointImpl(null).processWithPluginDescriptor( /* shouldBeSorted = */true, consumer)
+  @Internal
+  fun processWithPluginDescriptor(consumer: (T, PluginDescriptor) -> Unit) {
+    getPointImpl(null).processWithPluginDescriptor(consumer = consumer)
   }
 
   fun addExtensionPointListener(listener: ExtensionPointListener<T>, parentDisposable: Disposable?) {
-    getPointImpl(null).addExtensionPointListener(listener, false, parentDisposable)
+    getPointImpl(null).addExtensionPointListener(listener = listener,
+                                                 invokeForLoadedExtensions = false,
+                                                 parentDisposable = parentDisposable)
   }
 
   fun addExtensionPointListener(listener: ExtensionPointListener<T>) {
-    getPointImpl(null).addExtensionPointListener(listener, false, null)
+    getPointImpl(null).addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
   }
 
   fun addExtensionPointListener(areaInstance: AreaInstance, listener: ExtensionPointListener<T>) {
-    getPointImpl(areaInstance).addExtensionPointListener(listener, false, null)
+    getPointImpl(areaInstance).addExtensionPointListener(listener = listener, invokeForLoadedExtensions = false, parentDisposable = null)
   }
 
   fun removeExtensionPointListener(listener: ExtensionPointListener<T>) {
@@ -157,13 +159,13 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   }
 
   fun addChangeListener(listener: Runnable, parentDisposable: Disposable?) {
-    getPointImpl(null).addChangeListener(listener, parentDisposable)
+    getPointImpl(null).addChangeListener(listener = listener, parentDisposable = parentDisposable)
   }
 
   /**
-   * Build cache by arbitrary key using provided key to value mapper. Values with the same key merge into list. Return values by key.
+   * Build cache by arbitrary key using provided key to value mapper. Values with the same key merge into a list. Return values by key.
    *
-   * To exclude extension from cache, return null key.
+   * To exclude an extension from cache, return a null key.
    *
    * `cacheId` is required because it's dangerous to rely on identity of functional expressions.
    * JLS doesn't specify whether a new instance is produced or some common instance is reused for lambda expressions (see 15.27.4).
@@ -176,17 +178,17 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
   /**
    * Build cache by arbitrary key using provided key to value mapper. Return value by key.
    *
-   * To exclude extension from cache, return null key.
+   * To exclude an extension from cache, return a null key.
    */
   @ApiStatus.Experimental
   fun <K : Any> getByKey(key: K, cacheId: Class<*>, keyMapper: Function<T, K?>): T? {
-    return getByKey(getPointImpl(null), key, cacheId, keyMapper)
+    return getByKey(point = getPointImpl(null), key = key, cacheId = cacheId, keyMapper = keyMapper)
   }
 
   /**
    * Build cache by arbitrary key using provided key to value mapper. Return value by key.
    *
-   * To exclude extension from cache, return null key.
+   * To exclude an extension from cache, return a null key.
    */
   @ApiStatus.Experimental
   fun <K : Any, V : Any> getByKey(key: K,
@@ -209,84 +211,122 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     return computeIfAbsent(getPointImpl(null), cacheId, valueMapper)
   }
 
-  @ApiStatus.Internal
-  interface LazyExtension<T> {
-    val id: String?
-    val instance: T?
-
-    val implementationClassName: String
-    val implementationClass: Class<T>?
-
-    val pluginDescriptor: PluginDescriptor
-
-    @get:ApiStatus.Internal
-    val order: LoadingOrder
-
-    fun getCustomAttribute(name: String): String?
-  }
-
-  @ApiStatus.Internal
+  @Internal
   fun filterableLazySequence(): Sequence<LazyExtension<T>> {
     val point = getPointImpl(null)
     val adapters = point.sortedAdapters
     return LazyExtensionSequence(point = point, adapters = adapters)
   }
 
-  private class LazyExtensionSequence<T : Any>(
-    private val point: ExtensionPointImpl<T>,
-    private val adapters: List<ExtensionComponentAdapter>,
-  ) : Sequence<LazyExtension<T>> {
-    override fun iterator(): Iterator<LazyExtension<T>> {
-      return object : Iterator<LazyExtension<T>> {
-        private var currentIndex = 0
+  @Internal
+  fun findByIdOrFromInstance(id: String, idGetter: (T) -> String?): T? {
+    val point = point as ExtensionPointImpl<T>
+    point.sortedAdapters.firstOrNull { it.orderId == id }?.let { adapter ->
+      return adapter.createInstance(point.componentManager)
+    }
 
-        override fun next(): LazyExtension<T> {
-          val adapter = adapters.get(currentIndex++)
-          return object : LazyExtension<T> {
-            override val id: String?
-              get() = adapter.orderId
-
-            override val order: LoadingOrder
-              get() = adapter.order
-
-            override fun getCustomAttribute(name: String): String? {
-              return if (adapter is AdapterWithCustomAttributes) adapter.customAttributes.get(name) else null
-            }
-
-            override val instance: T?
-              get() = createOrError(adapter = adapter, point = point)
-            override val implementationClassName: String
-              get() = adapter.assignableToClassName
-            override val implementationClass: Class<T>?
-              get() {
-                try {
-                  return adapter.getImplementationClass(point.componentManager)
-                }
-                catch (e: CancellationException) {
-                  throw e
-                }
-                catch (e: Throwable) {
-                  logger<ExtensionPointName<T>>().error(point.componentManager.createError(e, adapter.pluginDescriptor.pluginId))
-                  return null
-                }
-              }
-
-            override val pluginDescriptor: PluginDescriptor
-              get() = adapter.pluginDescriptor
-          }
+    // check only adapters without id
+    for (adapter in point.sortedAdapters) {
+      if (adapter.orderId == null) {
+        val instance = adapter.createInstance<T>(point.componentManager) ?: continue
+        if (idGetter(instance) == id) {
+          return instance
         }
-
-        override fun hasNext(): Boolean = currentIndex < adapters.size
       }
     }
+    return null
   }
+}
+
+@Internal
+sealed interface LazyExtension<T> {
+  val id: String?
+  val instance: T?
+
+  val implementationClassName: String
+  val implementationClass: Class<T>?
+
+  val pluginDescriptor: PluginDescriptor
+
+  @get:Internal
+  val order: LoadingOrder
+
+  fun getCustomAttribute(name: String): String?
+}
+
+@Internal
+suspend fun <T: Any, R : Any> LazyExtension<T>.useOrLogError(task: suspend (instance: T) -> R): R? {
+  this as LazyExtensionImpl<T>
+  try {
+    return task(adapter.createInstance(point.componentManager) ?: return null)
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    thisLogger().error(point.componentManager.createError(e, pluginDescriptor.pluginId))
+    return null
+  }
+}
+
+private class LazyExtensionSequence<T : Any>(
+  private val point: ExtensionPointImpl<T>,
+  private val adapters: List<ExtensionComponentAdapter>,
+) : Sequence<LazyExtension<T>> {
+  override fun iterator(): Iterator<LazyExtension<T>> {
+    return object : Iterator<LazyExtension<T>> {
+      private var currentIndex = 0
+
+      override fun hasNext(): Boolean = currentIndex < adapters.size
+
+      override fun next(): LazyExtension<T> = LazyExtensionImpl(adapter = adapters.get(currentIndex++), point = point)
+    }
+  }
+}
+
+private class LazyExtensionImpl<T : Any>(
+  @JvmField val adapter: ExtensionComponentAdapter,
+  @JvmField val point: ExtensionPointImpl<T>,
+) : LazyExtension<T> {
+  override val id: String?
+    get() = adapter.orderId
+
+  override val order: LoadingOrder
+    get() = adapter.order
+
+  override fun getCustomAttribute(name: String): String? {
+    return if (adapter is AdapterWithCustomAttributes) adapter.customAttributes.get(name) else null
+  }
+
+  override val instance: T?
+    get() = createOrError(adapter = adapter, point = point)
+
+  override val implementationClassName: String
+    get() = adapter.assignableToClassName
+
+  override val implementationClass: Class<T>?
+    get() {
+      try {
+        return adapter.getImplementationClass(point.componentManager)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logger<ExtensionPointName<T>>().error(point.componentManager.createError(e, adapter.pluginDescriptor.pluginId))
+        return null
+      }
+    }
+
+  override val pluginDescriptor: PluginDescriptor
+    get() = adapter.pluginDescriptor
 }
 
 private fun <T : Any> createOrError(adapter: ExtensionComponentAdapter, point: ExtensionPointImpl<T>): T? {
   try {
     return adapter.createInstance(point.componentManager)
   }
-  catch (e: CancellationException) {
+  catch (e: ProcessCanceledException) {
     throw e
   }
   catch (e: Throwable) {

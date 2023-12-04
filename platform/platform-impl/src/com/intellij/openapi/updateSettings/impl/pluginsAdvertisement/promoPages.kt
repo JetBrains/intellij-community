@@ -4,15 +4,12 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ClientProperty
-import com.intellij.ui.dsl.builder.BottomGap
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.ui.JBFont
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.SwingConstants
 
 class PromoFeaturePage(
@@ -30,7 +27,7 @@ class PromoFeatureListItem(
 )
 
 object PromoPages {
-  fun build(page: PromoFeaturePage): JComponent {
+  fun build(page: PromoFeaturePage, openLearnMore: (url: String) -> Unit, openDownloadLink: () -> Unit): DialogPanel {
     val panel = panel {
       row {
         icon(page.productIcon)
@@ -43,9 +40,8 @@ object PromoPages {
 
       row {
         cell()
-
         text(page.descriptionHtml) {
-          FUSEventSource.SETTINGS.learnMoreAndLog(null, it.url.toExternalForm(), page.pluginId?.let(PluginId::getId))
+          openLearnMore(it.url.toExternalForm())
         }
       }.layout(RowLayout.PARENT_GRID)
 
@@ -55,8 +51,8 @@ object PromoPages {
         panel {
           for (feature in page.features) {
             row {
-              icon(feature.icon).gap(RightGap.SMALL)
-              label(feature.title)
+              icon(feature.icon).gap(RightGap.SMALL).align(AlignY.TOP)
+              text(feature.title)
             }
           }
         }
@@ -68,8 +64,8 @@ object PromoPages {
       row {
         cell()
 
-        (button(FeaturePromoBundle.message("get.prefix", page.suggestedIde.name)) {
-          FUSEventSource.SETTINGS.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, page.pluginId?.let(PluginId::getId))
+        (button(FeaturePromoBundle.message("get.prefix.with.placeholder", page.suggestedIde.name)) {
+          openDownloadLink()
         }).applyToComponent {
           this.icon = AllIcons.Ide.External_link_arrow
           this.horizontalTextPosition = SwingConstants.LEFT
@@ -81,5 +77,19 @@ object PromoPages {
     }
 
     return panel
+  }
+
+  fun build(page: PromoFeaturePage): DialogPanel {
+    return build(page, FUSEventSource.SETTINGS)
+  }
+
+  fun build(page: PromoFeaturePage, source: FUSEventSource): DialogPanel {
+    return build(page = page,
+                 openLearnMore = {
+                    source.learnMoreAndLog(null, it, page.pluginId?.let(PluginId::getId))
+                 },
+                 openDownloadLink = {
+                   source.openDownloadPageAndLog(null, page.suggestedIde.downloadUrl, page.pluginId?.let(PluginId::getId))
+                 })
   }
 }

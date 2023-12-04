@@ -3,14 +3,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
-import com.intellij.collaboration.async.withInitial
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FileStatus
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitBranchComparisonResultImpl
 import git4idea.changes.GitCommitShaWithPatches
@@ -19,16 +18,11 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.commands.GitLineHandler
 import git4idea.fetch.GitFetchSupport
-import git4idea.remote.hosting.changesSignalFlow
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiffDTO
-import org.jetbrains.plugins.gitlab.api.getMetadata
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.nio.charset.StandardCharsets
@@ -38,11 +32,6 @@ interface GitLabMergeRequestChanges {
    * List of merge request commits
    */
   val commits: List<GitLabCommit>
-
-  /**
-   * State of remote<->local repository sync (to the best of out knowledge)
-   */
-  val localRepositorySynced: StateFlow<Boolean>
 
   /**
    * Load and parse changes diffs
@@ -70,10 +59,6 @@ class GitLabMergeRequestChangesImpl(
   private val glProject = projectMapping.repository
 
   override val commits: List<GitLabCommit> = mergeRequestDetails.commits.asReversed()
-
-  override val localRepositorySynced: StateFlow<Boolean> = projectMapping.remote.repository.changesSignalFlow().withInitial(Unit).map {
-    projectMapping.remote.repository.currentRevision == mergeRequestDetails.diffRefs?.headSha
-  }.stateIn(cs, SharingStarted.Lazily, false)
 
   private val parsedChanges = cs.async(start = CoroutineStart.LAZY) {
     loadChanges(commits)
@@ -121,17 +106,17 @@ class GitLabMergeRequestChangesImpl(
       revsToCheck.add(it)
     }
     withContext(Dispatchers.IO) {
-      if (areAllRevisionPresent(revsToCheck)) return@withContext
+      if (areAllRevisionsPresent(revsToCheck)) return@withContext
 
       fetch(mergeRequestDetails.targetBranch)
       fetch("""merge-requests/${mergeRequestDetails.iid}/head:""")
 
-      check(areAllRevisionPresent(revsToCheck)) { "Failed to fetch some revisions" }
+      check(areAllRevisionsPresent(revsToCheck)) { "Failed to fetch some revisions" }
     }
   }
 
-  private suspend fun areAllRevisionPresent(revisions: List<String>): Boolean {
-    return coroutineToIndicator {
+  private suspend fun areAllRevisionsPresent(revisions: List<String>): Boolean =
+    coroutineToIndicator {
       val h = GitLineHandler(project, projectMapping.remote.repository.root, GitCommand.CAT_FILE)
       h.setSilent(true)
       h.addParameters("--batch-check=%(objecttype)")
@@ -140,7 +125,6 @@ class GitLabMergeRequestChangesImpl(
 
       !Git.getInstance().runCommand(h).getOutputOrThrow().contains("missing")
     }
-  }
 
   private suspend fun fetch(refspec: String) {
     coroutineToIndicator {

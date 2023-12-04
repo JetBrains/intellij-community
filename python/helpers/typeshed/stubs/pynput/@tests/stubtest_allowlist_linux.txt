@@ -1,0 +1,5 @@
+# These __init__ methods have *args, **kwargs arguments on some platforms, but not others
+pynput.keyboard.Controller.__init__
+
+# Platform specific implementation detail:
+pynput.keyboard.Controller.keyboard_mapping

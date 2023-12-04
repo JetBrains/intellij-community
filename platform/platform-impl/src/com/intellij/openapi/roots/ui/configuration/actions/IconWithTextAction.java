@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public abstract class IconWithTextAction extends AnAction implements CustomComponentAction {
 
   protected IconWithTextAction() {
-    this(Presentation.NULL_STRING, Presentation.NULL_STRING, null);
+    super();
   }
 
   protected IconWithTextAction(String text) {

@@ -13,6 +13,7 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import java.awt.Color
@@ -115,6 +116,7 @@ fun JEditorPane.readHTMLWithCodeHighlighting(text: String, language: String?) {
   }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(message = "HTMl conversion is handled in JEditorPane.readHTML")
 fun JEditorPane.toHTML(text: @Nls String?, miniFontSize: Boolean): String {
   val hintHint = HintHint(this, Point(0, 0))

@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.diff.actions.impl.OpenInEditorAction;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
@@ -162,7 +161,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> included,
                                       @Nullable LocalChangeList initialChangeList,
@@ -177,7 +176,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull List<? extends Change> included,
                                       @Nullable LocalChangeList initialChangeList,
@@ -209,7 +208,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   /**
    * @deprecated Prefer using {@link #commitWithExecutor}, {@link #commitVcsChanges} or {@link #showCommitDialog}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static boolean commitChanges(@NotNull Project project,
                                       @SuppressWarnings("unused") @Nullable List<? extends Change> ignored_parameter,
                                       @NotNull Collection<?> included,
@@ -884,7 +883,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     }
 
     @NotNull
-    private Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes, @NotNull Collection<? extends FilePath> unversioned) {
+    private static Iterable<Wrapper> wrap(@NotNull Collection<? extends Change> changes,
+                                          @NotNull Collection<? extends FilePath> unversioned) {
       return JBIterable.<Wrapper>empty()
         .append(JBIterable.from(changes).map(ChangeWrapper::new))
         .append(JBIterable.from(unversioned).map(UnversionedFileWrapper::new));

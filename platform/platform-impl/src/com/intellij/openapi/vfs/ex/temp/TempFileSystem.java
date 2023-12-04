@@ -306,7 +306,7 @@ public class TempFileSystem extends LocalFileSystemBase implements VirtualFilePo
     clearFsItemCache(file);
   }
 
-  private void clearFsItemCache(VirtualFile file) {
+  private static void clearFsItemCache(VirtualFile file) {
     registerFSItem(file, null);
   }
 

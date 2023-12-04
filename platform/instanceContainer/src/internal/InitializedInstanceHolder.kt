@@ -27,7 +27,7 @@ internal class InitializedInstanceHolder(val instance: Any) : InstanceHolder {
     return tryGetInstance()
   }
 
-  override suspend fun getInstanceInCallerDispatcher(keyClass: Class<*>?): Any {
+  override suspend fun getInstanceInCallerContext(keyClass: Class<*>?): Any {
     return tryGetInstance()
   }
 }

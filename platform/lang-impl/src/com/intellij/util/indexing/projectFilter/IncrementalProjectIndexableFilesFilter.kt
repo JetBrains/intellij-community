@@ -1,48 +1,76 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.projectFilter
 
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.util.containers.ConcurrentBitSet
-import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 
-internal class IncrementalProjectIndexableFilesFilter : IdFilter() {
-  @Volatile
-  private var fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
-  private var previousFileIds: ConcurrentBitSet? = null
+internal class IncrementalProjectIndexableFilesFilter : ProjectIndexableFilesFilter() {
+  private val fileIds: ConcurrentBitSet = ConcurrentBitSet.create()
 
   override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
 
   override fun containsFileId(fileId: Int): Boolean = fileIds.get(fileId)
 
   @Suppress("LocalVariableName")
-  fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): FileAddStatus {
+  override fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean {
     assert(fileId > 0)
 
-    val _fileIds = fileIds
-    if (_fileIds.get(fileId)) {
-      return FileAddStatus.PRESENT
+    return runUpdate {
+      val _fileIds = fileIds
+      if (_fileIds.get(fileId)) {
+        true
+      }
+      else if (add()) {
+        _fileIds.set(fileId)
+        true
+      }
+      else false
     }
-
-    if (add()) {
-      _fileIds.set(fileId)
-      val _previousFileIds = previousFileIds
-      return if (_previousFileIds == null || !_previousFileIds.get(fileId)) FileAddStatus.ADDED else FileAddStatus.PRESENT
-    }
-    return FileAddStatus.SKIPPED
   }
 
-  fun removeFileId(fileId: Int) {
+  override fun removeFileId(fileId: Int) {
     assert(fileId > 0)
-    fileIds.clear(fileId)
+    runUpdate {
+      fileIds.clear(fileId)
+    }
   }
 
-  fun memoizeAndResetFileIds() {
-    // called in sequential UnindexedFileUpdater tasks
-    previousFileIds = fileIds
-    fileIds = ConcurrentBitSet.create()
+  override fun resetFileIds() {
+    fileIds.clear()
   }
 
-  fun resetPreviousFileIds() {
-    // called in sequential UnindexedFileUpdater tasks
-    previousFileIds = null
+  override fun runHealthCheck(project: Project): List<HealthCheckError> {
+    return runAndCheckThatNoChangesHappened {
+      val errors = mutableListOf<HealthCheckError>()
+      val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
+      index.iterateIndexableFiles(ContentIterator {
+        if (it is VirtualFileWithId) {
+          val fileId = it.id
+          if (!containsFileId(fileId)) {
+            errors.add(MissingFileIdInFilterError(project, it, fileId, this))
+          }
+        }
+        true
+      }, project, ProgressManager.getInstance().progressIndicator)
+      errors
+    }
+  }
+
+  class MissingFileIdInFilterError(private val project: Project,
+                                   private val virtualFile: VirtualFile,
+                                   private val fileId: Int,
+                                   private val filter: ProjectIndexableFilesFilter): HealthCheckError {
+    override val presentableText: String
+      get() = "file ${virtualFile.path} not found in filter of ${project.name}"
+
+    override fun fix() {
+      filter.ensureFileIdPresent(fileId) { true }
+    }
   }
 }

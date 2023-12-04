@@ -134,7 +134,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   }
 
   @Override
-  public List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
+  public @NotNull List<Module> commit(@NotNull Project project, ModifiableModuleModel model, ModulesProvider modulesProvider) {
     ModulesProvider updatedModulesProvider;
     ModifiableModuleModel moduleModel;
     boolean commitModels;
@@ -156,7 +156,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
       updatedModulesProvider,
       commitModels,
       myUpdaters,
-      getSelectedDescriptors()).doCommit();
+      getSelectedDescriptors()).commit();
   }
 
   @Override

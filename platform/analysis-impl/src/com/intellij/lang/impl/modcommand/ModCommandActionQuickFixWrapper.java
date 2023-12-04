@@ -35,4 +35,9 @@ final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix {
   public @NotNull String getFamilyName() {
     return myAction.getFamilyName();
   }
+
+  @Override
+  public String toString() {
+    return "ModCommandActionQuickFixWrapper[action=" + myAction + "]";
+  }
 }

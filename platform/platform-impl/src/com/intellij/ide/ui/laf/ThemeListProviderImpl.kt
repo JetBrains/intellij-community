@@ -12,8 +12,9 @@ private class ThemeListProviderImpl : ThemeListProvider {
     if (ExperimentalUI.isNewUI()) {
       result.add(uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.NEW).sortedBy { it.name }.toList())
     }
-    result.add((uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.CLASSIC).filterNot { it.id == "IntelliJ" }
-                + uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name }.toList())
+    result.add((uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.CLASSIC).filterNot {
+        it.id == "IntelliJ" || (it.id == "JetBrainsLightTheme" && ExperimentalUI.isNewUI())
+      } + uiThemeProviderListManager.getThemeListForTargetUI(TargetUIType.UNSPECIFIED)).sortedBy { it.name }.toList())
     return result
   }
 }

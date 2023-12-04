@@ -4,6 +4,7 @@ package com.intellij.ide.actions.speedSearch
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.util.ui.UIUtil
@@ -13,7 +14,7 @@ import javax.swing.SwingUtilities
 class SpeedSearchAction : DumbAwareAction(
   ActionsBundle.messagePointer("action.SpeedSearch.text"),
   AllIcons.Actions.Find,
-) {
+), ActionRemoteBehaviorSpecification.Frontend {
 
   init {
     isEnabledInModalContext = true

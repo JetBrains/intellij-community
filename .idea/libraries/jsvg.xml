@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="jsvg" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="intellij-dependencies" maven-id="com.github.weisj:jsvg:1.2.0-jb.1">
+    <properties include-transitive-deps="false" maven-id="com.github.weisj:jsvg:1.2.0-jb.1">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/com/github/weisj/jsvg/1.2.0-jb.1/jsvg-1.2.0-jb.1.jar">
           <sha256sum>8c4fd87b5a88064eacd04c2319300d871e87b0b46c4c5588679bf9975e98207d</sha256sum>

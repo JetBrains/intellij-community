@@ -184,6 +184,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeParameter/");
         }
 
+        @TestMetadata("copyToActualTypeUsage")
+        public void testCopyToActualTypeUsage() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualTypeUsage/");
+        }
+
         @TestMetadata("copyToActualValueParameter")
         public void testCopyToActualValueParameter() throws Exception {
             runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualValueParameter/");

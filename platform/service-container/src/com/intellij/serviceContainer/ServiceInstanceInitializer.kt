@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
+import com.intellij.concurrency.installTemporaryThreadContext
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
@@ -8,9 +10,14 @@ import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.instanceContainer.instantiation.InstantiationException
+import com.intellij.platform.instanceContainer.instantiation.instantiate
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import java.util.concurrent.CancellationException
 
 internal abstract class ServiceInstanceInitializer(
   val componentManager: ComponentManagerImpl,
@@ -20,7 +27,32 @@ internal abstract class ServiceInstanceInitializer(
 
   override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any {
     checkWriteAction(instanceClass)
-    val instance = instantiateWithContainer(componentManager.dependencyResolver, parentScope, instanceClass, pluginId)
+    val instance = try {
+      instantiate(resolver = componentManager.dependencyResolver,
+                  parentScope = parentScope,
+                  instanceClass = instanceClass,
+                  supportedSignatures = componentManager.supportedSignaturesOfLightServiceConstructors)
+    }
+    catch (e: InstantiationException) {
+      LOG.error(e)
+      instantiateWithContainer(resolver = componentManager.dependencyResolver,
+                               parentScope = parentScope,
+                               instanceClass = instanceClass,
+                               pluginId = pluginId)
+    }
+    catch (e: PluginException) {
+      throw e
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: ProcessCanceledException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      throw PluginException(e, pluginId)
+    }
+
     if (instance is Disposable) {
       Disposer.register(componentManager.serviceParentDisposable, instance)
     }
@@ -34,7 +66,9 @@ internal abstract class ServiceInstanceInitializer(
     // which happens only on project/application shutdown, or on plugin unload.
     Cancellation.withNonCancelableSection().use {
       // loadState may invokeLater => don't capture the context
-      componentManager.initializeComponent(instance, serviceDescriptor, pluginId)
+      installTemporaryThreadContext(currentCoroutineContext()).use {
+        componentManager.initializeComponent(instance, serviceDescriptor, pluginId)
+      }
     }
     return instance
   }

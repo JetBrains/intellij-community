@@ -12,8 +12,10 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal fun fromGTDProviders(project: Project, editor: Editor, offset: Int): GTDActionData? {
+@Internal
+fun fromGTDProviders(project: Project, editor: Editor, offset: Int): GTDActionData? {
   return processInjectionThenHost(editor, offset) { _editor, _offset ->
     fromGTDProvidersInner(project, _editor, _offset)
   }

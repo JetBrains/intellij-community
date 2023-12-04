@@ -91,7 +91,7 @@ class JavaToKotlinAction : AnAction() {
                         mapping.setMapping(virtualFile, KotlinFileType.INSTANCE.language)
                     } else {
                         val fileName = uniqueKotlinFileName(virtualFile)
-                        virtualFile.pathBeforeJavaToKotlinConversion = virtualFile.path
+                        virtualFile.putUserData(pathBeforeJavaToKotlinConversion, virtualFile.path)
                         virtualFile.rename(this, fileName)
                     }
                     result += virtualFile

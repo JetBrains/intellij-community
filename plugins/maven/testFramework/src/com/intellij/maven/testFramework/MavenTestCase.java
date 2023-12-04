@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.testFramework;
 
+import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
 import com.intellij.ide.DataManager;
@@ -45,12 +46,15 @@ import org.jetbrains.idea.maven.server.MavenServerConnector;
 import org.jetbrains.idea.maven.server.MavenServerConnectorImpl;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.RemotePathTransformerFactory;
+import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
+import org.junit.Assume;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -67,7 +71,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
             <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
     """;
-  protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   private MavenProgressIndicator myProgressIndicator;
   private WSLDistribution myWSLDistribution;
   protected RemotePathTransformerFactory.Transformer myPathTransformer;
@@ -85,9 +88,12 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected VirtualFile myProjectPom;
   protected List<VirtualFile> myAllPoms = new ArrayList<>();
 
+  protected static final boolean preimportTestMode = Boolean.getBoolean("MAVEN_TEST_PREIMPORT");
+
 
   @Override
   protected void setUp() throws Exception {
+    assumeThisTestCanBeReusedForPreimport();
     super.setUp();
 
     setUpFixtures();
@@ -102,7 +108,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
     myProgressIndicator = new MavenProgressIndicator(myProject, new EmptyProgressIndicator(ModalityState.nonModal()), null);
 
-    MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspaceSettings());
+    MavenWorkspaceSettingsComponent.getInstance(myProject).loadState(new MavenWorkspacePersistedSettings());
 
     String home = getTestMavenHome();
     if (home != null) {
@@ -131,6 +137,23 @@ public abstract class MavenTestCase extends UsefulTestCase {
     });
   }
 
+  public static void assumeTestCanBeReusedForPreimport(Class<?> aClass, String testName) {
+    if (!preimportTestMode) return;
+    try {
+      if (aClass.getDeclaredAnnotation(InstantImportCompatible.class) == null) {
+        Method testMethod = aClass.getMethod(testName);
+        Assume.assumeNotNull(testMethod.getDeclaredAnnotation(InstantImportCompatible.class));
+      }
+    }
+    catch (NoSuchMethodException ignore) {
+    }
+  }
+
+  protected void assumeThisTestCanBeReusedForPreimport() {
+    assumeTestCanBeReusedForPreimport(this.getClass(), getName());
+  }
+
+
   private void setupWsl() {
     String wslMsId = System.getProperty("wsl.distribution.name");
     if (wslMsId == null) return;
@@ -157,9 +180,13 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
       @Override
-      public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
+      public @NotNull Set<Action> processError(@NotNull String category,
+                                               @NotNull String message,
+                                               String @NotNull [] details,
+                                               @Nullable Throwable t) {
         boolean intercept = t != null && (
-          StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") && message.contains("Couldn't read shelf information") ||
+          StringUtil.notNullize(t.getMessage()).contains("The network name cannot be found") &&
+          message.contains("Couldn't read shelf information") ||
           "JDK annotations not found".equals(t.getMessage()) && "#com.intellij.openapi.projectRoots.impl.JavaSdkImpl".equals(category));
         return intercept ? Action.NONE : Action.ALL;
       }
@@ -219,7 +246,14 @@ public abstract class MavenTestCase extends UsefulTestCase {
 
 
   private static void checkAllMavenConnectorsDisposed() {
-    assertEmpty("all maven connectors should be disposed", MavenServerManager.getInstance().getAllConnectors());
+    Collection<MavenServerConnector> connectors = MavenServerManager.getInstance().getAllConnectors();
+    if (!connectors.isEmpty()) {
+      MavenLog.LOG.warn("Connectors not empty, printing thread dump");
+      MavenLog.LOG.warn("===============================================");
+      MavenLog.LOG.warn(ThreadDumper.getThreadDumpInfo(ThreadDumper.getThreadInfos(), false).getRawDump());
+      MavenLog.LOG.warn("===============================================");
+      fail("all maven connectors should be disposed but got " + connectors);
+    }
   }
 
   private void ensureTempDirCreated() throws IOException {
@@ -441,12 +475,12 @@ public abstract class MavenTestCase extends UsefulTestCase {
   @Language("XML")
   public static String createPomXml(@NonNls @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
     return """
-      <?xml version="1.0"?>
-      <project xmlns="http://maven.apache.org/POM/4.0.0"
-               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-        <modelVersion>4.0.0</modelVersion>
-      """ + xml + "</project>";
+             <?xml version="1.0"?>
+             <project xmlns="http://maven.apache.org/POM/4.0.0"
+                      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                      xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+               <modelVersion>4.0.0</modelVersion>
+             """ + xml + "</project>";
   }
 
   protected VirtualFile createProfilesXmlOldStyle(String xml) {
@@ -612,8 +646,8 @@ public abstract class MavenTestCase extends UsefulTestCase {
       assertSameLinesWithFile(filePath, expectedText);
     }
     catch (FileComparisonFailure e) {
-      String expected = e.getExpected();
-      String actual = e.getActual();
+      String expected = e.getExpectedStringPresentation();
+      String actual = e.getActualStringPresentation();
       assertUnorderedElementsAreEqual(expected.split("\n"), actual.split("\n"));
     }
   }

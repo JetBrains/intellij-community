@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 class KotlinTopLevelFunctionByPackageIndex internal constructor() : StringStubIndexExtension<KtNamedFunction>() {
     companion object Helper : KotlinStringStubIndexHelper<KtNamedFunction>(KtNamedFunction::class.java) {
         override val indexKey: StubIndexKey<String, KtNamedFunction> =
-            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionByPackageIndex")
+            StubIndexKey.createIndexKey(KotlinTopLevelFunctionByPackageIndex::class.java.simpleName)
     }
 
     override fun getKey(): StubIndexKey<String, KtNamedFunction> = indexKey

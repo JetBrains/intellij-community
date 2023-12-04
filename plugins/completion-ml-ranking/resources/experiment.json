@@ -46,14 +46,14 @@
     },
     {
       "number": 15,
-      "description": "Full Line local model",
+      "description": "Full Line - Inline independent DROP UNKNOWN RED CODE",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
     },
     {
       "number": 16,
-      "description": "Full Line trigger model",
+      "description": "Full Line - Inline with trigger model",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
@@ -137,12 +137,6 @@
       "shouldLogElementFeatures": false
     },
     {
-      "id": "rust",
-      "experimentBucketsCount": 4,
-      "includeGroups": [ 7, 8, 12, 13],
-      "shouldLogElementFeatures": true
-    },
-    {
       "id": "swift",
       "experimentBucketsCount": 4,
       "includeGroups": [ 7, 8, 12, 13],
@@ -164,6 +158,18 @@
       "id": "objectivec",
       "experimentBucketsCount": 4,
       "includeGroups": [ 7, 8, 12 ],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "html",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 7, 12, 12, 13, 13 ],
+      "shouldLogElementFeatures": false
+    },
+    {
+      "id": "css",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 7, 12, 12, 13, 13 ],
       "shouldLogElementFeatures": false
     }
   ]

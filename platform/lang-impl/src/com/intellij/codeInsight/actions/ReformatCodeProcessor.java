@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.concurrent.FutureTask;
 
 public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
-  private static final Logger LOG = Logger.getInstance(ReformatCodeProcessor.class);
+  private static final Logger LOG = CodeStyle.LOG;
   private static final Key<Trinity<Long, Date, List<TextRange>>> SECOND_FORMAT_KEY = Key.create("second.format");
   private static final String SECOND_REFORMAT_CONFIRMED = "second.reformat.confirmed.2";
 
@@ -155,7 +155,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     boolean doNotKeepLineBreaks = confirmSecondReformat(file);
     return new FutureTask<>(() -> {
       Ref<Boolean> result = new Ref<>();
-      CodeStyle.doWithTemporarySettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
+      CodeStyle.runWithLocalSettings(myProject, CodeStyle.getSettings(fileToProcess), (settings) -> {
         if (doNotKeepLineBreaks) {
           settings.getCommonSettings(fileToProcess.getLanguage()).KEEP_LINE_BREAKS = false;
         }
@@ -215,6 +215,9 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
         KeptLineFeedsCollector.setup(fileToProcess);
       }
       try {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("explicit reformat for " + file.getName());
+        }
         CodeStyleManager.getInstance(myProject).reformatText(fileToProcess, ranges);
       }
       catch (ProcessCanceledException pce) {

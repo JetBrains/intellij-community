@@ -25,8 +25,7 @@ import java.io.File
 import java.util.*
 
 class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
-  override fun runInDispatchThread() = false
-  
+    
   @Test
   fun JavadocsAndSources() = runBlocking {
     importProjectAsync("""
@@ -121,7 +120,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
 
     val project = projectsTree.rootProjects[0]
     val dep = project.dependencies[0]
-    downloadArtifacts(Arrays.asList(project), Arrays.asList(dep))
+    projectsManager.downloadArtifacts(listOf(project), listOf(dep), true, true)
 
     assertTrue(sources.exists())
     assertTrue(javadoc.exists())
@@ -150,7 +149,7 @@ class ArtifactsDownloadingTest : ArtifactsDownloadingTestCase() {
                     """.trimIndent())
 
     val project = projectsTree.rootProjects[0]
-    val unresolvedArtifacts = downloadArtifacts(Arrays.asList(project), null)
+    val unresolvedArtifacts = projectsManager.downloadArtifacts(listOf(project), null, true, true)
     assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedSources, MavenId("junit", "junit", "4.0"))
     assertUnorderedElementsAreEqual(unresolvedArtifacts.resolvedDocs, MavenId("junit", "junit", "4.0"))
     assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedSources, MavenId("lib", "xxx", "1"))
@@ -240,15 +239,15 @@ ${VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)!!)}</url>
                     </dependencies>
                     """.trimIndent())
 
-    val files1 = Arrays.asList(File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-sources.jar"),
-                               File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-javadoc.jar"),
-                               File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-sources.jar"),
-                               File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-javadoc.jar"))
+  val files1 = listOf(File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-sources.jar"),
+                      File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-javadoc.jar"),
+                      File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-sources.jar"),
+                      File(getRepositoryPath(), "/xxx/yyy/1/yyy-1-test-javadoc.jar"))
 
-    val files2 = Arrays.asList(File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-sources.jar"),
-                               File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-javadoc.jar"),
-                               File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-sources.jar"),
-                               File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar"))
+    val files2 = listOf(File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-sources.jar"),
+                        File(getRepositoryPath(), "/xxx/xxx/1/xxx-1-foo-javadoc.jar"),
+                        File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-sources.jar"),
+                        File(getRepositoryPath(), "/xxx/zzz/1/zzz-1-test-foo-javadoc.jar"))
 
     for (each in files1) {
       assertFalse(each.toString(), each.exists())
@@ -283,8 +282,6 @@ ${VfsUtilCore.pathToUrl(myPathTransformer.toRemotePath(remoteRepo)!!)}</url>
                         </plugins>
                       </build>
                       """.trimIndent())
-
-      resolvePlugins()
 
       val f = File(getRepositoryPath(), "/org/apache/maven/plugins/maven-surefire-plugin/2.4.2/maven-surefire-plugin-2.4.2.jar")
 

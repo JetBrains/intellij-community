@@ -1,12 +1,12 @@
-<error descr="'@lombok.Builder' can be used on classes only">@lombok.Builder</error>
+<error descr="@Builder is only supported on classes, records, constructors, and methods.">@lombok.Builder</error>
 enum BuilderEnumError {
 }
 
-<error descr="'@lombok.Builder' can be used on classes only">@lombok.Builder</error>
+<error descr="@Builder is only supported on classes, records, constructors, and methods.">@lombok.Builder</error>
 interface BuilderInterfaceError {
 }
 
-<error descr="'@lombok.Builder' can be used on classes only">@lombok.Builder</error>
+<error descr="@Builder is only supported on classes, records, constructors, and methods.">@lombok.Builder</error>
 @interface BuilderAnnotationError {
 }
 

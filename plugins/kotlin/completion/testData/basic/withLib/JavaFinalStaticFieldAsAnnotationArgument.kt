@@ -1,5 +1,4 @@
 // FIR_COMPARISON
-// FIR_IDENTICAL
 
 annotation class A(val n: Int)
 

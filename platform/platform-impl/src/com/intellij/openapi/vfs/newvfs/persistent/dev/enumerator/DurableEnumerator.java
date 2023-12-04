@@ -67,7 +67,7 @@ public final class DurableEnumerator<V> implements DurableDataEnumerator<V>,
 
   @Override
   public void force() throws IOException {
-    valuesLog.flush(true);
+    valuesLog.flush();
     valueHashToId.flush();
   }
 

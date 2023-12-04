@@ -2,10 +2,12 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +86,7 @@ public final class X11UiUtil {
 
     private static @Nullable Xlib getInstance() {
       Class<? extends Toolkit> toolkitClass = Toolkit.getDefaultToolkit().getClass();
-      if (!SystemInfoRt.isXWindow || !"sun.awt.X11.XToolkit".equals(toolkitClass.getName())) {
+      if (!StartupUiUtil.isXToolkit()) {
         return null;
       }
 
@@ -294,12 +296,12 @@ public final class X11UiUtil {
   }
 
   public static boolean isWSL() {
-    return SystemInfoRt.isXWindow && System.getenv("WSL_DISTRO_NAME") != null;
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && System.getenv("WSL_DISTRO_NAME") != null;
   }
 
   public static boolean isTileWM() {
     String desktop = System.getenv("XDG_CURRENT_DESKTOP");
-    return SystemInfoRt.isXWindow && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
+    return SystemInfoRt.isUnix && !SystemInfoRt.isMac && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
   }
 
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {

@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
-import com.intellij.util.SystemProperties;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
@@ -53,8 +52,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class FSRecords {
   static final Logger LOG = Logger.getInstance(FSRecords.class);
   static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(LOG, SECONDS.toMillis(30));
-
-  static final boolean BACKGROUND_VFS_FLUSH = SystemProperties.getBooleanProperty("idea.background.vfs.flush", true);
 
   /** Not a constant value but just key for a value, because could be changed (see TurbochargedSharedIndexes) */
   public static final String IDE_USE_FS_ROOTS_DATA_LOADER = "idea.fs.roots.data.loader";

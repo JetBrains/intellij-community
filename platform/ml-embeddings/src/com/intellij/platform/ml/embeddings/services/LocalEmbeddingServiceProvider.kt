@@ -4,11 +4,13 @@ package com.intellij.platform.ml.embeddings.services
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingService
 import com.intellij.platform.ml.embeddings.models.LocalEmbeddingServiceLoader
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.nio.file.NoSuchFileException
 import java.lang.ref.SoftReference
 
 /**
@@ -21,26 +23,39 @@ class LocalEmbeddingServiceProvider {
   private var localServiceRef: SoftReference<LocalEmbeddingService>? = null
   private val mutex = Mutex()
 
-  private suspend fun getService(downloadArtifacts: Boolean = false): LocalEmbeddingService? {
+  suspend fun getService(downloadArtifacts: Boolean = false): LocalEmbeddingService? {
     return mutex.withLock {
       var service = localServiceRef?.get()
       if (service == null) {
         val artifactsManager = LocalArtifactsManager.getInstance()
         if (!artifactsManager.checkArtifactsPresent()) {
           if (!downloadArtifacts) return null
-          artifactsManager.downloadArtifactsIfNecessary()
+          logger.debug("Downloading model artifacts because requested embedding calculation")
+          if (!ApplicationManager.getApplication().isUnitTestMode) {
+            artifactsManager.downloadArtifactsIfNecessary()
+          }
         }
 
-        service = LocalEmbeddingServiceLoader().load(artifactsManager.getCustomRootDataLoader())
+        service = try {
+          LocalEmbeddingServiceLoader().load(artifactsManager.getCustomRootDataLoader())
+        }
+        catch (e: NoSuchFileException) {
+          logger.warn("Local embedding model artifacts not found: $e")
+          null
+        }
         localServiceRef = SoftReference(service)
       }
       service
     }
   }
 
-  fun getServiceBlocking(downloadArtifacts: Boolean = false): LocalEmbeddingService? = runBlockingCancellable { getService(downloadArtifacts) }
+  fun getServiceBlocking(downloadArtifacts: Boolean = false): LocalEmbeddingService? = runBlockingCancellable {
+    getService(downloadArtifacts)
+  }
 
   companion object {
-    fun getInstance() = service<LocalEmbeddingServiceProvider>()
+    private val logger = Logger.getInstance(LocalEmbeddingServiceProvider::class.java)
+
+    fun getInstance(): LocalEmbeddingServiceProvider = service()
   }
 }

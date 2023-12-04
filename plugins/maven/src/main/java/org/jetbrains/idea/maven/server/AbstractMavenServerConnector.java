@@ -25,6 +25,7 @@ public abstract class AbstractMavenServerConnector implements MavenServerConnect
   protected final Sdk myJdk;
   protected final Set<String> myMultimoduleDirectories = ConcurrentHashMap.newKeySet();
   private final Object embedderLock = new Object();
+  private final Exception myCreationTrace = new Exception();
 
   protected final String myVmOptions;
 
@@ -108,7 +109,7 @@ public abstract class AbstractMavenServerConnector implements MavenServerConnect
       });
   }
 
-  protected abstract  <R, E extends Exception> R perform(Retriable<R, E> r) throws E;
+  protected abstract <R, E extends Exception> R perform(Retriable<R, E> r) throws E;
 
   @Override
   public void dispose() {
@@ -145,7 +146,7 @@ public abstract class AbstractMavenServerConnector implements MavenServerConnect
 
   @Override
   public MavenServerStatus getDebugStatus(boolean clean) {
-    return perform( ()-> {
+    return perform(() -> {
       return getServer().getDebugStatus(clean);
     });
   }
@@ -157,6 +158,7 @@ public abstract class AbstractMavenServerConnector implements MavenServerConnect
            ", myDistribution=" + myDistribution.getMavenHome() +
            ", myJdk=" + myJdk.getName() +
            ", myMultimoduleDirectories=" + myMultimoduleDirectories +
+           ", myCreationTrace = " + ExceptionUtil.getThrowableText(myCreationTrace) +
            '}';
   }
 

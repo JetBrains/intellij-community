@@ -94,6 +94,7 @@ public final class ContainerUtil {
    * The former method is here to highlight incorrect usages of the latter.
    */
   @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @NotNull <T> LinkedList<T> newLinkedList() {
     return new LinkedList<>();
@@ -278,6 +279,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #newHashSet(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Collection<? extends T> iterable) {
@@ -445,6 +447,7 @@ public final class ContainerUtil {
    * The former method is here to highlight incorrect usages of the latter.
    */
   @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static @Unmodifiable @NotNull <E> List<E> immutableList() {
     return Collections.emptyList();
@@ -1694,6 +1697,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #iterateAndGetLastItem(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
   public static <T> T iterateAndGetLastItem(@NotNull List<? extends T> items) {
@@ -2124,6 +2128,7 @@ public final class ContainerUtil {
    * DO NOT REMOVE this method until {@link ContainerUtil#set(Object[])} is removed.
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T> Set<T> set() {
@@ -2809,6 +2814,7 @@ public final class ContainerUtil {
    * DO NOT remove this method until {@link #toCollection(Iterable)} is removed
    * The former method is here to highlight incorrect usages of the latter.
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @Contract(pure = true)
   public static @NotNull <T> Collection<T> toCollection(@NotNull Collection<? extends T> iterable) {

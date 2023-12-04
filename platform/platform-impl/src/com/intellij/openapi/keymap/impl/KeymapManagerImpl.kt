@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.openapi.keymap.impl
@@ -113,7 +113,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
         //    schemeManager.findSchemeByName(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP) == null) return
         val keymap = DefaultKeymap.getInstance().loadKeymap(keymapName, object : SchemeDataHolder<KeymapImpl> {
           override fun read(): Element {
-            return JDOMUtil.load(ResourceUtil.getResourceAsBytes(getEffectiveFile(ep), pluginDescriptor.classLoader))
+            return JDOMUtil.load(ResourceUtil.getResourceAsBytes(getEffectiveFile(ep), pluginDescriptor.classLoader)!!)
           }
         }, pluginDescriptor)
         schemeManager.addScheme(keymap)
@@ -233,7 +233,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   }
 
   private fun pollQueue() {
-    listeners.removeAll { it is WeakKeymapManagerListener && it.isDead }
+    listeners.removeIf { it is WeakKeymapManagerListener && it.isDead }
   }
 
   @Suppress("OverridingDeprecatedMember")
@@ -248,7 +248,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   }
 
   override fun removeWeakListener(listenerToRemove: KeymapManagerListener) {
-    listeners.removeAll { it is WeakKeymapManagerListener && it.isWrapped(listenerToRemove) }
+    listeners.removeIf { it is WeakKeymapManagerListener && it.isWrapped(listenerToRemove) }
   }
 }
 

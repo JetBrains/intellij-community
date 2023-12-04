@@ -14,29 +14,38 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.jetbrains.intellij.build.Source
-import org.jetbrains.intellij.build.SourceAndCacheStrategy
-import org.jetbrains.intellij.build.ZipSource
-import org.jetbrains.intellij.build.createSourceAndCacheStrategyList
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.dependencies.CacheDirCleanup
 import java.math.BigInteger
 import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
+import java.security.MessageDigest
 import java.time.Instant
 
 private const val jarSuffix = ".jar"
 private const val metaSuffix = ".json"
 
-private const val cacheVersion: Byte = 5
+private const val cacheVersion: Byte = 6
+
+internal interface SourceBuilder {
+  val useCacheAsTargetFile: Boolean
+
+  // one module (source) can be included in different plugins - cache per plugin
+  fun updateDigest(digest: MessageDigest)
+
+  suspend fun produce()
+}
 
 internal sealed interface JarCacheManager {
   suspend fun computeIfAbsent(sources: List<Source>,
                               targetFile: Path,
                               nativeFiles: MutableMap<ZipSource, List<String>>?,
                               span: Span,
-                              producer: suspend () -> Unit)
+                              producer: SourceBuilder): Path
+
+  fun validateHash(source: Source)
 }
 
 internal data object NonCachingJarCacheManager : JarCacheManager {
@@ -44,8 +53,12 @@ internal data object NonCachingJarCacheManager : JarCacheManager {
                                        targetFile: Path,
                                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                                        span: Span,
-                                       producer: suspend () -> Unit) {
-    producer()
+                                       producer: SourceBuilder): Path {
+    producer.produce()
+    return targetFile
+  }
+
+  override fun validateHash(source: Source) {
   }
 }
 
@@ -58,7 +71,8 @@ private val json by lazy {
   }
 }
 
-internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val classOutDirectory: Path) : JarCacheManager {
+internal class LocalDiskJarCacheManager(private val cacheDir: Path,
+                                        private val classOutDirectory: Path) : JarCacheManager {
   init {
     Files.createDirectories(cacheDir)
     CacheDirCleanup(cacheDir).runCleanupIfRequired()
@@ -68,7 +82,7 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
                                        targetFile: Path,
                                        nativeFiles: MutableMap<ZipSource, List<String>>?,
                                        span: Span,
-                                       producer: suspend () -> Unit) {
+                                       producer: SourceBuilder): Path {
     val items = createSourceAndCacheStrategyList(sources = sources, classOutDirectory = classOutDirectory)
 
     // 224 bit and not 256/512 - use a slightly shorter filename
@@ -86,6 +100,8 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
       source.updateDigest(hash)
     }
 
+    producer.updateDigest(hash)
+
     val hashString = BigInteger(1, hash.digest()).toString(Character.MAX_RADIX)
     val cacheName = "${targetFile.fileName.toString().removeSuffix(jarSuffix)}-$hashString"
     val cacheFileName = (cacheName + jarSuffix).takeLast(255)
@@ -97,8 +113,10 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
                    items = items,
                    span = span,
                    nativeFiles = nativeFiles)) {
-      Files.createDirectories(targetFile.parent)
-      Files.copy(cacheFile, targetFile)
+      if (!producer.useCacheAsTargetFile) {
+        Files.createDirectories(targetFile.parent)
+        Files.copy(cacheFile, targetFile)
+      }
       span.addEvent(
         "use cache",
         Attributes.of(
@@ -109,10 +127,14 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
 
       // update file modification time to maintain FIFO caches i.e., in persistent cache folder on TeamCity agent and for CacheDirCleanup
       Files.setLastModifiedTime(cacheFile, FileTime.from(Instant.now()))
-      return
+
+      if (producer.useCacheAsTargetFile) {
+        return cacheFile
+      }
+      return targetFile
     }
 
-    producer()
+    producer.produce()
 
     val sourceCacheItems = items.map { source ->
       SourceCacheItem(path = source.path,
@@ -129,7 +151,9 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
         catch (e: FileAlreadyExistsException) {
           // concurrent access?
           span.addEvent("Cache file $cacheFile already exists")
-          check(Files.size(targetFile) == Files.size(cacheFile))
+          check(Files.size(targetFile) == Files.size(cacheFile)) {
+            "targetFile=$targetFile, cacheFile=$cacheFile, sources=$sources"
+          }
         }
       }
 
@@ -140,6 +164,17 @@ internal class LocalDiskJarCacheManager(private val cacheDir: Path, private val 
       launch(Dispatchers.Default) {
         notifyAboutMetadata(sources = sourceCacheItems, items = items, nativeFiles = nativeFiles)
       }
+    }
+
+    if (producer.useCacheAsTargetFile) {
+      return cacheFile
+    }
+    return targetFile
+  }
+
+  override fun validateHash(source: Source) {
+    if (source.hash == 0L && (source !is DirSource || Files.exists(source.dir))) {
+      Span.current().addEvent("Zero hash for $source")
     }
   }
 }

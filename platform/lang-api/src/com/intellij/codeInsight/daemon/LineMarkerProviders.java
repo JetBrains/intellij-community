@@ -12,12 +12,6 @@ import org.jetbrains.annotations.NotNull;
 public final class LineMarkerProviders extends LanguageExtension<LineMarkerProvider> {
   public static final ExtensionPointName<LanguageExtensionPoint<LineMarkerProvider>> EP_NAME = ExtensionPointName.create("com.intellij.codeInsight.lineMarkerProvider");
 
-  /**
-   * @deprecated Use {@link #getInstance()}.
-   */
-  @Deprecated(forRemoval = true)
-  public static final LineMarkerProviders INSTANCE = ApplicationManager.getApplication() == null || ApplicationManager.getApplication().isUnitTestMode() ? null : getInstance();
-
   public static @NotNull LineMarkerProviders getInstance() {
     return ApplicationManager.getApplication().getService(LineMarkerProviders.class);
   }

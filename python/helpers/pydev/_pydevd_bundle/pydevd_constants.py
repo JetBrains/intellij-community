@@ -173,9 +173,6 @@ USE_LIB_COPY = SUPPORT_GEVENT and \
 USE_LOW_IMPACT_MONITORING = (IS_PY312_OR_GREATER and
                              os.environ.get('USE_LOW_IMPACT_MONITORING', False))
 
-if USE_LOW_IMPACT_MONITORING:
-    CYTHON_SUPPORTED = False
-
 # The tool name to use in the API calls from PEP 669.
 PYDEVD_TOOL_NAME = 'pydevd'
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.google.common.collect.Iterables;
@@ -39,7 +39,7 @@ public class SwitchedFileHolder implements FileHolder {
   }
 
   @Override
-  public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
+  public void cleanUnderScope(@NotNull VcsDirtyScope scope) {
     if (myProject.isDisposed()) return;
     final Iterator<VirtualFile> iterator = myMap.keySet().iterator();
     while (iterator.hasNext()) {
@@ -59,7 +59,7 @@ public class SwitchedFileHolder implements FileHolder {
   private boolean fileDropped(final VirtualFile file) {
     return !file.isValid() || myVcsManager.getVcsFor(file) == null;
   }
-  
+
   public Map<VirtualFile, String> getFilesMapCopy() {
     final HashMap<VirtualFile, String> result = new HashMap<>();
     for (final VirtualFile vf : myMap.keySet()) {

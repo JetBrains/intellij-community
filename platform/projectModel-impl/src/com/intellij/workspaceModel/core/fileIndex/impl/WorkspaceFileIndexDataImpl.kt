@@ -10,6 +10,8 @@ import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.CollectionQuery
@@ -43,10 +45,15 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   private var hasDirtyEntities = false
 
   init {
+    WorkspaceFileIndexData.instancesCounter.incrementAndGet()
+    val start = System.currentTimeMillis()
+
     packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     registerAllEntities(EntityStorageKind.MAIN)
     registerAllEntities(EntityStorageKind.UNLOADED)
     librariesAndSdkContributors.registerFileSets()
+
+    WorkspaceFileIndexData.initTimeMs.addElapsedTimeMs(start)
   }
 
   private fun registerAllEntities(storageKind: EntityStorageKind) {
@@ -67,7 +74,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                            includeContentSets: Boolean,
                            includeExternalSets: Boolean,
                            includeExternalSourceSets: Boolean,
-                           includeCustomKindSets: Boolean): WorkspaceFileInternalInfo {
+                           includeCustomKindSets: Boolean): WorkspaceFileInternalInfo = WorkspaceFileIndexData.getFileInfoTimeMs.addMeasuredTimeMs {
     if (!file.isValid) return WorkspaceFileInternalInfo.NonWorkspace.INVALID
     if (file.fileSystem is NonPhysicalFileSystem && file.parent == null) {
       return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
@@ -136,20 +143,25 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   }
 
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
+    val start = System.currentTimeMillis()
+
     ensureIsUpToDate()
-    for (value in fileSets.values) {
-      value.forEach { storedFileSet ->
-        when (storedFileSet) {
-          is WorkspaceFileSetImpl -> {
-            visitor.visitIncludedRoot(storedFileSet)
-          }
-          is ExcludedFileSet -> Unit
+    val action = { storedFileSet: StoredFileSet ->
+      when (storedFileSet) {
+        is WorkspaceFileSetImpl -> {
+          visitor.visitIncludedRoot(storedFileSet)
         }
+        is ExcludedFileSet -> Unit
       }
     }
+    for (value in fileSets.values) {
+      value.forEach(action)
+    }
+
+    WorkspaceFileIndexData.visitFileSetsTimeMs.addElapsedTimeMs(start)
   }
 
-  fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) {
+  fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) = WorkspaceFileIndexData.processFileSetsTimeMs.addMeasuredTimeMs {
     fileSets[virtualFile]?.forEach(action)
   }
   
@@ -229,14 +241,14 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     resetFileCache()
   }
 
-  override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) {
+  override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) = WorkspaceFileIndexData.markDirtyTimeMs.addMeasuredTimeMs {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     dirtyEntities.addAll(entityReferences)
     dirtyFiles.addAll(filesToInvalidate)
     hasDirtyEntities = dirtyEntities.isNotEmpty()
   }
 
-  override fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) {
+  override fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) = WorkspaceFileIndexData.onEntitiesChangedTimeMs.addMeasuredTimeMs {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     contributorList.filter { it.storageKind == storageKind }.forEach { 
       processChangesByContributor(it, storageKind, event)
@@ -245,6 +257,8 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   }
 
   override fun updateDirtyEntities() {
+    val start = System.currentTimeMillis()
+
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     for (file in dirtyFiles) {
       val collection = fileSets.remove(file)
@@ -264,6 +278,8 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     dirtyEntities.clear()
     resetFileCache()
     hasDirtyEntities = false
+
+    WorkspaceFileIndexData.updateDirtyEntitiesTimeMs.addElapsedTimeMs(start)
   }
 
   override fun resetFileCache() {
@@ -288,7 +304,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
   }
 
-  override fun getPackageName(dir: VirtualFile): String? {
+  override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexData.getPackageNameTimeMs.addMeasuredTimeMs {
     if (!dir.isDirectory) return null
 
     val fileSet = when (val info = getFileInfo(dir, true, true, true, true, true)) {
@@ -307,7 +323,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
   }
 
-  override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> {
+  override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> = WorkspaceFileIndexData.getDirectoriesByPackageNameTimeMs.addMeasuredTimeMs {
     val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
     if (includeLibrarySources) return query
     return query.filtering {

@@ -43,7 +43,7 @@ private fun createDocumentationComponent(
   request: DocumentationRequest,
   parentDisposable: Disposable,
 ): DocumentationComponent {
-  val browser = DocumentationBrowser.createBrowser(project, request)
+  val browser = DocumentationBrowser.createBrowser(project, listOf(request))
   val ui = DocumentationUI(project, browser)
   Disposer.register(parentDisposable, ui)
   return DocumentationComponentImpl(browser, ui)

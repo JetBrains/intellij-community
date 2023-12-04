@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
+
 package com.intellij.ide.startup.importSettings.chooser.testActions
 
 import com.intellij.ide.startup.importSettings.data.NotificationData
@@ -28,24 +30,33 @@ class ErrorTestDialogAction : DumbAwareAction() {
 
         val pane = panel {
           row {
-            button("Error With Actions", { error.fire(object : NotificationData {
-              override val status: NotificationData.NotificationStatus = NotificationData.NotificationStatus.ERROR
-              override val message: String = s
+            button( "Error With Actions") {
+              error.fire(object : NotificationData {
+                override val status: NotificationData.NotificationStatus = NotificationData.NotificationStatus.ERROR
+                override val message: String = s
 
-              override val customActionList: List<NotificationData.Action> = arrayListOf(
-                NotificationData.Action("Skip", {}),
-                NotificationData.Action("Try Again", {})
-              )
+                override val customActionList: List<NotificationData.Action> = arrayListOf(
+                  NotificationData.Action("Skip") {},
+                  NotificationData.Action("Try Again") {}
+                )
 
-            })})
+              })
+            }
           }
           row {
-            button("Error", {error.fire(object : NotificationData {
-              override val status: NotificationData.NotificationStatus = NotificationData.NotificationStatus.WARNING
-              override val message: String = "ага. тогда сигнал. если решим, что неудобно переделаем"
-              override val customActionList: List<NotificationData.Action> = emptyList()
+            button("Error") {
+              error.fire(object : NotificationData {
+                override val status: NotificationData.NotificationStatus = NotificationData.NotificationStatus.WARNING
+                override val message: String = "ага. тогда сигнал. если решим, что неудобно переделаем"
+                override val customActionList: List<NotificationData.Action> = emptyList()
 
-            })})
+              })
+            }
+          }
+          row {
+            button("close dialog") {
+              settService.doClose.fire(Unit)
+            }
           }
         }
 

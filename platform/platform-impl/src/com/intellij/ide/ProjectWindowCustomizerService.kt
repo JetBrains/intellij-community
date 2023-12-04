@@ -2,11 +2,13 @@
 package com.intellij.ide
 
 import com.intellij.ide.actions.DistractionFreeModeController
+import com.intellij.ide.ui.GradientTextureCache
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -18,10 +20,13 @@ import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.ui.ColorHexUtil
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.JBColor
+import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction
+import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
+import com.intellij.ui.*
 import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -32,11 +37,15 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.*
+import java.awt.Color
+import java.awt.Graphics2D
+import java.awt.RenderingHints
+import java.awt.Window
 import java.nio.file.Path
 import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 @Service(Service.Level.PROJECT)
 private class ProjectWindowCustomizerIconCache(private val project: Project) {
@@ -51,7 +60,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
       cachedIcon.drop()
     })
     busConnection.subscribe(ProjectNameListener.TOPIC, object: ProjectNameListener {
-      override fun nameChanged(newName: String) {
+      override fun nameChanged(newName: String?) {
         cachedIcon.drop()
       }
     })
@@ -79,6 +88,8 @@ private data class ProjectColors(val gradient: Color,
 class ProjectWindowCustomizerService : Disposable {
   companion object {
     private var instance: ProjectWindowCustomizerService? = null
+    private var leftGradientCache: GradientTextureCache = GradientTextureCache()
+    private var rightGradientCache: GradientTextureCache = GradientTextureCache()
 
     init {
       ApplicationManager.registerCleaner { instance = null }
@@ -344,12 +355,28 @@ class ProjectWindowCustomizerService : Disposable {
     g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
     val color = getGradientProjectColor(project)
 
-    val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
-    val x = parent.x.toFloat()
-    val y = parent.y.toFloat()
-    val offset = 150f
-    g.paint = RadialGradientPaint(x + offset, y + height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
-    g.fillRect(0, 0, length, height)
+    val length = Registry.intValue("ide.colorful.toolbar.gradient.radius", 300)
+    val projectComboBtn = ComponentUtil.findComponentsOfType(parent, ToolbarComboButton::class.java).find {
+      ClientProperty.get(it, CustomComponentAction.ACTION_KEY) is ProjectToolbarWidgetAction
+    }
+    val projectIconWidth = projectComboBtn?.leftIcons?.firstOrNull()?.iconWidth?.toFloat() ?: 0f
+    val offset = projectComboBtn?.let {
+      SwingUtilities.convertPoint(it.parent, it.x, it.y, parent).x.toFloat() + it.margin.left.toFloat() + projectIconWidth / 2
+    } ?: 150f
+
+    if (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull() == null
+        && ComponentUtil.findComponentsOfType(parent, IdeRootPane::class.java).firstOrNull()?.isToolbarInHeader() != true) return true
+
+    //additional multiplication by color.alpha is done because alpha will be lost after using blendColorsInRgb (sometimes it's not equals to 255)
+    val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85)
+                       .coerceIn(0.0, 1.0) * (color.alpha.toDouble() / 255)
+    val blendedColor = ColorUtil.blendColorsInRgb(parent.background, color, saturation)
+    val leftBound = (offset - length).coerceAtLeast(0f).toInt()
+    g.paint = leftGradientCache.getTexture(g, (offset - leftBound).toInt(), parent.background, blendedColor, leftBound)
+    g.fillRect(leftBound, 0, (offset - leftBound).toInt(), height)
+
+    g.paint = rightGradientCache.getTexture(g, length, blendedColor, parent.background, offset.toInt())
+    g.fillRect(offset.toInt(), 0, length, height)
 
     return true
   }

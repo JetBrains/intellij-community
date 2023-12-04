@@ -1,4 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.ide.ui.html
 
 import com.intellij.ide.ui.LafManager
@@ -6,18 +8,17 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.StyleSheet
@@ -37,27 +38,17 @@ private var currentLafStyleSheet: StyleSheet? = null
 @Suppress("unused")
 @Internal
 object GlobalStyleSheetHolder {
-  fun getGlobalStyleSheet(): StyleSheet = com.intellij.ide.ui.html.getGlobalStyleSheet()
+  fun getGlobalStyleSheet(): StyleSheet = createGlobalStyleSheet()
 }
 
 /**
  * Returns a global style sheet dynamically updated when LAF changes
  */
-internal fun getGlobalStyleSheet(): StyleSheet {
-  val result = StyleSheet()
+internal fun createGlobalStyleSheet(): StyleSheet {
   // return a linked sheet to avoid mutation of a global variable
+  val result = StyleSheet()
   result.addStyleSheet(globalStyleSheet)
   return result
-}
-
-internal fun updateGlobalSwingStyleSheet() {
-  // get the default JRE CSS and ...
-  val kit = HTMLEditorKit()
-  val defaultSheet = kit.styleSheet
-  globalStyleSheet.addStyleSheet(defaultSheet)
-
-  // ... set a new default sheet
-  kit.styleSheet = getGlobalStyleSheet()
 }
 
 /**
@@ -79,7 +70,24 @@ internal suspend fun updateGlobalStyleSheet() {
 }
 
 internal suspend fun initGlobalStyleSheet() {
-  service<GlobalStyleSheetUpdateService>().init()
+  coroutineScope {
+    launch(CoroutineName("EditorColorsManager preloading")) {
+      serviceAsync<EditorColorsManager>()
+    }
+
+    withContext(RawSwingDispatcher) {
+      span("global styleSheet updating") {
+        val kit = HTMLEditorKit()
+        val defaultSheet = kit.styleSheet
+        globalStyleSheet.addStyleSheet(defaultSheet)
+
+        // ... set a new default sheet
+        kit.styleSheet = createGlobalStyleSheet()
+      }
+    }
+
+    service<GlobalStyleSheetUpdateService>().init()
+  }
 }
 
 @Service(Service.Level.APP)
@@ -91,11 +99,9 @@ private class GlobalStyleSheetUpdateService(private val coroutineScope: Coroutin
     doUpdateGlobalStyleSheet()
 
     coroutineScope.launch {
-      updateRequests
-        .debounce(50.milliseconds)
-        .collectLatest {
-          doUpdateGlobalStyleSheet()
-        }
+      updateRequests.debounce(50.milliseconds).collectLatest {
+        doUpdateGlobalStyleSheet()
+      }
     }
   }
 

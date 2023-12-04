@@ -35,6 +35,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
@@ -48,7 +49,7 @@ import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
-import com.jetbrains.python.sdk.headless.PythonInProgressService;
+import com.jetbrains.python.sdk.headless.PythonActivityKey;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -371,7 +372,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
       LOG.info("Skipping background update for '" + sdk + "' in unit test mode");
       return;
     }
-    project.getService(PythonInProgressService.class).trackConfigurationActivityBlocking(() -> {
+    TrackingUtil.trackActivity(project, PythonActivityKey.INSTANCE, () -> {
       synchronized (ourLock) {
         if (ourUnderRefresh.contains(sdk)) {
           if (Trigger.LOG.isDebugEnabled()) {
@@ -382,14 +383,13 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
             }
           }
           ourToBeRefreshed.merge(sdk, requestData, PyUpdateSdkRequestData::merge);
-          return null;
+          return;
         }
         else {
           ourUnderRefresh.add(sdk);
         }
       }
       ProgressManager.getInstance().run(new PyUpdateSdkTask(project, sdk, requestData));
-      return null;
     });
   }
 
@@ -471,8 +471,6 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     pathsToTransfer.removeAll(nonTransferredModuleRoots);
 
     /*
-    Don't run actions related to transferred roots on editable sdks since they can share data with original ones.
-
     PyTransferredSdkRootsKt#transferRoots and PyTransferredSdkRootsKt#removeTransferredRoots skip sdks
     that are not equal to module one (editable as well).
 
@@ -481,8 +479,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     When current method was executed for original sdk,
     roots changes were not applied since there were no changes in paths to transfer (they were shared with editable copy).
      */
-    if (ArrayUtil.contains(sdk, ProjectJdkTable.getInstance().getAllJdks()) &&
-        !pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
+    if (!pathsToTransfer.equals(PyTransferredSdkRootsKt.getPathsToTransfer(sdk))) {
       if (project != null) {
         PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithSdk(project, sdk);
       }
@@ -688,7 +685,7 @@ public final class PythonSdkUpdater implements StartupActivity, DumbAware {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final SdkModificator effectiveModificator = sdk.getSdkModificator();
       if (processor.process(effectiveModificator)) {
-        effectiveModificator.commitChanges();
+        ApplicationManager.getApplication().runWriteAction(() -> effectiveModificator.commitChanges());
       }
     });
   }

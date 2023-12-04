@@ -69,7 +69,7 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     val filedDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"))
     val eventSchemeDescriptor = EventDescriptor("testEvent", setOf(filedDescriptor, filedDescriptor))
     val groupDescriptor = GroupDescriptor("testId", "counter", 1, setOf(eventSchemeDescriptor, eventSchemeDescriptor),
-                                          "classNameTest", "recorderTest", "pluginIdTest")
+                                          "classNameTest", "recorderTest", PluginSchemeDescriptor("pluginIdTest"))
     val serializationText = SerializationHelper.serialize(groupDescriptor)
     val realText = File(getTestDataRoot() + "SerializationGroupDescriptor.json").readText(Charsets.UTF_8)
 
@@ -230,7 +230,7 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     val filedDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"))
     val eventSchemeDescriptor = EventDescriptor("testEvent", setOf(filedDescriptor, filedDescriptor))
     val groupDescriptor = GroupDescriptor("testId", "counter", 1, setOf(eventSchemeDescriptor, eventSchemeDescriptor),
-                                          "classNameTest", "recorderTest", "pluginIdTest")
+                                          "classNameTest", "recorderTest", PluginSchemeDescriptor("pluginIdTest"))
     val eventsScheme = EventsScheme("commitHash", "buildNumber", listOf(groupDescriptor, groupDescriptor))
 
     val serializationText = SerializationHelper.serialize(eventsScheme)
@@ -254,7 +254,7 @@ internal class SerializationHelperTest : BasePlatformTestCase() {
     val filedDescriptor = FieldDescriptor("plugin", setOf("{util#class_name}", "{util#plugin}"), FieldDataType.ARRAY)
     val eventSchemeDescriptor = EventDescriptor("testEvent", setOf(filedDescriptor, filedDescriptor))
     val groupDescriptor = GroupDescriptor("testId", "counter", 1, setOf(eventSchemeDescriptor, eventSchemeDescriptor),
-                                          "classNameTest", "recorderTest", "pluginIdTest")
+                                          "classNameTest", "recorderTest", PluginSchemeDescriptor("pluginIdTest"))
     val eventsScheme = EventsScheme("commitHash", "buildNumber", listOf(groupDescriptor, groupDescriptor))
 
     val serializationText = SerializationHelper.serialize(eventsScheme)

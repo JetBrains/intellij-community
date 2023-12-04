@@ -1,5 +1,4 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.refactoring.ui;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -256,7 +255,7 @@ public class ConflictsDialog extends DialogWrapper implements ConflictsDialogBas
       }
 
       @Contract(pure = true)
-      private String getEscapedDescription(String conflictsMessage) {
+      private static String getEscapedDescription(String conflictsMessage) {
         return Pattern.compile("<[^<>]*>").matcher(conflictsMessage).replaceAll("");
       }
 

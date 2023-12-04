@@ -15,14 +15,20 @@ final class MixedListFactory extends SEResultsListFactory {
 
   private final List<String> prioritizedContributors = new ArrayList<>();
 
-  MixedListFactory() {
+  MixedListFactory(boolean forceDisableRecentFilesPrioritization) {
     prioritizedContributors.add(CalculatorSEContributor.class.getName());
     prioritizedContributors.add("AutocompletionContributor");
     prioritizedContributors.add("CommandsContributor");
     prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
-    if (Registry.is("search.everywhere.recent.at.top")) {
-      prioritizedContributors.add(RecentFilesSEContributor.class.getSimpleName());
+    if (!forceDisableRecentFilesPrioritization) {
+      if (Registry.is("search.everywhere.recent.at.top")) {
+        prioritizedContributors.add(RecentFilesSEContributor.class.getSimpleName());
+      }
     }
+  }
+
+  MixedListFactory(){
+    this(false);
   }
 
   @Override

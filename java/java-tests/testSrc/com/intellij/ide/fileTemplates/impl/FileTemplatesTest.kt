@@ -2,9 +2,12 @@
 package com.intellij.ide.fileTemplates.impl
 
 import com.intellij.ide.fileTemplates.*
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.PluginNode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -16,6 +19,7 @@ import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.registerExtension
 import com.intellij.util.io.delete
+import junit.framework.TestCase
 import org.assertj.core.api.Assertions
 import java.io.File
 import java.io.FileReader
@@ -114,6 +118,19 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     Assertions.assertThat(template.getUnsetAttributes(properties, project)).contains("ABC", "DEF")
   }
 
+  fun `test survive plugin reload`() {
+    val template = addTestTemplate("foo", "bar")
+    val fileName = "filename"
+    template.fileName = fileName
+    val templateManager = FileTemplateManager.getInstance(project)
+    templateManager.saveAllTemplates()
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(DynamicPluginListener.TOPIC).pluginLoaded(PluginNode(PluginId.getId("survive.template.plugin")))
+    val t = templateManager.getTemplate(template.qualifiedName)
+    TestCase.assertNotSame(template, t)
+    assertEquals(fileName, t.fileName)
+  }
+
   fun testDefaultPackage() {
     doClassTest("package \${PACKAGE_NAME}; public class \${NAME} {}", "public class XXX {\n}")
   }
@@ -165,11 +182,11 @@ internal class FileTemplatesTest : JavaProjectTestCase() {
     assertEquals("foo.txt", element.text)
   }
 
-  private fun addTestTemplate(name: String, text: String): FileTemplate {
+  private fun addTestTemplate(name: String, text: String): CustomFileTemplate {
     val template = FileTemplateManager.getInstance(project).addTemplate(name, "java")
     disposeOnTearDown(Disposable { FileTemplateManager.getInstance(project).removeTemplate(template) })
     template.text = text
-    return template
+    return template as CustomFileTemplate
   }
 
   private fun createDirectory(): PsiDirectory? {

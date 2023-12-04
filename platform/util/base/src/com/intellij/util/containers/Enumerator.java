@@ -3,9 +3,12 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.util.ArrayUtil;
+import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class Enumerator<T> {
   private static final LoggerRt LOG = LoggerRt.getInstance(Enumerator.class);
@@ -13,7 +16,23 @@ public class Enumerator<T> {
   private int myNextNumber = 1;
 
   public Enumerator(int expectNumber) {
-    myNumbers = new Object2IntOpenHashMap<>(expectNumber);
+    this(expectNumber, HashingStrategy.canonical());
+  }
+
+  public Enumerator(int expectNumber, @NotNull HashingStrategy<? super T> strategy) {
+    myNumbers =
+      strategy == HashingStrategy.canonical() ? new Object2IntOpenHashMap<>() :
+      new Object2IntOpenCustomHashMap<>(expectNumber, new Hash.Strategy<T>() {
+        @Override
+        public int hashCode(@Nullable T o) {
+          return strategy.hashCode(o);
+        }
+
+        @Override
+        public boolean equals(@Nullable T a, @Nullable T b) {
+          return strategy.equals(a, b);
+        }
+      });
   }
 
   public void clear() {

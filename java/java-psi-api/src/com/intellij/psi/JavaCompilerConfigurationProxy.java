@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -35,15 +35,19 @@ public abstract class JavaCompilerConfigurationProxy {
   abstract protected void setAdditionalOptionsImpl(@NotNull Project project, @NotNull Module module, @NotNull List<String> options);
 
   public static List<String> getAdditionalOptions(@NotNull Project project, @NotNull Module module) {
-    JavaCompilerConfigurationProxy[] extensions = EP_NAME.getExtensions();
-    if (extensions.length == 0) return Collections.emptyList();
-    return extensions[0].getAdditionalOptionsImpl(project, module);
+    List<JavaCompilerConfigurationProxy> extensions = EP_NAME.getExtensionList();
+    if (extensions.isEmpty()) {
+      return Collections.emptyList();
+    }
+    return extensions.get(0).getAdditionalOptionsImpl(project, module);
   }
 
   public static void setAdditionalOptions(@NotNull Project project, @NotNull Module module, @NotNull List<String> options) {
-    JavaCompilerConfigurationProxy[] extensions = EP_NAME.getExtensions();
-    if (extensions.length == 0) return;
-    extensions[0].setAdditionalOptionsImpl(project, module, options);
+    List<JavaCompilerConfigurationProxy> extensions = EP_NAME.getExtensionList();
+    if (extensions.isEmpty()) {
+      return;
+    }
+    extensions.get(0).setAdditionalOptionsImpl(project, module, options);
   }
 
   /**

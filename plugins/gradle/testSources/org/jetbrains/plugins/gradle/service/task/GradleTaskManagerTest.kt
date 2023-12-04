@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.task
 
 import com.intellij.openapi.application.runWriteAction
@@ -24,6 +24,7 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest
+import org.jetbrains.plugins.gradle.tooling.builder.AbstractModelBuilderTest.DistributionLocator
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicReference
@@ -129,6 +130,7 @@ class GradleTaskManagerTest: UsefulTestCase() {
       withPrefix {
         call("wrapper") {
           assign("gradleVersion", gradleVersion.version)
+          assign("distributionUrl" , DistributionLocator().getDistributionFor(gradleVersion).toString())
         }
       }
     }

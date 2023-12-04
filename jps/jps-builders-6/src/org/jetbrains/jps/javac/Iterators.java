@@ -22,7 +22,7 @@ public final class Iterators {
     return iterable == null || iterable instanceof Collection && ((Collection<?>)iterable).isEmpty();
   }
 
-  public static <T> boolean contains(Iterable<? extends T> iterable, T obj) {
+  public static <T> boolean contains(Iterable<? extends T> iterable, @NotNull T obj) {
     if (iterable instanceof Collection) {
       return ((Collection<?>)iterable).contains(obj);
     }
@@ -34,6 +34,17 @@ public final class Iterators {
       }
     }
     return false;
+  }
+
+  public static <T> T find(Iterable<? extends T> iterable, BooleanFunction<? super T> cond) {
+    if (iterable != null) {
+      for (T o : iterable) {
+        if (cond.fun(o)) {
+          return o;
+        }
+      }
+    }
+    return null;
   }
 
   public static <C extends Collection<? super T>, T> C collect(Iterable<? extends T> iterable, C acc) {
@@ -339,6 +350,16 @@ public final class Iterators {
         return processed.add(t);
       }
     });
+  }
+
+  public static <T> Iterable<T> uniqueBy(final Iterable<? extends T> it, final Provider<? extends BooleanFunction<T>> predicateFactory) {
+    return isEmptyCollection(it)? Collections.<T>emptyList() : new Iterable<T>() {
+      @NotNull
+      @Override
+      public Iterator<T> iterator() {
+        return filter(it.iterator(), predicateFactory.get());
+      }
+    };
   }
 
   @SuppressWarnings("unchecked")

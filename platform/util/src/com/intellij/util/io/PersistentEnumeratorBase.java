@@ -436,14 +436,6 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   boolean iterateData(@NotNull AppendableObjectStorage.StorageObjectProcessor<? super Data> processor) throws IOException {
-    lockStorageWrite(); // todo locking in key storage
-    try {
-      myKeyStorage.force();
-    }
-    finally {
-      unlockStorageWrite();
-    }
-
     return myKeyStorage.processAll(processor);
   }
 

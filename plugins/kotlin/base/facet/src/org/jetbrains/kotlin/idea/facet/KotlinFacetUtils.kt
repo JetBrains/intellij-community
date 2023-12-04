@@ -94,13 +94,13 @@ fun IKotlinFacetSettings.initializeIfNeeded(
                 languageLevel?.coerceAtMostVersion(compilerVersion)
             }
 
-            else -> {
-                val maximumValue = getLibraryVersion(
+            else -> run apiLevel@{
+                val maximumValue = getKotlinStdlibVersionOrNull(
                     module,
                     rootModel,
                     this.targetPlatform?.idePlatformKind,
                     coerceRuntimeLibraryVersionToReleased = compilerVersion == null
-                )
+                ) ?: compilerVersion ?: getDefaultVersion()
                 languageLevel?.coerceAtMostVersion(maximumValue)
             }
         }
@@ -199,6 +199,10 @@ fun applyCompilerArgumentsToFacetSettings(
         )
 
         val ignoredAsAdditionalArguments = ignoredFields + hashSetOf(
+            CommonCompilerArguments::fragments.name,
+            CommonCompilerArguments::fragmentRefines.name,
+            CommonCompilerArguments::fragmentSources.name,
+
             K2JVMCompilerArguments::moduleName.name,
             K2JVMCompilerArguments::noReflect.name,
             K2JVMCompilerArguments::noStdlib.name,
@@ -218,8 +222,11 @@ fun applyCompilerArgumentsToFacetSettings(
             K2NativeCompilerArguments::shortModuleName.name,
             K2NativeCompilerArguments::noendorsedlibs.name,
 
+            // These fields can be removed after they will be removed in Kotlin master
             K2JSCompilerArguments::metaInfo.name,
             K2JSCompilerArguments::outputFile.name,
+            K2JSCompilerArguments::outputDir.name,
+            K2JSCompilerArguments::moduleName.name,
         )
 
         fun exposeAsAdditionalArgument(property: KProperty1<CommonCompilerArguments, Any?>) =

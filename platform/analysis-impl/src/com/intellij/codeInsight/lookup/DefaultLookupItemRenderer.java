@@ -8,12 +8,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IconManager;
+import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.SizedIcon;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<?>>{
+public final class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<?>>{
   public static final DefaultLookupItemRenderer INSTANCE = new DefaultLookupItemRenderer();
 
   @Override
@@ -28,9 +29,11 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
 
   public static @Nullable Icon getRawIcon(final LookupElement item) {
     Icon icon = _getRawIcon(item);
-    if (icon instanceof ScalableIcon) icon = ((ScalableIcon)icon).scale(1f);
-    if (icon != null && icon.getIconHeight() > IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight()) {
-      return new SizedIcon(icon, icon.getIconWidth(), IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight());
+    if (icon instanceof ScalableIcon) {
+      icon = ((ScalableIcon)icon).scale(1f);
+    }
+    if (icon != null && icon.getIconHeight() > IconManager.getInstance().getPlatformIcon(PlatformIcons.Class).getIconHeight()) {
+      return new SizedIcon(icon, icon.getIconWidth(), IconManager.getInstance().getPlatformIcon(PlatformIcons.Class).getIconHeight());
     }
     return icon;
   }
@@ -98,5 +101,4 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem<
 
     return name;
   }
-
 }

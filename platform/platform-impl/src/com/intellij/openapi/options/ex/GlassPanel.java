@@ -84,7 +84,7 @@ public final class GlassPanel extends JComponent {
     }
   }
 
-  private @Nullable Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
+  private static @Nullable Area getComponentArea(final JComponent surfaceComponent, final JComponent lightComponent, int offset) {
     if (!lightComponent.isShowing()) return null;
 
     final Point panelPoint = SwingUtilities.convertPoint(lightComponent, new Point(0, 0), surfaceComponent);
@@ -114,11 +114,11 @@ public final class GlassPanel extends JComponent {
                                                 Math.min(height, 30), Math.min(height, 30)));
   }
 
-  private int getComponentHInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+  private static int getComponentHInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
     return isWithBorder ? 7 : isLabelFromTabbedPane ? 20 : 7;
   }
 
-  private int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
+  private static int getComponentVInset(boolean isWithBorder, boolean isLabelFromTabbedPane) {
     return isWithBorder ? 1 : isLabelFromTabbedPane ? 10 : 5;
   }
 

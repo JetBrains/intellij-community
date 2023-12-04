@@ -1858,7 +1858,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
       GroupingKt
       +GroupingKt__GroupingJVMKt
       +GroupingKt__GroupingKt
-      +MapAccessorsKt
+      MapAccessorsKt
       MapsKt
       +MapsKt___MapsJvmKt
       +MapsKt___MapsKt
@@ -1869,10 +1869,10 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
       +SetsKt___SetsKt
       +SetsKt__SetsJVMKt
       +SetsKt__SetsKt
-      +SlidingWindowKt
+      SlidingWindowKt
       +TypeAliasesKt
-      +UArraySortingKt
-      +UCollectionsKt
+      UArraySortingKt
+      UCollectionsKt
       +UCollectionsKt___UCollectionsKt
      +PsiDirectory: comparisons
      +PsiDirectory: concurrent
@@ -1896,7 +1896,6 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      +PsiDirectory: text
      +PsiDirectory: time
      +_Assertions
-     +AllowDifferentMembersInActual
      +BuilderInference
      +ContextFunctionTypeParams
      +DeepRecursiveFunction
@@ -1955,13 +1954,13 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      +WasExperimental
      +ArrayIntrinsicsKt
      +CharCodeJVMKt
-     +CharCodeKt
-     +CompareToKt
-     +DeepRecursiveKt
+     CharCodeKt
+     CompareToKt
+     DeepRecursiveKt
      +ExceptionsKt
      +ExceptionsKt__ExceptionsKt
-     +HashCodeKt
-     +LateinitKt
+     HashCodeKt
+     LateinitKt
      LazyKt
      +LazyKt__LazyJVMKt
      +LazyKt__LazyKt
@@ -1974,24 +1973,24 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      PreconditionsKt
      +PreconditionsKt__AssertionsJVMKt
      +PreconditionsKt__PreconditionsKt
-     +PropertyReferenceDelegatesKt
-     +ResultKt
+     PropertyReferenceDelegatesKt
+     ResultKt
      StandardKt
      +StandardKt__StandardKt
      +StandardKt__SynchronizedKt
-     +SuspendKt
+     SuspendKt
      +ThrowsKt
-     +TuplesKt
+     TuplesKt
      +TypeAliasesKt
-     +UByteArrayKt
-     +UByteKt
-     +UIntArrayKt
-     +UIntKt
-     +ULongArrayKt
-     +ULongKt
-     +UnsignedKt
-     +UNumbersKt
-     +UShortArrayKt
-     +UShortKt
+     UByteArrayKt
+     UByteKt
+     UIntArrayKt
+     UIntKt
+     ULongArrayKt
+     ULongKt
+     UnsignedKt
+     UNumbersKt
+     UShortArrayKt
+     UShortKt
     +PsiDirectory: META-INF
    +PsiDirectory: kotlin-stdlib-common.jar

@@ -74,10 +74,10 @@ public final class ArrangementMatchingRulesPanel extends JPanel implements DataP
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
-  private ArrangementSectionRulesControl createRulesControl(@NotNull Language language,
-                                                            @NotNull ArrangementStandardSettingsManager settingsManager,
-                                                            @NotNull ArrangementColorsProvider colorsProvider,
-                                                            @NotNull ArrangementSectionRulesControl.RepresentationCallback callback) {
+  private static ArrangementSectionRulesControl createRulesControl(@NotNull Language language,
+                                                                   @NotNull ArrangementStandardSettingsManager settingsManager,
+                                                                   @NotNull ArrangementColorsProvider colorsProvider,
+                                                                   @NotNull ArrangementSectionRulesControl.RepresentationCallback callback) {
     return new ArrangementSectionRulesControl(language, settingsManager, colorsProvider, callback);
   }
 

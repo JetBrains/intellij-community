@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
@@ -13,7 +13,21 @@ import org.editorconfig.language.util.EditorConfigPsiTreeUtil.iterateTypedSiblin
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil.iterateTypedSiblingsForward
 import org.editorconfig.language.util.isEquivalentTo
 
-class EditorConfigHeaderUniquenessInspection : LocalInspectionTool() {
+internal fun findDuplicateSection(section: EditorConfigSection): EditorConfigSection? {
+  iterateTypedSiblingsBackward(section) {
+    if (it !== section && it.header isEquivalentTo section.header) {
+      return it
+    }
+  }
+  iterateTypedSiblingsForward(section) {
+    if (it !== section && it.header isEquivalentTo section.header) {
+      return it
+    }
+  }
+  return null
+}
+
+internal class EditorConfigHeaderUniquenessInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
       val section = header.section
@@ -32,19 +46,4 @@ class EditorConfigHeaderUniquenessInspection : LocalInspectionTool() {
     }
   }
 
-  companion object {
-    fun findDuplicateSection(section: EditorConfigSection): EditorConfigSection? {
-      iterateTypedSiblingsBackward(section) {
-        if (it !== section && it.header isEquivalentTo section.header) {
-          return it
-        }
-      }
-      iterateTypedSiblingsForward(section) {
-        if (it !== section && it.header isEquivalentTo section.header) {
-          return it
-        }
-      }
-      return null
-    }
-  }
 }

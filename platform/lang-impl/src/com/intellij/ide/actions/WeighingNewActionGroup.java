@@ -12,7 +12,7 @@ public class WeighingNewActionGroup extends WeighingActionGroup implements DumbA
   private ActionGroup myDelegate;
 
   @Override
-  protected ActionGroup getDelegate() {
+  public ActionGroup getDelegate() {
     if (myDelegate == null) {
       myDelegate = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_NEW);
     }

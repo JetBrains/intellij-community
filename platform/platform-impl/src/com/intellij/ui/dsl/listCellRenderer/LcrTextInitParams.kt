@@ -9,7 +9,7 @@ import java.awt.Font
 import javax.swing.UIManager
 
 @ApiStatus.Experimental
-class LcrTextInitParams internal constructor(foreground: Color) : LcrInitParams() {
+class LcrTextInitParams(foreground: Color) : LcrInitParams() {
 
   /**
    * A grey text, that is usually used for non-primary information in renderers

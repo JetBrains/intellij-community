@@ -284,7 +284,7 @@ object KotlinPositionContextDetector {
                 )
             }
 
-            nameExpression.isImportExpressionInsidePackageDirective() -> {
+            nameExpression.isNameExpressionInsidePackageDirective() -> {
                 KotlinPackageDirectivePositionContext(
                     position,
                     reference,
@@ -336,22 +336,16 @@ object KotlinPositionContextDetector {
         return whenExpression.subjectExpression
     }
 
-    private fun KtExpression.isReferenceExpressionInImportDirective() = when (val parent = parent) {
+    private tailrec fun KtExpression.isReferenceExpressionInImportDirective(): Boolean = when (val parent = parent) {
         is KtImportDirective -> parent.importedReference == this
-        is KtDotQualifiedExpression -> {
-            val importDirective = parent.parent as? KtImportDirective
-            importDirective?.importedReference == parent
-        }
+        is KtDotQualifiedExpression -> parent.isReferenceExpressionInImportDirective()
 
         else -> false
     }
 
-    private fun KtExpression.isImportExpressionInsidePackageDirective() = when (val parent = parent) {
+    private tailrec fun KtExpression.isNameExpressionInsidePackageDirective(): Boolean = when (val parent = parent) {
         is KtPackageDirective -> parent.packageNameExpression == this
-        is KtDotQualifiedExpression -> {
-            val packageDirective = parent.parent as? KtPackageDirective
-            packageDirective?.packageNameExpression == parent
-        }
+        is KtDotQualifiedExpression -> parent.isNameExpressionInsidePackageDirective()
 
         else -> false
     }

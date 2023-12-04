@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -9,16 +10,17 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.buildtool.MavenEventHandler
+import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
-import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import java.io.File
+import java.io.Serializable
 import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
@@ -53,10 +55,10 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   suspend fun resolveProject(files: Collection<VirtualFile>,
                              explicitProfiles: MavenExplicitProfiles,
                              progressReporter: RawProgressReporter,
-                             syncConsole: MavenSyncConsole?,
-                             console: MavenConsole?,
+                             eventHandler: MavenEventHandler,
                              workspaceMap: MavenWorkspaceMap?,
-                             updateSnapshots: Boolean): Collection<MavenServerExecutionResult> {
+                             updateSnapshots: Boolean,
+                             userProperties: Properties): Collection<MavenServerExecutionResult> {
     val transformer = if (files.isEmpty()) RemotePathTransformerFactory.Transformer.ID
     else RemotePathTransformerFactory.createForProject(project)
     val ioFiles = files.map { file: VirtualFile -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
@@ -66,11 +68,12 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       explicitProfiles.enabledProfiles,
       explicitProfiles.disabledProfiles,
       serverWorkspaceMap,
-      updateSnapshots
+      updateSnapshots,
+      userProperties
     )
     val results = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
-      progressReporter, syncConsole, console)
+      progressReporter, eventHandler)
     if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
       for (result in results) {
         val data = result.projectData ?: continue
@@ -96,17 +99,26 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   fun resolve(info: MavenArtifactInfo, remoteRepositories: List<MavenRemoteRepository>): MavenArtifact {
     val requests = listOf(MavenArtifactResolutionRequest(info, ArrayList(remoteRepositories)))
-    return resolveArtifacts(requests, null, null, null)[0]
+    return runBlockingMaybeCancellable { resolveArtifacts(requests, null, MavenLogEventHandler)[0] }
   }
 
+  @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifacts(requests, indicator, syncConsole)}",
+              ReplaceWith("resolveArtifacts(requests, indicator, syncConsole)"))
   @Throws(MavenProcessCanceledException::class)
   fun resolveArtifacts(requests: Collection<MavenArtifactResolutionRequest>,
                        indicator: ProgressIndicator?,
                        syncConsole: MavenSyncConsole?,
                        console: MavenConsole?): List<MavenArtifact> {
-    return runLongRunningTaskBlocking(
+    return runBlockingMaybeCancellable { resolveArtifacts(requests, null, syncConsole ?: MavenLogEventHandler) }
+  }
+
+  @Throws(MavenProcessCanceledException::class)
+  suspend fun resolveArtifacts(requests: Collection<MavenArtifactResolutionRequest>,
+                               progressReporter: RawProgressReporter?,
+                               eventHandler: MavenEventHandler): List<MavenArtifact> {
+    return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, ArrayList(requests), ourToken) },
-      indicator, syncConsole, console)
+      progressReporter, eventHandler)
   }
 
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifactTransitively()}")
@@ -128,9 +140,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   suspend fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
                              progressReporter: RawProgressReporter?,
-                             syncConsole: MavenSyncConsole?,
-                             forceUpdateSnapshots: Boolean,
-                             console: MavenConsole?): List<PluginResolutionResponse> {
+                             eventHandler: MavenEventHandler,
+                             forceUpdateSnapshots: Boolean): List<PluginResolutionResponse> {
     val pluginResolutionRequests = ArrayList<PluginResolutionRequest>()
     for (mavenPluginRequest in mavenPluginRequests) {
       val mavenPluginId = mavenPluginRequest.first
@@ -147,7 +158,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       LongRunningEmbedderTask { embedder, taskId ->
         embedder.resolvePlugins(taskId, pluginResolutionRequests, forceUpdateSnapshots, ourToken)
       },
-      progressReporter, syncConsole, console)
+      progressReporter, eventHandler)
   }
 
   @Throws(MavenProcessCanceledException::class)
@@ -156,26 +167,24 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                     forceUpdateSnapshots: Boolean): Collection<MavenArtifact> {
     val mavenId = plugin.mavenId
     return runBlockingMaybeCancellable {
-      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, null, forceUpdateSnapshots, null)
+      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, MavenLogEventHandler, forceUpdateSnapshots)
         .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.artifacts }.toSet()
     }
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun readModel(file: File?): MavenModel {
+  fun readModel(file: File?): MavenModel? {
     return performCancelable<MavenModel, RuntimeException> { getOrCreateWrappee().readModel(file, ourToken) }
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun executeGoal(requests: Collection<MavenGoalExecutionRequest?>,
-                  goal: String,
-                  progressIndicator: MavenProgressIndicator?,
-                  console: MavenConsole?): List<MavenGoalExecutionResult> {
-    val indicator = progressIndicator?.indicator
-    val syncConsole = progressIndicator?.syncConsole
-    return runLongRunningTaskBlocking(
+  suspend fun executeGoal(requests: Collection<MavenGoalExecutionRequest?>,
+                          goal: String,
+                          progressReporter: RawProgressReporter,
+                          eventHandler: MavenEventHandler): List<MavenGoalExecutionResult> {
+    return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.executeGoal(taskId, ArrayList(requests), goal, ourToken) },
-      indicator, syncConsole, console)
+      progressReporter, eventHandler)
   }
 
   fun resolveRepositories(repositories: Collection<MavenRemoteRepository?>): Set<MavenRemoteRepository> {
@@ -223,55 +232,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   fun clearCachesFor(projectId: MavenId?) {
   }
 
-  @ApiStatus.Obsolete
-  @Throws(MavenProcessCanceledException::class)
-  private fun <R> runLongRunningTaskBlocking(task: LongRunningEmbedderTask<R>,
-                                             indicator: ProgressIndicator?,
-                                             syncConsole: MavenSyncConsole?,
-                                             console: MavenConsole?): R {
-    val longRunningTaskId = UUID.randomUUID().toString()
-    val embedder = getOrCreateWrappee()
-
-    @Suppress("RAW_RUN_BLOCKING")
-    return runBlocking {
-      val progressIndication = launch {
-        while (isActive) {
-          delay(500)
-          blockingContext {
-            val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-            indicator?.fraction = status.fraction()
-            console?.handleConsoleEvents(status.consoleEvents())
-            syncConsole?.handleDownloadEvents(status.downloadEvents())
-            if (null != indicator && indicator.isCanceled) {
-              if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
-                throw CancellationException()
-              }
-            }
-          }
-        }
-      }
-
-      try {
-        withContext(Dispatchers.IO) {
-          blockingContext {
-            task.run(embedder, longRunningTaskId)
-          }
-        }
-      }
-      catch (e: Exception) {
-        throw MavenProcessCanceledException(e)
-      }
-      finally {
-        progressIndication.cancelAndJoin()
-      }
-    }
-  }
-
-  @Throws(MavenProcessCanceledException::class)
-  private suspend fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
-                                             progressReporter: RawProgressReporter?,
-                                             syncConsole: MavenSyncConsole?,
-                                             console: MavenConsole?): R {
+  private suspend fun <R : Serializable> runLongRunningTask(task: LongRunningEmbedderTask<R>,
+                                                            progressReporter: RawProgressReporter?,
+                                                            eventHandler: MavenEventHandler): R {
     val longRunningTaskId = UUID.randomUUID().toString()
     val embedder = getOrCreateWrappee()
 
@@ -282,8 +245,8 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
           blockingContext {
             val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
             progressReporter?.fraction(status.fraction())
-            console?.handleConsoleEvents(status.consoleEvents())
-            syncConsole?.handleDownloadEvents(status.downloadEvents())
+            eventHandler.handleConsoleEvents(status.consoleEvents())
+            eventHandler.handleDownloadEvents(status.downloadEvents())
           }
         }
       }
@@ -302,12 +265,16 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       try {
         withContext(Dispatchers.IO) {
           blockingContext {
-            task.run(embedder, longRunningTaskId)
+            val response = task.run(embedder, longRunningTaskId)
+            val status = response.status
+            eventHandler.handleConsoleEvents(status.consoleEvents())
+            eventHandler.handleDownloadEvents(status.downloadEvents())
+            response.result
           }
         }
       }
       catch (e: Exception) {
-        throw MavenProcessCanceledException(e)
+        throw ProcessCanceledException(e)
       }
       finally {
         progressIndication.cancelAndJoin()
@@ -315,8 +282,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
   }
 
-  protected fun interface LongRunningEmbedderTask<R> {
-    @Throws(RemoteException::class, MavenServerProcessCanceledException::class)
-    fun run(embedder: MavenServerEmbedder, longRunningTaskId: String): R
+  protected fun interface LongRunningEmbedderTask<R : Serializable> {
+    fun run(embedder: MavenServerEmbedder, longRunningTaskId: String): MavenServerResponse<R>
   }
 }

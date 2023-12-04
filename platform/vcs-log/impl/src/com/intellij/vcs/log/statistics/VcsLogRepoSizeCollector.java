@@ -71,7 +71,7 @@ public @NonNls class VcsLogRepoSizeCollector extends ProjectUsagesCollector {
     return Collections.emptySet();
   }
 
-  static @NotNull String getVcsKeySafe(@NotNull VcsKey vcs) {
+  public static @NotNull String getVcsKeySafe(@NotNull VcsKey vcs) {
     if (PluginInfoDetectorKt.getPluginInfo(vcs.getClass()).isDevelopedByJetBrains()) {
       return UsageDescriptorKeyValidator.ensureProperKey(StringUtil.toLowerCase(vcs.getName()));
     }

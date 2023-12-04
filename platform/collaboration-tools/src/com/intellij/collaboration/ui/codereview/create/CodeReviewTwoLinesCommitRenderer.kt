@@ -19,6 +19,9 @@ import java.awt.Rectangle
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
+/**
+ * use [CodeReviewCreateReviewUIUtil.createCommitListCellRenderer] instead
+ */
 @ApiStatus.Internal
 class CodeReviewTwoLinesCommitRenderer : ListCellRenderer<VcsCommitMetadata>, BorderLayoutPanel() {
   private val nodeComponent: MyCommitNodeComponent = MyCommitNodeComponent().apply {

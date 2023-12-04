@@ -11,7 +11,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Handler, extending IDE behaviour on typing in editor.
+ * Handler, extending IDE behavior on typing in the editor.
  * <p>
  * Note that {@code PsiFile} passed to handler's methods isn't guaranteed to be in sync with the document at the time of invocation, for performance reasons.
  * Heavy/expensive methods should not be called there because they would lead to freezes on typing.
@@ -40,7 +40,7 @@ public abstract class TypedHandlerDelegate {
   /**
    * Called before starting processing the user input. It can be used to determine individual character input because other methods
    *   may be called multiple times (for each caret individually).
-   * This method is called once regardless how many carets exist in the editor.
+   * This method is called once regardless of how many carets exist in the editor.
    */
   public void newTypingStarted(char c, @NotNull Editor editor, @NotNull DataContext context) {
   }

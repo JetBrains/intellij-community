@@ -11,9 +11,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.data.index.*
-import com.intellij.vcs.log.impl.VcsLogSharedSettings
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
@@ -29,12 +27,12 @@ class ResumeIndexingAction : DumbAwareAction() {
 
     val data = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: project.serviceIfCreated<VcsProjectLog>()?.dataManager
     val index = data?.index as? VcsLogModifiableIndex
-    if (data == null || !VcsLogSharedSettings.isIndexSwitchedOn(project) || index == null) {
+    if (data == null || index == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
 
-    if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
+    if (!project.isIndexingEnabled) {
       val availableIndexers = VcsLogPersistentIndex.getAvailableIndexers(data.logProviders)
       if (availableIndexers.isEmpty()) {
         e.presentation.isEnabledAndVisible = false
@@ -95,17 +93,7 @@ class ResumeIndexingAction : DumbAwareAction() {
     val project = e.project ?: return
 
     val data = e.getData(VcsLogInternalDataKeys.LOG_DATA) ?: VcsProjectLog.getInstance(project).dataManager ?: return
-
-    if (!VcsLogData.isIndexSwitchedOnInRegistry()) {
-      val rootsForIndexing = VcsLogPersistentIndex.getAvailableIndexers(data.logProviders).keys
-      rootsForIndexing.forEach { VcsLogBigRepositoriesList.getInstance().removeRepository(it) }
-      VcsLogData.getIndexingRegistryValue().setValue(true)
-    }
-
-    val index = data.index as? VcsLogModifiableIndex ?: return
-    if (index.indexingRoots.isEmpty()) return
-
-    index.toggleIndexing()
+    data.toggleIndexing()
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT

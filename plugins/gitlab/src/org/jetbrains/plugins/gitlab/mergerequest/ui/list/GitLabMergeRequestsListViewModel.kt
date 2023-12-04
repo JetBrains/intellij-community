@@ -6,7 +6,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.codereview.list.ReviewListViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi

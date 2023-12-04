@@ -4,6 +4,8 @@
 
 package com.intellij.ui
 
+import com.intellij.codeInsight.intention.IntentionActionProvider
+import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.openapi.Disposable
@@ -14,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -22,6 +25,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
@@ -29,7 +33,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
-import com.intellij.util.namedChildScope
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -43,10 +47,11 @@ import java.util.function.BiFunction
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.milliseconds
 
-private val EDITOR_NOTIFICATION_PROVIDER =
-  Key.create<MutableMap<Class<EditorNotificationProvider>, JComponent>>("editor.notification.provider")
+private val EDITOR_NOTIFICATION_PROVIDER: Key<MutableMap<Class<EditorNotificationProvider>, JComponent>> =
+  Key.create("editor.notification.provider")
 
-private val PENDING_UPDATE = Key.create<Boolean>("pending.notification.update")
+private val PENDING_UPDATE: Key<Boolean> = Key.create("pending.notification.update")
+private val FILE_LEVEL_INTENTIONS: Key<List<IntentionActionWithOptions>> = Key.create("file.level.intentions")
 
 class EditorNotificationsImpl(private val project: Project,
                               coroutineScope: CoroutineScope) : EditorNotifications(), Disposable {
@@ -283,6 +288,19 @@ class EditorNotificationsImpl(private val project: Project,
         fileEditor.putUserData(EDITOR_NOTIFICATION_PROVIDER, mutableMapOf(providerClass to component))
       }
     }
+    collectIntentionActions(fileEditor, project)
+  }
+
+  private fun collectIntentionActions(fileEditor: FileEditor, project: Project) {
+    val fileEditorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return
+    val components = fileEditorManager.getTopComponents(fileEditor)
+    val intentions: List<IntentionActionWithOptions> = components.filterIsInstance(IntentionActionProvider::class.java)
+      .mapNotNull { it.intentionAction }
+    fileEditor.putUserData(FILE_LEVEL_INTENTIONS, ContainerUtil.unmodifiableOrEmptyList(intentions))
+  }
+
+  override fun getStoredFileLevelIntentions(fileEditor: FileEditor) : List<IntentionActionWithOptions> {
+    return fileEditor.getUserData(FILE_LEVEL_INTENTIONS) ?: emptyList()
   }
 
   override fun updateAllNotifications() {

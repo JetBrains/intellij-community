@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="assertJ" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.assertj:assertj-core:3.24.2">
+    <properties maven-id="org.assertj:assertj-core:3.24.2">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.24.2/assertj-core-3.24.2.jar">
           <sha256sum>df3d0b348f1fe806bdddcb10fa4ae63c6679e9888d4bc7055f09848517976aa3</sha256sum>

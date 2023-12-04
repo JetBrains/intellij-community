@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.ParsingDiagnostics;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor;
@@ -42,11 +43,12 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
       flavour = MarkdownParserManager.FLAVOUR;
     }
 
+    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, getLanguage(), chars);
+
+    var startTime = System.nanoTime();
     final var parser = new MarkdownParser(flavour, true);
     final var nodeType = MarkdownElementType.markdownType(chameleon.getElementType());
     final var node = parser.parseInline(nodeType, chars, 0, chars.length());
-
-    final PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, lexer, getLanguage(), chars);
 
     PsiBuilder.Marker rootMarker = builder.mark();
 
@@ -59,7 +61,7 @@ public class MarkdownLazyElementType extends ILazyParseableElementType {
     final var tree = builder.getTreeBuilt();
     final var actualElement = tree.getFirstChildNode().getFirstChildNode();
 
-    //System.out.println("Expanded tree:\n" + DebugKt.astToString(tree));
+    ParsingDiagnostics.registerParse(builder, getLanguage(), System.nanoTime() - startTime);
 
     return actualElement;
   }

@@ -74,7 +74,7 @@ class OverflowSemaphoreTest {
 
   @ParameterizedTest
   @ArgumentsSource(ConcurrencyArguments::class)
-  @Suppress("INVISIBLE_MEMBER")
+  @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
   fun concurrency(overflow: BufferOverflow, concurrency: Int) {
     val semaphore = OverflowSemaphore(concurrency, overflow)
     val counter = AtomicInteger()

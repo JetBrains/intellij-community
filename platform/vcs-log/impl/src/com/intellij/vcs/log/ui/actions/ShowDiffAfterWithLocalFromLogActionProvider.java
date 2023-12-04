@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.table.VcsLogCommitSelectionUtils;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +40,7 @@ public class ShowDiffAfterWithLocalFromLogActionProvider implements AnActionExte
       return;
     }
 
-    if (selection.getSize() != 1) {
+    if (VcsLogCommitSelectionUtils.getSize(selection) != 1) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

@@ -42,6 +42,6 @@ class SearchEverywhereSemanticExperiments {
       )
     )
 
-    fun getInstance() = service<SearchEverywhereSemanticExperiments>()
+    fun getInstance(): SearchEverywhereSemanticExperiments = service()
   }
 }

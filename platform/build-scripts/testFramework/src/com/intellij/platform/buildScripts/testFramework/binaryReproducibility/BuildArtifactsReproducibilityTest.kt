@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.NioFiles
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.reproducibleBuilds.diffTool.FileTreeContentComparison
 import java.nio.file.Files
 import java.nio.file.Path
@@ -77,7 +76,7 @@ internal class BuildArtifactsReproducibilityTest {
   }
 
   private fun report(result: FileTreeContentComparison.ComparisonResult, reportDirectory: Path, context: BuildContext) {
-    val report = context.applicationInfo.productName
+    val report = context.applicationInfo.fullProductName
       .replace(" ", "-")
       .plus("-compared-files.txt")
       .let(reportDirectory::resolve)

@@ -785,7 +785,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       int sideBorders = 0;
 
       if (ExperimentalUI.isNewUI() && ComboBoxPopup.isRendererWithInsets(comboBox.getRenderer())) {
-        scroller.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
+        scroller.setViewportBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
         scroller.setBackground(UIManager.getColor("ComboBox.background"));
         scroller.getVerticalScrollBar().setBackground(UIManager.getColor("ComboBox.background"));
         sideBorders = 10;

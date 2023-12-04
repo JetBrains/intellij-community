@@ -8,10 +8,11 @@ import java.util.*
  * Represents a listener for name changes of Project
  */
 interface ProjectNameListener: EventListener {
-  fun  nameChanged(newName: String)
+  fun nameChanged(newName: String?)
 
   companion object {
     @Topic.ProjectLevel
-    val TOPIC = Topic(ProjectNameListener::class.java)
+    @JvmField
+    val TOPIC: Topic<ProjectNameListener> = Topic(ProjectNameListener::class.java, Topic.BroadcastDirection.NONE)
   }
 }

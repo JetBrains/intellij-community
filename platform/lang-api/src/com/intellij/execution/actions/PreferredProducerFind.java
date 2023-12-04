@@ -13,6 +13,7 @@ import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +57,9 @@ final class PreferredProducerFind {
   }
 
   private static List<RuntimeConfigurationProducer> findAllProducers(Location location, ConfigurationContext context) {
-    final ArrayList<RuntimeConfigurationProducer> producers = new ArrayList<>();
-    for (final RuntimeConfigurationProducer prototype : RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER.getExtensionList()) {
+    final ArrayList<RuntimeConfigurationProducer> result = new ArrayList<>();
+    List<RuntimeConfigurationProducer> producers = RuntimeConfigurationProducer.RUNTIME_CONFIGURATION_PRODUCER.getExtensionList();
+    for (final RuntimeConfigurationProducer prototype : DumbService.getInstance(context.getProject()).filterByDumbAwareness(producers)) {
       final RuntimeConfigurationProducer producer;
       try {
         producer = prototype.createProducer(location, context);
@@ -72,10 +74,10 @@ final class PreferredProducerFind {
 
       if (producer.getConfiguration() != null) {
         LOG.assertTrue(producer.getSourceElement() != null, producer);
-        producers.add(producer);
+        result.add(producer);
       }
     }
-    return producers;
+    return result;
   }
 
   /**

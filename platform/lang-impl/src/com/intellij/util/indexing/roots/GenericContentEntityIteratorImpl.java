@@ -18,7 +18,7 @@ public final class GenericContentEntityIteratorImpl extends RootHolderIteratorBa
     super(entityReference, roots, presentation != null
                                   ? presentation
                                   : IndexableIteratorPresentation.create(
-                                    "Module unaware content roots from entity (" + roots.getRootsDebugStr() + ")",
+                                    "Module unaware content roots from entity (" + roots.getDebugDescription() + ")",
                                     IndexingBundle.message("indexable.files.provider.indexing.content"),
                                     IndexingBundle.message("indexable.files.provider.scanning.content")));
   }

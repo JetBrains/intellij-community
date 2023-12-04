@@ -4,10 +4,12 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.util.containers.UnmodifiableHashMap
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import kotlinx.collections.immutable.*
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.*
@@ -21,6 +23,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicReference
 
@@ -34,7 +37,7 @@ class BuildContextImpl(
 ) : BuildContext, CompilationContext by compilationContext {
   private val distFiles = ConcurrentLinkedQueue<DistFile>()
 
-  private val extraExecutablePatterns = AtomicReference<PersistentMap<OsFamily, PersistentList<String>>>(persistentHashMapOf())
+  private val extraExecutablePatterns = AtomicReference<UnmodifiableHashMap<OsFamily, PersistentList<String>>>(UnmodifiableHashMap.empty())
 
   override val fullBuildNumber: String
     get() = "${applicationInfo.productCode}-$buildNumber"
@@ -47,7 +50,7 @@ class BuildContextImpl(
   override val xBootClassPathJarNames: List<String>
     get() = productProperties.xBootClassPathJarNames
 
-  override var bootClassPathJarNames: List<String> = java.util.List.of("util.jar", "util_rt.jar")
+  override var bootClassPathJarNames: List<String> = java.util.List.of(PLATFORM_LOADER_JAR)
   
   override val ideMainClassName: String
     get() = if (useModularLoader) "com.intellij.platform.runtime.loader.IntellijLoader" else productProperties.mainClassName
@@ -77,14 +80,16 @@ class BuildContextImpl(
     options.buildStepsToSkip.addAll(productProperties.incompatibleBuildSteps)
     if (!options.buildStepsToSkip.isEmpty()) {
       Span.current().addEvent("build steps to be skipped", Attributes.of(
-        AttributeKey.stringArrayKey("stepsToSkip"), options.buildStepsToSkip.toImmutableList()
+        AttributeKey.stringArrayKey("stepsToSkip"), java.util.List.copyOf(options.buildStepsToSkip)
       ))
     }
   }
 
   companion object {
+    @Suppress("DeprecatedCallableAddReplaceWith")
     @JvmStatic
     @JvmOverloads
+    @Deprecated("Use createContext")
     fun createContextBlocking(communityHome: BuildDependenciesCommunityRoot,
                               projectHome: Path,
                               productProperties: ProductProperties,
@@ -94,6 +99,7 @@ class BuildContextImpl(
         createContext(communityHome = communityHome,
                       projectHome = projectHome,
                       productProperties = productProperties,
+                      setupTracer = true,
                       proprietaryBuildTools = proprietaryBuildTools,
                       options = options)
       }
@@ -102,13 +108,16 @@ class BuildContextImpl(
     suspend fun createContext(communityHome: BuildDependenciesCommunityRoot,
                               projectHome: Path,
                               productProperties: ProductProperties,
+                              setupTracer: Boolean = true,
                               proprietaryBuildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
                               options: BuildOptions = BuildOptions()): BuildContext {
       val compilationContext = CompilationContextImpl.createCompilationContext(
         communityHome = communityHome,
         projectHome = projectHome,
-        setupTracer = true,
-        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome, productProperties, options),
+        setupTracer = setupTracer,
+        buildOutputRootEvaluator = createBuildOutputRootEvaluator(projectHome = projectHome,
+                                                                  productProperties = productProperties,
+                                                                  buildOptions = options),
         options = options,
       )
       return createContext(compilationContext = compilationContext,
@@ -208,7 +217,7 @@ class BuildContextImpl(
     return shouldBuildDistributions() && options.targetOs.contains(os) && (options.targetArch == null || options.targetArch == arch)
   }
 
-  override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext {
+  override fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean): BuildContext {
     val projectHomeForCustomizersAsString = FileUtilRt.toSystemIndependentName(projectHomeForCustomizers.toString())
     val options = BuildOptions(compressZipFiles = this.options.compressZipFiles)
     options.useCompiledClassesFromProjectOutput = this.options.useCompiledClassesFromProjectOutput
@@ -228,17 +237,19 @@ class BuildContextImpl(
       macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizersAsString),
       proprietaryBuildTools = proprietaryBuildTools,
     )
-    @Suppress("DEPRECATION") val productCode = productProperties.productCode
-    copy.paths.artifactDir = paths.artifactDir.resolve(productCode!!)
-    copy.paths.artifacts = "${paths.artifacts}/$productCode"
-    copy.compilationContext.prepareForBuild()
+    if (prepareForBuild) {
+      @Suppress("DEPRECATION") val productCode = productProperties.productCode
+      copy.paths.artifactDir = paths.artifactDir.resolve(productCode!!)
+      copy.paths.artifacts = "${paths.artifacts}/$productCode"
+      copy.compilationContext.prepareForBuild()
+    }
     return copy
   }
 
   override fun includeBreakGenLibraries() = isJavaSupportedInProduct
 
   private val isJavaSupportedInProduct: Boolean
-    get() = productProperties.productLayout.bundledPluginModules.contains("intellij.java.plugin")
+    get() = productProperties.productLayout.bundledPluginModules.contains(JavaPluginLayout.MAIN_MODULE_NAME)
 
   override fun patchInspectScript(path: Path) {
     //todo use placeholder in inspect.sh/inspect.bat file instead
@@ -299,16 +310,31 @@ class BuildContextImpl(
 
   override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
     extraExecutablePatterns.updateAndGet { prev ->
-      prev.put(os, (prev.get(os) ?: persistentListOf()).add(pattern))
+      prev.with(os, (prev.get(os) ?: persistentListOf()).add(pattern))
     }
   }
 
   override fun getExtraExecutablePattern(os: OsFamily): List<String> = extraExecutablePatterns.get().get(os) ?: emptyList()
 
   override suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean) {
-    jarCacheManager.computeIfAbsent(sources = sources, targetFile = targetFile, nativeFiles = null, span = Span.current()) {
-      buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
-    }
+    jarCacheManager.computeIfAbsent(
+      sources = sources,
+      targetFile = targetFile,
+      nativeFiles = null,
+      span = Span.current(),
+      producer = object : SourceBuilder {
+        override val useCacheAsTargetFile: Boolean
+          get() = false
+
+        override fun updateDigest(digest: MessageDigest) {
+          digest.update(Byte.MIN_VALUE)
+        }
+
+        override suspend fun produce() {
+          buildJar(targetFile = targetFile, sources = sources, compress = compress, notify = false)
+        }
+      },
+    )
   }
 }
 

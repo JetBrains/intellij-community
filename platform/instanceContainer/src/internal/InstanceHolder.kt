@@ -36,5 +36,5 @@ sealed interface InstanceHolder {
    */
   suspend fun getInstance(keyClass: Class<*>?): Any
 
-  suspend fun getInstanceInCallerDispatcher(keyClass: Class<*>?): Any
+  suspend fun getInstanceInCallerContext(keyClass: Class<*>?): Any
 }

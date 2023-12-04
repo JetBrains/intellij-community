@@ -34,12 +34,6 @@ internal class ModuleLibraryFileEntry(override val path: Path,
                                       override val libraryFile: Path?,
                                       override val size: Int,
                                       override val hash: Long) : DistributionFileEntry, LibraryFileEntry {
-  init {
-    if (hash == 0L) {
-      var f = 3
-    }
-  }
-
   override val type: String
     get() = "module-library-file"
 

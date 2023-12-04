@@ -29,6 +29,8 @@
       "playLast.svg": "actions/play_last.svg",
       "preview.svg": "actions/preview.svg",
       "profileCPU.svg": "actions/profileCPU.svg",
+      "profileMemory.svg": "actions/profileMemory.svg",
+      "profileRed.svg": "actions/profileRed.svg",
       "projectDirectory.svg": "actions/projectDirectory.svg",
       "runAll.svg": "actions/runAll.svg",
       "reformatCode.svg": "actions/reformatCode.svg",
@@ -41,6 +43,7 @@
       "swapPanels.svg": "actions/swapPanels.svg",
       "synchronizeScrolling.svg": "actions/synchronizeScrolling.svg",
       "showImportStatements.svg": "actions/showImportStatements.svg",
+      "suggestedRefactoringBulb.svg": "actions/suggestedRefactoringBulb.svg",
       "toggleVisibility.svg": "actions/toggleVisibility.svg",
       "undeploy.svg": "nodes/undeploy.svg"
     },
@@ -95,12 +98,28 @@
     },
     "codeWithMe": {
       "cwmAccess.svg": "codeWithMe/cwmAccess.svg",
+      "cwmCamAvatarOff.svg": "codeWithMe/cwmCamAvatarOff.svg",
+      "cwmCamAvatarOn.svg": "codeWithMe/cwmCamAvatarOn.svg",
+      "cwmCamOff.svg": "codeWithMe/cwmCamOff.svg",
+      "cwmCamOn.svg": "codeWithMe/cwmCamOn.svg",
       "cwmDisableCall.svg": "codeWithMe/cwmDisableCall.svg",
       "cwmEnableCall.svg": "codeWithMe/cwmEnableCall.svg",
       "cwmIconModificator.svg": "codeWithMe/cwmIconModificator.svg",
       "cwmIconModificatorMenu.svg": "codeWithMe/cwmIconModificatorMenu.svg",
       "cwmInvite.svg": "codeWithMe/cwmInvite.svg",
-      "cwmUsers.svg": "users.svg"
+      "cwmMicAvatarOff.svg": "codeWithMe/cwmMicAvatarOff.svg",
+      "cwmMicAvatarOn.svg": "codeWithMe/cwmMicAvatarOn.svg",
+      "cwmMicOff.svg": "codeWithMe/cwmMicOff.svg",
+      "cwmMicOn.svg": "codeWithMe/cwmMicOn.svg",
+      "cwmPermissionEdit.svg": "codeWithMe/cwmPermissionEdit.svg",
+      "cwmPermissionFull.svg": "codeWithMe/cwmPermissionFull.svg",
+      "cwmPermissionView.svg": "codeWithMe/cwmPermissionView.svg",
+      "cwmPermissions.svg": "codeWithMe/cwmPermissions.svg",
+      "cwmScreenOff.svg": "codeWithMe/cwmScreenOff.svg",
+      "cwmScreenOn.svg": "codeWithMe/cwmScreenOn.svg",
+      "cwmPermissionsGranted.svg": "codeWithMe/cwmPermissionsGranted.svg",
+      "cwmUsers.svg": "users.svg",
+      "cwmVerified.svg": "codeWithMe/cwmVerified.svg"
     },
     "debugger": {
       "addToWatch.svg": "debugger/addToWatch.svg",
@@ -195,6 +214,7 @@
       "jspx.svg": "fileTypes/jspx.svg",
       "less.svg": "icons/less.svg",
       "manifest.svg": "fileTypes/manifest.svg",
+      "microsoftWindows.svg": "fileTypes/microsoftWindows.svg",
       "modified.svg": "general/modified.svg",
       "patch.svg": "vcs/patch_file.svg",
       "properties.svg": "fileTypes/properties.svg",
@@ -374,6 +394,7 @@
       "undo.svg": "actions/undo.svg",
       "save.svg": "actions/menu-saveall.svg",
       "print.svg": "general/print.svg",
+      "projectConfigurable.svg": "general/projectConfigurable.svg",
       "projectWideAnalysisOff.svg": "actions/projectWideAnalysisOff.svg",
       "projectWideAnalysisOn.svg": "actions/projectWideAnalysisOn.svg",
       "softWrap.svg": "actions/toggleSoftWrap.svg",
@@ -425,7 +446,10 @@
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
       "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg",
-      "localScope.svg": ["ide/localScope.svg", "ide/localScopeAction.svg"]
+      "localScope.svg": [
+        "ide/localScope.svg",
+        "ide/localScopeAction.svg"
+      ]
     },
     "image": {
       "actualZoom.svg": "graph/actualZoom.svg",
@@ -718,13 +742,23 @@
     "status": {
       "error.svg": [
         "general/balloonError.svg",
-        "ide/fatalError.svg"
+        "ide/fatalError.svg",
+        "general/error.svg"
       ],
       "errorOutline.svg": "ide/fatalError-read.svg",
       "failedInProgress.svg": "status/failedInProgress.svg",
-      "info.svg": "general/balloonInformation.svg",
-      "infoOutline.svg": "general/showInfos.svg",
-      "warning.svg": "general/balloonWarning.svg",
+      "info.svg": [
+        "general/balloonInformation.svg",
+        "general/information.svg"
+      ],
+      "infoOutline.svg": [
+        "general/showInfos.svg",
+        "general/note.svg"
+      ],
+      "warning.svg": [
+        "general/balloonWarning.svg",
+        "general/warning.svg"
+      ],
       "warningOutline.svg": "general/showWarning.svg"
     },
     "table": {
@@ -809,6 +843,9 @@
       "createNewProjectTab.svg": "welcome/createNewProjectTab.svg",
       "fromVCSTab.svg": "welcome/fromVCSTab.svg",
       "open.svg": "welcome/open.svg"
+    },
+    "ultimate": {
+      "lock.svg": "ultimate/lock.svg"
     }
   }
 }

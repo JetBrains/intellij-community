@@ -10,6 +10,9 @@ import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.div
+import kotlin.io.path.exists
 
 abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
     override fun isFirPlugin() = true
@@ -27,6 +30,14 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
             { project.invalidateCaches() },
             { super.tearDown() }
         )
+    }
+
+    override fun getAfterTestDataAbsolutePath(mainFileName: String): Path {
+        val k2FileName = mainFileName.removeSuffix(".kt") + ".k2.kt.after"
+        val k2FilePath = testDataDirectory.toPath() / k2FileName
+        if (k2FilePath.exists()) return k2FilePath
+
+        return super.getAfterTestDataAbsolutePath(mainFileName)
     }
 
     override fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {

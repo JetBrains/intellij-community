@@ -42,6 +42,10 @@ public class OpenLogAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
 
+    openLogInEditor(project);
+  }
+
+  public static void openLogInEditor(@NotNull Project project) {
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(LoggerFactory.getLogFilePath());
     if (file != null) {
       VfsUtil.markDirtyAndRefresh(true, false, false, file);

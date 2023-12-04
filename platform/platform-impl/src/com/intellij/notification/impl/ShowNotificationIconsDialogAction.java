@@ -59,7 +59,7 @@ public final class ShowNotificationIconsDialogAction extends AnAction implements
         panel.add(createIconsRow(NotificationType.ERROR, false));
       }
 
-      private @NotNull JPanel createIconsRow(@NotNull NotificationType notificationType, boolean forToolWindow) {
+      private static @NotNull JPanel createIconsRow(@NotNull NotificationType notificationType, boolean forToolWindow) {
         JPanel row = new JPanel();
         row.setLayout(new BoxLayout(row, BoxLayout.X_AXIS));
         for (int i = 0; i <= 10; i++) {

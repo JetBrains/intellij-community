@@ -70,6 +70,7 @@ import java.util.concurrent.Future;
 
 import static com.intellij.codeInsight.util.CodeCompletionKt.CodeCompletion;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
+import static com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck.DeliberateAdditionalCheckInCompletion;
 
 @SuppressWarnings("deprecation")
 public class CodeCompletionHandlerBase {
@@ -304,7 +305,7 @@ public class CodeCompletionHandlerBase {
       phase = new CompletionPhase.BgCalculation(indicator);
       indicator.showLookup();
     } else {
-      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()));
+      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()), null);
     }
     CompletionServiceImpl.setCompletionPhase(phase);
 
@@ -655,10 +656,10 @@ public class CodeCompletionHandlerBase {
     if (psiFile != null) {
       if (Registry.is("ide.check.stub.text.consistency") ||
           ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
-        StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+        StubTextInconsistencyException.checkStubTextConsistency(psiFile, DeliberateAdditionalCheckInCompletion);
         if (PsiDocumentManager.getInstance(psiFile.getProject()).hasUncommitedDocuments()) {
           PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
-          StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+          StubTextInconsistencyException.checkStubTextConsistency(psiFile, DeliberateAdditionalCheckInCompletion);
         }
       }
     }

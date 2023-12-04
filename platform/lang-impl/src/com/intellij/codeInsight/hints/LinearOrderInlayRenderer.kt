@@ -97,6 +97,10 @@ abstract class LinearOrderInlayRenderer<Constraint : Any>(
     cachedPresentation.mouseClicked(event, translated)
   }
 
+  override fun mousePressed(event: MouseEvent, translated: Point) {
+    cachedPresentation.mousePressed(event, translated)
+  }
+
   override fun mouseMoved(event: MouseEvent, translated: Point) {
     cachedPresentation.mouseMoved(event, translated)
   }

@@ -42,7 +42,8 @@
             implementationClass="org.jetbrains.kotlin.idea.completion.confidence.EnableAutopopupInStringTemplate"/>
     <completion.confidence
             language="kotlin"
-            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"/>
+            implementationClass="com.intellij.codeInsight.completion.SkipAutopopupInStrings"
+            id="kotlinSkipAutopopupInStrings"/>
 
     <lookup.charFilter implementation="org.jetbrains.kotlin.idea.completion.KotlinCompletionCharFilter"/>
     <lookup.actionProvider implementation="org.jetbrains.kotlin.idea.completion.KotlinExcludeFromCompletionLookupActionProvider"/>

@@ -33,7 +33,7 @@ public final class ThreadingAssertions {
   @Internal
   @VisibleForTesting
   public static final String MUST_EXECUTE_INSIDE_READ_ACTION =
-    "Read access is allowed from inside read-action (see Application.runReadAction())";
+    "Read access is allowed from inside read-action only (see Application.runReadAction())";
   @Internal
   @VisibleForTesting
   public static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION =

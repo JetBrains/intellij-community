@@ -2,9 +2,6 @@
 package org.jetbrains.plugins.gitlab.mergerequest.diff
 
 import com.intellij.collaboration.async.launchNow
-import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
-import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.ui.codereview.diff.viewer.DiffMapped
 import com.intellij.collaboration.ui.codereview.diff.viewer.controlInlaysIn
 import com.intellij.diff.DiffContext
 import com.intellij.diff.DiffExtension
@@ -15,13 +12,11 @@ import com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.DiffUserDataKeys
-import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.impl.GenericDataProvider
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
@@ -29,14 +24,14 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffDiscussionViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.diff.GitLabMergeRequestDiffReviewViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestDiscussionInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestNewDiscussionInlayRenderer
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestReviewControlsGutterRenderer
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestChangeViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.GitLabMergeRequestDiffDiscussionViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 class GitLabMergeRequestDiffExtension : DiffExtension() {
@@ -70,25 +65,25 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
           coroutineScope {
             viewer.controlInlaysIn(this, changeVm.discussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
-              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, reviewVm.avatarIconsProvider)
+              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider,
+                                                        GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
             }
 
             viewer.controlInlaysIn(this, changeVm.draftDiscussions, GitLabMergeRequestDiffDiscussionViewModel::id) {
-              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, reviewVm.avatarIconsProvider)
+              GitLabMergeRequestDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider,
+                                                        GitLabStatistics.MergeRequestNoteActionPlace.DIFF)
             }
 
-            val newDiscussions = changeVm.newDiscussions.map {
-              it.map { (location, vm) ->
-                NewNoteDiffInlayViewModel(changeVm, location, vm)
+            viewer.controlInlaysIn(this, changeVm.newDiscussions, { "NEW_${it.originalLocation}" }) {
+              GitLabMergeRequestNewDiscussionInlayRenderer(this, project, it, changeVm.avatarIconsProvider,
+                                                           GitLabStatistics.MergeRequestNoteActionPlace.DIFF) {
+                changeVm.cancelNewDiscussion(it.originalLocation)
               }
-            }
-            viewer.controlInlaysIn(this, newDiscussions, NewNoteDiffInlayViewModel::id) {
-              GitLabMergeRequestNewDiscussionInlayRenderer(this, project, it.editVm, reviewVm.avatarIconsProvider, it::cancel)
             }
 
             launch {
-              changeVm.discussionsViewOption.collectLatest { discussionsViewOption ->
-                if (discussionsViewOption != DiscussionsViewOption.DONT_SHOW) {
+              changeVm.canComment.collectLatest {
+                if (it) {
                   coroutineScope {
                     viewer.controlAddCommentActionsIn(this, changeVm)
                     awaitCancellation()
@@ -105,42 +100,28 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
   }
 }
 
-private class NewNoteDiffInlayViewModel(private val changeVm: GitLabMergeRequestChangeViewModel,
-                                        private val newLocation: DiffLineLocation,
-                                        val editVm: NewGitLabNoteViewModel) : DiffMapped {
-  val id: String = "NEW_AT_$newLocation"
-  override val location: Flow<DiffLineLocation> = flowOf(newLocation)
-  override val isVisible: Flow<Boolean> = flowOf(true)
-
-  fun cancel() {
-    changeVm.cancelNewDiscussion(newLocation)
-  }
-}
-
-private fun DiffViewerBase.controlAddCommentActionsIn(cs: CoroutineScope, vm: GitLabMergeRequestChangeViewModel) {
+private fun DiffViewerBase.controlAddCommentActionsIn(cs: CoroutineScope, vm: GitLabMergeRequestDiffReviewViewModel) {
   when (this) {
     is SimpleOnesideDiffViewer -> {
-      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, editor.allLinesFlow(), editor) {
+      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, MutableStateFlow(emptyList()), editor) {
         vm.requestNewDiscussion(side to it, true)
       }
     }
     is UnifiedDiffViewer -> {
-      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, editor.allLinesFlow(), editor) {
+      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, MutableStateFlow(emptyList()), editor) {
         val (indices, side) = transferLineFromOneside(it)
         val loc = side.select(indices).takeIf { it >= 0 }?.let { side to it } ?: return@setupIn
         vm.requestNewDiscussion(loc, true)
       }
     }
     is TwosideTextDiffViewer -> {
-      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, editor1.allLinesFlow(), editor1) {
+      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, MutableStateFlow(emptyList()), editor1) {
         vm.requestNewDiscussion(Side.LEFT to it, true)
       }
-      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, editor2.allLinesFlow(), editor2) {
+      GitLabMergeRequestReviewControlsGutterRenderer.setupIn(cs, MutableStateFlow(emptyList()), editor2) {
         vm.requestNewDiscussion(Side.RIGHT to it, true)
       }
     }
     else -> return
   }
 }
-
-private fun Editor.allLinesFlow() = MutableStateFlow(listOf(LineRange(0, document.lineCount)))

@@ -13,6 +13,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
@@ -376,6 +377,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     if (!(clickSource instanceof JList<?> || clickSource instanceof JTree)) {
       PopupUtil.setPopupToggleComponent(this, clickSource);
     }
+    ActionUtil.initActionContextForComponent(myContent);
     return this;
   }
 
@@ -552,7 +554,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     show(point);
   }
 
-  private boolean isComponentSupportsAlignment(Component c) {
+  private static boolean isComponentSupportsAlignment(Component c) {
     if (!(c instanceof JComponent)
         || (c instanceof ActionButton)
         || (c instanceof ComboBoxWithWidePopup<?>)) {

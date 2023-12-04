@@ -21,7 +21,7 @@ internal class KeymapKind(val value: String, @Nls val displayName: String, @Nls 
   companion object {
     val MAC = KeymapKind(KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP,
                          IdeBundle.message("presentation.assistant.configurable.keymap.mac"),
-                         IdeBundle.message("presentation.assistant.configurable.keymap.mac.label"))
+                         IdeBundle.message("presentation.assistant.configurable.keymap.mac"))
 
     val WIN = KeymapKind(KeymapManager.DEFAULT_IDEA_KEYMAP,
                          IdeBundle.message("presentation.assistant.configurable.keymap.win"),
@@ -32,7 +32,7 @@ internal class KeymapKind(val value: String, @Nls val displayName: String, @Nls 
       KeymapManager.DEFAULT_IDEA_KEYMAP -> WIN
       else -> KeymapManagerEx.getInstanceEx().getKeymap(value)?.let {
         KeymapKind(value, it.presentableName,
-                   if (it.name.containsMacOS) IdeBundle.message("presentation.assistant.configurable.keymap.mac.label")
+                   if (it.name.containsMacOS) IdeBundle.message("presentation.assistant.configurable.keymap.mac")
                    else it.presentableName)
       } ?: KeymapKind(value, value, value)
     }
@@ -41,6 +41,23 @@ internal class KeymapKind(val value: String, @Nls val displayName: String, @Nls 
       SystemInfo.isMac -> MAC
       else -> WIN
     }
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as KeymapKind
+
+    return value == other.value
+  }
+
+  override fun hashCode(): Int {
+    return value.hashCode()
+  }
+
+  override fun toString(): String {
+    return "KeymapKind(value='$value', displayName='$displayName', defaultLabel='$defaultLabel', keymap=$keymap, isMac=$isMac)"
   }
 }
 

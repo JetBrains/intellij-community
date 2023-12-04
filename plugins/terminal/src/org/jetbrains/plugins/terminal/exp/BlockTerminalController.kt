@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.exp.BlockTerminalSearchSession.Companion.isSearchInBlock
@@ -24,6 +25,7 @@ class BlockTerminalController(
   private val focusModel: TerminalFocusModel
 ) : ShellCommandListener {
   private val listeners: MutableList<BlockTerminalControllerListener> = CopyOnWriteArrayList()
+  private val promptVisibilityAlarm: Alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
 
   var searchSession: BlockTerminalSearchSession? = null
     private set
@@ -33,7 +35,7 @@ class BlockTerminalController(
 
     // Show initial terminal output (prior to the first prompt) in a separate block.
     // `initialized` event will finish the block.
-    outputController.startCommandBlock(null)
+    outputController.startCommandBlock(command = null, promptText = null)
     promptController.promptIsVisible = false
     session.model.isCommandRunning = true
   }
@@ -44,28 +46,29 @@ class BlockTerminalController(
 
   @RequiresEdt
   fun startCommandExecution(command: String) {
+    promptController.reset()
     if (command.isBlank()) {
       outputController.insertEmptyLine()
-      promptController.reset()
     }
     else startCommand(command)
   }
 
   private fun startCommand(command: String) {
-    outputController.startCommandBlock(command)
-    promptController.promptIsVisible = false
-    session.executeCommand(command)
-  }
-
-  override fun commandStarted(command: String) {
+    outputController.startCommandBlock(command, promptText = promptController.promptText)
+    // Hide the prompt with delay, so it will be possible to cancel hide request if command is extra fast.
+    // And there will be no blinking of prompt in this case.
+    promptVisibilityAlarm.addRequest(Runnable {
+      promptController.promptIsVisible = false
+    }, 50)
+    session.sendCommandToExecute(command)
     session.model.isCommandRunning = true
   }
 
-  override fun initialized() {
+  override fun initialized(currentDirectory: String?) {
     finishCommandBlock(exitCode = 0)
   }
 
-  override fun commandFinished(command: String, exitCode: Int, duration: Long) {
+  override fun commandFinished(command: String?, exitCode: Int, duration: Long?) {
     finishCommandBlock(exitCode)
   }
 
@@ -75,13 +78,8 @@ class BlockTerminalController(
     val model = session.model
     model.isCommandRunning = false
 
-    // prepare terminal for the next command
-    model.withContentLock {
-      model.clearAllAndMoveCursorToTopLeftCorner(session.controller)
-    }
-
+    promptVisibilityAlarm.cancelAllRequests()
     invokeLater {
-      promptController.reset()
       promptController.promptIsVisible = true
     }
   }

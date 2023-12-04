@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.impl.AbstractEntityStorage
 import com.intellij.platform.workspace.storage.impl.references.MutableReferenceContainer
 import com.intellij.platform.workspace.storage.impl.references.ReferenceContainer
 import com.intellij.platform.workspace.storage.testEntities.entities.*
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertNotSame
 import kotlin.test.assertSame

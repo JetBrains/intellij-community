@@ -2,32 +2,28 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.starters.JavaStartersBundle
-import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.ide.wizard.OnboardingTipsInstallationInfo
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.keymap.KeymapTextContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.*
 
 @ApiStatus.Experimental
-abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsNewProjectWizardStep(parent) {
-
+abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : AssetsOnboardingTipsProjectWizardStep(parent) {
   fun withJavaSampleCodeAsset(sourceRootPath: String, aPackage: String, generateOnboardingTips: Boolean) {
-    val renderedOnboardingTips = Registry.`is`("doc.onboarding.tips.render")
+    val renderedOnboardingTips = shouldRenderOnboardingTips()
     val templateName = when {
       !generateOnboardingTips -> "SampleCode"
-      renderedOnboardingTips -> "SampleCodeWithRenderedOnboardingTips.java"
+      shouldRenderOnboardingTips() -> "SampleCodeWithRenderedOnboardingTips.java"
       else -> "SampleCodeWithOnboardingTips.java"
     }
 
-    val sourcePath = createJavaSourcePath(sourceRootPath, aPackage, "Main.java")
+    val sourcePath = createJavaSourcePath(sourceRootPath, aPackage, generatedFileName)
     addTemplateAsset(sourcePath, templateName, buildMap {
       put("PACKAGE_NAME", aPackage)
       if (generateOnboardingTips) {
@@ -35,10 +31,6 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
           override fun isSimplifiedMacShortcuts(): Boolean = SystemInfo.isMac
         }
         if (renderedOnboardingTips) {
-          fun rawShortcut(shortcut: String) = """<shortcut raw="$shortcut"/>"""
-          fun shortcut(actionId: String) = """<shortcut actionId="$actionId"/>"""
-          fun icon(allIconsId: String) = """<icon src="$allIconsId"/>"""
-
           //@formatter:off
           put("RunComment1", JavaStartersBundle.message("onboarding.run.comment.render.1", shortcut(IdeActions.ACTION_DEFAULT_RUNNER)))
           put("RunComment2", JavaStartersBundle.message("onboarding.run.comment.render.2", icon("AllIcons.Actions.Execute")))
@@ -69,20 +61,18 @@ abstract class AssetsJavaNewProjectWizardStep(parent: NewProjectWizardStep) : As
     addFilesToOpen(sourcePath)
   }
 
-  fun prepareTipsInEditor(project: Project) {
-    val templateManager = FileTemplateManager.getDefaultInstance()
-    val properties = getTemplateProperties()
-    val defaultProperties = templateManager.defaultProperties
-    val template = templateManager.getInternalTemplate("SampleCode")
-    val simpleSampleText = template.getText(defaultProperties + properties)
-    for (extension in NewProjectOnboardingTips.EP_NAME.extensions) {
-      extension.installTips(project, OnboardingTipsInstallationInfo(simpleSampleText) { text ->
-        text.indexOf("System.out.println").takeIf { it >= 0 } ?: error("Cannot find place to install breakpoint")
-      })
+  @ScheduledForRemoval
+  @Deprecated("Use prepareOnboardingTips and it should be called before wizard project setup")
+  fun prepareTipsInEditor(project: Project) { }
+
+  fun prepareOnboardingTips(project: Project) {
+    prepareOnboardingTips(project, "SampleCode", generatedFileName) { charSequence ->
+      charSequence.indexOf("System.out.println").takeIf { it >= 0 }
     }
   }
 
   companion object {
+    private const val generatedFileName = "Main.java"
 
     fun createJavaSourcePath(sourceRootPath: String, aPackage: String, fileName: String): String {
       val packageDirectory = aPackage.replace('.', '/')

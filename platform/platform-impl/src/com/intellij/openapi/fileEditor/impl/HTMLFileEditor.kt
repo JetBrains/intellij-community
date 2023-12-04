@@ -17,12 +17,12 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBar
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.jcef.JBCefBrowserBase.ErrorPage
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.Alarm
-import com.intellij.util.namedChildScope
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch

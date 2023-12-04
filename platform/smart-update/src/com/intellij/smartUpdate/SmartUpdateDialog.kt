@@ -7,18 +7,24 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.and
 import com.intellij.ui.layout.selectedValueIs
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.util.minimumWidth
+import com.intellij.util.ui.UIUtil
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import javax.swing.JFormattedTextField
 import javax.swing.text.MaskFormatter
+
 
 class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
   init {
@@ -72,11 +78,15 @@ class SmartUpdateDialog(private val project: Project) : DialogWrapper(project) {
           }
         }.enabledIf(scheduled.selected)
       }
-    }
+    }.apply { minimumWidth = JBUIScale.scale(300) }
   }
 
   override fun doCancelAction() {
     applyFields()
     super.doCancelAction()
   }
+}
+
+fun hintLabel(@NlsContexts.Label text: String): JBLabel = JBLabel(text).apply {
+  foreground = UIUtil.getContextHelpForeground()
 }

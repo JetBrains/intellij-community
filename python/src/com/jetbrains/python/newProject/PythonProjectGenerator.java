@@ -32,9 +32,11 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
@@ -175,7 +177,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     if (sdk instanceof PyLazySdk) {
       final Sdk createdSdk = ((PyLazySdk)sdk).create();
       settings.setSdk(createdSdk);
-      if (createdSdk != null) {
+      if (createdSdk != null && !useNewInterpreterCreationUi()) {
         SdkConfigurationUtil.addSdk(createdSdk);
       }
     }
@@ -206,7 +208,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
     configureProject(project, baseDir, settings, module, synchronizer);
     var statisticsInfo = settings.getInterpreterInfoForStatistics();
-    if (statisticsInfo instanceof InterpreterStatisticsInfo interpreterStatisticsInfo) {
+    if (statisticsInfo instanceof InterpreterStatisticsInfo interpreterStatisticsInfo && settings.getSdk() != null) {
       PythonNewProjectWizardCollector.logPythonNewProjectGenerated(interpreterStatisticsInfo,
                                                                    PyStatisticToolsKt.getVersion(settings.getSdk()),
                                                                    this.getClass());
@@ -311,7 +313,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     final Application app = ApplicationManager.getApplication();
     app.invokeLater(() -> {
       PyPackagesNotificationPanel.showPackageInstallationError(PyBundle.message("python.new.project.install.failed.title", frameworkName),
-                                  errorDescription);
+                                                               errorDescription);
     });
   }
 
@@ -369,12 +371,12 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
   }
 
   private static void installFrameworkIfNeeded(@NotNull final Project project,
-                                              @NotNull final String frameworkName,
-                                              @NotNull final String requirement,
-                                              @Nullable final Sdk sdk,
-                                              final boolean forceInstallFramework,
-                                              boolean asBackgroundTask,
-                                              @Nullable final Runnable callback) {
+                                               @NotNull final String frameworkName,
+                                               @NotNull final String requirement,
+                                               @Nullable final Sdk sdk,
+                                               final boolean forceInstallFramework,
+                                               boolean asBackgroundTask,
+                                               @Nullable final Runnable callback) {
 
     if (sdk == null) {
       reportPackageInstallationFailure(frameworkName, null);
@@ -385,35 +387,38 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     if (forceInstallFramework || PythonSdkUtil.isRemote(sdk)) {
 
       if (asBackgroundTask) {
-        ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
-          @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
-            installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
-          }
-
-          @Override
-          public void onSuccess() {
-            // Installed / checked successfully, call callback on AWT
-            if (callback != null) {
-              callback.run();
+        ProgressManager.getInstance()
+          .run(new Task.Backgroundable(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
+            @Override
+            public void run(@NotNull final ProgressIndicator indicator) {
+              installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
             }
-          }
-        });
-      } else {
-        ProgressManager.getInstance().run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
-          @Override
-          public void run(@NotNull final ProgressIndicator indicator) {
-            installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
-          }
 
-          @Override
-          public void onSuccess() {
-            // Installed / checked successfully, call callback on AWT
-            if (callback != null) {
-              callback.run();
+            @Override
+            public void onSuccess() {
+              // Installed / checked successfully, call callback on AWT
+              if (callback != null) {
+                callback.run();
+              }
             }
-          }
-        });
+          });
+      }
+      else {
+        ProgressManager.getInstance()
+          .run(new Task.Modal(project, PyBundle.message("python.install.framework.ensure.installed", frameworkName), false) {
+            @Override
+            public void run(@NotNull final ProgressIndicator indicator) {
+              installPackages(frameworkName, forceInstallFramework, indicator, requirement, sdk);
+            }
+
+            @Override
+            public void onSuccess() {
+              // Installed / checked successfully, call callback on AWT
+              if (callback != null) {
+                callback.run();
+              }
+            }
+          });
       }
     }
     else {
@@ -473,5 +478,9 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
         reportPackageInstallationFailure(requirement, Pair.create(sdk, e));
       }
     }
+  }
+
+  public static boolean useNewInterpreterCreationUi() {
+    return Registry.is("python.new.interpreter.creation.ui") && !PlatformUtils.isDataSpell();
   }
 }

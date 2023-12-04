@@ -43,6 +43,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -60,12 +61,9 @@ public final class XLineBreakpointManager {
   private final MultiMap<String, XLineBreakpointImpl> myBreakpoints = MultiMap.createConcurrent();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
-  private final InlineBreakpointInlayManager myInlineBreakpointInlayManager;
 
   public XLineBreakpointManager(@NotNull Project project) {
     myProject = project;
-
-    myInlineBreakpointInlayManager = new InlineBreakpointInlayManager(project, this);
 
     MessageBusConnection busConnection = project.getMessageBus().connect();
 
@@ -93,18 +91,19 @@ public final class XLineBreakpointManager {
         }
       }));
 
-      EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
-        @Override
-        public void editorCreated(@NotNull EditorFactoryEvent event) {
-          if (!Registry.is("debugger.show.breakpoints.inline")) return;
-          getInlineBreakpointInlayManager().initializeInNewEditor(event.getEditor());
-        }
-      }, project);
-
-      Registry.get("debugger.show.breakpoints.inline").addListener(new RegistryValueListener() {
+      Registry.get(XDebuggerUtil.INLINE_BREAKPOINTS_KEY).addListener(new RegistryValueListener() {
         @Override
         public void afterValueChanged(@NotNull RegistryValue value) {
-          getInlineBreakpointInlayManager().reinitializeAll();
+          if (!XDebuggerUtil.areInlineBreakpointsEnabled()) {
+            // Multiple breakpoints on the single line should be joined in this case.
+            for (String fileUrl : myBreakpoints.keySet()) {
+              var file = VirtualFileManager.getInstance().findFileByUrl(fileUrl);
+              if (file == null) continue;
+              var document = FileDocumentManager.getInstance().getDocument(file);
+              if (document == null) continue;
+              updateBreakpoints(document);
+            }
+          }
         }
       }, project);
     }
@@ -119,10 +118,6 @@ public final class XLineBreakpointManager {
           .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
-  }
-
-  public @NotNull InlineBreakpointInlayManager getInlineBreakpointInlayManager() {
-    return myInlineBreakpointInlayManager;
   }
 
   void updateBreakpointsUI() {
@@ -165,7 +160,7 @@ public final class XLineBreakpointManager {
     List<XLineBreakpoint> toRemove = new SmartList<>();
     for (XLineBreakpointImpl breakpoint : breakpoints) {
       breakpoint.updatePosition();
-      if (!breakpoint.isValid() || !positions.add(Registry.is("debugger.show.breakpoints.inline") ? breakpoint.getOffset() : breakpoint.getLine())) {
+      if (!breakpoint.isValid() || !positions.add(XDebuggerUtil.areInlineBreakpointsEnabled() ? breakpoint.getOffset() : breakpoint.getLine())) {
         toRemove.add(breakpoint);
       }
     }
@@ -245,18 +240,7 @@ public final class XLineBreakpointManager {
           }
         });
 
-        if (Registry.is("debugger.show.breakpoints.inline")) {
-          var file = FileDocumentManager.getInstance().getFile(document);
-          if (file != null) {
-            var inlineInlaysManager = getInlineBreakpointInlayManager();
-            var firstLine = document.getLineNumber(e.getOffset());
-            var lastLine = document.getLineNumber(e.getOffset() + e.getNewLength());
-            inlineInlaysManager.queueRedrawLine(document, firstLine);
-            if (lastLine != firstLine) {
-              inlineInlaysManager.queueRedrawLine(document, lastLine);
-            }
-          }
-        }
+        InlineBreakpointInlayManager.getInstance(myProject).redrawDocument(e);
       }
     }
   }

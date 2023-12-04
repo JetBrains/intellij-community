@@ -56,7 +56,7 @@ internal open class StorageIndexes(
 
     // Assert external mappings
     for ((_, mappings) in externalMappings) {
-      for ((id, _) in mappings.index) {
+      mappings.index.forEach { id, _ ->
         assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
       }
     }
@@ -266,7 +266,6 @@ internal class MutableStorageIndexes(
     val idsWithSoftRef = HashSet(this.softLinks.getIdsByEntry(beforeSymbolicId))
     for (entityId in idsWithSoftRef) {
       val originalEntityData = builder.getOriginalEntityData(entityId) as WorkspaceEntityData<WorkspaceEntity>
-      val originalParentsData = builder.getOriginalParents(entityId.asChild())
       val entity = builder.entitiesByType.getEntityDataForModification(entityId) as WorkspaceEntityData<WorkspaceEntity>
       val editingBeforeSymbolicId = entity.symbolicId()
       (entity as SoftLinkable).updateLink(beforeSymbolicId, newSymbolicId)
@@ -276,10 +275,6 @@ internal class MutableStorageIndexes(
       // TODO :: Avoid updating of all soft links for the dependent entity
       builder.indexes.updateSymbolicIdIndexes(builder, entity.createEntity(builder), editingBeforeSymbolicId, entity)
     }
-  }
-
-  fun removeExternalMapping(identifier: String) {
-    externalMappings[identifier]?.clearMapping()
   }
 
   fun toImmutable(): StorageIndexes {

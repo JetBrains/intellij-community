@@ -67,6 +67,12 @@ public abstract class ActionGroup extends AnAction {
     super(text, description, icon);
   }
 
+  public ActionGroup(@NotNull Supplier<@ActionText String> text,
+                     @NotNull Supplier<@ActionDescription String> description,
+                     @Nullable Supplier<? extends @Nullable Icon> icon) {
+    super(text, description, icon);
+  }
+
   public ActionGroup(@NotNull Supplier<@ActionText String> dynamicText,
                      @NotNull Supplier<@ActionDescription String> dynamicDescription,
                      @Nullable Icon icon) {

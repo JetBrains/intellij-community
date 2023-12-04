@@ -15,9 +15,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -72,6 +72,10 @@ public final class PythonSdkType extends SdkType {
   @NotNull
   @ApiStatus.Internal
   public static final Key<String> MOCK_PY_VERSION_KEY = Key.create("PY_MOCK_PY_VERSION_KEY");
+
+  @NotNull
+  @ApiStatus.Internal
+  public static final Key<Boolean> MOCK_PY_MARKER_KEY = KeyWithDefaultValue.create("MOCK_PY_MARKER_KEY", true);
 
   private static final Logger LOG = Logger.getInstance(PythonSdkType.class);
 
@@ -140,14 +144,13 @@ public final class PythonSdkType extends SdkType {
   @NotNull
   @Override
   public FileChooserDescriptor getHomeChooserDescriptor() {
-    final boolean isWindows = SystemInfo.isWindows;
-
     final var descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
       @Override
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
-          if (!isValidSdkHome(files[0].getPath())) {
-            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.name", files[0].getName()));
+          VirtualFile file = files[0];
+          if (!isLocatedInWsl(file) && !isValidSdkHome(file.getPath())) {
+            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.name", file.getName()));
           }
         }
       }
@@ -156,7 +159,7 @@ public final class PythonSdkType extends SdkType {
       public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
         // TODO: add a better, customizable filtering
         if (!file.isDirectory()) {
-          if (isWindows) {
+          if (isLocatedInLocalWindowsFS(file)) {
             String path = file.getPath();
             boolean looksExecutable = false;
             for (String ext : PythonSdkUtil.WINDOWS_EXECUTABLE_SUFFIXES) {
@@ -178,6 +181,14 @@ public final class PythonSdkType extends SdkType {
     }
 
     return descriptor;
+  }
+
+  private static boolean isLocatedInLocalWindowsFS(@NotNull VirtualFile file) {
+    return SystemInfo.isWindows && !isCustomPythonSdkHomePath(file.getPath());
+  }
+
+  private static boolean isLocatedInWsl(@NotNull VirtualFile file) {
+    return SystemInfo.isWindows && isCustomPythonSdkHomePath(file.getPath());
   }
 
   @Override
@@ -590,9 +601,9 @@ public final class PythonSdkType extends SdkType {
    */
   @SuppressWarnings("TestOnlyProblems")
   public static boolean isMock(@NotNull Sdk sdk) {
-    return sdk instanceof MockSdk ||
-           (sdk.getUserData(MOCK_PY_VERSION_KEY) != null) ||
-           (sdk.getUserData(MOCK_SYS_PATH_KEY) != null);
+    return (sdk.getUserData(MOCK_PY_VERSION_KEY) != null) ||
+           (sdk.getUserData(MOCK_SYS_PATH_KEY) != null) ||
+           (sdk.getUserData(MOCK_PY_MARKER_KEY) != null);
   }
 
   /**

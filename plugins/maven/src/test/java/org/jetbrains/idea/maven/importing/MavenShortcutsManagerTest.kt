@@ -15,8 +15,7 @@ import org.junit.Test
 import java.io.IOException
 
 class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   private var myShortcutsManager: MavenShortcutsManager? = null
 
   override fun setUp() {
@@ -115,7 +114,6 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
                       </plugins>
                     </build>
                     """.trimIndent())
-    resolvePlugins()
 
     assertKeymapContains(myProjectPom, goal)
   }
@@ -149,7 +147,6 @@ class MavenShortcutsManagerTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent())
     val goal = "org.apache.maven.plugins:maven-surefire-plugin:2.4.3:test"
     assignShortcut(myProjectPom, goal, "alt shift X")
-    resolvePlugins()
 
     assertKeymapContains(myProjectPom, goal)
   }

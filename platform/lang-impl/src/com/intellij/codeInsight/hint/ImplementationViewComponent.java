@@ -9,7 +9,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -52,7 +51,6 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
@@ -60,12 +58,9 @@ import java.util.function.Consumer;
 public final class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
-  private static final String IMPLEMENTATION_VIEW_PLACE = "ImplementationView";
   private final EditorFactory factory;
   private final Project project;
-
-  private ImplementationViewElement[] myElements;
-  private int myIndex;
+  private final DefinitionSwitcher<ImplementationViewElement> mySwitcher;
 
   private EditorEx myEditor;
   private volatile boolean myEditorReleased;
@@ -88,7 +83,7 @@ public final class ImplementationViewComponent extends JPanel {
   }
 
   public boolean hasElementsToShow() {
-    return myElements != null && myElements.length > 0;
+    return mySwitcher.getElements().length > 0;
   }
 
   private record FileDescriptor(@NotNull VirtualFile file, int index, @NotNull TargetPresentation element) {
@@ -98,7 +93,7 @@ public final class ImplementationViewComponent extends JPanel {
                                      final int index) {
     super(new BorderLayout());
 
-    project = elements.size() > 0 ? elements.iterator().next().getProject() : null;
+    project = !elements.isEmpty() ? elements.iterator().next().getProject() : null;
     factory = EditorFactory.getInstance();
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
@@ -114,23 +109,27 @@ public final class ImplementationViewComponent extends JPanel {
 
     add(myViewingPanel, BorderLayout.CENTER);
 
-    myToolbar = createToolbar();
+    mySwitcher = new DefinitionSwitcher<>(elements.toArray(new ImplementationViewElement[0]), this, (element) -> {
+      updateControls();
+      return null;
+    });
+    mySwitcher.setIndex(index);
+    myToolbar = mySwitcher.createToolbar(createGearActionButton());
 
     setPreferredSize(JBUI.size(600, 400));
 
     update(elements, (psiElements, fileDescriptors) -> {
       if (psiElements.length == 0) return false;
-      myElements = psiElements;
-
-      myIndex = index < myElements.length ? index : 0;
-      VirtualFile virtualFile = myElements[myIndex].getContainingFile();
+      mySwitcher.setElements(psiElements);
+      mySwitcher.setIndex(index < psiElements.length ? index : 0);
+      VirtualFile virtualFile = mySwitcher.getCurrentElement().getContainingFile();
 
       tuneEditor(virtualFile);
 
       final JPanel toolbarPanel = new JPanel(new GridBagLayout());
       final GridBagConstraints gc =
         new GridBagConstraints(GridBagConstraints.RELATIVE, 0, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                               JBUI.insets(0), 0, 0);
+                               JBUI.emptyInsets(), 0, 0);
 
       mySingleEntryPanel = new JPanel(new BorderLayout());
       toolbarPanel.add(mySingleEntryPanel, gc);
@@ -139,15 +138,15 @@ public final class ImplementationViewComponent extends JPanel {
       myFileChooser.setOpaque(false);
       myFileChooser.addActionListener(e -> {
         int index1 = myFileChooser.getSelectedIndex();
-        if (myIndex != index1) {
-          myIndex = index1;
+        if (mySwitcher.getIndex() != index1) {
+          mySwitcher.setIndex(index1);
           UIEventLogger.ImplementationViewComboBoxSelected.log(project);
           updateControls();
         }
       });
       toolbarPanel.add(myFileChooser, gc);
 
-      if (myElements.length > 1) {
+      if (mySwitcher.getElements().length > 1) {
         mySingleEntryPanel.setVisible(false);
         updateRenderer(project);
       }
@@ -203,11 +202,12 @@ public final class ImplementationViewComponent extends JPanel {
 
   private  void updateSingleEntryLabel(VirtualFile virtualFile) {
     mySingleEntryPanel.removeAll();
-    JLabel label = new JLabel(myElements[myIndex].getPresentableText(), getIconForFile(virtualFile, project), SwingConstants.LEFT);
+    ImplementationViewElement element = mySwitcher.getCurrentElement();
+    JLabel label = new JLabel(element.getPresentableText(), getIconForFile(virtualFile, project), SwingConstants.LEFT);
     mySingleEntryPanel.add(label, BorderLayout.CENTER);
     label.setForeground(FileStatusManager.getInstance(project).getStatus(virtualFile).getColor());
 
-    mySingleEntryPanel.add(new JLabel(myElements[myIndex].getLocationText(), myElements[myIndex].getLocationIcon(), SwingConstants.LEFT), BorderLayout.EAST);
+    mySingleEntryPanel.add(new JLabel(element.getLocationText(), element.getLocationIcon(), SwingConstants.LEFT), BorderLayout.EAST);
     mySingleEntryPanel.setOpaque(false);
     mySingleEntryPanel.setVisible(true);
     mySingleEntryPanel.setBorder(JBUI.Borders.empty(4, 3));
@@ -289,15 +289,14 @@ public final class ImplementationViewComponent extends JPanel {
   }
 
   public void update(@NotNull final Collection<? extends ImplementationViewElement> elements, final int index) {
-    update(elements, (psiElements, fileDescriptors) -> {
+    update(elements, (viewElements, fileDescriptors) -> {
       if (myEditor.isDisposed()) return false;
-      if (psiElements.length == 0) return false;
+      if (viewElements.length == 0) return false;
 
-      final Project project = psiElements[0].getProject();
-      myElements = psiElements;
-
-      myIndex = index < myElements.length ? index : 0;
-      VirtualFile virtualFile = myElements[myIndex].getContainingFile();
+      final Project project = viewElements[0].getProject();
+      mySwitcher.setElements(viewElements);
+      mySwitcher.setIndex(index < viewElements.length ? index : 0);
+      VirtualFile virtualFile = mySwitcher.getCurrentElement().getContainingFile();
 
       EditorHighlighter highlighter;
       if (virtualFile != null) {
@@ -305,7 +304,7 @@ public final class ImplementationViewComponent extends JPanel {
         myEditor.setHighlighter(highlighter);
       }
 
-      if (myElements.length > 1) {
+      if (viewElements.length > 1) {
         myFileChooser.setVisible(true);
         mySingleEntryPanel.setVisible(false);
 
@@ -329,21 +328,21 @@ public final class ImplementationViewComponent extends JPanel {
     });
   }
 
-  private static void update(@NotNull Collection<? extends ImplementationViewElement> elements,
+  private static void update(@NotNull Collection<? extends ImplementationViewElement> viewElements,
                              @NotNull PairFunction<? super ImplementationViewElement[], ? super List<FileDescriptor>, Boolean> fun) {
-    List<ImplementationViewElement> candidates = new ArrayList<>(elements.size());
-    List<FileDescriptor> files = new ArrayList<>(elements.size());
+    List<ImplementationViewElement> candidates = new ArrayList<>(viewElements.size());
+    List<FileDescriptor> files = new ArrayList<>(viewElements.size());
     final Set<String> names = new HashSet<>();
-    for (ImplementationViewElement element : elements) {
-      if (element.isNamed()) {
-        names.add(element.getName());
+    for (ImplementationViewElement viewElement : viewElements) {
+      if (viewElement.isNamed()) {
+        names.add(viewElement.getName());
       }
       if (names.size() > 1) {
         break;
       }
     }
 
-    for (ImplementationViewElement element : elements) {
+    for (ImplementationViewElement element : viewElements) {
       VirtualFile file = element.getContainingFile();
       if (file == null) continue;
       if (names.size() > 1) {
@@ -372,7 +371,7 @@ public final class ImplementationViewComponent extends JPanel {
   }
 
   public JComponent getPreferredFocusableComponent() {
-    return myElements.length > 1 ? myFileChooser : myEditor.getContentComponent();
+    return mySwitcher.getElements().length > 1 ? myFileChooser : myEditor.getContentComponent();
   }
 
   @ApiStatus.Internal
@@ -398,14 +397,14 @@ public final class ImplementationViewComponent extends JPanel {
 
   private void updateCombo() {
     if (myFileChooser != null && myFileChooser.isVisible()) {
-      myFileChooser.setSelectedIndex(myIndex);
+      myFileChooser.setSelectedIndex(mySwitcher.getIndex());
     }
   }
 
   private void updateEditorText() {
     disposeNonTextEditor();
 
-    final ImplementationViewElement foundElement = myElements[myIndex];
+    final ImplementationViewElement foundElement = mySwitcher.getCurrentElement();
     final Project project = foundElement.getProject();
     final VirtualFile vFile = foundElement.getContainingFile();
     if (vFile == null) return;
@@ -481,6 +480,7 @@ public final class ImplementationViewComponent extends JPanel {
   public static String getNewText(PsiElement elt) {
     Project project = elt.getProject();
     PsiFile psiFile = getContainingFile(elt);
+    if (psiFile == null) return null;
 
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (doc == null) return null;
@@ -527,121 +527,17 @@ public final class ImplementationViewComponent extends JPanel {
     }
   }
 
-  private ActionToolbar createToolbar() {
-    DefaultActionGroup group = new DefaultActionGroup();
-
-    BackAction back = new BackAction();
-    back.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0)), this);
-    group.add(back);
-
-    group.add(new ToolbarLabelAction() {
-      @Override
-      public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation,
-                                                       @NotNull String place) {
-        JComponent component = super.createCustomComponent(presentation, place);
-        component.setBorder(JBUI.Borders.empty(0, 2));
-        return component;
-      }
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        Presentation presentation = e.getPresentation();
-        if (myElements != null && myElements.length > 1) {
-          presentation.setText(myIndex + 1 + "/" + myElements.length);
-          presentation.setVisible(true);
-        }
-        else {
-          presentation.setVisible(false);
-        }
-      }
-
-      @Override
-      public @NotNull ActionUpdateThread getActionUpdateThread() {
-        return ActionUpdateThread.EDT;
-      }
-    });
-
-    ForwardAction forward = new ForwardAction();
-    forward.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0)), this);
-    group.add(forward);
-
-    group.add(createGearActionButton());
-
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
-    toolbar.setReservePlaceAutoPopupIcon(false);
-    toolbar.setTargetComponent(myEditor.getContentComponent());
-    return toolbar;
-  }
-
-  private void goBack() {
-    myIndex--;
-    updateControls();
-  }
-
-  private void goForward() {
-    myIndex++;
-    updateControls();
-  }
-
   public int getIndex() {
-    return myIndex;
+    return mySwitcher.getIndex();
   }
 
   public ImplementationViewElement[] getElements() {
-    return myElements;
+    return mySwitcher.getElements();
   }
 
   public UsageView showInUsageView() {
     UIEventLogger.ImplementationViewToolWindowOpened.log(project);
     return FindUtil.showInUsageView(null, collectElementsForShowUsages(), myTitle, project);
-  }
-
-  private final class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    BackAction() {
-      super(CodeInsightBundle.messagePointer("quick.definition.back"), AllIcons.Actions.Play_back);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      goBack();
-    }
-
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myIndex > 0);
-      presentation.setVisible(myElements != null && myElements.length > 1);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
-  }
-
-  private final class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
-    ForwardAction() {
-      super(CodeInsightBundle.messagePointer("quick.definition.forward"), AllIcons.Actions.Play_forward);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      goForward();
-    }
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      Presentation presentation = e.getPresentation();
-      presentation.setEnabled(myElements != null && myIndex < myElements.length - 1);
-      presentation.setVisible(myElements != null && myElements.length > 1);
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.EDT;
-    }
   }
 
   private final class EditSourceAction extends EditSourceActionBase {
@@ -678,7 +574,7 @@ public final class ImplementationViewComponent extends JPanel {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myElements[myIndex].navigate(myFocusEditor);
+      mySwitcher.getCurrentElement().navigate(myFocusEditor);
     }
   }
 
@@ -712,7 +608,7 @@ public final class ImplementationViewComponent extends JPanel {
 
   private PsiElement[] collectElementsForShowUsages() {
     List<PsiElement> result = new ArrayList<>();
-    for (ImplementationViewElement element : myElements) {
+    for (ImplementationViewElement element : mySwitcher.getElements()) {
       PsiElement psiElement = element.getElementForShowUsages();
       if (psiElement != null) {
         result.add(psiElement);

@@ -8,10 +8,12 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.callMatcher.CallMatcher
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.USuperExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
+@VisibleForTesting
 class ThreadRunInspection : AbstractBaseUastLocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = UastHintedVisitorAdapter.create(
     holder.file.language, ThreadRunVisitor(holder), arrayOf(UCallExpression::class.java), true)
@@ -29,7 +31,6 @@ class ThreadRunInspection : AbstractBaseUastLocalInspectionTool() {
     }
   }
 
-  companion object {
-    private val THREAD_RUN = CallMatcher.instanceCall("java.lang.Thread", "run").parameterCount(0)
-  }
+  private inline val THREAD_RUN get() = CallMatcher.instanceCall("java.lang.Thread", "run").parameterCount(0)
+
 }

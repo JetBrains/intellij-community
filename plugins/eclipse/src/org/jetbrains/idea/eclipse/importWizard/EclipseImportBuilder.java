@@ -425,7 +425,7 @@ public final class EclipseImportBuilder extends ProjectImportBuilder<String> imp
           return looksLikeEclipse(file) ? dressIcon(file, AllIcons.Providers.Eclipse) : super.getIcon(file);
         }
 
-        private boolean looksLikeEclipse(final VirtualFile file) {
+        private static boolean looksLikeEclipse(final VirtualFile file) {
           return file.findChild(".eclipseproduct") != null;
         }
       };

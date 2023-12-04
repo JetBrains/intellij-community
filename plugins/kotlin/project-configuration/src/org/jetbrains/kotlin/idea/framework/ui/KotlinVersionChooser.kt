@@ -2,13 +2,19 @@
 package org.jetbrains.kotlin.idea.framework.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.util.not
 import com.intellij.openapi.observable.util.or
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.uiDesigner.core.Spacer
@@ -18,39 +24,54 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import java.awt.Dimension
 import javax.swing.DefaultComboBoxModel
 
 
-internal class KotlinVersionChooser(project: Project, minimumVersion: String): Disposable {
+@Service(Service.Level.PROJECT)
+internal class KotlinVersionChooserService(
+    private val coroutineScope: CoroutineScope
+) {
+    fun childScope(name: String): CoroutineScope = coroutineScope.namedChildScope(name)
+}
+
+internal class KotlinVersionChooser(
+    private val project: Project,
+    private val minimumVersion: String,
+    private val parentDisposable: Disposable,
+    private val modalityState: ModalityState
+) {
     private val loading = AtomicBooleanProperty(true)
     private val error = AtomicBooleanProperty(false)
     private val comboBoxModel = DefaultComboBoxModel<String>()
     private val selectedVersion = AtomicProperty("")
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Default)
+    private val coroutineScope = project.service<KotlinVersionChooserService>().childScope("KotlinVersionChooser")
 
     val kotlinVersion: String?
         get() = selectedVersion.get().takeIf { it.isNotBlank() }
 
     init {
-        coroutineScope.launch {
-            withBackgroundProgress(project, KotlinProjectConfigurationBundle.message("configure.kotlin.find.maven.versions")) {
-                comboBoxModel.removeAllElements()
-                loading.set(true)
-                error.set(false)
-                val kotlinVersions = try {
+        Disposer.register(parentDisposable) {
+            coroutineScope.cancel()
+        }
+
+        coroutineScope.launch(Dispatchers.EDT + modalityState.asContextElement()) {
+            // Use IO dispatcher because loadVersions is blocking
+            val loadedVersions = withContext(Dispatchers.IO) {
+                runCatching {
                     ConfigureDialogWithModulesAndVersion.loadVersions(minimumVersion)
-                } catch (e: Exception) {
-                    error.set(true)
-                    listOf(ConfigureDialogWithModulesAndVersion.DEFAULT_KOTLIN_VERSION)
-                }
-                comboBoxModel.addAll(kotlinVersions)
-                @Suppress("HardCodedStringLiteral")
-                comboBoxModel.selectedItem = kotlinVersions.firstOrNull()
-                loading.set(false)
+                }.getOrNull()
             }
+            error.set(loadedVersions == null)
+
+            val kotlinVersions = loadedVersions ?: listOf(ConfigureDialogWithModulesAndVersion.DEFAULT_KOTLIN_VERSION)
+            comboBoxModel.addAll(kotlinVersions)
+            @Suppress("HardCodedStringLiteral")
+            comboBoxModel.selectedItem = kotlinVersions.firstOrNull()
+            loading.set(false)
         }
     }
 
@@ -100,9 +121,5 @@ internal class KotlinVersionChooser(project: Project, minimumVersion: String): D
                     }
             }.layout(RowLayout.PARENT_GRID)
         }
-    }
-
-    override fun dispose() {
-        coroutineScope.cancel()
     }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.icons.ImageDataByPathLoader.Companion.createIcon
@@ -16,7 +17,7 @@ import javax.swing.Icon
 @Internal
 fun findIconByPath(@NonNls path: String,
                    classLoader: ClassLoader,
-                   cache: MutableMap<Pair<String, ClassLoader?>, CachedImageIcon>?,
+                   cache: Cache<Pair<String, ClassLoader?>, CachedImageIcon>?,
                    toolTip: Supplier<String?>? = null): Icon? {
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
 
@@ -37,7 +38,7 @@ fun findIconByPath(@NonNls path: String,
                                   classLoader = effectiveClassLoader,
                                   toolTip = toolTip)
       else -> {
-        cache.computeIfAbsent(Pair(originalPath, effectiveClassLoader)) {
+        cache.get(Pair(originalPath, effectiveClassLoader)) {
           createIcon(originalPath = it.first,
                      originalClassLoader = it.second!!,
                      patched = patched,
@@ -75,7 +76,7 @@ internal class ImageDataByPathLoader private constructor(override val path: Stri
                         isOriginal: Boolean): ImageDataLoader? {
       val patched = transform.patchPath(originalLoader.path, originalLoader.classLoader) ?: return if (isOriginal) null else originalLoader
       val classLoader = if (patched.second == null) originalLoader.classLoader else patched.second!!
-      return if (patched.first.startsWith("file:/")) {
+      return if (patched.first.startsWith(FILE_SCHEME_PREFIX)) {
         ImageDataByFilePathLoader(patched.first)
       }
       else {

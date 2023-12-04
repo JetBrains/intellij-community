@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="guava-testlib" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="com.google.guava:guava-testlib:32.1.2-jre">
+    <properties include-transitive-deps="false" maven-id="com.google.guava:guava-testlib:32.1.3-jre">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava-testlib/32.1.2-jre/guava-testlib-32.1.2-jre.jar">
-          <sha256sum>6dcc70f0fdafc5db17430df58cc6040459cfab99ae46425e6a321745ff91899d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava-testlib/32.1.3-jre/guava-testlib-32.1.3-jre.jar">
+          <sha256sum>58aca6a4f287ae73e5fd610212bdcdc78d677c4475695009ba1656349dad9079</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava-testlib/32.1.2-jre/guava-testlib-32.1.2-jre.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava-testlib/32.1.3-jre/guava-testlib-32.1.3-jre.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava-testlib/32.1.2-jre/guava-testlib-32.1.2-jre-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava-testlib/32.1.3-jre/guava-testlib-32.1.3-jre-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

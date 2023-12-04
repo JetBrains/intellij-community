@@ -49,7 +49,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
                                                      "}");
     assertSize(1, myFixture.findGuttersAtCaret());
 
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile(), false);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile());
     assertThat(intentions.guttersToShow.size()).isGreaterThan(1);
   }
 
@@ -72,7 +72,7 @@ public class GutterIntentionsTest extends LightJavaCodeInsightFixtureTestCase {
                                                      "}");
     assertSize(1, myFixture.findGuttersAtCaret());
 
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile(), false);
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(getEditor(), getFile());
     List<AnAction> descriptors = intentions.guttersToShow;
     Set<String> names = descriptors.stream().map(o -> o.getTemplatePresentation().getText()).collect(Collectors.toSet());
     assertEquals(descriptors.size(), names.size());

@@ -9,10 +9,12 @@ import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.awt.datatransfer.DataTransferer;
@@ -51,7 +53,7 @@ public final class ClipboardSynchronizer implements Disposable {
     else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfoRt.isMac) {
       myClipboardHandler = new MacClipboardHandler();
     }
-    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && SystemInfoRt.isXWindow) {
+    else if (Patches.SLOW_GETTING_CLIPBOARD_CONTENTS && StartupUiUtil.isXToolkit()) {
       myClipboardHandler = new XWinClipboardHandler();
     }
     else if (SystemInfoRt.isWindows) {

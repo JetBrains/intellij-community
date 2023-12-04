@@ -34,12 +34,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
 import java.util.List;
 import java.util.*;
-
-import static com.intellij.reference.SoftReference.dereference;
 
 public class GroupNode extends Node implements Navigatable, Comparable<GroupNode> {
   private static final NodeComparator COMPARATOR = new NodeComparator();
@@ -393,11 +389,11 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     return list;
   }
 
-  private volatile Reference<UsageNodePresentation> myCachedPresentation;
+  private volatile UsageNodePresentation myCachedPresentation;
 
   @Override
   public @Nullable UsageNodePresentation getCachedPresentation() {
-    return dereference(myCachedPresentation);
+    return myCachedPresentation;
   }
 
   @Override
@@ -420,8 +416,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     TextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES.toTextAttributes();
     attributes.setForegroundColor(foregroundColor);
     chunks.add(new TextChunk(attributes, group.getPresentableGroupText()));
-    UsageNodePresentation presentation = new UsageNodePresentation(icon, chunks.toArray(TextChunk.EMPTY_ARRAY), null);
-    myCachedPresentation = new SoftReference<>(presentation);
+    myCachedPresentation = new UsageNodePresentation(icon, chunks.toArray(TextChunk.EMPTY_ARRAY), null);
   }
 
   @NotNull

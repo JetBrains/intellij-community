@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.util
 
-import com.intellij.openapi.vcs.ex.Range
+import com.intellij.diff.util.Range
 import com.intellij.util.containers.PeekableIteratorWrapper
 
-private val Range.leftStart: Int get() = vcsLine1
-private val Range.leftEnd: Int get() = vcsLine2
-private val Range.rightStart: Int get() = line1
-private val Range.rightEnd: Int get() = line2
+private val Range.leftStart: Int get() = start1
+private val Range.leftEnd: Int get() = end1
+private val Range.rightStart: Int get() = start2
+private val Range.rightEnd: Int get() = end2
 
 /**
  * Input: given 3 revisions: A -> B -> C and 2 sets of differences between them: earlyChanges 'A -> B' and laterChanges 'B -> C'.
@@ -68,7 +68,7 @@ object ExcludingApproximateChangedRangesShifter {
             }
           }
           rightStart > leftStart -> {
-            result.add(Range(cShift + bStart, laterRange.rightStart, aStart, aEnd))
+            result.add(Range(aStart, aEnd, cShift + bStart, laterRange.rightStart))
             if (rightEnd == leftEnd) {
               // "later" fully inside "early"
               cShift += laterDelta
@@ -92,7 +92,7 @@ object ExcludingApproximateChangedRangesShifter {
 
       // add leftover
       if (!fullyMapped && bStart <= bEnd) {
-        result.add(Range(cShift + bStart, cShift + bEnd, aStart, aEnd))
+        result.add(Range(aStart, aEnd, cShift + bStart, cShift + bEnd))
       }
     }
     return result

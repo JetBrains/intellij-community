@@ -49,18 +49,18 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   private boolean isCreatingNewProject;
 
-  private MavenProject myAggregatorProject;
-  private MavenProject myParentProject;
+  protected MavenProject myAggregatorProject;
+  protected MavenProject myParentProject;
 
-  private boolean myInheritGroupId;
-  private boolean myInheritVersion;
+  protected boolean myInheritGroupId;
+  protected boolean myInheritVersion;
 
-  private MavenId myProjectId;
-  private MavenArchetype myArchetype;
+  protected MavenId myProjectId;
+  protected MavenArchetype myArchetype;
 
-  private MavenEnvironmentForm myEnvironmentForm;
+  protected MavenEnvironmentForm myEnvironmentForm;
 
-  private Map<String, String> myPropertiesToCreateByArtifact;
+  protected Map<String, String> myPropertiesToCreateByArtifact;
 
   @Override
   public @NotNull Module createModule(@NotNull ModifiableModuleModel moduleModel)
@@ -97,18 +97,10 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     final VirtualFile root = createAndGetContentEntry();
     rootModel.addContentEntry(root);
 
-    // todo this should be moved to generic ModuleBuilder
-    var projectSdk = ProjectRootManager.getInstance(rootModel.getProject()).getProjectSdk();
-    if (myJdk == null || equalSdks(myJdk, projectSdk)) {
-      rootModel.inheritSdk();
-    }
-    else {
-      rootModel.setSdk(myJdk);
-    }
+    inheritOrSetSDK(rootModel);
 
     if (isCreatingNewProject) {
-      ExternalProjectsManagerImpl.setupCreatedProject(project);
-      project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
+      setupNewProject(project);
     }
 
     MavenUtil.runWhenInitialized(project, (DumbAwareRunnable)() -> {
@@ -122,7 +114,23 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     });
   }
 
-  private static boolean equalSdks(Sdk sdk1, Sdk sdk2) {
+  protected static void setupNewProject(Project project) {
+    ExternalProjectsManagerImpl.setupCreatedProject(project);
+    project.putUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT, true);
+  }
+
+  protected void inheritOrSetSDK(@NotNull ModifiableRootModel rootModel) {
+    // todo this should be moved to generic ModuleBuilder
+    var projectSdk = ProjectRootManager.getInstance(rootModel.getProject()).getProjectSdk();
+    if (myJdk == null || equalSdks(myJdk, projectSdk)) {
+      rootModel.inheritSdk();
+    }
+    else {
+      rootModel.setSdk(myJdk);
+    }
+  }
+
+  protected static boolean equalSdks(Sdk sdk1, Sdk sdk2) {
     if (sdk1 == null && sdk2 == null) return true;
     if (sdk1 == null || sdk2 == null) return false;
     return sdk1.getSdkType() == sdk2.getSdkType()
@@ -182,7 +190,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
-  private VirtualFile createAndGetContentEntry() {
+  protected VirtualFile createAndGetContentEntry() {
     String path = FileUtil.toSystemIndependentName(getContentEntryPath());
     new File(path).mkdirs();
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(path);

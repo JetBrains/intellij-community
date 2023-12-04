@@ -8,6 +8,7 @@ import com.intellij.openapi.application.CachedSingletonsRegistry;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.impl.VirtualFileEnumerationAware;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +19,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.function.Supplier;
 
-public abstract class ScratchFileService {
+public abstract class ScratchFileService implements VirtualFileEnumerationAware {
   public enum Option {existing_only, create_if_missing, create_new_always}
 
   private static final Supplier<ScratchFileService> ourInstance = CachedSingletonsRegistry.lazy(() -> {

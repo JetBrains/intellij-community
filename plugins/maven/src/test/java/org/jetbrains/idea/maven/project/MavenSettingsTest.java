@@ -113,40 +113,40 @@ public class MavenSettingsTest extends MavenTestCase {
       ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);
       MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent(
         """
-          <MavenWorkspaceSettings>
+          <MavenImportPreferences>
             <option name="importingSettings">
               <MavenImportingSettings>
                 <option name="importAutomatically" value="true" />
               </MavenImportingSettings>
             </option>
-          </MavenWorkspaceSettings>
+          </MavenImportPreferences>
           """);
       assertFalse(workspaceSettingsComponent.getSettings().getImportingSettings().isImportAutomatically());
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.ALL, projectTrackerSettings.getAutoReloadType());
-      assertEquals("<MavenWorkspaceSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
+      assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
     });
     replaceService(myProject, ExternalSystemProjectTrackerSettings.class, new AutoImportProjectTrackerSettings(), () -> {
       ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);
       MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent(
         """
-          <MavenWorkspaceSettings>
+          <MavenImportPreferences>
             <option name="importingSettings">
               <MavenImportingSettings>
                 <option name="importAutomatically" value="false" />
               </MavenImportingSettings>
             </option>
-          </MavenWorkspaceSettings>
+          </MavenImportPreferences>
           """);
       assertFalse(workspaceSettingsComponent.getSettings().getImportingSettings().isImportAutomatically());
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.SELECTIVE, projectTrackerSettings.getAutoReloadType());
-      assertEquals("<MavenWorkspaceSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
+      assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
     });
     replaceService(myProject, ExternalSystemProjectTrackerSettings.class, new AutoImportProjectTrackerSettings(), () -> {
       ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);
-      MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent("<MavenWorkspaceSettings />");
+      MavenWorkspaceSettingsComponent workspaceSettingsComponent = loadWorkspaceComponent("<MavenWorkspacePersistedSettings />");
       assertFalse(workspaceSettingsComponent.getSettings().getImportingSettings().isImportAutomatically());
       assertEquals(ExternalSystemProjectTrackerSettings.AutoReloadType.SELECTIVE, projectTrackerSettings.getAutoReloadType());
-      assertEquals("<MavenWorkspaceSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
+      assertEquals("<MavenWorkspacePersistedSettings />", storeWorkspaceComponent(workspaceSettingsComponent));
     });
   }
 
@@ -154,7 +154,7 @@ public class MavenSettingsTest extends MavenTestCase {
     try {
       MavenWorkspaceSettingsComponent workspaceSettingsComponent = new MavenWorkspaceSettingsComponent(myProject);
       Element workspaceSettingsElement = JDOMUtil.load(rawWorkspaceSettingsComponent);
-      MavenWorkspaceSettings workspaceSettings = deserializeState(workspaceSettingsElement, MavenWorkspaceSettings.class, null);
+      MavenWorkspacePersistedSettings workspaceSettings = deserializeState(workspaceSettingsElement, MavenWorkspacePersistedSettings.class, null);
       workspaceSettingsComponent.loadState(workspaceSettings);
       return workspaceSettingsComponent;
     }
@@ -176,7 +176,7 @@ public class MavenSettingsTest extends MavenTestCase {
 
   private static String storeWorkspaceComponent(MavenWorkspaceSettingsComponent workspaceSettingsComponent) {
     try {
-      MavenWorkspaceSettings workspaceSettings = workspaceSettingsComponent.getState();
+      MavenWorkspacePersistedSettings workspaceSettings = workspaceSettingsComponent.getState();
       JdomSerializer jdomSerializer = XmlSerializer.getJdomSerializer();
       SkipDefaultsSerializationFilter serializationFilter = jdomSerializer.getDefaultSerializationFilter();
       Element workspaceSettingsElement = jdomSerializer.serialize(workspaceSettings, serializationFilter, true);

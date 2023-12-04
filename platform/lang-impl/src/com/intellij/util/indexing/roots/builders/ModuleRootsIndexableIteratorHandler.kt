@@ -2,15 +2,14 @@
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.util.indexing.roots.origin.IndexingRootHolder
-import com.intellij.util.indexing.roots.origin.MutableIndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
+import com.intellij.util.indexing.roots.origin.MutableIndexingUrlRootHolder
 import com.intellij.util.indexing.roots.selectRootVirtualFileUrls
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 
@@ -71,9 +70,9 @@ class ModuleRootsIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   }
 
   private fun resolveRoots(builders: List<ModuleRootsIteratorBuilder>,
-                           fileBasedBuilders: List<ModuleRootsFileBasedIteratorBuilder>): IndexingRootHolder {
-    val rootsFromRecursiveBuilders = selectRootVirtualFileUrls(builders.flatMap { it.urls }).mapNotNull { url -> url.virtualFile }
-    val holder = fileBasedBuilders.foldRight(MutableIndexingRootHolder()) { builder, holder -> holder.addRoots(builder.files); holder }
+                           fileBasedBuilders: List<ModuleRootsFileBasedIteratorBuilder>): IndexingUrlRootHolder {
+    val rootsFromRecursiveBuilders = selectRootVirtualFileUrls(builders.flatMap { it.urls })
+    val holder = fileBasedBuilders.foldRight(MutableIndexingUrlRootHolder()) { builder, holder -> holder.addRoots(builder.files); holder }
     holder.roots.addAll(rootsFromRecursiveBuilders)
     return holder
   }

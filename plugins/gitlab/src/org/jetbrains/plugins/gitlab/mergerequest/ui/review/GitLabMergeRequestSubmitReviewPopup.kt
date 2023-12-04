@@ -5,33 +5,33 @@ import com.intellij.collaboration.async.inverted
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.SimpleHtmlPane
-import com.intellij.collaboration.ui.util.bindChildIn
-import com.intellij.collaboration.ui.util.bindDisabledIn
-import com.intellij.collaboration.ui.util.bindTextIn
-import com.intellij.collaboration.ui.util.bindVisibilityIn
+import com.intellij.collaboration.ui.util.*
+import com.intellij.collaboration.ui.util.popup.awaitClose
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.InstallButton
 import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.JBPopupListener
-import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.showAbove
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import java.awt.Component
 import java.awt.Font
 import java.awt.event.ActionListener
 import javax.swing.JButton
@@ -40,22 +40,38 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal object GitLabMergeRequestSubmitReviewPopup {
-  suspend fun show(vm: GitLabMergeRequestSubmitReviewViewModel, parentComponent: JComponent, above: Boolean = false) {
+  suspend fun show(vm: GitLabMergeRequestSubmitReviewViewModel, parentComponent: Component, above: Boolean = false) {
     withContext(Dispatchers.Main) {
-      coroutineScope {
-        val container = createPopupComponent(vm)
-        val popup = JBPopupFactory.getInstance()
-          // popup requires a properly focusable component, will not look under a panel
-          .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
-          .setFocusable(true)
-          .setRequestFocus(true)
-          .setResizable(true)
-          .createPopup()
+      val container = createPopupComponent(vm)
+      val popup = createPopup(container)
 
-        popup.showAndAwait(parentComponent, above)
+      if (above) {
+        popup.showAbove(parentComponent)
       }
+      else {
+        popup.showUnderneathOf(parentComponent)
+      }
+      popup.awaitClose()
     }
   }
+
+  suspend fun show(vm: GitLabMergeRequestSubmitReviewViewModel, project: Project) {
+    withContext(Dispatchers.Main) {
+      val container = createPopupComponent(vm)
+      val popup = createPopup(container)
+
+      popup.showCenteredInCurrentWindow(project)
+      popup.awaitClose()
+    }
+  }
+
+  private fun createPopup(container: ComponentContainer): JBPopup = JBPopupFactory.getInstance()
+    // popup requires a properly focusable component, will not look under a panel
+    .createComponentPopupBuilder(container.component, container.preferredFocusableComponent)
+    .setFocusable(true)
+    .setRequestFocus(true)
+    .setResizable(true)
+    .createPopup()
 
   private fun CoroutineScope.createPopupComponent(vm: GitLabMergeRequestSubmitReviewViewModel): ComponentContainer {
     val cs = this
@@ -87,8 +103,9 @@ internal object GitLabMergeRequestSubmitReviewPopup {
       private val submitButton = JButton(CollaborationToolsBundle.message("review.submit.action")).apply {
         isOpaque = false
         toolTipText = GitLabBundle.message("merge.request.submit.action.tooltip")
-        bindDisabledIn(cs, combine(vm.isBusy, vm.draftCommentsCount) { busy, draftComments ->
-          busy || draftComments <= 0
+        bindEnabledIn(cs, combine(vm.isBusy, vm.text, vm.draftCommentsCount) { busy, text, draftComments ->
+          // Is enabled when not busy and: the text is not blank, or there are draft comments to submit
+          !busy && (text.isNotBlank() || draftComments > 0)
         })
         addActionListener {
           vm.submit()
@@ -158,33 +175,6 @@ internal object GitLabMergeRequestSubmitReviewPopup {
           }
           document.bindTextIn(cs, text)
         }
-    }
-  }
-
-  private suspend fun JBPopup.showAndAwait(component: JComponent, above: Boolean = false) {
-    try {
-      val result = CompletableDeferred<Unit>(currentCoroutineContext()[Job])
-      addListener(object : JBPopupListener {
-        override fun onClosed(event: LightweightWindowEvent) {
-          if (event.isOk) {
-            result.complete(Unit)
-          }
-          else {
-            result.cancel()
-          }
-        }
-      })
-      if (above) {
-        showAbove(component)
-      }
-      else {
-        showUnderneathOf(component)
-      }
-      result.await()
-    }
-    catch (e: CancellationException) {
-      cancel()
-      throw e
     }
   }
 }

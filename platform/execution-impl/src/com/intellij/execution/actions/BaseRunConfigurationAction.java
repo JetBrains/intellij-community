@@ -1,5 +1,4 @@
- // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+ // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.ProgramRunnerUtil;
@@ -13,6 +12,8 @@ import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior;
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -31,8 +32,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Supplier;
 
-public abstract class BaseRunConfigurationAction extends ActionGroup {
+public abstract class BaseRunConfigurationAction extends ActionGroup implements ActionRemoteBehaviorSpecification {
   protected static final Logger LOG = Logger.getInstance(BaseRunConfigurationAction.class);
+  private volatile Boolean isDumbAware = false;
 
   protected BaseRunConfigurationAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
     super(text, description, icon);
@@ -40,9 +42,23 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     setEnabledInModalContext(true);
   }
 
+  protected BaseRunConfigurationAction(@NotNull Supplier<String> text,
+                                       @NotNull Supplier<String> description,
+                                       @Nullable Supplier<? extends @Nullable Icon> icon) {
+    super(text, description, icon);
+
+    setPopup(true);
+    setEnabledInModalContext(true);
+  }
+
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
+  }
+
+  @Override
+  public @NotNull ActionRemoteBehavior getBehavior() {
+    return ActionRemoteBehavior.BackendOnly;
   }
 
   @Override
@@ -222,6 +238,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       presentation.setPerformGroup(false);
     }
     else{
+      isDumbAware = configuration.getType().isDumbAware();
       presentation.setEnabledAndVisible(true);
       VirtualFile vFile = dataContext.getData(CommonDataKeys.VIRTUAL_FILE);
       if (vFile != null) {
@@ -248,7 +265,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   @Override
   public boolean isDumbAware() {
-    return false;
+    return isDumbAware;
   }
 
   public static @NotNull @Nls String suggestRunActionName(@NotNull RunConfiguration configuration) {

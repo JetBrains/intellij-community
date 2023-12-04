@@ -33,11 +33,15 @@ val MAVEN_REPO: Path = USER_HOME.resolve(".m2/repository")
 
 internal val isWindows: Boolean = System.getProperty("os.name").startsWith("windows", ignoreCase = true)
 
+fun interface DistributionFileEntryProducer {
+  fun consume(size: Int, hash: Long, targetFile: Path): DistributionFileEntry
+}
+
 data class ZipSource(
   @JvmField val file: Path,
   @JvmField val excludes: List<Regex> = emptyList(),
   @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
-  val distributionFileEntryProducer: ((Int, Long) -> DistributionFileEntry)?,
+  val distributionFileEntryProducer: DistributionFileEntryProducer?,
 ) : Source, Comparable<ZipSource> {
   override var size: Int = 0
   override var hash: Long = 0
@@ -144,13 +148,8 @@ suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean 
 internal suspend fun buildJar(targetFile: Path,
                               sources: List<Source>,
                               compress: Boolean = false,
-                              dryRun: Boolean = false,
                               notify: Boolean = true,
                               nativeFileHandler: NativeFileHandler? = null) {
-  if (dryRun) {
-    return
-  }
-
   val packageIndexBuilder = if (compress) null else PackageIndexBuilder()
   writeNewFile(targetFile) { outChannel ->
     ZipFileWriter(channel = outChannel,

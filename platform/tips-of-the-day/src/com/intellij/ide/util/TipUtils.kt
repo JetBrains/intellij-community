@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.icons.loadImageByClassLoader
 import com.intellij.ui.scale.JBUIScale.scale
@@ -112,7 +113,13 @@ private fun loadAndParseTip(tip: TipAndTrickBean?, contextComponent: Component?,
   val currentTip = loadTip(tip = tip, isStrict = isStrict)
   val tipHtml = Jsoup.parse(currentTip.tipContent)
   val tipContent = tipHtml.body()
-  val icons = loadImages(tipContent, currentTip.tipImagesLoader, currentTip.imagesLocation, contextComponent, isStrict)
+
+  val icons = loadImages(tipContent,
+                         currentTip.tipImagesLoader,
+                         currentTip.tipContentLoader,
+                         currentTip.imagesLocation,
+                         contextComponent,
+                         isStrict)
   inlineProductInfo(tipContent)
   val paragraphs = TipContentConverter(tipContent, icons, isStrict).convert()
   if (paragraphs.isEmpty()) {
@@ -172,7 +179,9 @@ private val productCodeTipMap = mapOf(Pair("iu", "ij"),
 
 private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
   val fallbackLoader = TipUtils::class.java.classLoader
-  val pluginDescriptor = tip.pluginDescriptor
+  // descriptor can be null if the provided tip is not registered as an extension
+  // such tips are not present in the tips of the day list, but shown in the productivity guide
+  val pluginDescriptor: PluginDescriptor? = tip.pluginDescriptor
   val langBundle = DynamicBundle.findLanguageBundle()
 
   //I know of ternary operators, but in cases like this they're harder to comprehend and debug than this.
@@ -181,8 +190,10 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
     val langBundleLoader = langBundle.pluginDescriptor
     if (langBundleLoader != null) tipLoader = langBundleLoader.pluginClassLoader
   }
-  if (tipLoader == null && pluginDescriptor != null && pluginDescriptor.pluginClassLoader != null) {
-    tipLoader = pluginDescriptor.pluginClassLoader
+  val pluginClassLoader = pluginDescriptor?.pluginClassLoader
+
+  if (tipLoader == null && pluginClassLoader != null) {
+    tipLoader = pluginClassLoader
   }
   if (tipLoader == null) tipLoader = fallbackLoader
   var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
@@ -193,13 +204,16 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
   val retrievers: MutableList<TipRetriever> = ArrayList()
 
   listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc", "").forEach { retrievers.add(TipRetriever(tipLoader, "tips", it)) }
-  val fallbackRetriever = TipRetriever(fallbackLoader, "tips", "")
+  val fallbackRetriever = TipRetriever(if (pluginClassLoader == null) fallbackLoader else pluginClassLoader, "tips", "")
   retrievers.add(fallbackRetriever)
   return TipRetrieversInfo(fallbackRetriever, retrievers)
 }
 
+//Because images are not localized, we're always loading them from main classloader, but some of the images might not be present there
+//so we're providing a secondary loader as backup to try plugin resources (e.g. Kotlin) that might have brought these images along.
 private fun loadImages(tipContent: Element,
-                       loader: ClassLoader?,
+                       primaryImagesLoader: ClassLoader?,
+                       secondaryImagesLoader: ClassLoader?,
                        tipsPath: String?,
                        contextComponent: Component?,
                        isStrict: Boolean): Map<String, Icon> {
@@ -216,7 +230,7 @@ private fun loadImages(tipContent: Element,
 
     val path = imgElement.attr("src")
     var image: Image? = null
-    if (loader == null) {
+    if (primaryImagesLoader == null) {
       // This case is required only for testing by opening tip from the file (see TipDialog.OpenTipsAction)
       try {
         val imageUrl = File(tipsPath, path).toURI().toURL()
@@ -237,7 +251,13 @@ private fun loadImages(tipContent: Element,
       }
     }
     else {
-      image = loadImageByClassLoader(path = "$tipsPath$path", classLoader = loader, scaleContext = ScaleContext.create(contextComponent))
+      image = loadImageByClassLoader(path = "$tipsPath$path",
+                                     classLoader = primaryImagesLoader,
+                                     scaleContext = ScaleContext.create(contextComponent))
+      if (image == null && secondaryImagesLoader != null)
+        image = loadImageByClassLoader(path = "$tipsPath$path",
+                                       classLoader = secondaryImagesLoader,
+                                       scaleContext = ScaleContext.create(contextComponent))
     }
     if (image != null) {
       var icon: Icon = JBImageIcon(image)

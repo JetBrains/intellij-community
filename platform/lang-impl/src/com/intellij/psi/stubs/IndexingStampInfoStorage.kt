@@ -35,25 +35,26 @@ internal class IndexingStampInfoStorageOverFastAttributes(private val attribute:
   }
 
   override fun readStampInfo(fileId: Int): IndexingStampInfo? {
-    val int3 = IntArray(3)
+    val int4 = IntArray(4)
     val attributeAccessor = attributeAccessor()
-    int3[0] = attributeAccessor.readField(fileId, 0)
-    int3[1] = attributeAccessor.readField(fileId, 1)
-    int3[2] = attributeAccessor.readField(fileId, 2)
-    return if (int3[0] == 0 && int3[1] == 0 && int3[2] == 0) {
+    for (i in int4.indices) {
+      int4[i] = attributeAccessor.readField(fileId, i)
+    }
+
+    return if (int4.all { it == 0 }) {
       null
     }
     else {
-      IndexingStampInfo.fromInt3(int3)
+      IndexingStampInfo.fromInt4(int4)
     }
   }
 
   override fun writeStampInfo(fileId: Int, stampInfo: IndexingStampInfo) {
-    val int3 = stampInfo.toInt3()
+    val int4 = stampInfo.toInt4()
     val attributeAccessor = attributeAccessor()
-    attributeAccessor.write(fileId, 0, int3[0])
-    attributeAccessor.write(fileId, 1, int3[1])
-    attributeAccessor.write(fileId, 2, int3[2])
+    for (i in int4.indices) {
+      attributeAccessor.write(fileId, i, int4[i])
+    }
   }
 }
 

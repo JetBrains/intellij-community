@@ -2,13 +2,13 @@
 package com.intellij.ide.startup.importSettings.transfer
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
-import com.intellij.ide.customize.transferSettings.models.IdeVersion
-import com.intellij.ide.startup.importSettings.data.DialogImportItem
-import com.intellij.ide.startup.importSettings.data.ImportFromProduct
-import com.intellij.ide.startup.importSettings.data.ImportProgress
-import com.intellij.ide.startup.importSettings.data.SettingsContributor
+import com.intellij.ide.startup.importSettings.data.*
+import com.intellij.ide.startup.importSettings.jb.JbProductInfo
+import com.intellij.ide.startup.importSettings.jb.NameMappings
+import com.intellij.ide.startup.importSettings.models.BaseIdeVersion
+import com.intellij.ide.startup.importSettings.models.IdeVersion
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.NlsContexts.ProgressDetails
 import com.intellij.openapi.util.NlsContexts.ProgressText
@@ -17,21 +17,26 @@ import com.jetbrains.rd.util.reactive.OptProperty
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.compose
 
-internal class TransferSettingsProgress(sourceIdeVersion: IdeVersion) : ImportFromProduct {
+class TransferSettingsProgress(override val from: DialogImportItem) : ImportFromProduct {
+
+  constructor(sourceIdeVersion: IdeVersion) : this(DialogImportItem(
+      TransferSettingsContributor(sourceIdeVersion),
+      sourceIdeVersion.transferableId.icon(IconProductSize.LARGE) ?: AllIcons.Actions.Stub
+    ))
+  constructor(productInfo: JbProductInfo)  : this(DialogImportItem(
+    productInfo, NameMappings.getIcon(productInfo.codeName, IconProductSize.LARGE) ?: AllIcons.Actions.Stub
+  ))
+
 
   override val message = null
   override val progress = TransferSettingsProgressIndicator()
 
-  override val from = DialogImportItem(
-    TransferSettingsContributor(sourceIdeVersion),
-    sourceIdeVersion.transferableId.icon ?: AllIcons.Actions.Stub
-  )
   override val to = DialogImportItem.self()
 
   fun createProgressIndicatorAdapter(): ProgressIndicator = ProgressIndicatorAdapter(progress)
 }
 
-internal class TransferSettingsProgressIndicator : ImportProgress {
+class TransferSettingsProgressIndicator : ImportProgress {
 
   override val progressMessage = Property<String?>(null)
   override val progress = OptProperty<Int>()
@@ -43,23 +48,26 @@ private class TransferSettingsContributor(ideVersion: BaseIdeVersion) : Settings
   override val name = ideVersion.name
 }
 
-private class ProgressIndicatorAdapter(private val backend: TransferSettingsProgressIndicator) : ProgressIndicator {
+class ProgressIndicatorAdapter(private val backend: TransferSettingsProgressIndicator) : ProgressIndicator {
+
+  @Volatile
+  private var cancelled = false
+
   override fun start() {}
   override fun stop() {}
   override fun isRunning() = true
-  override fun cancel() {}
-  override fun isCanceled() = false
+  override fun cancel() { cancelled = true }
+  override fun isCanceled() = cancelled
 
-  private val textProp = Property<String?>(null)
-  private val text2Prop = Property<String?>(null)
+  private val textProp = Property<@ProgressText String?>(null)
+  private val text2Prop = Property<@ProgressText String?>(null)
   init {
     textProp.compose(text2Prop, ::Pair).advise(Lifetime.Eternal) { (t1, t2) ->
       val text = when {
         t1 == null && t2 == null -> null
         t1 == null && t2 != null -> t2
         t1 != null && t2 == null -> t1
-        t1 != null && t2 != null -> "$t1 / $t2"
-        else -> error("Impossible")
+        else -> "$t1 / $t2"
       }
       backend.progressMessage.set(text)
     }
@@ -96,7 +104,10 @@ private class ProgressIndicatorAdapter(private val backend: TransferSettingsProg
   override fun setModalityProgress(modalityProgress: ProgressIndicator?) {}
   override fun isIndeterminate() = false
   override fun setIndeterminate(indeterminate: Boolean) {}
-  override fun checkCanceled() {}
+  override fun checkCanceled() {
+    if (cancelled)
+      throw ProcessCanceledException()
+  }
   override fun isPopupWasShown() = true
   override fun isShowing() = true
 }

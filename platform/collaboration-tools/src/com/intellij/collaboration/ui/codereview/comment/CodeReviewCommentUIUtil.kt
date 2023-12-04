@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.JBColor
+import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBInsets
 import icons.CollaborationToolsIcons
@@ -54,6 +55,12 @@ object CodeReviewCommentUIUtil {
           it.dispatchEvent(ComponentEvent(component, ComponentEvent.COMPONENT_RESIZED))
       })
     }
+  }
+
+  fun createPostNowButton(actionListener: (ActionEvent) -> Unit): JComponent {
+    val button = ActionLink(CollaborationToolsBundle.message("review.comments.post-now.action"))
+    button.addActionListener(actionListener)
+    return button
   }
 
   fun createDeleteCommentIconButton(actionListener: (ActionEvent) -> Unit): JComponent {

@@ -36,11 +36,9 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // We expect two events: One published before and one after the PSI tree modification.
-        trackerA.assertModified("module A after out-of-block change", expectedEventCount = 2)
+        trackerA.assertModified("module A after out-of-block change")
         trackerB.assertNotModified("unmodified module B")
         trackerC.assertNotModified("unmodified module C")
-
-        disposeTrackers(trackerA, trackerB, trackerC)
     }
 
     fun `test that source module out-of-block modification does not occur after deleting a symbol in a function body`() {
@@ -64,8 +62,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         trackerA.assertNotModified("module A with an in-block modification")
-
-        disposeTrackers(trackerA)
     }
 
     fun `test that source module out-of-block modification does not occur after deleting whitespace`() {
@@ -87,8 +83,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         trackerA.assertNotModified("module A after deleting whitespace")
-
-        disposeTrackers(trackerA)
     }
 
     fun `test that source module out-of-block modification occurs after adding a space in an identifier`() {
@@ -113,9 +107,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // In total, seven PSI tree changes are processed: Two `BEFORE_CHILD_REPLACEMENT`, one `CHILDREN_CHANGED`, and four `CHILD_ADDED`.
-        trackerA.assertModified("module A after adding a space in an identifier", expectedEventCount = 7)
-
-        disposeTrackers(trackerA)
+        trackerA.assertModified("module A after adding a space in an identifier")
     }
 
     fun `test that source module out-of-block modification occurs after commenting out a function`() {
@@ -135,9 +127,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        trackerA.assertModifiedOnce("module A after commenting out a function")
-
-        disposeTrackers(trackerA)
+        trackerA.assertModified("module A after commenting out a function")
     }
 
     fun `test that source module out-of-block modification does not occur after commenting out a type inside a function body`() {
@@ -173,8 +163,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         trackerA.assertNotModified("module A after commenting out a type inside a function body")
-
-        disposeTrackers(trackerA)
     }
 
     fun `test that source module out-of-block modification occurs after commenting out a type`() {
@@ -194,9 +182,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
             }
         }
 
-        trackerA.assertModifiedOnce("module A after commenting out a type")
-
-        disposeTrackers(trackerA)
+        trackerA.assertModified("module A after commenting out a type")
     }
 
     fun `test that source module out-of-block modification occurs after adding a modifier to a function`() {
@@ -217,9 +203,7 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // In total, seven PSI tree changes are processed: Three `BEFORE_CHILD_REMOVAL`, three `CHILD_REMOVED`, and one `CHILD_ADDED`.
-        trackerA.assertModified("module A after adding a modifier to a function", expectedEventCount = 7)
-
-        disposeTrackers(trackerA)
+        trackerA.assertModified("module A after adding a modifier to a function")
     }
 
     fun `test that source module out-of-block modification occurs after adding a return type to a function`() {
@@ -241,9 +225,142 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
 
         // In total, seventeen PSI tree changes are processed: Five `BEFORE_CHILD_REMOVAL`, two `CHILDREN_CHANGED`, seven `CHILD_REMOVED`,
         // two `CHILD_ADDED`, and one `BEFORE_CHILD_REPLACEMENT`.
-        trackerA.assertModified("module A after adding a return type to a function", expectedEventCount = 17)
+        trackerA.assertModified("module A after adding a return type to a function")
+    }
 
-        disposeTrackers(trackerA)
+    fun `test that source module out-of-block modification occurs after adding a contract to a function body`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """
+                        inline fun foo(block: () -> Unit) {
+                            <caret>block()
+                        }
+                    """.trimIndent()
+                )
+            )
+        }
+
+        val trackerA = createTracker(moduleA)
+
+        val textAfterModification =
+            """
+                inline fun foo(block: () -> Unit) {
+                    kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                    block()
+                }
+            """.trimIndent()
+
+        moduleA.configureEditorForFile("main.kt").apply {
+            modify(textAfterModification) {
+                type("kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }\n")
+            }
+        }
+
+        trackerA.assertModified("module A after adding a contract to a function body")
+    }
+
+    fun `test that source module out-of-block modification occurs after deleting a contract inside a function body`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """
+                        inline fun foo(block: () -> Unit) {
+                            <caret>kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                            block()
+                        }
+                    """.trimIndent()
+                )
+            )
+        }
+
+        val trackerA = createTracker(moduleA)
+
+        val textAfterModification =
+            """
+                inline fun foo(block: () -> Unit) {
+                    block()
+                }
+            """.trimIndent()
+
+        moduleA.configureEditorForFile("main.kt").apply {
+            modify(textAfterModification) {
+                deleteLine()
+            }
+        }
+
+        trackerA.assertModified("module A after deleting a contract inside a function body")
+    }
+
+    fun `test that source module out-of-block modification occurs after wrapping a contract statement in an if-expression`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """
+                        inline fun foo(block: () -> Unit) {
+                            <caret>kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                            block()
+                        }
+                    """.trimIndent()
+                )
+            )
+        }
+
+        val trackerA = createTracker(moduleA)
+
+        val textAfterModification =
+            """
+                inline fun foo(block: () -> Unit) {
+                    if (1 == 2) kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                    block()
+                }
+            """.trimIndent()
+
+        moduleA.configureEditorForFile("main.kt").apply {
+            modify(textAfterModification) {
+                type("if (1 == 2) ")
+            }
+        }
+
+        trackerA.assertModified("module A after wrapping a contract statement in an if-expression")
+    }
+
+    fun `test that source module out-of-block modification occurs after unwrapping an illegally nested contract statement`() {
+        val moduleA = createModuleInTmpDir("a") {
+            listOf(
+                FileWithText(
+                    "main.kt",
+                    """
+                        inline fun foo(block: () -> Unit) {
+                            <caret>if (1 == 2)
+                            kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                            block()
+                        }
+                    """.trimIndent()
+                )
+            )
+        }
+
+        val trackerA = createTracker(moduleA)
+
+        val textAfterModification =
+            """
+                inline fun foo(block: () -> Unit) {
+                    kotlin.contracts.contract { callsInPlace(block, InvocationKind.EXACTLY_ONCE) }
+                    block()
+                }
+            """.trimIndent()
+
+        moduleA.configureEditorForFile("main.kt").apply {
+            modify(textAfterModification) {
+                deleteLine()
+            }
+        }
+
+        trackerA.assertModified("module A after unwrapping an illegally nested contract statement")
     }
 
     fun `test that source module out-of-block modification does not occur after changing a non-physical file`() {
@@ -264,8 +381,6 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
 
         trackerA.assertNotModified("module A")
         trackerB.assertNotModified("module B")
-
-        disposeTrackers(trackerA, trackerB)
     }
 
     fun `test that script module out-of-block modification affects a single script module`() {
@@ -288,12 +403,10 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // We expect two events: One published before and one after the PSI tree modification.
-        trackerA.assertModified("script A after out-of-block modification", expectedEventCount = 2)
+        trackerA.assertModified("script A after out-of-block modification")
         trackerB.assertNotModified("unmodified script B")
         trackerC.assertNotModified("unmodified module C")
         trackerD.assertNotModified("unmodified not-under-content-root file D")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
     fun `test that not-under-content-root module out-of-block modification affects a single not-under-content-root module`() {
@@ -314,12 +427,10 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         }
 
         // We expect two events: One published before and one after the PSI tree modification.
-        trackerA.assertModified("not-under-content-root file A after out-of-block modification", expectedEventCount = 2)
+        trackerA.assertModified("not-under-content-root file A after out-of-block modification")
         trackerB.assertNotModified("unmodified not-under-content-root file B")
         trackerC.assertNotModified("unmodified module C")
         trackerD.assertNotModified("unmodified script D")
-
-        disposeTrackers(trackerA, trackerB, trackerC, trackerD)
     }
 
     private fun KtFile.configureEditor() {

@@ -93,4 +93,42 @@ public abstract class KotlinPsiBasedTestFrameworkTestGenerated extends AbstractK
             runTest("testData/codeInsight/lineMarker/runMarkers/testNGTestClassWithSubclasses.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/lineMarker/runMarkers")
+    public static class WithGradleConfiguration extends AbstractKotlinPsiBasedTestFrameworkTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithGradleConfiguration, this, testDataFilePath);
+        }
+
+        @TestMetadata("jUnit3TestFile.kt")
+        public void testJUnit3TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit3TestFile.kt");
+        }
+
+        @TestMetadata("jUnit3TestFileWithJUnit4.kt")
+        public void testJUnit3TestFileWithJUnit4() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit3TestFileWithJUnit4.kt");
+        }
+
+        @TestMetadata("jUnit4TestFile.kt")
+        public void testJUnit4TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit4TestFile.kt");
+        }
+
+        @TestMetadata("jUnit5TestFile.kt")
+        public void testJUnit5TestFile() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
+        }
+
+        @TestMetadata("jUnitTestClassWithSubclasses.kt")
+        public void testJUnitTestClassWithSubclasses() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnitTestClassWithSubclasses.kt");
+        }
+
+        @TestMetadata("testNGTestClassWithSubclasses.kt")
+        public void testTestNGTestClassWithSubclasses() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/testNGTestClassWithSubclasses.kt");
+        }
+    }
 }

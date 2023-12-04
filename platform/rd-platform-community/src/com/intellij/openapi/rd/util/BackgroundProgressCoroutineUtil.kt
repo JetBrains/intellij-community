@@ -4,16 +4,22 @@ package com.intellij.openapi.rd.util
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.contextModality
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.StandardProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.ProgressDetails
+import com.intellij.openapi.util.NlsContexts.ProgressText
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.asContextElement
 import com.intellij.platform.util.progress.rawProgressReporter
 import com.intellij.platform.util.progress.withRawProgressReporter
 import com.intellij.util.awaitCancellationAndInvoke
@@ -411,20 +417,34 @@ class ProgressCoroutineScopeLegacy private constructor(indicator: ProgressIndica
   companion object {
     internal suspend fun <T> execute(coroutineContext: CoroutineContext, progressLifetime: Lifetime, indicator: ProgressIndicator, action: suspend ProgressCoroutineScope.() -> T): T {
       return try {
-        val sink = object : ProgressSink {
-          override fun update(text: @NlsContexts.ProgressText String?, details: @NlsContexts.ProgressDetails String?, fraction: Double?) {
+        val reporter = object : RawProgressReporter {
+          override fun text(text: @ProgressText String?) {
             if (progressLifetime.isNotAlive) return
 
             progressLifetime.launch(coroutineContext) {
               if (text != null) indicator.text = text
+            }
+          }
+
+          override fun details(details: @ProgressDetails String?) {
+            if (progressLifetime.isNotAlive) return
+
+            progressLifetime.launch(coroutineContext) {
               if (details != null) indicator.text2 = details
+            }
+          }
+
+          override fun fraction(fraction: Double?) {
+            if (progressLifetime.isNotAlive) return
+
+            progressLifetime.launch(coroutineContext) {
               if (fraction != null) indicator.fraction = fraction
             }
           }
         }
 
         coroutineScope {
-          withContext(ModalityState.defaultModalityState().asContextElement() + sink.asContextElement()) {
+          withContext(ModalityState.defaultModalityState().asContextElement() + reporter.asContextElement()) {
             ProgressCoroutineScopeLegacy(indicator).action()
           }
         }

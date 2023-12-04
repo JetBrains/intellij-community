@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -67,7 +66,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   public static final @NonNls Key<Boolean> DONT_HIDE_TOOLBAR_IN_HEADER = Key.create("DontHideToolbarInHeader");
   private static final @NonNls String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
   public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
-  @ApiStatus.Internal public static final Key<Boolean> SHOW_BETA_LABEL = Key.create("ShowBetaLabel");
+  @ApiStatus.Internal public static final String HEADER_ICON = "HeaderIcon";
 
   @ApiStatus.Internal public static final Key<Boolean> NOT_SELECTED_TAB_ICON_TRANSPARENT = Key.create("NotSelectedIconTransparent");
 
@@ -466,16 +465,6 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
           }
         }
         ui.window.fireActivated(ToolWindowEventSource.ToolWindowHeader);
-      }
-
-      @Override
-      public void mouseClicked(MouseEvent e) {
-        if (SwingUtilities.isLeftMouseButton(e) && e.getClickCount() == 2) {
-          if (ui.tabsLayout.doubleClickActions.isEmpty() || !(e.getComponent() instanceof ContentTabLabel)) {
-            ToolWindowManagerEx manager = ui.window.getToolWindowManager();
-            manager.setMaximized(ui.window, !manager.isMaximized(ui.window));
-          }
-        }
       }
 
       @Override

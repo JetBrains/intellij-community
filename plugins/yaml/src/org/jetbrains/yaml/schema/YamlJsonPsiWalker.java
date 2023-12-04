@@ -24,11 +24,9 @@ import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
-import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
@@ -298,7 +296,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         return ((YAMLKeyValue)property).getName();
       }
 
-      private YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
+      private static YAMLKeyValue findPrecedingKeyValueWithNoValue(PsiElement element) {
         if (PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT) {
           PsiElement prev = element.getPrevSibling();
           prev = prev == null ? null : PsiTreeUtil.skipWhitespacesAndCommentsBackward(prev);
@@ -377,7 +375,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       }
 
       @Nullable
-      private PsiElement skipNonNewlineSpaces(YAMLKeyValue keyValue) {
+      private static PsiElement skipNonNewlineSpaces(YAMLKeyValue keyValue) {
         PsiElement sibling = keyValue.getNextSibling();
         while (sibling instanceof PsiWhiteSpace && !sibling.getText().contains("\n")) {
           sibling = sibling.getNextSibling();

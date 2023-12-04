@@ -1,22 +1,23 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.timeline
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapModelsToViewModels
+import com.intellij.collaboration.async.modelFlow
+import com.intellij.collaboration.async.transformConsecutiveSuccesses
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.GitLabMergeRequestViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.ui.issues.IssuesUtil
-import org.jetbrains.plugins.gitlab.ui.comment.DelegatingGitLabNoteEditingViewModel
+import org.jetbrains.plugins.gitlab.ui.GitLabUIUtil
+import org.jetbrains.plugins.gitlab.ui.comment.GitLabNoteEditingViewModel
 import org.jetbrains.plugins.gitlab.ui.comment.NewGitLabNoteViewModel
-import org.jetbrains.plugins.gitlab.ui.comment.forNewNote
 import org.jetbrains.plugins.gitlab.ui.comment.onDoneIn
 import java.net.URL
 
@@ -28,8 +29,6 @@ interface GitLabMergeRequestTimelineViewModel : GitLabMergeRequestViewModel {
   val newNoteVm: NewGitLabNoteViewModel?
 
   val serverUrl: URL
-
-  fun requestLoad()
 
   fun setShowEvents(show: Boolean)
 }
@@ -45,15 +44,14 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
 ) : GitLabMergeRequestTimelineViewModel {
 
   private val cs = parentCs.childScope(Dispatchers.Default)
-  private val loadingRequests = MutableSharedFlow<Unit>(1)
 
   override val number: String = "!${mergeRequest.iid}"
   override val author: GitLabUserDTO = mergeRequest.author
   override val title: SharedFlow<String> = mergeRequest.details.map { it.title }.map { title ->
-    IssuesUtil.convertMarkdownToHtmlWithIssues(project, title)
+    GitLabUIUtil.convertToHtml(project, title)
   }.modelFlow(cs, LOG)
   override val descriptionHtml: SharedFlow<String> = mergeRequest.details.map { it.description }.map { description ->
-    IssuesUtil.convertMarkdownToHtmlWithIssues(project, description)
+    GitLabUIUtil.convertToHtml(project, description)
   }.modelFlow(cs, LOG)
   override val url: String = mergeRequest.url
 
@@ -61,18 +59,15 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override val showEvents: StateFlow<Boolean> = _showEvents.asStateFlow()
 
   override val timelineItems: SharedFlow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
-    mergeRequest.createTimelineItemsFlow(showEvents).mapToVms(mergeRequest).modelFlow(cs, LOG)
-
-  @RequiresEdt
-  override fun requestLoad() {
-    cs.launch {
-      loadingRequests.emit(Unit)
-    }
-  }
+    mergeRequest.createTimelineItemsFlow(showEvents)
+      .transformConsecutiveSuccesses {
+        mapModelsToViewModels { createItemVm(mergeRequest, it) }
+      }
+      .modelFlow(cs, LOG)
 
   override val newNoteVm: NewGitLabNoteViewModel? =
     if (mergeRequest.canAddNotes) {
-      DelegatingGitLabNoteEditingViewModel(cs, "", mergeRequest::addNote).forNewNote(currentUser).apply {
+      GitLabNoteEditingViewModel.forNewNote(cs, project, mergeRequest, currentUser).apply {
         onDoneIn(cs) {
           text.value = ""
         }
@@ -90,6 +85,12 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
   override fun setShowEvents(show: Boolean) {
     _showEvents.value = show
     preferences.showEventsInTimeline = show
+  }
+
+  override fun reloadData() {
+    cs.launchNow {
+      mergeRequest.reloadData()
+    }
   }
 
   override fun refreshData() {
@@ -134,15 +135,6 @@ class LoadAllGitLabMergeRequestTimelineViewModel(
         Result.success(timeline)
       }
     }
-
-  private fun Flow<Result<List<GitLabMergeRequestTimelineItem>>>.mapToVms(mr: GitLabMergeRequest)
-    : Flow<Result<List<GitLabMergeRequestTimelineItemViewModel>>> =
-    throwFailure()
-      .mapCaching(
-        GitLabMergeRequestTimelineItem::id,
-        { item -> createItemVm(mr, item) },
-        { if (this is GitLabMergeRequestTimelineItemViewModel.Discussion) destroy() }
-      ).asResultFlow()
 
   private fun CoroutineScope.createItemVm(mr: GitLabMergeRequest, item: GitLabMergeRequestTimelineItem)
     : GitLabMergeRequestTimelineItemViewModel =

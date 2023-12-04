@@ -33,6 +33,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 
 public final class ConsoleViewUtil {
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
@@ -219,7 +220,15 @@ public final class ConsoleViewUtil {
     printWithHighlighting(console, text, highlighter, null);
   }
 
-  public static void printWithHighlighting(@NotNull ConsoleView console, @NotNull String text,
+  public static void printWithHighlighting(@NotNull ConsoleView console,
+                                           @NotNull String text,
+                                           @NotNull SyntaxHighlighter highlighter,
+                                           Runnable doOnNewLine) {
+    printWithHighlighting((token, contentType) -> console.print(token, contentType), text, highlighter, doOnNewLine);
+  }
+
+  public static void printWithHighlighting(@NotNull BiConsumer<? super String, ? super ConsoleViewContentType> tokenSink,
+                                           @NotNull String text,
                                            @NotNull SyntaxHighlighter highlighter,
                                            Runnable doOnNewLine) {
     Lexer lexer = highlighter.getHighlightingLexer();
@@ -231,7 +240,7 @@ public final class ConsoleViewUtil {
       StringTokenizer eolTokenizer = new StringTokenizer(lexer.getTokenText(), "\n", true);
       while (eolTokenizer.hasMoreTokens()){
         String tok = eolTokenizer.nextToken();
-        console.print(tok, contentType);
+        tokenSink.accept(tok, contentType);
         if (doOnNewLine != null && "\n".equals(tok)) {
             doOnNewLine.run();
         }
@@ -260,22 +269,27 @@ public final class ConsoleViewUtil {
     }
   }
 
+  public static Filter[] computeConsoleFilters(@NotNull ConsoleFilterProvider provider,
+                                               @NotNull Project project,
+                                               @Nullable ConsoleView consoleView,
+                                               @NotNull GlobalSearchScope searchScope) {
+    if (consoleView != null && provider instanceof ConsoleDependentFilterProvider) {
+      return ((ConsoleDependentFilterProvider)provider).getDefaultFilters(consoleView, project, searchScope);
+    }
+    else if (provider instanceof ConsoleFilterProviderEx) {
+      return ((ConsoleFilterProviderEx)provider).getDefaultFilters(project, searchScope);
+    }
+    else {
+      return provider.getDefaultFilters(project);
+    }
+  }
+
   public static @NotNull List<Filter> computeConsoleFilters(@NotNull Project project,
                                                             @Nullable ConsoleView consoleView,
                                                             @NotNull GlobalSearchScope searchScope) {
     List<Filter> result = new ArrayList<>();
     for (ConsoleFilterProvider eachProvider : ConsoleFilterProvider.FILTER_PROVIDERS.getExtensions()) {
-      Filter[] filters;
-      if (consoleView != null && eachProvider instanceof ConsoleDependentFilterProvider) {
-        filters = ((ConsoleDependentFilterProvider)eachProvider).getDefaultFilters(consoleView, project, searchScope);
-      }
-      else if (eachProvider instanceof ConsoleFilterProviderEx) {
-        filters = ((ConsoleFilterProviderEx)eachProvider).getDefaultFilters(project, searchScope);
-      }
-      else {
-        filters = eachProvider.getDefaultFilters(project);
-      }
-      Collections.addAll(result, filters);
+      Collections.addAll(result, computeConsoleFilters(eachProvider, project, consoleView, searchScope));
     }
     return result;
   }

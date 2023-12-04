@@ -124,7 +124,7 @@ public final class DomManagerImpl extends DomManager implements Disposable {
         };
       }
 
-      private boolean shouldFireDomEvents(VFileEvent event) {
+      private static boolean shouldFireDomEvents(VFileEvent event) {
         if (event instanceof VFileContentChangeEvent) return !event.isFromSave();
         if (event instanceof VFilePropertyChangeEvent) {
           return VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName())

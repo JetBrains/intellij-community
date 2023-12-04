@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="EntityStorage" pattern="file[intellij.platform.workspace.storage]:*/||file[intellij.platform.workspace.storage.testEntities]:*/||file[intellij.platform.workspace.storage.tests]:*/" />
+</component>

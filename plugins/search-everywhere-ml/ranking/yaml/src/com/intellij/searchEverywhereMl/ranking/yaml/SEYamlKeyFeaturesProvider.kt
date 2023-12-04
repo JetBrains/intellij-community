@@ -1,9 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.searchEverywhereMl.ranking.yaml
 
-import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCache
-import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereElementFeaturesProvider
-import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereStatisticianService
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
@@ -12,23 +9,36 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.searchEverywhereMl.ranking.features.FeaturesProviderCache
+import com.intellij.searchEverywhereMl.ranking.features.SearchEverywhereElementFeaturesProvider
+import com.intellij.searchEverywhereMl.ranking.features.statistician.SearchEverywhereStatisticianService
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.FILE_MODIFIED_IN_LAST_DAY
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.FILE_MODIFIED_IN_LAST_HOUR
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.FILE_MODIFIED_IN_LAST_MONTH
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.FILE_MODIFIED_IN_LAST_WEEK
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.FILE_RECENCY_INDEX
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.FILE_TIME_SINCE_LAST_MODIFICATION
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.KEY_IS_IN_TOP_5_RECENTLY_USED
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.KEY_IS_MOST_POPULAR
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.KEY_IS_MOST_RECENTLY_USED
+import com.intellij.searchEverywhereMl.ranking.yaml.SEYamlKeyFeaturesProvider.Fields.KEY_NEVER_USED
 import com.intellij.util.Time
 import org.jetbrains.yaml.navigation.YAMLKeyNavigationItem
 import org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor
 
 private class SEYamlKeyFeaturesProvider : SearchEverywhereElementFeaturesProvider(YAMLKeysSearchEverywhereContributor::class.java) {
-  companion object {
-    private val KEY_IS_MOST_RECENTLY_USED = EventFields.Boolean("yamlKeyIsMostRecentlyUsed")
-    private val KEY_IS_IN_TOP_5_RECENTLY_USED = EventFields.Boolean("yamlKeyIsInTop5RecentlyUsed")
-    private val KEY_NEVER_USED = EventFields.Boolean("yamlKeyNeverUsed")
-    private val KEY_IS_MOST_POPULAR = EventFields.Boolean("yamlKeyIsMostPopular")
+  object Fields {
+    val KEY_IS_MOST_RECENTLY_USED = EventFields.Boolean("yamlKeyIsMostRecentlyUsed")
+    val KEY_IS_IN_TOP_5_RECENTLY_USED = EventFields.Boolean("yamlKeyIsInTop5RecentlyUsed")
+    val KEY_NEVER_USED = EventFields.Boolean("yamlKeyNeverUsed")
+    val KEY_IS_MOST_POPULAR = EventFields.Boolean("yamlKeyIsMostPopular")
 
-    private val FILE_RECENCY_INDEX = EventFields.Int("yamlFileRecencyIndex")
-    private val FILE_TIME_SINCE_LAST_MODIFICATION = EventFields.Long("yamlTimeSinceLastModification")
-    private val FILE_MODIFIED_IN_LAST_HOUR = EventFields.Boolean("yamlFileModifiedInLastHour")
-    private val FILE_MODIFIED_IN_LAST_DAY = EventFields.Boolean("yamlFileModifiedInLastDay")
-    private val FILE_MODIFIED_IN_LAST_WEEK = EventFields.Boolean("yamlFileModifiedInLastWeek")
-    private val FILE_MODIFIED_IN_LAST_MONTH = EventFields.Boolean("yamlFileModifiedInLastMonth")
+    val FILE_RECENCY_INDEX = EventFields.Int("yamlFileRecencyIndex")
+    val FILE_TIME_SINCE_LAST_MODIFICATION = EventFields.Long("yamlTimeSinceLastModification")
+    val FILE_MODIFIED_IN_LAST_HOUR = EventFields.Boolean("yamlFileModifiedInLastHour")
+    val FILE_MODIFIED_IN_LAST_DAY = EventFields.Boolean("yamlFileModifiedInLastDay")
+    val FILE_MODIFIED_IN_LAST_WEEK = EventFields.Boolean("yamlFileModifiedInLastWeek")
+    val FILE_MODIFIED_IN_LAST_MONTH = EventFields.Boolean("yamlFileModifiedInLastMonth")
   }
 
   override fun getFeaturesDeclarations(): List<EventField<*>> {

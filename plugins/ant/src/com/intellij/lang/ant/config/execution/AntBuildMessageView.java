@@ -407,7 +407,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   @Nullable
-  private AntMessage getCustomizedMessage(final @Nls String text, @AntMessage.Priority int priority) {
+  private static AntMessage getCustomizedMessage(final @Nls String text, @AntMessage.Priority int priority) {
     AntMessage customizedMessage = null;
 
     for (AntMessageCustomizer customizer : AntMessageCustomizer.EP_NAME.getExtensionList()) {

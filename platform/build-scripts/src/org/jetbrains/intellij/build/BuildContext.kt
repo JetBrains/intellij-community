@@ -125,7 +125,7 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path): BuildContext
+  fun createCopyForProduct(productProperties: ProductProperties, projectHomeForCustomizers: Path, prepareForBuild: Boolean = true): BuildContext
 
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
 }
@@ -136,14 +136,16 @@ fun executeStepSync(context: BuildContext, stepMessage: String, stepId: String, 
     Span.current().addEvent("skip step", Attributes.of(AttributeKey.stringKey("name"), stepMessage))
   }
   else {
-    spanBuilder(stepMessage).use {
+    spanBuilder(stepMessage).startSpan().use {
       step.run()
     }
   }
   return true
 }
 
-suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder, stepId: String, crossinline step: suspend CoroutineScope.(Span) -> Unit) {
+suspend inline fun BuildContext.executeStep(spanBuilder: SpanBuilder,
+                                            stepId: String,
+                                            crossinline step: suspend CoroutineScope.(Span) -> Unit) {
   if (isStepSkipped(stepId)) {
     spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
   }

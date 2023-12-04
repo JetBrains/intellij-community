@@ -61,6 +61,14 @@
             qualifiedName="org.jetbrains.kotlin.classImportFilter"
             interface="org.jetbrains.kotlin.idea.util.ClassImportFilter"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.analysis.additionalKDocResolutionProvider"
+            interface="org.jetbrains.kotlin.analysis.api.symbols.AdditionalKDocResolutionProvider"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.projectStructureInsightsProvider"
+            interface="org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -68,6 +76,7 @@
                         serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.builtins.IdeBuiltInsVirtualFileProviderImpl"/>
     
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindAboutPopupDescriptionProvider"/>
+    <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinAnalyzerVersionAboutPopupDescriptionProvider"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.PluginStartupApplicationService" />
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.KotlinPluginUpdater"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.quickfix.QuickFixes"/>
@@ -91,9 +100,6 @@
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KotlinModuleDependentsProvider"
             serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.IdeKotlinModuleDependentsProvider"/>
-    <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.project.structure.KtModuleScopeProvider"
-            serviceImplementation="org.jetbrains.kotlin.idea.base.projectStructure.KtModuleScopeProviderIdeImpl"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.facet.KotlinFacetEditorProviderService"
             serviceImplementation="org.jetbrains.kotlin.idea.base.compilerPreferences.KotlinFacetEditorProviderServiceImpl"/>
@@ -142,6 +148,8 @@
 
     <typeDeclarationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinTypeDeclarationProvider"/>
 
+    <lang.floatingToolbarCustomizer language="kotlin" implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer$DefaultGroup"/>
+
     <lang.foldingBuilder
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.KotlinFoldingBuilder"/>
@@ -150,6 +158,10 @@
     <codeInsight.linkHandler
             prefix="#kotlinClass/"
             handlerClass="org.jetbrains.kotlin.idea.highlighter.markers.KotlinClassTooltipLinkHandler"/>
+
+    <referenceImporter
+            id="KotlinReferenceImporter"
+            implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
 
     <breadcrumbsInfoProvider implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinBreadcrumbsInfoProvider"/>
 
@@ -166,7 +178,7 @@
             implementationClass="org.jetbrains.kotlin.psi.psiUtil.KtStringTemplateExpressionManipulator"/>
 
     <treeStructureProvider implementation="org.jetbrains.kotlin.idea.projectView.KotlinSelectInProjectViewProvider"/>
-    <treeStructureProvider implementation="org.jetbrains.kotlin.idea.projectView.KotlinExpandNodeProjectViewProvider" order="last"/>
+    <treeStructureProvider implementation="org.jetbrains.kotlin.idea.projectView.KotlinExpandNodeProjectViewProvider" order="last, after ClassesTreeStructureProvider"/>
 
     <qualifiedNameProvider implementation="org.jetbrains.kotlin.idea.actions.KotlinQualifiedNameProvider"/>
 
@@ -183,7 +195,7 @@
     <search.topHitProvider implementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptionsTopHitProvider"/>
 
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinClassFileDecompiler"/>
-    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
+    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompiler"/>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.kotlin.idea.roots.ui.NonJvmKotlinModuleEditorsProvider"/>
@@ -399,6 +411,10 @@
                  description="Allows ResolveElementCache to reuse analysis results of PerFileCache"
                  defaultValue="true"
                  restartRequired="true"/>
+
+    <registryKey key="kotlin.multiline.function.parameters.info"
+                 description="Activates the mode of line-by-line display of the function parameters info, if there are more than three of them"
+                 defaultValue="false" />
   </extensions>
 
   <!-- Tips and Tricks -->
@@ -424,12 +440,6 @@
             id="kotlin.external.compiler.updates"
             displayType="STICKY_BALLOON"
             key="kotlin.external.compiler.updates.notification.group.name"
-    />
-    <notificationGroup
-            id="Kotlin plugin updates"
-            displayType="STICKY_BALLOON"
-            bundle="messages.KotlinPluginUpdaterBundle"
-            key="plugin.updater.notification.group"
     />
     <notificationGroup
             id="Kotlin Migration"
@@ -536,10 +546,6 @@
            class="org.jetbrains.kotlin.idea.actions.KotlinActionGroup">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
-
-    <action id="KotlinConfigureUpdates" class="org.jetbrains.kotlin.idea.actions.ConfigurePluginUpdatesAction">
-      <add-to-group group-id="KotlinToolsGroup"/>
-    </action>
 
     <action id="CopyKotlinProjectInformation" class="org.jetbrains.kotlin.idea.actions.internal.CopyKotlinProjectOverviewAction">
     </action>

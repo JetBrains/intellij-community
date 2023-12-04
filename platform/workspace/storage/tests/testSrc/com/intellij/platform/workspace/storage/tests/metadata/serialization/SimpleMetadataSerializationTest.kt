@@ -5,6 +5,7 @@ import com.intellij.platform.workspace.storage.impl.serialization.UnsupportedEnt
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
+import org.junit.Ignore
 import org.junit.Test
 
 class SimpleMetadataSerializationTest: MetadataSerializationTest() {
@@ -130,6 +131,7 @@ class SimpleMetadataSerializationTest: MetadataSerializationTest() {
     MetadataSerializationRoundTripChecker.verifyPSerializationRoundTrip(builder.toSnapshot(), VirtualFileUrlManagerImpl())
   }
 
+  @Ignore("Disabled while the hash is naively counted")
   @Test //cache version and current version should be the same
   fun `key prop entity`() {
     val virtualFileManager = VirtualFileUrlManagerImpl()

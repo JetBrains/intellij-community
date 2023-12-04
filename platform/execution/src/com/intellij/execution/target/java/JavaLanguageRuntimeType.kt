@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target.java
 
 import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.LanguageRuntimeType
+import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.icons.AllIcons
@@ -20,7 +21,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier
 import javax.swing.Icon
 
-class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(TYPE_ID) {
+class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfiguration>(JavaLanguageRuntimeTypeConstants.TYPE_ID) {
   override val icon: Icon = AllIcons.FileTypes.Java
 
   @NlsSafe
@@ -94,36 +95,36 @@ class JavaLanguageRuntimeType : LanguageRuntimeType<JavaLanguageRuntimeConfigura
     }
   }
 
-  override fun volumeDescriptors(): List<VolumeDescriptor> = listOf(CLASS_PATH_VOLUME, AGENTS_VOLUME)
+  private fun tryParseJavaVersionFromOutput(output: String?): JavaVersion? =
+    output?.lines()?.firstNotNullOfOrNull {
+      kotlin.runCatching { JavaVersion.parse(it) }.getOrNull()
+    }
+
+  override fun volumeDescriptors(): List<VolumeDescriptor> = listOf(JavaLanguageRuntimeTypeConstants.CLASS_PATH_VOLUME, JavaLanguageRuntimeTypeConstants.AGENTS_VOLUME)
 
   override fun duplicateConfig(config: JavaLanguageRuntimeConfiguration): JavaLanguageRuntimeConfiguration =
     duplicatePersistentComponent(this, config)
+}
 
-  companion object {
-    @JvmStatic
-    val TYPE_ID: String = "JavaLanguageRuntime"
+object JavaLanguageRuntimeTypeConstants {
+  @JvmStatic
+  val TYPE_ID: String = "JavaLanguageRuntime"
 
-    @JvmStatic
-    val CLASS_PATH_VOLUME: VolumeDescriptor = VolumeDescriptor(
-      JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
-      ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
-      ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
-      ExecutionBundle.message("java.language.runtime.classpath.volume.browsing.title"),
-      ""
-    )
+  @JvmStatic
+  val CLASS_PATH_VOLUME: VolumeDescriptor = VolumeDescriptor(
+    JavaLanguageRuntimeType::class.qualifiedName + ":classPath",
+    ExecutionBundle.message("java.language.runtime.classpath.volume.label"),
+    ExecutionBundle.message("java.language.runtime.classpath.volume.description"),
+    ExecutionBundle.message("java.language.runtime.classpath.volume.browsing.title"),
+    ""
+  )
 
-    @JvmStatic
-    val AGENTS_VOLUME: VolumeDescriptor = VolumeDescriptor(
-      JavaLanguageRuntimeType::class.qualifiedName + ":agents",
-      ExecutionBundle.message("java.language.runtime.agents.volume.label"),
-      ExecutionBundle.message("java.language.runtime.agents.volume.description"),
-      ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
-      ""
-    )
-
-    private fun tryParseJavaVersionFromOutput(output: String?): JavaVersion? =
-      output?.lines()?.firstNotNullOfOrNull {
-        kotlin.runCatching { JavaVersion.parse(it) }.getOrNull()
-      }
-  }
+  @JvmStatic
+  val AGENTS_VOLUME: VolumeDescriptor = VolumeDescriptor(
+    JavaLanguageRuntimeType::class.qualifiedName + ":agents",
+    ExecutionBundle.message("java.language.runtime.agents.volume.label"),
+    ExecutionBundle.message("java.language.runtime.agents.volume.description"),
+    ExecutionBundle.message("java.language.runtime.agents.volume.browsing.title"),
+    ""
+  )
 }

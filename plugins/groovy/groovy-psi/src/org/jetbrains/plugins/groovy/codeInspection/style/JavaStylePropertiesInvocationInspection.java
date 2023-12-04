@@ -26,8 +26,8 @@ public class JavaStylePropertiesInvocationInspection extends BaseInspection {
         if (JavaStylePropertiesUtil.isPropertyAccessor(methodCall)) {
           final String message = GroovyBundle.message("java.style.property.access");
           final GrExpression expression = methodCall.getInvokedExpression();
-          if (expression instanceof GrReferenceExpression) {
-            PsiElement referenceNameElement = ((GrReferenceExpression)expression).getReferenceNameElement();
+          if (expression instanceof GrReferenceExpression ref) {
+            PsiElement referenceNameElement = ref.getReferenceNameElement();
             registerError(referenceNameElement, message, myFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }

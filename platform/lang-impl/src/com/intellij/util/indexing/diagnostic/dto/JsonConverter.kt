@@ -58,6 +58,7 @@ fun IndexingFileSetStatistics.toJsonStatistics(visibleTimeToAllThreadsTimeRatio:
     providerName = fileSetName,
     totalNumberOfIndexedFiles = numberOfIndexedFiles,
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
+    totalNumberOfNothingToWriteFiles = numberOfNothingToWriteFiles,
     filesFullyIndexedByExtensions = listOfFilesFullyIndexedByExtensions,
     totalIndexingVisibleTime = convertAllThreadsTimeToVisibleDuration(processingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
     contentLoadingVisibleTime = convertAllThreadsTimeToVisibleDuration(contentLoadingTimeInAllThreads, visibleTimeToAllThreadsTimeRatio),
@@ -81,7 +82,8 @@ fun SlowIndexedFile.toJson(): JsonFileProviderIndexStatistics.JsonSlowIndexedFil
 
 fun IndexingFileSetStatistics.IndexedFile.toJson(): JsonFileProviderIndexStatistics.JsonIndexedFile = JsonFileProviderIndexStatistics.JsonIndexedFile(
   path = portableFilePath,
-  wasFullyIndexedByExtensions = wasFullyIndexedByExtensions
+  wasFullyIndexedByExtensions = indexesEvaluated == IndexesEvaluated.BY_EXTENSIONS,
+  nothingToWrite = indexesEvaluated == IndexesEvaluated.NOTHING_TO_WRITE,
 )
 
 fun ScanningTimes.toJson(): JsonProjectScanningHistoryTimes =
@@ -165,7 +167,8 @@ private fun ProjectScanningHistoryImpl.getFileCount() = JsonProjectScanningFileC
 private fun ProjectDumbIndexingHistoryImpl.getFileCount() = JsonProjectDumbIndexingFileCount(
   numberOfChangedDuringIndexingFiles = changedDuringIndexingFilesStat.numberOfFiles,
   numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = providerStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions },
-  numberOfFilesIndexedWithLoadingContent = providerStatistics.sumOf { it.totalNumberOfIndexedFiles }
+  numberOfFilesIndexedWithLoadingContent = providerStatistics.sumOf { it.totalNumberOfIndexedFiles },
+  numberOfNothingToWriteFiles = providerStatistics.sumOf { it.totalNumberOfNothingToWriteFiles },
 )
 
 private fun ProjectDumbIndexingHistoryImpl.aggregateStatsPerFileTypeAndLanguage(): Pair<List<JsonStatsPerFileType>, List<JsonStatsPerParentLanguage>> {

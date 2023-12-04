@@ -20,7 +20,8 @@
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
-    <httpRequestHandler implementation="org.jetbrains.idea.devkit.debug.HttpDebugListener"/>
+    <httpRequestHandler implementation="org.jetbrains.idea.devkit.requestHandlers.HttpDebugListener"/>
+    <httpRequestHandler implementation="org.jetbrains.idea.devkit.requestHandlers.BuildHttpRequestHandler"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
     <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.DevKitApplicationPatcher"/>
@@ -646,6 +647,12 @@
                     dynamic="true">
       <with attribute="implementationClass"
             implements="org.jetbrains.idea.devkit.inspections.StaticInitializationInExtensionsVisitorProvider"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.methodNameProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass"
+            implements="org.jetbrains.idea.devkit.inspections.MethodNameProvider"/>
     </extensionPoint>
   </extensionPoints>
 

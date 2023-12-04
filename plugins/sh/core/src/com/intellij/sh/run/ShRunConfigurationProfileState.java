@@ -92,7 +92,7 @@ final class ShRunConfigurationProfileState implements RunProfileState {
     commandLine.withInitialColumns(120);
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);
     commandLine.setWorkDirectory(myRunConfiguration.getScriptWorkingDirectory());
-    commandLine.withExePath(ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh"));
+    commandLine.withExePath(ShConfigurationType.getDefaultShell(myProject));
     commandLine.withParameters("-c");
     commandLine.withParameters(myRunConfiguration.getScriptText());
     return commandLine;

@@ -232,7 +232,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         handleExpansion(event, false);
       }
 
-      private void handleExpansion(TreeExpansionEvent event, boolean expanded) {
+      private static void handleExpansion(TreeExpansionEvent event, boolean expanded) {
         final TreePath path = event.getPath();
         final Object component = path != null ? path.getLastPathComponent() : null;
         if (component instanceof XValueGroupNodeImpl) {

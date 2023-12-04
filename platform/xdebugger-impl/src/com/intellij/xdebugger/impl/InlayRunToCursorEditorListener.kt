@@ -3,11 +3,11 @@ package com.intellij.xdebugger.impl
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.daemon.impl.IntentionsUIImpl
+import com.intellij.codeInsight.hint.ClientHintManager
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.codeInsight.hint.PriorityQuestionAction
-import com.intellij.codeInsight.hint.QuestionAction
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
@@ -15,10 +15,18 @@ import com.intellij.openapi.actionSystem.impl.ToolbarUtils.createImmediatelyUpda
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.editor.*
-import com.intellij.openapi.editor.event.*
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseEventArea
+import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.IterationState
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -26,12 +34,14 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.icons.toStrokeIcon
+import com.intellij.util.PlatformUtils
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
@@ -41,19 +51,25 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.lang.ref.WeakReference
 import javax.swing.*
+import kotlin.math.min
 
-private const val NEGATIVE_INLAY_PANEL_SHIFT = -6 // it is needed to fit into 2-space tabulation
 private const val MINIMAL_TEXT_OFFSET = 16
-private const val ACTION_BUTTON_SIZE = 22
 private const val ACTION_BUTTON_GAP = 2
 
 class InlayRunToCursorEditorListener(private val project: Project, private val coroutineScope: CoroutineScope) : EditorMouseMotionListener, EditorMouseListener {
   companion object {
+    @ApiStatus.Internal
+    const val NEGATIVE_INLAY_PANEL_SHIFT = -6 // it is needed to fit into 2-space tabulation
+    @ApiStatus.Internal
+    const val ACTION_BUTTON_SIZE = 22
+
     @JvmStatic
-    val isInlayRunToCursorEnabled: Boolean get() = AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor")
+    val isInlayRunToCursorEnabled: Boolean get() = AdvancedSettings.getBoolean("debugger.inlay.run.to.cursor") &&
+                                                   !PlatformUtils.isPyCharm()
   }
 
   private var currentJob: Job? = null
@@ -62,24 +78,13 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   private var currentEditor = WeakReference<Editor?>(null)
   private var currentLineNumber = -1
 
-  fun installScrollListeners(debuggerManagerImpl: XDebuggerManagerImpl) {
-    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
-      override fun editorCreated(event: EditorFactoryEvent) {
-        val editor = event.editor
-        editor.getScrollingModel().addVisibleAreaListener(VisibleAreaListener {
-          showInlayRunToCursorIfNeeded(editor, null)
-        })
-      }
-    }, debuggerManagerImpl)
-  }
-
   override fun mouseMoved(e: EditorMouseEvent) {
     showInlayRunToCursorIfNeeded(e.editor, e)
   }
 
   @RequiresEdt
   fun reshowInlayRunToCursor(editor: Editor) {
-    currentEditor = WeakReference(null)
+    currentEditor.clear()
     currentLineNumber = -1
     showInlayRunToCursorIfNeeded(editor, null)
   }
@@ -96,7 +101,7 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     if (editor.project != project) return true
 
     if (!isInlayRunToCursorEnabled) {
-      IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
+      IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE[project] = 0
       return true
     }
 
@@ -105,12 +110,23 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     }
     val session = XDebuggerManager.getInstance(project).getCurrentSession() as XDebugSessionImpl?
     if (session == null || !session.isPaused || session.isReadOnly) {
-      IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = false
+      IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE[project] = 0
       return true
     }
-    IntentionsUIImpl.DISABLE_INTENTION_BULB[project] = true
-    val lineNumber = if (e != null) XDebuggerManagerImpl.getLineNumber(e) else lineFromCurrentMouse(editor) ?: return false
+    // It can be improved to dynamically detect the necessary offset
+    IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE[project] = ACTION_BUTTON_SIZE + ACTION_BUTTON_GAP
+    val (lineNumber, x) = if (e != null) {
+      XDebuggerManagerImpl.getLineNumber(e) to (if (e.area == EditorMouseEventArea.EDITING_AREA) e.mouseEvent.x else 0)
+    } else {
+      val location = locationOnEditor(editor) ?: return false
+      lineFromCurrentMouse(editor, location) to location.x
+    }
     if (lineNumber < 0) {
+      return true
+    }
+    if (x > showInlayPopupWidth(editor)) {
+      currentEditor.clear()
+      currentLineNumber = -1
       return true
     }
     if (currentEditor.get() === editor && currentLineNumber == lineNumber) {
@@ -118,19 +134,27 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     }
     currentEditor = WeakReference(editor)
     currentLineNumber = lineNumber
-    scheduleInlayRunToCursor(editor, lineNumber, session)
+
+    val isAtExecution = session.currentPosition?.let { it.getFile() == editor.virtualFile && it.getLine() == lineNumber } ?: false
+    scheduleInlayRunToCursor(editor, lineNumber, isAtExecution)
     return true
   }
 
-  private fun lineFromCurrentMouse(editor: Editor): Int? {
-    val location = MouseInfo.getPointerInfo().location
+  private fun showInlayPopupWidth(editor: Editor) = EditorUtil.getSpaceWidth(Font.PLAIN, editor) *
+                                                    Registry.intValue("debugger.inlayRunToCursor.hover.area", 4)
+
+  private fun locationOnEditor(editor: Editor): Point? {
+    val location: Point = MouseInfo.getPointerInfo().location ?: return null
     SwingUtilities.convertPointFromScreen(location, editor.getContentComponent())
 
     val editorGutterComponentEx = editor.gutter as? EditorGutterComponentEx ?: return null
     if (!editor.getContentComponent().bounds.contains(location) && !editorGutterComponentEx.bounds.contains(location)) {
       return null
     }
+    return location
+  }
 
+  private fun lineFromCurrentMouse(editor: Editor, location: Point): Int {
     val logicalPosition: LogicalPosition = editor.xyToLogicalPosition(location)
     if (logicalPosition.line >= editor.document.getLineCount()) {
       return -1
@@ -140,14 +164,14 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   }
 
   @RequiresEdt
-  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
+  private fun scheduleInlayRunToCursor(editor: Editor, lineNumber: Int, isAtExecution: Boolean) {
     currentJob?.cancel()
     if (editor !is EditorImpl) return
     coroutineScope.launch(Dispatchers.EDT, CoroutineStart.UNDISPATCHED) {
       val job = coroutineContext.job
       job.cancelOnDispose(editor.disposable)
       currentJob = job
-      scheduleInlayRunToCursorAsync(editor, lineNumber, session)
+      scheduleInlayRunToCursorAsync(editor, lineNumber, isAtExecution)
       currentJob = null
     }
   }
@@ -175,16 +199,13 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
   }
 
   @RequiresEdt
-  private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int, session: XDebugSessionImpl) {
+  private suspend fun scheduleInlayRunToCursorAsync(editor: Editor, lineNumber: Int, isAtExecution: Boolean) {
     val firstNonSpacePos = getFirstNonSpacePos(editor, lineNumber) ?: return
 
     val lineY = editor.logicalPositionToXY(LogicalPosition(lineNumber, 0)).y
 
-    val group = DefaultActionGroup()
-    val pausePosition = session.currentPosition
-    if (pausePosition != null && pausePosition.getFile() == editor.virtualFile && pausePosition.getLine() == lineNumber) {
-      group.add(ActionManager.getInstance().getAction(XDebuggerActions.RESUME))
-      showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
+    if (isAtExecution) {
+      showHint(editor, lineNumber, firstNonSpacePos, listOf(ActionManager.getInstance().getAction(XDebuggerActions.RESUME)), lineY)
     }
     else {
       val hoverPosition = XSourcePositionImpl.create(FileDocumentManager.getInstance().getFile(editor.getDocument()), lineNumber) ?: return
@@ -193,19 +214,23 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
         types.any { it.enabledIcon === AllIcons.Debugger.Db_set_breakpoint }
       }
 
+      val actions = mutableListOf<AnAction>()
+
       if (hasGeneralBreakpoint) {
-        group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
+        actions.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RUN_TO_CURSOR))
       }
 
-      val extraActions = ActionManager.getInstance().getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup
-      group.addAll(extraActions)
+      val extraActions = (ActionManager.getInstance().getAction("XDebugger.RunToCursorInlayExtraActions") as DefaultActionGroup).getChildren(null)
+      actions.addAll(extraActions)
 
-      showHint(editor, lineNumber, firstNonSpacePos, group, lineY)
+      showHint(editor, lineNumber, firstNonSpacePos, actions, lineY)
     }
   }
 
   @RequiresEdt
-  private suspend fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, group: DefaultActionGroup, lineY: Int) {
+  private suspend fun showHint(editor: Editor, lineNumber: Int, firstNonSpacePos: Point, actions: List<AnAction>, lineY: Int) {
+    if (actions.isEmpty()) return
+
     val rootPane = editor.getComponent().rootPane
     if (rootPane == null) {
       return
@@ -213,21 +238,46 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
 
     val editorGutterComponentEx = editor.gutter as? EditorGutterComponentEx ?: return
 
-    val needShowOnGutter = firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET)
-    val xPosition = JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) -
-                    (if (needShowOnGutter) JBUI.scale(ACTION_BUTTON_SIZE) else 0)
+    val needShowOnGutter = firstNonSpacePos.x < JBUI.scale(MINIMAL_TEXT_OFFSET + ACTION_BUTTON_SIZE * (actions.size - 1))
+
+    var xPosition = JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT)
+    var actionsToShow = actions
+
+    if (needShowOnGutter) {
+      val breakpointInsertionZoneRightOffset = if (EditorSettingsExternalizable.getInstance().isLineNumbersShown && UISettings.getInstance().showBreakpointsOverLineNumbers)
+        editorGutterComponentEx.lineNumberAreaOffset + editorGutterComponentEx.lineNumberAreaWidth
+      else
+        editorGutterComponentEx.whitespaceSeparatorOffset
+      val numberOfActionsToShow = min(
+        (editorGutterComponentEx.width + JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) - breakpointInsertionZoneRightOffset) / JBUI.scale(ACTION_BUTTON_SIZE),
+        actions.size)
+      if (numberOfActionsToShow <= 0) {
+        return
+      }
+      xPosition -= JBUI.scale(ACTION_BUTTON_SIZE) * numberOfActionsToShow
+      actionsToShow = actions.take(numberOfActionsToShow)
+    }
+
+    if (needShowOnGutter) {
+      val breakpointInsertionZoneRightOffset = if (EditorSettingsExternalizable.getInstance().isLineNumbersShown && UISettings.getInstance().showBreakpointsOverLineNumbers)
+        editorGutterComponentEx.lineNumberAreaOffset + editorGutterComponentEx.lineNumberAreaWidth
+      else
+        editorGutterComponentEx.whitespaceSeparatorOffset
+      if (editorGutterComponentEx.width + xPosition < breakpointInsertionZoneRightOffset) {
+        val fillingNumberOfActions = (editorGutterComponentEx.width + JBUI.scale(NEGATIVE_INLAY_PANEL_SHIFT) - breakpointInsertionZoneRightOffset) / JBUI.scale(ACTION_BUTTON_SIZE)
+        if (fillingNumberOfActions <= 0) {
+          return
+        }
+        actionsToShow = actionsToShow.take(fillingNumberOfActions)
+      }
+    }
+
+    val group = DefaultActionGroup(actionsToShow)
 
     val gutterRenderer = editorGutterComponentEx.getGutterRenderer(Point(editorGutterComponentEx.width + xPosition, lineY))
     if (gutterRenderer != null) {
       return
     }
-
-    val caretLine = editor.getCaretModel().logicalPosition.line
-    val minimalOffsetBeforeText = MINIMAL_TEXT_OFFSET + (ACTION_BUTTON_GAP * 2 + ACTION_BUTTON_SIZE) * group.childrenCount
-    if (editor.getSettings().isShowIntentionBulb() && caretLine == lineNumber && firstNonSpacePos.x >= JBUI.scale(minimalOffsetBeforeText)) {
-      group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS))
-    }
-    if (group.childrenCount == 0) return
 
     val editorContentComponent = editor.contentComponent
     val position = SwingUtilities.convertPoint(
@@ -266,23 +316,15 @@ class InlayRunToCursorEditorListener(private val project: Project, private val c
     justPanel.preferredSize = JBDimension((2 * ACTION_BUTTON_GAP + ACTION_BUTTON_SIZE) * group.childrenCount, ACTION_BUTTON_SIZE)
     justPanel.add(toolbarImpl.component)
     val hint = RunToCursorHint(justPanel, this)
-    val questionAction: QuestionAction = object : PriorityQuestionAction {
-      override fun execute(): Boolean {
-        return true
-      }
-
-      override fun getPriority(): Int {
-        return PriorityQuestionAction.INTENTION_BULB_PRIORITY
-      }
-    }
-    val offset = editor.getCaretModel().offset
-
     initIsCompleted.lock()
 
-    val flags = HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE or
+    val clientHintManager = ClientHintManager.getCurrentInstance()
+
+    val flags = HintManager.HIDE_BY_ANY_KEY or HintManager.HIDE_BY_TEXT_CHANGE or HintManager.UPDATE_BY_SCROLLING or
       HintManager.HIDE_IF_OUT_OF_EDITOR or HintManager.DONT_CONSUME_ESCAPE
 
-    HintManagerImpl.getInstanceImpl().showQuestionHint(editor, position, offset, offset, hint, flags, questionAction, HintManager.RIGHT)
+    val hintInfo = HintManagerImpl.createHintHint(editor, position, hint, HintManager.RIGHT)
+    clientHintManager.showEditorHint(hint, editor, hintInfo, position, flags, 0, true) { }
   }
 
   private fun calculateEffectiveHoverColorAndStroke(needShowOnGutter: Boolean, editor: Editor, lineNumber: Int): Pair<Color, Color?> {

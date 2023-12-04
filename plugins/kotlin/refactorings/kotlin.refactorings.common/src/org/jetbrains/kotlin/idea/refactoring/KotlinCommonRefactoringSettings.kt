@@ -28,6 +28,11 @@ interface KotlinCommonRefactoringSettings {
     var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean
 
     /**
+     * Indicates whether automatic file rename based on changed type name is suggested
+     */
+    var renameFileNames: Boolean
+
+    /**
      * Indicates whether automatic variable rename based on changed type name is suggested
      */
     var renameVariables: Boolean
@@ -46,6 +51,18 @@ interface KotlinCommonRefactoringSettings {
      * Indicates whether automatic functions rename based on changed overloaded function name is suggested
      */
     var renameOverloads: Boolean
+
+    /**
+     * Indicates whether automatic test methods rename based on changed production methods name is suggested
+     */
+    var renameTestMethods: Boolean
+
+    var INLINE_LOCAL_THIS: Boolean
+    var INLINE_PROPERTY_KEEP: Boolean
+    var INLINE_METHOD_THIS: Boolean
+    var INLINE_METHOD_KEEP: Boolean
+    var INLINE_TYPE_ALIAS_THIS: Boolean
+    var INLINE_TYPE_ALIAS_KEEP: Boolean
 
     companion object {
         @JvmStatic

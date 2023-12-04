@@ -82,6 +82,12 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     return robotService.findAllText(component).map { UiText(this, it) }
   }
 
+  fun hasVisibleComponent(component: UiComponent): Boolean {
+    val components = searchContext.findAll(component.data.xpath)
+    if (components.isEmpty()) return false
+    return components.any { it.isVisible() }
+  }
+
   // Mouse
   fun click(point: Point? = null) {
     if (point != null) {

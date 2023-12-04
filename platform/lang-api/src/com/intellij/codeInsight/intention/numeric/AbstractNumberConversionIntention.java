@@ -5,7 +5,10 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.lang.LangBundle;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public abstract class AbstractNumberConversionIntention implements ModCommandAction {
 
@@ -105,8 +107,8 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
     List<Conversion> list = getConverters(actionContext.file()).stream()
       .map(converter -> new Conversion(converter, converter.getConvertedText(text, number)))
       .filter(conversion -> conversion.myResult != null)
-      .collect(Collectors.toList());
-    return new ModChooseAction(LangBundle.message("intention.name.convert.number.to.title"), list);
+      .toList();
+    return ModCommand.chooseAction(LangBundle.message("intention.name.convert.number.to.title"), list);
   }
 
   /**

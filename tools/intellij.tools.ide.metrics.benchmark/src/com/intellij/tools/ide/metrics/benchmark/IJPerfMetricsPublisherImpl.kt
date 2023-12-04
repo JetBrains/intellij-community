@@ -2,8 +2,8 @@
 package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.testFramework.diagnostic.MetricsPublisher
 import com.intellij.teamcity.TeamCityClient
@@ -11,6 +11,8 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
@@ -48,9 +50,10 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       else setBuildParams()
     )
 
-    private fun prepareMetricsForPublishing(spanName: String): PerformanceMetricsDto {
-      val metrics: List<PerformanceMetrics.Metric> = MetricsExtractor(PathManager.getLogDir().resolve("opentelemetry.json").toFile())
-        .waitTillMetricsExported(spanName)
+    private suspend fun prepareMetricsForPublishing(fullQualifiedTestMethodName: String, spanName: String): PerformanceMetricsDto {
+      val metrics: List<PerformanceMetrics.Metric> = MetricsExtractor().waitTillMetricsExported(spanName)
+
+      teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = fullQualifiedTestMethodName)
 
       val buildInfo = CIServerBuildInfo(
         buildId = teamCityClient.buildId,
@@ -66,25 +69,28 @@ class IJPerfMetricsPublisherImpl : MetricsPublisher {
       )
 
       return PerformanceMetricsDto.create(
-        projectName = spanName,
+        projectName = fullQualifiedTestMethodName,
         projectURL = "",
         projectDescription = "",
-        methodName = "",
-        buildNumber = ApplicationInfo.getInstance().build,
+        methodName = fullQualifiedTestMethodName,
+        buildNumber = BuildNumber.currentVersion(),
         metrics = metrics,
         buildInfo = buildInfo
       )
     }
   }
 
-  override fun publish(vararg metricName: String) {
-    metricName.forEach {
-      val metricsDto = prepareMetricsForPublishing(it)
+  override suspend fun publish(fullQualifiedTestMethodName: String, metricName: String) {
+    val metricsDto = prepareMetricsForPublishing(fullQualifiedTestMethodName, metricName)
 
+    withContext(Dispatchers.IO) {
       val artifactName = "metrics.performance.json"
       val reportFile = Files.createTempFile("unit-perf-metric", artifactName)
       jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
-      teamCityClient.publishTeamCityArtifacts(reportFile, it, "metrics.performance.json", false)
+      teamCityClient.publishTeamCityArtifacts(source = reportFile,
+                                              artifactPath = fullQualifiedTestMethodName,
+                                              artifactName = "metrics.performance.json",
+                                              zipContent = false)
     }
   }
 }

@@ -9,6 +9,9 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCiJobStatus
 @GraphQLFragment("/graphql/fragment/ciJob.graphql")
 data class GitLabCiJobDTO(
   val name: String,
-  @SinceGitLab("13.11") val status: GitLabCiJobStatus,
-  @SinceGitLab("15.4") val webPath: String?
-)
+  @SinceGitLab("13.11") val status: GitLabCiJobStatus?,
+  @SinceGitLab("13.11") val allowFailure: Boolean?,
+  @SinceGitLab("13.5") val detailedStatus: DetailedStatus?
+) {
+  data class DetailedStatus(val detailsPath: String)
+}

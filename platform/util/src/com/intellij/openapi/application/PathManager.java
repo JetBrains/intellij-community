@@ -269,8 +269,9 @@ public final class PathManager {
   // config paths
 
   public static synchronized @NotNull Path getCommonDataPath() {
-    if (ourCommonDataPath == null) {
-      Path path = Paths.get(platformPath("", "Application Support", "", "APPDATA", "", "XDG_DATA_HOME", ".local/share", ""));
+    Path path = ourCommonDataPath;
+    if (path == null) {
+      path = Paths.get(platformPath("", "Application Support", "", "APPDATA", "", "XDG_DATA_HOME", ".local/share", ""));
       if (!Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
         try {
           Files.createDirectories(path);
@@ -281,7 +282,7 @@ public final class PathManager {
       }
       ourCommonDataPath = path;
     }
-    return ourCommonDataPath;
+    return path;
   }
 
   @SuppressWarnings("IdentifierGrammar")
@@ -294,20 +295,14 @@ public final class PathManager {
   }
 
   public static @NotNull String getConfigPath() {
-    if (ourConfigPath != null) return ourConfigPath;
-
-    String explicit = getExplicitPath(PROPERTY_CONFIG_PATH);
-    if (explicit != null) {
-      ourConfigPath = explicit;
+    String path = ourConfigPath;
+    if (path == null) {
+      String explicit = getExplicitPath(PROPERTY_CONFIG_PATH);
+      ourConfigPath = path = explicit != null ? explicit :
+                  PATHS_SELECTOR != null ? getDefaultConfigPathFor(PATHS_SELECTOR) :
+                  getHomePath() + '/' + CONFIG_DIRECTORY;
     }
-    else if (PATHS_SELECTOR != null) {
-      ourConfigPath = getDefaultConfigPathFor(PATHS_SELECTOR);
-    }
-    else {
-      ourConfigPath = getHomePath() + '/' + CONFIG_DIRECTORY;
-    }
-
-    return ourConfigPath;
+    return path;
   }
 
   @TestOnly
@@ -316,17 +311,12 @@ public final class PathManager {
   }
 
   public static @NotNull String getScratchPath() {
-    if (ourScratchPath != null) return ourScratchPath;
-
-    String explicit = getExplicitPath(PROPERTY_SCRATCH_PATH);
-    if (explicit != null) {
-      ourScratchPath = explicit;
+    String path = ourScratchPath;
+    if (path == null) {
+      String explicit = getExplicitPath(PROPERTY_SCRATCH_PATH);
+      ourScratchPath = path = explicit == null ? getConfigPath() : explicit;
     }
-    else {
-      ourScratchPath = getConfigPath();
-    }
-
-    return ourScratchPath;
+    return path;
   }
 
   public static @NotNull String getDefaultConfigPathFor(@NotNull String selector) {
@@ -347,20 +337,14 @@ public final class PathManager {
   }
 
   public static @NotNull String getPluginsPath() {
-    if (ourPluginPath != null) return ourPluginPath;
-
-    String explicit = getExplicitPath(PROPERTY_PLUGINS_PATH);
-    if (explicit != null) {
-      ourPluginPath = explicit;
+    String path = ourPluginPath;
+    if (path == null) {
+      String explicit = getExplicitPath(PROPERTY_PLUGINS_PATH);
+      ourPluginPath = path = explicit != null ? explicit :
+        PATHS_SELECTOR != null && System.getProperty(PROPERTY_CONFIG_PATH) == null ? getDefaultPluginPathFor(PATHS_SELECTOR) :
+        getConfigPath() + '/' + PLUGINS_DIRECTORY;
     }
-    else if (PATHS_SELECTOR != null && System.getProperty(PROPERTY_CONFIG_PATH) == null) {
-      ourPluginPath = getDefaultPluginPathFor(PATHS_SELECTOR);
-    }
-    else {
-      ourPluginPath = getConfigPath() + '/' + PLUGINS_DIRECTORY;
-    }
-
-    return ourPluginPath;
+    return path;
   }
 
   public static @NotNull String getDefaultPluginPathFor(@NotNull String selector) {
@@ -380,20 +364,14 @@ public final class PathManager {
   }
 
   public static @NotNull String getSystemPath() {
-    if (ourSystemPath != null) return ourSystemPath;
-
-    String explicit = getExplicitPath(PROPERTY_SYSTEM_PATH);
-    if (explicit != null) {
-      ourSystemPath = explicit;
+    String path = ourSystemPath;
+    if (path == null) {
+      String explicit = getExplicitPath(PROPERTY_SYSTEM_PATH);
+      ourSystemPath = path = explicit != null ? explicit :
+        PATHS_SELECTOR != null ? getDefaultSystemPathFor(PATHS_SELECTOR) :
+        getHomePath() + '/' + SYSTEM_DIRECTORY;
     }
-    else if (PATHS_SELECTOR != null) {
-      ourSystemPath = getDefaultSystemPathFor(PATHS_SELECTOR);
-    }
-    else {
-      ourSystemPath = getHomePath() + '/' + SYSTEM_DIRECTORY;
-    }
-
-    return ourSystemPath;
+    return path;
   }
 
   public static @NotNull String getDefaultSystemPathFor(@NotNull String selector) {
@@ -421,20 +399,14 @@ public final class PathManager {
   }
 
   public static @NotNull String getLogPath() {
-    if (ourLogPath != null) return ourLogPath;
-
-    String explicit = getExplicitPath(PROPERTY_LOG_PATH);
-    if (explicit != null) {
-      ourLogPath = explicit;
+    String path = ourLogPath;
+    if (path == null) {
+      String explicit = getExplicitPath(PROPERTY_LOG_PATH);
+      ourLogPath = path = explicit != null ? explicit :
+        PATHS_SELECTOR != null && System.getProperty(PROPERTY_SYSTEM_PATH) == null ? getDefaultLogPathFor(PATHS_SELECTOR) :
+        getSystemPath() + '/' + LOG_DIRECTORY;
     }
-    else if (PATHS_SELECTOR != null && System.getProperty(PROPERTY_SYSTEM_PATH) == null) {
-      ourLogPath = getDefaultLogPathFor(PATHS_SELECTOR);
-    }
-    else {
-      ourLogPath = getSystemPath() + '/' + LOG_DIRECTORY;
-    }
-
-    return ourLogPath;
+    return path;
   }
 
   public static @NotNull String getDefaultLogPathFor(@NotNull String selector) {
@@ -657,11 +629,11 @@ public final class PathManager {
   }
 
   /**
-   * Return original value of the config path, if it was changed via {@link PathCustomizer}, or {@code null} if no custom paths were set. 
+   * Return original value of the config path ignoring possible customizations made by {@link PathCustomizer}. 
    */
   @ApiStatus.Internal
-  public static @Nullable Path getOriginalConfigDir() {
-    return ourOriginalConfigDir;
+  public static @NotNull Path getOriginalConfigDir() {
+    return ourOriginalConfigDir != null ? ourOriginalConfigDir : getConfigDir();
   }
 
   private static String getCustomPropertiesFile() {

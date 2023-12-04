@@ -44,7 +44,7 @@ public class AddIgnoredIdentifierQuickFix extends ModCommandQuickFix implements 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement context = descriptor.getPsiElement();
-    return ModCommand.updateOption(context, new PyUnresolvedReferencesInspection(), inspection -> {
+    return ModCommand.updateInspectionOption(context, new PyUnresolvedReferencesInspection(), inspection -> {
       String name = myIdentifier.toString();
       if (myIgnoreAllAttributes) {
         name += PyNames.END_WILDCARD;

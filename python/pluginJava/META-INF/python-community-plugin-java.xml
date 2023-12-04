@@ -24,6 +24,5 @@
     <typeProvider implementation="com.jetbrains.python.psi.impl.PyJavaTypeProvider"/>
     <pySuperMethodsSearch implementation="com.jetbrains.python.psi.impl.PyJavaSuperMethodsSearchExecutor"/>
     <importCandidateProvider implementation="com.jetbrains.python.psi.impl.PyJavaImportCandidateProvider"/>
-    <pythonHeadlessSdkModifier implementation="com.jetbrains.python.inspections.PythonIdeaHeadlessSdkModifier"/>
   </extensions>
 </idea-plugin>

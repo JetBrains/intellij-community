@@ -517,14 +517,14 @@ public final class AttributesStorageOld implements AbstractAttributesStorage {
     assert expectedFileId == fileId || expectedFileId == 0;
   }
 
-  private int fileAttributeRecordId(final PersistentFSConnection connection,
-                                    final int fileId) throws IOException {
+  private static int fileAttributeRecordId(final PersistentFSConnection connection,
+                                           final int fileId) throws IOException {
     return connection.getRecords().getAttributeRecordId(fileId);
   }
 
-  private void updateFileAttributeRecordId(final PersistentFSConnection connection,
-                                           final int fileId,
-                                           final int attributeRecordId) throws IOException {
+  private static void updateFileAttributeRecordId(final PersistentFSConnection connection,
+                                                  final int fileId,
+                                                  final int attributeRecordId) throws IOException {
     connection.getRecords().setAttributeRecordId(fileId, attributeRecordId);
   }
 }

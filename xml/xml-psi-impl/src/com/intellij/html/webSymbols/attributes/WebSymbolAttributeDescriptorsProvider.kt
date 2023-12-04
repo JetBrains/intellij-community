@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.asSafely
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbol.Companion.HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ATTRIBUTES
 import com.intellij.webSymbols.WebSymbol.Companion.KIND_HTML_ELEMENTS
 import com.intellij.webSymbols.WebSymbol.Companion.NAMESPACE_HTML
@@ -31,7 +32,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
       val symbols = (context.descriptor as? WebSymbolElementDescriptor)?.symbol?.let { listOf(it) }
                     ?: queryExecutor.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ELEMENTS, context.name)
       queryExecutor
-        .runListSymbolsQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, expandPatterns = true, scope = symbols, virtualSymbols = false)
+        .runListSymbolsQuery(HTML_ATTRIBUTES, expandPatterns = true, scope = symbols, virtualSymbols = false)
         .asSequence()
         .filter { !it.hasOnlyStandardHtmlSymbolsOrExtensions() }
         .map { it.getAttributeDescriptor(it.name, context, queryExecutor) }

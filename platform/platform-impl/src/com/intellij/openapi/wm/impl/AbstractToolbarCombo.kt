@@ -28,18 +28,26 @@ abstract class AbstractToolbarCombo : JComponent(), UiInspectorContextProvider, 
 
   protected fun fireUpdateEvents(prop: KProperty<*>, oldValue: Any?, newValue: Any?) {
     firePropertyChange(prop.name, oldValue, newValue)
-    invalidate()
+    revalidate()
     repaint()
   }
 
   override fun getUiInspectorContext(): List<PropertyBean> {
-    val res = mutableListOf<PropertyBean>()
-    if (leftIcons.size == 1) res.add(PropertyBean("icon", leftIcons[0], false))
-    if (leftIcons.size > 1) res.add(PropertyBean("leftIcons", leftIcons, false))
+    val result = mutableListOf<PropertyBean>()
+    if (leftIcons.size == 1) {
+      result.add(PropertyBean("icon", leftIcons[0], false))
+    }
+    if (leftIcons.size > 1) {
+      result.add(PropertyBean("leftIcons", leftIcons, false))
+    }
 
-    if (rightIcons.size == 1) res.add(PropertyBean("rightIcon", rightIcons[0], false))
-    if (rightIcons.size > 1) res.add(PropertyBean("rightIcons", rightIcons, false))
+    if (rightIcons.size == 1) {
+      result.add(PropertyBean("rightIcon", rightIcons[0], false))
+    }
+    if (rightIcons.size > 1) {
+      result.add(PropertyBean("rightIcons", rightIcons, false))
+    }
 
-    return res
+    return result
   }
 }

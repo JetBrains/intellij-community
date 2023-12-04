@@ -25,7 +25,6 @@ import java.util.function.Supplier;
  * The base class for actions which create new file elements.
  */
 public abstract class CreateElementActionBase extends CreateInDirectoryActionBase implements WriteActionAware {
-
   protected CreateElementActionBase() {
   }
 
@@ -39,6 +38,11 @@ public abstract class CreateElementActionBase extends CreateInDirectoryActionBas
     super(dynamicText, dynamicDescription, icon);
   }
 
+  protected CreateElementActionBase(@NotNull Supplier<String> dynamicText,
+                                    @Nullable Supplier<String> dynamicDescription,
+                                    @Nullable Supplier<? extends @Nullable Icon> icon) {
+    super(dynamicText, dynamicDescription, icon);
+  }
 
   /**
    * @return created elements. Never null.

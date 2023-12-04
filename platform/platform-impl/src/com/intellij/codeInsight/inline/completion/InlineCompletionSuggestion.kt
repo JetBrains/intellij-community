@@ -4,24 +4,27 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.openapi.util.UserDataHolderBase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 
+/**
+ * Abstract class representing an inline completion suggestion.
+ *
+ * Provides the suggestion flow for generating only one suggestion.
+ * @see InlineCompletionElement
+ */
 abstract class InlineCompletionSuggestion : UserDataHolderBase() {
   abstract val suggestionFlow: Flow<InlineCompletionElement>
 
-  // TODO: implement indicator
-  val addLoadingIndicator: Boolean
-    get() = false
-
-  fun handleInsert() {
-    // TODO: add actual insertion here
-  }
+  class Default(override val suggestionFlow: Flow<InlineCompletionElement>) : InlineCompletionSuggestion()
 
   companion object {
-    val EMPTY: InlineCompletionSuggestion = object : InlineCompletionSuggestion() {
-      override val suggestionFlow: Flow<InlineCompletionElement> = emptyFlow()
+    fun empty(): InlineCompletionSuggestion = Default(emptyFlow())
+
+    fun withFlow(buildSuggestion: suspend FlowCollector<InlineCompletionElement>.() -> Unit): InlineCompletionSuggestion {
+      return Default(flow(buildSuggestion))
     }
   }
 }
 
-class InlineCompletionSuggestionFlow(override val suggestionFlow: Flow<InlineCompletionElement>) : InlineCompletionSuggestion()

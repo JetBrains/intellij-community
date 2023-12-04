@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
@@ -14,10 +15,10 @@ import java.util.function.Supplier
  */
 @ApiStatus.Experimental
 interface EnvironmentKeyProvider {
-
   companion object {
-    @JvmStatic
-    val EP_NAME : ExtensionPointName<EnvironmentKeyProvider> = ExtensionPointName("com.intellij.environmentKeyProvider")
+    @JvmField
+    @Internal
+    val EP_NAME: ExtensionPointName<EnvironmentKeyProvider> = ExtensionPointName("com.intellij.environmentKeyProvider")
   }
 
   /**
@@ -29,7 +30,7 @@ interface EnvironmentKeyProvider {
   /**
    * Returns all keys that are absolutely required for a project to be configured without interaction with the user.
    */
-  suspend fun getRequiredKeys(project: Project) : List<EnvironmentKey>
+  suspend fun getRequiredKeys(project: Project): List<EnvironmentKey>
 
   @NlsContext(prefix = "environment.key.description")
   @Nls(capitalization = Nls.Capitalization.Sentence)

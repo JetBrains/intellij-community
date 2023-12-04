@@ -315,6 +315,10 @@ internal object JavaConverter {
       override fun visitReferenceParameterList(list: PsiReferenceParameterList) {
         result = true
       }
+
+      override fun visitResourceList(resourceList: PsiResourceList) {
+        result = true
+      }
     }
 
     element.accept(visitor)

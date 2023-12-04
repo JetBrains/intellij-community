@@ -46,22 +46,29 @@ object BuildDependenciesDownloader {
   // increment on semantic changes in extract code to invalidate all current caches
   private const val EXTRACT_CODE_VERSION = 4
 
-  // increment on semantic changes in download code to invalidate all current caches
-  // e.g. when some issues in extraction code were fixed
+  // increment on semantic changes in download code to invalidate all current caches,
+  // e.g., when some issues in extraction code were fixed
   private const val DOWNLOAD_CODE_VERSION = 3
 
   /**
    * Set tracer to get telemetry. e.g. it's set for build scripts to get opentelemetry events
    */
   @Volatile
-  var TRACER: Tracer = TracerProvider.noop()["noop-build-dependencies"]
+  var TRACER: Tracer = TracerProvider.noop().get("noop-build-dependencies")
 
-  fun getDependenciesProperties(communityRoot: BuildDependenciesCommunityRoot): DependenciesProperties =
-    DependenciesProperties(communityRoot)
+  fun getDependencyProperties(communityRoot: BuildDependenciesCommunityRoot): DependenciesProperties {
+    return DependenciesProperties(communityRoot)
+  }
 
   @JvmStatic
-  fun getUriForMavenArtifact(mavenRepository: String, groupId: String, artifactId: String, version: String, packaging: String): URI =
-    getUriForMavenArtifact(mavenRepository, groupId, artifactId, version, null, packaging)
+  fun getUriForMavenArtifact(mavenRepository: String, groupId: String, artifactId: String, version: String, packaging: String): URI {
+    return getUriForMavenArtifact(mavenRepository = mavenRepository,
+                                  groupId = groupId,
+                                  artifactId = artifactId,
+                                  version = version,
+                                  classifier = null,
+                                  packaging = packaging)
+  }
 
   @JvmStatic
   fun getUriForMavenArtifact(mavenRepository: String,
@@ -76,8 +83,9 @@ object BuildDependenciesDownloader {
     return URI.create("${base}/${groupStr}/${artifactId}/${version}/${artifactId}-${version}${classifierStr}.${packaging}")
   }
 
-  private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path =
-    Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
+  private fun getProjectLocalDownloadCache(communityRoot: BuildDependenciesCommunityRoot): Path {
+    return Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
+  }
 
   @Throws(IOException::class)
   private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot): Path {
@@ -96,12 +104,14 @@ object BuildDependenciesDownloader {
   }
 
   @JvmStatic
-  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path =
-    downloadFileToCacheLocationSync(uri.toString(), communityRoot)
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path {
+    return downloadFileToCacheLocationSync(url = uri.toString(), communityRoot = communityRoot)
+  }
 
   @JvmStatic
-  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, username: String, password: String): Path =
-    downloadFileToCacheLocationSync(uri.toString(), communityRoot, username, password)
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, username: String, password: String): Path {
+    return downloadFileToCacheLocationSync(url = uri.toString(), communityRoot = communityRoot, username = username, password = password)
+  }
 
   fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String): Path {
     val lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
@@ -109,7 +119,6 @@ object BuildDependenciesDownloader {
     return getDownloadCachePath(communityRoot).resolve("${hashString}-${lastNameFromUri}")
   }
 
-  @JvmStatic
   @Synchronized
   fun extractFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot,
                                  archiveFile: Path,
@@ -124,8 +133,9 @@ object BuildDependenciesDownloader {
     return targetDirectory
   }
 
-  private fun hashString(s: String): String =
-    BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36)
+  private fun hashString(s: String): String {
+    return BigInteger(1, Hashing.sha256().hashString(s, StandardCharsets.UTF_8).asBytes()).toString(36)
+  }
 
   private fun getExpectedFlagFileContent(archiveFile: Path,
                                          targetDirectory: Path,
@@ -158,8 +168,7 @@ options:${getExtractOptionsShortString(options)}
     if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
       LOG.fine("Skipping extract to $targetDirectory since flag file $flagFile is correct")
 
-      // Update file modification time to maintain FIFO caches i.e.
-      // in persistent cache folder on TeamCity agent
+      // update file modification time to maintain FIFO caches, i.e., in persistent cache folder on TeamCity agent
       val now = FileTime.from(Instant.now())
       Files.setLastModifiedTime(targetDirectory, now)
       Files.setLastModifiedTime(flagFile, now)
@@ -221,7 +230,7 @@ options:${getExtractOptionsShortString(options)}
                   communityRoot: BuildDependenciesCommunityRoot,
                   vararg options: BuildDependenciesExtractOptions) {
     cleanUpIfRequired(communityRoot)
-    fileLocks[target].withLock {
+    fileLocks.get(target).withLock {
       // Extracting different archive files into the same target should overwrite target each time
       // That's why flagFile should be dependent only on target location
       val hash = hashString(target.toString()).substring(0, 6)
@@ -271,7 +280,6 @@ options:${getExtractOptionsShortString(options)}
   @TestOnly fun getExtractCount(): Int = extractCount.get()
 
   class HttpStatusException(message: String, private val statusCode: Int, val url: String) : IllegalStateException(message) {
-    override fun toString(): String =
-      "HttpStatusException(status=${statusCode}, url=${url}, message=${message})"
+    override fun toString(): String = "HttpStatusException(status=${statusCode}, url=${url}, message=${message})"
   }
 }

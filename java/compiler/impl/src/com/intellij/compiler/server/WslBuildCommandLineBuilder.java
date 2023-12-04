@@ -104,7 +104,7 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
           myProgressIndicator.setText(JavaCompilerBundle.message("progress.preparing.wsl.build.environment"));
           myReportedProgress = true;
         }
-        builder.append(myDistribution.getWslPath(targetPath.toString()));
+        builder.append(myDistribution.getWslPath(targetPath));
       }
     }
     for (String s : classpathInTarget) {

@@ -4,7 +4,11 @@
 package com.intellij.ide.trustedProjects
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.*
+import com.intellij.ide.impl.OpenUntrustedProjectChoice
+import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
+import com.intellij.ide.impl.TrustedPathsSettings
+import com.intellij.ide.impl.TrustedProjectsStatistics
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.service
@@ -18,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ThreeState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 object TrustedProjectsDialog {
@@ -36,10 +41,10 @@ object TrustedProjectsDialog {
     projectRoot: Path,
     project: Project?,
     @NlsContexts.DialogTitle title: String,
-    @NlsContexts.DialogMessage message: String,
-    @NlsContexts.Button trustButtonText: String,
-    @NlsContexts.Button distrustButtonText: String,
-    @NlsContexts.Button cancelButtonText: String
+    @NlsContexts.DialogMessage message: String = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
+    @NlsContexts.Button trustButtonText: String = IdeBundle.message("untrusted.project.dialog.trust.button"),
+    @NlsContexts.Button distrustButtonText: String = IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+    @NlsContexts.Button cancelButtonText: String = IdeBundle.message("untrusted.project.open.dialog.cancel.button")
   ): Boolean {
     val locatedProject = TrustedProjectsLocator.locateProject(projectRoot, project)
     val projectTrustedState = TrustedProjects.getProjectTrustedState(locatedProject)
@@ -130,6 +135,7 @@ object TrustedProjectsDialog {
     return answer
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use async method instead")
   fun confirmOpeningOrLinkingUntrustedProject(
     projectRoot: Path,
@@ -183,6 +189,7 @@ object TrustedProjectsDialog {
     return openChoice != OpenUntrustedProjectChoice.CANCEL
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use async method instead")
   fun confirmLoadingUntrustedProject(
     project: Project,

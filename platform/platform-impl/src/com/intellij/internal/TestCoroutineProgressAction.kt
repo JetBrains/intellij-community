@@ -5,13 +5,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.ide.progress.withBackgroundProgress
-import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.*
 import com.intellij.platform.util.progress.*
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.*
@@ -98,6 +95,15 @@ internal class TestCoroutineProgressAction : AnAction() {
             }
           }
         }
+        row {
+          button("300ms BG Progress") {
+            cs.launch {
+              withBackgroundProgress(project, "300ms background progress") {
+                delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong() + 10) // + epsilon
+              }
+            }
+          }
+        }
       }
     }.show()
   }
@@ -165,7 +171,7 @@ internal class TestCoroutineProgressAction : AnAction() {
     }
     val items = (1..if (parallel) 100 else 5).toList()
     val transformed = progressStep(endFraction = 0.1) {
-      items.transformWithProgress(parallel) { item, out ->
+      items.transformWithProgress(parallel) { item ->
         progressStep(endFraction = 1.0, text = "Transforming $item") {
           if (Math.random() < 0.5) {
             out(item)

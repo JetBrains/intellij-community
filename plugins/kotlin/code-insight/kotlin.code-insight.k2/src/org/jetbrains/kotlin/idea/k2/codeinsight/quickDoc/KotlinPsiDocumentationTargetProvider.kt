@@ -10,7 +10,8 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 
 class KotlinPsiDocumentationTargetProvider : PsiDocumentationTargetProvider {
     override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
-        return if (element.language.`is`(KotlinLanguage.INSTANCE)) KotlinDocumentationTarget(element, originalElement) else null
+        val elementWithDocumentation = element.navigationElement ?: element
+        return if (elementWithDocumentation.language.`is`(KotlinLanguage.INSTANCE)) KotlinDocumentationTarget(elementWithDocumentation, originalElement) else null
     }
 }
 

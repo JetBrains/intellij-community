@@ -78,6 +78,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     PsiClass classToExtendFrom = myClassToExtendFromPointer != null ? myClassToExtendFromPointer.getElement() : null;
     return
       BaseIntentionAction.canModify(myClass)
+      && startElement.isPhysical()
       && classToExtendFrom != null
       && classToExtendFrom.isValid()
       && !classToExtendFrom.hasModifierProperty(PsiModifier.FINAL)
@@ -85,7 +86,6 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
           || !myClass.isInterface()
               && myClass.getExtendsList() != null
               && (myClass.getExtendsList().getReferencedTypes().length == 0) == myToAdd);
-
   }
 
   @Override

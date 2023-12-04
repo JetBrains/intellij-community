@@ -1,9 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator
 
+import org.jetbrains.kotlin.idea.k2.refactoring.bindToElement.AbstractK2BindToElementTest
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.AbstractKotlinFirInlineTest
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.AbstractK2IntroduceVariableTest
 import org.jetbrains.kotlin.idea.k2.refactoring.move.AbstractK2MoveTest
-import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2BindToElementTest
 import org.jetbrains.kotlin.idea.k2.refactoring.safeDelete.AbstractK2SafeDeleteTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
@@ -34,6 +35,14 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
         }
         testClass<AbstractK2BindToElementTest> {
             model("refactoring/bindToElement")
+        }
+        testClass<AbstractKotlinFirInlineTest> {
+            model("refactoring/inline/inlineVariableOrProperty", isRecursive = false, pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/inlineVariableOrProperty/addParenthesis", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/inlineVariableOrProperty/explicateParameterTypes", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/inlineVariableOrProperty/explicateTypeArgument", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/inlineVariableOrProperty/property", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/inlineVariableOrProperty/stringTemplates", pattern = Patterns.KT_WITHOUT_DOTS)
         }
     }
 

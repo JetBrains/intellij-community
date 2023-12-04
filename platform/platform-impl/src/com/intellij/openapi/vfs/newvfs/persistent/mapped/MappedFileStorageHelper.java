@@ -58,32 +58,28 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
   private static final Map<Path, MappedFileStorageHelper> storagesRegistry = new HashMap<>();
 
   public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
-                                                            @NotNull String storageName,
-                                                            int bytesPerRow) throws IOException {
-    return openHelper(vfs, storageName, bytesPerRow, true);
-  }
-
-  public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
-                                                            @NotNull String storageName,
+                                                            @NotNull Path absoluteStoragePath,
                                                             int bytesPerRow,
                                                             boolean checkFileIdsBelowMax) throws IOException {
+    if (!absoluteStoragePath.isAbsolute()) {
+      throw new IllegalArgumentException("absoluteStoragePath(=" + absoluteStoragePath + ") is not absolute");
+    }
     if (bytesPerRow <= 0) {
       throw new IllegalArgumentException("bytesPerRow(=" + bytesPerRow + ") must be >0");
     }
-    PersistentFSConnection connection = vfs.connection();
-    Path fastAttributesDir = connection.getPersistentFSPaths().storagesSubDir("extended-attributes");
-    Files.createDirectories(fastAttributesDir);
+    var storageDir = absoluteStoragePath.getParent().normalize();
 
-    Path storagePath = fastAttributesDir.resolve(storageName).toAbsolutePath();
+    Files.createDirectories(storageDir);
+    PersistentFSConnection connection = vfs.connection();
 
     var recordsStorage = connection.getRecords();
 
     synchronized (storagesRegistry) {
-      MappedFileStorageHelper alreadyExistingHelper = storagesRegistry.get(storagePath);
+      MappedFileStorageHelper alreadyExistingHelper = storagesRegistry.get(absoluteStoragePath);
       if (alreadyExistingHelper != null && alreadyExistingHelper.storage.isOpen()) {
         if (alreadyExistingHelper.bytesPerRow != bytesPerRow) {
           throw new IllegalStateException(
-            "StorageHelper[" + storageName + "] is already registered, " +
+            "StorageHelper[" + absoluteStoragePath + "] is already registered, " +
             "but with .bytesPerRow(=" + bytesPerRow + ") != storage.bytesPerRow(=" + alreadyExistingHelper.bytesPerRow + ")"
           );
         }
@@ -93,7 +89,7 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
       return MMappedFileStorageFactory.withDefaults()
         .pageSize(DEFAULT_PAGE_SIZE)
         .wrapStorageSafely(
-          storagePath,
+          absoluteStoragePath,
           mappedFileStorage -> {
             MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
               mappedFileStorage,
@@ -101,11 +97,27 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
               recordsStorage::maxAllocatedID,
               checkFileIdsBelowMax
             );
-            storagesRegistry.put(storagePath, storageHelper);
+            storagesRegistry.put(absoluteStoragePath, storageHelper);
             return storageHelper;
           }
         );
     }
+  }
+
+  public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
+                                                            @NotNull String storageName,
+                                                            int bytesPerRow) throws IOException {
+    return openHelper(vfs, storageName, bytesPerRow, true);
+  }
+
+  public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
+                                                            @NotNull String storageName,
+                                                            int bytesPerRow,
+                                                            boolean checkFileIdsBelowMax) throws IOException {
+    PersistentFSConnection connection = vfs.connection();
+    Path fastAttributesDir = connection.getPersistentFSPaths().storagesSubDir("extended-attributes");
+    Path storagePath = fastAttributesDir.resolve(storageName).toAbsolutePath();
+    return openHelper(vfs, storagePath, bytesPerRow, checkFileIdsBelowMax);
   }
 
   public static @NotNull MappedFileStorageHelper openHelperAndVerifyVersions(@NotNull FSRecordsImpl vfs,
@@ -121,9 +133,17 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
                                                                              int bytesPerRow,
                                                                              boolean checkFileIdBelowMax) throws IOException {
     MappedFileStorageHelper helper = openHelper(vfs, storageName, bytesPerRow, checkFileIdBelowMax);
-
     verifyTagsAndVersions(helper, vfs.getCreationTimestamp(), storageFormatVersion);
+    return helper;
+  }
 
+  public static @NotNull MappedFileStorageHelper openHelperAndVerifyVersions(@NotNull FSRecordsImpl vfs,
+                                                                             @NotNull Path absoluteStoragePath,
+                                                                             int storageFormatVersion,
+                                                                             int bytesPerRow,
+                                                                             boolean checkFileIdBelowMax) throws IOException {
+    MappedFileStorageHelper helper = openHelper(vfs, absoluteStoragePath, bytesPerRow, checkFileIdBelowMax);
+    verifyTagsAndVersions(helper, vfs.getCreationTimestamp(), storageFormatVersion);
     return helper;
   }
 
@@ -321,6 +341,7 @@ public final class MappedFileStorageHelper implements Closeable, CleanableStorag
     //         -- state it has undefined behavior in such a context.
   }
 
+  /** It should be used in a rare occasions only: see {@link MMappedFileStorage#FSYNC_ON_FLUSH_BY_DEFAULT} docs */
   public void fsync() throws IOException {
     storage.fsync();
   }

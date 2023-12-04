@@ -16,8 +16,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
@@ -28,6 +26,7 @@ import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionSymbol
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -126,11 +125,9 @@ private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
     return className.substringAfterLast("$").toIntOrNull() ?: 0
 }
 
-private fun functionNameByArgument(elementAt: KtFunction): String? =
-    analyze(elementAt) {
-        val parentCall = KtPsiUtil.getParentCallIfPresent(elementAt) as? KtCallExpression ?: return null
-        val call = parentCall.resolveCall()?.successfulFunctionCallOrNull() ?: return null
-        val function = call.partiallyAppliedSymbol.symbol as? KtFunctionSymbol ?: return null
+private fun functionNameByArgument(argument: KtFunction): String? =
+    analyze(argument) {
+        val function = getFunctionSymbol(argument) as? KtFunctionSymbol ?: return null
         return function.name.asString()
     }
 

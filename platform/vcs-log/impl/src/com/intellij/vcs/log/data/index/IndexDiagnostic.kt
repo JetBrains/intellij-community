@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.data.index
 
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.applyIf
@@ -77,7 +76,7 @@ internal object IndexDiagnostic {
     }
     val paths = details.parents.indices.flatMapTo(mutableSetOf()) { parentIndex ->
       ChangesUtil.getPaths(details.getChanges(parentIndex))
-    }.take(FILTERED_PATHS_LIMIT).filter { !ProjectLevelVcsManager.getInstance(project).isIgnored(it) }
+    }.take(FILTERED_PATHS_LIMIT).filter { getRoot(it)?.path == details.root.path }
     val pathsFilter = if (paths.isNotEmpty()) { VcsLogFilterObject.fromPaths(paths) } else null
 
     val sb = StringBuilder()

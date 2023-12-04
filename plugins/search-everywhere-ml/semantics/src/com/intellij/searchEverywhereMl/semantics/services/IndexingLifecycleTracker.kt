@@ -1,15 +1,16 @@
 package com.intellij.searchEverywhereMl.semantics.services
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.searchEverywhereMl.semantics.listeners.SemanticIndexingFinishListener
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
+import com.intellij.platform.ml.embeddings.search.listeners.SemanticIndexingFinishListener
+import com.intellij.platform.ml.embeddings.search.settings.SemanticSearchSettings
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 @Service(Service.Level.PROJECT)
-class IndexingLifecycleTracker {
+class IndexingLifecycleTracker: Disposable {
   private val mutex = ReentrantLock()
   private val condition = mutex.newCondition()
   private var readyIndexCount = 0
@@ -31,8 +32,10 @@ class IndexingLifecycleTracker {
   }
 
   companion object {
-    fun getInstance(project: Project) = project.service<IndexingLifecycleTracker>()
+    fun getInstance(project: Project): IndexingLifecycleTracker = project.service()
   }
+
+  override fun dispose() {}
 }
 
 class IndexingLifecycleListener(private val project: Project): SemanticIndexingFinishListener {

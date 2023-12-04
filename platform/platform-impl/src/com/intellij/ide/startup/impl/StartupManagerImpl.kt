@@ -43,7 +43,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -182,7 +181,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     }
     else {
       coroutineScope.launch(tracer.span("project post-startup activities running")) {
-        if (System.getProperty("idea.delayed.project.post.startup.activities", "false").toBoolean()) {
+        if (System.getProperty("idea.delayed.project.post.startup.activities", "true").toBoolean()) {
           withContext(tracer.span("fully opened editors waiting")) {
             (project.serviceAsync<FileEditorManager>() as? FileEditorManagerEx)?.waitForTextEditors()
           }
@@ -240,10 +239,8 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       // to put it on the timeline and make clear what's going at the end (avoiding the last "unknown" phase)
       val dumbAwareActivity = StartUpMeasurer.startActivity(StartUpMeasurer.Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES)
       val counter = AtomicInteger()
-      val dumbService = DumbService.getInstance(project)
+      val dumbService = project.serviceAsync<DumbService>()
       val isProjectLightEditCompatible = project is LightEditCompatible
-      val traceContext = Context.current()
-
       project as ComponentManagerImpl
       for (item in StartupActivity.POST_STARTUP_ACTIVITY.filterableLazySequence()) {
         val activity = item.instance ?: continue
@@ -265,22 +262,21 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
         @Suppress("SSBasedInspection", "UsagesOfObsoleteApi")
         if (activity is DumbAware) {
-          //LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
+          if (pluginDescriptor.pluginId == PluginManagerCore.CORE_ID) {
+            LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
+          }
           dumbService.runWithWaitForSmartModeDisabled().use {
             blockingContext {
               runOldActivity(activity as StartupActivity)
             }
           }
-          continue
         }
         else if (!isProjectLightEditCompatible) {
-          //LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
+          LOG.warn(PluginException("Migrate ${item.implementationClassName} to ProjectActivity", pluginDescriptor.pluginId))
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
           counter.incrementAndGet()
           blockingContext {
             dumbService.runWhenSmart {
-              traceContext.makeCurrent()
-
               runOldActivity(activity as StartupActivity)
             }
           }
@@ -298,7 +294,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
       coroutineContext.ensureActive()
 
-      StartUpPerformanceService.getInstance().projectDumbAwareActivitiesFinished()
+      serviceAsync<StartUpPerformanceService>().projectDumbAwareActivitiesFinished()
 
       if (!ApplicationManager.getApplication().isUnitTestMode) {
         coroutineContext.ensureActive()
@@ -313,12 +309,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       throw e
     }
     catch (e: Throwable) {
-      if (ApplicationManager.getApplication().isUnitTestMode) {
-        postStartupActivitiesPassed = -1
-      }
-      else {
-        throw e
-      }
+      throw e
     }
   }
 

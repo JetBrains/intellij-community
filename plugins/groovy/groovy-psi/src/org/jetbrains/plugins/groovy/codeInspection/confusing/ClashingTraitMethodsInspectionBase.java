@@ -93,7 +93,7 @@ public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection 
 
       @NotNull
       @NlsSafe
-      private String buildSignatureString(@NotNull ClashingMethod entry) {
+      private static String buildSignatureString(@NotNull ClashingMethod entry) {
         HierarchicalMethodSignature signature = entry.getSignature();
         return PsiFormatUtil.formatMethod(signature.getMethod(), signature.getSubstitutor(),
                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
@@ -102,7 +102,7 @@ public abstract class ClashingTraitMethodsInspectionBase extends BaseInspection 
 
       @NotNull
       @NlsSafe
-      private String buildTraitString(@NotNull ClashingMethod entry) {
+      private static String buildTraitString(@NotNull ClashingMethod entry) {
         return StringUtil.join(entry.getSuperTraits(), tr -> tr.getName(), ", ");
       }
     };

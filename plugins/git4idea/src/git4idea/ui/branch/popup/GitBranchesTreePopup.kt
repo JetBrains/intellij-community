@@ -36,6 +36,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import git4idea.GitBranch
@@ -52,6 +53,7 @@ import git4idea.ui.branch.GitBranchPopupFetchAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
+import git4idea.ui.branch.popup.compose.createComposeBranchesPopup
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchTypeUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeModel.BranchUnderRepository
@@ -560,7 +562,10 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     }
 
     override fun mouseMoved(e: MouseEvent) {
-      if (!isMouseMoved(e.locationOnScreen)) return
+      if (!isMouseMoved(e.locationOnScreen)
+          // Don't change the selection on mouse move in the screen reader mode,
+          // because it could conflict with screen reader features that move the mouse pointer.
+          || ScreenReader.isActive()) return
       val path = getPath(e)
       if (path != null) {
         tree.selectionPath = path
@@ -742,6 +747,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     fun create(project: Project, selectedRepository: GitRepository?): JBPopup {
       val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
       val selectedRepoIfNeeded = if (GitBranchActionsUtil.userWantsSyncControl(project)) null else selectedRepository
+      if (Registry.`is`("git.experimental.compose.branches.popup")) {
+        return createComposeBranchesPopup(project, selectedRepoIfNeeded ?: repositories.first())
+      }
       return GitBranchesTreePopup(project, GitBranchesTreePopupStep(project, selectedRepoIfNeeded, repositories, true))
     }
 

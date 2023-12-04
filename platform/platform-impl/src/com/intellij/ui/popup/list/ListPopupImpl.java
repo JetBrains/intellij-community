@@ -811,7 +811,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
 
-    private boolean hasMultiSelectionModifier(@NotNull MouseEvent e) {
+    private static boolean hasMultiSelectionModifier(@NotNull MouseEvent e) {
       return (e.getModifiers() & (SystemInfo.isMac ? META_MASK : CTRL_MASK)) != 0;
     }
 

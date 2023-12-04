@@ -68,7 +68,7 @@
      name: "attribute or property name",
      origin: "vue@3.0.0 (vue)",
      complete: true,
-     description: "<p>Optional attribute or property name</p>",
+     description: "<p>Optional attribute or property name",
      priority: NORMAL,
      has-pattern: true,
      segments: [

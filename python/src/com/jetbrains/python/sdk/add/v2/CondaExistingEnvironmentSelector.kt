@@ -1,119 +1,133 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
-import com.intellij.icons.AllIcons
+import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.observable.util.not
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.ui.components.fields.ExtendableTextComponent
-import com.intellij.ui.dsl.builder.Align
+import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
-import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.layout.predicate
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
-import com.jetbrains.python.sdk.add.target.conda.createCondaSdkFromExistingEnv
-import com.jetbrains.python.sdk.add.target.conda.suggestCondaPath
-import com.jetbrains.python.sdk.flavors.conda.PyCondaCommand
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
+import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
+import com.jetbrains.python.statistics.InterpreterCreationMode
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlin.time.Duration.Companion.seconds
 
-class CondaExistingEnvironmentSelector(state: PythonAddInterpreterState) : PythonAddEnvironment(state) {
-
+@OptIn(FlowPreview::class)
+class CondaExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
   private lateinit var envComboBox: ComboBox<PyCondaEnv?>
-  private lateinit var condaExecutableComboBox: TextFieldWithBrowseButton
-  private var selectedEnvironment = propertyGraph.property<PyCondaEnv?>(null)
-  private var lastLoadedConda = propertyGraph.property("")
-  private var condaEnvironmentsLoaded = propertyGraph.property(true)
+  private val selectedEnvironment = propertyGraph.property<PyCondaEnv?>(null)
+  private val lastLoadedConda = propertyGraph.property("")
+  private val loadingCondaEnvironments = MutableStateFlow(value = false)
 
-
-  override fun buildOptions(panel: Panel) {
+  override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
-      row(message("sdk.create.conda.executable.path")) {
-        condaExecutableComboBox = textFieldWithBrowseButton()
-          .bindText(state.condaExecutable)
-          .align(Align.FILL)
-          .component
-      }
+      executableSelector(state.condaExecutable,
+                         validationRequestor,
+                         message("sdk.create.conda.executable.path"),
+                         message("sdk.create.conda.missing.text"))
+        .displayLoaderWhen(presenter.detectingCondaExecutable, scope = presenter.scope, uiContext = presenter.uiContext)
 
       row(message("sdk.create.custom.env.creation.type")) {
-        envComboBox = comboBox<PyCondaEnv?>(emptyList(), CondaEnvComboBoxListCellRenderer())
+        val condaEnvironmentsLoaded = loadingCondaEnvironments.predicate(presenter.scope) { !it }
+
+        envComboBox = comboBox(emptyList(), CondaEnvComboBoxListCellRenderer())
           .bindItem(selectedEnvironment)
-          .enabledIf(condaEnvironmentsLoaded)
+          .displayLoaderWhen(loadingCondaEnvironments, makeTemporaryEditable = true,
+                             scope = presenter.scope, uiContext = presenter.uiContext)
           .component
 
-        link(message("sdk.create.custom.conda.refresh.envs")) {
-          val modalityState = ModalityState.current().asContextElement()
-          state.scope.launch(Dispatchers.Default + modalityState) {
-            val commandExecutor = TargetEnvironmentRequestCommandExecutor(LocalTargetEnvironmentRequest())
-            val environments = PyCondaEnv.getEnvs(commandExecutor, state.condaExecutable.get())
-            withContext(Dispatchers.Main + modalityState) {
-              envComboBox.removeAllItems()
-              val envs = environments.getOrThrow() // todo error handling
-              selectedEnvironment.set(envs.first())
-              envs.forEach(envComboBox::addItem)
-              lastLoadedConda.set(state.condaExecutable.get())
-            }
-          }
-        }.visibleIf(!condaEnvironmentsLoaded)
+        link(message("sdk.create.custom.conda.refresh.envs"), action = { onReloadCondaEnvironments() })
+          .visibleIf(condaEnvironmentsLoaded)
       }
+    }
+  }
 
+  private fun onReloadCondaEnvironments() {
+    val modalityState = ModalityState.current().asContextElement()
+    state.scope.launch(Dispatchers.EDT + modalityState) {
+      reloadCondaEnvironments(presenter.condaExecutableOnTarget)
+    }
+  }
+
+  private suspend fun reloadCondaEnvironments(condaExecutableOnTarget: FullPathOnTarget) {
+    try {
+      loadingCondaEnvironments.value = true
+      val commandExecutor = presenter.createExecutor()
+      val environments = PyCondaEnv.getEnvs(commandExecutor, condaExecutableOnTarget)
+      envComboBox.removeAllItems()
+      val envs = environments.getOrLogException(LOG) ?: emptyList()
+      selectedEnvironment.set(envs.firstOrNull())
+      envs.forEach(envComboBox::addItem)
+      lastLoadedConda.set(state.condaExecutable.get())
+    }
+    finally {
+      loadingCondaEnvironments.value = false
     }
   }
 
   override fun onShown() {
     val modalityState = ModalityState.current().asContextElement()
-    state.scope.launch(Dispatchers.Default + modalityState) {
-
-      val pathOnTarget = suggestCondaPath()!! // todo flow for undiscovered conda
-      val commandExecutor = TargetEnvironmentRequestCommandExecutor(LocalTargetEnvironmentRequest())
-      val environments = PyCondaEnv.getEnvs(commandExecutor, pathOnTarget)
-
-      withContext(Dispatchers.Main + modalityState) {
-
-        lastLoadedConda.set(pathOnTarget)
-        envComboBox.removeAllItems()
-        val envs = environments.getOrThrow()
-        selectedEnvironment.set(envs.first())
-        envs.forEach(envComboBox::addItem)
-
-
-        val refreshIcon = ExtendableTextComponent.Extension.create(AllIcons.Actions.Refresh, AllIcons.Actions.Refresh, "Refresh conda") {
-          // todo decide whether we need icon or just link
+    state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      presenter.currentCondaExecutableFlow
+        .debounce(1.seconds)
+        .collectLatest { condaExecutablePath ->
+          withContext(Dispatchers.EDT + modalityState) {
+            val pathOnTarget = condaExecutablePath?.let { presenter.getPathOnTarget(it) }
+            if (pathOnTarget != null) {
+              reloadCondaEnvironments(pathOnTarget)
+            }
+            else {
+              loadingCondaEnvironments.value = false
+            }
+          }
         }
-        val textComponent = condaExecutableComboBox.childComponent as ExtendableTextComponent
+    }
 
-        condaEnvironmentsLoaded.dependsOn(state.condaExecutable, ::condasMatch)
-        condaEnvironmentsLoaded.dependsOn(lastLoadedConda, ::condasMatch)
+    state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      presenter.currentCondaExecutableFlow.collectLatest {
+        loadingCondaEnvironments.value = true
+      }
+    }
 
-        condaEnvironmentsLoaded.afterChange {
-          if (it) textComponent.removeExtension(refreshIcon)
-          else textComponent.addExtension(refreshIcon)
-        }
-
-
+    state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      presenter.detectingCondaExecutable.collectLatest { isDetecting ->
+        if (isDetecting) loadingCondaEnvironments.value = true
       }
     }
   }
 
-  private fun condasMatch(): Boolean = state.condaExecutable.get() == lastLoadedConda.get()
-
   override fun getOrCreateSdk(): Sdk {
-    return runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.conda.select.progress"), TaskCancellation.nonCancellable()) {
-      PyCondaCommand(state.condaExecutable.get(), null)
-        .createCondaSdkFromExistingEnv(selectedEnvironment.get()!!.envIdentity, state.basePythonSdks.get(),
-                                       ProjectManager.getInstance().defaultProject)
-    }
+    return presenter.selectCondaEnvironment(selectedEnvironment.get()!!.envIdentity)
   }
 
+  override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
+    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    val identity = selectedEnvironment.get()?.envIdentity as? PyCondaEnvIdentity.UnnamedEnv
+    val selectedConda = if (identity?.isBase == true) InterpreterType.BASE_CONDA else InterpreterType.CONDAVENV
+    return InterpreterStatisticsInfo(selectedConda,
+                                     statisticsTarget,
+                                     false,
+                                     false,
+                                     true,
+                                     InterpreterCreationMode.CUSTOM)
+  }
+
+  companion object {
+    private val LOG = logger<CondaExistingEnvironmentSelector>()
+  }
 }

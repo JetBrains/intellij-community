@@ -12,7 +12,10 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.application.impl.inModalContext
 import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.*
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.project.Project
@@ -25,6 +28,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.progress.*
 import com.intellij.platform.util.progress.asContextElement
 import com.intellij.platform.util.progress.impl.ProgressState
@@ -34,10 +38,7 @@ import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.awt.AWTEvent
-import java.awt.Component
-import java.awt.Container
-import java.awt.EventQueue
+import java.awt.*
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
@@ -185,21 +186,27 @@ private fun CoroutineScope.showIndicator(
 ): Job {
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
-    val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
-    val span = tracer.spanBuilder("Progress: ${taskInfo.title}").startSpan()
-    indicator.start()
-    try {
-      val indicatorAdded = withContext(Dispatchers.EDT) {
-        showIndicatorInUI(project, taskInfo, indicator)
+    tracer.spanBuilder("Progress: ${taskInfo.title}").startSpan().use {
+      val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
+      withContext(Dispatchers.EDT) {
+        val indicatorAdded = showIndicatorInUI(project, taskInfo, indicator)
+        try {
+          indicator.start() // must be after showIndicatorInUI
+          try {
+            if (indicatorAdded) {
+              withContext(Dispatchers.Default) {
+                indicator.updateFromFlow(stateFlow)
+              }
+            }
+          }
+          finally {
+            indicator.stop()
+          }
+        }
+        finally {
+          indicator.finish(taskInfo) // removes indicator from UI if added
+        }
       }
-      if (indicatorAdded) {
-        indicator.updateFromFlow(stateFlow)
-      }
-    }
-    finally {
-      indicator.stop()
-      indicator.finish(taskInfo)
-      span.end()
     }
   }
 }
@@ -222,7 +229,8 @@ private fun coroutineCancellingIndicator(job: Job): ProgressIndicatorEx {
  * Asynchronously updates the indicator [text][ProgressIndicator.setText],
  * [text2][ProgressIndicator.setText2], and [fraction][ProgressIndicator.setFraction] from the [updates].
  */
-private suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
+@Internal
+suspend fun ProgressIndicatorEx.updateFromFlow(updates: Flow<ProgressState>): Nothing {
   updates.throttle(50).flowOn(Dispatchers.Default).collect { state: ProgressState ->
     text = state.text
     text2 = state.details
@@ -338,12 +346,20 @@ private suspend fun doShowModalIndicator(
         awaitCancellationAndInvoke {
           // TODO: don't move focus back if the focus owner was changed
           //if (focusComponent.isFocusOwner)
-            previousFocusOwner.requestFocusInWindow()
+          previousFocusOwner.requestFocusInWindow()
         }
       }
 
       deferredDialog?.complete(dialog)
     }
+  }
+}
+
+private fun ownerWindow(owner: ModalTaskOwner): Window? {
+  return when (owner) {
+    is ComponentModalTaskOwner -> ProgressWindow.calcParentWindow(owner.component, null)
+    is ProjectModalTaskOwner -> ProgressWindow.calcParentWindow(null, owner.project)
+    is GuessModalTaskOwner -> ProgressWindow.calcParentWindow(null, null) // guess
   }
 }
 

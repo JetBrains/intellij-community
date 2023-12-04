@@ -20,10 +20,10 @@ import java.awt.Rectangle
 
 internal suspend fun showDocumentationPopup(
   project: Project,
-  request: DocumentationRequest,
+  requests: List<DocumentationRequest>,
   popupContext: PopupContext,
 ): AbstractPopup {
-  val browser = DocumentationBrowser.createBrowser(project, request)
+  val browser = DocumentationBrowser.createBrowser(project, requests)
   try {
     // to avoid flickering: show popup after there is anything to show
     // OR show popup after the timeout

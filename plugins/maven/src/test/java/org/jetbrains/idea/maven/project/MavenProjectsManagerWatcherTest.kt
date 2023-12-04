@@ -17,20 +17,15 @@ import org.junit.Test
 import java.io.IOException
 
 class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
-  private var myProjectsManager: MavenProjectsManager? = null
   private var myProjectsTreeTracker: MavenProjectTreeTracker? = null
-
-  override fun runInDispatchThread() = false
 
   override fun setUp() = runBlocking {
     super.setUp()
-    myProjectsManager = MavenProjectsManager.getInstance(myProject)
     myProjectsTreeTracker = MavenProjectTreeTracker()
-    myProjectsManager!!.addProjectsTreeListener(myProjectsTreeTracker!!, getTestRootDisposable())
+    projectsManager.addProjectsTreeListener(myProjectsTreeTracker!!, getTestRootDisposable())
     initProjectsManager(true)
     createProjectPom(createPomContent("test", "project"))
     importProjectAsync()
-    //addManagedFiles(myProjectPom);
   }
 
   @Test
@@ -157,12 +152,12 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
     scheduleProjectImportAndWait()
     assertRootProjects("project")
     assertModules("project")
-    myProjectsManager!!.explicitProfiles = MavenExplicitProfiles(listOf("junit4"),
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit4"),
                                                                  listOf("junit5"))
     assertHasPendingProjectForReload()
     scheduleProjectImportAndWait()
     assertMavenProjectDependencies("test:project:1", "junit:junit:4.12")
-    myProjectsManager!!.explicitProfiles = MavenExplicitProfiles(listOf("junit5"),
+    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit5"),
                                                                  listOf("junit4"))
     assertHasPendingProjectForReload()
     scheduleProjectImportAndWait()
@@ -171,14 +166,14 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
 
   private fun assertMavenProjectDependencies(projectMavenCoordinates: String, vararg expectedDependencies: String) {
     val mavenId = MavenId(projectMavenCoordinates)
-    val mavenProject = myProjectsManager!!.getProjectsTree().findProject(mavenId)
+    val mavenProject = projectsManager.getProjectsTree().findProject(mavenId)
     val actualDependencies = mavenProject!!.dependencyTree.map { it.artifact.mavenId.getKey() }
     Assert.assertEquals(java.util.List.of(*expectedDependencies), actualDependencies)
   }
 
   private suspend fun addManagedFiles(pom: VirtualFile) {
     waitForImportWithinTimeout {
-      myProjectsManager!!.addManagedFiles(listOf(pom))
+      projectsManager.addManagedFiles(listOf(pom))
     }
   }
 

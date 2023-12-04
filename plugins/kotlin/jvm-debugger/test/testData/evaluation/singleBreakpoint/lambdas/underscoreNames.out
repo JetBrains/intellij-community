@@ -7,11 +7,6 @@ Compile bytecode for y
 KotlinStackFrame (underscoreNames.kt:18)
     JavaValue[this] this: UnderscoreNamesKt$main$1@uniqueID = Function3<underscoreNames.A, java.lang.String, java.lang.Integer, java.lang.String>
         JavaValue[field] arity: int = 3 (Lambda.!EXT!)
-    JavaValue[local] $dstr$x$_u24__u24$y: underscoreNames.A = A(x=1.0, y=, z=0)
-        JavaValue[field] x: double = 1.0 (underscoreNames.kt:2)
-        JavaValue[field] y: java.lang.String (underscoreNames.kt:2)
-        JavaValue[field] z: char = '0' 48 (underscoreNames.kt:2)
-    JavaValue[local] $noName_1: java.lang.String
     JavaValue[local] w: int = 1 (underscoreNames.kt:11)
     JavaValue[local] x: double = 1.0 (underscoreNames.kt:11)
     JavaValue[local] y: char = '0' 48 (underscoreNames.kt:11)

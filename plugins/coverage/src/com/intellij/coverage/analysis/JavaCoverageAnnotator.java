@@ -26,21 +26,21 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Roman.Chernyatchik
  */
-public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disposable {
+public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disposable.Default {
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myPackageCoverageInfos = new HashMap<>();
   private final Map<String, PackageAnnotator.PackageCoverageInfo> myFlattenPackageCoverageInfos = new HashMap<>();
   private final Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> myDirCoverageInfos =
     new HashMap<>();
   private final Map<String, PackageAnnotator.ClassCoverageInfo> myClassCoverageInfos = new ConcurrentHashMap<>();
   private final Map<PsiElement, PackageAnnotator.SummaryCoverageInfo> myExtensionCoverageInfos = new WeakHashMap<>();
-  private CoverageClassStructure myStructure;
+  protected CoverageClassStructure myStructure;
 
   public JavaCoverageAnnotator(final Project project) {
     super(project);
   }
 
   @Nullable
-  public CoverageClassStructure getStructure() {
+  public final CoverageClassStructure getStructure() {
     return myStructure;
   }
 
@@ -50,27 +50,35 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
 
   @Override
   @Nullable
-  public final String getDirCoverageInformationString(@NotNull final PsiDirectory directory,
-                                                @NotNull final CoverageSuitesBundle currentSuite,
-                                                @NotNull final CoverageDataManager coverageDataManager) {
-    final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(directory);
+  public final @Nls String getDirCoverageInformationString(@NotNull PsiDirectory psiDirectory,
+                                                           @NotNull CoverageSuitesBundle currentSuite,
+                                                           @NotNull CoverageDataManager coverageDataManager) {
+    final PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage(psiDirectory);
     if (psiPackage == null) return null;
 
-    final VirtualFile virtualFile = directory.getVirtualFile();
+    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
 
-    final boolean isInTestContent = TestSourcesFilter.isTestSources(virtualFile, directory.getProject());
-    if (!currentSuite.isTrackTestFolders() && isInTestContent) {
-      return null;
-    }
-    return getCoverageInformationString(myDirCoverageInfos.get(virtualFile), coverageDataManager.isSubCoverageActive());
-
+    return getDirCoverageInformationString(psiDirectory.getProject(), virtualFile, currentSuite, coverageDataManager);
   }
 
   @Override
   @Nullable
-  public final String getFileCoverageInformationString(@NotNull PsiFile file, @NotNull CoverageSuitesBundle currentSuite, @NotNull CoverageDataManager manager) {
+  public final @Nls String getDirCoverageInformationString(@NotNull Project project, @NotNull VirtualFile virtualFile,
+                                                           @NotNull CoverageSuitesBundle currentSuite,
+                                                           @NotNull CoverageDataManager coverageDataManager) {
+    if (!currentSuite.isTrackTestFolders() && TestSourcesFilter.isTestSources(virtualFile, project)) {
+      return null;
+    }
+    return getCoverageInformationString(myDirCoverageInfos.get(virtualFile), coverageDataManager.isSubCoverageActive());
+  }
+
+  @Override
+  @Nullable
+  public final String getFileCoverageInformationString(@NotNull PsiFile psiFile,
+                                                       @NotNull CoverageSuitesBundle currentSuite,
+                                                       @NotNull CoverageDataManager manager) {
     for (JavaCoverageEngineExtension extension : JavaCoverageEngineExtension.EP_NAME.getExtensions()) {
-      final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(this, file);
+      final PackageAnnotator.ClassCoverageInfo info = extension.getSummaryCoverageInfo(this, psiFile);
       if (info != null) {
         return getCoverageInformationString(info, manager.isSubCoverageActive());
       }
@@ -93,33 +101,32 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     myStructure = null;
   }
 
-  public class JavaPackageAnnotator implements Annotator {
-    @Override
-    public void annotatePackage(String packageQualifiedName, PackageAnnotator.PackageCoverageInfo packageCoverageInfo) {
-      myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
-    }
+  public static class JavaCoverageInfoCollector implements CoverageInfoCollector {
+    private final JavaCoverageAnnotator myAnnotator;
+
+    public JavaCoverageInfoCollector(JavaCoverageAnnotator annotator) { myAnnotator = annotator; }
 
     @Override
-    public void annotatePackage(String packageQualifiedName,
-                                PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
-                                boolean flatten) {
+    public void addPackage(String packageQualifiedName,
+                           PackageAnnotator.PackageCoverageInfo packageCoverageInfo,
+                           boolean flatten) {
       if (flatten) {
-        myFlattenPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
+        myAnnotator.myFlattenPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
       }
       else {
-        annotatePackage(packageQualifiedName, packageCoverageInfo);
+        myAnnotator.myPackageCoverageInfos.put(packageQualifiedName, packageCoverageInfo);
       }
     }
 
     @Override
-    public void annotateSourceDirectory(VirtualFile dir,
-                                        PackageAnnotator.PackageCoverageInfo dirCoverageInfo) {
-      myDirCoverageInfos.put(dir, dirCoverageInfo);
+    public void addSourceDirectory(VirtualFile dir,
+                                   PackageAnnotator.PackageCoverageInfo dirCoverageInfo) {
+      myAnnotator.myDirCoverageInfos.put(dir, dirCoverageInfo);
     }
 
     @Override
-    public void annotateClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
-      myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
+    public void addClass(String classQualifiedName, PackageAnnotator.ClassCoverageInfo classCoverageInfo) {
+      myAnnotator.myClassCoverageInfos.put(classQualifiedName, classCoverageInfo);
     }
   }
 
@@ -130,7 +137,7 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
     return () -> {
       long timeMs = TimeoutUtil.measureExecutionTime(() -> {
         collectSummaryInfo(suite, project);
-        myStructure = new CoverageClassStructure(project);
+        myStructure = new CoverageClassStructure(project, this);
         Disposer.register(this, myStructure);
         dataManager.triggerPresentationUpdate();
       });
@@ -273,12 +280,12 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
   }
 
   private void collectSummaryInfo(@NotNull CoverageSuitesBundle suite, Project project) {
-    var annotator = new JavaPackageAnnotator();
+    var collector = new JavaCoverageInfoCollector(this);
     if (shouldSkipUnloadedClassesAnalysis(suite)) {
-      JavaCoverageReportEnumerator.collectSummaryInReport(suite, project, annotator);
+      JavaCoverageReportEnumerator.collectSummaryInReport(suite, project, collector);
     }
     else {
-      new JavaCoverageClassesAnnotator(suite, project, annotator).visitSuite();
+      new JavaCoverageClassesAnnotator(suite, project, collector).visitSuite();
     }
   }
 
@@ -302,9 +309,5 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator implements Disp
       }
       return null;
     });
-  }
-
-  @Override
-  public void dispose() {
   }
 }

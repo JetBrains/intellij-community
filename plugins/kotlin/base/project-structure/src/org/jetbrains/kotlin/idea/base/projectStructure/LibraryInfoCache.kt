@@ -11,7 +11,9 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId.GlobalLibraryTableId
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -322,7 +324,10 @@ class LibraryInfoCache(project: Project) : Disposable {
             if (libraryChanges.none() && moduleChanges.none()) return
 
             val outdatedLibraries: MutableList<Library> = libraryChanges
-                .mapNotNull { it.oldEntity?.findLibraryBridge(storageBefore) }
+                .mapNotNull {
+                    val oldEntity = it.oldEntity.takeIf { it?.entitySource !is JpsGlobalFileEntitySource }
+                    oldEntity?.findLibraryBridge(storageBefore)
+                }
                 .toMutableList()
 
             val oldLibDependencies = moduleChanges.mapNotNull {
@@ -334,7 +339,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             }.flatten().associateBy { it.library }
 
             for (entry in oldLibDependencies.entries) {
-                val value = entry.value
+                val value = entry.value.takeIf { it.library.tableId !is GlobalLibraryTableId } ?: continue
                 if (value != newLibDependencies[entry.key]) {
                     val libraryBridge = value.library.findLibraryBridge(storageBefore, project)
                     outdatedLibraries.addIfNotNull(libraryBridge)

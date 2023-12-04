@@ -236,7 +236,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection imp
       return expression;
     }
 
-    private boolean isEquality(PsiExpression expression, boolean equals, PsiExpression part1, PsiExpression part2) {
+    private static boolean isEquality(PsiExpression expression, boolean equals, PsiExpression part1, PsiExpression part2) {
       expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiBinaryExpression binaryExpression)) {
         return false;

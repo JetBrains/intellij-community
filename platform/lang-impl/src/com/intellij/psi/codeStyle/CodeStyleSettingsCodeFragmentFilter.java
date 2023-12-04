@@ -50,9 +50,9 @@ public final class CodeStyleSettingsCodeFragmentFilter {
 
   public @NotNull CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
     Ref<CodeStyleSettingsToShow> settingsToShow = new Ref<>();
-    CodeStyle.doWithTemporarySettings(myProject,
-                                      CodeStyle.getSettings(myFile),
-                                      tempSettings -> settingsToShow.set(computeFieldsWithTempSettings(tempSettings, types)));
+    CodeStyle.runWithLocalSettings(myProject,
+                                   CodeStyle.getSettings(myFile),
+                                   tempSettings -> settingsToShow.set(computeFieldsWithTempSettings(tempSettings, types)));
     return settingsToShow.get();
   }
 
@@ -216,7 +216,7 @@ public final class CodeStyleSettingsCodeFragmentFilter {
       }
     }
 
-    private int getNewIntValue(Field classField, int oldValue) {
+    private static int getNewIntValue(Field classField, int oldValue) {
       String fieldName = classField.getName();
       if (fieldName.contains("WRAP")) {
         return oldValue == CommonCodeStyleSettings.WRAP_ALWAYS

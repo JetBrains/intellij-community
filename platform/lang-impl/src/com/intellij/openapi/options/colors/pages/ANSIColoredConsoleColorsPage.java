@@ -142,7 +142,7 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
 
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("terminalCommandToRunUsingIDE", JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY);
 
-    if (ExperimentalUI.isNewUI() && Registry.is("ide.experimental.ui.new.terminal", false)) {
+    if (ExperimentalUI.isNewUI() && Registry.is("terminal.new.ui", false)) {
       AttributesDescriptor[] terminalAttrs = getBlockTerminalAttributes();
       ATTRS = ArrayUtil.mergeArrays(ATTRS, terminalAttrs);
       ColorDescriptor[] terminalColors = getBlockTerminalColors();
@@ -153,47 +153,51 @@ public final class ANSIColoredConsoleColorsPage implements ColorSettingsPage, Di
   private static AttributesDescriptor[] getBlockTerminalAttributes() {
     return new AttributesDescriptor[]{
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.black"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_BLACK()),
+                               BlockTerminalColors.getBLACK()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.red"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_RED()),
+                               BlockTerminalColors.getRED()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.green"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_GREEN()),
+                               BlockTerminalColors.getGREEN()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.yellow"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_YELLOW()),
+                               BlockTerminalColors.getYELLOW()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blue"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_BLUE()),
+                               BlockTerminalColors.getBLUE()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.magenta"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_MAGENTA()),
+                               BlockTerminalColors.getMAGENTA()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.cyan"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_CYAN()),
+                               BlockTerminalColors.getCYAN()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.white"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_WHITE()),
+                               BlockTerminalColors.getWHITE()),
 
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blackBright"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_BLACK_BRIGHT()),
+                               BlockTerminalColors.getBLACK_BRIGHT()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.redBright"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_RED_BRIGHT()),
+                               BlockTerminalColors.getRED_BRIGHT()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.greenBright"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_GREEN_BRIGHT()),
+                               BlockTerminalColors.getGREEN_BRIGHT()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.yellowBright"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_YELLOW_BRIGHT()),
+                               BlockTerminalColors.getYELLOW_BRIGHT()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blueBright"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_BLUE_BRIGHT()),
+                               BlockTerminalColors.getBLUE_BRIGHT()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.magentaBright"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_MAGENTA_BRIGHT()),
+                               BlockTerminalColors.getMAGENTA_BRIGHT()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.cyanBright"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_CYAN_BRIGHT()),
+                               BlockTerminalColors.getCYAN_BRIGHT()),
       new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.whiteBright"),
-                               BlockTerminalColors.getBLOCK_TERMINAL_WHITE_BRIGHT()),
+                               BlockTerminalColors.getWHITE_BRIGHT()),
     };
   }
 
   private static ColorDescriptor[] getBlockTerminalColors() {
     return new ColorDescriptor[]{
       new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.defaultForeground"),
-                          BlockTerminalColors.getBLOCK_TERMINAL_DEFAULT_FOREGROUND(), ColorDescriptor.Kind.FOREGROUND),
+                          BlockTerminalColors.getDEFAULT_FOREGROUND(), ColorDescriptor.Kind.FOREGROUND),
       new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.defaultBackground"),
-                          BlockTerminalColors.getBLOCK_TERMINAL_DEFAULT_BACKGROUND(), ColorDescriptor.Kind.BACKGROUND),
+                          BlockTerminalColors.getDEFAULT_BACKGROUND(), ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blockBackground.start"),
+                          BlockTerminalColors.getBLOCK_BACKGROUND_START(), ColorDescriptor.Kind.BACKGROUND),
+      new ColorDescriptor(OptionsBundle.messagePointer("color.settings.blockTerminal.blockBackground.end"),
+                          BlockTerminalColors.getBLOCK_BACKGROUND_END(), ColorDescriptor.Kind.BACKGROUND),
     };
   }
 

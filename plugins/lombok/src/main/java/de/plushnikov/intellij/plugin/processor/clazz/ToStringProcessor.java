@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -16,6 +15,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -30,9 +30,9 @@ import static de.plushnikov.intellij.plugin.LombokClassNames.TO_STRING_INCLUDE;
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class ToStringProcessor extends AbstractClassProcessor {
   public static final String TO_STRING_METHOD_NAME = "toString";
+  private static final List<String> METHOD_LIST = List.of(TO_STRING_METHOD_NAME);
 
   private static final String INCLUDE_ANNOTATION_METHOD = "name";
   private static final String INCLUDE_ANNOTATION_RANK = "rank";
@@ -44,7 +44,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
 
   @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    return List.of(TO_STRING_METHOD_NAME);
+    return METHOD_LIST;
   }
 
   @Override
@@ -71,7 +71,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
   }
 
   private static void validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
-    if (psiClass.isAnnotationType() || psiClass.isInterface()) {
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isRecord()) {
       builder.addErrorMessage("inspection.message.to.string.only.supported.on.class.or.enum.type");
       builder.markFailed();
     }
@@ -93,7 +93,7 @@ public final class ToStringProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     target.addAll(createToStringMethod(psiClass, psiAnnotation));
   }
 

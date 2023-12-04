@@ -3,7 +3,6 @@
 package com.intellij.platform.impl.toolkit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import sun.awt.LightweightFrame
 import sun.awt.SunToolkit
@@ -22,17 +21,16 @@ class IdeToolkit : SunToolkit() {
     @JvmStatic
     fun getInstance(): IdeToolkit = getDefaultToolkit() as IdeToolkit
 
-    private fun clientInstance(): ClientToolkit = service()
-
     private val clipboard = Clipboard("System")
   }
+
+  fun clientInstance() = ClientToolkit.getInstance()
 
   fun peerCreated(target: Component, peer: ComponentPeer, disposable: Disposable) {
     targetCreatedPeer(target, peer)
     Disposer.register(disposable) { targetDisposedPeer(target, peer) }
   }
 
-  fun createPanelWindow(panel: Component, target: Window, realParent: Container?): WindowPeer = clientInstance().createPanelWindow(panel, target, realParent)
   override fun createWindow(target: Window): WindowPeer = clientInstance().createWindow(target)
   override fun createDialog(target: Dialog): DialogPeer = clientInstance().createDialog(target)
   override fun createFrame(target: Frame): FramePeer = clientInstance().createFrame(target)

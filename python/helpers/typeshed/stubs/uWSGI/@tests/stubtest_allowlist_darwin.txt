@@ -1,0 +1,12 @@
+# Error: is not present at runtime
+# =============================
+# These functions depend on modules which are not built into
+# the MacOS wheel by default, so we just ignore them for now
+# we don't want to pretend they don't exist, because people
+# could still configure a build with the required modules
+# manually, we don't do that for typeshed, since it would
+# add a lot of additional complexity to stubtest_third_party
+uwsgi.SymbolsImporter
+uwsgi.SymbolsZipImporter
+uwsgi.ZipImporter
+uwsgi.route

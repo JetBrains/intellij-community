@@ -154,6 +154,9 @@ class PyTypedDictInspection : PyInspection() {
 
       node.processClassLevelDeclarations { element, _ ->
         if (element !is PyTargetExpression) {
+          if (element is PyTypeParameter) {
+            return@processClassLevelDeclarations true
+          }
           registerProblem(tryGetNameIdentifier(element),
                           PyPsiBundle.message("INSP.typeddict.invalid.statement.in.typeddict.definition.expected.field.name.field.type"),
                           ProblemHighlightType.WEAK_WARNING)
@@ -355,7 +358,12 @@ class PyTypedDictInspection : PyInspection() {
         }
         return
       }
-      val type = Ref.deref(PyTypingTypeProvider.getStringBasedType(strType, expression, myTypeEvalContext))
+      val type = if (expression is PyReferenceExpression) {
+        Ref.deref(PyTypingTypeProvider.getType(expression, myTypeEvalContext))
+      }
+      else {
+        Ref.deref(PyTypingTypeProvider.getStringBasedType(strType, expression, myTypeEvalContext))
+      }
       if (type == null && !PyTypingTypeProvider.resolveToQualifiedNames(expression, myTypeEvalContext).any { qualifiedName ->
           PyTypingTypeProvider.ANY == qualifiedName
         }) {

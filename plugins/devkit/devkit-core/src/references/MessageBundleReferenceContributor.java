@@ -85,7 +85,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
         }
 
         @Nullable
-        private PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
           if (!isActionOrGroupKey(text)) return null;
 
           final int dotAfterPrefix = text.indexOf('.');
@@ -103,7 +103,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
         }
 
         @Nullable
-        private PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
           if (!isToolwindowKey(text)) return null;
 
           String id = StringUtil.notNullize(StringUtil.substringAfter(text, TOOLWINDOW_STRIPE_PREFIX)).replace('_', ' ');
@@ -111,7 +111,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
         }
 
         @Nullable
-        private PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
           if (!isExportableKey(text)) return null;
 
           String id = text.replace(EXPORTABLE_PREFIX, "").replace(EXPORTABLE_SUFFIX, "");
@@ -119,7 +119,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
         }
 
         @Nullable
-        private PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createPluginIdReference(@NotNull PsiElement element, String text) {
           if (!isPluginDescriptionKey(text)) return null;
 
           String id = StringUtil.substringAfter(StringUtil.notNullize(StringUtil.substringBefore(text, DESCRIPTION)), PLUGIN);
@@ -127,7 +127,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
         }
 
         @Nullable
-        private PsiReference createAdvancedSettingReference(@NotNull PsiElement element, String text) {
+        private static PsiReference createAdvancedSettingReference(@NotNull PsiElement element, String text) {
           if (!isAdvancedSettingKey(text)) return null;
 
           String s = StringUtil.notNullize(StringUtil.substringAfter(text, ADVANCED_SETTING));

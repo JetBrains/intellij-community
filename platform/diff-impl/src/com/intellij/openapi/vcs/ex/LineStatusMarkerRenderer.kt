@@ -29,7 +29,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 abstract class LineStatusMarkerRenderer internal constructor(
   protected val project: Project?,
   protected val document: Document,
-  disposable: Disposable,
+  protected val disposable: Disposable,
   private val editorFilter: MarkupEditorFilter? = null,
   private val isMain: Boolean = true // tell clients that it's a "proper" vcs status renderer
 ) {
@@ -93,12 +93,16 @@ abstract class LineStatusMarkerRenderer internal constructor(
   @RequiresEdt
   private fun updateHighlighters() {
     if (disposed) return
+    repaintGutter()
+    updateErrorStripeHighlighters()
+  }
+
+  private fun repaintGutter() {
     EditorFactory.getInstance().editors(document).forEach {
       if (it is EditorEx) {
         it.gutterComponentEx.repaint()
       }
     }
-    updateErrorStripeHighlighters()
   }
 
   @RequiresEdt
@@ -123,10 +127,10 @@ abstract class LineStatusMarkerRenderer internal constructor(
       }
       val oldHighlighter = if (highlighterIt.hasNext()) highlighterIt.peek() else null
       val oldMarkerData = oldHighlighter?.getUserData(TOOLTIP_KEY)
-      if (oldHighlighter != null && oldHighlighter.isValid()
-          && oldMarkerData != null && oldMarkerData.type == range.type
-          && oldHighlighter.getStartOffset() == textRange.startOffset
-          && oldHighlighter.getEndOffset() == textRange.endOffset) {
+      if (oldHighlighter != null && oldHighlighter.isValid() &&
+          oldMarkerData != null && oldMarkerData.type == range.type &&
+          oldHighlighter.startOffset == textRange.startOffset &&
+          oldHighlighter.endOffset == textRange.endOffset) {
         // reuse existing highlighter if possible
         newHighlighters.add(oldHighlighter)
         highlighterIt.next()
@@ -148,11 +152,11 @@ abstract class LineStatusMarkerRenderer internal constructor(
     errorStripeHighlighters.addAll(newHighlighters)
   }
 
-  private fun createErrorStripeHighlighter(markupModel: MarkupModelEx, textRange: TextRange, diffType: Byte): RangeHighlighter =
-    markupModel.addRangeHighlighterAndChangeAttributes(null, textRange.startOffset, textRange.endOffset,
-                                                       DiffDrawUtil.LST_LINE_MARKER_LAYER,
-                                                       HighlighterTargetArea.LINES_IN_RANGE,
-                                                       false) { it: RangeHighlighterEx ->
+  private fun createErrorStripeHighlighter(markupModel: MarkupModelEx, textRange: TextRange, diffType: Byte): RangeHighlighter {
+    return markupModel.addRangeHighlighterAndChangeAttributes(null, textRange.startOffset, textRange.endOffset,
+                                                              DiffDrawUtil.LST_LINE_MARKER_LAYER,
+                                                              HighlighterTargetArea.LINES_IN_RANGE,
+                                                              false) { it: RangeHighlighterEx ->
       it.setThinErrorStripeMark(true)
       it.setGreedyToLeft(true)
       it.setGreedyToRight(true)
@@ -163,6 +167,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
       // ensure key is there in MarkupModelListener.afterAdded event
       it.putUserData(TOOLTIP_KEY, MarkerData(diffType))
     }
+  }
 
   protected open fun createErrorStripeTextAttributes(diffType: Byte): TextAttributes = DiffStripeTextAttributes(diffType)
 
@@ -172,6 +177,7 @@ abstract class LineStatusMarkerRenderer internal constructor(
       LOG.warn(String.format("Highlighter is damaged for %s, isValid: %s", this, gutterHighlighter.isValid()))
     }
     disposeHighlighter(gutterHighlighter)
+
     for (highlighter in errorStripeHighlighters) {
       disposeHighlighter(highlighter)
     }

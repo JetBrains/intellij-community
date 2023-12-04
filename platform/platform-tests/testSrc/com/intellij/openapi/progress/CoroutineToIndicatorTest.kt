@@ -69,6 +69,15 @@ class CoroutineToIndicatorTest : CancellationTest() {
     assertSame(t, thrown)
   }
 
+  private suspend inline fun testRunUnderIndicatorRethrow(t: ProcessCanceledException) {
+    val thrown = assertThrows<PceCancellationException> {
+      coroutineToIndicator {
+        throw t
+      }
+    }
+    assertSame(t, thrown.cause)
+  }
+
   @Test
   fun `fails if context reporter is not raw`() {
     assertLogThrows<IllegalStateException> {

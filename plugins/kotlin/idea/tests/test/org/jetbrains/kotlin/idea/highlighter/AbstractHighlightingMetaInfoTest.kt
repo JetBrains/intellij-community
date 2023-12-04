@@ -46,6 +46,7 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
                 allowErrorHighlighting = ALLOW_ERRORS in globalDirectives,
                 highlightWarnings = HIGHLIGHT_WARNINGS in globalDirectives,
             ),
+            dumbMode = DUMB_MODE in globalDirectives
         )
 
         codeMetaInfoTestCase.checkFile(file.virtualFile, expectedHighlightingFile, project)
@@ -114,5 +115,6 @@ abstract class AbstractHighlightingMetaInfoTest : KotlinMultiFileLightCodeInsigh
         private const val HIGHLIGHT_WARNINGS = "HIGHLIGHT_WARNINGS"
         private const val HIGHLIGHTER_ATTRIBUTES_KEY = "HIGHLIGHTER_ATTRIBUTES_KEY"
         private const val CHECK_SYMBOL_NAMES = "CHECK_SYMBOL_NAMES"
+        private const val DUMB_MODE = "DUMB_MODE"
     }
 }

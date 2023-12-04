@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 
 object MavenImportStats {
   // Hacky way to measure report import stages speed.
-  // The better way would be to use StructuredIdeActivity.stageStared in MavenImportingManager.doImport with the new importing Flow
   fun startApplyingModelsActivity(project: Project?, importingActivity: StructuredIdeActivity?): StructuredIdeActivity {
     return ProjectImportCollector.WORKSPACE_APPLY_STAGE.startedWithParent(project, importingActivity!!)
   }

@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
-import com.intellij.concurrency.withThreadLocal
-import com.intellij.openapi.application.AccessToken
 import com.intellij.platform.instanceContainer.CycleInitializationException
 import com.intellij.util.findCycle
 import kotlinx.collections.immutable.PersistentSet
@@ -82,19 +80,19 @@ internal abstract class LazyInstanceHolder(
   }
 
   override suspend fun getInstance(keyClass: Class<*>?): Any {
-    return getInstance(keyClass, callerDispatcher = false)
+    return getInstance(keyClass, useCallerContext = false)
   }
 
-  override suspend fun getInstanceInCallerDispatcher(keyClass: Class<*>?): Any {
-    return getInstance(keyClass, callerDispatcher = true)
+  override suspend fun getInstanceInCallerContext(keyClass: Class<*>?): Any {
+    return getInstance(keyClass, useCallerContext = true)
   }
 
-  private suspend fun getInstance(keyClass: Class<*>?, callerDispatcher: Boolean): Any {
+  private suspend fun getInstance(keyClass: Class<*>?, useCallerContext: Boolean): Any {
     tryGetInstance()?.let {
       return it
     }
     return when (val state = state()) {
-      is Initial -> tryInitialize(state, keyClass, callerDispatcher)
+      is Initial -> tryInitialize(state, keyClass, useCallerContext)
       is InProgress -> tryAwait(state)
       is CannotLoadClass -> throw state.classLoadingError
       is CannotInitialize -> throw state.initializationError
@@ -102,7 +100,7 @@ internal abstract class LazyInstanceHolder(
     }
   }
 
-  private suspend fun tryInitialize(state: Initial, keyClass: Class<*>?, undispatched: Boolean): Any {
+  private suspend fun tryInitialize(state: Initial, keyClass: Class<*>?, useCallerContext: Boolean): Any {
     val initializer = state.initializer
     val newState = InProgress(initializer, persistentHashSetOf())
     val witness = stateHandle.compareAndExchange(this, state, newState)
@@ -123,28 +121,51 @@ internal abstract class LazyInstanceHolder(
       throw t
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    val dispatcherCtx = if (undispatched) {
-      // for example, inside runBlocking its event loop will be used for initialization
-      checkNotNull(currentCoroutineContext()[CoroutineDispatcher])
+    val callerCtx = if (useCallerContext) {
+      // for example, inside runBlocking its event loop will be used for initialization,
+      // and/or context modality state will be used
+      currentCoroutineContext().minusKey(Job)
     }
     else {
       EmptyCoroutineContext
     }
-    val parentScope = state.parentScope
+    return suspendCancellableCoroutine { waiter ->
+      tryAwait(newState, waiter)
+      // publish waiter before `initialize()` because it's undispatched
+      initialize(state.parentScope, callerCtx, initializer, instanceClass)
+    }
+  }
+
+  private fun initialize(
+    parentScope: CoroutineScope,
+    callerCtx: CoroutineContext,
+    initializer: InstanceInitializer,
+    instanceClass: Class<*>,
+  ) {
     parentScope.launch(
-      context = CoroutineName("${initializer.instanceClassName} init") + dispatcherCtx + CurrentlyInitializingInstance(this),
+      context = callerCtx + CurrentlyInitializingInstance(this) + CoroutineName("${initializer.instanceClassName} init"),
       start = CoroutineStart.UNDISPATCHED,
     ) {
-      try {
-        ensureActive()
-        complete(finalState = initializer.createInstance(parentScope, instanceClass))
-      }
-      catch (t: Throwable) {
-        complete(finalState = CannotInitialize(instanceClass = instanceClass, t))
+      // TODO Initialization of services happens in a child coroutine of container scope (this coroutine)
+      //  => cancellation of container scope cancels currently initializing instances as well as
+      //  it prevents initialization of the new instances.
+      //  - Some services (for example, `com.intellij.vcs.log.impl.VcsProjectLog.dropLogManager`)
+      //    expect `project.messageBus` to work after cancellation of the service scope.
+      //  - Some listeners (namely `EditorFactoryListener.editorReleased`) request other services during `startDispose()`.
+      //  - We have a number of services, which request other services uninitialized during own disposal.
+      //  Requesting an uninitialized instance during disposal of another instance is incorrect,
+      //  but it's legacy, and we have to live with it for a while.
+      //  To maintain the old behavior we run initialization in NonCancellable context:
+      //  the instance will be initialized even if the container scope is already cancelled.
+      withContext(NonCancellable) {
+        try {
+          complete(finalState = initializer.createInstance(parentScope, instanceClass))
+        }
+        catch (t: Throwable) {
+          complete(finalState = CannotInitialize(instanceClass = instanceClass, t))
+        }
       }
     }
-    return tryAwait(newState)
   }
 
   private fun complete(finalState: Any) {
@@ -255,24 +276,6 @@ internal abstract class LazyInstanceHolder(
 private class CurrentlyInitializingInstance(val holder: LazyInstanceHolder)
   : AbstractCoroutineContextElement(CurrentlyInitializingInstance) {
   companion object : CoroutineContext.Key<CurrentlyInitializingInstance>
-}
-
-private val currentlyInitializingInstance: ThreadLocal<CurrentlyInitializingInstance?> = ThreadLocal()
-
-/**
- * Puts context [CurrentlyInitializingInstance] to a special thread-local.
- */
-fun withCurrentlyInitializingHolder(initializerContext: CoroutineContext): AccessToken {
-  return withThreadLocal(currentlyInitializingInstance) {
-    initializerContext[CurrentlyInitializingInstance]
-  }
-}
-
-/**
- * Returns the [CurrentlyInitializingInstance] from thread local.
- */
-fun currentlyInitializingInstanceContext(): CoroutineContext? {
-  return currentlyInitializingInstance.get()
 }
 
 internal class StaticInstanceHolder(scope: CoroutineScope, initializer: InstanceInitializer)

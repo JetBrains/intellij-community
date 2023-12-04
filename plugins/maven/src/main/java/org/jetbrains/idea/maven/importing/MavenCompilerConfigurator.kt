@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.compiler.CompilerConfiguration
@@ -24,14 +24,20 @@ import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions
 
-/**
- * @author Vladislav.Soroka
- */
+private val ALL_PROJECTS_COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
+private val DEFAULT_COMPILER_EXTENSION = Key.create<MavenCompilerExtension>("default.compiler")
+private val DEFAULT_COMPILER_IS_SET = Key.create<Boolean>("default.compiler.updated")
+private const val JAVAC_ID = "javac"
+private const val MAVEN_COMPILER_PARAMETERS = "maven.compiler.parameters"
+
+private const val propStartTag = "\${"
+private const val propEndTag = "}"
+
+private val LOG = Logger.getInstance(MavenCompilerConfigurator::class.java)
+
 @ApiStatus.Internal
 class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
                                   MavenWorkspaceConfigurator {
-  private val LOG = Logger.getInstance(MavenCompilerConfigurator::class.java)
-
 
   override fun isApplicable(mavenProject: MavenProject?): Boolean {
     return true
@@ -120,13 +126,13 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
   }
 
   override fun process(modifiableModelsProvider: IdeModifiableModelsProvider,
-              module: Module,
-              rootModel: MavenRootModelAdapter,
-              mavenModel: MavenProjectsTree,
-              mavenProject: MavenProject,
-              changes: MavenProjectChanges,
-              mavenProjectToModuleName: Map<MavenProject, String>,
-              postTasks: List<MavenProjectsProcessorTask>) {
+                       module: Module,
+                       rootModel: MavenRootModelAdapter,
+                       mavenModel: MavenProjectsTree,
+                       mavenProject: MavenProject,
+                       changes: MavenProjectChanges,
+                       mavenProjectToModuleName: Map<MavenProject, String>,
+                       postTasks: List<MavenProjectsProcessorTask>) {
     val project = module.project
 
     // select (and cache) default compiler extension
@@ -261,96 +267,85 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
   private data class MavenProjectWithModulesData(val mavenProject: MavenProject,
                                                  val modules: List<Module>)
 
-  companion object {
-    private val ALL_PROJECTS_COMPILERS = Key.create<MutableSet<String>>("maven.compilers")
-    private val DEFAULT_COMPILER_EXTENSION = Key.create<MavenCompilerExtension>("default.compiler")
-    private val DEFAULT_COMPILER_IS_SET = Key.create<Boolean>("default.compiler.updated")
-    private const val JAVAC_ID = "javac"
-    private const val MAVEN_COMPILER_PARAMETERS = "maven.compiler.parameters"
+  private fun getCompilerId(config: Element): String {
+    val compilerId = config.getChildTextTrim("compilerId")
+    if (compilerId.isNullOrBlank() || JAVAC_ID == compilerId || hasUnresolvedProperty(compilerId)) return JAVAC_ID
+    else return compilerId
+  }
 
-    private fun getCompilerId(config: Element): String {
-      val compilerId = config.getChildTextTrim("compilerId")
-      if (compilerId.isNullOrBlank() || JAVAC_ID == compilerId || hasUnresolvedProperty(compilerId)) return JAVAC_ID
-      else return compilerId
+  private fun hasUnresolvedProperty(txt: String): Boolean {
+    val i = txt.indexOf(propStartTag)
+    return i >= 0 && findClosingBraceOrNextUnresolvedProperty(i + 1, txt) != -1
+  }
+
+  private fun findClosingBraceOrNextUnresolvedProperty(index: Int, s: String): Int {
+    if (index == -1) return -1
+    val pair = s.findAnyOf(listOf(propEndTag, propStartTag), index) ?: return -1
+    if (pair.second == propEndTag) return pair.first
+    val nextIndex = if (pair.second == propStartTag) pair.first + 2 else pair.first + 1
+    return findClosingBraceOrNextUnresolvedProperty(nextIndex, s)
+  }
+
+  private fun getResolvedText(txt: String?): String? {
+    val result = txt.nullize() ?: return null
+    if (hasUnresolvedProperty(result)) return null
+    return result
+  }
+
+  private fun getResolvedText(it: Element): String? {
+    return getResolvedText(it.textTrim)
+  }
+
+  private fun collectCompilerArgs(mavenCompilerConfiguration: MavenCompilerConfiguration): List<String> {
+    val options = mutableListOf<String>()
+
+    val pluginConfiguration = mavenCompilerConfiguration.pluginConfiguration
+    val parameters = pluginConfiguration?.getChild("parameters")
+
+    if (parameters?.textTrim?.toBoolean() == true) {
+      options += "-parameters"
+    }
+    else if (parameters == null && mavenCompilerConfiguration.propertyCompilerParameters?.toBoolean() == true) {
+      options += "-parameters"
     }
 
-    private const val propStartTag = "\${"
-    private const val propEndTag = "}"
+    if (pluginConfiguration == null) return options
 
-    private fun hasUnresolvedProperty(txt: String): Boolean {
-      val i = txt.indexOf(propStartTag)
-      return i >= 0 && findClosingBraceOrNextUnresolvedProperty(i + 1, txt) != -1
-    }
+    val compilerArguments = pluginConfiguration.getChild("compilerArguments")
+    if (compilerArguments != null) {
+      val unresolvedArgs = mutableSetOf<String>()
+      val effectiveArguments = compilerArguments.children.map {
+        val key = it.name.run { if (startsWith("-")) this else "-$this" }
+        val value = getResolvedText(it)
+        if (value == null && hasUnresolvedProperty(it.textTrim)) {
+          unresolvedArgs += key
+        }
+        key to value
+      }.toMap()
 
-    private fun findClosingBraceOrNextUnresolvedProperty(index: Int, s: String): Int {
-      if (index == -1) return -1
-      val pair = s.findAnyOf(listOf(propEndTag, propStartTag), index) ?: return -1
-      if (pair.second == propEndTag) return pair.first
-      val nextIndex = if (pair.second == propStartTag) pair.first + 2 else pair.first + 1
-      return findClosingBraceOrNextUnresolvedProperty(nextIndex, s)
-    }
-
-    private fun getResolvedText(txt: String?): String? {
-      val result = txt.nullize() ?: return null
-      if (hasUnresolvedProperty(result)) return null
-      return result
-    }
-
-    private fun getResolvedText(it: Element): String? {
-      return getResolvedText(it.textTrim)
-    }
-
-    private fun collectCompilerArgs(mavenCompilerConfiguration: MavenCompilerConfiguration): List<String> {
-      val options = mutableListOf<String>()
-
-      val pluginConfiguration = mavenCompilerConfiguration.pluginConfiguration
-      val parameters = pluginConfiguration?.getChild("parameters")
-
-      if (parameters?.textTrim?.toBoolean() == true) {
-        options += "-parameters"
-      }
-      else if (parameters == null && mavenCompilerConfiguration.propertyCompilerParameters?.toBoolean() == true) {
-        options += "-parameters"
-      }
-
-      if (pluginConfiguration == null) return options
-
-      val compilerArguments = pluginConfiguration.getChild("compilerArguments")
-      if (compilerArguments != null) {
-        val unresolvedArgs = mutableSetOf<String>()
-        val effectiveArguments = compilerArguments.children.map {
-          val key = it.name.run { if (startsWith("-")) this else "-$this" }
-          val value = getResolvedText(it)
-          if (value == null && hasUnresolvedProperty(it.textTrim)) {
-            unresolvedArgs += key
-          }
-          key to value
-        }.toMap()
-
-        effectiveArguments.forEach { key, value ->
-          if (key.startsWith("-A") && value != null) {
-            options.add("$key=$value")
-          }
-          else if (key !in unresolvedArgs) {
-            options.add(key)
-            addIfNotNull(options, value)
-          }
+      effectiveArguments.forEach { key, value ->
+        if (key.startsWith("-A") && value != null) {
+          options.add("$key=$value")
+        }
+        else if (key !in unresolvedArgs) {
+          options.add(key)
+          addIfNotNull(options, value)
         }
       }
-
-      addIfNotNull(options, getResolvedText(pluginConfiguration.getChildTextTrim("compilerArgument")))
-
-      val compilerArgs = pluginConfiguration.getChild("compilerArgs")
-      if (compilerArgs != null) {
-        for (arg in compilerArgs.getChildren("arg")) {
-          addIfNotNull(options, getResolvedText(arg))
-        }
-        for (compilerArg in compilerArgs.getChildren("compilerArg")) {
-          addIfNotNull(options, getResolvedText(compilerArg))
-        }
-      }
-      return options
     }
+
+    addIfNotNull(options, getResolvedText(pluginConfiguration.getChildTextTrim("compilerArgument")))
+
+    val compilerArgs = pluginConfiguration.getChild("compilerArgs")
+    if (compilerArgs != null) {
+      for (arg in compilerArgs.getChildren("arg")) {
+        addIfNotNull(options, getResolvedText(arg))
+      }
+      for (compilerArg in compilerArgs.getChildren("compilerArg")) {
+        addIfNotNull(options, getResolvedText(compilerArg))
+      }
+    }
+    return options
   }
 }
 

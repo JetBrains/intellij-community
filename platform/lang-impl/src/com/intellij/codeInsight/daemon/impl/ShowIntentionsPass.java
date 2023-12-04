@@ -212,13 +212,13 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
       myHighlightInfoType = highlightInfoType;
     }
 
-    private static void filter(@NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
-                               @Nullable PsiFile psiFile,
-                               IntentionActionFilter @NotNull [] filters) {
+    private void filter(@NotNull List<HighlightInfo.IntentionActionDescriptor> descriptors,
+                        @Nullable PsiFile psiFile,
+                        IntentionActionFilter @NotNull [] filters) {
       for (Iterator<HighlightInfo.IntentionActionDescriptor> it = descriptors.iterator(); it.hasNext(); ) {
         HighlightInfo.IntentionActionDescriptor actionDescriptor = it.next();
         for (IntentionActionFilter filter : filters) {
-          if (!filter.accept(actionDescriptor.getAction(), psiFile)) {
+          if (!filter.accept(actionDescriptor.getAction(), psiFile, myOffset)) {
             it.remove();
             break;
           }
@@ -248,13 +248,11 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if (state != null && !state.isFinished()) {
+    if (state != null && !state.isFinished() || myEditor.isDisposed()) {
       return;
     }
     IntentionsInfo intentionsInfo = new IntentionsInfo();
     getActionsToShow(myEditor, myFile, intentionsInfo, myPassIdToShowIntentionsFor, myQueryIntentionActions);
-    EditorNotificationActions.collectActions(myEditor, intentionsInfo); // TODO EDT-only call! (IDEA-333895)
-    intentionsInfo.filterActions(myFile);
     myCachedIntentions = IntentionsUI.getInstance(myProject).getCachedIntentions(myEditor, myFile);
     myActionsChanged = myCachedIntentions.wrapAndUpdateActions(intentionsInfo, false);
     UnresolvedReferenceQuickFixUpdater.getInstance(myProject).startComputingNextQuickFixes(myFile, myEditor, myVisibleRange);
@@ -267,7 +265,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     CachedIntentions cachedIntentions = myCachedIntentions;
     boolean actionsChanged = myActionsChanged;
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if ((state == null || state.isFinished()) && cachedIntentions != null) {
+    if ((state == null || state.isFinished()) && cachedIntentions != null && !myEditor.isDisposed()) {
       IntentionsUI.getInstance(myProject).update(cachedIntentions, actionsChanged);
     }
   }
@@ -275,10 +273,8 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
 
   /**
    * Returns the list of actions to show in the Alt-Enter popup at the caret offset in the given editor.
-   *
-   * @param includeSyncActions whether EDT-only providers should be queried, if {@code true}, this method should be invoked in EDT
    */
-  public static @NotNull IntentionsInfo getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile, boolean includeSyncActions) {
+  public static @NotNull IntentionsInfo getActionsToShow(@NotNull Editor hostEditor, @NotNull PsiFile hostFile) {
     IntentionsInfo result = new IntentionsInfo();
     getActionsToShow(hostEditor, hostFile, result, -1);
     return result;
@@ -329,7 +325,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
         boolean added = false;
         for (HighlightInfo.IntentionActionDescriptor fix : additionalFixes) {
           if (!ContainerUtil.exists(fixes, descriptor -> descriptor.getAction().getText().equals(fix.getAction().getText()))) {
-            fix.setProblemOffset(info.startOffset);
+            fix.setProblemRange(info.getFixTextRange());
             fixes.add(fix);
             added = true;
           }

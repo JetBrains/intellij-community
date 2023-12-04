@@ -56,9 +56,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SlowOperations
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -263,6 +263,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
             return
           }
         }
+      }
+      if (data.tracker is SimpleLocalLineStatusTracker) {
+        return data.tracker.hasPartialState()
       }
 
       releaseTracker(document)

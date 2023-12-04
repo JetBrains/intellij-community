@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
 public class GenericTest extends IncrementalTestCase {
@@ -76,11 +62,17 @@ public class GenericTest extends IncrementalTestCase {
     doTest();
   }
 
-  /* Not working yet
-  public void testChangeToCovariantMethodInBase3() throws Exception {
+  public void testChangeToCovariantMethodInBase3() {
+    // Strictly speaking, recompilation of "IImpl" is not necessary, since all needed bridge methods will be included by the compiler into its base "Mediator" class (see the test's classes).
+    // However, at the moment when decision is made, both Mediator and IImpl do not have necessary bridge methods, so the corresponding rule affects both classes.
+    // At the moment we assume that it is fine to recompile more classes rather than make the rule to be more complicated.
     doTest();
   }
-  */
+
+  public void testChangeToCovariantMethodInBase4() {
+    doTest();
+  }
+
   public void testChangeVarargSignature() {
     doTest();
   }

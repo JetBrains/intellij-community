@@ -72,7 +72,7 @@ public abstract class BaseViewAction extends DumbAwareAction implements ActionRe
     return context.getTabFor(grid);
   }
 
-  protected final void setEnabled(AnActionEvent e, boolean enabled) {
+  protected static void setEnabled(AnActionEvent e, boolean enabled) {
     e.getPresentation().setVisible(enabled);
   }
 }

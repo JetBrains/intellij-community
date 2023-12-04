@@ -4,12 +4,13 @@ package com.intellij.testFramework;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
-import com.intellij.openapi.projectRoots.impl.MockSdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.util.Disposer;
@@ -21,7 +22,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,12 +35,14 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertTrue;
 
 @TestOnly
 public final class IdeaTestUtil {
   private static final String MOCK_JDK_DIR_NAME_PREFIX = "mockJDK-";
+  private static final String MOCK_JDK_GROUP_ID = "mockjdk-base-java";
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void printDetectedPerformanceTimings() {
@@ -74,22 +76,27 @@ public final class IdeaTestUtil {
   }
 
   public static @NotNull Sdk getMockJdk(@NotNull JavaVersion version) {
-    int mockJdk = version.feature >= 21 ? 21 : 
+    int mockJdk = version.feature >= 21 ? 21 :
                   version.feature >= 11 ? 11 :
                   version.feature >= 9 ? 9 :
                   version.feature >= 7 ? version.feature :
                   version.feature >= 5 ? 7 :
                   4;
+    String sdkName = getMockJdkName(version);
     if (mockJdk > 9) {
-      return createMockJdkFromRepository("java " + version, mockJdk);
+      return createMockJdkFromRepository(sdkName, mockJdk);
     }
     String path = getPathForJdkNamed(MOCK_JDK_DIR_NAME_PREFIX + "1." + mockJdk).getPath();
-    return createMockJdk("java " + version, path);
+    return createMockJdk(sdkName, path);
+  }
+
+  public static @NotNull String getMockJdkName(@NotNull JavaVersion version) {
+    return "java " + version;
   }
 
   private static Sdk createMockJdkFromRepository(String name, int version) {
     List<RemoteRepositoryDescription> repos = MavenDependencyUtil.getRemoteRepositoryDescriptions();
-    String coordinates = "org.jetbrains.mockjdk:mockjdk-base-java:" + version + ".0";
+    String coordinates = "org.jetbrains.mockjdk:"+ MOCK_JDK_GROUP_ID + ":" + version + ".0";
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coordinates, false);
     Collection<OrderRoot> roots =
       JarRepositoryManager.loadDependenciesModal(ProjectManager.getInstance().getDefaultProject(), libraryProperties, false, false, null,
@@ -122,7 +129,11 @@ public final class IdeaTestUtil {
     return null;
   }
 
-  public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
+  public static @NotNull Sdk createMockJdk(
+    @NotNull String name,
+    @NotNull String path,
+    Consumer<SdkModificator> sdkModificatorCustomizer
+  ) {
     Sdk fromLegacyPath = createMockJdkFromLegacyPath(path);
     if (fromLegacyPath != null) {
       return fromLegacyPath;
@@ -133,30 +144,8 @@ public final class IdeaTestUtil {
                                "classes are included into classpath and that the plugin isn't disabled " +
                                "by 'idea.load.plugins' or 'idea.load.plugins.id' system properties");
     }
-
-    MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
-    SdkModificator sdkModificator = new SdkModificator() {
-      @NotNull
-      @Override public String getName() { throw new UnsupportedOperationException(); }
-      @Override public void setName(@NotNull String name1) { throw new UnsupportedOperationException(); }
-      @Override public String getHomePath() { throw new UnsupportedOperationException(); }
-      @Override public void setHomePath(String path1) { throw new UnsupportedOperationException(); }
-      @Override public String getVersionString() { throw new UnsupportedOperationException(); }
-      @Override public void setVersionString(String versionString) { throw new UnsupportedOperationException(); }
-      @Override public SdkAdditionalData getSdkAdditionalData() { throw new UnsupportedOperationException(); }
-      @Override public void setSdkAdditionalData(SdkAdditionalData data) { throw new UnsupportedOperationException(); }
-      @Override public VirtualFile @NotNull [] getRoots(@NotNull OrderRootType rootType) { return roots.get(rootType).toArray(VirtualFile.EMPTY_ARRAY); }
-      @Override public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
-      @Override public void removeRoots(@NotNull OrderRootType rootType) { throw new UnsupportedOperationException(); }
-      @Override public void removeAllRoots() { throw new UnsupportedOperationException(); }
-      @Override public void commitChanges() { throw new UnsupportedOperationException(); }
-      @Override public boolean isWritable() { throw new UnsupportedOperationException(); }
-
-      @Override
-      public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
-        roots.putValue(rootType, root);
-      }
-    };
+    Sdk sdk = ProjectJdkTable.getInstance().createSdk(name, JavaSdk.getInstance());
+    SdkModificator sdkModificator = sdk.getSdkModificator();
 
     String sdkPath;
     if (path.endsWith(".jar!/")) {
@@ -171,6 +160,12 @@ public final class IdeaTestUtil {
         }
       }
     }
+    sdkModificator.setHomePath(sdkPath);
+    sdkModificator.setVersionString(name);
+    if (sdkModificatorCustomizer != null) {
+      sdkModificatorCustomizer.accept(sdkModificator);
+    }
+
     // only Mock JDKs 1.4/1.7 have src.zip
     if (path.endsWith("mockJDK-1.7") || path.endsWith("mockJDK-1.4")) {
       if (new File(path, "src.zip").exists()) {
@@ -179,8 +174,18 @@ public final class IdeaTestUtil {
     }
 
     JavaSdkImpl.attachJdkAnnotations(sdkModificator);
+    Application application = ApplicationManager.getApplication();
+    Runnable runnable = () -> sdkModificator.commitChanges();
+    if (application.isDispatchThread()) {
+      application.runWriteAction(runnable);
+    } else {
+      application.invokeAndWait(() -> application.runWriteAction(runnable));
+    }
+    return sdk;
+  }
 
-    return new MockSdk(name, sdkPath, name, roots, () -> JavaSdk.getInstance());
+  public static @NotNull Sdk createMockJdk(@NotNull String name, @NotNull String path) {
+    return createMockJdk(name, path, null);
   }
 
   // it's JDK 1.4, not 14
@@ -255,11 +260,20 @@ public final class IdeaTestUtil {
     Assert.assertNotNull(sdk);
     String oldVersionString = sdk.getVersionString();
 
-    // hack
-    ((SdkModificator)sdk).setVersionString(testVersion.getDescription());
+    setSdkVersion(sdk, testVersion.getDescription());
 
     Assert.assertSame(testVersion, JavaSdk.getInstance().getVersion(sdk));
-    Disposer.register(parentDisposable, () -> ((SdkModificator)sdk).setVersionString(oldVersionString));
+    Disposer.register(parentDisposable, () -> {
+      setSdkVersion(sdk, oldVersionString);
+    });
+  }
+
+  private static void setSdkVersion(@NotNull Sdk sdk, @Nullable String sdkVersion) {
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setVersionString(sdkVersion);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
   }
 
   public static @NotNull String requireRealJdkHome() {

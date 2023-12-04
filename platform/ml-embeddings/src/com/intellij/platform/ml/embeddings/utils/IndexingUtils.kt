@@ -3,37 +3,41 @@ package com.intellij.platform.ml.embeddings.utils
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.services.LocalEmbeddingServiceProvider
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
 import kotlin.math.sqrt
 
 private const val SEPARATOR = "~"
 
-fun splitIdentifierIntoTokens(initialScope: String): List<String> {
-  var scope = initialScope
-  for (reg in arrayOf("(?<=[A-Za-z])(?=[A-Z][a-z])", "[^\\w\\s]", "[_\\-]")) {
-    scope = scope.replace(reg.toRegex(), SEPARATOR)
+private object SplittingRegExps {
+  val wordsEndingLocations: List<Regex> = arrayOf(
+    "(?<=[A-Za-z])(?=[A-Z][a-z])", "[^\\w\\s]", "[_\\-]").map { it.toRegex() }
+
+  val boundDigitsLocation: Regex = "(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)".toRegex()
+}
+
+fun splitIdentifierIntoTokens(identifier: String): List<String> {
+  var transformedIdentifier = identifier
+  for (regex in SplittingRegExps.wordsEndingLocations) {
+    transformedIdentifier = transformedIdentifier.replace(regex, SEPARATOR)
   }
 
-  val initialScopeArray = scope.split(SEPARATOR)
-
   return buildList {
-    for (elem in initialScopeArray) {
-      if (elem.isEmpty()) continue
-      var prev = Character.isUpperCase(elem[elem.length - 1])
-      var part = elem
+    for (token in transformedIdentifier.split(SEPARATOR)) {
+      if (token.isEmpty()) continue
+      var isNextCharUpperCase = Character.isUpperCase(token.last())
+      var transformedToken = token
 
-      for (i in elem.length - 2 downTo 0) {
-        val nextElem = Character.isUpperCase(part[i])
-        if (prev xor nextElem) {
-          part = part.substring(0, i + if (prev) 1 else 0) + SEPARATOR + part.substring(i + if (prev) 1 else 0)
-          prev = nextElem
+      for (index in token.length - 2 downTo 0) {
+        val isCurCharUpperCase = Character.isUpperCase(transformedToken[index])
+        val isCaseChanging = isNextCharUpperCase xor isCurCharUpperCase
+        if (isCaseChanging) {
+          val splitPosition = index + if (isNextCharUpperCase) 1 else 0
+          transformedToken = transformedToken.substring(0, splitPosition) + SEPARATOR + transformedToken.substring(splitPosition)
+          isNextCharUpperCase = isCurCharUpperCase
         }
       }
 
-      part.split(SEPARATOR)
-        .flatMap { it.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)".toRegex()) }
+      transformedToken.split(SEPARATOR)
+        .flatMap { it.split(SplittingRegExps.boundDigitsLocation) }
         .filterNot(String::isEmpty)
         .map { it.lowercase() }
         .forEach(this::add)
@@ -41,18 +45,12 @@ fun splitIdentifierIntoTokens(initialScope: String): List<String> {
   }
 }
 
-fun generateEmbedding(indexableRepresentation: String, downloadArtifacts: Boolean = false): FloatTextEmbedding? {
+suspend fun generateEmbedding(indexableRepresentation: String, downloadArtifacts: Boolean = false): FloatTextEmbedding? {
   return generateEmbeddings(listOf(indexableRepresentation), downloadArtifacts)?.single()
 }
 
-fun generateEmbeddings(texts: List<String>, downloadArtifacts: Boolean = false): List<FloatTextEmbedding>? {
-  return ProgressManager.getInstance().runProcess<List<FloatTextEmbedding>?>(
-    {
-      val embeddingService = LocalEmbeddingServiceProvider.getInstance().getServiceBlocking(downloadArtifacts) ?: return@runProcess null
-      runBlockingCancellable { embeddingService.embed(texts) }.map { it.normalized() }
-    },
-    EmptyProgressIndicator()
-  )
+suspend fun generateEmbeddings(texts: List<String>, downloadArtifacts: Boolean = false): List<FloatTextEmbedding>? {
+  return LocalEmbeddingServiceProvider.getInstance().getService(downloadArtifacts)?.embed(texts)?.map { it.normalized() } ?: return null
 }
 
 fun FloatTextEmbedding.normalized(): FloatTextEmbedding {

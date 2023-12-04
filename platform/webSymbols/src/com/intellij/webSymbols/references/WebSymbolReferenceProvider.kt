@@ -57,11 +57,11 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
 
   protected open fun shouldShowProblems(element: T): Boolean = true
 
-  protected fun unresolvedSymbol(namespace: SymbolNamespace, kind: SymbolKind, name: String) =
+  protected fun unresolvedSymbol(qualifiedKind: WebSymbolQualifiedKind, name: String) =
     WebSymbolMatchImpl.create(
       name,
       listOf(WebSymbolNameSegment(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)),
-      namespace, kind, WebSymbolOrigin.empty(),
+      qualifiedKind.namespace, qualifiedKind.kind, WebSymbolOrigin.empty(),
       null, null
     )
 

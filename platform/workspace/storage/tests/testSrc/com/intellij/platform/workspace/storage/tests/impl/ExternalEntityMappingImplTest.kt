@@ -6,7 +6,6 @@ import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntit
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource
 import com.intellij.platform.workspace.storage.tests.createBuilderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Test
 import kotlin.test.assertTrue
 

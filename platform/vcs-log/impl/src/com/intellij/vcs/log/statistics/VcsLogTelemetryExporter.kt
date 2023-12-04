@@ -6,22 +6,22 @@ import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.VcsScope
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogFilter
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.LogHistory
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.HISTORY_COMPUTING_VCS_NAME
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.IS_INITIAL_HISTORY_COMPUTING
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.TYPE_HISTORY_COMPUTING
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.FILE_HISTORY_IS_INITIAL
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.FILE_HISTORY_TYPE
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LIST
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTERED_COMMIT_COUNT
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTERS_LIST
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_FILTER_KIND
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_REPOSITORY_COMMIT_COUNT
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_SORT_TYPE
-import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_LOG_VCS_LIST
+import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.VCS_NAME
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
+import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider
 import com.intellij.util.indexing.diagnostic.dto.toMillis
 import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.FILTERED_COMMIT_COUNT_FIELD
 import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.FILE_HISTORY_COLLECTING_RENAMES
 import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.FILE_HISTORY_COMPUTING
+import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.FILTERED_COMMIT_COUNT_FIELD
 import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.FILTERS_FIELD
 import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.FILTER_KIND_FIELD
 import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.REPOSITORY_COMMIT_COUNT_FIELD
@@ -41,17 +41,17 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
     override suspend fun export(spans: Collection<SpanData>) {
       spans.vcsSpans().forEach { span ->
         LogHistory.entries
-          .find { historySpan -> historySpan.name == span.name }
+          .find { historySpan -> historySpan.getName() == span.name }
           ?.let { historySpan ->
+            val vcsName = span.attributes[VCS_NAME].orEmpty()
             when (historySpan) {
               LogHistory.Computing -> {
-                val vcsName = span.attributes[HISTORY_COMPUTING_VCS_NAME].orEmpty()
-                val indexComputing = "index" == span.attributes[TYPE_HISTORY_COMPUTING]
-                if (span.attributes[IS_INITIAL_HISTORY_COMPUTING] == true) {
+                val indexComputing = "index" == span.attributes[FILE_HISTORY_TYPE]
+                if (span.attributes[FILE_HISTORY_IS_INITIAL] == true) {
                   FILE_HISTORY_COMPUTING.log(vcsName, indexComputing, span.valueInMillis)
                 }
               }
-              LogHistory.CollectingRenames -> FILE_HISTORY_COLLECTING_RENAMES.log(span.valueInMillis)
+              LogHistory.CollectingRenames -> FILE_HISTORY_COLLECTING_RENAMES.log(vcsName, span.valueInMillis)
             }
           }
       }
@@ -66,7 +66,7 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
         val filtersList = span.attributes[VCS_LOG_FILTERS_LIST]?.toStringList()
         if (filtersList.isNullOrEmpty()) continue
 
-        val vcsList = span.attributes[VCS_LOG_VCS_LIST]?.toStringList() ?: continue
+        val vcsList = span.attributes[VCS_LIST]?.toStringList() ?: continue
         val sortType = span.attributes[VCS_LOG_SORT_TYPE] ?: continue
         val commitCount = span.attributes[VCS_LOG_FILTERED_COMMIT_COUNT] ?: continue
         val repositoryCommitCount = span.attributes[VCS_LOG_REPOSITORY_COMMIT_COUNT]

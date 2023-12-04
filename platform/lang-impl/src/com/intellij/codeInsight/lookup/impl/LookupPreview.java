@@ -98,7 +98,7 @@ final class LookupPreview {
         g.drawString(suffix, r.x, r.y + editor.getAscent());
       }
 
-      private Font getFont(@NotNull Editor editor) {
+      private static Font getFont(@NotNull Editor editor) {
         return editor.getColorsScheme().getFont(EditorFontType.PLAIN);
       }
     };

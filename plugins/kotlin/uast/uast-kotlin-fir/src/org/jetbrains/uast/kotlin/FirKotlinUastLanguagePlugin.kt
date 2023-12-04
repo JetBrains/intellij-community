@@ -8,7 +8,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.uast.*
@@ -16,6 +22,8 @@ import org.jetbrains.uast.kotlin.FirKotlinConverter.convertDeclarationOrElement
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightPrimaryConstructor
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
+
+private val JVM_STATIC_FQN = FqName("kotlin.jvm.JvmStatic")
 
 class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
     override val priority: Int = 10
@@ -73,6 +81,8 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
                 FirKotlinConverter.convertKtFile(element, null, requiredTypes) as Sequence<T>
             element is KtClassOrObject ->
                 FirKotlinConverter.convertClassOrObject(element, null, requiredTypes) as Sequence<T>
+            element is KtNamedFunction && element.isJvmStatic() ->
+                FirKotlinConverter.convertJvmStaticMethod(element, null, requiredTypes) as Sequence<T>
             element is KtProperty && !element.isLocal ->
                 FirKotlinConverter.convertNonLocalProperty(element, null, requiredTypes) as Sequence<T>
             element is KtParameter ->
@@ -81,6 +91,20 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
                 FirKotlinConverter.convertFakeLightConstructorAlternatives(element, null, requiredTypes) as Sequence<T>
             else ->
                 sequenceOf(convertElementWithParent(element, requiredTypes.nonEmptyOr(DEFAULT_TYPES_LIST)) as? T).filterNotNull()
+        }
+    }
+
+    @OptIn(KtAllowAnalysisOnEdt::class)
+    private fun KtNamedFunction.isJvmStatic() = annotationEntries.any { annotation ->
+        annotation.shortName?.asString() == JVM_STATIC_FQN.shortName().asString() && allowAnalysisOnEdt {
+            analyze(annotation) {
+                annotation.resolveCall()
+                    ?.singleConstructorCallOrNull()
+                    ?.partiallyAppliedSymbol
+                    ?.symbol
+                    ?.containingClassIdIfNonLocal
+                    ?.asSingleFqName() == JVM_STATIC_FQN
+            }
         }
     }
 

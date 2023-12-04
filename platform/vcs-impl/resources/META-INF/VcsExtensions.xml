@@ -64,7 +64,7 @@
                     serviceImplementation="com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager"/>
-    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.openapi.vcs.changes.shelf.ShelveChangeManagerProjectActivity"/>
     <projectService serviceImplementation="com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager"
                     headlessImplementation=""/>
 
@@ -264,6 +264,7 @@
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.impl.LineStatusTrackerManager$CheckinFactory"/>
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.ActiveChangeListTracker"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ActiveChangeListTrackerImpl"/>
+    <gutterMarkPreprocessor implementation="com.intellij.openapi.vcs.ex.ClientIdGutterIconMerge"/>
 
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"
                       order="first"/>
@@ -275,8 +276,6 @@
     <ignoredFileProvider id="VCS.DefaultIgnoredFileProvider" implementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl$DefaultIgnoredFileProvider" order="first"/>
     <ignoredFileProvider implementation="com.intellij.openapi.vcs.changes.ProjectExcludesIgnoredFileProvider" order="after VCS.DefaultIgnoredFileProvider"/>
     <nonProjectFileWritingAccessExtension implementation="com.intellij.openapi.vcs.changes.IgnoredFileWritingAccessExtension"/>
-    <dateTimeFormatter id="vcs.annotate" name="VCS Annotate" />
-    <dateTimeFormatter id="vcs.log" name="VCS Log" />
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsApplicationOptionsUsagesCollector"/>

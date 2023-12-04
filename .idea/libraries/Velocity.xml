@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="Velocity" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="org.apache.velocity:velocity-engine-core:2.3">
+    <properties maven-id="org.apache.velocity:velocity-engine-core:2.3">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/apache/velocity/velocity-engine-core/2.3/velocity-engine-core-2.3.jar">
           <sha256sum>b086cee8fd8183e240b4afcf54fe38ec33dd8eb0da414636e5bf7aa4d9856629</sha256sum>

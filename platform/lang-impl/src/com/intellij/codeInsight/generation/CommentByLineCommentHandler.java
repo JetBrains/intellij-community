@@ -25,6 +25,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CommentStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.util.PsiUtilBase;
@@ -175,10 +176,10 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
 
       block.blockSuitableCommenter = getBlockSuitableCommenter(psiFile, block.editor, offset, endOffset);
       Language lineStartLanguage = getLineStartLanguage(block.editor, psiFile, startLine);
-      CommonCodeStyleSettings languageSettings = CodeStyle.getLanguageSettings(psiFile, lineStartLanguage);
-      block.commentWithIndent = !languageSettings.LINE_COMMENT_AT_FIRST_COLUMN;
-      block.addLineSpace = languageSettings.LINE_COMMENT_ADD_SPACE;
-      block.addBlockSpace = languageSettings.BLOCK_COMMENT_ADD_SPACE;
+      CommentStyleSettings commentStyleSettings = CodeStyle.getLanguageSettings(psiFile, lineStartLanguage);
+      block.commentWithIndent = !commentStyleSettings.isLineCommentInTheFirstColumn();
+      block.addLineSpace = commentStyleSettings.isLineCommentFollowedWithSpace();
+      block.addBlockSpace = commentStyleSettings.isBlockCommentIncludesSpace();
 
       for (int line = startLine; line <= endLine; line++) {
         Commenter commenter = block.blockSuitableCommenter != null ? block.blockSuitableCommenter : findCommenter(block.editor, psiFile, line);
@@ -444,7 +445,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     return CharArrayUtil.regionMatches(chars, offset, prefix) ? offset : -1;
   }
 
-  private void doDefaultCommenting(final Block block) {
+  private static void doDefaultCommenting(final Block block) {
     final Document document = block.editor.getDocument();
     DocumentUtil.executeInBulk(
       document, block.endLine - block.startLine >= Registry.intValue("comment.by.line.bulk.lines.trigger"), () -> {

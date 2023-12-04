@@ -207,8 +207,13 @@
       "since": "2023.3"
     },
     {
-      "key": "PresentationAssistant.Bright.Popup.background",
-      "description": "Presentation Assistant popup bright background (experimental UI only)",
+      "key": "PresentationAssistant.Bright.PopupBackground",
+      "description": "Presentation Assistant popup bright background (experimental UI only). PopupBackground name is used to not apply the '*.background' pattern default color",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Bright.Popup.border",
+      "description": "Presentation Assistant popup bright border (experimental UI only)",
       "since": "2023.3"
     },
     {
@@ -222,8 +227,13 @@
       "since": "2023.3"
     },
     {
-      "key": "PresentationAssistant.Pale.Popup.background",
+      "key": "PresentationAssistant.Pale.PopupBackground",
       "description": "Presentation Assistant popup pale background (experimental UI only)",
+      "since": "2023.3"
+    },
+    {
+      "key": "PresentationAssistant.Pale.Popup.border",
+      "description": "Presentation Assistant popup pale border (experimental UI only)",
       "since": "2023.3"
     },
     {
@@ -390,6 +400,21 @@
       "key": "EditorTabs.hoverBackground",
       "since": "2019.2",
       "description": "Transparent overlay on editor tab hover. If value isn't specified the value of DefaultTabs.hoverBackground will be used"
+    },
+    {
+      "key": "EditorTabs.hoverInactiveBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on editor tab hover when editor is not focused. If value isn't specified the value of DefaultTabs.hoverBackground will be used"
+    },
+    {
+      "key": "EditorTabs.hoverSelectedBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on selected editor tab. If value isn't specified the #00000000 will be used"
+    },
+    {
+      "key": "EditorTabs.hoverSelectedInactiveBackground",
+      "since": "2022.1",
+      "description": "Transparent overlay on selected editor tab when editor is not focused. If value isn't specified the #00000000 will be used"
     },
     {
       "key": "EditorTabs.inactiveColoredFileBackground",

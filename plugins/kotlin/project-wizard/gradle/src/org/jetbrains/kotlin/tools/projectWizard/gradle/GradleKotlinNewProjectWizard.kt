@@ -2,8 +2,9 @@
 package org.jetbrains.kotlin.tools.projectWizard.gradle
 
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChangedEvent
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -34,9 +35,15 @@ import org.jetbrains.kotlin.idea.configuration.getGradleKotlinVersion
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.tools.projectWizard.*
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard.Companion.DEFAULT_KOTLIN_VERSION
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_MAIN_KOTLIN_PATH
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_MAIN_RESOURCES_PATH
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_KOTLIN_PATH
+import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_RESOURCES_PATH
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
+import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersionProviderService
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
@@ -63,10 +70,15 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             data.putUserData(GradleKotlinNewProjectWizardData.KEY, this)
         }
 
-        override var addSampleCodeProperty = propertyGraph.property(true)
+        override val addSampleCodeProperty = propertyGraph.property(true)
             .bindBooleanStorage(ADD_SAMPLE_CODE_PROPERTY_NAME)
 
         override var addSampleCode by addSampleCodeProperty
+
+        override val generateOnboardingTipsProperty = propertyGraph.property(AssetsJavaNewProjectWizardStep.proposeToGenerateOnboardingTipsByDefault())
+            .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
+
+        override var generateOnboardingTips by generateOnboardingTipsProperty
 
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
@@ -76,11 +88,22 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }
         }
 
+        private fun setupSampleCodeWithOnBoardingTipsUI(builder: Panel) {
+            builder.indent {
+                row {
+                    checkBox(UIBundle.message("label.project.wizard.new.project.generate.onboarding.tips"))
+                        .bindSelected(generateOnboardingTipsProperty)
+                        .whenStateChangedFromUi { logAddSampleOnboardingTipsChangedEvent(it) }
+                }
+            }.enabledIf(addSampleCodeProperty)
+        }
+
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupGradleDslUI(builder)
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
+            setupSampleCodeWithOnBoardingTipsUI(builder)
         }
 
         override fun validateLanguageCompatibility(gradleVersion: GradleVersion): Boolean {
@@ -153,11 +176,11 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             canUseFoojay = currentGradleVersion >= minGradleFoojayVersion
         }
 
-        // The default value of 1.9.0 is actually never used, it is just here to avoid the variable being nullable.
-        private var kotlinVersionToUse: String = "1.9.0"
+        // The default value is actually never used, it is just here to avoid the variable being nullable.
+        private var kotlinVersionToUse: String = DEFAULT_KOTLIN_VERSION
 
         private fun findKotlinVersionToUse(project: Project) {
-            val latestKotlinVersion = KotlinWizardVersionStore.getInstance().state?.kotlinPluginVersion ?: "1.9.0"
+            val latestKotlinVersion = KotlinWizardVersionStore.getInstance().state?.kotlinPluginVersion ?: DEFAULT_KOTLIN_VERSION
             kotlinVersionToUse = latestKotlinVersion
             if (isCreatingNewRootModule()) {
                 return
@@ -239,37 +262,37 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         }
     }
 
-    private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
+    private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
         private fun createKotlinContentRoots() {
             val directories = listOf(
-                "$outputDirectory/src/main/kotlin",
-                "$outputDirectory/src/main/resources",
-                "$outputDirectory/src/test/kotlin",
-                "$outputDirectory/src/test/resources",
+                "$outputDirectory/$SRC_MAIN_KOTLIN_PATH",
+                "$outputDirectory/$SRC_MAIN_RESOURCES_PATH",
+                "$outputDirectory/$SRC_TEST_KOTLIN_PATH",
+                "$outputDirectory/$SRC_TEST_RESOURCES_PATH",
             )
             directories.forEach {
                 Path.of(it).createDirectories()
             }
         }
 
-        private fun withKotlinSampleCode(packageName: String) {
-            val templateName = "KotlinSampleCode"
-            val sourcePath = "src/main/kotlin/Main.kt"
-            addTemplateAsset(sourcePath, templateName, buildMap {
-                put("PACKAGE_NAME", packageName)
-            })
-            addFilesToOpen(sourcePath)
-        }
-
+        private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
 
         override fun setupAssets(project: Project) {
             if (context.isCreatingNewProject) {
                 addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
+                addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
             }
             createKotlinContentRoots()
             if (parent.addSampleCode) {
-                withKotlinSampleCode(parent.groupId)
+                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldAddOnboardingTips())
             }
+        }
+
+        override fun setupProject(project: Project) {
+            if (shouldAddOnboardingTips()) {
+                prepareOnboardingTips(project)
+            }
+            super.setupProject(project)
         }
     }
 }

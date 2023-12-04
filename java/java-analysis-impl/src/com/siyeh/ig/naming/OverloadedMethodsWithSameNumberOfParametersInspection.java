@@ -16,15 +16,12 @@
 package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
@@ -90,7 +87,7 @@ public class OverloadedMethodsWithSameNumberOfParametersInspection extends BaseI
       }
     }
 
-    private boolean areParameterTypesConvertible(PsiParameterList parameterList, PsiParameterList otherParameterList) {
+    private static boolean areParameterTypesConvertible(PsiParameterList parameterList, PsiParameterList otherParameterList) {
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiParameter[] otherParameters = otherParameterList.getParameters();
       for (int i = 0; i < parameters.length; i++) {

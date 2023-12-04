@@ -122,7 +122,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return false;
   }
 
-  private boolean isCertainTypeElement(XmlTag xml, final String typeName, final String nsPrefix) {
+  private static boolean isCertainTypeElement(XmlTag xml, final String typeName, final String nsPrefix) {
     if (! isTypeElement(xml)) return false;
     final XmlAttribute name = getNameAttr(xml);
     if (name == null) return false;
@@ -137,7 +137,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return XmlUtil.XML_SCHEMA_URI.equals(xml.getNamespace()) && ("complexType".equals(localName) || "simpleType".equals(localName));
   }
 
-  private Collection<SchemaTypeInfo> gatherInheritors(XmlTag xml) {
+  private static Collection<SchemaTypeInfo> gatherInheritors(XmlTag xml) {
     XmlAttribute name = getNameAttr(xml);
     if (name == null || StringUtil.isEmptyOrSpaces(name.getValue())) return null;
     String localName = name.getValue();
@@ -185,7 +185,7 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return name;
   }
 
-  private String getDefaultNs(final XmlFile file) {
+  private static String getDefaultNs(final XmlFile file) {
     return ReadAction.compute(() -> {
       String nsUri;
       final XmlTag tag = file.getDocument().getRootTag();

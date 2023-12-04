@@ -1,4 +1,4 @@
-// FIR_COMPARISON
+// IGNORE_K2
 package <caret>
 
 // EXIST: {"lookupString":"kotlin","icon":"nodes/package.svg"}

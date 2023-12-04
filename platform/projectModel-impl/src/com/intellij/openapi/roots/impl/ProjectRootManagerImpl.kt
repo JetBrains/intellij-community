@@ -5,6 +5,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.module.Module
@@ -303,7 +304,7 @@ open class ProjectRootManagerImpl(val project: Project,
     if (oldSdkName != projectSdkName) stateChanged = true
     if (oldSdkType != projectSdkType) stateChanged = true
     val app = ApplicationManager.getApplication()
-    LOG.debug("State was changed: $stateChanged")
+    LOG.debug { "ProjectRootManagerImpl state was changed: $stateChanged" }
     if (app != null) {
       val isStateLoaded = isStateLoaded
       if (stateChanged) {
@@ -470,5 +471,5 @@ open class ProjectRootManagerImpl(val project: Project,
   private val moduleManager: ModuleManager
     get() = ModuleManager.getInstance(project)
 
-  override fun markRootsForRefresh() {}
+  override fun markRootsForRefresh(): List<VirtualFile> = emptyList()
 }

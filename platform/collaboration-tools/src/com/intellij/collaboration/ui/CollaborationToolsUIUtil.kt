@@ -5,6 +5,7 @@ import com.intellij.application.subscribe
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.ui.codereview.comment.RoundedPanel
 import com.intellij.collaboration.ui.layout.SizeRestrictedSingleComponentLayout
+import com.intellij.collaboration.ui.util.CodeReviewColorUtil
 import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.ui.util.JComponentOverlay
 import com.intellij.collaboration.ui.util.bindProgressIn
@@ -37,6 +38,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -289,15 +291,24 @@ object CollaborationToolsUIUtil {
    */
   fun getInsets(oldUI: Insets, newUI: Insets): Insets = if (ExperimentalUI.isNewUI()) newUI else oldUI
 
-  fun createTagLabel(text: @Nls String): JComponent =
-    JLabel(text).apply {
+  /**
+   * A text label with a rounded rectangle as a background
+   * To be used for various tags and badges
+   */
+  fun createTagLabel(text: @Nls String): JComponent = createTagLabel(SingleValueModel(text))
+
+  fun createTagLabel(model: SingleValueModel<@Nls String?>): JComponent =
+    JLabel(model.value).apply {
       font = JBFont.small()
-      foreground = UIUtil.getContextHelpForeground()
+      foreground = CodeReviewColorUtil.Review.stateForeground
       border = JBUI.Borders.empty(0, 4)
+      model.addListener {
+        text = it
+      }
     }.let {
       RoundedPanel(SingleComponentCenteringLayout(), 4).apply {
         border = JBUI.Borders.empty()
-        background = UIUtil.getPanelBackground()
+        background = CodeReviewColorUtil.Review.stateBackground
         add(it)
       }
     }
@@ -360,6 +371,13 @@ private class ScrollablePanel(layout: LayoutManager?, private val orientation: I
 
   override fun getScrollableTracksViewportHeight(): Boolean = orientation == SwingConstants.HORIZONTAL
 }
+
+fun jbColorFromHex(name: @NonNls String, light: @NonNls String, dark: @NonNls String): JBColor =
+  JBColor.namedColor(name, jbColorFromHex(light, dark))
+
+fun jbColorFromHex(light: @NonNls String, dark: @NonNls String): JBColor =
+  JBColor(ColorUtil.fromHex(light), ColorUtil.fromHex(dark))
+
 
 /**
  * Loading label with animated icon

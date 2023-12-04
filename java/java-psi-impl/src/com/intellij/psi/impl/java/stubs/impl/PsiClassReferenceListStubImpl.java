@@ -31,7 +31,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       if (info == null) throw new IllegalArgumentException();
       if (info.text() == null) throw new IllegalArgumentException();
     }
-    myInfos = infos;
+    myInfos = infos.length == 0 ? TypeInfo.EMPTY_ARRAY : infos;
   }
 
   @Override
@@ -40,7 +40,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
     if (types == null) {
       myTypes = types = createTypes();
     }
-    return types.clone();
+    return types.length == 0 ? PsiClassType.EMPTY_ARRAY : types.clone();
   }
   
   private boolean shouldSkipSoleObject() {

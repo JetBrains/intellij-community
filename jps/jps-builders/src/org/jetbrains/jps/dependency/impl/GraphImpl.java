@@ -4,13 +4,14 @@ package org.jetbrains.jps.dependency.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.dependency.*;
+import org.jetbrains.jps.dependency.java.JvmNodeReferenceID;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+// this is a base implementation for shared functionality in both DependencyGraph and Delta
 abstract class GraphImpl implements Graph {
 
   private final BackDependencyIndex myDependencyIndex; // nodeId -> nodes, referencing the nodeId
@@ -22,11 +23,13 @@ abstract class GraphImpl implements Graph {
   protected GraphImpl(@NotNull MapletFactory cFactory) {
     myContainerFactory = cFactory;
     addIndex(myDependencyIndex = new NodeDependenciesIndex(cFactory));
-    myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map");
-    mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map");
+
+    // important: if multiple implementations of NodeSource are available, change to generic graph element externalizer
+    Externalizer<NodeSource> srcExternalizer = Externalizer.forGraphElement(FileSource::new);
+    myNodeToSourcesMap = cFactory.createSetMultiMaplet("node-sources-map", Externalizer.forGraphElement(JvmNodeReferenceID::new), srcExternalizer);
+    mySourceToNodesMap = cFactory.createSetMultiMaplet("source-nodes-map", srcExternalizer, Externalizer.forAnyGraphElement());
   }
 
-  // todo: ensure both dependency-graph and delta always have the same set of back-deps indices
   protected final void addIndex(BackDependencyIndex index) {
     myIndices.add(index);
   }
@@ -53,8 +56,7 @@ abstract class GraphImpl implements Graph {
 
   @Override
   public Iterable<NodeSource> getSources(@NotNull ReferenceID id) {
-    Iterable<NodeSource> nodeSources = myNodeToSourcesMap.get(id);
-    return nodeSources != null? nodeSources : Collections.emptyList();
+    return myNodeToSourcesMap.get(id);
   }
 
   @Override
@@ -69,8 +71,7 @@ abstract class GraphImpl implements Graph {
 
   @Override
   public Iterable<Node<?, ?>> getNodes(@NotNull NodeSource source) {
-    var nodes = mySourceToNodesMap.get(source);
-    return nodes != null? nodes : Collections.emptyList();
+    return mySourceToNodesMap.get(source);
   }
 
   public void close() throws IOException {

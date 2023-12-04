@@ -184,6 +184,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
                myScopeDescriptor.scopeEquals(myProjectScope);
       }
     });
+    result.add(new PreviewAction());
     result.add(new SearchEverywhereFiltersAction<>(filter, onChanged, statisticsCollector));
     return result;
   }

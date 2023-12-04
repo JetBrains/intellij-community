@@ -119,6 +119,11 @@ public class SLRUMap<K, V> {
     return set;
   }
 
+  /**
+   * 'clear' may be a bit misleading: this method indeed makes the cache empty, but all the current entries go
+   * through {@link #onDropFromCache(Object, Object)} first, quite important side effect to consider -- 'drain'
+   * would be a better name.
+   */
   public void clear() {
     try {
       if (!protectedQueue.isEmpty()) {

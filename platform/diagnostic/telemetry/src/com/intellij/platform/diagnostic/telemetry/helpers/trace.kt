@@ -16,34 +16,34 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 import java.util.function.Consumer
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
-inline fun <T> SpanBuilder.useWithScope(operation: (Span) -> T): T {
+inline fun <T> SpanBuilder.useWithScopeBlocking(operation: (Span) -> T): T {
   val span = startSpan()
   return span.makeCurrent().use {
     span.use(operation)
   }
 }
 
-suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext, crossinline operation: suspend CoroutineScope.(Span) -> T): T {
+suspend inline fun <T> SpanBuilder.useWithScope(context: CoroutineContext = EmptyCoroutineContext,
+                                                crossinline operation: suspend CoroutineScope.(Span) -> T): T {
   val span = startSpan()
   return withContext(Context.current().with(span).asContextElement() + context) {
-    span.use {
+    try {
       operation(span)
     }
-  }
-}
-
-suspend inline fun <T> SpanBuilder.useWithScope2(crossinline operation: suspend (Span) -> T): T {
-  val span = startSpan()
-  return withContext(Context.current().with(span).asContextElement()) {
-    span.use {
-      operation(span)
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      span.recordException(e)
+      span.setStatus(StatusCode.ERROR)
+      throw e
+    }
+    finally {
+      span.end()
     }
   }
-}
-
-fun runWithSpanSimple(tracer: IJTracer, spanName: String, operation: Runnable) {
-  runWithSpan(tracer, spanName) { _ -> operation.run() }
 }
 
 fun <T> computeWithSpanAttribute(tracer: IJTracer,
@@ -51,49 +51,46 @@ fun <T> computeWithSpanAttribute(tracer: IJTracer,
                                  attributeName: String,
                                  attributeValue: (T) -> String,
                                  operation: () -> T): T {
-  return computeWithSpan(tracer, spanName) { span ->
+  return tracer.spanBuilder(spanName).useWithScopeBlocking { span ->
     val result = operation.invoke()
     span.setAttribute(attributeName, attributeValue.invoke(result))
-    return@computeWithSpan result
+    result
+  }
+}
+
+fun <T> computeWithSpanAttributes(tracer: IJTracer,
+                                  spanName: String,
+                                  attributeGenerator: (T) -> Map<String, String>,
+                                  operation: () -> T): T {
+  return tracer.spanBuilder(spanName).useWithScopeBlocking { span ->
+    val result = operation.invoke()
+    attributeGenerator.invoke(result).forEach { (attributeName, attributeValue) ->
+      span.setAttribute(attributeName, attributeValue)
+    }
+    result
   }
 }
 
 inline fun <T> computeWithSpan(tracer: Tracer, spanName: String, operation: (Span) -> T): T {
-  return tracer.spanBuilder(spanName).useWithScope(operation)
-}
-
-inline fun runWithSpan(tracer: Tracer, spanName: String, operation: (Span) -> Unit) {
-  tracer.spanBuilder(spanName).useWithScope(operation)
+  return tracer.spanBuilder(spanName).useWithScopeBlocking(operation)
 }
 
 internal fun <T> computeWithSpanIgnoreThrows(tracer: Tracer,
                                              spanName: String,
                                              operation: ThrowableNotNullFunction<Span, T, out Throwable>): T {
-  return tracer.spanBuilder(spanName).useWithScope(operation::`fun`)
+  return tracer.spanBuilder(spanName).useWithScopeBlocking(operation::`fun`)
 }
 
 internal fun runWithSpanIgnoreThrows(tracer: Tracer, spanName: String, operation: ThrowableConsumer<Span, out Throwable>) {
-  tracer.spanBuilder(spanName).useWithScope(operation::consume)
+  tracer.spanBuilder(spanName).useWithScopeBlocking(operation::consume)
 }
 
 fun runWithSpan(tracer: Tracer, spanName: String, operation: Consumer<Span>) {
-  tracer.spanBuilder(spanName).useWithScope(operation::accept)
+  tracer.spanBuilder(spanName).useWithScopeBlocking(operation::accept)
 }
 
 inline fun <T> SpanBuilder.use(operation: (Span) -> T): T {
   return startSpan().use(operation)
-}
-
-inline fun Span.useWithScope(operation: () -> Unit) {
-  makeCurrent().use {
-    use { operation.invoke() }
-  }
-}
-
-fun Span.runSpanWithScope(operation: Runnable) {
-  makeCurrent().use {
-    use { operation.run() }
-  }
 }
 
 inline fun <T> Span.use(operation: (Span) -> T): T {

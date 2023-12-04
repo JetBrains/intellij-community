@@ -75,7 +75,7 @@
      name: "event name",
      origin: "vue@3.0.0 (vue)",
      complete: true,
-     description: "<p>Optional event name</p>",
+     description: "<p>Optional event name",
      priority: NORMAL,
      has-pattern: true,
      segments: [
@@ -124,7 +124,7 @@
       required: false,
      },
      complete: true,
-     description: "<p>Call <code>event.stopPropagation()</code>.…",
+     description: "<p>Call <code>event.stopPropagation()</code>.",
      priority: NORMAL,
      segments: [
       {
@@ -152,7 +152,7 @@
      matchedName: "html/modifiers/once",
      origin: "vue@3.0.0 (vue)",
      complete: true,
-     description: "<p>Trigger handler at most once.</p>",
+     description: "<p>Trigger handler at most once.",
      priority: NORMAL,
      segments: [
       {

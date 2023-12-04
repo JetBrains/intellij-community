@@ -1,20 +1,29 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefScrollbarsHelper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import java.awt.Color
 
 internal object PreviewLAFThemeStyles {
+  @Suppress("ConstPropertyName", "CssInvalidHtmlTagReference")
+  object Variables {
+    const val FontSize = "--default-font-size"
+  }
+
+  val defaultFontSize: Int
+    get() = service<MarkdownPreviewSettings>().state.fontSize
+
   /**
    * This method will generate stylesheet with colors and other attributes matching current LAF settings of the IDE.
    * Generated CSS will override base rules from the default.css, so the preview elements will have correct colors.
@@ -32,13 +41,17 @@ internal object PreviewLAFThemeStyles {
     val infoForeground = namedColor("Component.infoForeground", contrastedForeground).webRgba()
 
     val markdownFenceBackground = JBColor(Color(212, 222, 231, 255 / 4), Color(212, 222, 231, 25))
-    val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1)
+    val fontSize = JBCefApp.normalizeScaledSize(defaultFontSize)
     val backgroundColor = scheme.defaultBackground.webRgba()
     // language=CSS
     return """
+    :root {
+      ${Variables.FontSize}: ${fontSize}px;
+    }
+
     body {
         background-color: ${backgroundColor};
-        font-size: ${fontSize}px !important;
+        font-size: var(${Variables.FontSize}) !important;
     }
     
     body, p, blockquote, ul, ol, dl, table, pre, code, tr  {

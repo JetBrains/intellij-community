@@ -1,13 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("AppJavaExecutorUtil")
 @file:OptIn(ExperimentalCoroutinesApi::class)
-
 package com.intellij.util.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
@@ -16,7 +15,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Only for java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
+ * Only for Java clients and only if you cannot rewrite in Kotlin and use coroutines (as you should).
  */
 @Internal
 fun executeOnPooledIoThread(task: Runnable) {
@@ -27,10 +26,8 @@ fun executeOnPooledIoThread(task: Runnable) {
 }
 
 @Internal
-fun createSingleTaskApplicationPoolExecutor(name: String, coroutineScope: CoroutineScope): Executor {
-  return CoroutineDispatcherBackedExecutor(coroutineScope = coroutineScope,
-                                           context = Dispatchers.IO.limitedParallelism(1) + CoroutineName(name))
-}
+fun createSingleTaskApplicationPoolExecutor(name: String, coroutineScope: CoroutineScope): Executor =
+  CoroutineDispatcherBackedExecutor(coroutineScope, context = Dispatchers.IO.limitedParallelism(1) + CoroutineName(name))
 
 @Internal
 class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, private val context: CoroutineContext) : Executor {
@@ -40,12 +37,11 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, private 
 
   override fun execute(it: Runnable) {
     childScope.launch(context) {
-      // blockingContext not used by intention - low-level tasks are expected in a such executors
+      // `blockingContext` is not used by intention - low-level tasks are expected in such executors
       try {
         it.run()
       }
-      catch (_: ProcessCanceledException) {
-      }
+      catch (_: ProcessCanceledException) { }
     }
   }
 
@@ -59,8 +55,7 @@ class CoroutineDispatcherBackedExecutor(coroutineScope: CoroutineScope, private 
           if (jobs.isEmpty()) {
             break
           }
-
-          jobs.toList().joinAll()
+          jobs.joinAll()
         }
       }
     }

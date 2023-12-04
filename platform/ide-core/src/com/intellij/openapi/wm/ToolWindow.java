@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Tool windows expose UI for specific functionality, like "Project" or "Favorites".
@@ -38,7 +40,7 @@ public interface ToolWindow extends BusyObject {
 
   /**
    * @param runnable A command to execute right after the window gets activated. The call is asynchronous since it may require animation.
-   * @throws IllegalStateException if tool window isn't installed.
+   * @throws IllegalStateException if the tool window isn't installed.
    */
   default void activate(@Nullable Runnable runnable) {
     activate(runnable, true, true);
@@ -148,10 +150,16 @@ public interface ToolWindow extends BusyObject {
    */
   @NlsContexts.TabTitle @NotNull String getStripeTitle();
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  @NotNull Supplier<@NlsContexts.TabTitle String> getStripeTitleProvider();
+
   /**
    * Sets new window stripe button text.
    */
   void setStripeTitle(@NlsContexts.TabTitle @NotNull String title);
+
+  void setStripeTitleProvider(@NotNull Supplier<@NlsContexts.TabTitle @NotNull String> title);
 
   /**
    * @return Whether the window is available or not.

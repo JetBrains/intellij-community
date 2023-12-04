@@ -5,19 +5,18 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import junit.framework.TestCase
-import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.builtins.DefaultBuiltIns
+import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.ui.KotlinMethodNode
+import org.jetbrains.kotlin.idea.intentions.AddFullQualifierIntention
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -25,48 +24,25 @@ import org.junit.runner.RunWith
 
 @RunWith(JUnit38ClassRunner::class)
 class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo, KotlinParameterInfo, KotlinTypeInfo, DescriptorVisibility, KotlinMutableMethodDescriptor>() {
+    protected  fun findTargetDescriptor(handler: KotlinChangeSignatureHandler): DeclarationDescriptor {
+        val element = findTargetElement() as KtElement
 
-    override fun findCallers(method: PsiMethod): LinkedHashSet<PsiMethod> {
-        val root = KotlinMethodNode(method, HashSet(), project) { }
-        return (0 until root.childCount).flatMapTo(LinkedHashSet()) {
-            (root.getChildAt(it) as KotlinMethodNode).member.toLightMethods()
-        }
+        val descriptor = handler.findDescriptor(element)
+        handler.checkDescriptor(descriptor, project, editor)
+        val callableDescriptor = descriptor.sure { "Target descriptor is null" }
+        return callableDescriptor
+    }
+
+    override fun doTestInvokePosition(code: String) {
+        doTestTargetElement<KtCallExpression>(code)
+    }
+
+    override fun addFullQualifier(fragment: KtExpressionCodeFragment) {
+        AddFullQualifierIntention.Holder.addQualifiersRecursively(fragment)
     }
 
     override fun doRefactoring(configure: KotlinChangeInfo.() -> Unit) {
         KotlinChangeSignatureProcessor(project, createChangeInfo().apply { configure() }, "Change Signature").run()
-    }
-
-    override fun doTestWithDescriptorModification(configureFiles: Boolean, modificator: KotlinMutableMethodDescriptor.() -> Unit) {
-        if (configureFiles) {
-            configureFiles()
-        }
-
-        val context = createChangeSignatureContext()
-        val callableDescriptor = context.callableDescriptor
-        val kotlinChangeSignature = KotlinChangeSignature(
-                project,
-                editor,
-                callableDescriptor,
-                object : KotlinChangeSignatureConfiguration {
-                    override fun configure(originalDescriptor: KotlinMethodDescriptor): KotlinMethodDescriptor {
-                        return originalDescriptor.modify(modificator)
-                    }
-                },
-                context.context,
-                null,
-        )
-
-        val declarations = callableDescriptor.safeAs<CallableMemberDescriptor>()
-                                   ?.getDeepestSuperDeclarations()
-                           ?: listOf(callableDescriptor)
-
-        val adjustedDescriptor = kotlinChangeSignature.adjustDescriptor(declarations)!!
-        val processor = kotlinChangeSignature.createSilentRefactoringProcessor(adjustedDescriptor) as KotlinChangeSignatureProcessor
-        processor.changeInfo.also { it.checkUsedParameters = true }
-        processor.run()
-
-        compareEditorsWithExpectedData()
     }
 
     private class ChangeSignatureContext(
@@ -75,18 +51,13 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
     )
 
     private fun createChangeSignatureContext(): ChangeSignatureContext {
-        val element = findTargetElement().assertedCast<KtElement> { "Target element is null" }
         val context = file
             .findElementAt(editor.caretModel.offset)
             ?.getNonStrictParentOfType<KtElement>()
             .sure { "Context element is null" }
 
-        val bindingContext = element.analyze(BodyResolveMode.FULL)
-        val callableDescriptor = KotlinChangeSignatureHandler
-            .findDescriptor(element, project, editor, bindingContext)
-            .sure { "Target descriptor is null" }
-
-        return ChangeSignatureContext(callableDescriptor, context)
+        val handler = KotlinChangeSignatureHandler()
+        return ChangeSignatureContext(findTargetDescriptor(handler) as CallableDescriptor, context)
     }
 
     override fun createChangeInfo(): KotlinChangeInfo {
@@ -100,44 +71,6 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
         )!!
     }
 
-    override fun KotlinChangeInfo.createKotlinStringParameter(name: String, defaultValueForCall: KtExpression?) =
-            createKotlinParameter(name, "String", defaultValueForCall)
-
-    override fun KotlinChangeInfo.createKotlinIntParameter(
-        name: String,
-        defaultValueForCall: KtExpression?,
-        defaultValueAsDefaultParameter: Boolean,
-    ) = createKotlinParameter(name, "Int", defaultValueForCall, defaultValueAsDefaultParameter)
-
-    override fun KotlinMutableMethodDescriptor.createNewIntParameter(
-      defaultValueForCall: KtExpression?,
-      withDefaultValue: Boolean,
-    ): KotlinParameterInfo = KotlinParameterInfo(
-      name = "i",
-      originalTypeInfo = createParameterTypeInfo("Int"),
-      callableDescriptor = baseDescriptor,
-      defaultValueForCall = defaultValueForCall,
-    ).apply {
-        if (withDefaultValue) {
-            defaultValueAsDefaultParameter = true
-            this.defaultValueForCall = defaultValueForCall ?: kotlinDefaultIntValue
-        }
-    }
-
-    private fun KotlinMutableMethodDescriptor.createNewParameter(
-      name: String = "i",
-      type: KotlinTypeInfo = createParameterTypeInfo("Int"),
-      callableDescriptor: CallableDescriptor = baseDescriptor,
-      defaultValueForCall: KtExpression? = null,
-      defaultValueAsDefaultParameter: Boolean = false,
-    ): KotlinParameterInfo = KotlinParameterInfo(
-      callableDescriptor = callableDescriptor,
-      name = name,
-      originalTypeInfo = type,
-      defaultValueForCall = defaultValueForCall,
-      defaultValueAsDefaultParameter = defaultValueAsDefaultParameter,
-    )
-
     override fun KotlinChangeInfo.createKotlinParameter(name: String,
                                                originalType: String?,
                                                defaultValueForCall: KtExpression?,
@@ -146,24 +79,95 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
         return KotlinParameterInfo(
                 callableDescriptor = originalBaseFunctionDescriptor,
                 name = name,
-                originalTypeInfo = createParameterTypeInfo(originalType),
+                originalTypeInfo = createParameterTypeInfo(originalType, method),
                 defaultValueForCall = defaultValueForCall,
                 defaultValueAsDefaultParameter = defaultValueAsDefaultParameter
         ).apply {
             if (currentType != null) {
-                currentTypeInfo = createParameterTypeInfo(currentType)
+                currentTypeInfo = createParameterTypeInfo(currentType, method)
             }
         }
     }
 
-    override fun createParameterTypeInfo(type: String?): KotlinTypeInfo {
+    override fun createParameterTypeInfo(type: String?, ktElement: PsiElement): KotlinTypeInfo {
         return KotlinTypeInfo(false, null, type)
     }
 
-    // --------------------------------- Tests ---------------------------------
+    fun testJavaMethodJvmStaticKotlinUsages() = doJavaTest {
+        //kotlin method from java: wrong test data
+        val first = newParameters[1]
+        newParameters[1] = newParameters[0]
+        newParameters[0] = first
+    }
 
+    // ---------- propagation ----------------------------
+    fun testPropagateWithParameterDuplication() = doTestConflict {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
 
+        primaryPropagationTargets = listOf(
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
+        )
+    }
 
+    fun testPropagateWithVariableDuplication() = doTestConflict {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        primaryPropagationTargets = listOf(
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
+        )
+    }
+
+    fun testPropagateWithThisQualificationInClassMember() = doTest {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
+        val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
+        primaryPropagationTargets = listOf(functionBar)
+    }
+
+    fun testPropagateWithThisQualificationInExtension() = doTest {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        primaryPropagationTargets = listOf(
+            KotlinTopLevelFunctionFqnNameIndex.get("bar", project, project.allScope()).first()
+        )
+    }
+
+    fun testPrimaryConstructorParameterPropagation() = doTestAndIgnoreConflicts {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        primaryPropagationTargets = findCallers(method.getRepresentativeLightMethod()!!)
+    }
+
+    fun testSecondaryConstructorParameterPropagation() = doTestAndIgnoreConflicts {
+        val defaultValueForCall = KtPsiFactory(project).createExpression("1")
+        addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
+
+        primaryPropagationTargets = findCallers(method.getRepresentativeLightMethod()!!)
+    }
+
+    fun testParameterPropagation() = doTestAndIgnoreConflicts {
+        val psiFactory = KtPsiFactory(project)
+
+        val defaultValueForCall1 = psiFactory.createExpression("1")
+        val newParameter1 = createKotlinParameter("n", null, defaultValueForCall1, currentType = "Int")
+        addParameter(newParameter1)
+
+        val defaultValueForCall2 = psiFactory.createExpression("\"abc\"")
+        val newParameter2 = createKotlinParameter("s", null, defaultValueForCall2, currentType = "String")
+        addParameter(newParameter2)
+
+        val classA = KotlinFullClassNameIndex.get("A", project, project.allScope()).first()
+        val functionBar = classA.declarations.first { it is KtNamedFunction && it.name == "bar" }
+        val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
+
+        primaryPropagationTargets = listOf(functionBar, functionTest)
+    }
 }
 
 fun createChangeInfo(

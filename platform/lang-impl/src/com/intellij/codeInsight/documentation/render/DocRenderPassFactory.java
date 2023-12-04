@@ -55,7 +55,7 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
   }
 
   private static final class DocRenderPass extends EditorBoundHighlightingPass implements DumbAware {
-    private Items items;
+    private volatile Items items;
 
     DocRenderPass(@NotNull Editor editor, @NotNull PsiFile psiFile) {
       super(editor, psiFile, false);

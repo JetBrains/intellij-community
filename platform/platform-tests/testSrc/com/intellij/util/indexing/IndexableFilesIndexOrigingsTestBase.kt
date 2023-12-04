@@ -15,6 +15,9 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertSize
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -24,7 +27,8 @@ import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
-import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
+import com.intellij.workspaceModel.ide.getInstance
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -66,7 +70,7 @@ abstract class IndexableFilesIndexOriginsTestBase {
   }
 
   protected fun createModuleContentOrigin(fileSpec: ContentSpec, module: com.intellij.openapi.module.Module): IndexableSetOrigin =
-    IndexableEntityProviderMethods.createIterators(module, IndexingRootHolder.fromFile(fileSpec.file)).first().origin
+    IndexableEntityProviderMethods.createIterators(module, IndexingUrlRootHolder.fromUrl(fileSpec.virtualFileUrl)).first().origin
 
   protected fun createLibraryOrigin(library: Library): IndexableSetOrigin =
     LibraryIndexableFilesIteratorImpl.createIteratorList(library).also { assertSize(1, it) }.first().origin
@@ -159,5 +163,9 @@ abstract class IndexableFilesIndexOriginsTestBase {
     }
   }
 
-  protected val ContentSpec.file: VirtualFile get() = resolveVirtualFile()
+  protected val ContentSpec.file: VirtualFile
+    get() = resolveVirtualFile()
+
+  private val ContentSpec.virtualFileUrl: VirtualFileUrl
+    get() = file.toVirtualFileUrl(VirtualFileUrlManager.getInstance(project))
 }

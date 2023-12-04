@@ -58,13 +58,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testParenthesizedPlusString() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 String test = (((1 + 2) - (3*4))) + <caret>" = number = "+(1+2);
+               void test(int i) {
+                 String test = (((1 + 2) - (3*i))) + <caret>" = number = "+(1+2);
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 String test = STR."\\{(1 + 2) - (3 * 4)} = number = \\{1 + 2}";
+               void test(int i) {
+                 String test = STR."\\{(1 + 2) - (3 * i)} = number = \\{1 + 2}";
                }
              }""");
   }
@@ -72,13 +72,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testDivide() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 String test = 7/3 + <caret>" = number";
+               void test(int i) {
+                 String test = i/3 + <caret>" = number";
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 String test = STR."\\{7 / 3} = number";
+               void test(int i) {
+                 String test = STR."\\{i / 3} = number";
                }
              }""");
   }
@@ -93,10 +93,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
                StringTemplateMigration get(String data) {
                  return this;
                }
-             }""", """
+             }""",
+           """
              class StringTemplateMigration {
                void test() {
-                 String test = STR."fun() = \\{get("foo")}\\nfun() = \\{this.get("bar")}";
+                 String test = STR.""\"
+             fun() = \\{get("foo")}
+             fun() = \\{this.get("bar")}""\";
                }
                StringTemplateMigration get(String data) {
                  return this;
@@ -114,10 +117,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
                static int sum(int a, int b) {
                  return a + b;
                }
-             }""", """
+             }""",
+           """
              class StringTemplateMigration {
                void test() {
-                 String test = STR."fun() = \\{StringTemplateMigration.sum(7, 8)}\\nfun() = \\{sum(9, 10)}";
+                 String test = STR.""\"
+             fun() = \\{StringTemplateMigration.sum(7, 8)}
+             fun() = \\{sum(9, 10)}""\";
                }
                static int sum(int a, int b) {
                  return a + b;
@@ -166,13 +172,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testTernaryOperator() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 System.out.println((true ? "a" : "b") + <caret>"c");
+               void test(String b) {
+                 System.out.println((true ? "a" : b) + <caret>"c");
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 System.out.println(STR."\\{true ? "a" : "b"}c");
+               void test(String b) {
+                 System.out.println(STR."\\{true ? "a" : b}c");
                }
              }""");
   }
@@ -180,13 +186,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testNumberTypesBeforeString() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 System.out.println(1+0.2f+1.1+1_000_000+7l+0x0f+012+0b11 + <caret>" = number");
+               void test(int i) {
+                 System.out.println(i+0.2f+1.1+1_000_000+7l+0x0f+012+0b11 + <caret>" = number");
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 System.out.println(STR."\\{1 + 0.2f + 1.1 + 1_000_000 + 7l + 0x0f + 012 + 0b11} = number");
+               void test(int i) {
+                 System.out.println(STR."\\{i + 0.2f + 1.1 + 1_000_000 + 7l + 0x0f + 012 + 0b11} = number");
                }
              }""");
   }
@@ -194,13 +200,13 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
   public void testNumberTypesAfterString() {
     doTest("""
              class StringTemplateMigration {
-               void test() {
-                 System.out.println("number = "<caret> + 1+1.1+2+7+0.2f+1_000_000+7l+0x0f+012+0b11+1.2+1.3+1.4+1.5);
+               void test(String s) {
+                 System.out.println(s + " = "<caret> + 1+1.1+2+7+0.2f+1_000_000+7l+0x0f+012+0b11+1.2+1.3+1.4+1.5);
                }
              }""", """
              class StringTemplateMigration {
-               void test() {
-                 System.out.println(STR."number = 11.127\\{0.2f}\\{1_000_000}\\{7l}\\{0x0f}\\{012}\\{0b11}1.21.31.41.5");
+               void test(String s) {
+                 System.out.println(STR."\\{s} = 11.127\\{0.2f}\\{1_000_000}\\{7l}\\{0x0f}\\{012}\\{0b11}1.21.31.41.5");
                }
              }""");
   }
@@ -259,13 +265,45 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
                  int quote = "\\"";
                  System.out.println(quote <caret> + "\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9" + "\\u00A9" + quote);
                }
-             }""", """
+             }""",
+           """
              class StringTemplateMigration {
                void test() {
                  int quote = "\\"";
-                 System.out.println(STR."\\{quote}\\n \\\\ \\" \\t \\b \\r \\f \\' \\u00A9\\u00A9\\{quote}");
+                 System.out.println(STR.""\"
+             \\{quote}
+              \\\\ " \\t \\b \\r \\f ' ©©\\{quote}""\");
                }
              }""");
+  }
+
+  public void testAnnotationParameterIgnored() {
+    assertNoHighlightNoQuickFix("""
+      interface X {
+        String s = "one";
+        
+        @SuppressWarnings("x" +<caret> s + "y") void x();
+      }""");
+  }
+
+  public void testSwitchCaseLabelIgnored() {
+    assertNoHighlightNoQuickFix("""
+      class X {
+        static void x(String s) {
+          switch (s) {
+            case "asdf" <caret>+ 1:
+              System.out.println(s);
+          }
+        }
+      }""");
+  }
+
+  public void testAnnotationMethodIgnored() {
+    assertNoHighlightNoQuickFix("""
+      @interface X {
+        String x() default "number " <caret>+ 1;
+      }
+      """);
   }
 
   public void testNullValue() {
@@ -282,6 +320,83 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
              }""");
   }
 
+  public void testTextBlocks() {
+    doTest("""
+             class TextBlock {
+               String name = "Java21";
+               
+               String message = ""\"
+                   Hello ""\" + <caret>name + ""\"
+                   ! Text block "example".
+                   ""\";
+             }
+             """,
+           """
+             class TextBlock {
+               String name = "Java21";
+                        
+               String message = STR.""\"
+             Hello\\{name}! Text block "example".
+             ""\";
+             }
+             """);
+  }
+
+  public void testFormatting() {
+    doTest("""
+             class StringTemplateMigration {
+               void test() {
+                 int requestCode = 200;
+                 
+                 String helloJSON =
+                 "{\\n" +
+                 "  \\"cod\\": \\"" + <caret>requestCode + "\\",\\n" +
+                 "  \\"message\\": 0,\\n" +
+                 "  \\"cnt\\": 40,\\n" +
+                 "  \\"city\\": {\\n" +
+                 "    \\"id\\": 524901,\\n" +
+                 "    \\"name\\": \\"ABC\\",\\n" +
+                 "    \\"coord\\": {\\n" +
+                 "      \\"lat\\": 55.7522,\\n" +
+                 "      \\"lon\\": 37.6156\\n" +
+                 "    },\\n" +
+                 "    \\"country\\": \\"XY\\",\\n" +
+                 "    \\"population\\": 0,\\n" +
+                 "    \\"timezone\\": 10800,\\n" +
+                 "    \\"sunrise\\": 1688431913,\\n" +
+                 "    \\"sunset\\": 1688494529\\n" +
+                 "  }\\n" +
+                 "}";
+               }
+             }""", """
+             class StringTemplateMigration {
+               void test() {
+                 int requestCode = 200;
+             
+                 String helloJSON =
+                         STR.""\"
+             {
+               "cod": \\"\\{requestCode}",
+               "message": 0,
+               "cnt": 40,
+               "city": {
+                 "id": 524901,
+                 "name": "ABC",
+                 "coord": {
+                   "lat": 55.7522,
+                   "lon": 37.6156
+                 },
+                 "country": "XY",
+                 "population": 0,
+                 "timezone": 10800,
+                 "sunrise": 1688431913,
+                 "sunset": 1688494529
+               }
+             }""\";
+               }
+             }""");
+  }
+
   private void doTest(@NotNull @Language("Java") String before, @NotNull @Language("Java") String after) {
     myFixture.configureByText("Template.java", before);
 
@@ -289,6 +404,15 @@ public class StringTemplateMigrationInspectionTest extends LightJavaCodeInsightF
     myFixture.launchAction(myFixture.findSingleIntention("Replace with string template"));
 
     myFixture.checkResult(after);
+  }
+
+  private void assertNoHighlightNoQuickFix(@NotNull @Language("Java") String code) {
+    myFixture.configureByText("Template.java", code);
+
+    myFixture.enableInspections(new StringTemplateMigrationInspection());
+    myFixture.testHighlighting(true, true, true);
+    assertEmpty("Quickfix is available but should not",
+                myFixture.filterAvailableIntentions("Replace with string template"));
   }
 
   @Override

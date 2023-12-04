@@ -27,11 +27,11 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.application
-import com.intellij.util.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.ui.DeprecationStripePanel

@@ -27,20 +27,12 @@ class UastKotlinPsiSuspendContinuationParameter private constructor(
 ) {
     private val annotationsPart = UastLazyPart<Array<PsiAnnotation>>()
 
-    private val _annotations: Array<PsiAnnotation>
+    override val _annotations: Array<PsiAnnotation>
         get() = annotationsPart.getOrBuild {
             arrayOf(
                 UastFakeLightNullabilityAnnotation(KtTypeNullability.NON_NULLABLE, this)
             )
         }
-
-    override fun getAnnotations(): Array<PsiAnnotation> {
-        return _annotations
-    }
-
-    override fun hasAnnotation(fqn: String): Boolean {
-        return _annotations.find { it.hasQualifiedName(fqn) } != null
-    }
 
     companion object {
         fun create(

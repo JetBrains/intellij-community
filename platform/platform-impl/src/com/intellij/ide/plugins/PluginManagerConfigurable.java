@@ -10,7 +10,9 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.certificates.PluginCertificateManager;
 import com.intellij.ide.plugins.enums.PluginsGroupType;
+import com.intellij.ide.plugins.enums.SortBy;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -78,6 +80,8 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.intellij.ide.plugins.newui.PluginsViewCustomizerKt.getPluginsViewCustomizer;
+
 public final class PluginManagerConfigurable
   implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
 
@@ -111,6 +115,7 @@ public final class PluginManagerConfigurable
     new PluginsGroup(IdeBundle.message("plugins.configurable.bundled.updates"), PluginsGroupType.BUNDLED_UPDATE);
 
   private Runnable myMarketplaceRunnable;
+  private final MarketplaceRequests myMarketplaceRequests = MarketplaceRequests.getInstance();
 
   private SearchResultPanel myMarketplaceSearchPanel;
   private SearchResultPanel myInstalledSearchPanel;
@@ -250,6 +255,8 @@ public final class PluginManagerConfigurable
       myLaterSearchQuery = null;
       myForceShowInstalledTabForTag = false;
     }
+
+    getPluginsViewCustomizer().processConfigurable(this);
 
     return myCardPanel;
   }
@@ -394,6 +401,21 @@ public final class PluginManagerConfigurable
               if (project != null) {
                 addSuggestedGroup(groups, project, customRepositoriesMap);
               }
+
+              PluginsViewCustomizer.PluginsGroupDescriptor internalPluginsGroupDescriptor =
+                getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
+              if (internalPluginsGroupDescriptor != null) {
+                List<IdeaPluginDescriptor> customPlugins = internalPluginsGroupDescriptor.getPlugins();
+                addGroup(
+                  groups,
+                  internalPluginsGroupDescriptor.getName(),
+                  PluginsGroupType.INTERNAL,
+                  SearchWords.INTERNAL.getValue(),
+                  customPlugins,
+                  group -> customPlugins.size() >= ITEMS_PER_GROUP
+                );
+              }
+
               addGroupViaLightDescriptor(
                 groups,
                 IdeBundle.message("plugins.configurable.staff.picks"),
@@ -511,6 +533,9 @@ public final class PluginManagerConfigurable
             }
             attributes.add(SearchWords.STAFF_PICKS.getValue());
             attributes.add(SearchWords.SUGGESTED.getValue());
+            if (getPluginsViewCustomizer() != NoOpPluginsViewCustomizer.INSTANCE) {
+              attributes.add(SearchWords.INTERNAL.getValue());
+            }
             return attributes;
           }
 
@@ -530,7 +555,7 @@ public final class PluginManagerConfigurable
                   }
                   try {
                     ProcessIOExecutorService.INSTANCE.submit(() -> {
-                      allTags.addAll(MarketplaceRequests.getInstance().getAllPluginsTags());
+                      allTags.addAll(myMarketplaceRequests.getMarketplaceTagsSupplier().get());
                     }).get();
                   }
                   catch (InterruptedException | ExecutionException e) {
@@ -540,13 +565,16 @@ public final class PluginManagerConfigurable
                 }
                 yield myTagsSorted;
               }
-              case SORT_BY -> Arrays.asList("downloads", "name", "rating", "updated");
+              case SORT_BY -> ContainerUtil.map(
+                Arrays.asList(SortBy.DOWNLOADS, SortBy.NAME, SortBy.RATING, SortBy.UPDATE_DATE),
+                sort -> sort.getQuery()
+              );
               case VENDOR -> {
                 if (myVendorsSorted == null || myVendorsSorted.isEmpty()) {
                   LinkedHashSet<String> vendors = new LinkedHashSet<>();
                   try {
                     ProcessIOExecutorService.INSTANCE.submit(() -> {
-                      vendors.addAll(MarketplaceRequests.getInstance().getAllPluginsVendors());
+                      vendors.addAll(myMarketplaceRequests.getMarketplaceVendorsSupplier().get());
                     }).get();
                   }
                   catch (InterruptedException | ExecutionException e) {
@@ -557,7 +585,7 @@ public final class PluginManagerConfigurable
                 yield myVendorsSorted;
               }
               case REPOSITORY -> UpdateSettings.getInstance().getPluginHosts();
-              case SUGGESTED, STAFF_PICKS -> null;
+              case INTERNAL, SUGGESTED, STAFF_PICKS -> null;
             };
           }
 
@@ -587,7 +615,7 @@ public final class PluginManagerConfigurable
 
         myMarketplaceSortByGroup = new DefaultActionGroup();
 
-        for (SortBySearchOption option : SortBySearchOption.values()) {
+        for (SortBy option : SortBy.getEntries()) {
           myMarketplaceSortByGroup.addAction(new MarketplaceSortByAction(option));
         }
 
@@ -628,7 +656,7 @@ public final class PluginManagerConfigurable
             return getIcon().getIconHeight();
           }
 
-          private @NotNull Icon getIcon() {
+          private static @NotNull Icon getIcon() {
             return AllIcons.General.ButtonDropTriangle;
           }
         }); // TODO: icon
@@ -661,14 +689,14 @@ public final class PluginManagerConfigurable
             addAction = updateAction;
           }
           else {
-            if (updateAction.myOption == SortBySearchOption.Relevance) {
+            if (updateAction.myOption == SortBy.RELEVANCE) {
               updateAction.myState = true;
               return;
             }
 
             for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
               MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
-              if (sortByAction.myOption == SortBySearchOption.Relevance) {
+              if (sortByAction.myOption == SortBy.RELEVANCE) {
                 sortByAction.myState = true;
                 break;
               }
@@ -678,7 +706,7 @@ public final class PluginManagerConfigurable
           }
 
           List<String> queries = new ArrayList<>();
-          new SearchQueryParser.Marketplace(mySearchTextField.getText()) {
+          new SearchQueryParser.Marketplace(mySearchTextField.getText()) { // FIXME: it's unused - why hasn't it been removed?
             @Override
             protected void addToSearchQuery(@NotNull String query) {
               queries.add(query);
@@ -732,19 +760,36 @@ public final class PluginManagerConfigurable
             @Override
             protected void handleQuery(@NotNull String query, @NotNull PluginsGroup result) {
               try {
+                SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
+
+                if (parser.internal) {
+                  PluginsViewCustomizer.PluginsGroupDescriptor groupDescriptor =
+                    getPluginsViewCustomizer().getInternalPluginsGroupDescriptor();
+                  if (groupDescriptor != null) {
+                    if (parser.searchQuery == null) {
+                      result.descriptors.addAll(groupDescriptor.getPlugins());
+                    }
+                    else {
+                      for (IdeaPluginDescriptor pluginDescriptor : groupDescriptor.getPlugins()) {
+                        if (StringUtil.containsIgnoreCase(pluginDescriptor.getName(), parser.searchQuery)) {
+                          result.descriptors.add(pluginDescriptor);
+                        }
+                      }
+                    }
+                    ContainerUtil.removeDuplicates(result.descriptors);
+                    result.sortByName();
+                    return;
+                  }
+                }
+
                 Map<String, List<PluginNode>> customRepositoriesMap =
                   CustomPluginRepositoryService.getInstance().getCustomRepositoryPluginMap();
 
-                SearchQueryParser.Marketplace parser = new SearchQueryParser.Marketplace(query);
 
-                if (parser.suggested) {
-                  if (project != null) {
-                    result.descriptors.addAll(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
-                  }
-                  return;
+                if (parser.suggested && project != null) {
+                  result.descriptors.addAll(PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customRepositoriesMap));
                 }
-
-                if (!parser.repositories.isEmpty()) {
+                else if (!parser.repositories.isEmpty()) {
                   for (String repository : parser.repositories) {
                     List<PluginNode> descriptors = customRepositoriesMap.get(repository);
                     if (descriptors == null) {
@@ -763,50 +808,52 @@ public final class PluginManagerConfigurable
                   }
                   ContainerUtil.removeDuplicates(result.descriptors);
                   result.sortByName();
-                  return;
-                }
+                } else {
+                  List<PluginNode> pluginsFromMarketplace =
+                    myMarketplaceRequests.searchPlugins(parser.getUrlQuery(), 10000, true);
+                  // compare plugin versions between marketplace & custom repositories
+                  List<PluginNode> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
+                  Collection<PluginNode> plugins = RepositoryHelper.mergePluginsFromRepositories(pluginsFromMarketplace,
+                                                                                                 customPlugins,
+                                                                                                 false);
+                  result.descriptors.addAll(0, plugins);
 
-                List<PluginNode> pluginsFromMarketplace = MarketplaceRequests.getInstance().searchPlugins(parser.getUrlQuery(), 10000, true);
-                // compare plugin versions between marketplace & custom repositories
-                List<PluginNode> customPlugins = ContainerUtil.flatten(customRepositoriesMap.values());
-                Collection<PluginNode> plugins = RepositoryHelper.mergePluginsFromRepositories(pluginsFromMarketplace,
-                                                                                               customPlugins,
-                                                                                               false);
-                result.descriptors.addAll(0, plugins);
+                  if (parser.searchQuery != null) {
+                    List<PluginNode> descriptors = ContainerUtil.filter(customPlugins,
+                                                                        descriptor -> StringUtil.containsIgnoreCase(descriptor.getName(),
+                                                                                                                    parser.searchQuery));
+                    result.descriptors.addAll(0, descriptors);
+                  }
 
-                if (parser.searchQuery != null) {
-                  List<PluginNode> descriptors = ContainerUtil.filter(customPlugins,
-                                                                      descriptor -> StringUtil.containsIgnoreCase(descriptor.getName(),
-                                                                                                                  parser.searchQuery));
-                  result.descriptors.addAll(0, descriptors);
-                }
+                  ContainerUtil.removeDuplicates(result.descriptors);
 
-                ContainerUtil.removeDuplicates(result.descriptors);
+                  if (!result.descriptors.isEmpty()) {
+                    String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
 
-                if (!result.descriptors.isEmpty()) {
-                  String title = IdeBundle.message("plugin.manager.action.label.sort.by.1");
+                    for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
+                      MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
+                      sortByAction.setState(parser);
+                      if (sortByAction.myState) {
+                        title = IdeBundle.message("plugin.manager.action.label.sort.by",
+                                                  sortByAction.myOption.getPresentableNameSupplier().get());
+                      }
+                    }
 
-                  for (AnAction action : myMarketplaceSortByGroup.getChildren(null)) {
-                    MarketplaceSortByAction sortByAction = (MarketplaceSortByAction)action;
-                    sortByAction.setState(parser);
-                    if (sortByAction.myState) {
-                      title = IdeBundle.message("plugin.manager.action.label.sort.by",
-                                                sortByAction.myOption.myPresentableNameSupplier.get());
+                    myMarketplaceSortByAction.setText(title);
+                    result.addRightAction(myMarketplaceSortByAction);
+
+
+                    Collection<IdeaPluginDescriptor> updates = PluginUpdatesService.getUpdates();
+                    if (!ContainerUtil.isEmpty(updates)) {
+                      myPostFillGroupCallback = () -> {
+                        applyUpdates(myPanel, updates);
+                        selectionListener.accept(myMarketplacePanel);
+                      };
                     }
                   }
-
-                  myMarketplaceSortByAction.setText(title);
-                  result.addRightAction(myMarketplaceSortByAction);
-
-
-                  Collection<IdeaPluginDescriptor> updates = PluginUpdatesService.getUpdates();
-                  if (!ContainerUtil.isEmpty(updates)) {
-                    myPostFillGroupCallback = () -> {
-                      applyUpdates(myPanel, updates);
-                      selectionListener.accept(myMarketplacePanel);
-                    };
-                  }
                 }
+
+                PluginManagerUsageCollector.performMarketplaceSearch(ProjectUtil.getActiveProject(), parser, result.descriptors);
               }
               catch (IOException e) {
                 LOG.info(e);
@@ -821,6 +868,11 @@ public final class PluginManagerConfigurable
           };
 
         return myMarketplaceSearchPanel;
+      }
+
+      @Override
+      protected void onSearchReset() {
+        PluginManagerUsageCollector.searchReset();
       }
     };
   }
@@ -979,6 +1031,11 @@ public final class PluginManagerConfigurable
           }
         }
         myPluginModel.setInvalidFixCallback(null);
+      }
+
+      @Override
+      protected void onSearchReset() {
+        PluginManagerUsageCollector.searchReset();
       }
 
       @Override
@@ -1149,6 +1206,7 @@ public final class PluginManagerConfigurable
             }
 
             result.descriptors.addAll(descriptors);
+            PluginManagerUsageCollector.performInstalledTabSearch(ProjectUtil.getActiveProject(), parser, result.descriptors);
 
             if (!result.descriptors.isEmpty()) {
               if (parser.invalid) {
@@ -1226,6 +1284,11 @@ public final class PluginManagerConfigurable
     String groupName = IdeBundle.message("plugins.configurable.suggested");
     LOG.info("Marketplace tab: '" + groupName + "' group load started");
     List<IdeaPluginDescriptor> plugins = PluginsAdvertiserStartupActivityKt.findSuggestedPlugins(project, customMap);
+
+    for (IdeaPluginDescriptor plugin : plugins) {
+      FUSEventSource.PLUGINS_SUGGESTED_GROUP.logPluginSuggested(plugin.getPluginId());
+    }
+
     addGroup(groups, groupName, PluginsGroupType.SUGGESTED, "", plugins, group -> false);
   }
 
@@ -1506,6 +1569,15 @@ public final class PluginManagerConfigurable
   static void shutdownOrRestartAppAfterInstall(@NotNull @NlsContexts.DialogTitle String title,
                                                @NotNull Function<? super String, @Nls String> message) {
     if (showRestartDialog(title, message) == Messages.YES) {
+      // TODO this function should
+      //  - schedule restart in invokeLater with ModalityState.nonModal();
+      //  - close settings dialog.
+      //  What happens:
+      //  - the settings dialog should be displayed in a service coroutine.
+      //  - restart awaits completion of all service coroutines.
+      //  - calling restart synchronously from this function prevents completion of the service coroutine.
+      //  => deadlock IDEA-335883.
+      //  IDEA-335883 is currently fixed by showing the dialog outside of the container scope.
       ApplicationManagerEx.getApplicationEx().restart(true);
     }
   }
@@ -1578,25 +1650,13 @@ public final class PluginManagerConfigurable
                                                     });
   }
 
-  private enum SortBySearchOption {
-    Downloads(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Downloads")),
-    Name(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Name")),
-    Rating(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Rating")),
-    Relevance(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Relevance")),
-    Updated(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Updated"));
-
-    private final Supplier<@Nls String> myPresentableNameSupplier;
-
-    SortBySearchOption(Supplier<@Nls String> supplier) {myPresentableNameSupplier = supplier;}
-  }
-
   private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
-    private final SortBySearchOption myOption;
+    private final SortBy myOption;
     private boolean myState;
     private boolean myVisible;
 
-    private MarketplaceSortByAction(@NotNull SortBySearchOption option) {
-      super(option.myPresentableNameSupplier);
+    private MarketplaceSortByAction(@NotNull SortBy option) {
+      super(option.getPresentableNameSupplier());
       myOption = option;
     }
 
@@ -1623,24 +1683,19 @@ public final class PluginManagerConfigurable
     }
 
     public void setState(@NotNull SearchQueryParser.Marketplace parser) {
-      if (myOption == SortBySearchOption.Relevance) {
+      if (myOption == SortBy.RELEVANCE) {
         myState = parser.sortBy == null;
         myVisible = parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null;
       }
       else {
-        myState = parser.sortBy != null && myOption.name().equalsIgnoreCase(parser.sortBy);
+        myState = parser.sortBy != null && myOption == parser.sortBy;
         myVisible = true;
       }
     }
 
     public @Nullable String getQuery() {
-      return switch (myOption) {
-        case Downloads -> "/sortBy:downloads";
-        case Name -> "/sortBy:name";
-        case Rating -> "/sortBy:rating";
-        case Updated -> "/sortBy:updated";
-        case Relevance -> null;
-      };
+      if (myOption == SortBy.RELEVANCE) return null;
+      return SearchWords.SORT_BY.getValue() + myOption.getQuery();
     }
   }
 
@@ -1793,7 +1848,7 @@ public final class PluginManagerConfigurable
                                           @NotNull @NonNls String query,
                                           @NotNull @NonNls String showAllQuery) throws IOException {
     LOG.info("Marketplace tab: '" + name + "' group load started");
-    List<PluginNode> pluginNodes = MarketplaceRequests.getInstance().searchPlugins(query, ITEMS_PER_GROUP * 2);
+    List<PluginNode> pluginNodes = myMarketplaceRequests.searchPlugins(query, ITEMS_PER_GROUP * 2);
     addGroup(groups,
              name,
              type,

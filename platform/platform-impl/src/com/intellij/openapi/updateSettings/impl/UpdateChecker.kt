@@ -38,13 +38,9 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
 import java.io.IOException
 import java.lang.ref.SoftReference
 import java.net.HttpURLConnection
@@ -72,17 +68,18 @@ private val shownNotifications = MultiMap<NotificationKind, Notification>()
 
 @Service
 private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
-  @Suppress("OPT_IN_USAGE")
+  @OptIn(ExperimentalCoroutinesApi::class)
   private val limitedDispatcher = Dispatchers.IO.limitedParallelism(1)
 
   /**
    * For scheduled update checks.
    */
-  fun updateAndShowResult(): ActionCallback {
+  fun updateAndShowResult(showResults: Boolean = false): ActionCallback {
     val callback = ActionCallback()
     coroutineScope.launch(limitedDispatcher) {
       doUpdateAndShowResult(
         userInitiated = false,
+        showResults = showResults,
         preferDialog = false,
         showSettingsLink = true,
         callback = callback,
@@ -94,7 +91,6 @@ private class UpdateCheckerHelper(private val coroutineScope: CoroutineScope) {
     }
     return callback
   }
-
 }
 
 /**
@@ -146,6 +142,9 @@ object UpdateChecker {
   fun updateAndShowResult(): ActionCallback =
     service<UpdateCheckerHelper>().updateAndShowResult()
 
+  fun getUpdates(): ActionCallback =
+    service<UpdateCheckerHelper>().updateAndShowResult(false)
+
   /**
    * For manual update checks (Help | Check for Updates, Settings | Updates | Check Now)
    * (the latter action passes customized update settings and forces result presentation in a dialog).
@@ -159,6 +158,7 @@ object UpdateChecker {
           project = getProject(),
           customSettings = customSettings,
           userInitiated = true,
+          showResults = true,
           preferDialog = isConditionalModal,
           showSettingsLink = shouldStartInBackground(),
           indicator = indicator,
@@ -285,7 +285,11 @@ object UpdateChecker {
             }
             // collect latest plugins from custom repos
             val storedDescriptor = customRepoPlugins[id]
-            if (storedDescriptor == null || StringUtil.compareVersionNumbers(descriptor.version, storedDescriptor.version) > 0) {
+            if (storedDescriptor == null
+                || StringUtil.compareVersionNumbers(descriptor.version, storedDescriptor.version) > 0 &&
+                allowedUpgrade(storedDescriptor, descriptor)
+                || (StringUtil.compareVersionNumbers(descriptor.version, storedDescriptor.version) < 0 &&
+                    allowedDowngrade(storedDescriptor, descriptor))) {
               customRepoPlugins[id] = descriptor
             }
           }
@@ -352,6 +356,16 @@ object UpdateChecker {
     return updateable
   }
 
+  @JvmStatic
+  private fun allowedDowngrade(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean {
+    return PluginManagementPolicy.getInstance().isDowngradeAllowed(localDescriptor, remoteDescriptor)
+  }
+
+  @JvmStatic
+  private fun allowedUpgrade(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean {
+    return PluginManagementPolicy.getInstance().isUpgradeAllowed(localDescriptor, remoteDescriptor)
+  }
+
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
   private fun findUpdatesInJetBrainsRepository(updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
@@ -365,9 +379,9 @@ object UpdateChecker {
     val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString }
-      if (lastUpdate != null &&
-          (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor,
-                                                                                           buildNumber) > 0)) {
+      if (lastUpdate != null && (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version,
+                                                                                                                 descriptor,
+                                                                                                                 buildNumber) > 0)) {
         runCatching { MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
           .onFailure {
             if (!isNetworkError(it)) throw it
@@ -445,12 +459,19 @@ object UpdateChecker {
     val installedPlugin = PluginManagerCore.getPlugin(pluginId)
     if (installedPlugin == null
         || pluginVersion == null
-        || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0) {
+        || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0
+            && allowedUpgrade(installedPlugin, originalDownloader.descriptor))
+        || (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) < 0
+            && allowedDowngrade(installedPlugin, originalDownloader.descriptor))) {
       val oldDownloader = ourUpdatedPlugins[pluginId]
       val downloader = if (PluginManagerCore.isDisabled(pluginId)) {
         originalDownloader
       }
-      else if (oldDownloader == null || StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0) {
+      else if (oldDownloader == null
+               || (StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) > 0
+                   && allowedUpgrade(installedPlugin, oldDownloader.descriptor))
+               || (StringUtil.compareVersionNumbers(pluginVersion, oldDownloader.pluginVersion) < 0 &&
+                   allowedDowngrade(installedPlugin, oldDownloader.descriptor))) {
         val descriptor = originalDownloader.descriptor
         if (descriptor is PluginNode && descriptor.isIncomplete) {
           originalDownloader.prepareToInstall(indicator ?: EmptyProgressIndicator())
@@ -536,7 +557,7 @@ object UpdateChecker {
   fun testPlatformUpdate(
     project: Project?,
     updateDataText: String,
-    patchFile: File?,
+    patchFile: Path?,
     forceUpdate: Boolean,
   ) {
     if (!ApplicationManager.getApplication().isInternal) {
@@ -601,6 +622,7 @@ private fun doUpdateAndShowResult(
   project: Project? = null,
   customSettings: UpdateSettings? = null,
   userInitiated: Boolean,
+  showResults: Boolean,
   preferDialog: Boolean,
   showSettingsLink: Boolean,
   indicator: ProgressIndicator? = null,
@@ -619,9 +641,12 @@ private fun doUpdateAndShowResult(
   val platformUpdates = UpdateChecker.getPlatformUpdates(updateSettings, indicator)
   if (platformUpdates is PlatformUpdates.ConnectionError) {
     if (userInitiated) {
-      showErrors(project = project,
-                 message = IdeBundle.message("updates.error.connection.failed", platformUpdates.error.message),
-                 preferDialog = preferDialog)
+      val err = platformUpdates.error
+      val message = when {
+        err is HttpRequests.HttpStatusException && err.statusCode == HttpRequests.CUSTOM_ERROR_CODE && err.message != null -> err.message!!
+        else -> IdeBundle.message("updates.error.connection.failed", err.message)
+      }
+      showErrors(project, message, preferDialog)
     }
     callback?.setRejected()
     return null
@@ -656,12 +681,16 @@ private fun doUpdateAndShowResult(
     showErrors(project = project, message = builder.wrapWithHtmlBody().toString(), preferDialog = preferDialog)
   }
 
+  fun nonIgnored(downloaders: Collection<PluginDownloader>) = downloaders.filterNot { UpdateChecker.isIgnored(it.descriptor) }
+
+  val enabledPlugins = nonIgnored(pluginUpdates.allEnabled)
+  val updatedPlugins = enabledPlugins + nonIgnored(pluginUpdates.allDisabled)
+  if (!showResults) {
+    UpdateSettingsEntryPointActionProvider.newPluginUpdates(updatedPlugins, customRepoPlugins)
+    callback?.setDone()
+    return null
+  }
   return {
-    fun nonIgnored(downloaders: Collection<PluginDownloader>) = downloaders.filterNot { UpdateChecker.isIgnored(it.descriptor) }
-
-    val enabledPlugins = nonIgnored(pluginUpdates.allEnabled)
-    val updatedPlugins = enabledPlugins + nonIgnored(pluginUpdates.allDisabled)
-
     val forceDialog = preferDialog || userInitiated && !notificationsEnabled()
 
     if (platformUpdates is PlatformUpdates.Loaded) {
@@ -738,7 +767,8 @@ private fun showResults(
           message = message,
           actions = listOf(
             NotificationAction.createExpiring(IdeBundle.message("updates.all.plugins.action", updatedPlugins.size)) { e, _ ->
-              PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?, null)
+              val component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent?
+              PluginUpdateDialog.runUpdateAll(updatedPlugins, component, null, null)
             },
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.plugins.dialog.action"), runnable),
             NotificationAction.createSimpleExpiring(IdeBundle.message("updates.ignore.updates.link", updatedPlugins.size)) {

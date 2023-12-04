@@ -230,7 +230,7 @@ class AdvancedArrayAccess {
     System.out.println(array[0]); // <-- Value 'array[0]' was reported as always 'null'
   }
 
-  private static final int[] ARR_FIRST = {<error descr="Illegal forward reference">ARR_SECOND</error>[0], 1};
+  private static final int[] ARR_FIRST = {<error descr="Cannot read value of field 'ARR_SECOND' before the field's definition">ARR_SECOND</error>[0], 1};
   private static final int[] ARR_SECOND = {ARR_FIRST[0], 1};
 
   void testSelfReference() {

@@ -92,9 +92,6 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
     override val kind: KotlinModuleKind
         get() = dataSource.kind
 
-    override val mergedCompilerArguments: String
-        get() = dataSource.mergedCompilerArguments
-
     override val compilerArguments: String
         get() = dataSource.compilerArguments
 
@@ -192,9 +189,6 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
             if (!getEntityData().isKindInitialized()) {
                 error("Field KotlinSettingsEntity#kind should be initialized")
             }
-            if (!getEntityData().isMergedCompilerArgumentsInitialized()) {
-                error("Field KotlinSettingsEntity#mergedCompilerArguments should be initialized")
-            }
             if (!getEntityData().isCompilerArgumentsInitialized()) {
                 error("Field KotlinSettingsEntity#compilerArguments should be initialized")
             }
@@ -265,8 +259,6 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
             if (this.pureKotlinSourceFolders != dataSource.pureKotlinSourceFolders) this.pureKotlinSourceFolders =
                 dataSource.pureKotlinSourceFolders.toMutableList()
             if (this.kind != dataSource.kind) this.kind = dataSource.kind
-            if (this.mergedCompilerArguments != dataSource.mergedCompilerArguments) this.mergedCompilerArguments =
-                dataSource.mergedCompilerArguments
             if (this.compilerArguments != dataSource.compilerArguments) this.compilerArguments = dataSource.compilerArguments
             if (this.compilerSettings != dataSource.compilerSettings) this.compilerSettings = dataSource.compilerSettings
             if (this.targetPlatform != dataSource.targetPlatform) this.targetPlatform = dataSource.targetPlatform
@@ -543,14 +535,6 @@ open class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEntity
 
             }
 
-        override var mergedCompilerArguments: String
-            get() = getEntityData().mergedCompilerArguments
-            set(value) {
-                checkModificationAllowed()
-                getEntityData(true).mergedCompilerArguments = value
-                changedProperty.add("mergedCompilerArguments")
-            }
-
         override var compilerArguments: String
             get() = getEntityData().compilerArguments
             set(value) {
@@ -597,7 +581,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
     var isHmppEnabled: Boolean = false
     lateinit var pureKotlinSourceFolders: MutableList<String>
     lateinit var kind: KotlinModuleKind
-    lateinit var mergedCompilerArguments: String
     lateinit var compilerArguments: String
     lateinit var compilerSettings: CompilerSettingsData
     lateinit var targetPlatform: String
@@ -618,7 +601,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
 
     internal fun isPureKotlinSourceFoldersInitialized(): Boolean = ::pureKotlinSourceFolders.isInitialized
     internal fun isKindInitialized(): Boolean = ::kind.isInitialized
-    internal fun isMergedCompilerArgumentsInitialized(): Boolean = ::mergedCompilerArguments.isInitialized
     internal fun isCompilerArgumentsInitialized(): Boolean = ::compilerArguments.isInitialized
     internal fun isCompilerSettingsInitialized(): Boolean = ::compilerSettings.isInitialized
     internal fun isTargetPlatformInitialized(): Boolean = ::targetPlatform.isInitialized
@@ -767,7 +749,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
             isHmppEnabled,
             pureKotlinSourceFolders,
             kind,
-            mergedCompilerArguments,
             compilerArguments,
             compilerSettings,
             targetPlatform,
@@ -806,7 +787,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         if (this.isHmppEnabled != other.isHmppEnabled) return false
         if (this.pureKotlinSourceFolders != other.pureKotlinSourceFolders) return false
         if (this.kind != other.kind) return false
-        if (this.mergedCompilerArguments != other.mergedCompilerArguments) return false
         if (this.compilerArguments != other.compilerArguments) return false
         if (this.compilerSettings != other.compilerSettings) return false
         if (this.targetPlatform != other.targetPlatform) return false
@@ -835,7 +815,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         if (this.isHmppEnabled != other.isHmppEnabled) return false
         if (this.pureKotlinSourceFolders != other.pureKotlinSourceFolders) return false
         if (this.kind != other.kind) return false
-        if (this.mergedCompilerArguments != other.mergedCompilerArguments) return false
         if (this.compilerArguments != other.compilerArguments) return false
         if (this.compilerSettings != other.compilerSettings) return false
         if (this.targetPlatform != other.targetPlatform) return false
@@ -860,7 +839,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         result = 31 * result + isHmppEnabled.hashCode()
         result = 31 * result + pureKotlinSourceFolders.hashCode()
         result = 31 * result + kind.hashCode()
-        result = 31 * result + mergedCompilerArguments.hashCode()
         result = 31 * result + compilerArguments.hashCode()
         result = 31 * result + compilerSettings.hashCode()
         result = 31 * result + targetPlatform.hashCode()
@@ -885,7 +863,6 @@ class KotlinSettingsEntityData : WorkspaceEntityData.WithCalculableSymbolicId<Ko
         result = 31 * result + isHmppEnabled.hashCode()
         result = 31 * result + pureKotlinSourceFolders.hashCode()
         result = 31 * result + kind.hashCode()
-        result = 31 * result + mergedCompilerArguments.hashCode()
         result = 31 * result + compilerArguments.hashCode()
         result = 31 * result + compilerSettings.hashCode()
         result = 31 * result + targetPlatform.hashCode()

@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.sync.Mutex
@@ -15,15 +14,11 @@ import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteDraftNote
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.deleteNote
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateDraftNote
-import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateNote
-import org.jetbrains.plugins.gitlab.util.GitLabStatistics
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.*
 import java.util.*
 
 interface GitLabNote {
-  val id: String
+  val id: GitLabId
   val author: GitLabUserDTO
   val createdAt: Date?
 
@@ -37,10 +32,21 @@ interface MutableGitLabNote : GitLabNote {
   /**
    * Whether the note can be edited.
    */
-  suspend fun canEdit(): Boolean
+  fun canEdit(): Boolean
+
+  /**
+   * Whether the note can be submitted individually.
+   */
+  fun canSubmit(): Boolean
 
   suspend fun setBody(newText: String)
   suspend fun delete()
+
+  /**
+   * Individually submit the note if it's a draft. This means the draft note is published as a note
+   * shown to all users involed in the review, rather than just to the user that made the note.
+   */
+  suspend fun submit()
 }
 
 interface GitLabMergeRequestNote : GitLabNote {
@@ -49,7 +55,7 @@ interface GitLabMergeRequestNote : GitLabNote {
 }
 
 interface GitLabMergeRequestDraftNote : GitLabMergeRequestNote, MutableGitLabNote {
-  val discussionId: String?
+  val discussionId: GitLabId?
   override val createdAt: Date? get() = null
   override val canAdmin: Boolean get() = true
   override val resolved: StateFlow<Boolean> get() = MutableStateFlow(false)
@@ -61,17 +67,16 @@ class MutableGitLabMergeRequestNote(
   parentCs: CoroutineScope,
   private val project: Project,
   private val api: GitLabApi,
-  private val glProject: GitLabProjectCoordinates,
   mr: GitLabMergeRequest,
   private val eventSink: suspend (GitLabNoteEvent<GitLabNoteDTO>) -> Unit,
-  private val noteData: GitLabNoteDTO
+  noteData: GitLabNoteDTO
 ) : GitLabMergeRequestNote, MutableGitLabNote {
 
   private val cs = parentCs.childScope(CoroutineExceptionHandler { _, e -> LOG.warn(e) })
 
   private val operationsGuard = Mutex()
 
-  override val id: String = noteData.id
+  override val id: GitLabGid = noteData.id
   override val author: GitLabUserDTO = noteData.author
   override val createdAt: Date = noteData.createdAt
   override val canAdmin: Boolean = noteData.userPermissions.adminNote
@@ -83,37 +88,38 @@ class MutableGitLabMergeRequestNote(
     it.position?.let(GitLabNotePosition::from)
   }
   override val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?> = position.mapPosition(mr).modelFlow(cs, LOG)
-  override suspend fun canEdit(): Boolean = true
+  override fun canEdit(): Boolean = true
+  override fun canSubmit(): Boolean = false
 
   override suspend fun setBody(newText: String) {
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.graphQL.updateNote(noteData.id, newText).getResultOrThrow()
+          api.graphQL.updateNote(id.gid, newText).getResultOrThrow()
         }
       }
       data.update { it.copy(body = newText) }
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UPDATE_NOTE)
   }
 
   override suspend fun delete() {
     withContext(cs.coroutineContext) {
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
-          api.graphQL.deleteNote(noteData.id).getResultOrThrow()
+          api.graphQL.deleteNote(id.gid).getResultOrThrow()
         }
       }
-      eventSink(GitLabNoteEvent.Deleted(noteData.id))
+      eventSink(GitLabNoteEvent.Deleted(id))
     }
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.DELETE_NOTE)
+  }
+
+  override suspend fun submit() {
+    error("Cannot submit an already submitted note")
   }
 
   fun update(item: GitLabNoteDTO) {
     data.value = item
   }
-
-  suspend fun destroy() = cs.cancelAndJoinSilently()
 
   override fun toString(): String =
     "MutableGitLabNote(id='$id', author=$author, createdAt=$createdAt, canAdmin=$canAdmin, body=${body.value}, resolved=${resolved.value}, position=${position.value})"
@@ -122,6 +128,7 @@ class MutableGitLabMergeRequestNote(
 class GitLabMergeRequestDraftNoteImpl(
   parentCs: CoroutineScope,
   private val api: GitLabApi,
+  private val glMetadata: GitLabServerMetadata?,
   private val project: GitLabProjectCoordinates,
   private val mr: GitLabMergeRequest,
   private val eventSink: suspend (GitLabNoteEvent<GitLabMergeRequestDraftNoteRestDTO>) -> Unit,
@@ -133,8 +140,8 @@ class GitLabMergeRequestDraftNoteImpl(
 
   private val operationsGuard = Mutex()
 
-  override val id: String = noteData.id.toString()
-  override val discussionId: String? = noteData.discussionId
+  override val id: GitLabRestId = noteData.id
+  override val discussionId: GitLabRestId? = noteData.discussionId
 
   private val data = MutableStateFlow(noteData)
   override val body: StateFlow<String> = data.mapState(cs, GitLabMergeRequestDraftNoteRestDTO::note)
@@ -142,8 +149,10 @@ class GitLabMergeRequestDraftNoteImpl(
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) { it.position.let(GitLabNotePosition::from) }
   override val positionMapping: Flow<GitLabMergeRequestNotePositionMapping?> = position.mapPosition(mr).modelFlow(cs, LOG)
 
-  override suspend fun canEdit(): Boolean =
-    GitLabVersion(15, 10) <= api.getMetadata().version
+  override fun canEdit(): Boolean =
+    glMetadata != null && GitLabVersion(15, 10) <= glMetadata.version
+  override fun canSubmit(): Boolean =
+    glMetadata != null && GitLabVersion(15, 10) <= glMetadata.version
 
   @SinceGitLab("15.10")
   override suspend fun setBody(newText: String) {
@@ -151,7 +160,7 @@ class GitLabMergeRequestDraftNoteImpl(
       operationsGuard.withLock {
         withContext(Dispatchers.IO) {
           // Checked by canEdit
-          api.rest.updateDraftNote(project, mr.iid, noteData.id, newText)
+          api.rest.updateDraftNote(project, mr.iid, noteData.id.restId.toLong(), newText)
         }
       }
       data.update { it.copy(note = newText) }
@@ -164,18 +173,29 @@ class GitLabMergeRequestDraftNoteImpl(
         withContext(Dispatchers.IO) {
           // Shouldn't require extra check, delete and get draft notes was introduced in
           // the same update
-          api.rest.deleteDraftNote(project, mr.iid, noteData.id)
+          api.rest.deleteDraftNote(project, mr.iid, noteData.id.restId.toLong())
         }
       }
-      eventSink(GitLabNoteEvent.Deleted(noteData.id.toString()))
+      eventSink(GitLabNoteEvent.Deleted(id))
+    }
+  }
+
+  override suspend fun submit() {
+    withContext(cs.coroutineContext) {
+      operationsGuard.withLock {
+        withContext(Dispatchers.IO) {
+          // Shouldn't require extra check, delete and get draft notes was introduced in
+          // the same update
+          api.rest.submitSingleDraftNote(project, mr.iid, noteData.id.restId.toLong()).body()
+        }
+      }
+      mr.reloadDiscussions()
     }
   }
 
   fun update(item: GitLabMergeRequestDraftNoteRestDTO) {
     data.value = item
   }
-
-  suspend fun destroy() = cs.cancelAndJoinSilently()
 
   override fun toString(): String =
     "GitLabMergeRequestDraftNoteImpl(id='$id', author=$author, createdAt=$createdAt, body=${body.value})"
@@ -199,7 +219,7 @@ private fun Flow<GitLabNotePosition?>.mapPosition(mr: GitLabMergeRequest): Flow<
 
 class GitLabSystemNote(noteData: GitLabNoteDTO) : GitLabNote {
 
-  override val id: String = noteData.id
+  override val id: GitLabGid = noteData.id
   override val author: GitLabUserDTO = noteData.author
   override val createdAt: Date = noteData.createdAt
 

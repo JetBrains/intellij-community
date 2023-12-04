@@ -9,7 +9,6 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.PatchProjectUtil
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
-import com.intellij.ide.observation.Observation
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.openapi.application.ApplicationManager
@@ -23,6 +22,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.util.progress.durationStep
 import com.intellij.util.asSafely
 import com.intellij.util.indexing.FileBasedIndex

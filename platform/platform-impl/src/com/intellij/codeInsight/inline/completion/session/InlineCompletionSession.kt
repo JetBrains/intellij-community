@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionProvider
+import com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 import com.intellij.codeInsight.inline.completion.utils.InlineCompletionJob
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
@@ -13,7 +14,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 class InlineCompletionSession private constructor(
   val context: InlineCompletionContext,
-  val provider: InlineCompletionProvider
+  val provider: InlineCompletionProvider,
+  val request: InlineCompletionRequest
 ) : Disposable {
 
   init {
@@ -44,11 +46,12 @@ class InlineCompletionSession private constructor(
     internal fun init(
       editor: Editor,
       provider: InlineCompletionProvider,
+      request: InlineCompletionRequest,
       parentDisposable: Disposable
     ): InlineCompletionSession {
       val currentSession = getOrNull(editor)
       check(currentSession == null) { "Inline completion session already exists." }
-      return InlineCompletionSession(InlineCompletionContext(editor), provider).also {
+      return InlineCompletionSession(InlineCompletionContext(editor, request.file.language), provider, request).also {
         Disposer.register(parentDisposable, it)
         editor.putUserData(INLINE_COMPLETION_SESSION, it)
       }

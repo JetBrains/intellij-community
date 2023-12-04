@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -18,7 +17,6 @@ import java.util.List;
 /**
  * @author Adam Juraszek
  */
-@Service
 public final class CustomLogProcessor extends AbstractLogProcessor {
 
   public CustomLogProcessor() {

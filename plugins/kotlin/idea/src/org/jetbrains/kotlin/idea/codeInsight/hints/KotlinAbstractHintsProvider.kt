@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.hints
 
-import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactory
+import com.intellij.codeInsight.daemon.impl.InlayHintsPassFactoryInternal
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.lang.Language
@@ -178,5 +178,5 @@ internal fun createKtFile(
 }
 
 internal fun refreshHints(project: Project) {
-    InlayHintsPassFactory.restartDaemonUpdatingHints(project)
+    InlayHintsPassFactoryInternal.restartDaemonUpdatingHints(project)
 }

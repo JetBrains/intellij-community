@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.execution.*;
@@ -46,13 +46,11 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements.*;
+import static com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements.ActionWithWriteAccess;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final String BUTTON_MODE = "ButtonMode";
 
-  public static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
-  public static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   public static boolean hasRunCurrentFileItem(@NotNull Project project) {
@@ -207,7 +205,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
-  public @NotNull JComponent createCustomComponent(final @NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     ComboBoxButton button = new RunConfigurationsComboBoxButton(presentation);
     if (isNoWrapping(place)) return button;
 
@@ -475,6 +473,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   private static final class SelectTargetAction extends AnAction {
     private final Project myProject;
     private final ExecutionTarget myTarget;
+
+    private static final Icon CHECKED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
+    private static final Icon CHECKED_SELECTED_ICON = JBUIScale.scaleIcon(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
 
     SelectTargetAction(final Project project, final ExecutionTarget target, boolean selected) {
       myProject = project;

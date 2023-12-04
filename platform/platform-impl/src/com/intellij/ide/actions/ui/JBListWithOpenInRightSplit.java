@@ -173,12 +173,12 @@ public final class JBListWithOpenInRightSplit<T> extends JBList<T> {
   }
 
   @NotNull @NonNls
-  private String getActionId() {
+  private static String getActionId() {
     return IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT;
   }
 
   @NotNull
-  private Icon getIcon() {
+  private static Icon getIcon() {
     return AllIcons.Actions.SplitVertically;
   }
 }

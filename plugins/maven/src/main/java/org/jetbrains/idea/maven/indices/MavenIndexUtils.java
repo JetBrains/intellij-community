@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
@@ -112,9 +112,12 @@ public final class MavenIndexUtils {
   }
 
   private static Map<String, Set<String>> getRemoteRepositoriesMap(Project project) {
-    if (project.isDisposed()) return Collections.emptyMap();
+    if (project.isDisposed()) {
+      return Collections.emptyMap();
+    }
+
     Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(MavenUtil.getRemoteResolvedRepositories(project));
-    for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
+    for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensionList()) {
       remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(project));
     }
 

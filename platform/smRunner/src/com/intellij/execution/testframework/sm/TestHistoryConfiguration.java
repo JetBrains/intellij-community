@@ -14,25 +14,19 @@ import com.intellij.util.xmlb.annotations.XMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @State(name = "TestHistory", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public class TestHistoryConfiguration implements PersistentStateComponent<TestHistoryConfiguration.State> {
 
   public static class State {
 
-    private Map<String, ConfigurationBean> myHistoryElements = new LinkedHashMap<>();
+    private final Map<String, ConfigurationBean> myHistoryElements = new LinkedHashMap<>();
 
     @Property(surroundWithTag = false)
     @XMap(entryTagName = "history-entry", keyAttributeName = "file")
     public Map<String, ConfigurationBean> getHistoryElements() {
       return myHistoryElements;
-    }
-
-    public void setHistoryElements(final Map<String, ConfigurationBean> elements) {
-      myHistoryElements = elements;
     }
   }
 
@@ -53,7 +47,7 @@ public class TestHistoryConfiguration implements PersistentStateComponent<TestHi
   }
 
   public Collection<String> getFiles() {
-    return myState.getHistoryElements().keySet();
+    return new ArrayList<>(myState.getHistoryElements().keySet());
   }
 
   public String getConfigurationName(String file) {

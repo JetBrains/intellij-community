@@ -9,7 +9,6 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
@@ -51,6 +51,8 @@ import static com.intellij.ide.startup.StartupActionScriptManager.*;
 
 public final class PluginInstaller {
   private static final Logger LOG = Logger.getInstance(PluginInstaller.class);
+  private static final boolean DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS =
+    SystemProperties.getBooleanProperty("plugins.drop-disabled-flag-of-uninstalled-plugins", true);
 
   public static final String UNKNOWN_HOST_MARKER = "__unknown_repository__";
 
@@ -256,7 +258,7 @@ public final class PluginInstaller {
         return false;
       }
 
-      if (!PluginManagerFilters.getInstance().allowInstallingPlugin(pluginDescriptor)) {
+      if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginDescriptor)) {
         String message = IdeBundle.message("dialog.message.plugin.is.not.allowed", pluginDescriptor.getName());
         MessagesEx.showWarningDialog(parent, message, IdeBundle.message("dialog.title.install.plugin"));
         return false;
@@ -404,7 +406,23 @@ public final class PluginInstaller {
       return false;
     }
 
-    return PluginEnabler.HEADLESS.isDisabled(targetDescriptor.getPluginId()) ||
+    PluginId targetPluginId = targetDescriptor.getPluginId();
+
+    if (DROP_DISABLED_FLAG_OF_REINSTALLED_PLUGINS && // IDEA-329952
+        PluginEnabler.HEADLESS.isDisabled(targetPluginId)) {
+      var pluginSet = PluginManagerCore.INSTANCE.getPluginSet();
+      var wasInstalledBefore = pluginSet.isPluginInstalled(targetPluginId);
+      if (!wasInstalledBefore) {
+        // FIXME can't drop the disabled flag first because it's implementation filters ids against the current plugin set;
+        //  so load first, then enable
+        targetDescriptor.setEnabled(true);
+        var result = DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
+        PluginEnabler.HEADLESS.enable(Set.of(targetDescriptor));
+        return result;
+      }
+    }
+
+    return PluginEnabler.HEADLESS.isDisabled(targetPluginId) ||
            DynamicPlugins.INSTANCE.loadPlugin(targetDescriptor);
   }
 

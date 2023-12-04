@@ -68,15 +68,22 @@ class WelcomeSeparateBalloonLayoutImpl(parent: JRootPane, insets: Insets) : Welc
         updateBalloons()
       }
       balloons.add(newBalloon)
-      if (!newBalloon.isDisposed) {
+      if (!newBalloon.isDisposed && layeredPane!!.isShowing) {
         newBalloon.show(layeredPane)
-        newBalloon.component.isVisible = myVisible
+        newBalloon.component?.isVisible = myVisible
       }
       updateBalloons()
       ApplicationManager.getApplication().getMessageBus().syncPublisher(BALLOON_NOTIFICATION_TOPIC).newNotifications()
     }
     else {
       super.add(newBalloon, layoutData)
+    }
+  }
+
+  fun autoPopup() {
+    val balloonLayout = WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl
+    if (balloonLayout != null && !balloonLayout.myVisible && balloonLayout.locationComponent != null) {
+      showPopup()
     }
   }
 

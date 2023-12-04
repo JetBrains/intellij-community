@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.loopToCallChain.sequence
 
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.hasUsages
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.hasUsages
 import org.jetbrains.kotlin.idea.intentions.negate
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*

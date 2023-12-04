@@ -108,8 +108,7 @@ public final class HgChangeProvider implements ChangeProvider {
     return hgChanges;
   }
 
-  @Nullable
-  private HgChange findChange(@NotNull HgRepository hgRepo, @NotNull HgNameWithHashInfo info) {
+  private @Nullable HgChange findChange(@NotNull HgRepository hgRepo, @NotNull HgNameWithHashInfo info) {
     File file = new File(hgRepo.getRoot().getPath(), info.getName());
     VirtualFile virtualSubrepoFile = VfsUtil.findFileByIoFile(file, false);
     HgRepository subrepo = HgUtil.getRepositoryForFile(myProject, virtualSubrepoFile);
@@ -250,7 +249,7 @@ public final class HgChangeProvider implements ChangeProvider {
             vcsKey
           );
         } else {
-          // The original file does not exist so this is a renamed.
+          // The original file does not exist, so this is a renamed.
           processChange(
             HgContentRevision.create(project, beforeFile, parentRevision),
             HgCurrentContentRevision.create(afterFile, currentNumber),

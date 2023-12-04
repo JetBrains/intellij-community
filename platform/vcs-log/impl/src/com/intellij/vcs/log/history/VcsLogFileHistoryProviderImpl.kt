@@ -2,12 +2,11 @@
 package com.intellij.vcs.log.history
 
 import com.google.common.util.concurrent.SettableFuture
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.content.TabGroupId
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.impl.*
@@ -21,7 +20,6 @@ import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 import com.intellij.vcs.log.visible.filters.matches
 import com.intellij.vcsUtil.VcsUtil
-import java.util.function.Function
 
 class VcsLogFileHistoryProviderImpl(project: Project) : VcsLogFileHistoryProvider {
   private val providers = listOf(VcsLogSingleFileHistoryProvider(project), VcsLogDirectoryHistoryProvider(project))
@@ -37,7 +35,6 @@ class VcsLogFileHistoryProviderImpl(project: Project) : VcsLogFileHistoryProvide
 
 class VcsLogDirectoryHistoryProvider(private val project: Project) : VcsLogFileHistoryProvider {
   override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
-    if (!Registry.`is`("vcs.history.show.directory.history.in.log")) return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
     return createPathsFilter(project, dataManager.logProviders, paths) != null
   }
@@ -109,8 +106,6 @@ class VcsLogDirectoryHistoryProvider(private val project: Project) : VcsLogFileH
 }
 
 private class VcsLogSingleFileHistoryProvider(private val project: Project) : VcsLogFileHistoryProvider {
-  private val tabGroupId: TabGroupId = TabGroupId("History", VcsBundle.messagePointer("file.history.tab.name"), false)
-
   override fun canShowFileHistory(paths: Collection<FilePath>, revisionNumber: String?): Boolean {
     if (!isNewHistoryEnabled() || paths.size != 1) return false
 
@@ -120,7 +115,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
 
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
     val logProvider = dataManager.logProviders[root]
-    if (logProvider?.diffHandler == null || logProvider.fileHistoryHandler == null) return false
+    if (logProvider?.diffHandler == null || logProvider.getFileHistoryHandler(project) == null) return false
     return dataManager.index.isIndexingEnabled(root) || Registry.`is`("vcs.force.new.history")
   }
 
@@ -141,9 +136,7 @@ private class VcsLogSingleFileHistoryProvider(private val project: Project) : Vc
     }
     val firstTime = fileHistoryUi == null
     if (firstTime) {
-      val suffix = if (hash != null) " (" + hash.toShortString() + ")" else ""
-      fileHistoryUi = VcsLogContentUtil.openLogTab(project, logManager, tabGroupId, Function { path.name + suffix },
-                                                   FileHistoryUiFactory(path, root, hash), true)
+      fileHistoryUi = project.service<FileHistoryTabsManager>().openFileHistoryTab(logManager, path, root, hash)
     }
     selectRowWhenOpen(logManager, hash, root, fileHistoryUi!!, firstTime)
   }

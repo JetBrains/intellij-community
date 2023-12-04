@@ -1,13 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.session
 
+import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
-class InlineCompletionContext internal constructor(val editor: Editor) : UserDataHolderBase(), Disposable {
+class InlineCompletionContext internal constructor(val editor: Editor, val language: Language) : UserDataHolderBase(), Disposable {
   private val myState = InlineCompletionState().also {
     Disposer.register(this, it)
   }
@@ -51,6 +52,15 @@ class InlineCompletionContext internal constructor(val editor: Editor) : UserDat
   override fun dispose() {
     clear()
     isDisposed = true
+  }
+
+  override fun toString(): String {
+    return if (!isDisposed) {
+      "InlineCompletionContext(disposed=false, textToInsert=${textToInsert()})"
+    }
+    else {
+      "InlineCompletionContext(disposed=true)"
+    }
   }
 
   private inline fun <T> assureNotDisposed(block: () -> T): T {

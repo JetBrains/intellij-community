@@ -25,7 +25,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
                                  private var filters: VcsLogFilterCollection? = null) :
   VcsLogFile(VcsLogTabsManager.getFullName(pathId.logId)), VirtualFilePathWrapper { //NON-NLS not displayed
 
-  private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.getInstance()
+  private val fileSystemInstance: VcsLogVirtualFileSystem = VcsLogVirtualFileSystem.Holder.getInstance()
   internal val tabId get() = pathId.logId
 
   internal var tabName: String

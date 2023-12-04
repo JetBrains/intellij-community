@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.XmlSerializerUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -65,17 +66,20 @@ enum class PresentationAssistantPopupAlignment(val x: Int, val y: Int, @Nls val 
   }
 }
 
-enum class PresentationAssistantTheme(val value: Int, @Nls val displayName: String, val foreground: Color, val background: Color, val keymapLabel: Color) {
+enum class PresentationAssistantTheme(val value: Int, @Nls val displayName: String, val foreground: Color,
+                                      val background: Color, val border: Color, val keymapLabel: Color) {
   BRIGHT(0,
          IdeBundle.message("presentation.assistant.configurable.theme.bright"),
          JBColor.namedColor("PresentationAssistant.Bright.Popup.foreground", JBColor.foreground()),
-         JBColor.namedColor("PresentationAssistant.Bright.Popup.background", JBColor.PanelBackground),
+         JBColor.namedColor("PresentationAssistant.Bright.PopupBackground", JBUI.CurrentTheme.Notification.BACKGROUND),
+         JBColor.namedColor("PresentationAssistant.Bright.Popup.border", JBColor.border()),
          JBColor.namedColor("PresentationAssistant.Bright.keymapLabel", JBColor.foreground())),
 
   PALE(1,
        IdeBundle.message("presentation.assistant.configurable.theme.pale"),
        JBColor.namedColor("PresentationAssistant.Pale.Popup.foreground", JBColor.foreground()),
-       JBColor.namedColor("PresentationAssistant.Pale.Popup.background", JBColor.PanelBackground),
+       JBColor.namedColor("PresentationAssistant.Pale.PopupBackground", JBUI.CurrentTheme.Notification.BACKGROUND),
+       JBColor.namedColor("PresentationAssistant.Pale.Popup.border", JBColor.border()),
        JBColor.namedColor("PresentationAssistant.Pale.keymapLabel", JBColor.foreground()));
 
   companion object {

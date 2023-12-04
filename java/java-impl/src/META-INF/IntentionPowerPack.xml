@@ -256,12 +256,6 @@
     </intentionAction>
     <intentionAction>
       <language>JAVA</language>
-      <className>com.siyeh.ipp.whileloop.ReplaceWhileLoopWithDoWhileLoopIntention</className>
-      <bundleName>messages.JavaBundle</bundleName>
-      <categoryKey>intention.category.control.flow</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <language>JAVA</language>
       <className>com.siyeh.ipp.whileloop.ReplaceDoWhileLoopWithWhileLoopIntention</className>
       <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.control.flow</categoryKey>

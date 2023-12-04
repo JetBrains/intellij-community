@@ -167,15 +167,6 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     }
   }
 
-  override fun withKotlinTest() = apply {
-    withMavenCentral()
-    // version is inherited from the Kotlin plugin
-    addTestImplementationDependency("org.jetbrains.kotlin:kotlin-test")
-    configureTestTask {
-      call("useJUnitPlatform")
-    }
-  }
-
   override fun withJUnit() = apply {
     when (isJunit5Supported(gradleVersion)) {
       true -> withJUnit5()

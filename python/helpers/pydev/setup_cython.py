@@ -53,7 +53,7 @@ def process_args():
 
 
 def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
-                    target_arch, extended=False):
+                    target_arch, extended=False, should_add_python_3_12_suffix=True):
     """
     :param dir_name: directory where the Cython file is located
     :param extension_name: name of the .pyx or .c file to build extension from, e.g.
@@ -62,6 +62,8 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
     :param force_cython: if False, build from the C file, use ``.pyx`` otherwise
     :param target_arch: target architecture, e.g. amd64
     :param extended: add ``_ext`` to the name of the extension package name
+    :param should_add_python_3_12_suffix: whether to add a Python 3.12 specific suffixes
+      to the build files
     """
     pyx_file = os.path.join(os.path.dirname(__file__), dir_name,
                             "%s.pyx" % (extension_name,))
@@ -120,17 +122,10 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
             # Always compile the .c (and not the .pyx) file (which we should keep
             # up-to-date by running build_tools/build.py).
 
-            # In case it's a pydevd_frame_evaluator extension with the version suffix.
-            import re
-            target_pydevd_name = extension_name
-            m = re.search(r"_\d+_\d+$", extension_name)
-            if m:
-                target_pydevd_name = extension_name[:m.start()]
-
             # The C file for Python 3.11 and older is incompatible with
             # Python 3.12.
             effective_c_file_name = "%s.c" % (
-                extension_name + "_312" if IS_PY312_OR_GREATER else extension_name
+                extension_name + "_312" if IS_PY312_OR_GREATER and should_add_python_3_12_suffix else extension_name
             )
 
             ext_modules = [Extension(
@@ -216,6 +211,11 @@ def main():
 
         build_extension(frame_eval_dir_name, extension_name, target_frame_eval,
                         force_cython, target_arch, extended)
+
+    if IS_PY312_OR_GREATER:
+        extension_name = "pydevd_pep_669_tracing_cython"
+        build_extension("_pydevd_bundle", extension_name, extension_name,
+                        force_cython, target_arch, extended, False)
 
     if extension_folder:
         create_init_py_files(extension_folder, subdir_names_to_ignore=["build"])

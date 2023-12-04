@@ -14,7 +14,8 @@ public class ToggleOptionAction extends ToggleAction {
 
   @SuppressWarnings("unused")
   public ToggleOptionAction(@NotNull Option option) {
-    this(option, null);
+    super();
+    this.optionSupplier = event -> option;
   }
 
   @SuppressWarnings("unused")
@@ -24,7 +25,8 @@ public class ToggleOptionAction extends ToggleAction {
 
   @SuppressWarnings("unused")
   public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier) {
-    this(optionSupplier, null);
+    super();
+    this.optionSupplier = optionSupplier;
   }
 
   public ToggleOptionAction(@NotNull Function<? super AnActionEvent, ? extends Option> optionSupplier, @Nullable Icon icon) {
@@ -57,8 +59,12 @@ public class ToggleOptionAction extends ToggleAction {
       String name = option.getName();
       if (name != null) presentation.setText(name);
       String description = option.getDescription();
-      if (description != null) presentation.setDescription(description);
-      if (ActionPlaces.isPopupPlace(event.getPlace())) presentation.setIcon(null);
+      if (description != null) {
+        presentation.setDescription(description);
+      }
+      if (ActionPlaces.isPopupPlace(event.getPlace())) {
+        presentation.setIcon(null);
+      }
     }
   }
 

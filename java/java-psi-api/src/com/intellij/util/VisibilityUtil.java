@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
-public final class VisibilityUtil  {
+public final class VisibilityUtil {
   @NonNls public static final String ESCALATE_VISIBILITY = "EscalateVisible";
   private static final String[] visibilityModifiers = {
     PsiModifier.PRIVATE,
@@ -45,12 +45,17 @@ public final class VisibilityUtil  {
 
   public static void escalateVisibility(PsiMember modifierListOwner, PsiElement place) throws IncorrectOperationException {
     final String visibilityModifier = getVisibilityModifier(modifierListOwner.getModifierList());
-    int index;
-    for (index = 0; index < visibilityModifiers.length; index++) {
-      String modifier = visibilityModifiers[index];
-      if(modifier.equals(visibilityModifier)) break;
+    PsiElement fileResolveScope = null;
+    if (place instanceof PsiJavaReference) {
+      fileResolveScope = ((PsiJavaReference)place).advancedResolve(false).getCurrentFileResolveScope();
+    } else if (place instanceof PsiCall) {
+      fileResolveScope = ((PsiCall)place).resolveMethodGenerics().getCurrentFileResolveScope();
     }
-    for(;index < visibilityModifiers.length && !PsiUtil.isAccessible(modifierListOwner, place, null); index++) {
+    PsiResolveHelper psiResolveHelper = PsiResolveHelper.getInstance(place.getProject());
+    for (int index = ArrayUtil.indexOf(visibilityModifiers, visibilityModifier);
+         index < visibilityModifiers.length &&
+         !psiResolveHelper.isAccessible(modifierListOwner, modifierListOwner.getModifierList(), place, null, fileResolveScope);
+         index++) {
       @PsiModifier.ModifierConstant String modifier = visibilityModifiers[index];
       PsiUtil.setModifierProperty(modifierListOwner, modifier, true);
     }
@@ -126,12 +131,14 @@ public final class VisibilityUtil  {
           escalateVisibility(member, element);
         }
       }
-    } else {
-       setVisibility(member.getModifierList(), newVisibility);
+    }
+    else {
+      setVisibility(member.getModifierList(), newVisibility);
     }
   }
 
-  public static void setVisibility(@NotNull PsiModifierList modifierList, @PsiModifier.ModifierConstant @NotNull String newVisibility) throws IncorrectOperationException {
+  public static void setVisibility(@NotNull PsiModifierList modifierList, @PsiModifier.ModifierConstant @NotNull String newVisibility)
+    throws IncorrectOperationException {
     modifierList.setModifierProperty(newVisibility, true);
     if (newVisibility.equals(PsiModifier.PRIVATE)) {
       modifierList.setModifierProperty(PsiModifier.DEFAULT, false);

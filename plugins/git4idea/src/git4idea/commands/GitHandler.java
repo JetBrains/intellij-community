@@ -22,20 +22,15 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.vcs.VcsLocaleHelper;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
 import git4idea.config.GitVersionSpecialty;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.context.Scope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,9 +41,6 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.Consumer;
-
-import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
 
 /**
  * A handler for git commands
@@ -65,6 +57,7 @@ public abstract class GitHandler {
   private final GitCommand myCommand;
 
   private boolean myPreValidateExecutable = true;
+  private boolean myEnableInteractiveCallbacks = true;
 
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
@@ -82,8 +75,6 @@ public abstract class GitHandler {
 
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
-
-  protected @Nullable OpenTelemetrySpanHolder mySpanHolder;
 
   /**
    * A constructor
@@ -384,7 +375,7 @@ public abstract class GitHandler {
    *
    * @deprecated Do not use, each ENV may have its own escaping rules.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @NotNull File file) {
     myCustomEnv.put(name, myExecutable.convertFilePath(file));
   }
@@ -407,12 +398,22 @@ public abstract class GitHandler {
     return myPreValidateExecutable;
   }
 
+  /**
+   * See {@link GitImplBase#run(Computable, Computable)}
+   */
+  public boolean isEnableInteractiveCallbacks() {
+    return myEnableInteractiveCallbacks;
+  }
+
+  /**
+   * See {@link GitImplBase#run(Computable, Computable)}
+   */
+  public void setEnableInteractiveCallbacks(boolean enableInteractiveCallbacks) {
+    myEnableInteractiveCallbacks = enableInteractiveCallbacks;
+  }
+
   void runInCurrentThread() throws IOException {
     try {
-      OpenTelemetrySpanHolder spanHolder = mySpanHolder;
-      if (spanHolder != null) {
-        spanHolder.startSpan();
-      }
       start();
       if (isStarted()) {
         try {
@@ -495,18 +496,27 @@ public abstract class GitHandler {
     if (myExecutable.isLocal()) {
       executionEnvironment.putAll(EnvironmentUtil.getEnvironmentMap());
     }
-    executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
+    executionEnvironment.putAll(myExecutable.getLocaleEnv());
     executionEnvironment.putAll(myCustomEnv);
     executionEnvironment.put(GitCommand.IJ_HANDLER_MARKER_ENV, "true");
 
-    // customizers take read locks, which could not be acquired under potemkin progress
-    if (!(ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress)) {
+    if (!shouldSuppressReadLocks()) {
       VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
         customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, myExecutableContext);
       });
 
       executionEnvironment.remove("PS1"); // ensure we won't get detected as interactive shell because of faulty customizer
     }
+  }
+
+  /**
+   * Tasks executed under {@link PotemkinProgress#runInBackground} cannot take read lock.
+   */
+  protected static boolean shouldSuppressReadLocks() {
+    if (ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress) {
+      return !ApplicationManager.getApplication().isDispatchThread();
+    }
+    return false;
   }
 
   protected abstract Process startProcess() throws ExecutionException;
@@ -524,38 +534,6 @@ public abstract class GitHandler {
   @Override
   public String toString() {
     return myCommandLine.toString();
-  }
-
-  public void setSpan(@NotNull String spanName, @Nullable Consumer<Span> spanConfigurator) {
-    mySpanHolder = new OpenTelemetrySpanHolder(spanName, spanConfigurator);
-  }
-
-  protected static class OpenTelemetrySpanHolder {
-    private final @NotNull IJTracer myTracer = TelemetryManager.getInstance().getTracer(VcsScope);
-    private final @NotNull String myName;
-    private final @Nullable Consumer<Span> myConfigurator;
-
-    private @Nullable Span mySpan;
-
-    private OpenTelemetrySpanHolder(@NotNull String spanName, @Nullable Consumer<Span> spanConfigurator) {
-      myName = spanName;
-      myConfigurator = spanConfigurator;
-    }
-
-    void startSpan() {
-      Span span = myTracer.spanBuilder(myName).startSpan();
-      try (Scope scope = span.makeCurrent()) {
-        if (myConfigurator != null) myConfigurator.accept(span);
-        mySpan = span;
-      }
-    }
-
-    void endSpan() {
-      Span commandSpan = mySpan;
-      if (commandSpan != null) {
-        commandSpan.end();
-      }
-    }
   }
 
   //region deprecated stuff
@@ -617,7 +595,7 @@ public abstract class GitHandler {
    * @param ex an error to add to the list
    * @deprecated remove together with {@link GitHandlerUtil}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void addError(VcsException ex) {
     myErrors.add(ex);
   }

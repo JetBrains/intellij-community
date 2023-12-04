@@ -1,5 +1,3 @@
-import org.jetbrains.annotations.Nullable;
-
 public class TestJava {
     public Object nullableObj(int p) {
         return p > 0 ? "response" : null;

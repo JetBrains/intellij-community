@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContext
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.simple.AlignedDiffModel.ChangeIntersection.*
 import com.intellij.diff.tools.util.SyncScrollSupport
+import com.intellij.diff.tools.util.base.TextDiffSettingsHolder
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.util.*
 import com.intellij.openapi.Disposable
@@ -31,6 +32,14 @@ import kotlin.math.max
 
 class SimpleAlignedDiffModel(val viewer: SimpleDiffViewer)
   : AlignedDiffModel(viewer.request, viewer.context, viewer.editor1, viewer.editor2, viewer.syncScrollable) {
+  init {
+    textSettings.addListener(object : TextDiffSettingsHolder.TextDiffSettings.Listener {
+      override fun alignModeChanged() {
+        viewer.rediff()
+      }
+    }, this)
+  }
+
   override fun getDiffChanges(): List<AlignableChange> {
     return viewer.myModel.allChanges
   }
@@ -422,7 +431,7 @@ abstract class AlignedDiffModel(val diffRequest: DiffRequest,
     return side.selectNotNull(editor1, editor2)
   }
 
-  private val textSettings get() = TextDiffViewerUtil.getTextSettings(diffContext)
+  protected val textSettings get() = TextDiffViewerUtil.getTextSettings(diffContext)
 
   private fun AlignableChange.calculateDeltaHeight(): Int {
     val leftStartLine = getStartLine(Side.LEFT)

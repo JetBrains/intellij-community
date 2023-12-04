@@ -17,6 +17,9 @@ data class GitLabProjectDTO(
   val httpUrlToRepo: @NlsSafe String?,
   val sshUrlToRepo: @NlsSafe String?,
   val userPermissions: ProjectUserPermissions,
+  val onlyAllowMergeIfAllDiscussionsAreResolved: Boolean,
+  val onlyAllowMergeIfPipelineSucceeds: Boolean,
+  @SinceGitLab("13.1") val allowMergeOnSkippedPipeline: Boolean
 ) {
   val ownerPath: @NlsSafe String = fullPath.split("/").dropLast(1).joinToString("/")
 

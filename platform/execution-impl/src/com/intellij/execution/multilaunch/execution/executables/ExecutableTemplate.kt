@@ -1,10 +1,10 @@
 package com.intellij.execution.multilaunch.execution.executables
 
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.openapi.project.Project
 
 interface ExecutableTemplate {
   val type: String
 
-  fun createExecutable(configuration: MultiLaunchConfiguration, uniqueId: String): Executable?
+  fun createExecutable(project: Project, configuration: MultiLaunchConfiguration, uniqueId: String): Executable?
 }

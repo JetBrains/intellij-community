@@ -83,8 +83,8 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       var lastArgumentIsSupplier = false
       if (parameters.isEmpty() || arguments.isEmpty()) {
         //try to find String somewhere else
-        logStringArgument = findAdditionalString(node, searcher) ?: return true
-        argumentCount = findAdditionalArguments(node, searcher, true) ?: return true
+        logStringArgument = findMessageSetterStringArg(node, searcher) ?: return true
+        argumentCount = findAdditionalArgumentCount(node, searcher, true) ?: return true
       }
       else {
         val index = getIndex(parameters) ?: return true
@@ -100,7 +100,7 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
             return true
           }
         }
-        val additionalArgumentCount: Int = findAdditionalArguments(node, searcher, false) ?: return true
+        val additionalArgumentCount: Int = findAdditionalArgumentCount(node, searcher, false) ?: return true
         argumentCount += additionalArgumentCount
         logStringArgument = arguments[index - 1]
       }
@@ -165,8 +165,8 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
     private val BUILDER_CHAIN = setOf("addKeyValue", "addMarker", "setCause")
     private val ADD_ARGUMENT = "addArgument"
     private val SET_MESSAGE = "setMessage"
-    private fun findAdditionalString(node: UCallExpression,
-                                     loggerType: LoggerTypeSearcher): UExpression? {
+    private fun findMessageSetterStringArg(node: UCallExpression,
+                                           loggerType: LoggerTypeSearcher): UExpression? {
       if (loggerType != SLF4J_BUILDER_HOLDER) {
         return null
       }
@@ -196,9 +196,12 @@ class LoggingPlaceholderCountMatchesArgumentCountInspection : AbstractBaseUastLo
       return null
     }
 
-    private fun findAdditionalArguments(node: UCallExpression,
-                                        loggerType: LoggerTypeSearcher,
-                                        allowIntermediateMessage: Boolean): Int? {
+    /**
+     * @return The count of additional arguments, or null if it is impossible to count.
+     */
+    private fun findAdditionalArgumentCount(node: UCallExpression,
+                                            loggerType: LoggerTypeSearcher,
+                                            allowIntermediateMessage: Boolean): Int? {
       if (loggerType != SLF4J_BUILDER_HOLDER) {
         return 0
       }

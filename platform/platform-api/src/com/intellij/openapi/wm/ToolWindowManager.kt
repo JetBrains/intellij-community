@@ -85,7 +85,7 @@ abstract class ToolWindowManager {
     return registerToolWindow(RegisterToolWindowTask(id = id, anchor = anchor, canCloseContent = canCloseContent, canWorkInDumbMode = false))
   }
 
-  @ApiStatus.Internal
+  @Internal
   abstract fun registerToolWindow(task: RegisterToolWindowTask): ToolWindow
 
   /**
@@ -121,13 +121,12 @@ abstract class ToolWindowManager {
   abstract val toolWindowIdSet: Set<String>
 
   /**
-   * @return `ID` of currently active tool window or `null` if there is no active
-   * tool window.
+   * @return `ID` of currently active tool window or `null` if there is no active tool window.
    */
   abstract val activeToolWindowId: String?
 
   /**
-   * @return `ID` of tool window that was activated last time.
+   * @return `ID` of tool window activated last time.
    */
   abstract val lastActiveToolWindowId: String?
 

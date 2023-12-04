@@ -38,6 +38,11 @@ public class K1IdeK2CodeBreakpointHighlightingTestGenerated extends AbstractK1Id
         runTest("testData/highlighting/conditionalReturnInLambda.kt");
     }
 
+    @TestMetadata("defaultLambdaParameter.kt")
+    public void testDefaultLambdaParameter() throws Exception {
+        runTest("testData/highlighting/defaultLambdaParameter.kt");
+    }
+
     @TestMetadata("inlineOnlyFunctions.kt")
     public void testInlineOnlyFunctions() throws Exception {
         runTest("testData/highlighting/inlineOnlyFunctions.kt");

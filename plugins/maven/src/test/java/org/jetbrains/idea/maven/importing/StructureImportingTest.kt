@@ -15,8 +15,6 @@ import java.io.File
 import java.io.IOException
 
 class StructureImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
   @Test
   fun testInheritProjectJdkForModules() = runBlocking {
     importProjectAsync("""
@@ -1036,12 +1034,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        """.trimIndent())
 
     val disabledProfiles = listOf("one")
-    if (isNewImportingProcess) {
-      importViaNewFlow(listOf(myProjectPom), true, emptyList<String>())
-    }
-    else {
-      doImportProjectsLegacyWay(listOf(myProjectPom), true, disabledProfiles)
-    }
+    doImportProjects(listOf(myProjectPom), true, disabledProfiles)
     assertModules("project-two")
   }
 }

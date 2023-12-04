@@ -231,8 +231,8 @@ abstract class AbstractLineMarkersTest : KotlinLightCodeInsightFixtureTestCase()
                 } catch (failure: FileComparisonFailure) {
                     throw FileComparisonFailure(
                         error.message + "\n" + failure.message,
-                        failure.expected,
-                        failure.actual,
+                        failure.expectedStringPresentation,
+                        failure.actualStringPresentation,
                         failure.filePath
                     )
                 }

@@ -22,6 +22,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import java.util.function.Function;
 
 public final class PSIPresentationBgRendererWrapper implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
                                                                AutoCompletionContributor, PossibleSlowContributor, EssentialContributor,
-                                                               SearchEverywhereExtendedInfoProvider {
+                                                               SearchEverywhereExtendedInfoProvider, SearchEverywherePreviewProvider {
   private final AbstractGotoSEContributor myDelegate;
 
   public PSIPresentationBgRendererWrapper(AbstractGotoSEContributor delegate) { myDelegate = delegate; }
@@ -111,6 +112,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     /**
      * @see #create(Object, Object)
      */
+    @ApiStatus.Internal
     public PsiItemWithPresentation(PsiElement first, TargetPresentation second) {
       super(first, second);
     }
@@ -318,5 +320,9 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     if (o instanceof PsiItemWithPresentation) return ((PsiItemWithPresentation)o).getItem();
     if (o instanceof PsiElementNavigationItem) return ((PsiElementNavigationItem)o).getTargetElement();
     return null;
+  }
+
+  public AbstractGotoSEContributor getDelegate() {
+    return myDelegate;
   }
 }

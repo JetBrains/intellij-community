@@ -56,6 +56,7 @@ public class Maven3XProjectResolver {
   @Nullable private final MavenWorkspaceMap myWorkspaceMap;
   @NotNull private final Maven3ServerConsoleLogger myConsoleWrapper;
   @NotNull private final ArtifactRepository myLocalRepository;
+  @NotNull private final Properties userProperties;
   private final boolean myResolveInParallel;
 
   public Maven3XProjectResolver(@NotNull Maven3XServerEmbedder embedder,
@@ -65,6 +66,7 @@ public class Maven3XProjectResolver {
                                 @Nullable MavenWorkspaceMap workspaceMap,
                                 @NotNull Maven3ServerConsoleLogger consoleWrapper,
                                 @NotNull ArtifactRepository localRepository,
+                                @NotNull Properties userProperties,
                                 boolean resolveInParallel) {
     myEmbedder = embedder;
     myUpdateSnapshots = updateSnapshots;
@@ -73,14 +75,15 @@ public class Maven3XProjectResolver {
     myWorkspaceMap = workspaceMap;
     myConsoleWrapper = consoleWrapper;
     myLocalRepository = localRepository;
+    this.userProperties = userProperties;
     myResolveInParallel = resolveInParallel;
   }
 
   @NotNull
   public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
-                                                                @NotNull Collection<File> files,
-                                                                @NotNull List<String> activeProfiles,
-                                                                @NotNull List<String> inactiveProfiles) {
+                                                               @NotNull Collection<File> files,
+                                                               @NotNull List<String> activeProfiles,
+                                                               @NotNull List<String> inactiveProfiles) {
     try {
       DependencyTreeResolutionListener listener = new DependencyTreeResolutionListener(myConsoleWrapper);
 
@@ -107,10 +110,10 @@ public class Maven3XProjectResolver {
                                                              @NotNull Collection<File> files,
                                                              @NotNull List<String> activeProfiles,
                                                              @NotNull List<String> inactiveProfiles,
-                                                             List<ResolutionListener> listeners) throws RemoteException {
+                                                             List<ResolutionListener> listeners) {
     File file = !files.isEmpty() ? files.iterator().next() : null;
     files.forEach(f -> MavenServerStatsCollector.fileRead(f));
-    MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles);
+    MavenExecutionRequest request = myEmbedder.createRequest(file, activeProfiles, inactiveProfiles, userProperties);
 
     request.setUpdateSnapshots(myUpdateSnapshots);
 
@@ -168,7 +171,7 @@ public class Maven3XProjectResolver {
         task.updateTotalRequests(buildingResultsToResolveDependencies.size());
         boolean runInParallel = myResolveInParallel;
         Collection<Maven3ExecutionResult> execResults =
-          ParallelRunner.execute(
+          ParallelRunnerForServer.execute(
             runInParallel,
             buildingResultsToResolveDependencies.entrySet(), entry -> {
               if (task.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());
@@ -334,10 +337,10 @@ public class Maven3XProjectResolver {
     return buildingResults;
   }
 
-  private void buildSinglePom(ProjectBuilder builder,
-                              List<ProjectBuildingResult> buildingResults,
-                              ProjectBuildingRequest projectBuildingRequest,
-                              File pomFile) {
+  private static void buildSinglePom(ProjectBuilder builder,
+                                     List<ProjectBuildingResult> buildingResults,
+                                     ProjectBuildingRequest projectBuildingRequest,
+                                     File pomFile) {
     try {
       ProjectBuildingResult build = builder.build(pomFile, projectBuildingRequest);
       buildingResults.add(build);

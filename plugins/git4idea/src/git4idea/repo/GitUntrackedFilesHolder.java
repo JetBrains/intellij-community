@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsManagedFilesHolder;
-import com.intellij.openapi.vcs.impl.projectlevelman.RecursiveFilePathSet;
+import com.intellij.openapi.vcs.util.paths.RecursiveFilePathSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.ComparableObject;
@@ -133,7 +133,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     synchronized (LOCK) {
       if (myEverythingDirty) return;
       for (FilePath filePath : files) {
-        if (myIgnoredFiles.contains(filePath) ||
+        if (myIgnoredFiles.containsExplicitly(filePath) ||
             !myIgnoredFiles.hasAncestor(filePath)) {
           myDirtyFiles.add(filePath);
         }

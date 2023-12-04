@@ -12,6 +12,7 @@ function __jetbrains_intellij_send_message
 end
 
 function __jetbrains_intellij_fish_preexec -a commandline --on-event fish_preexec
+  __jetbrains_intellij_clear_all_and_move_cursor_to_top_left
   __jetbrains_intellij_debug_log 'command_started: %s' "$commandline"
   __jetbrains_intellij_send_message 'command_started;command=%s;current_directory=%s' \
      (__jetbrains_intellij_encode "$commandline") \
@@ -36,4 +37,8 @@ function __jetbrains_intellij_debug_log
     builtin printf $argv
     builtin printf '\n'
   end
+end
+
+function __jetbrains_intellij_clear_all_and_move_cursor_to_top_left
+  builtin printf '\e[3J\e[1;1H'
 end

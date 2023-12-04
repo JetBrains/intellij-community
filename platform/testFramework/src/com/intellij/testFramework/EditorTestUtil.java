@@ -742,13 +742,17 @@ public final class EditorTestUtil {
     Project project = editor.getProject();
     assertNotNull(project);
     UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);
-    CurrentEditorProvider savedProvider = undoManager.getEditorProvider();
-    undoManager.setEditorProvider(() -> fileEditor); // making undo work in test
+    undoManager.setOverriddenEditorProvider(new CurrentEditorProvider() {
+      @Override
+      public @Nullable FileEditor getCurrentEditor(@Nullable Project project) {
+        return fileEditor;
+      }
+    });
     try {
       runnable.run();
     }
     finally {
-      undoManager.setEditorProvider(savedProvider);
+      undoManager.setOverriddenEditorProvider(null);
     }
   }
 

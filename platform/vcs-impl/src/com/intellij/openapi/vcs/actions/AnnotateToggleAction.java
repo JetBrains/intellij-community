@@ -65,7 +65,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     super.update(e);
     Provider provider = getProvider(e);
     Presentation presentation = e.getPresentation();
-    presentation.setEnabled(provider != null && !provider.isSuspended(e));
+    presentation.setEnabled(provider != null);
     if (provider != null) {
       presentation.setText(provider.getActionName(e));
     }
@@ -89,7 +89,7 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     Provider provider = getProvider(e);
-    return provider != null && provider.isAnnotated(e);
+    return provider != null && (provider.isAnnotated(e) || provider.isSuspended(e));
   }
 
   @Override
@@ -104,7 +104,9 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     }
 
     Provider provider = getProvider(e);
-    if (provider != null) provider.perform(e, selected);
+    if (provider != null && !provider.isSuspended(e)) {
+      provider.perform(e, selected);
+    }
   }
 
   public static void doAnnotate(@NotNull final Editor editor,
@@ -380,6 +382,9 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
     @CalledInAny
     boolean isEnabled(AnActionEvent e);
 
+    /**
+     * @return whether annotations are already being computed in background
+     */
     @CalledInAny
     boolean isSuspended(@NotNull AnActionEvent e);
 

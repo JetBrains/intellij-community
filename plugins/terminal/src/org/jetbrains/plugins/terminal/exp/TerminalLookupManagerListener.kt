@@ -52,7 +52,9 @@ class TerminalLookupManagerListener : LookupManagerListener {
         return
       }
       val typedString = lookup.itemPattern(chosenItem)
-      if (typedString == chosenItem.lookupString) {
+      if (typedString == chosenItem.lookupString
+          // if typed string differs only by the absence of the trailing slash, execute the command as well
+          || "$typedString/" == chosenItem.lookupString) {
         executeCommand(lookup)
       }
     }

@@ -173,7 +173,7 @@ public class MethodMayBeStaticInspection extends BaseInspection {
       registerMethodError(method);
     }
 
-    private boolean isExcluded(PsiMethod method) {
+    private static boolean isExcluded(PsiMethod method) {
       return SerializationUtils.isWriteObject(method) || SerializationUtils.isReadObject(method) ||
              SerializationUtils.isWriteReplace(method) || SerializationUtils.isReadResolve(method);
     }

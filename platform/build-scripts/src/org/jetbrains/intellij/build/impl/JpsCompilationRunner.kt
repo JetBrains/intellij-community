@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.devkit.runtimeModuleRepository.jps.build.RuntimeModuleRepositoryBuildConstants
 import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -316,7 +316,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
           .setAttribute("modules", moduleSet.joinToString(separator = ", "))
           .setAttribute("incremental", context.options.incrementalCompilation)
           .setAttribute("cacheDir", compilationData.dataStorageRoot.toString())
-          .useWithScope {
+          .useWithScopeBlocking {
             Standalone.runBuild(
               { context.projectModel }, compilationData.dataStorageRoot.toFile(),
               mapOf(GlobalOptions.BUILD_DATE_IN_SECONDS to "${context.options.buildDateInSeconds}"),

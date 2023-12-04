@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.DeleteAction
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.maven.testFramework.utils.importMavenProjects
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -35,17 +34,14 @@ import org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider
 import org.jetbrains.idea.maven.project.actions.RemoveManagedFilesAction
 import org.jetbrains.idea.maven.project.projectRoot.MavenModuleStructureExtension
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
-import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Assume
 import org.junit.Test
 
 class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     initProjectsManager(false)
-    Assume.assumeFalse(MavenUtil.isLinearImportEnabled())
   }
 
   @Test
@@ -119,19 +115,15 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                                              """.trimIndent())
     importProjectAsync(m1)
     assertModules("m1")
-    resolveDependenciesAndImport() // ensure no pending imports
     waitForImportWithinTimeout {
       projectsManager.addManagedFiles(listOf(m2))
     }
-    resolveDependenciesAndImport()
     assertModules("m1", "m2")
 
-    //configConfirmationForYesAnswer();
     MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true)
     waitForImportWithinTimeout {
       projectsManager.removeManagedFiles(listOf(m2))
     }
-    resolveDependenciesAndImport()
     assertModules("m1")
   }
 
@@ -157,8 +149,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>project</artifactId>
                        <version>2
                        """.trimIndent())
-    waitForReadingCompletion()
-    resolveDependenciesAndImport()
     assertFalse(called[0]) // on update
   }
 
@@ -375,8 +365,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     writeAction {
       ModuleDeleteProvider.detachModules(myProject, arrayOf(module))
     }
-    //myProjectsManager.performScheduledImportInTests();
-    importMavenProjects(projectsManager)
     assertNull(ModuleManager.getInstance(myProject).findModuleByName("m"))
     assertTrue(projectsManager.isIgnored(projectsManager.findProject(m)!!))
   }
@@ -554,7 +542,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>
                     """.trimIndent())
     val log = StringBuilder()
-    //myProjectsManager.performScheduledImportInTests();
     projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
       override fun projectsUpdated(updated: List<Pair<MavenProject, MavenProjectChanges>>, deleted: List<MavenProject>) {
         for (each in updated) {
@@ -568,7 +555,6 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
     withContext(Dispatchers.EDT) {
       FileContentUtil.reparseFiles(myProject, projectsManager.getProjectsFiles(), true)
     }
-    projectsManager.waitForReadingCompletion()
     assertTrue(log.toString(), log.length == 0)
   }
 

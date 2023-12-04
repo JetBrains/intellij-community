@@ -31,10 +31,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -299,13 +296,14 @@ final class DirectoryLock {
             var otherPid = Long.parseLong(Files.readString(lockFile));
             var handle = ProcessHandle.of(otherPid).orElse(null);
             if (handle != null) {
-              var command = handle.info().command().orElse("");
-              if (command.contains("java") || command.contains(ApplicationNamesInfo.getInstance().getScriptName())) {
+              var command = Path.of(handle.info().command().orElse(""));
+              if (command.endsWith(SystemInfoRt.isWindows ? "java.exe" : "java") ||
+                  command.endsWith(ApplicationNamesInfo.getInstance().getScriptName() + (SystemInfoRt.isWindows ? "64.exe" : ""))) {
                 throw new IllegalStateException(BootstrapBundle.message("bootstrap.error.still.running", command, Long.toString(otherPid), lockFile), e);
               }
             }
           }
-          catch (NumberFormatException ignored) { }
+          catch (NumberFormatException | InvalidPathException ignored) { }
           Files.deleteIfExists(lockFile);
         }
         catch (IOException ex) {

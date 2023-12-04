@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -38,7 +37,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
 
   public RunContextAction(@NotNull Executor executor) {
     super(ExecutionBundle.messagePointer("perform.action.with.context.configuration.action.name", executor.getStartActionText()),
-          Presentation.NULL_STRING, IconLoader.createLazy(() -> executor.getIcon()));
+          Presentation.NULL_STRING,
+          executor::getIcon);
     myExecutor = executor;
   }
 

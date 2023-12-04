@@ -59,9 +59,9 @@ abstract class CustomComponentEvaluator(name: String) : XFullValueEvaluator() {
     }
   }
 
-  private class EvaluationCallback(private val myPanel: JPanel,
-                                   private val myEvaluator: CustomComponentEvaluator,
-                                   private val myProject: Project) : XFullValueEvaluationCallback {
+  protected class EvaluationCallback(private val myPanel: JComponent,
+                                     private val myEvaluator: CustomComponentEvaluator,
+                                     private val myProject: Project) : XFullValueEvaluationCallback {
     private val myObsolete = AtomicBoolean(false)
     override fun evaluated(fullValue: String) {
       evaluated(fullValue, null)

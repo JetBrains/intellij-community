@@ -3,18 +3,20 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.roots.AnnotationOrderRootType
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.platform.workspace.jps.entities.*
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.LibraryRoot
-import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
-import com.intellij.platform.workspace.jps.entities.LibraryTableId
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import org.junit.*
 import org.junit.rules.TemporaryFolder
 
@@ -37,8 +39,8 @@ class JpsGlobalEntitiesSavingTest {
   fun `test global libraries saving`() {
     // TODO:: Investigate failing on TC
     Assume.assumeFalse("Temporary failed in check of expected file content", UsefulTestCase.IS_UNDER_TEAMCITY)
-    copyAndLoadGlobalEntities(expectedFile = "saving", testDir = temporaryFolder.newFolder(),
-                              parentDisposable = disposableRule.disposable) { entitySource ->
+    copyAndLoadGlobalEntities(expectedFile = "libraries/saving", testDir = temporaryFolder.newFolder(),
+                              parentDisposable = disposableRule.disposable) { entitySource, _ ->
       val librariesNames = listOf("com.gradle", "org.maven")
       val libraryTable = LibraryTablesRegistrar.getInstance().libraryTable
       libraryTable as GlobalLibraryTableBridgeImpl
@@ -68,4 +70,55 @@ class JpsGlobalEntitiesSavingTest {
       Assert.assertEquals(librariesNames, libraryBridges.map { it.name })
     }
   }
+
+  @Test
+  fun `test global sdk saving`() {
+    Assume.assumeTrue("Test has to be executed on the new implementation of SDK", GlobalSdkTableBridge.isEnabled())
+    // TODO:: Investigate failing on TC
+    Assume.assumeFalse("Temporary failed in check of expected file content", UsefulTestCase.IS_UNDER_TEAMCITY)
+    copyAndLoadGlobalEntities(expectedFile = "sdk/saving", testDir = temporaryFolder.newFolder(),
+                              parentDisposable = disposableRule.disposable) { entitySource, _ ->
+      OrderRootType.EP_NAME.point.registerExtension(AnnotationOrderRootType(), disposableRule.disposable)
+      val sdkNames = listOf("jbr-2048", "amazon.crevetto")
+      val sdks = ProjectJdkTable.getInstance().allJdks
+      Assert.assertEquals(0, sdks.size)
+
+      val workspaceModel = GlobalWorkspaceModel.getInstance()
+      Assert.assertEquals(0, workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList().size)
+
+      val virtualFileManager = VirtualFileUrlManager.getGlobalInstance()
+      ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+          workspaceModel.updateModel("Test update") { builder ->
+            var sdkRoots = listOf(SdkRoot(virtualFileManager.fromUrl("/Contents/Home!/java.compiler"), SdkRootTypeId(OrderRootType.CLASSES.customName)),
+                                  SdkRoot(virtualFileManager.fromUrl("/lib/src.zip!/java.se"), SdkRootTypeId(OrderRootType.SOURCES.customName)))
+            val jbrSdkEntity = SdkEntity(sdkNames[0], "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/jbr-2048/Contents/Home"),
+                                         sdkRoots, "", entitySource)
+            builder.addEntity(jbrSdkEntity)
+
+            sdkRoots = listOf(SdkRoot(virtualFileManager.fromUrl("/Contents/plugins/java/lib/resources/jdkAnnotations.jar"), SdkRootTypeId(AnnotationOrderRootType.getInstance().customName)))
+            val amazonSdkEntity = SdkEntity(sdkNames[1], "JavaSDK", virtualFileManager.fromUrl("/Library/Java/JavaVirtualMachines/amazon.crevetto/Contents/Home"),
+                                            sdkRoots, "", entitySource)
+            builder.addEntity(amazonSdkEntity)
+          }
+        }
+      }
+
+      val sdkBridges = ProjectJdkTable.getInstance().allJdks
+      Assert.assertEquals(sdkNames.size, sdkBridges.size)
+      Assert.assertEquals(sdkNames, sdkBridges.map { it.name })
+    }
+  }
+
+  private val OrderRootType.customName: String
+    get() {
+      if (this is PersistentOrderRootType) {
+        // Only `NativeLibraryOrderRootType` don't have rootName all other elements with it
+        return sdkRootName ?: name()
+      }
+      else {
+        // It's only for `DocumentationRootType` this is the only class that doesn't extend `PersistentOrderRootType`
+        return name()
+      }
+    }
 }

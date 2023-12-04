@@ -13,7 +13,8 @@ public final class GitCommandProvider implements CommandProvider {
     return Map.ofEntries(
       Map.entry(GitCheckoutCommand.PREFIX, GitCheckoutCommand::new),
       Map.entry(ShowFileHistoryCommand.PREFIX, ShowFileHistoryCommand::new),
-      Map.entry(GitCommitCommand.PREFIX, GitCommitCommand::new)
+      Map.entry(GitCommitCommand.PREFIX, GitCommitCommand::new),
+      Map.entry(FilterVcsLogTabCommand.PREFIX, FilterVcsLogTabCommand::new)
     );
   }
 }

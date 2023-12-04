@@ -26,7 +26,8 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.Font
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import javax.swing.JEditorPane
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
@@ -50,7 +51,7 @@ internal object UpdateInfoPanel {
   @JvmStatic
   fun create(newBuild: BuildInfo,
              patches: UpdateChain?,
-             testPatch: File?,
+             testPatch: Path?,
              writeProtected: Boolean,
              @NlsContexts.Label licenseInfo: String?,
              licenseWarn: Boolean,
@@ -125,9 +126,9 @@ internal object UpdateInfoPanel {
   }
 
   @NlsContexts.DetailedDescription
-  private fun infoLabelText(newBuild: BuildInfo, patches: UpdateChain?, testPatch: File?, appInfo: ApplicationInfo): String {
+  private fun infoLabelText(newBuild: BuildInfo, patches: UpdateChain?, testPatch: Path?, appInfo: ApplicationInfo): String {
     val patchSize = when {
-      testPatch != null -> max(testPatch.length() shr 20, 1).toString()
+      testPatch != null -> max(Files.size(testPatch) shr 20, 1).toString()
       patches != null && !patches.size.isNullOrBlank() -> {
         val match = PATCH_SIZE_RANGE.matchEntire(patches.size)
         if (match != null) match.groupValues[1] else patches.size

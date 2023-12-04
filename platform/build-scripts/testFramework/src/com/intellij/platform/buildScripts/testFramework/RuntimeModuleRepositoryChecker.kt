@@ -112,6 +112,13 @@ class RuntimeModuleRepositoryChecker private constructor(
       repository.collectDependencies(mainModule.moduleDescriptor, mainModuleGroupPath, allProductModules)
     }
     productModules.bundledPluginModuleGroups.forEach { group ->
+      if (group.includedModules.isEmpty()) {
+        softly.collectAssertionError(AssertionError("""
+           |No modules from '$group' are included in a product running in '${currentMode.id}' mode, so corresponding plugin won't be loaded.
+           |Probably it indicates that some incorrect dependency was added to the main plugin module.  
+        """.trimMargin()))
+        return@forEach
+      }
       val pluginPath = FList.singleton("bundled plugin ${group.includedModules[0].moduleDescriptor.moduleId.stringId}")
       group.includedModules.forEach {
         repository.collectDependencies(it.moduleDescriptor, pluginPath.prepend(it.moduleDescriptor.moduleId.stringId), allProductModules)

@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.NotNull;
@@ -116,13 +117,12 @@ public final class VcsFacadeImpl extends VcsFacade {
 
   @Override
   public @NotNull List<PsiFile> getChangedFilesFromDirs(@NotNull Project project,
-                                                        @NotNull List<? extends PsiDirectory> dirs) {
+                                                        @NotNull List<? extends PsiDirectory> psiDirs) {
     ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    Collection<Change> changes = new ArrayList<>();
 
-    for (PsiDirectory dir : dirs) {
-      changes.addAll(changeListManager.getChangesIn(dir.getVirtualFile()));
-    }
+    Collection<Change> allChanges = changeListManager.getAllChanges();
+    List<VirtualFile> dirs = ContainerUtil.map(psiDirs, dir -> dir.getVirtualFile());
+    List<? extends Change> changes = VcsImplUtil.filterChangesUnderFiles(allChanges, dirs).toList();
 
     return getChangedFiles(project, changes);
   }

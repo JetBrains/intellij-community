@@ -76,9 +76,6 @@ import static org.jdom.JDOMConstants.NS_PREFIX_XML;
  * elements and content, directly access the element's textual content,
  * manipulate its attributes, and manage namespaces.
  * <p>
- * See {@link NamespaceAware} and {@link #getNamespacesInScope()} for more
- * details on what the Namespace scope is and how it is managed in JDOM and
- * specifically by this Element class.
  *
  * @author Brett McLaughlin
  * @author Jason Hunter
@@ -92,7 +89,6 @@ import static org.jdom.JDOMConstants.NS_PREFIX_XML;
  * @author Bradley S. Huffman
  * @author Victor Toni
  * @author Rolf Lear
- * @see NamespaceAware
  * @see Content
  */
 public class Element extends Content implements Parent, Serializable {
@@ -179,7 +175,7 @@ public class Element extends Content implements Parent, Serializable {
    *                              name or the given URI is illegal as a
    *                              namespace URI
    */
-  public Element(final String name, final String uri) {
+  public Element(String name, String uri) {
     this(name, Namespace.getNamespace(NS_PREFIX_DEFAULT, uri));
   }
 
@@ -195,7 +191,7 @@ public class Element extends Content implements Parent, Serializable {
    *                              namespace prefix, or the given URI is
    *                              illegal as a namespace URI
    */
-  public Element(final String name, final String prefix, final String uri) {
+  public Element(String name, String prefix, String uri) {
     this(name, Namespace.getNamespace(prefix, uri));
   }
 
@@ -1294,7 +1290,7 @@ public class Element extends Content implements Parent, Serializable {
    */
   @Override
   public Element clone() {
-    final Element element = (Element)super.clone();
+    Element element = (Element)super.clone();
 
     // name and namespace are references to immutable objects
     // so super.clone() handles them ok
@@ -1671,7 +1667,7 @@ public class Element extends Content implements Parent, Serializable {
 
   // maven uses serialization - jdom must support serialization
 
-  private void writeObject(final ObjectOutputStream out) throws IOException {
+  private void writeObject(ObjectOutputStream out) throws IOException {
     // sends out the name and namespace.
     out.defaultWriteObject();
     if (hasAdditionalNamespaces()) {
@@ -1695,7 +1691,7 @@ public class Element extends Content implements Parent, Serializable {
       out.writeInt(0);
     }
 
-    final int cs = content.size();
+    int cs = content.size();
     out.writeInt(cs);
     for (Content value : content) {
       out.writeObject(value);

@@ -7,7 +7,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.MethodSignatureUtil
 import com.intellij.psi.util.PsiTreeUtil
@@ -19,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
-import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
@@ -29,6 +27,8 @@ import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isInheritable
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
+import org.jetbrains.kotlin.idea.searching.inheritors.DirectKotlinOverridingCallableSearch
+import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -258,12 +258,24 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         searchDeeply: Boolean,
         processor: (superMember: PsiElement, overridingMember: PsiElement) -> Boolean
     ): Boolean {
-        TODO()
+        for (member in members) {
+            if (member is KtCallableDeclaration) {
+                val iterator = if (searchDeeply) {
+                    member.findAllOverridings().filterIsInstance<KtElement>().iterator()
+                } else {
+                    DirectKotlinOverridingCallableSearch.search(member).iterator()
+                }
+                for (psiElement in iterator) {
+                    if (!processor(member, psiElement)) return false
+                }
+            }
+        }
+        return true
     }
 
-    override fun findDeepestSuperMethodsNoWrapping(method: PsiElement): List<PsiElement> {
+    override fun findSuperMethodsNoWrapping(method: PsiElement, deepest: Boolean): List<PsiElement> {
         return when (val element = method.unwrapped) {
-            is PsiMethod -> element.findDeepestSuperMethods().toList()
+            is PsiMethod -> (if (deepest) element.findDeepestSuperMethods() else element.findSuperMethods()).toList()
             is KtCallableDeclaration -> analyze(element) {
                 // it's not possible to create symbol for function type parameter, so we need to process this case separately
                 // see KTIJ-25760 and KTIJ-25653
@@ -271,7 +283,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
                 val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
 
-                val allSuperMethods = symbol.getAllOverriddenSymbols()
+                val allSuperMethods = if (deepest) symbol.getAllOverriddenSymbols() else symbol.getDirectlyOverriddenSymbols()
                 val deepestSuperMethods = allSuperMethods.filter {
                     when (it) {
                         is KtFunctionSymbol -> !it.isOverride
@@ -331,7 +343,11 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 val callExpression = element.getNonStrictParentOfType<KtCallElement>() ?: return false
                 return withResolvedCall(callExpression) { call ->
                     when (call) {
-                        is KtDelegatedConstructorCall -> call.symbol == ktDeclaration.getSymbol()
+                        is KtDelegatedConstructorCall -> {
+                            val constructorSymbol = call.symbol
+                            val declarationSymbol = ktDeclaration.getSymbol()
+                            constructorSymbol == declarationSymbol || constructorSymbol.getContainingSymbol() == declarationSymbol
+                        }
                         else -> false
                     }
                 } ?: false

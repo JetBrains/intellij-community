@@ -5,25 +5,32 @@ import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.WrappingRunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.impl.RunConfigurationSelector
+import com.intellij.execution.multilaunch.MultiLaunchConfiguration
+import com.intellij.execution.multilaunch.execution.ExecutionMode
+import com.intellij.execution.multilaunch.execution.executables.Executable
+import com.intellij.execution.multilaunch.execution.executables.ExecutableTemplate
+import com.intellij.execution.multilaunch.state.ExecutableSnapshot
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.ide.DataManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.jetbrains.rd.util.lifetime.Lifetime
-import com.intellij.execution.multilaunch.MultiLaunchConfiguration
-import com.intellij.execution.multilaunch.execution.BeforeExecuteTask
-import com.intellij.execution.multilaunch.execution.ExecutionMode
-import com.intellij.execution.multilaunch.execution.executables.Executable
-import com.intellij.execution.multilaunch.execution.executables.ExecutableTemplate
-import com.intellij.execution.multilaunch.state.ExecutableSnapshot
+import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
+import com.intellij.internal.statistic.StructuredIdeActivity
 
 @Service(Service.Level.PROJECT)
 class RunConfigurationExecutableManager(private val project: Project) : ExecutableTemplate {
@@ -32,7 +39,7 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
   }
 
   override val type = "runConfig"
-  override fun createExecutable(configuration: MultiLaunchConfiguration, uniqueId: String): Executable? {
+  override fun createExecutable(project: Project, configuration: MultiLaunchConfiguration, uniqueId: String): Executable? {
     return listExecutables(configuration).firstOrNull { it.uniqueId == uniqueId }
   }
 
@@ -45,24 +52,31 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  class RunConfigurationExecutable(private val configuration: MultiLaunchConfiguration, private val project: Project, val settings: RunnerAndConfigurationSettings, template: RunConfigurationExecutableManager) : Executable(
+  class RunConfigurationExecutable(
+    private val configuration: MultiLaunchConfiguration,
+    private val project: Project,
+    val settings: RunnerAndConfigurationSettings,
+    template: RunConfigurationExecutableManager
+  ) : Executable(
     settings.uniqueID,
     settings.configuration.name,
     settings.configuration.icon,
     template
   ) {
-    override val beforeExecuteTasks: List<BeforeExecuteTask>
-      get() = getBeforeRunTasks(settings.configuration)
-        .map { BeforeRunTaskProvider.getProvider(project, it.providerId)?.name ?: it.providerId.toString()}
-        .map { BeforeExecuteTask(it) }
-
-    override val supportsDebugging: Boolean
-      get() = true
+    override val supportsDebugging = true
+    override val supportsEditing = true
 
     override fun saveAttributes(snapshot: ExecutableSnapshot) {}
     override fun loadAttributes(snapshot: ExecutableSnapshot) {}
 
-    override suspend fun execute(mode: ExecutionMode, lifetime: Lifetime): RunContentDescriptor? {
+    override fun performEdit() {
+      val dialog = EditConfigurationsDialog.findInstanceFromFocus() ?: return
+      val dialogContext = DataManager.getInstance().getDataContext(dialog.getPreferredFocusedComponent())
+      val selector = RunConfigurationSelector.KEY.getData(dialogContext) ?: return
+      selector.select(settings.configuration)
+    }
+
+    override suspend fun execute(mode: ExecutionMode, activity: StructuredIdeActivity, lifetime: Lifetime): RunContentDescriptor? {
       val executor = when (mode) {
         ExecutionMode.Run -> DefaultRunExecutor.getRunExecutorInstance()
         ExecutionMode.Debug -> ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG)!!
@@ -76,14 +90,17 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
           null,
           null)
         { executionEnvironment ->
+          executionEnvironment.putUserData(ExecutionManagerImpl.PARENT_PROFILE_IDE_ACTIVITY, activity)
           val oldCallback = executionEnvironment.callback
           executionEnvironment.callback = object : ProgramRunner.Callback {
-            override fun processStarted(rcd: RunContentDescriptor) {
-              rcd.isActivateToolWindowWhenAdded = configuration.parameters.activateToolWindows
-              rcd.isAutoFocusContent = configuration.parameters.activateToolWindows
-              //rcd.contentToolWindowId = "Services"
-              cont.resume(rcd, null)
-              oldCallback?.processStarted(rcd)
+            override fun processStarted(runContentDescriptor: RunContentDescriptor?) {
+              runContentDescriptor?.apply {
+                isActivateToolWindowWhenAdded = configuration.parameters.activateToolWindows
+                isAutoFocusContent = configuration.parameters.activateToolWindows
+              }
+
+              cont.resume(runContentDescriptor, null)
+              oldCallback?.processStarted(runContentDescriptor)
             }
             override fun processNotStarted() {
               cont.cancel() // TODO: figure out if this is cancel or error or what
@@ -97,15 +114,34 @@ class RunConfigurationExecutableManager(private val project: Project) : Executab
         ExecutionManagerImpl.stopProcess(runContentDescriptor)
       }
 
-      suspendCancellableCoroutine { cont ->
-        runContentDescriptor.processHandler?.addProcessListener(object : ProcessAdapter() {
-          override fun processTerminated(event: ProcessEvent) {
-            cont.resume(Unit, null)
+      when (runContentDescriptor) {
+        null -> {
+          val message = HtmlBuilder()
+            .append(HtmlChunk
+              .text(ExecutionBundle.message ("run.configurations.multilaunch.notification.title.incompatible.configuration.type", settings.configuration.type.displayName))
+              .wrapWith("b"))
+            .br()
+            .append(ExecutionBundle.message("run.configurations.multilaunch.notification.description.incompatible.configuration.type"))
+            .toString()
+
+          ToolWindowManager.getInstance(project).notifyByBalloon(
+            ToolWindowId.SERVICES,
+            MessageType.WARNING,
+            message
+          )
+        }
+        else -> {
+          suspendCancellableCoroutine { cont ->
+            runContentDescriptor.processHandler?.addProcessListener(object : ProcessAdapter() {
+              override fun processTerminated(event: ProcessEvent) {
+                cont.resume(Unit, null)
+              }
+              override fun processNotStarted() {
+                cont.cancel()
+              }
+            })
           }
-          override fun processNotStarted() {
-            cont.cancel()
-          }
-        })
+        }
       }
 
       return runContentDescriptor

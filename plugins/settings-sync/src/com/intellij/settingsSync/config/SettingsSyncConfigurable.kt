@@ -24,6 +24,7 @@ import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import com.intellij.settingsSync.UpdateResult.*
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
+import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ComponentPredicate

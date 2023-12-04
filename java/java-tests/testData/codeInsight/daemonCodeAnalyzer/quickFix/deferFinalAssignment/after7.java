@@ -4,7 +4,7 @@ import java.io.*;
 class a {
     final int n;
     a(int n) {
-        int n1<caret>;
+        int <caret>n1;
         n1 =n;
         n1 =n;
         this.n = n1;

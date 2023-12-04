@@ -26,7 +26,11 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
 
   fun isBuiltInTestEventsUsed(): Boolean = isGradleAtLeast("7.6")
 
+  fun isIntellijTestEventsUsed(): Boolean = !isBuiltInTestEventsUsed()
+
   fun isTestLauncherUsed(): Boolean = isGradleAtLeast("8.3")
+
+  fun isOpentest4jSupportedByGradleJunit4Integration(): Boolean = isGradleAtLeast("8.4")
 
   fun testJunit5Project(gradleVersion: GradleVersion, action: () -> Unit) {
     assumeThatJunit5IsSupported(gradleVersion)
@@ -35,6 +39,10 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
 
   fun testJunit4Project(gradleVersion: GradleVersion, action: () -> Unit) {
     test(gradleVersion, JAVA_JUNIT4_FIXTURE, action)
+  }
+
+  fun testJunit4Opentest4jProject(gradleVersion: GradleVersion, action: () -> Unit) {
+    test(gradleVersion, JAVA_JUNIT4_OPENTEST4J_FIXTURE, action)
   }
 
   fun testTestNGProject(gradleVersion: GradleVersion, action: () -> Unit) {
@@ -73,6 +81,19 @@ abstract class GradleExecutionTestCase : GradleExecutionBaseTestCase() {
       withBuildFile(gradleVersion) {
         withJavaPlugin()
         withJUnit4()
+      }
+      withDirectory("src/main/java")
+      withDirectory("src/test/java")
+    }
+
+    private val JAVA_JUNIT4_OPENTEST4J_FIXTURE = GradleTestFixtureBuilder.create("java-plugin-junit4-opentest4j-project") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("java-plugin-junit4-opentest4j-project")
+      }
+      withBuildFile(gradleVersion) {
+        withJavaPlugin()
+        withJUnit4()
+        addTestImplementationDependency("org.opentest4j:opentest4j:1.3.0")
       }
       withDirectory("src/main/java")
       withDirectory("src/test/java")

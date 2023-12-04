@@ -9,17 +9,20 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Graphics
 import java.awt.Rectangle
 
-class InlineSuffixRenderer(private val editor: Editor, val suffix: String) : EditorCustomElementRenderer {
-  private val width = editor.contentComponent.getFontMetrics(InlineCompletionFontUtils.font(editor)).stringWidth(suffix)
+class InlineSuffixRenderer(private val editor: Editor, suffix: String) : EditorCustomElementRenderer {
+  private val font = InlineCompletionFontUtils.font(editor)
+  private val width = editor.contentComponent.getFontMetrics(font).stringWidth(suffix)
+
+  val suffix = suffix.formatBeforeRendering(editor)
 
   override fun calcWidthInPixels(inlay: Inlay<*>): Int = width
   override fun calcHeightInPixels(inlay: Inlay<*>): Int {
-    return editor.contentComponent.getFontMetrics(InlineCompletionFontUtils.font(editor)).height
+    return editor.contentComponent.getFontMetrics(font).height
   }
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     g.color = InlineCompletionFontUtils.color(editor)
-    g.font = InlineCompletionFontUtils.font(editor)
+    g.font = font
     g.drawString(suffix, targetRegion.x, targetRegion.y + editor.ascent)
   }
 }

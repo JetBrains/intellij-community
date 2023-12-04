@@ -15,6 +15,7 @@ import org.junit.Test
 import java.io.File
 
 class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
 
   @Test
   fun testRefreshFSAfterImport() = runBlocking {
@@ -29,12 +30,7 @@ class StructureImportingFsRefreshTest : MavenMultiVersionImportingTestCase() {
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-      if (isNewImportingProcess) {
-        PlatformTestUtil.waitForPromise(myImportingResult!!.vfsRefreshPromise!!)
-      }
-      else {
-        PlatformTestUtil.waitForPromise(vfsRefreshPromise)
-      }
+      PlatformTestUtil.waitForPromise(vfsRefreshPromise)
       assertNotNull(myProjectRoot.findChild("foo"))
     }
   }

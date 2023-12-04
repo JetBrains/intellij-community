@@ -43,6 +43,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
@@ -75,7 +76,7 @@ public final class ScratchFileActions {
     });
 
     public NewFileAction() {
-      getTemplatePresentation().setIcon(new ScratchFileTypeIcon(AllIcons.FileTypes.Text));
+      getTemplatePresentation().setIconSupplier(new SynchronizedClearableLazy<>(() -> new ScratchFileTypeIcon(AllIcons.FileTypes.Text)));
     }
 
     @Override

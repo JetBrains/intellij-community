@@ -99,7 +99,7 @@ public final class WelcomeScreenComponentFactory {
     textPanel.add(namePanel);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
-    panel.setToolTipText(applicationName + " " + appVersion);
+    panel.setToolTipText(IdeBundle.message("about.box.build.number", appInfo.getBuild()));
 
     panel.addMouseListener(new MouseAdapter() {
       @Override
@@ -366,6 +366,31 @@ public final class WelcomeScreenComponentFactory {
     toolbar.setMinimumButtonSize(new JBDimension(26, 26));
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setActionButtonBorder(horizontalGap, 1);
+
+    ApplicationManager.getApplication().getMessageBus().connect(parentDisposable)
+      .subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, new WelcomeBalloonLayoutImpl.BalloonNotificationListener() {
+        @Override
+        public void notificationsChanged(List<NotificationType> types) {
+        }
+
+        @Override
+        public void newNotifications() {
+          UIUtil.invokeLaterIfNeeded(() -> {
+            Disposable disposable = Disposer.newDisposable(parentDisposable);
+            toolbar.addListener(new ActionToolbarListener() {
+              @Override
+              public void actionsUpdated() {
+                Disposer.dispose(disposable);
+                BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
+                if (balloonLayout instanceof WelcomeSeparateBalloonLayoutImpl layout) {
+                  layout.autoPopup();
+                }
+              }
+            }, disposable);
+            toolbar.updateActionsAsync();
+          });
+        }
+      });
 
     JComponent result = toolbar.getComponent();
     toolbar.setTargetComponent(result);

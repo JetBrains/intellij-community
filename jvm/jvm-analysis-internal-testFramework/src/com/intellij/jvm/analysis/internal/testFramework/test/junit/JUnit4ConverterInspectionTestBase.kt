@@ -22,5 +22,5 @@ abstract class JUnit4ConverterInspectionTestBase : JvmInspectionTestBase() {
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(sdkLevel)
+  override fun getProjectDescriptor(): LightProjectDescriptor = JUnitProjectDescriptor(LanguageLevel.HIGHEST)
 }

@@ -27,11 +27,7 @@ open class WebSymbolsFrameworkExtensionPoint<T : Any> : BaseKeyedLazyInstance<T>
     pluginDescriptor = DefaultPluginDescriptor("test")
   }
 
-  override fun getImplementationClassName(): String? {
-    return implementation
-  }
+  override fun getImplementationClassName(): String? = implementation
 
-  override fun getKey(): String? {
-    return framework
-  }
+  override fun getKey(): String = framework!!
 }

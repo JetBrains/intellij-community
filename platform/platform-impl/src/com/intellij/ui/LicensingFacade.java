@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class LicensingFacade {
+  public String platformProductCode;
   public String licensedTo;
   public @NlsSafe String licenseeEmail;
   public List<String> restrictions;
@@ -23,6 +24,7 @@ public final class LicensingFacade {
   public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
   public String metadata;
+  public boolean ai_enabled;
   public static volatile boolean isUnusedSignalled;
 
   public static volatile LicensingFacade INSTANCE;

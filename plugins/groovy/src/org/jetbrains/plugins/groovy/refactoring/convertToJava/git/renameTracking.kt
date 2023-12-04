@@ -2,10 +2,5 @@
 package org.jetbrains.plugins.groovy.refactoring.convertToJava.git
 
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VirtualFile
 
-val key = Key.create<String>("PATH_BEFORE_GROOVY_TO_JAVA_CONVERSION")
-
-var VirtualFile.pathBeforeGroovyToJavaConversion: String?
-  get() = getUserData(key)
-  set(value) = putUserData(key, value)
+val pathBeforeGroovyToJavaConversion = Key.create<String>("PATH_BEFORE_GROOVY_TO_JAVA_CONVERSION")

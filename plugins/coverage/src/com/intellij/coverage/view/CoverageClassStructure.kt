@@ -30,7 +30,7 @@ data class CoverageNodeInfo(val id: String,
 }
 
 
-class CoverageClassStructure(val project: Project) : Disposable {
+class CoverageClassStructure(val project: Project, val annotator: JavaCoverageAnnotator) : Disposable {
   private val fileStatusManager = FileStatusManager.getInstance(project)
   private val state = CoverageViewManager.getInstance(project).stateBean
   private val cache = hashMapOf<String, PsiNamedElement?>()
@@ -61,7 +61,7 @@ class CoverageClassStructure(val project: Project) : Disposable {
 
     hasVCSFilteredChildren = false
     hasFullyCoveredChildren = false
-    val classes = JavaCoverageAnnotator.getInstance(project).classesCoverage.mapNotNull { (fqn, counter) ->
+    val classes = annotator.classesCoverage.mapNotNull { (fqn, counter) ->
       if (hideFullyCovered && counter.isFullyCovered) {
         hasFullyCoveredChildren = true
         null
@@ -147,11 +147,11 @@ class CoverageClassStructure(val project: Project) : Disposable {
     return CoverageTreeNode(info).also { add(it) }
   }
 
-  private fun isModified(className: String): Boolean {
-    val psiClass = runReadAction { getPsiClass(className)?.takeIf { it.isValid } } ?: return false
-    val virtualFile = runReadAction { psiClass.containingFile.virtualFile }
+  private fun isModified(className: String): Boolean = runReadAction {
+    val psiClass = getPsiClass(className)?.takeIf { it.isValid } ?: return@runReadAction false
+    val virtualFile = psiClass.containingFile.virtualFile
     val status = fileStatusManager.getStatus(virtualFile)
-    return CoverageViewExtension.isModified(status)
+    return@runReadAction CoverageViewExtension.isModified(status)
   }
 
   private fun getPsiClass(className: String): PsiNamedElement? = cache.getOrPut(className) {

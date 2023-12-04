@@ -114,7 +114,7 @@ public class SharedThreadLocalRandomInspection extends BaseInspection {
       return !myMethodMatcher.matches(methodCallExpression);
     }
 
-    private PsiVariable assignedToVariable(PsiMethodCallExpression expression) {
+    private static PsiVariable assignedToVariable(PsiMethodCallExpression expression) {
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(expression, PsiParenthesizedExpression.class);
       if (parent instanceof PsiVariable) {
         return (PsiVariable)parent;

@@ -153,7 +153,7 @@ public abstract class LocalHistoryTestCase extends Assert {
     return facade.getChangeListInTests().getChangesInTests().get(0);
   }
 
-  public static List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {
+  public static @NotNull List<Revision> collectRevisions(LocalHistoryFacade facade, RootEntry root, String path, String projectId, @Nullable String pattern) {
     return new RevisionsCollector(facade, root, path, projectId, pattern).getResult();
   }
 

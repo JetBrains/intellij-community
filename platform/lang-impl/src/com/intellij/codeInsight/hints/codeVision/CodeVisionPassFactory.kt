@@ -5,8 +5,11 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
+import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.codeVision.CodeVisionHost
 import com.intellij.codeInsight.codeVision.CodeVisionInitializer
 import com.intellij.codeInsight.codeVision.lensContext
+import com.intellij.codeInsight.daemon.impl.grave.CodeVisionGrave
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
@@ -16,6 +19,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.impl.text.TextEditorInitializer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
@@ -61,8 +65,21 @@ private fun getCurrentModificationStamp(file: PsiFile): Long {
 }
 
 private class CodeVisionTextEditorInitializer : TextEditorInitializer {
-  override suspend fun initializeEditor(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
+  override suspend fun initializeEditor(project: Project,
+                                        file: VirtualFile,
+                                        document: Document,
+                                        editorSupplier: suspend () -> EditorEx,
+                                        highlighterReady: suspend () -> Unit) {
     if (!isCodeVisionEnabled) {
+      return
+    }
+
+    val raisedZombies = raiseZombies(project, file, document)
+    if (raisedZombies.isNotEmpty()) {
+      val editor = editorSupplier()
+      withContext(Dispatchers.EDT) {
+        editor.lensContext?.setZombieResults(raisedZombies)
+      }
       return
     }
 
@@ -75,7 +92,18 @@ private class CodeVisionTextEditorInitializer : TextEditorInitializer {
     }
 
     withContext(Dispatchers.EDT) {
-      editor.lensContext.setResults(placeholders)
+      editor.lensContext?.setResults(placeholders)
     }
+  }
+
+  private suspend fun raiseZombies(project: Project, file: VirtualFile, document: Document): List<Pair<TextRange, CodeVisionEntry>> {
+    val grave = project.serviceAsync<CodeVisionGrave>()
+    val raisedState = grave.raise(file, document)
+    if (raisedState == null) {
+      return emptyList()
+    }
+    val cvHost = project.serviceAsync<CodeVisionHost>()
+    val providers = cvHost.providers.map { p -> p.id }.toSet()
+    return raisedState.filter { (_, entry) -> providers.contains(entry.providerId) }
   }
 }

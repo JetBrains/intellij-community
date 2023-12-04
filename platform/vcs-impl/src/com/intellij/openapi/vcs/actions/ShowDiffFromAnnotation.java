@@ -65,6 +65,7 @@ public final class ShowDiffFromAnnotation extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    assert myChangesProvider != null;
     final int actualNumber = ShowAnnotateOperationsPopup.getAnnotationLineNumber(e.getDataContext());
     if (actualNumber < 0) return;
 
@@ -85,7 +86,7 @@ public final class ShowDiffFromAnnotation extends DumbAwareAction {
                                                                                 int actualNumber) throws DiffRequestProducerException {
     try {
       Pair<? extends CommittedChangeList, FilePath> pair = changesProvider.getChangesIn(actualNumber);
-      if (pair == null || pair.getFirst() == null || pair.getSecond() == null) {
+      if (pair.getFirst() == null || pair.getSecond() == null) {
         throw new DiffRequestProducerException(VcsBundle.message("show.diff.from.annotation.action.error.can.not.load.data.to.show.diff"));
       }
 

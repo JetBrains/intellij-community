@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.impl;
 
 import com.intellij.compiler.ModuleSourceSet;
@@ -29,7 +29,7 @@ public final class CompileScopeUtil {
 
   public static void setResourcesScopeForExternalBuild(@NotNull CompileScope scope, @NotNull List<String> moduleNames) {
     List<TargetTypeBuildScope> resourceScopes = new ArrayList<>();
-    for (UpdateResourcesBuildContributor provider : UpdateResourcesBuildContributor.EP_NAME.getExtensions()) {
+    for (UpdateResourcesBuildContributor provider : UpdateResourcesBuildContributor.EP_NAME.getExtensionList()) {
       for (BuildTargetType<?> type : provider.getResourceTargetTypes()) {
         resourceScopes.add(CmdlineProtoUtil.createTargetsScope(type.getTypeId(), moduleNames, false));
       }

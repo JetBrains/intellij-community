@@ -1,59 +1,78 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.data
 
+import com.intellij.ide.startup.importSettings.StartupImportIcons
+import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
 import com.intellij.ide.startup.importSettings.transfer.SettingTransferService
-import com.intellij.ide.ui.ProductIcons
-import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.ui.JBAccountInfoService
+import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
 import com.jetbrains.rd.swing.proxyProperty
 import com.jetbrains.rd.util.reactive.*
-import java.util.*
+import org.jetbrains.annotations.Nls
+import java.time.LocalDate
 import javax.swing.Icon
 
 interface SettingsService {
   companion object {
     fun getInstance(): SettingsService = service()
   }
+
   fun getSyncService(): SyncService
   fun getJbService(): JbService
   fun getExternalService(): ExternalService
 
-  fun skipImport()
+  val importCancelled: Signal<Unit>
 
   val error: ISignal<NotificationData>
 
   val jbAccount: IPropertyView<JBAccountInfoService.JBAData?>
 
   val isSyncEnabled: IPropertyView<Boolean>
+
+  val doClose: ISignal<Unit>
+
+  fun isLoggedIn(): Boolean = jbAccount.value != null
 }
 
-class SettingsServiceImpl : SettingsService {
+class SettingsServiceImpl : SettingsService, Disposable.Default {
 
-  private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", true)
+  private val shouldUseMockData = SystemProperties.getBooleanProperty("intellij.startup.wizard.use-mock-data", false)
 
   override fun getSyncService() =
     if (shouldUseMockData) TestSyncService()
     else SyncServiceImpl.getInstance()
 
-  override fun getJbService() = TestJbService()
+  override fun getJbService() =
+    if (shouldUseMockData) TestJbService()
+    else JbImportServiceImpl.getInstance()
 
   override fun getExternalService(): ExternalService =
     if (shouldUseMockData) TestExternalService()
     else SettingTransferService.getInstance()
 
-  override fun skipImport() = thisLogger().info("$IMPORT_SERVICE skipImport")
+  override val importCancelled = Signal<Unit>().apply {
+    advise(createLifetime()) {
+      thisLogger().info("$IMPORT_SERVICE cancelImport")
+    }
+  }
 
   override val error = Signal<NotificationData>()
 
   override val jbAccount = Property<JBAccountInfoService.JBAData?>(null)
+
+  override val doClose = Signal<Unit>()
 
   private fun unloggedSyncHide(): IPropertyView<Boolean> {
     fun getValue(): Boolean = Registry.`is`("import.setting.unlogged.sync.hide")
@@ -69,15 +88,17 @@ class SettingsServiceImpl : SettingsService {
     }
   }
 
-  override val isSyncEnabled = jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
+  override val isSyncEnabled = Property(shouldUseMockData) //jbAccount.compose(unloggedSyncHide()) { account, reg -> !reg || account != null }
 
   init {
-    jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com"))
+    if (shouldUseMockData) {
+      jbAccount.set(JBAccountInfoService.JBAData("Aleksey Ivanovskii", "alex.ivanovskii", "alex.ivanovskii@gmail.com"))
+    }
   }
 }
 
 
-interface SyncService : BaseJbService {
+interface SyncService : JbService {
   enum class SYNC_STATE {
     UNLOGGED,
     WAINING_FOR_LOGIN,
@@ -86,11 +107,6 @@ interface SyncService : BaseJbService {
     TURNED_OFF,
     NO_SYNC,
     GENERAL
-  }
-
-  @Deprecated("Use getJbAccount from SettingsService", ReplaceWith("jbAccount", "com.intellij.ide.startup.importSettings.data.SettingsService"))
-  fun isLoggedIn(): Boolean {
-    return syncState.value != SYNC_STATE.UNLOGGED
   }
 
   val syncState: IPropertyView<SYNC_STATE>
@@ -104,11 +120,8 @@ interface SyncService : BaseJbService {
 interface ExternalService : BaseService {
   suspend fun warmUp()
 }
-interface JbService: BaseJbService {
-  fun getConfig(): Config
-}
 
-interface BaseJbService : BaseService {
+interface JbService : BaseService {
   fun getOldProducts(): List<Product>
 }
 
@@ -119,8 +132,9 @@ interface BaseService {
 
   fun getProductIcon(itemId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
 
-  fun baseProduct(id: String): Boolean = true /* синк возможет только из того же продукта. в противном случае мне нужно показать импорт
-  диалог прогресса импорта выглядит иначе если импорт того же продукта */
+  // sync is only possible from the same product. Otherwise, we need to show import.
+  // import dialog progress looks differently, if it's importing from the same product
+  fun baseProduct(id: String): Boolean = true
 
   fun importSettings(productId: String, data: List<DataForSave>): DialogImportData
 }
@@ -133,63 +147,55 @@ enum class IconProductSize(val int: Int) {
 
 
 interface Product : SettingsContributor {
-  val version: String
-  val lastUsage: Date
+  val version: String?
+  val lastUsage: LocalDate
 }
 
 interface Config : SettingsContributor {
-  val path: String /* /IntelliJ IDEA Ultimate 2023.2.1 */
+  val path: String
 }
 
 interface SettingsContributor {
   val id: String
-  val name: String
+  val name: @Nls String
 }
 
 
 interface BaseSetting {
   val id: String
-
   val icon: Icon
-  val name: String
-  val comment: String?
+  val name: @Nls String
+  val comment: @Nls String?
 }
 
 interface Configurable : Multiple {
-  /* https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=1420%3A237610&mode=dev */
 }
 
 interface Multiple : BaseSetting {
-  /* это список с настройками данного сеттинга. например кеймапа с ключами. плагины. этот интерфейс обозначает только наличие дочерних настроек.
-  для этого интерфейса есть расширение Configurable которое применимо, если В ТЕОРИИ эти настройки можно выбирать.
-  в теории потому что для того чтобы показалась выпадашка с выбором нужно чтобы самый верхний сервис предоставлял возможность редактирования.
-  например ImportService позвозяет выбирать\редактировать, SettingsService - нет. в случае если редактирование невозможно Configurable -ы
-  в диалоге будут выглядеть как Multiple
-   https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev */
   val list: List<List<ChildSetting>>
 }
 
 interface ChildSetting {
   val id: String
-  val name: String
-  val leftComment: String? /* built-in скетч: https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169853&mode=dev */
-  val rightComment: String? /* hotkey скетч https://www.figma.com/file/7lzmMqhEETFIxMg7E2EYSF/Import-settings-and-Settings-Sync-UX-2507?node-id=961%3A169735&mode=dev*/
+  val name: @Nls String
+  val leftComment: @Nls String?
+  val rightComment: @Nls String?
 }
 
 data class DataForSave(val id: String, val childIds: List<String>? = null)
 
-interface  ImportFromProduct: DialogImportData {
+interface ImportFromProduct : DialogImportData {
   val from: DialogImportItem
   val to: DialogImportItem
 }
 
 interface DialogImportData {
-  val message: String?
-  val progress : ImportProgress
+  val message: @Nls String?
+  val progress: ImportProgress
 }
 
 interface ImportProgress {
-  val progressMessage: IPropertyView<String?>
+  val progressMessage: IPropertyView<@Nls String?>
   val progress: IOptPropertyView<Int>
 }
 
@@ -201,10 +207,34 @@ data class DialogImportItem(val item: SettingsContributor, val icon: Icon) {
     fun self() = DialogImportItem(
       object : SettingsContributor {
         override val id = "DialogImportItem.self"
-        override val name = ApplicationInfo.getInstance().fullApplicationName
+        override val name = ApplicationNamesInfo.getInstance().getFullProductName()
       },
-      ProductIcons.getInstance().productIcon
+      getCurrentProductIcon()
     )
+
+    @Suppress("DEPRECATION")
+    private fun getCurrentProductIcon() = when {
+      PlatformUtils.isAppCode() -> StartupImportIcons.IdeIcons.AC_48
+      PlatformUtils.isAqua() -> StartupImportIcons.IdeIcons.Aqua_48
+      PlatformUtils.isCLion() -> StartupImportIcons.IdeIcons.CL_48
+      PlatformUtils.isDataGrip() -> StartupImportIcons.IdeIcons.DG_48
+      PlatformUtils.isDataSpell() -> StartupImportIcons.IdeIcons.DS_48
+      PlatformUtils.isGoIde() -> StartupImportIcons.IdeIcons.GO_48
+      PlatformUtils.isIdeaCommunity() -> StartupImportIcons.IdeIcons.IC_48
+      PlatformUtils.isIdeaUltimate() -> StartupImportIcons.IdeIcons.IU_48
+      PlatformUtils.isPhpStorm() -> StartupImportIcons.IdeIcons.PS_48
+      PlatformUtils.isPyCharmCommunity() -> StartupImportIcons.IdeIcons.PC_48
+      PlatformUtils.isPyCharmPro() -> StartupImportIcons.IdeIcons.PY_48
+      PlatformUtils.isRider() -> StartupImportIcons.IdeIcons.RD_48
+      PlatformUtils.isRubyMine() -> StartupImportIcons.IdeIcons.RM_48
+      PlatformUtils.isRustRover() -> StartupImportIcons.IdeIcons.RR_48
+      PlatformUtils.isWebStorm() -> StartupImportIcons.IdeIcons.WS_48
+      // TODO: StartupImportIcons.IdeIcons.MPS_48
+      else -> {
+        logger<DialogImportItem>().error("Unknown IDE: ${PlatformUtils.getPlatformPrefix()}.")
+        StartupImportIcons.IdeIcons.IC_48 // fall back to IDEA Community
+      }
+    }
   }
 }
 

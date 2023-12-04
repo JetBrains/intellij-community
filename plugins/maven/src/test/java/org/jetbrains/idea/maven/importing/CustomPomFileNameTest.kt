@@ -6,8 +6,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class CustomPomFileNameTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   @Test
   fun testCustomPomFileName() = runBlocking {
     createProjectSubFile("m1/customName.xml", createPomXml(

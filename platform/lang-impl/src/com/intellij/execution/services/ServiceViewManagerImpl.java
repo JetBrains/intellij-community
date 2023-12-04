@@ -271,7 +271,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     ServiceViewDragHelper.installDnDSupport(myProject, toolWindowEx.getDecorator(), contentManager);
   }
 
-  private void addMainContent(ContentManager contentManager, ServiceView mainView) {
+  private static void addMainContent(ContentManager contentManager, ServiceView mainView) {
     Content mainContent = ContentFactory.getInstance().createContent(mainView, null, false);
     mainContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
     mainContent.setHelpId(getToolWindowContextHelpId());
@@ -419,7 +419,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
                                       Function<? super ServiceView, ? extends Promise<?>> action, Consumer<? super Content> onSuccess) {
     Content content = iterator.next();
     ServiceView serviceView = getServiceView(content);
-    if (serviceView == null) {
+    if (serviceView == null || content.getManager() == null) {
       if (iterator.hasNext()) {
         promiseFindView(iterator, result, action, onSuccess);
       }
@@ -437,7 +437,9 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       })
       .onError(e -> {
         if (iterator.hasNext()) {
-          promiseFindView(iterator, result, action, onSuccess);
+          AppUIExecutor.onUiThread().expireWith(serviceView.getProject()).submit(() -> {
+            promiseFindView(iterator, result, action, onSuccess);
+          });
         }
         else {
           result.setError(e);

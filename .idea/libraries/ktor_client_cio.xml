@@ -1,36 +1,36 @@
 <component name="libraryTable">
   <library name="ktor-client-cio" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="io.ktor:ktor-client-cio-jvm:2.3.5">
+    <properties maven-id="io.ktor:ktor-client-cio-jvm:2.3.6">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/2.3.5/ktor-client-cio-jvm-2.3.5.jar">
-          <sha256sum>807747418bfedad4f42c9b8ed8b90c05a9164448d3649be9911c2fd74ce6500e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/2.3.6/ktor-client-cio-jvm-2.3.6.jar">
+          <sha256sum>1d192b8f2511fbbbc19a600b9760005bf26717a236169078011a944445cbf199</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.3.5/ktor-client-core-jvm-2.3.5.jar">
-          <sha256sum>0064e3436cdadcac43f6f786049d3573f5fd327a3a369c8c543c0b2e768821fd</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.3.6/ktor-client-core-jvm-2.3.6.jar">
+          <sha256sum>17c46a56a128c54dc989160bd6d87b5101e8c64b801a91b4e4332ec299b0ebcb</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.3.5/ktor-http-jvm-2.3.5.jar">
-          <sha256sum>79642f3cdfd3705671381be736ea9fb5f41f2029d93a2e3eecc9a8defd1df996</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.3.6/ktor-http-jvm-2.3.6.jar">
+          <sha256sum>3746af8f014313bffb07010dc19ff1a915d6ed26f6c30fa4a48887f001807b44</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.3.5/ktor-events-jvm-2.3.5.jar">
-          <sha256sum>49be3acb09cba0aeedd10fd742d7da9dfc45f8c79ca967e89de2b66bc3bd38ba</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.3.6/ktor-events-jvm-2.3.6.jar">
+          <sha256sum>d11ba69b1af157b873e273479eb291cf8cd8fd1d047e2d33e30e3eaced519452</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.3.5/ktor-http-cio-jvm-2.3.5.jar">
-          <sha256sum>b78af263ca0f3fc9e9aa5afb9468ebfe70aa581df8d52cbc372f704607bea4f2</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.3.6/ktor-http-cio-jvm-2.3.6.jar">
+          <sha256sum>adb54beedb7650f255fbbc33c649699f1041640b0a7a4dc1d9326d18bfa7e161</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.5/ktor-network-jvm-2.3.5.jar">
-          <sha256sum>ada0cd86f6164767d0370cfb805422aafcbb127642c12cd3e5ce9962946d6ced</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.6/ktor-network-jvm-2.3.6.jar">
+          <sha256sum>1b379f2ed8f1ea38f6538c9fd0468c6354affd9ef4b8b537f1b02ff8c6bdff31</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.5/ktor-websockets-jvm-2.3.5.jar">
-          <sha256sum>601818e9984fe3ac65e4380d1a8a7e1f03b11efc3b942eda44897ed0b53a65ed</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.6/ktor-websockets-jvm-2.3.6.jar">
+          <sha256sum>bd3c611fc11865ce50aa83cac77840a4354da827af6d3f862472ab2ec7936115</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.5/ktor-network-tls-jvm-2.3.5.jar">
-          <sha256sum>b5b2657de271a969e19293421dbb6068dab35c3c4f1c27ea58f9f82ad19bc08b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.6/ktor-network-tls-jvm-2.3.6.jar">
+          <sha256sum>7a5a7a89615c1fdbe810a377072c09c91c5ae71efe3df13841a353005874e265</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.3.5/ktor-utils-jvm-2.3.5.jar">
-          <sha256sum>8722f0ef544bc86dcb8bf322ea82518a43df24fcaa64204aaae197584c2777a9</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.3.6/ktor-utils-jvm-2.3.6.jar">
+          <sha256sum>008d9ecfa81283d5efa06c8ef3396b192bcbac17044c6f8d6f319e30fe1fcb23</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.3.5/ktor-io-jvm-2.3.5.jar">
-          <sha256sum>f3ddb66875ffac0bd90d7b7cdeb60be9454ac9bcd659b29daf6d0f025f25e8e3</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.3.6/ktor-io-jvm-2.3.6.jar">
+          <sha256sum>efcd9f4451ac800e9e4002ebd758f6627ff4fe84cb9e80a8c62220904d244021</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -46,29 +46,29 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/2.3.5/ktor-client-cio-jvm-2.3.5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.3.5/ktor-client-core-jvm-2.3.5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.3.5/ktor-http-jvm-2.3.5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.3.5/ktor-events-jvm-2.3.5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.3.5/ktor-http-cio-jvm-2.3.5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.5/ktor-network-jvm-2.3.5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.5/ktor-websockets-jvm-2.3.5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.5/ktor-network-tls-jvm-2.3.5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.3.5/ktor-utils-jvm-2.3.5.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.3.5/ktor-io-jvm-2.3.5.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/2.3.6/ktor-client-cio-jvm-2.3.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.3.6/ktor-client-core-jvm-2.3.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.3.6/ktor-http-jvm-2.3.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.3.6/ktor-events-jvm-2.3.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.3.6/ktor-http-cio-jvm-2.3.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.6/ktor-network-jvm-2.3.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.6/ktor-websockets-jvm-2.3.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.6/ktor-network-tls-jvm-2.3.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.3.6/ktor-utils-jvm-2.3.6.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.3.6/ktor-io-jvm-2.3.6.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/2.3.5/ktor-client-cio-jvm-2.3.5-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.3.5/ktor-client-core-jvm-2.3.5-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.3.5/ktor-http-jvm-2.3.5-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.3.5/ktor-events-jvm-2.3.5-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.3.5/ktor-http-cio-jvm-2.3.5-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.5/ktor-network-jvm-2.3.5-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.5/ktor-websockets-jvm-2.3.5-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.5/ktor-network-tls-jvm-2.3.5-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.3.5/ktor-utils-jvm-2.3.5-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.3.5/ktor-io-jvm-2.3.5-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-cio-jvm/2.3.6/ktor-client-cio-jvm-2.3.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-core-jvm/2.3.6/ktor-client-core-jvm-2.3.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-jvm/2.3.6/ktor-http-jvm-2.3.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-events-jvm/2.3.6/ktor-events-jvm-2.3.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-http-cio-jvm/2.3.6/ktor-http-cio-jvm-2.3.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-jvm/2.3.6/ktor-network-jvm-2.3.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-websockets-jvm/2.3.6/ktor-websockets-jvm-2.3.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-network-tls-jvm/2.3.6/ktor-network-tls-jvm-2.3.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-utils-jvm/2.3.6/ktor-utils-jvm-2.3.6-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-io-jvm/2.3.6/ktor-io-jvm-2.3.6-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

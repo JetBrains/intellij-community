@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NotNullLazyKey
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.*
+import com.intellij.vcsUtil.VcsImplUtil
 import javax.swing.tree.DefaultTreeModel
 
 class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
@@ -16,7 +17,7 @@ class ModuleChangesGroupingPolicy(val project: Project, val model: DefaultTreeMo
   override fun getParentNodeFor(nodePath: StaticFilePath,
                                 node: ChangesBrowserNode<*>,
                                 subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
-    val file = resolveVirtualFile(nodePath)
+    val file = VcsImplUtil.findValidParentAccurately(nodePath.filePath)
     val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, node, subtreeRoot)
 
     file?.let { myIndex.getModuleForFile(file, HIDE_EXCLUDED_FILES) }?.let { module ->

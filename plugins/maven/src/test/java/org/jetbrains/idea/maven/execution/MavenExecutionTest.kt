@@ -35,8 +35,7 @@ import java.io.IOException
 import javax.swing.SwingUtilities
 
 class MavenExecutionTest : MavenExecutionTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   @Test
   fun testExternalExecutor() = runBlocking {
     if (!hasMavenInstallation()) return@runBlocking

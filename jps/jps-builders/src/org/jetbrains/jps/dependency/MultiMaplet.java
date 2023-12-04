@@ -1,34 +1,55 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.dependency;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.dependency.diff.Difference;
+import org.jetbrains.jps.javac.Iterators;
 
-public interface MultiMaplet<K, V> {
-  boolean containsKey(final K key);
+import java.util.function.BiFunction;
 
-  @Nullable
-  Iterable<V> get(final K key);
+public interface MultiMaplet<K, V> extends BaseMaplet<K> {
 
-  void put(final K key, final Iterable<? extends V> values);
+  @NotNull
+  Iterable<V> get(K key);
 
-  void remove(final K key);
+  void put(K key, @NotNull Iterable<? extends V> values);
 
+  void appendValue(K key, final V value);
 
-  void appendValue(final K key, final V value);
-
-  default void appendValues(final K key, final Iterable<? extends V> values) {
+  default void appendValues(K key, @NotNull Iterable<? extends V> values) {
     for (V value : values) {
       appendValue(key, value);
     }
   }
 
-  void removeValue(final K key, final V value);
+  void removeValue(K key, V value);
 
-  default void removeValues(final K key, final Iterable<? extends V> values) {
+  default void removeValues(K key, @NotNull Iterable<? extends V> values) {
     for (V value : values) {
       removeValue(key, value);
     }
   }
 
-  Iterable<K> getKeys();
+  default void update(K key, @NotNull Iterable<V> dataAfter, BiFunction<? super Iterable<V>, ? super Iterable<V>, Difference.Specifier<? extends V, ?>> diffComparator) {
+    Iterable<V> dataBefore = get(key);
+    boolean beforeEmpty = Iterators.isEmpty(dataBefore);
+    boolean afterEmpty = Iterators.isEmpty(dataAfter);
+    if (beforeEmpty || afterEmpty) {
+      if (!beforeEmpty || !afterEmpty) {
+        put(key, dataAfter);
+      }
+    }
+    else {
+      var diff = diffComparator.apply(dataBefore, dataAfter);
+      if (!diff.unchanged()) {
+        if (Iterators.isEmpty(diff.removed()) && Iterators.isEmpty(diff.changed())) {
+          appendValues(key, diff.added());
+        }
+        else {
+          put(key, dataAfter);
+        }
+      }
+    }
+  }
+
 }

@@ -20,11 +20,16 @@ import com.intellij.packaging.impl.elements.FileOrDirectoryCopyPackagingElement
 import com.intellij.platform.backend.workspace.WorkspaceModel.Companion.getInstance
 import com.intellij.platform.backend.workspace.useNewWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.diagnostic.telemetry.Compiler
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
 import com.intellij.platform.workspace.storage.query.groupBy
 import com.intellij.util.PathUtil
+import io.opentelemetry.api.metrics.Meter
+import java.util.concurrent.atomic.AtomicLong
 
 internal class ArtifactVirtualFileListener(private val project: Project) : BulkFileListener {
   private val parentPathsToArtifacts: CachedValue<Map<String, List<ArtifactEntity>>> = CachedValue { storage: EntityStorage ->
@@ -42,7 +47,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
     }
   }
 
-  private fun filePathChanged(oldPath: String, newPath: String) {
+  private fun filePathChanged(oldPath: String, newPath: String) = filePathChangedMs.addMeasuredTimeMs {
     val artifactEntities = if (useNewWorkspaceModelApi()) {
       val refs = parentPathToArtifactReferences[oldPath]?.asSequence() ?: return
       val storage = project.workspaceModel.entityStorage.current
@@ -83,7 +88,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
   private val parentPathToArtifacts: Map<String, List<ArtifactEntity>>
     get() = getInstance(project).entityStorage.cachedValue(parentPathsToArtifacts)
 
-  private fun propertyChanged(event: VFilePropertyChangeEvent) {
+  private fun propertyChanged(event: VFilePropertyChangeEvent) = propertyChangedMs.addMeasuredTimeMs {
     if (VirtualFile.PROP_NAME == event.propertyName) {
       val parent = event.file.parent
       if (parent != null) {
@@ -124,6 +129,28 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
         }
       }
       return result
+    }
+
+    private val filePathChangedMs: AtomicLong = AtomicLong()
+    private val propertyChangedMs: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val filePathChangedGauge = meter.gaugeBuilder("compiler.ArtifactVirtualFileListener.filePathChanged.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val propertyChangedGauge = meter.gaugeBuilder("compiler.ArtifactVirtualFileListener.propertyChanged.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          filePathChangedGauge.record(filePathChangedMs.get())
+          propertyChangedGauge.record(propertyChangedMs.get())
+        },
+        filePathChangedGauge, propertyChangedGauge,
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(Compiler))
     }
   }
 }

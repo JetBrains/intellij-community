@@ -56,7 +56,7 @@ public class RefsModel implements VcsLogRefs {
     return myBestRefForHead.get(headIndex);
   }
 
-  public @NotNull VirtualFile rootAtHead(int headIndex) {
+  public @Nullable VirtualFile rootAtHead(int headIndex) {
     return myRootForHead.get(headIndex);
   }
 

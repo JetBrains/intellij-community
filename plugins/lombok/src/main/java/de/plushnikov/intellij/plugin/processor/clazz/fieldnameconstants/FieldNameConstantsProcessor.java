@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz.fieldnameconstants;
 
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -10,6 +9,7 @@ import de.plushnikov.intellij.plugin.processor.handler.FieldNameConstantsHandler
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -22,7 +22,6 @@ import java.util.Optional;
  *
  * @author alanachtenberg
  */
-@Service
 public final class FieldNameConstantsProcessor extends AbstractFieldNameConstantsProcessor {
 
   public FieldNameConstantsProcessor() {
@@ -37,7 +36,7 @@ public final class FieldNameConstantsProcessor extends AbstractFieldNameConstant
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     final Collection<PsiMember> psiMembers = filterMembers(psiClass, psiAnnotation);
     if (!psiMembers.isEmpty()) {
       final String typeName = FieldNameConstantsHandler.getTypeName(psiClass, psiAnnotation);

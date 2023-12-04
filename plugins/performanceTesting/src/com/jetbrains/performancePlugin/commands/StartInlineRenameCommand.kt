@@ -1,12 +1,12 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.AbstractCommand
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScopeBlocking
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.InplaceRefactoringContinuation
 import com.intellij.refactoring.RefactoringSettings
@@ -56,7 +56,7 @@ class StartInlineRenameCommand(text: String, line: Int) : AbstractCommand(text, 
         actionCallback.reject("Renamers are empty")
       }
       else if (renamers.size == 1) {
-        PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).useWithScope {
+        PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).useWithScopeBlocking {
           renamers[0].performRename()
           actionCallback.setDone()
         }

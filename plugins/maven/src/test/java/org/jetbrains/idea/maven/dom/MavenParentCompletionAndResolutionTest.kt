@@ -25,6 +25,7 @@ import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
 import org.junit.Test
 
 class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
+  override fun runInDispatchThread() = true
   @Test
   fun testVariants() = runBlocking {
     importProjectAsync("""

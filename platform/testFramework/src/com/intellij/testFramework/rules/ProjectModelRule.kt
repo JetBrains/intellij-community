@@ -7,7 +7,9 @@ import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetType
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.ModifiableModuleModel
@@ -108,7 +110,13 @@ open class ProjectModelRule : TestRule {
       setup(sdkModificator)
     }
     finally {
-      sdkModificator.commitChanges()
+      val application = ApplicationManager.getApplication()
+      val runnable = { sdkModificator.commitChanges() }
+      if (application.isDispatchThread) {
+        runWriteAction(runnable)
+      } else {
+        application.invokeAndWait { runWriteAction(runnable) }
+      }
     }
   }
 

@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.codeUsageScope
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
-import org.jetbrains.kotlin.idea.refactoring.conflicts.checkAccidentalPropertyOverrides
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -97,9 +96,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
 
     val collisions = SmartList<UsageInfo>()
     checkRedeclarationConflicts(declaration, newName, collisions)
-    checkAccidentalPropertyOverrides(declaration, newName, collisions)
-    renameRefactoringSupport.checkOriginalUsagesRetargeting(declaration, newName, result, collisions)
-    renameRefactoringSupport.checkNewNameUsagesRetargeting(declaration, newName, collisions)
+    renameRefactoringSupport.checkUsagesRetargeting(declaration, newName, result, collisions)
     result += collisions
   }
 
@@ -192,67 +189,66 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
     override fun copy() = this
   }
 
-  override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
-    super.prepareRenaming(element, newName, allRenames, scope)
+    override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
+        super.prepareRenaming(element, newName, allRenames, scope)
 
-    val namedUnwrappedElement = element.namedUnwrappedElement
-    val propertyMethods = when (namedUnwrappedElement) {
-      is KtProperty -> runReadAction { LightClassUtil.getLightClassPropertyMethods(namedUnwrappedElement) }
-      is KtParameter -> runReadAction { LightClassUtil.getLightClassPropertyMethods(namedUnwrappedElement) }
-      else -> throw IllegalStateException("Can't be for element $element there because of canProcessElement()")
-    }
-
-    val newPropertyName = if (element is KtLightMethod) propertyNameByAccessor(newName, element) else newName
-
-    val (getterJvmName, setterJvmName) = getJvmNames(namedUnwrappedElement)
-
-    val getter = propertyMethods.getter as? KtLightMethod
-    val setter = propertyMethods.setter as? KtLightMethod
-    if (newPropertyName != null
-        && getter != null && setter != null
-        && (element == getter || element == setter)
-        && propertyNameByAccessor(getter.name, getter) == propertyNameByAccessor(setter.name, setter)
-    ) {
-      val accessorToRename = if (element == getter) setter else getter
-      val newAccessorName = if (element == getter) JvmAbi.setterName(newPropertyName) else JvmAbi.getterName(newPropertyName)
-      if (isUnitTestMode() || Messages.showYesNoDialog(
-          KotlinBundle.message("text.do.you.want.to.rename.0.as.well", accessorToRename.name),
-          RefactoringBundle.message("rename.title"),
-          Messages.getQuestionIcon()
-        ) == Messages.YES
-      ) {
-        allRenames[accessorToRename] = newAccessorName
-      }
-    }
-
-    for (propertyMethod in propertyMethods) {
-      val mangledPropertyName = if (propertyMethod is KtLightMethod && propertyMethod.isMangled) {
-        val suffix = renameRefactoringSupport.getModuleNameSuffixForMangledName(propertyMethod.name)
-        if (suffix != null && newPropertyName != null) renameRefactoringSupport.mangleInternalName(
-          newPropertyName,
-          suffix
-        )
-        else null
-      }
-      else null
-
-      val adjustedPropertyName = mangledPropertyName ?: newPropertyName
-      if (element is KtDeclaration && adjustedPropertyName != null) {
-        val wrapper = PropertyMethodWrapper(propertyMethod)
-        when {
-          JvmAbi.isGetterName(propertyMethod.name) && getterJvmName == null ->
-            allRenames[wrapper] = JvmAbi.getterName(adjustedPropertyName)
-
-          JvmAbi.isSetterName(propertyMethod.name) && setterJvmName == null ->
-            allRenames[wrapper] = JvmAbi.setterName(adjustedPropertyName)
+        val namedUnwrappedElement = element.namedUnwrappedElement
+        val propertyMethods = when (namedUnwrappedElement) {
+            is KtProperty -> runReadAction { LightClassUtil.getLightClassPropertyMethods(namedUnwrappedElement) }
+            is KtParameter -> runReadAction { LightClassUtil.getLightClassPropertyMethods(namedUnwrappedElement) }
+            else -> throw IllegalStateException("Can't be for element $element there because of canProcessElement()")
         }
-      }
 
-      addRenameElements(propertyMethod, (element as PsiNamedElement).name, adjustedPropertyName, allRenames, scope)
+        val newPropertyName = if (element is KtLightMethod) propertyNameByAccessor(newName, element) else newName
+
+        val (getterJvmName, setterJvmName) = getJvmNames(namedUnwrappedElement)
+
+        val getter = propertyMethods.getter as? KtLightMethod
+        val setter = propertyMethods.setter as? KtLightMethod
+        if (newPropertyName != null
+            && getter != null && setter != null
+            && (element == getter || element == setter)
+            && propertyNameByAccessor(getter.name, getter) == propertyNameByAccessor(setter.name, setter)
+        ) {
+            val accessorToRename = if (element == getter) setter else getter
+            val newAccessorName = if (element == getter) JvmAbi.setterName(newPropertyName) else JvmAbi.getterName(newPropertyName)
+            if (isUnitTestMode() || Messages.showYesNoDialog(
+                    KotlinBundle.message("text.do.you.want.to.rename.0.as.well", accessorToRename.name),
+                    RefactoringBundle.message("rename.title"),
+                    Messages.getQuestionIcon()
+                ) == Messages.YES
+            ) {
+                allRenames[accessorToRename] = newAccessorName
+            }
+        }
+
+        val originalName = (element as PsiNamedElement).name
+        for (propertyMethod in propertyMethods) {
+            val mangledPropertyName = if (propertyMethod is KtLightMethod && propertyMethod.isMangled) {
+                val suffix = renameRefactoringSupport.getModuleNameSuffixForMangledName(propertyMethod.name)
+                if (suffix != null && newPropertyName != null) renameRefactoringSupport.mangleInternalName(
+                    newPropertyName,
+                    suffix
+                )
+                else null
+            } else null
+
+            val adjustedPropertyName = mangledPropertyName ?: newPropertyName
+            if (element is KtDeclaration && adjustedPropertyName != null) {
+                val wrapper = PropertyMethodWrapper(propertyMethod)
+                when {
+                    JvmAbi.isGetterName(propertyMethod.name) && getterJvmName == null ->
+                        allRenames[wrapper] = JvmAbi.getterName(adjustedPropertyName)
+
+                    JvmAbi.isSetterName(propertyMethod.name) && setterJvmName == null ->
+                        allRenames[wrapper] = JvmAbi.setterName(adjustedPropertyName)
+                }
+            }
+            addRenameElements(propertyMethod, originalName, adjustedPropertyName, allRenames, scope)
+        }
+
+        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
     }
-
-    renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
-  }
 
   protected enum class UsageKind {
     SIMPLE_PROPERTY_USAGE,

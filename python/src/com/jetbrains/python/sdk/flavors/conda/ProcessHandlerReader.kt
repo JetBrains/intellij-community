@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.flavors.conda
 
 import com.intellij.execution.process.*
-import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.util.Key
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -50,16 +50,16 @@ class ProcessHandlerReader(processHandler: ProcessHandler) {
 
 
   /**
-   * Runs process, prints its output to [sink] (if provided) and returns either null or error
+   * Runs process, prints its output to [reporter] (if provided) and returns either null or error
    */
   @Suppress("HardCodedStringLiteral")
-  suspend fun runProcessAndGetError(uiContext: CoroutineContext, sink: ProgressSink?): String? {
+  suspend fun runProcessAndGetError(uiContext: CoroutineContext, reporter: RawProgressReporter?): String? {
 
     val jobs = mutableListOf<Job>()
     jobs += withContext(uiContext) {
       launch {
         for (message in stdOut) {
-          sink?.text(message.filter { it != UIUtil.MNEMONIC })
+          reporter?.text(message.filter { it != UIUtil.MNEMONIC })
         }
       }
     }

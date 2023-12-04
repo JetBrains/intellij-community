@@ -215,7 +215,7 @@ private fun doLoadByDescriptor(path: String,
                                colorPatcher: SvgAttributePatcher?): BufferedImage? {
   var image: BufferedImage?
   val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-  if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(path)) && !path.startsWith("file://")) {
+  if (resourceClass == null && (classLoader == null || URLUtil.containsScheme(path)) && !path.startsWith(FILE_SCHEME_PREFIX)) {
     val connection = URL(path).openConnection()
     (connection as? HttpURLConnection)?.addRequestProperty("User-Agent", "IntelliJ")
     connection.getInputStream().use { stream ->
@@ -227,7 +227,7 @@ private fun doLoadByDescriptor(path: String,
                                     colorPatcher = colorPatcher) { stream.readAllBytes() }
       }
       else {
-        loadPng(stream = stream)
+        loadRasterImage(stream = stream)
       }
     }
     if (start != -1L) {

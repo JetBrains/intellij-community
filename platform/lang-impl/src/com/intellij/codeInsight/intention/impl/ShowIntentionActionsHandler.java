@@ -5,7 +5,9 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.codeInsight.daemon.impl.IntentionsUI;
+import com.intellij.codeInsight.daemon.impl.ShowIntentionsPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -62,6 +64,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.stubs.StubInconsistencyReporter.SourceOfCheck.DeliberateAdditionalCheckInIntentions;
+
 public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(ShowIntentionActionsHandler.class);
 
@@ -91,8 +95,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     IntentionsUI.getInstance(project).hide();
 
-    if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction() &&
-        !IntentionsUIImpl.DISABLE_INTENTION_BULB.get(project, false)) {
+    if (HintManagerImpl.getInstanceImpl().performCurrentQuestionAction()) {
       return;
     }
 
@@ -144,16 +147,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     String progressTitle = CodeInsightBundle.message("progress.title.searching.for.context.actions");
     DumbService dumbService = DumbService.getInstance(project);
     boolean useAlternativeResolve = dumbService.isAlternativeResolveEnabled();
-    ShowIntentionsPass.IntentionsInfo intentionsInfo = new ShowIntentionsPass.IntentionsInfo();
-    EditorNotificationActions.collectActions(editor, intentionsInfo);
     ThrowableComputable<CachedIntentions, RuntimeException> prioritizedRunnable =
       () -> ProgressManager.getInstance().computePrioritized(() -> {
-        intentionsInfo.filterActions(file);
         DaemonCodeAnalyzerImpl.waitForUnresolvedReferencesQuickFixesUnderCaret(file, editor);
-        return ReadAction.compute(() -> {
-          ShowIntentionsPass.getActionsToShow(editor, file, intentionsInfo, -1);
-          return CachedIntentions.createAndUpdateActions(project, file, editor, intentionsInfo);
-        });
+        return ReadAction.compute(() -> CachedIntentions.createAndUpdateActions(
+          project, file, editor,
+          ShowIntentionsPass.getActionsToShow(editor, file)));
       });
     ThrowableComputable<CachedIntentions, RuntimeException> process =
       useAlternativeResolve
@@ -374,7 +373,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (Registry.is("ide.check.stub.text.consistency") ||
         ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManagerEx.isInStressTest()) {
       if (hostFile.isValid()) {
-        StubTextInconsistencyException.checkStubTextConsistency(hostFile);
+        StubTextInconsistencyException.checkStubTextConsistency(hostFile, DeliberateAdditionalCheckInIntentions);
       }
     }
   }

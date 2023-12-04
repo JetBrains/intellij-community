@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ModalityState;
@@ -66,21 +67,22 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
     JavaProjectModelModificationService.getInstance(project)
       .addDependency(myCurrentModule, myLibraryDescriptor, myScope)
       .onSuccess(__ -> {
+        if (editor == null) return;
         ReadAction.nonBlocking(() -> {
             PsiReference reference = restoreReference();
-            if (myQualifiedClassName == null || editor == null || reference == null) return null;
+            if (myQualifiedClassName == null || reference == null) return null;
             try {
-              return getImportActionInfo(myCurrentModule, reference, myQualifiedClassName);
+              return AddImportAction.create(editor, myCurrentModule, reference, myQualifiedClassName);
             }
             catch (IndexNotReadyException e) {
               Logger.getInstance(AddExtLibraryDependencyFix.class).info(e);
               return null;
             }
           })
-          .expireWhen(() -> editor == null || editor.isDisposed() || myCurrentModule.isDisposed())
-          .finishOnUiThread(modality, info -> {
-            if (info != null && editor != null) {
-              importReference(project, editor, info);
+          .expireWhen(() -> editor.isDisposed() || myCurrentModule.isDisposed())
+          .finishOnUiThread(modality, action -> {
+            if (action != null) {
+              action.execute();
             }
           })
           .submit(AppExecutorUtil.getAppExecutorService());

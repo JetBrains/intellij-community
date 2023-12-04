@@ -54,7 +54,7 @@ public final class LookupElementBuilder extends LookupElement {
     myCaseSensitive = caseSensitive;
   }
 
-  private String validate(String string) {
+  private static String validate(String string) {
     StringUtil.assertValidSeparators(string);
     return string;
   }

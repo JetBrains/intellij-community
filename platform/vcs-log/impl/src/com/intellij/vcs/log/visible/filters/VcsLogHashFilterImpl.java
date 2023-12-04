@@ -10,6 +10,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.Objects;
 
+/**
+ * @see VcsLogFilterObject#fromHash(String)
+ */
 class VcsLogHashFilterImpl implements VcsLogHashFilter {
   private final @NotNull Collection<String> myHashes;
 

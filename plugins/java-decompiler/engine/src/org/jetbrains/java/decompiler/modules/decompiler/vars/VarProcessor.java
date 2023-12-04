@@ -21,6 +21,10 @@ public class VarProcessor {
   public static final int VAR_EXPLICIT_FINAL = 2;
   public static final int VAR_FINAL = 3;
 
+  public StructMethod getMethod() {
+    return method;
+  }
+
   private final VarNamesCollector varNamesCollector = new VarNamesCollector();
   private final StructMethod method;
   private final MethodDescriptor methodDescriptor;

@@ -65,9 +65,8 @@ public class InitializeFinalFieldInConstructorFix extends PsiBasedModCommandActi
       return getFinalCommand(field, allMembers);
     }
 
-    return new ModChooseMember(QuickFixBundle.message("initialize.final.field.in.constructor.choose.dialog.title"),
-                               allMembers, allMembers, ModChooseMember.SelectionMode.MULTIPLE,
-                               chosenMembers -> getFinalCommand(field, chosenMembers));
+    return ModCommand.chooseMultipleMembers(QuickFixBundle.message("initialize.final.field.in.constructor.choose.dialog.title"),
+                                            allMembers, chosenMembers -> getFinalCommand(field, chosenMembers));
   }
 
   @NotNull

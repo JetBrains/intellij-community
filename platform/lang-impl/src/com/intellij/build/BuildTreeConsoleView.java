@@ -951,7 +951,7 @@ public final class BuildTreeConsoleView implements ConsoleView, DataProvider, Bu
       Disposer.register(this, myView);
       if (executionConsole != null) {
         String nodeConsoleViewName = getNodeConsoleViewName(buildProgressRootNode);
-        myView.addViewAndShowIfNeeded(executionConsole, nodeConsoleViewName, true);
+        myView.addViewAndShowIfNeeded(executionConsole, nodeConsoleViewName, true, false);
         myNodeConsoleViewName.set(nodeConsoleViewName);
       }
       ConsoleView emptyConsole = new ConsoleViewImpl(project, GlobalSearchScope.EMPTY_SCOPE, true, false);

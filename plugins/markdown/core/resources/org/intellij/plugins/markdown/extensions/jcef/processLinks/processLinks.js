@@ -17,8 +17,9 @@ if (window.__IntelliJTools === undefined) {
     }
     const href = getHrefAttribute(link)
     if (href[0] === '#') {
-      const elementId = href.substring(1);
-      const elementById = window.document.getElementById(elementId);
+      const elementId = href.toLowerCase().substring(1);
+      const decodedElementId = decodeURI(elementId)
+      const elementById = window.document.getElementById(decodedElementId);
       if (elementById) {
         elementById.scrollIntoViewIfNeeded();
       }

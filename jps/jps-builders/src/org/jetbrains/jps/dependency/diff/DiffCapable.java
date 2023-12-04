@@ -7,34 +7,4 @@ public interface DiffCapable<T extends DiffCapable<T, D>, D extends Difference> 
   int diffHashCode();
   
   D difference(T past);
-
-
-  interface Adapter<T> extends DiffCapable<Adapter<T>, Difference>{
-    T getValue();
-  }
-
-  static <T> Adapter<T> wrap(T value) {
-    return new Adapter<>() {
-      @Override
-      public T getValue() {
-        return value;
-      }
-
-      @Override
-      public boolean isSame(DiffCapable<?, ?> other) {
-        return other instanceof Adapter && value.equals(((Adapter<?>)other).getValue());
-      }
-
-      @Override
-      public int diffHashCode() {
-        return value.hashCode();
-      }
-
-      @Override
-      public Difference difference(Adapter past) {
-        return () -> value.equals(past.getValue());
-      }
-    };
-  }
-
 }

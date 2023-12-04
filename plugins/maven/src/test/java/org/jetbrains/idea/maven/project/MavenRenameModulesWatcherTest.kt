@@ -7,8 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenRenameModulesWatcherTest : MavenDomTestCase() {
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()

@@ -1,27 +1,22 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.ModifierFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import com.intellij.util.containers.ContainerUtil;
-import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemSink;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.AddAbstractAndStaticModifiersFix;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -40,6 +35,19 @@ public class SuperBuilderHandler extends BuilderHandler {
   protected boolean validateBuilderConstructor(@NotNull PsiClass psiClass,
                                                Collection<BuilderInfo> builderInfos,
                                                @NotNull ProblemSink problemSink) {
+    return true;
+  }
+
+  @Override
+  boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass.isRecord()) {
+      builder.addErrorMessage("inspection.message.superbuilder.can.be.used.on.classes.only");
+      return false;
+    }
+    if(!psiClass.hasModifierProperty(PsiModifier.STATIC) && psiClass.getParent() instanceof PsiClass) {
+      builder.addErrorMessage("inspection.message.superbuilder.can.be.used.on.static.inner.classes.only");
+      return false;
+    }
     return true;
   }
 
@@ -67,10 +75,12 @@ public class SuperBuilderHandler extends BuilderHandler {
           problem.withLocalQuickFixes(() -> LocalQuickFix.from(new AddAbstractAndStaticModifiersFix(existingInnerBuilderClass)));
         }
         else if (!isAbstract) {
-          problem.withLocalQuickFixes(() -> new ModifierFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false));
+          problem.withLocalQuickFixes(
+            () -> PsiQuickFixFactory.createModifierListFix(existingInnerBuilderClass, PsiModifier.ABSTRACT, true, false));
         }
         else {
-          problem.withLocalQuickFixes(() -> new ModifierFix(existingInnerBuilderClass, PsiModifier.STATIC, true, false));
+          problem.withLocalQuickFixes(
+            () -> PsiQuickFixFactory.createModifierListFix(existingInnerBuilderClass, PsiModifier.STATIC, true, false));
         }
         return false;
       }
@@ -306,15 +316,13 @@ public class SuperBuilderHandler extends BuilderHandler {
                                                                  @NotNull PsiClassType bType, @NotNull PsiClassType cType) {
     final Collection<PsiMethod> result = new ArrayList<>();
 
-    final Collection<String> existedMethodNames = PsiClassUtil.collectClassMethodsIntern(baseClassBuilder).stream()
-      .filter(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, LombokClassNames.TOLERATE))
-      .map(PsiMethod::getName).collect(Collectors.toSet());
+    final Map<String, List<List<PsiType>>> existingMethodsWithParameters =
+      BuilderHandler.getExistingMethodsWithParameterTypes(baseClassBuilder);
 
     // create builder methods
-    builderInfos.stream()
-      .filter(info -> info.notAlreadyExistingMethod(existedMethodNames))
-      .map(BuilderInfo::renderBuilderMethods)
-      .forEach(result::addAll);
+    for (BuilderInfo info : builderInfos) {
+      result.addAll(info.renderBuilderMethods(existingMethodsWithParameters));
+    }
 
     final PsiManager psiManager = psiClass.getManager();
     final boolean forceCallSuper = PsiClassUtil.hasSuperClass(psiClass);
@@ -323,12 +331,16 @@ public class SuperBuilderHandler extends BuilderHandler {
       // precalculate obtainVia
       builderInfos.forEach(BuilderInfo::withObtainVia);
 
-      if (!existedMethodNames.contains(STATIC_FILL_VALUES_METHOD_NAME)) {
+      final PsiClassType typeWithGenerics = PsiClassUtil.getTypeWithGenerics(psiClass);
+      final PsiClassType typeWithWildcardsForSuperBuilderTypeParameters =
+        getTypeWithWildcardsForSuperBuilderTypeParameters(baseClassBuilder);
+      if (!BuilderHandler.matchMethodWithParams(existingMethodsWithParameters, STATIC_FILL_VALUES_METHOD_NAME,
+                                                List.of(typeWithGenerics, typeWithWildcardsForSuperBuilderTypeParameters))) {
         // create '$fillValuesFromInstanceIntoBuilder' method
         final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, STATIC_FILL_VALUES_METHOD_NAME)
           .withMethodReturnType(PsiTypes.voidType())
-          .withParameter(INSTANCE_VARIABLE_NAME, PsiClassUtil.getTypeWithGenerics(psiClass))
-          .withParameter(BUILDER_VARIABLE_NAME, getTypeWithWildcardsForSuperBuilderTypeParameters(baseClassBuilder))
+          .withParameter(INSTANCE_VARIABLE_NAME, typeWithGenerics)
+          .withParameter(BUILDER_VARIABLE_NAME, typeWithWildcardsForSuperBuilderTypeParameters)
           .withContainingClass(baseClassBuilder)
           .withNavigationElement(psiClass)
           .withModifier(PsiModifier.PRIVATE)
@@ -343,7 +355,7 @@ public class SuperBuilderHandler extends BuilderHandler {
         result.add(methodBuilder);
       }
 
-      if (!existedMethodNames.contains(FILL_VALUES_METHOD_NAME)) {
+      if (!BuilderHandler.matchMethodWithParams(existingMethodsWithParameters, FILL_VALUES_METHOD_NAME, List.of(cType))) {
         // create '$fillValuesFrom' method
         final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiManager, FILL_VALUES_METHOD_NAME)
           .withMethodReturnType(bType)
@@ -362,7 +374,7 @@ public class SuperBuilderHandler extends BuilderHandler {
       }
     }
 
-    if (!existedMethodNames.contains(SELF_METHOD)) {
+    if (!BuilderHandler.matchMethodWithParams(existingMethodsWithParameters, SELF_METHOD, Collections.emptyList())) {
       // create 'self' method
       final LombokLightMethodBuilder selfMethod = new LombokLightMethodBuilder(psiManager, SELF_METHOD)
         .withMethodReturnType(bType)
@@ -374,7 +386,7 @@ public class SuperBuilderHandler extends BuilderHandler {
     }
 
     final String buildMethodName = getBuildMethodName(psiAnnotation);
-    if (!existedMethodNames.contains(buildMethodName)) {
+    if (!BuilderHandler.matchMethodWithParams(existingMethodsWithParameters, buildMethodName, Collections.emptyList())) {
       // create 'build' method
       final LombokLightMethodBuilder buildMethod = new LombokLightMethodBuilder(psiManager, buildMethodName)
         .withMethodReturnType(cType)
@@ -388,7 +400,8 @@ public class SuperBuilderHandler extends BuilderHandler {
       result.add(buildMethod);
     }
 
-    if (!existedMethodNames.contains(ToStringProcessor.TO_STRING_METHOD_NAME)) {
+    if (!BuilderHandler.matchMethodWithParams(existingMethodsWithParameters, ToStringProcessor.TO_STRING_METHOD_NAME,
+                                              Collections.emptyList())) {
       // create 'toString' method
       result.add(createToStringMethod(psiAnnotation, baseClassBuilder, forceCallSuper));
     }

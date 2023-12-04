@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="rd-core" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-core:2023.3.2">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-core:2024.1.1-preview3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2023.3.2/rd-core-2023.3.2.jar">
-          <sha256sum>9689abb20ff5ac8590212ba99cc1959a655fd0d5c60c3bdec080f11457539af4</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2024.1.1-preview3/rd-core-2024.1.1-preview3.jar">
+          <sha256sum>c2d15c010a190d34a21d10d8825ac3abb308d9637f67c1cf52d0b32dbb9f3fc2</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2023.3.2/rd-core-2023.3.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2024.1.1-preview3/rd-core-2024.1.1-preview3.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2023.3.2/rd-core-2023.3.2-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2024.1.1-preview3/rd-core-2024.1.1-preview3-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2023.3.2/rd-core-2023.3.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-core/2024.1.1-preview3/rd-core-2024.1.1-preview3-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

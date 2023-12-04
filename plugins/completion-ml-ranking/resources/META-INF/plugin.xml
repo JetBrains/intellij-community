@@ -51,6 +51,11 @@
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt 9"/>
       <add-to-group group-id="MaintenanceGroup" anchor="before" relative-to-action="DumpLookupElementWeights"/>
     </action>
+    <action id="DumpMLExperimentGroups"
+            class="com.intellij.completion.ml.actions.DumpMLExperimentsGroupsAction"
+            internal="true">
+      <add-to-group group-id="MaintenanceGroup" anchor="after" relative-to-action="DumpMLCompletionFeatures"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -59,7 +64,7 @@
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
                         serviceImplementation="com.intellij.completion.ml.sorting.MLSorterFactory"/>
 
-    <codeCompletionConfigurable provider="com.intellij.completion.ml.settings.MLRankingConfigurableProvider"/>
+    <mlCodeCompletionConfigurable provider="com.intellij.completion.ml.settings.MLRankingConfigurableProvider"/>
 
     <applicationService serviceImplementation="com.intellij.completion.ml.personalization.impl.ApplicationUserFactorStorage"/>
 

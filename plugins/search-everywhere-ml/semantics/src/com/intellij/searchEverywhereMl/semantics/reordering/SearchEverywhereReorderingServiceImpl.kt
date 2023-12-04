@@ -2,7 +2,6 @@ package com.intellij.searchEverywhereMl.semantics.reordering
 
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
-import com.intellij.searchEverywhereMl.semantics.settings.SemanticSearchSettings
 
 class SearchEverywhereReorderingServiceImpl : SearchEverywhereReorderingService {
   private val enabledTabs = setOf(
@@ -12,7 +11,7 @@ class SearchEverywhereReorderingServiceImpl : SearchEverywhereReorderingService 
     SymbolSearchEverywhereContributor::class.java.simpleName
   )
 
-  override fun isEnabled() = SemanticSearchSettings.getInstance().isEnabled()
+  override fun isEnabled() = false
 
   override fun isEnabledInTab(tabID: String): Boolean {
     return tabID in enabledTabs

@@ -1,12 +1,10 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.util.MemoryDumpHelper
-import java.lang.IllegalStateException
 
 class ConditionalMemoryDumpCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
@@ -30,7 +28,7 @@ class ConditionalMemoryDumpCommand(text: String, line: Int) : PerformanceCommand
           LOG.info("Dumping memory snapshot to: $memoryDumpPath")
           MemoryDumpHelper.captureMemoryDump(memoryDumpPath)
           if (withErrorMessages) {
-            throw IllegalStateException("Got low memory signal, memory dump attached")
+            LOG.error("Got low memory signal, memory dump attached")
           }
         }
       //we can't register a proper disposable since we wait till all commands are finished

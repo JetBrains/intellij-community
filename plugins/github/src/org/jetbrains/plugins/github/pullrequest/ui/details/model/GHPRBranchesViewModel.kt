@@ -5,13 +5,11 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.withInitial
-import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.asStateFlow
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranches
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.GitRemoteBranchesUtil
 import git4idea.remote.hosting.HostedGitRepositoryRemote
 import git4idea.remote.hosting.changesSignalFlow
@@ -61,11 +59,7 @@ class GHPRBranchesViewModel internal constructor(
     cs.launch {
       val details = detailsState.first()
       val remoteDescriptor = details.getRemoteDescriptor() ?: return@launch
-      val localPrefix = if(details.headRepository?.isFork == true) {
-        "fork/${remoteDescriptor.name}"
-      } else {
-        null
-      }
+      val localPrefix = if (details.headRepository?.isFork == true) "fork" else null
       GitRemoteBranchesUtil.fetchAndCheckoutRemoteBranch(gitRepository, remoteDescriptor, details.headRefName, localPrefix)
     }
   }

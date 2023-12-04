@@ -1046,7 +1046,7 @@ abstract class AbstractYamlMultilineInjectionTest(val async: Boolean) : BasePlat
         myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
       }
       waitForYamlCoroutines()
-    }.attempts(1)
+    }.warmupIterations(0).attempts(1)
       .assertTiming()
 
     myInjectionFixture.assertInjectedContent("""root:

@@ -12,7 +12,7 @@ class SearchEverywhereMlElementFeatureValidationRule : CustomValidationRule() {
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
     if (isThirdPartyValue(data)) return ValidationResultType.THIRD_PARTY
-    return when (SearchEverywhereMLStatisticsCollector.findElementFeatureByName(data)) {
+    return when (SearchEverywhereMLStatisticsCollector.Fields.findElementFeatureByName(data)) {
       null -> ValidationResultType.REJECTED
       else -> ValidationResultType.ACCEPTED
     }

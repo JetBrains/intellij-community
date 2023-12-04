@@ -67,7 +67,7 @@ final class TopAnomaliesAction extends ActionGroup {
         }
       }
 
-      private void checkParents(JComponent component, Set<Pair<JComponent, Integer>> top, int limit) {
+      private static void checkParents(JComponent component, Set<Pair<JComponent, Integer>> top, int limit) {
         top.add(Pair.create(component, component.getComponentCount()));
 
         trimToLimit(top, limit);
@@ -113,7 +113,7 @@ final class TopAnomaliesAction extends ActionGroup {
         }
       }
 
-      private void checkClientProperties(JComponent component, Set<Pair<JComponent, Integer>> top, int limit) {
+      private static void checkClientProperties(JComponent component, Set<Pair<JComponent, Integer>> top, int limit) {
         try {
           Field clientProperties = JComponent.class.getDeclaredField("clientProperties");
           clientProperties.setAccessible(true);

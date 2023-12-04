@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectId
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware.Companion.EP_NAME
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.ModuleManager
@@ -30,6 +31,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isConfiguredByPlatformProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
+import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,12 +45,8 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   @Service(Service.Level.PROJECT)
   private class CoroutineScopeService(val coroutineScope: CoroutineScope)
 
-  private suspend fun Project.trackConfiguration(action: suspend () -> Unit) {
-    serviceAsync<ExternalSystemInProgressService>().trackConfigurationActivity(action)
-  }
-
   override suspend fun execute(project: Project) {
-    project.trackConfiguration {
+    project.trackActivity(ExternalSystemActivityKey) {
       project.serviceAsync<ExternalSystemInProgressService>().unlinkedActivityStarted()
       loadProjectIfSingleUnlinkedProjectFound(project)
       val projectRoots = installProjectRootsScanner(project)
@@ -158,7 +156,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
   private suspend fun installUnlinkedProjectScanner(project: Project, projectRoots: ProjectRoots) {
     whenProjectRootsChanged(projectRoots, project) { changedRoots ->
       EP_NAME.forEachExtensionSafeAsync { extension ->
-        project.trackConfiguration {
+        project.trackActivity(ExternalSystemActivityKey) {
           for (projectRoot in changedRoots) {
             updateNotification(project, projectRoot, extension)
           }
@@ -170,7 +168,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
         updateNotification(project, projectRoot, extension)
       }
       projectRoots.whenProjectRootRemoved(extensionDisposable) { projectRoot ->
-        project.trackConfiguration {
+        project.trackActivity(ExternalSystemActivityKey) {
           expireNotification(project, projectRoot, extension)
         }
       }
@@ -199,7 +197,7 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
         .notificationNotify(extension.createProjectId(externalProjectPath)) {
           val cs = project.service<CoroutineScopeService>().coroutineScope
           cs.launch(extensionDisposable) {
-            project.trackConfiguration {
+            project.trackActivity(ExternalSystemActivityKey) {
               extension.linkAndLoadProjectAsync(project, externalProjectPath)
             }
           }
@@ -308,19 +306,18 @@ class UnlinkedProjectStartupActivity : ProjectActivity {
     }
   }
 
+  private fun ExternalSystemUnlinkedProjectAware.createProjectId(externalProjectPath: String): ExternalSystemProjectId {
+    return ExternalSystemProjectId(systemId, externalProjectPath)
+  }
+
+  private suspend fun ExternalSystemUnlinkedProjectAware.hasBuildFiles(project: Project, externalProjectPath: String): Boolean {
+    return readAction {
+      val projectRoot = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
+      projectRoot?.children?.firstOrNull { isBuildFile(project, it) } != null
+    }
+  }
+
   companion object {
-
     private val LOG = Logger.getInstance("#com.intellij.openapi.externalSystem.autolink")
-
-    private fun ExternalSystemUnlinkedProjectAware.createProjectId(externalProjectPath: String): ExternalSystemProjectId {
-      return ExternalSystemProjectId(systemId, externalProjectPath)
-    }
-
-    private suspend fun ExternalSystemUnlinkedProjectAware.hasBuildFiles(project: Project, externalProjectPath: String): Boolean {
-      return readAction {
-        val projectRoot = LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
-        projectRoot?.children?.firstOrNull { isBuildFile(project, it) } != null
-      }
-    }
   }
 }

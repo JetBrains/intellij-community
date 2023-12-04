@@ -14,13 +14,15 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * Quick fix that creates a new directory in one of the target directories. Automatically creates all intermediate directories of
- * {@link TargetDirectory#getPathToCreate()} and {@link NewFileLocation#getSubPath()}. If there are multiple target directories it shows
- * a popup where users can select desired target directory.
+ * {@link TargetDirectory#getPathToCreate()} and {@link NewFileLocation#getSubPath()}. If there are multiple target directories, it shows
+ * a popup where users can select the desired target directory.
  */
 public final class CreateDirectoryPathFix extends AbstractCreateFileFix {
-  // invoked from other module
+  // invoked from another module
   @SuppressWarnings("WeakerAccess")
   public CreateDirectoryPathFix(@NotNull PsiElement psiElement,
                                 @NotNull NewFileLocation newFileLocation,
@@ -52,10 +54,13 @@ public final class CreateDirectoryPathFix extends AbstractCreateFileFix {
   }
 
   @Override
-  protected void apply(@NotNull Project project, @NotNull PsiDirectory targetDirectory, @Nullable Editor editor)
+  protected void apply(@NotNull Project project, @NotNull Supplier<? extends @Nullable PsiDirectory> targetDirectory, @Nullable Editor editor)
     throws IncorrectOperationException {
 
-    targetDirectory.createSubdirectory(myNewFileName);
+    PsiDirectory directory = targetDirectory.get();
+    if (directory != null) {
+      directory.createSubdirectory(myNewFileName);
+    }
   }
 
   @Override

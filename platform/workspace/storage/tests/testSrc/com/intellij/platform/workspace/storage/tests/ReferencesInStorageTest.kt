@@ -6,7 +6,6 @@ import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -93,7 +92,7 @@ class ReferencesInStorageTest {
     builder.addEntity(child)
     builder.assertConsistency()
     assertEquals(child, parent1.children.single())
-    assertEquals(emptyList<XChildEntity>(), parent2.children.toList())
+    assertEquals(emptyList(), parent2.children.toList())
     assertEquals("parent1", child.parentEntity.parentProperty)
     assertEquals("parent2", child.dataClass!!.parent.resolve(builder)?.parentProperty)
     assertEquals(setOf(parent1, parent2), builder.entities(XParentEntity::class.java).toSet())
@@ -116,8 +115,8 @@ class ReferencesInStorageTest {
     builder.assertConsistency()
     builder.removeEntity(child)
     builder.assertConsistency()
-    assertEquals(emptyList<XChildEntity>(), builder.entities(XChildEntity::class.java).toList())
-    assertEquals(emptyList<XChildEntity>(), parent.children.toList())
+    assertEquals(emptyList(), builder.entities(XChildEntity::class.java).toList())
+    assertEquals(emptyList(), parent.children.toList())
     assertEquals(parent, builder.singleParent())
   }
 
@@ -129,8 +128,8 @@ class ReferencesInStorageTest {
     }
     builder.removeEntity(child.parentEntity)
     builder.assertConsistency()
-    assertEquals(emptyList<XChildEntity>(), builder.entities(XChildEntity::class.java).toList())
-    assertEquals(emptyList<XParentEntity>(), builder.entities(XParentEntity::class.java).toList())
+    assertEquals(emptyList(), builder.entities(XChildEntity::class.java).toList())
+    assertEquals(emptyList(), builder.entities(XParentEntity::class.java).toList())
   }
 
   @Test
@@ -166,8 +165,8 @@ class ReferencesInStorageTest {
     }
     builder.removeEntity(child1.parentEntity)
     builder.assertConsistency()
-    assertEquals(emptyList<XChildEntity>(), builder.entities(XChildEntity::class.java).toList())
-    assertEquals(emptyList<XParentEntity>(), builder.entities(XParentEntity::class.java).toList())
+    assertEquals(emptyList(), builder.entities(XChildEntity::class.java).toList())
+    assertEquals(emptyList(), builder.entities(XParentEntity::class.java).toList())
   }
 
   @Test
@@ -183,7 +182,7 @@ class ReferencesInStorageTest {
     }
     builder.removeEntity(parent)
     builder.assertConsistency()
-    assertEquals(emptyList<XChildEntity>(), builder.entities(XChildEntity::class.java).toList())
-    assertEquals(emptyList<XParentEntity>(), builder.entities(XParentEntity::class.java).toList())
+    assertEquals(emptyList(), builder.entities(XChildEntity::class.java).toList())
+    assertEquals(emptyList(), builder.entities(XParentEntity::class.java).toList())
   }
 }

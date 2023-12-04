@@ -22,10 +22,11 @@ import com.intellij.openapi.util.NlsContexts
 class PatchDiffRequest(
   val patch: TextFilePatch,
   private val windowTitle: @NlsContexts.DialogTitle String?,
-  val panelTitle: @NlsContexts.Label String?
+  val contentTitle1: @NlsContexts.Label String?,
+  val contentTitle2: @NlsContexts.Label String?
 ) : DiffRequest() {
 
-  constructor(appliedPatch: TextFilePatch) : this(appliedPatch, null, null)
+  constructor(appliedPatch: TextFilePatch) : this(appliedPatch, null, null, null)
 
   override fun getTitle(): String? {
     return windowTitle

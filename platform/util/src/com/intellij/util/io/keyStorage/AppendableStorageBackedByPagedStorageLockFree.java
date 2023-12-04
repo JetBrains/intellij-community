@@ -156,25 +156,30 @@ public final class AppendableStorageBackedByPagedStorageLockFree<Data> implement
 
   @Override
   public boolean processAll(@NotNull StorageObjectProcessor<? super Data> processor) throws IOException {
-    if (isDirty()) {
-      //RC: why not .force() right here? Probably because of the locks: processAll is a read method, so
-      //    it is likely readLock is acquired, but force() requires writeLock, and one can't upgrade read
-      //    lock to the write one. So the responsibility was put on a caller.
+    //ensure no deadlocks on attempt escalate read->write lock:
+    assert storageLock.getReadLockCount() == 0 : "Read-lock must not be held";
 
-      //MAYBE RC: we really don't need full flush here -- flushAppendBuffer() is enough, since
-      //PagedStorage.readInputStream() reads over cached pages, not over on-disk file, as
-      //legacy PagedFileStorage does. But still requires writeLock, hence comment before still
-      //applies
-      throw new IllegalStateException("Must be .force()-ed first");
+    int fileLengthLocal;
+    lockWrite();
+    try {
+      flushAppendBuffer();
+      fileLengthLocal = fileLength;
+      if (fileLengthLocal == 0) {
+        return true;
+      }
     }
-    if (fileLength == 0) {
-      return true;
+    finally {
+      unlockWrite();
     }
+
     IOCancellationCallbackHolder.checkCancelled();
-    //throw new UnsupportedOperationException("Method not implemented yet");
+
+    //Since it is append-only storage => already-written records never modified => could be read without locking:
+    //Newer records appended after unlockWrite() -- will not be read, which is expectable
+
     return storage.readInputStream(is -> {
       // calculation may restart few times, so it's expected that processor processes duplicates
-      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLength) {
+      LimitedInputStream lis = new LimitedInputStream(new BufferedInputStream(is), fileLengthLocal) {
         @Override
         public int available() {
           return remainingLimit();

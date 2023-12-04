@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
 class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+  @Suppress("CompanionObjectInExtension") // used in third party
   companion object {
     @RequiresReadLock
     fun createPassForPreview(file: PsiFile,

@@ -176,6 +176,11 @@ public abstract class IdeLightClassesByPsiTestGenerated extends AbstractIdeLight
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithSetParamPropertyModifier.kt"));
         }
 
+        @TestMetadata("annotationWithVaragArguments.kt")
+        public void testAnnotationWithVaragArguments() throws Exception {
+            runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotationWithVaragArguments.kt"));
+        }
+
         @TestMetadata("annotations.kt")
         public void testAnnotations() throws Exception {
             runTest(compilerTestData("compiler/testData/asJava/lightClasses/lightClassByPsi/annotations.kt"));

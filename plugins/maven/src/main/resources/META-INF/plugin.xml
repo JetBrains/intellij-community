@@ -96,7 +96,6 @@
                     serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectResolverImpl"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.project.importing.MavenImportingManager"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.archetype.MavenCatalogManager"/>
@@ -119,8 +118,6 @@
     <compiler.task execute="AFTER" implementation="org.jetbrains.idea.maven.tasks.MavenTasksManager$MavenAfterCompileTask"/>
 
     <consoleFilterProvider implementation="org.jetbrains.idea.maven.project.MavenConsoleFilterProvider"/>
-
-    <activityInProgressPredicate implementation="org.jetbrains.idea.maven.utils.MavenInProgressPredicate"/>
 
     <projectConfigurable groupId="build.tools" groupWeight="120" instance="org.jetbrains.idea.maven.utils.MavenSettings" id="MavenSettings"
                          bundle="messages.MavenProjectBundle"
@@ -308,9 +305,11 @@
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenImportCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenDependencyInsertionCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenIndexUsageCollector"/>
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenPluginCollector"/>
 
-    <statistics.validation.customValidationRule implementation="org.jetbrains.idea.maven.statistics.MavenPluginCoordinatesWhitelistValidationRule"/>
+    <statistics.validation.customValidationRule
+      implementation="org.jetbrains.idea.maven.statistics.MavenPluginCoordinatesWhitelistValidationRule"/>
 
     <registryKey key="maven.collect.local.stat" defaultValue="false"
                  description="Collect local maven statistics. Used in Internal mode. Does not affect FUS"/>
@@ -320,9 +319,6 @@
 
     <registryKey key="maven.dedicated.indexer" defaultValue="true"
                  description="Dedicated maven indexer" restartRequired="true"/>
-
-    <registryKey key="maven.linear.import" defaultValue="false"
-                 description="Linear maven import process"/>
 
     <registryKey key="maven.plugins.use.cache" defaultValue="true"
                  description="Use cache for plugin resolving"/>
@@ -834,6 +830,11 @@
       <reference ref="Maven.TasksGroup"/>
     </group>
 
+    <group id="Maven.RepositoryMenu" class="org.jetbrains.idea.maven.navigator.actions.RepositoryMenu" popup="true">
+      <action id="Maven.UpdateLocalIndex" class="org.jetbrains.idea.maven.navigator.actions.UpdateLocalIndexAction"/>
+      <action id="Maven.ShowIndexData" class="org.jetbrains.idea.maven.navigator.actions.ShowIndexAction"/>
+    </group>
+
     <group id="Maven.GlobalProjectMenu" class="org.jetbrains.idea.maven.utils.actions.MavenActionGroup" popup="true"
            icon="OpenapiIcons.RepositoryLibraryLogo">
       <add-to-group group-id="EditorPopupMenu" anchor="last"/>
@@ -871,4 +872,9 @@
   <projectListeners>
     <listener class="org.jetbrains.idea.maven.project.MavenDependencyUpdater" topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
   </projectListeners>
+  <applicationListeners>
+    <listener class="org.jetbrains.idea.maven.project.MavenImportListenerBridge"
+              topic="org.jetbrains.idea.maven.project.MavenSyncListener"
+              activeInTestMode="true" activeInHeadlessMode="true"/>
+  </applicationListeners>
 </idea-plugin>

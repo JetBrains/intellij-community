@@ -13,12 +13,12 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
+import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.PlatformTestUtil.dispatchAllEventsInIdeEventQueue
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.io.write
 import com.intellij.util.lang.JavaVersion
-import junit.framework.ComparisonFailure
 import junit.framework.TestCase
 import org.jdom.Element
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -267,8 +267,11 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         }
     }
 
+    protected open fun getAfterTestDataAbsolutePath(mainFileName: String) =
+        testDataDirectory.toPath() / (mainFileName + afterFileNameSuffix)
+
     protected fun doTestForInternal(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
-        val mainFilePath = mainFile.name
+        val mainFileName = mainFile.name
         val expectedProblemString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $expectedProblemDirectiveName: "
         )
@@ -280,21 +283,27 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
         )
 
         val inspectionSettings = loadInspectionSettings(mainFile)
-        val canonicalPathToExpectedFile = mainFilePath + afterFileNameSuffix
-        val canonicalPathToExpectedPath = testDataDirectory.toPath() / canonicalPathToExpectedFile
+        val afterFileAbsolutePath = getAfterTestDataAbsolutePath(mainFileName)
 
-        if (!runInspectionWithFixesAndCheck(inspection, expectedProblemString, expectedHighlightString, localFixTextString, inspectionSettings)) {
-            assertFalse("$canonicalPathToExpectedFile should not exist as no action could be applied", Files.exists(canonicalPathToExpectedPath))
+        if (!runInspectionWithFixesAndCheck(
+                inspection,
+                expectedProblemString,
+                expectedHighlightString,
+                localFixTextString,
+                inspectionSettings
+            )
+        ) {
+            assertFalse("${afterFileAbsolutePath.fileName} should not exist as no action could be applied", Files.exists(afterFileAbsolutePath))
             return
         }
 
-        createAfterFileIfItDoesNotExist(canonicalPathToExpectedPath)
+        createAfterFileIfItDoesNotExist(afterFileAbsolutePath)
         dispatchAllEventsInIdeEventQueue()
         try {
-            myFixture.checkResultByFile(canonicalPathToExpectedFile)
-        } catch (e: ComparisonFailure) {
+            myFixture.checkResultByFile("${afterFileAbsolutePath.fileName}")
+        } catch (e: FileComparisonFailure) {
             KotlinTestUtils.assertEqualsToFile(
-                File(testDataDirectory, canonicalPathToExpectedFile),
+                File(testDataDirectory, "${afterFileAbsolutePath.fileName}"),
                 editor.document.text
             )
         }

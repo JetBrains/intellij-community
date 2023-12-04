@@ -14,8 +14,8 @@ import java.util.*
 interface TelemetryReceivedListener : EventListener {
   companion object {
     @Topic.AppLevel
-    @JvmStatic
+    @JvmField
     val TOPIC: Topic<TelemetryReceivedListener> = Topic(TelemetryReceivedListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
-  fun sendSpans(spansData: Collection<SpanData>)
+  fun sendSpans(spanData: Collection<SpanData>)
 }

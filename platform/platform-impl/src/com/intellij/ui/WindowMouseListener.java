@@ -2,7 +2,6 @@
 
 package com.intellij.ui;
 
-import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
 import org.intellij.lang.annotations.JdkConstants;

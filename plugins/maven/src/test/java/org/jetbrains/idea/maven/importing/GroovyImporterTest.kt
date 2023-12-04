@@ -18,8 +18,7 @@ import java.util.*
 class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
   private var repoPath: String? = null
 
-  override fun runInDispatchThread() = false
-
+  
   override fun setUp() {
     super.setUp()
     repoPath = File(myDir, "repo").path
@@ -187,9 +186,7 @@ class GroovyImporterTest : MavenMultiVersionImportingTestCase() {
     val batchDir = File(repoPath, "org/codehaus/groovy/groovy-eclipse-batch/2.1.3-01/")
     batchDir.mkdirs()
     val batchJar = File(batchDir, "groovy-eclipse-batch-2.1.3-01.jar")
-    if (!isNewImportingProcess) { // old import tests are not resolving anything
-      batchJar.createNewFile()
-    }
+    batchJar.createNewFile()
 
     if (!supportsImportOfNonExistingFolders()) {
       createStdProjectFolders()

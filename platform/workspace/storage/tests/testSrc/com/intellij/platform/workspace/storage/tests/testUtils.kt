@@ -3,13 +3,11 @@ package com.intellij.platform.workspace.storage.tests
 
 import com.google.common.collect.HashBiMap
 import com.intellij.platform.workspace.storage.EntityStorage
-import com.intellij.platform.workspace.storage.EntityTypesResolver
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongMultiMap
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver
 import junit.framework.TestCase.*
 import org.junit.Assert

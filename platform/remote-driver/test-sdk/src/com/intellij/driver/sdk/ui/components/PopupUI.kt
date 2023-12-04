@@ -6,4 +6,4 @@ import org.intellij.lang.annotations.Language
 fun Finder.popup(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='HeavyWeightWindow']",
                                                                PopupUiComponent::class.java)
 
-class PopupUiComponent(data: ComponentData) : UiComponent(data)
+open class PopupUiComponent(data: ComponentData) : UiComponent(data)

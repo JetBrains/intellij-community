@@ -59,6 +59,13 @@
             restartRequired="true"
     />
 
+    <registryKey
+            key="kotlin.caches.fine.grained.throttling.timeout.ms"
+            description="Minimal time in ms between two successive invalidations of the same cache on low memory"
+            defaultValue="5000"
+            restartRequired="true"
+    />
+
     <projectService
             serviceInterface="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService"
             serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.ResolutionAnchorCacheServiceImpl"/>

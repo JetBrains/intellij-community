@@ -1,17 +1,27 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.instantiation
 
+import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.openapi.progress.Cancellation
-import com.intellij.platform.instanceContainer.internal.withCurrentlyInitializingHolder
-import com.intellij.util.ArrayUtil
+import com.intellij.platform.util.coroutines.namedChildScope
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
-import com.intellij.util.lateinitVal
 import kotlinx.coroutines.*
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.lang.reflect.Constructor
 
+/**
+ * Instantiates [instanceClass] using [resolver] to find instances for constructor parameter types.
+ * This function searches for a constructor which matches one of [supportedSignatures].
+ *
+ * @param parentScope a scope which is used as a parent for instance scope
+ * if [instanceClass] defines a constructor with a parameter of [CoroutineScope] type
+ * @param supportedSignatures a list of constructor signatures which are looked up in the class.
+ * @throws InstantiationException if none class does not define any constructor with one of [supportedSignatures],
+ * or [resolver] cannot find an instance for constructor parameter type
+ */
 suspend fun <T> instantiate(
   resolver: DependencyResolver,
   parentScope: CoroutineScope,
@@ -19,16 +29,25 @@ suspend fun <T> instantiate(
   supportedSignatures: List<MethodType>,
 ): T {
   val (signature, constructor) = findConstructor(instanceClass, supportedSignatures)
-  when (val result = resolveArguments(resolver, signature.parameterList(), round = 0)) {
+  when (val result = resolveArguments(resolver = resolver,
+                                      parameterTypes = signature.parameterArray(),
+                                      instanceClass = instanceClass,
+                                      round = 0)) {
     is ResolutionResult.UnresolvedParameter -> {
       throw InstantiationException(
         "Signature '$signature' for found in '${instanceClass.name}', but '${resolver}' cannot resolve '${result.parameterType}'"
       )
     }
     is ResolutionResult.Resolved -> {
-      return instantiate(parentScope, instanceClass, result.arguments) {
-        @Suppress("UNCHECKED_CAST")
-        constructor.invokeWithArguments(*it) as T
+      return instantiate(parentScope, instanceClass, result.arguments) { args ->
+        if (args.isEmpty()) {
+          @Suppress("UNCHECKED_CAST")
+          constructor.invoke() as T
+        }
+        else {
+          @Suppress("UNCHECKED_CAST")
+          constructor.invokeWithArguments(*args) as T
+        }
       }
     }
   }
@@ -47,6 +66,16 @@ private fun findConstructor(instanceClass: Class<*>, signatures: List<MethodType
   throw InstantiationException("Class '$instanceClass' does not define any of supported signatures '$signatures'")
 }
 
+/**
+ * Instantiates [instanceClass] using [resolver] to find instances for constructor parameter types.
+ * This function searches for the greediest constructor, i.e., a constructor with most parameters, which is satisfiable.
+ *
+ * @param parentScope a scope which is used as a parent for instance scope
+ * if [instanceClass] defines a constructor with a parameter of [CoroutineScope] type
+ * @throws InstantiationException if there are no constructors,
+ * or more than one satisfiable constructor,
+ * or [resolver] cannot find an instance for constructor parameter type
+ */
 suspend fun <T> instantiate(resolver: DependencyResolver, parentScope: CoroutineScope, instanceClass: Class<T>): T {
   val (constructor, lazyArgs) = findConstructorAndArguments(resolver, instanceClass)
   return instantiate(parentScope, instanceClass, lazyArgs) {
@@ -101,7 +130,10 @@ private fun <T> findConstructorAndArguments(
   } as List<Constructor<T>>
 
   var roundIndex = 0
-  val roundZero = doFindConstructorAndArguments(resolver, sortedConstructors, roundIndex)
+  val roundZero = doFindConstructorAndArguments(resolver = resolver,
+                                                constructors = sortedConstructors,
+                                                round = roundIndex,
+                                                instanceClass = instanceClass)
   var round = roundZero
   while (true) {
     when (round) {
@@ -118,7 +150,10 @@ private fun <T> findConstructorAndArguments(
           }
           roundIndex < rounds -> {
             roundIndex++
-            round = doFindConstructorAndArguments(resolver, sortedConstructors, roundIndex)
+            round = doFindConstructorAndArguments(resolver = resolver,
+                                                  constructors = sortedConstructors,
+                                                  instanceClass = instanceClass,
+                                                  round = roundIndex)
           }
           else -> {
             // NB reporting unsatisfiable constructors from round zero
@@ -134,10 +169,11 @@ private fun <T> findConstructorAndArguments(
 private fun <T> doFindConstructorAndArguments(
   resolver: DependencyResolver,
   constructors: List<Constructor<T>>,
+  instanceClass: Class<T>,
   round: Int,
 ): DependencyResolutionResult<T> {
   var greediest: DependencyResolutionResult.Resolved<T>? = null
-  var unsatisfiableConstructors: MutableList<ConstructorAndParameterType<T>>? = null
+  var unsatisfiableConstructors: MutableList<UnsatisfiedConstructorParameterType<T>>? = null
 
   val singleConstructor = constructors.size == 1
 
@@ -152,7 +188,7 @@ private fun <T> doFindConstructorAndArguments(
 
     val parameterTypes = constructor.parameterTypes
     if (greediest != null && parameterTypes.size < greediest.arguments.size) {
-      // next constructor has strictly fewer parameters than previous
+      // the next constructor has strictly fewer parameters than previous
       return greediest
     }
 
@@ -161,12 +197,15 @@ private fun <T> doFindConstructorAndArguments(
       continue
     }
 
-    val arguments = when (val result = resolveArguments(resolver, parameterTypes.toList(), round)) {
+    val arguments = when (val result = resolveArguments(resolver = resolver,
+                                                        parameterTypes = parameterTypes,
+                                                        instanceClass = instanceClass,
+                                                        round = round)) {
       is ResolutionResult.UnresolvedParameter -> {
         if (unsatisfiableConstructors == null) {
           unsatisfiableConstructors = ArrayList()
         }
-        unsatisfiableConstructors.add(ConstructorAndParameterType(constructor, result.parameterType))
+        unsatisfiableConstructors.add(UnsatisfiedConstructorParameterType(constructor, result.parameterType))
         continue@constructors // unsatisfiable constructor
       }
       is ResolutionResult.Resolved -> {
@@ -200,20 +239,23 @@ private sealed interface ResolutionResult {
   value class Resolved(val arguments: List<Argument>) : ResolutionResult
 }
 
-private fun resolveArguments(resolver: DependencyResolver, parameterTypes: List<Class<*>>, round: Int): ResolutionResult {
+private fun resolveArguments(resolver: DependencyResolver,
+                             parameterTypes: Array<Class<*>>,
+                             instanceClass: Class<*>,
+                             round: Int): ResolutionResult {
+  if (parameterTypes.isEmpty()) {
+    return ResolutionResult.Resolved(emptyList())
+  }
+
   val arguments = ArrayList<Argument>(parameterTypes.size)
   for (parameterType in parameterTypes) {
-    arguments += if (parameterType === CoroutineScope::class.java) {
-      Argument.CoroutineScopeMarker
+    if (parameterType === CoroutineScope::class.java) {
+      arguments.add(Argument.CoroutineScopeMarker)
     }
     else {
-      val dependency = resolver.resolveDependency(parameterType, round)
-      if (dependency != null) {
-        Argument.LazyArgument(dependency)
-      }
-      else {
-        return ResolutionResult.UnresolvedParameter(parameterType)
-      }
+      val dependency = resolver.resolveDependency(parameterType = parameterType, instanceClass = instanceClass, round = round)
+                       ?: return ResolutionResult.UnresolvedParameter(parameterType)
+      arguments.add(Argument.LazyArgument(dependency))
     }
   }
   return ResolutionResult.Resolved(arguments)
@@ -225,61 +267,57 @@ private suspend fun <T> instantiate(
   lazyArgs: List<Argument>,
   instantiate: (Array<out Any>) -> T,
 ): T {
-  return coroutineScope {
-    val args: Array<Any> = lazyArgs.map { argument: Argument ->
-      if (argument === Argument.CoroutineScopeMarker) {
-        CompletableDeferred(argument)
-      }
-      else {
-        val supplier = (argument as Argument.LazyArgument).argumentSupplier
-        async(start = CoroutineStart.UNDISPATCHED) { // don't pay for dispatch
-          supplier()
+  val args: Array<Any> = if (lazyArgs.isEmpty()) {
+    ArrayUtilRt.EMPTY_OBJECT_ARRAY
+  }
+  else {
+    coroutineScope {
+      lazyArgs.map { argument: Argument ->
+        if (argument === Argument.CoroutineScopeMarker) {
+          CompletableDeferred(argument)
         }
-      }
-    }.awaitAll().toArray(ArrayUtil.EMPTY_OBJECT_ARRAY)
-    val initializerContext = currentCoroutineContext()
-    var instanceResult: Result<T> by lateinitVal()
-    parentScope.launch(CoroutineName(instanceClass.name), start = CoroutineStart.UNDISPATCHED) {
-      // Don't cancel parentScope on failure.
-      supervisorScope {
-        val requiresScope = replaceScopeMarkerWithScope(args, this@supervisorScope)
-        instanceResult = runCatching {
-          // If a service is requested during highlighting (under impatient=true),
-          // then it's initialization might be broken forever.
-          // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
-          // so it leaks to newInstance call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
-          // for example, if a service obtains a read action in the constructor.
-          // Non-cancellable section is required to silence throwIfImpatient().
-          // In general, we want initialization to be cancellable, and it must be cancelled only on parent scope cancellation,
-          // which happens only on project/application shutdown, or on plugin unload.
-          Cancellation.withNonCancelableSection().use {
-            // A separate thread-local is required to track cyclic service initialization, because
-            // we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
-            // Only the context of the owner coroutine should be captured.
-            withCurrentlyInitializingHolder(initializerContext).use {
-              // TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
-              instantiate(args)
-            }
+        else {
+          val supplier = (argument as Argument.LazyArgument).argumentSupplier
+          async(start = CoroutineStart.UNDISPATCHED) { // don't pay for dispatch
+            supplier()
           }
         }
-        if (instanceResult.isSuccess) {
-          if (requiresScope) {
-            awaitCancellation() // keep instance coroutine alive
-          }
-        }
-      }
+      }.awaitAll()
     }
-    instanceResult.getOrThrow()
+      .toArray(ArrayUtilRt.EMPTY_OBJECT_ARRAY)
+      .also { args ->
+        replaceScopeMarkerWithScope(args) {
+          parentScope.namedChildScope(instanceClass.name)
+        }
+      }
+  }
+  // If a service is requested during highlighting (under impatient=true),
+  // then it's initialization might be broken forever.
+  // Impatient reader is a property of thread (at the moment, before IJPL-53 is completed),
+  // so it leaks to newInstance call, where it might cause ReadMostlyRWLock.throwIfImpatient() to throw,
+  // for example, if a service obtains a read action in the constructor.
+  // Non-cancellable section is required to silence throwIfImpatient().
+  // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
+  // which happens only on project/application shutdown, or on plugin unload.
+  Cancellation.withNonCancelableSection().use {
+    // A separate thread-local is required to track cyclic service initialization, because
+    // we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
+    // Only the context of the owner coroutine should be captured.
+    // TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
+    installTemporaryThreadContext(currentCoroutineContext()).use {
+      return instantiate(args)
+    }
   }
 }
 
-private fun replaceScopeMarkerWithScope(args: Array<Any>, instanceScope: CoroutineScope): Boolean {
-  var requiresScope = false
+private fun replaceScopeMarkerWithScope(args: Array<Any>, instanceScope: () -> CoroutineScope) {
+  var scope: CoroutineScope? = null
   for ((index, arg) in args.withIndex()) {
     if (arg === Argument.CoroutineScopeMarker) {
-      requiresScope = true
-      args[index] = instanceScope
+      if (scope == null) {
+        scope = instanceScope()
+      }
+      args[index] = scope
     }
   }
-  return requiresScope
 }

@@ -1,8 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
-import com.intellij.execution.process.ProcessService;
 import com.intellij.execution.process.LocalPtyOptions;
+import com.intellij.execution.process.ProcessService;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -106,7 +106,7 @@ public class PtyCommandLine extends GeneralCommandLine {
   @NotNull
   @Override
   protected Process startProcess(@NotNull List<String> commands) throws IOException {
-    if (getInputFile() == null) {
+    if (getInputFile() == null && getProcessCreator() == null) {
       try {
         return startProcessWithPty(commands);
       }
@@ -144,6 +144,10 @@ public class PtyCommandLine extends GeneralCommandLine {
     return null;
   }
 
+  public @NotNull LocalPtyOptions getPtyOptions() {
+    return myOptionsBuilder.build();
+  }
+
   @NotNull
   public Process startProcessWithPty(@NotNull List<String> commands) throws IOException {
     Map<String, String> env = new HashMap<>();
@@ -161,7 +165,7 @@ public class PtyCommandLine extends GeneralCommandLine {
     String[] command = ArrayUtilRt.toStringArray(commands);
     File workDirectory = getWorkDirectory();
     String directory = workDirectory != null ? workDirectory.getPath() : null;
-    LocalPtyOptions options = myOptionsBuilder.build();
+    LocalPtyOptions options = getPtyOptions();
     Application app = ApplicationManager.getApplication();
     return ProcessService.getInstance()
       .startPtyProcess(command, directory, env, options, app, isRedirectErrorStream(), myWindowsAnsiColorEnabled,

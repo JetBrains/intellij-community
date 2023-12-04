@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="JUnit5Vintage" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.junit.vintage:junit-vintage-engine:5.10.0">
+    <properties include-transitive-deps="false" maven-id="org.junit.vintage:junit-vintage-engine:5.10.0">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/junit/vintage/junit-vintage-engine/5.10.0/junit-vintage-engine-5.10.0.jar">
           <sha256sum>6cb4d98b2f37ad78d28bbee4864869a110d278d9684445bde243de01148d8e8a</sha256sum>

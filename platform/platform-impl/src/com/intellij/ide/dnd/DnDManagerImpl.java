@@ -730,7 +730,7 @@ public final class DnDManagerImpl extends DnDManager {
       cleanTargetComponent(dte.getDropTargetContext().getComponent());
     }
 
-    private void cleanTargetComponent(final Component c) {
+    private static void cleanTargetComponent(final Component c) {
       DnDTarget target = getTarget(c);
       if (target instanceof DnDNativeTarget && c instanceof JComponent) {
         ((JComponent)c).putClientProperty(DnDNativeTarget.EVENT_KEY, null);

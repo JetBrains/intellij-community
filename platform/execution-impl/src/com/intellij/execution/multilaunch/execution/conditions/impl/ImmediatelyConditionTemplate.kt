@@ -14,6 +14,7 @@ import com.intellij.execution.multilaunch.execution.conditions.Condition
 import com.intellij.execution.multilaunch.execution.conditions.ConditionTemplate
 import com.intellij.execution.multilaunch.execution.messaging.ExecutionNotifier
 import com.intellij.execution.multilaunch.state.ConditionSnapshot
+import com.intellij.internal.statistic.StructuredIdeActivity
 
 class ImmediatelyConditionTemplate : ConditionTemplate {
   override val type = "immediately"
@@ -26,8 +27,9 @@ class ImmediatelyConditionTemplate : ConditionTemplate {
     override fun validate(configuration: MultiLaunchConfiguration, row: ExecutableRow) {}
     override fun createExecutionListener(descriptor: ExecutionDescriptor,
                                          mode: ExecutionMode,
+                                         activity: StructuredIdeActivity,
                                          lifetime: Lifetime): ExecutionNotifier =
-      Listener(descriptor.executable, mode, lifetime)
+      Listener(descriptor.executable, mode, activity, lifetime)
 
     override fun saveAttributes(snapshot: ConditionSnapshot) {}
     override fun loadAttributes(snapshot: ConditionSnapshot) {}
@@ -35,11 +37,12 @@ class ImmediatelyConditionTemplate : ConditionTemplate {
     inner class Listener(
       private val executable: Executable,
       private val mode: ExecutionMode,
+      private val activity: StructuredIdeActivity,
       private val lifetime: Lifetime
     ) : DefaultExecutionNotifier() {
       override fun start(configuration: MultiLaunchConfiguration, executables: List<Executable>) {
         lifetime.launchBackground {
-          executable.execute(mode, lifetime)
+          executable.execute(mode, activity, lifetime)
         }
       }
     }

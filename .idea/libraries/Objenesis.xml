@@ -1,6 +1,6 @@
 <component name="libraryTable">
   <library name="Objenesis" type="repository">
-    <properties include-transitive-deps="false" jar-repository-id="central-proxy" maven-id="org.objenesis:objenesis:3.3">
+    <properties include-transitive-deps="false" maven-id="org.objenesis:objenesis:3.3">
       <verification>
         <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar">
           <sha256sum>02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb</sha256sum>

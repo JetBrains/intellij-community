@@ -9,6 +9,7 @@ import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
+import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
@@ -259,7 +260,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
       group(message("title.accessibility")) {
         row {
-          val isOverridden = GeneralSettings.isSupportScreenReadersOverridden()
+          val isOverridden = isSupportScreenReadersOverridden()
           val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK))
           val ctrlShiftTab = KeymapUtil.getKeystrokeText(
             KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.CTRL_DOWN_MASK + InputEvent.SHIFT_DOWN_MASK))
@@ -322,10 +323,10 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield { checkBox(cdUseCompactTreeIndents) }
           yield { checkBox(cdEnableMenuMnemonics) }
           yield { checkBox(cdEnableControlsMnemonics) }
-          if ((SystemInfo.isWindows || SystemInfo.isXWindow) && ExperimentalUI.isNewUI()) {
+          if (!SystemInfo.isMac && ExperimentalUI.isNewUI()) {
             yield {
               checkBox(cdSeparateMainMenu).apply {
-                if (SystemInfo.isXWindow) {
+                if (!SystemInfo.isWindows) {
                   comment(message("ide.restart.required.comment"))
                 }
               }
@@ -353,7 +354,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 checkBox.enabled(false)
                 contextHelp(message("option.is.overridden.by.jvm.property", MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
               }
-              if (SystemInfoRt.isXWindow && !IdeRootPane.hideNativeLinuxTitleSupported) {
+              if (SystemInfo.isUnix && !SystemInfo.isMac && !IdeRootPane.hideNativeLinuxTitleSupported) {
                 checkBox.enabled(false)
                 checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
               }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenSearchTest : MavenMultiVersionImportingTestCase() {
+  override fun runInDispatchThread() = true
 
   @Test
   fun `test searching POM files by module name`() = runBlocking {

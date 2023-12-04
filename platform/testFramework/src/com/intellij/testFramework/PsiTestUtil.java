@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.stubs.StubInconsistencyReporter;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -546,20 +547,22 @@ public final class PsiTestUtil {
   public static Sdk modifyJdkRoots(@NotNull Sdk sdk, Consumer<? super SdkModificator> modifier) {
     Sdk clone;
     try {
-      clone = (Sdk)sdk.clone();
+      clone = sdk.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
     SdkModificator sdkModificator = clone.getSdkModificator();
     modifier.accept(sdkModificator);
-    sdkModificator.commitChanges();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
     return clone;
   }
 
   public static void checkStubsMatchText(@NotNull PsiFile file) {
     try {
-      StubTextInconsistencyException.checkStubTextConsistency(file);
+      StubTextInconsistencyException.checkStubTextConsistency(file, StubInconsistencyReporter.SourceOfCheck.ForTests);
     }
     catch (StubTextInconsistencyException e) {
       compareStubTexts(e);

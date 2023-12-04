@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -509,6 +509,31 @@ public class JavaFormatterAlignmentTest extends AbstractJavaFormatterTest {
         char   a     = '2';
         int    aaaaa = 3;
         String b;""");
+  }
+
+  public void testAlignFieldsInAnonymousClass() {
+    getSettings().ALIGN_GROUP_FIELD_DECLARATIONS = true;
+    doMethodTest(
+      """
+        (new Thread() {
+                    private int a = 1;
+                    private String abc = "alphabet";
+                
+                    @Override
+                    public void run() {
+                        super.run();
+                    }
+                }).start();""",
+      """
+        (new Thread() {
+            private int    a   = 1;
+            private String abc = "alphabet";
+        
+            @Override
+            public void run() {
+                super.run();
+            }
+        }).start();""");
   }
 
   public void testAlignVarDeclarations() {

@@ -3,6 +3,8 @@ package org.jetbrains.jps.dependency;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 /**
  * This class does not reflect a real-member or a real-class usage.
  * Add this usage to the set of affected usages to tag additional nodes, whose dependencies should be treated as potentially affected
@@ -12,6 +14,11 @@ public final class AffectionScopeMetaUsage implements Usage {
 
   public AffectionScopeMetaUsage(@NotNull ReferenceID nodeId) {
     myNodeId = nodeId;
+  }
+
+  @Override
+  public void write(GraphDataOutput out) throws IOException {
+    // not supported
   }
 
   @Override

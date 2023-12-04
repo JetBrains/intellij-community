@@ -104,7 +104,7 @@ public class GitFetcher {
     return GitFetchResult.error(message);
   }
 
-  private @NotNull GitFetchResult fetchCurrentRemote(@NotNull GitRepository repository) {
+  private static @NotNull GitFetchResult fetchCurrentRemote(@NotNull GitRepository repository) {
     FetchParams fetchParams = getFetchParams(repository);
     if (fetchParams.isError()) {
       return fetchParams.getError();
@@ -114,15 +114,15 @@ public class GitFetcher {
     return fetchRemote(repository, remote, null);
   }
 
-  private @NotNull GitFetchResult fetchRemote(@NotNull GitRepository repository,
-                                              @NotNull GitRemote remote,
-                                              @Nullable String branch) {
+  private static @NotNull GitFetchResult fetchRemote(@NotNull GitRepository repository,
+                                                     @NotNull GitRemote remote,
+                                                     @Nullable String branch) {
     return fetchNatively(repository, remote, branch);
   }
 
   // leaving this unused method, because the wanted behavior can change again
   @SuppressWarnings("UnusedDeclaration")
-  private @NotNull GitFetchResult fetchCurrentBranch(@NotNull GitRepository repository) {
+  private static @NotNull GitFetchResult fetchCurrentBranch(@NotNull GitRepository repository) {
     FetchParams fetchParams = getFetchParams(repository);
     if (fetchParams.isError()) {
       return fetchParams.getError();

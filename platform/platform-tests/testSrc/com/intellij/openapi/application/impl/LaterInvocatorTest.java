@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.idea.IgnoreJUnit3;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -582,6 +583,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     }));
   }
 
+  @IgnoreJUnit3
   public void testSwingThroughIdeEventQueuePerformance() {
     int N = 1_000_000;
 
@@ -601,6 +603,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     }).assertTiming();
   }
 
+  @IgnoreJUnit3
   public void testApplicationInvokeLaterPerformance() {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
@@ -619,6 +622,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     }).assertTiming();
   }
 
+  @IgnoreJUnit3
   public void testApplicationInvokeLaterInModalContextPerformance() {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();

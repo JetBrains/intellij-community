@@ -13,28 +13,16 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.RunAll.Companion.runAll
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.concurrency.Promise
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
 import org.junit.Test
 import java.util.regex.Pattern
 
 class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
-  override fun runInDispatchThread() = false
-
-  override fun tearDown() {
-    runAll(
-      ThrowableRunnable<Throwable> { stopMavenImportManager() },
-      ThrowableRunnable<Throwable> { super.tearDown() }
-    )
-  }
 
   @Test
   fun testAddExternalLibraryDependency() = runBlocking {
@@ -51,11 +39,6 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
     assertHasDependency(myProjectPom, "junit", "junit")
   }
 
-  private fun assertImportingIsInProgress(result: Promise<Void>?) {
-    if (isNewImportingProcess) {
-      assertTrue(getInstance(myProject).isImportingInProgress())
-    }
-  }
 
   @Test
   fun testAddExternalLibraryDependencyWithEqualMinAndMaxVersions() = runBlocking {

@@ -9,51 +9,52 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
-import com.jediterm.terminal.emulator.ColorPalette
 import com.jediterm.terminal.model.CharBuffer
-import com.jediterm.terminal.ui.AwtTransformers
-import java.awt.Color
-import java.awt.Font
+import org.jetbrains.plugins.terminal.exp.TerminalUiUtils.toTextAttributes
 
 class SimpleTerminalController(
-  private val settings: JBTerminalSystemSettingsProviderBase,
+  settings: JBTerminalSystemSettingsProviderBase,
   private val session: TerminalSession,
-  private val editor: EditorEx,
-  eventsHandler: TerminalEventsHandler
+  private val editor: EditorEx
 ) : Disposable {
   val document: Document
     get() = editor.document
-  private val palette: ColorPalette
-    get() = settings.terminalColorPalette
   private val terminalModel: TerminalModel
     get() = session.model
 
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   private val selectionModel = TerminalSelectionModel(outputModel)  // fake model, that won't be changed
-  private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor)
+  private val caretModel: TerminalCaretModel = TerminalCaretModel(session, outputModel, editor, parentDisposable = this)
   private val caretPainter: TerminalCaretPainter = TerminalCaretPainter(caretModel, outputModel, selectionModel, editor)
 
   var isFocused: Boolean = false
 
   init {
     editor.putUserData(TerminalDataContextUtils.IS_ALTERNATE_BUFFER_EDITOR_KEY, true)
+    Disposer.register(this, caretPainter)
 
     // create dummy logical block, that will cover all the output, needed only for caret model
-    outputModel.createBlock(command = null)
+    outputModel.createBlock(command = null, directory = null)
     terminalModel.isCommandRunning = true
 
     setupContentListener()
+    val eventsHandler = SimpleTerminalEventsHandler(session, settings, outputModel)
     setupKeyEventDispatcher(editor, settings, eventsHandler, outputModel, selectionModel, disposable = this)
     setupMouseListener(editor, settings, terminalModel, eventsHandler, disposable = this)
     terminalModel.withContentLock {
       updateEditorContent()
     }
+  }
+
+  @RequiresEdt
+  fun clearTextSelection() {
+    editor.selectionModel.removeSelection()
   }
 
   private fun setupContentListener() {
@@ -135,37 +136,9 @@ class SimpleTerminalController(
     caretPainter.repaint()
   }
 
-  private fun TextStyle.toTextAttributes(): TextAttributes {
-    return TextAttributes().also { attr ->
-      attr.backgroundColor = AwtTransformers.toAwtColor(palette.getBackground(terminalModel.styleState.getBackground(backgroundForRun)))
-      attr.foregroundColor = getStyleForeground(this)
-      if (hasOption(TextStyle.Option.BOLD)) {
-        attr.fontType = attr.fontType or Font.BOLD
-      }
-      if (hasOption(TextStyle.Option.ITALIC)) {
-        attr.fontType = attr.fontType or Font.ITALIC
-      }
-      if (hasOption(TextStyle.Option.UNDERLINED)) {
-        attr.withAdditionalEffect(EffectType.LINE_UNDERSCORE, attr.foregroundColor)
-      }
-    }
-  }
+  private fun TextStyle.toTextAttributes(): TextAttributes = this.toTextAttributes(session.colorPalette)
 
-  private fun getStyleForeground(style: TextStyle): Color {
-    val foreground = palette.getForeground(terminalModel.styleState.getForeground(style.foregroundForRun))
-    return if (style.hasOption(TextStyle.Option.DIM)) {
-      val background = palette.getBackground(terminalModel.styleState.getBackground(style.backgroundForRun))
-      Color((foreground.red + background.red) / 2,
-            (foreground.green + background.green) / 2,
-            (foreground.blue + background.blue) / 2,
-            foreground.alpha)
-    }
-    else AwtTransformers.toAwtColor(foreground)!!
-  }
-
-  override fun dispose() {
-    Disposer.dispose(caretModel)
-  }
+  override fun dispose() {}
 
   private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
 

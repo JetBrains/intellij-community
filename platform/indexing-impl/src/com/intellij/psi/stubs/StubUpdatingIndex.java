@@ -61,7 +61,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   private static final FileBasedIndex.ProjectSpecificInputFilter INPUT_FILTER = new BaseFileTypeInputFilter(AFTER_SUBSTITUTION) {
     private static void logIfStubTraceEnabled(@NotNull String logText) {
-      if (FileBasedIndex.getInstance() instanceof FileBasedIndexEx fileBasedIndex && fileBasedIndex.doTraceStubUpdates(INDEX_ID)) {
+      if (FileBasedIndex.getInstance() instanceof FileBasedIndexEx fileBasedIndex && FileBasedIndexEx.doTraceStubUpdates(INDEX_ID)) {
         fileBasedIndex.getLogger().info(logText);
       }
     }

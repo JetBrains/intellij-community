@@ -45,6 +45,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.paint.PositionUtil;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
@@ -75,7 +76,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.VcsCommitStyleFactory.createStyle;
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.*;
 
-public class VcsLogGraphTable extends TableWithProgress implements DataProvider, CopyProvider, Disposable {
+public class VcsLogGraphTable extends TableWithProgress implements VcsLogCommitList, DataProvider, CopyProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
 
   private static final int MAX_DEFAULT_DYNAMIC_COLUMN_WIDTH = 300;
@@ -176,6 +177,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   public void dispose() {
   }
 
+  @Override
   public @NotNull VcsLogCommitSelection getSelection() {
     return getModel().createSelection(getSelectedRows());
   }
@@ -550,6 +552,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         }
         return sb.toString();
       })
+      .ifEq(VcsLogInternalDataKeys.VCS_LOG_GRAPH_TABLE).thenGet(() -> {
+        return this;
+      })
       .orNull();
   }
 
@@ -641,7 +646,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                                        baseStyle.getBackground(), VcsLogHighlighter.TextStyle.NORMAL);
 
     int commitId = rowInfo.getCommit();
-    VcsShortCommitDetails details = myLogData.getMiniDetailsGetter().getCommitDataIfAvailable(commitId);
+    VcsShortCommitDetails details = myLogData.getCommitMetadataCache().getCachedData(commitId);
     if (details != null) {
       int columnModelIndex = convertColumnIndexToModel(column);
       List<VcsCommitStyle> styles = ContainerUtil.map(myHighlighters, highlighter -> {
@@ -700,6 +705,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   @Override
   public @NotNull GraphTableModel getModel() {
     return (GraphTableModel)super.getModel();
+  }
+
+  @Override
+  public @NotNull GraphTableModel getListModel() {
+    return getModel();
   }
 
   @NotNull

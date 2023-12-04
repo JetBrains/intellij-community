@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.internal
 
-import com.intellij.util.attachAsChildTo
-import com.intellij.util.namedChildScope
+import com.intellij.platform.util.coroutines.attachAsChildTo
+import com.intellij.platform.util.coroutines.namedChildScope
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.CoroutineName
@@ -26,7 +26,10 @@ class ScopeHolder(
    */
   private val _registeredScopes = AtomicReference<PersistentMap<CoroutineScope, CoroutineScope>>(persistentHashMapOf())
 
-  fun intersectScope(pluginScope: CoroutineScope): CoroutineScope {
+  fun intersectScope(pluginScope: CoroutineScope?): CoroutineScope {
+    if (pluginScope == null) {
+      return containerScope // no intersection
+    }
     var scopes = _registeredScopes.get()
     scopes[pluginScope]?.let {
       return it

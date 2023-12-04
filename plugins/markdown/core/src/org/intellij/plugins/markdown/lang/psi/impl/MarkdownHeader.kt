@@ -18,6 +18,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.elementType
+import org.intellij.markdown.html.entities.Entities
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.util.children
@@ -169,7 +170,7 @@ class MarkdownHeader: MarkdownHeaderImpl {
         count += 1
       }
     }
-    val replaced = text.lowercase().replace(garbageRegex, "").replace(" ", "-")
+    val replaced = replaceEntities(text).lowercase().replace(garbageRegex, "").replace(" ", "-")
 
     return when {
       AdvancedSettings.getBoolean("markdown.squash.multiple.dashes.in.header.anchors") -> replaced.replace(Regex("-{2,}"), "-")
@@ -225,6 +226,26 @@ class MarkdownHeader: MarkdownHeaderImpl {
     private fun obtainRawAnchorText(header: MarkdownHeader): String? {
       return CachedValuesManager.getCachedValue(header) {
         CachedValueProvider.Result.create(header.buildRawAnchorText(false), PsiModificationTracker.MODIFICATION_COUNT)
+      }
+    }
+
+    private val ENTITY_REGEX = Regex("""&(?:([a-zA-Z0-9]+)|#([0-9]{1,8})|#[xX]([a-fA-F0-9]{1,8}));""")
+
+    fun replaceEntities(text: CharSequence): String {
+      return ENTITY_REGEX.replace(text) { match ->
+        val g = match.groups
+        if (g.size > 4 && g[4] != null) {
+          val char = g[4]!!.value[0]
+          char.toString()
+        } else {
+          val code = when {
+            g[1] != null -> Entities.map[match.value]
+            g[2] != null -> g[2]!!.value.toInt()
+            g[3] != null -> g[3]!!.value.toInt(16)
+            else -> null
+          }
+          code?.toChar()?.toString() ?: "&amp;${match.value.substring(1)}"
+        }
       }
     }
   }

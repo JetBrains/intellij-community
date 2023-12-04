@@ -53,6 +53,13 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
       return myWithAnnotations ? PsiTestUtil.addJdkAnnotations(jdk) : jdk;
     }
 
+    /**
+     * Calculate the name of SDK without instantiation
+     */
+    public @NotNull String getSdkName() {
+      return IdeaTestUtil.getMockJdkName(myLanguageLevel.toJavaVersion());
+    }
+
     @Override
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);

@@ -5,6 +5,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.RootsChangeRescanningInfo;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -21,6 +22,7 @@ import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.BuildableRootsChangeRescanningInfoImpl.BuiltRescanningInfo;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService;
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark;
 import com.intellij.util.indexing.roots.IndexableEntityProvider;
@@ -58,6 +60,15 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     if (changes.isEmpty()) {
       runFullRescan(project, "Project roots have changed");
     }
+    if (DumbServiceImpl.isSynchronousTaskExecution()) {
+      doIndexChanges(project, changes);
+    }
+    else {
+      ApplicationManager.getApplication().executeOnPooledThread(() -> doIndexChanges(project, changes));
+    }
+  }
+
+  private static void doIndexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeRescanningInfo> changes) {
     boolean indexDependencies = false;
     for (RootsChangeRescanningInfo change : changes) {
       if (change == RootsChangeRescanningInfo.TOTAL_RESCAN) {
@@ -101,8 +112,8 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
         List<@NotNull WorkspaceEntity> entities = ContainerUtil.mapNotNull(references, (ref) -> ref.resolve(entityStorage));
         builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, entities, entityStorage));
       }
-      else if (change instanceof BuildableRootsChangeRescanningInfo) {
-        builders.addAll(getBuildersOnBuildableChangeInfo((BuildableRootsChangeRescanningInfo)change, project, entityStorage));
+      else if (change instanceof BuiltRescanningInfo) {
+        builders.addAll(getBuildersOnBuildableChangeInfo((BuiltRescanningInfo)change, project, entityStorage));
       }
       else {
         LOG.warn("Unexpected change " + change.getClass() + " " + change + ", full reindex requested");
@@ -351,31 +362,30 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   @NotNull
-  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuildableRootsChangeRescanningInfo buildableInfo,
+  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuiltRescanningInfo info,
                                                                                                  @NotNull Project project,
                                                                                                  @NotNull EntityStorage entityStorage) {
-    BuildableRootsChangeRescanningInfoImpl info = (BuildableRootsChangeRescanningInfoImpl)buildableInfo;
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     IndexableIteratorBuilders instance = IndexableIteratorBuilders.INSTANCE;
-    for (ModuleId moduleId : info.getModules()) {
+    for (ModuleId moduleId : info.modules()) {
       builders.addAll(instance.forModuleContent(moduleId));
     }
     if (info.hasInheritedSdk()) {
       builders.addAll(instance.forInheritedSdk());
     }
-    for (Pair<String, String> sdk : info.getSdks()) {
+    for (Pair<String, String> sdk : info.sdks()) {
       builders.addAll(instance.forSdk(sdk.getFirst(), sdk.getSecond()));
     }
-    for (LibraryId library : info.getLibraries()) {
+    for (LibraryId library : info.libraries()) {
       builders.addAll(instance.forLibraryEntity(library, true));
     }
-    builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, info.getWorkspaceEntities(), entityStorage));
+    builders.addAll(getBuildersOnWorkspaceEntitiesRootsChange(project, info.entities(), entityStorage));
     return builders;
   }
 
   @Override
   @NotNull
-  public BuildableRootsChangeRescanningInfo createBuildableInfo() {
+  public BuildableRootsChangeRescanningInfo createBuildableInfoBuilder() {
     return new BuildableRootsChangeRescanningInfoImpl();
   }
 

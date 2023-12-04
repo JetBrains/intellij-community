@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator {
   private static final Logger LOG = Logger.getInstance(JavaCoverageClassesAnnotator.class);
 
-  private final Annotator myAnnotator;
+  private final CoverageInfoCollector myCollector;
   private final ProjectData myProjectData;
   private final Map<String, PackageAnnotator.AtomicPackageCoverageInfo> myFlattenPackages = new ConcurrentHashMap<>();
   private final Map<VirtualFile, PackageAnnotator.AtomicPackageCoverageInfo> myFlattenDirectories = new ConcurrentHashMap<>();
@@ -38,9 +38,9 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
 
   public JavaCoverageClassesAnnotator(@NotNull CoverageSuitesBundle suite,
                                       @NotNull Project project,
-                                      @NotNull Annotator annotator) {
+                                      @NotNull CoverageInfoCollector collector) {
     super(suite, project);
-    myAnnotator = annotator;
+    myCollector = collector;
     myProjectData = mySuite.getCoverageData();
     myPackageAnnotator = new PackageAnnotator(suite, project, myProjectData);
   }
@@ -64,19 +64,19 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     }
     myFlattenPackages.clear();
 
-    annotatePackages(flattenPackages, myAnnotator);
+    annotatePackages(flattenPackages, myCollector);
   }
 
   /**
    * Collect coverage stats for all packages, based on flatten packages coverage
    * @param flattenPackages fqn to package coverage mapping
    */
-  public static void annotatePackages(Map<String, PackageAnnotator.PackageCoverageInfo> flattenPackages, Annotator annotator) {
+  public static void annotatePackages(Map<String, PackageAnnotator.PackageCoverageInfo> flattenPackages, CoverageInfoCollector collector) {
     Map<String, PackageAnnotator.PackageCoverageInfo> packages = new HashMap<>();
     for (var entry : flattenPackages.entrySet()) {
       String packageFQName = entry.getKey();
       var info = entry.getValue();
-      annotator.annotatePackage(packageFQName, info, true);
+      collector.addPackage(packageFQName, info, true);
 
       while (!packageFQName.isEmpty()) {
         packages.computeIfAbsent(packageFQName, k -> new PackageAnnotator.PackageCoverageInfo()).append(info);
@@ -87,7 +87,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
       packages.computeIfAbsent("", k -> new PackageAnnotator.PackageCoverageInfo()).append(info);
     }
     for (Map.Entry<String, PackageAnnotator.PackageCoverageInfo> entry : packages.entrySet()) {
-      annotator.annotatePackage(entry.getKey(), entry.getValue());
+      collector.addPackage(entry.getKey(), entry.getValue(), false);
     }
   }
 
@@ -110,7 +110,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     }
     myFlattenDirectories.clear();
 
-    annotateDirectories(flattenDirectories, myAnnotator, getPackageRoots(module, packageVMName));
+    annotateDirectories(flattenDirectories, myCollector, getPackageRoots(module, packageVMName));
   }
 
   /**
@@ -118,7 +118,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
    * @param sourceRoots Set of root directories, where the calculation should stop
    */
   public static void annotateDirectories(Map<VirtualFile, PackageAnnotator.PackageCoverageInfo> flattenDirectories,
-                                  Annotator annotator,
+                                  CoverageInfoCollector collector,
                                   Set<VirtualFile> sourceRoots) {
     Map<VirtualFile, PackageAnnotator.DirCoverageInfo> directories = new HashMap<>();
     for (var entry : flattenDirectories.entrySet()) {
@@ -132,7 +132,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     }
 
     for (PackageAnnotator.DirCoverageInfo dir : directories.values()) {
-      annotator.annotateSourceDirectory(dir.sourceRoot, dir);
+      collector.addSourceDirectory(dir.sourceRoot, dir);
     }
   }
 
@@ -158,7 +158,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
                              PackageAnnotator.ClassCoverageInfo info,
                              String packageVMName,
                              VirtualFile directory) {
-    myAnnotator.annotateClass(toplevelClassSrcFQName, info);
+    myCollector.addClass(toplevelClassSrcFQName, info);
     getOrCreateFlattenPackage(packageVMName).append(info);
     if (directory != null) {
       getOrCreateFlattenDirectory(directory).append(info);

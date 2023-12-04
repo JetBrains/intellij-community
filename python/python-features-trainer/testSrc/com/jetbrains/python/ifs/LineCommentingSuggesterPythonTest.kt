@@ -9,6 +9,9 @@ import training.featuresSuggester.FeatureSuggesterTestUtils.testInvokeLater
 import training.featuresSuggester.FeatureSuggesterTestUtils.typeAndCommit
 import training.featuresSuggester.NoSuggestion
 
+/**
+ * Use `intellij.python.tests` module as a classpath to run this test locally
+ */
 class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
   override val testingCodeFileName = "PythonCodeExample.py"
   override val testingSuggesterId = "Comment with line comment"

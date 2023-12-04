@@ -8,6 +8,10 @@
             qualifiedName="org.jetbrains.kotlin.foreignUsagesRenameProcessor"
             interface="org.jetbrains.kotlin.idea.refactoring.rename.ForeignUsagesRenameProcessor"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.postInsertDeclarationCallback"
+            interface="org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.PostInsertDeclarationCallback"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -19,8 +23,6 @@
     <lang.namesValidator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator"/>
 
     <nameSuggestionProvider implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggestionProvider"/>
-
-    <lang.floatingToolbarCustomizer language="kotlin" implementationClass="com.intellij.ui.codeFloatingToolbar.FloatingToolbarCustomizer$DefaultGroup"/>
 
     <lang.refactoringSupport
             language="kotlin"
@@ -82,8 +84,6 @@
     <refactoring.inlineHandler
             language="JAVA"
             implementationClass="org.jetbrains.kotlin.idea.refactoring.inline.KotlinToJavaInlineHandler"/>
-
-    <refactoring.overrideMethodProcessor implementation="org.jetbrains.kotlin.idea.refactoring.inline.KotlinOverrideMethodsProcessor"/>
 
     <refactoring.safeDeleteProcessor
             id="kotlinProcessor"

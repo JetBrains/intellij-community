@@ -69,10 +69,10 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   @Override
   public void update(final @NotNull AnActionEvent e) {
     boolean selected = isSelected(e);
-    final Presentation presentation = e.getPresentation();
+    Presentation presentation = e.getPresentation();
     Toggleable.setSelected(presentation, selected);
     if (e.isFromContextMenu()) {
-      //force showing check marks instead of toggle icons in the context menu
+      // force showing check marks instead of toggle icons in the context menu
       presentation.setIcon(null);
     }
   }

@@ -17,7 +17,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.data
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.dependencytoolwindow.DependencyToolWindowBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -215,7 +215,7 @@ internal class PackageSearchProjectService(private val project: Project) : Dispo
                 .onEach {
                     controller = showBackgroundLoadingBar(
                         project = project,
-                        title = DependencyToolWindowBundle.getMessage("toolwindow.stripe.Dependencies"),
+                        title = IdeBundle.message("toolwindow.stripe.Dependencies"),
                         upperMessage = PackageSearchBundle.message("packagesearch.ui.loading"),
                         cancellable = false,
                         isPausable = false

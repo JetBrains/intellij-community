@@ -3,9 +3,11 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.review
 
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.util.childScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 
@@ -23,32 +25,30 @@ interface GitLabMergeRequestReviewViewModel {
   fun submitReview()
 
   companion object {
-    val DATA_KEY: DataKey<GitLabMergeRequestReviewViewModel> = DataKey.create("GitLab.MergeRequest.Diff.Review.ViewModel")
+    val DATA_KEY: DataKey<GitLabMergeRequestReviewViewModel> = DataKey.create("GitLab.MergeRequest.Review.ViewModel")
   }
 }
 
 internal open class GitLabMergeRequestReviewViewModelBase(
-  parentCs: CoroutineScope,
-  protected val currentUser: GitLabUserDTO,
-  protected val mergeRequest: GitLabMergeRequest
+  protected val cs: CoroutineScope,
+  private val currentUser: GitLabUserDTO,
+  private val mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestReviewViewModel {
 
-  protected val cs = parentCs.childScope(Dispatchers.Default + CoroutineName("GitLab Merge Request Review VM"))
-
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)
-  final override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
+  override val discussionsViewOption: StateFlow<DiscussionsViewOption> = _discussionsViewOption.asStateFlow()
 
-  final override val submittableReview: StateFlow<GitLabMergeRequestSubmitReviewViewModel.SubmittableReview?> =
+  override val submittableReview: StateFlow<GitLabMergeRequestSubmitReviewViewModel.SubmittableReview?> =
     mergeRequest.getSubmittableReview(currentUser)
       .stateIn(cs, SharingStarted.Eagerly, null) // need Eagerly for action update to work properly
 
-  final override var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)? = null
+  override var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)? = null
 
-  final override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
+  override fun setDiscussionsViewOption(viewOption: DiscussionsViewOption) {
     _discussionsViewOption.value = viewOption
   }
 
-  final override fun submitReview() {
+  override fun submitReview() {
     cs.launch {
       check(submittableReview.first() != null)
       val handler = submitReviewInputHandler

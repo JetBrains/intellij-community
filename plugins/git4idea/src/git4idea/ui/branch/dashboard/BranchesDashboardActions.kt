@@ -28,6 +28,7 @@ import git4idea.actions.branch.GitBranchActionsUtil.calculateNewBranchInitialNam
 import git4idea.branch.GitBranchType
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBrancher
+import git4idea.commands.Git
 import git4idea.config.GitVcsSettings
 import git4idea.fetch.GitFetchResult
 import git4idea.fetch.GitFetchSupport
@@ -544,7 +545,7 @@ internal object BranchesDashboardActions {
 
     override fun doAction(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
       for ((repository, remotes) in selectedRemotes) {
-        removeRemotes(service(), repository, remotes)
+        removeRemotes(Git.getInstance(), repository, remotes)
       }
     }
   }
@@ -559,7 +560,7 @@ internal object BranchesDashboardActions {
 
     override fun doAction(e: AnActionEvent, project: Project, selectedRemotes: Map<GitRepository, Set<GitRemote>>) {
       val (repository, remotes) = selectedRemotes.entries.first()
-      editRemote(service(), repository, remotes.first())
+      editRemote(Git.getInstance(), repository, remotes.first())
     }
   }
 

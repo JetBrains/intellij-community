@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.serialization.deserialization.getName
 @ApiStatus.Internal
 class KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameIndex() {
     companion object {
-        val NAME = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.name)
+        val NAME = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.simpleName)
     }
 
     override fun getName(): ID<FqName, List<Name>> = NAME

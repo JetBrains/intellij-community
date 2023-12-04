@@ -19,6 +19,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 final class CompilerProjectExtensionImpl extends CompilerProjectExtension implements Disposable {
@@ -37,7 +38,11 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
       String outputPath = pathElement.getAttributeValue(URL);
       VirtualFilePointer oldValue = myCompilerOutput;
       myCompilerOutput = outputPath != null ? VirtualFilePointerManager.getInstance().create(outputPath, this, null) : null;
-      return oldValue != myCompilerOutput;
+
+      return !Objects.equals(
+        oldValue != null ? oldValue.getUrl() : null,
+        myCompilerOutput != null ? myCompilerOutput.getUrl() : null
+      );
     }
     return false;
   }

@@ -1,7 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.openapi.components.Service;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -20,6 +19,7 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -36,21 +36,21 @@ import static de.plushnikov.intellij.plugin.LombokClassNames.EQUALS_AND_HASHCODE
  *
  * @author Plushnikov Michail
  */
-@Service
 public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALS_METHOD_NAME = "equals";
   private static final String HASH_CODE_METHOD_NAME = "hashCode";
   private static final String CAN_EQUAL_METHOD_NAME = "canEqual";
+  private static final List<String> ALL_NAMES = List.of(EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME, CAN_EQUAL_METHOD_NAME);
 
   private static final String INCLUDE_ANNOTATION_METHOD = "replaces";
 
-  EqualsAndHashCodeProcessor() {
+  public EqualsAndHashCodeProcessor() {
     super(PsiMethod.class, LombokClassNames.EQUALS_AND_HASHCODE);
   }
 
   @Override
   protected Collection<String> getNamesOfPossibleGeneratedElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    return List.of(EQUALS_METHOD_NAME, HASH_CODE_METHOD_NAME, CAN_EQUAL_METHOD_NAME);
+    return ALL_NAMES;
   }
 
   @Override
@@ -90,7 +90,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   void validateCallSuperParamExtern(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
     validateCallSuperParam(psiAnnotation, psiClass, builder,
-                           () -> PsiQuickFixFactory.createAddAnnotationQuickFix(psiClass, "lombok.EqualsAndHashCode", "callSuper = true"));
+                           () -> PsiQuickFixFactory.createAddAnnotationFix(psiClass, "lombok.EqualsAndHashCode", "callSuper = true"));
   }
 
   private void validateCallSuperParam(@NotNull PsiAnnotation psiAnnotation,
@@ -119,8 +119,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   private static void validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemSink builder) {
-    final boolean definedOnWrongType = psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum();
-    if (definedOnWrongType) {
+    if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum() || psiClass.isRecord()) {
       builder.addErrorMessage("inspection.message.equals.and.hashcode.only.supported.on.class.type");
       builder.markFailed();
     }
@@ -142,7 +141,7 @@ public final class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   @Override
   protected void generatePsiElements(@NotNull PsiClass psiClass,
                                      @NotNull PsiAnnotation psiAnnotation,
-                                     @NotNull List<? super PsiElement> target) {
+                                     @NotNull List<? super PsiElement> target, @Nullable String nameHint) {
     target.addAll(createEqualAndHashCode(psiClass, psiAnnotation));
   }
 

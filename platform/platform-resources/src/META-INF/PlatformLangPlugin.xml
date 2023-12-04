@@ -54,6 +54,8 @@
   <xi:include href="intellij.platform.feedback.xml"/>
   <xi:include href="intellij.platform.tips.xml"/>
 
+  <xi:include href="/META-INF/IJent.xml"/>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.ide.RecentProjectsManager"
                         serviceImplementation="com.intellij.ide.AttachedModuleAwareRecentProjectsManager" preload="notHeadless"/>
@@ -63,20 +65,25 @@
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
 
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgesLoader"/>
+    <workspace.bridgeInitializer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgeInitializer"/>
+
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
     <commandLineInspectionProjectConfigurator implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator"/>
     <registryKey key="unknown.sdk" defaultValue="true" description="Check for unknown SDKs and provide automatic fixes or smart suggestions"/>
     <registryKey key="unknown.sdk.auto" defaultValue="true" description="Checks and resolves unknown SDKs automatically on start"/>
     <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
+    <registryKey key="workspace.model.global.sdk.bridge" defaultValue="false"
+                 description="Enables new implementation for SDK which works via Workspace Model"
+                 restartRequired="true"/>
 
     <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
     <applicationService serviceInterface="com.intellij.profile.codeInspection.InspectionProfileManager"
                         serviceImplementation="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
-
-    <exportable serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable"/>
 
     <projectOpenProcessor implementation="com.intellij.platform.PlatformProjectOpenProcessor" order="last"/>
 

@@ -31,7 +31,7 @@
     <orderEntry type="library" name="XStream" level="project" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
     <orderEntry type="library" name="libthrift" level="project" />
-    <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="library" name="slf4j-api" level="project" />
     <orderEntry type="library" name="slf4j-jdk14" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="jsoup" level="project" />
@@ -141,5 +141,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
+    <orderEntry type="module" module-name="intellij.terminal" />
   </component>
 </module>

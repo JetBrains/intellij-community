@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -19,33 +19,31 @@ public final class HgExecutableManager {
     return ApplicationManager.getApplication().getService(HgExecutableManager.class);
   }
 
-  @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = {
+  private static final @NonNls String[] DEFAULT_WINDOWS_PATHS = {
     "C:\\Program Files\\Mercurial",
     "C:\\Program Files (x86)\\Mercurial",
     "C:\\cygwin\\bin"};
-  @NonNls private static final String[] DEFAULT_UNIX_PATHS = {
+  private static final @NonNls String[] DEFAULT_UNIX_PATHS = {
     "/usr/local/bin",
     "/usr/bin",
     "/opt/local/bin",
     "/opt/bin",
     "/usr/local/mercurial"};
-  @NonNls private static final String DEFAULT_WINDOWS_HG = "hg.exe";
-  @NonNls private static final String DEFAULT_UNIX_HG = "hg";
+  private static final @NonNls String DEFAULT_WINDOWS_HG = "hg.exe";
+  private static final @NonNls String DEFAULT_UNIX_HG = "hg";
 
-  @NotNull private final NotNullLazyValue<String> myDetectedExecutable;
+  private final @NotNull NotNullLazyValue<String> myDetectedExecutable;
 
   public HgExecutableManager() {
     myDetectedExecutable = NotNullLazyValue.atomicLazy(HgExecutableManager::identifyDefaultHgExecutable);
   }
 
-  @NotNull
-  public String getHgExecutable() {
+  public @NotNull String getHgExecutable() {
     String path = HgGlobalSettings.getInstance().getHgExecutable();
     return path == null ? getDefaultExecutable() : path;
   }
 
-  @NotNull
-  public String getHgExecutable(@NotNull Project project) {
+  public @NotNull String getHgExecutable(@NotNull Project project) {
     HgProjectSettings projectSettings = HgProjectSettings.getInstance(project);
     if (!projectSettings.isHgExecutableOverridden()) return getHgExecutable();
 
@@ -53,16 +51,14 @@ public final class HgExecutableManager {
     return path == null ? getDefaultExecutable() : path;
   }
 
-  @NotNull
-  public String getDefaultExecutable() {
+  public @NotNull String getDefaultExecutable() {
     return myDetectedExecutable.getValue();
   }
 
   /**
    * @return the default executable name depending on the platform
    */
-  @NotNull
-  private static String identifyDefaultHgExecutable() {
+  private static @NotNull String identifyDefaultHgExecutable() {
     File hgExecutableFromPath = PathEnvironmentVariableUtil.findInPath(SystemInfo.isWindows ? DEFAULT_WINDOWS_HG : DEFAULT_UNIX_HG,
                                                                        PathEnvironmentVariableUtil.getPathVariableValue(),
                                                                        null);

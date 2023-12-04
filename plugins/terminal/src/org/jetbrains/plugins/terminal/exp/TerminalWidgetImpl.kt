@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
@@ -9,12 +10,12 @@ import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.ui.TerminalWidget
 import com.intellij.terminal.ui.TtyConnectorAccessor
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
+import org.jetbrains.plugins.terminal.exp.ui.BlockTerminalColorPalette
 import java.awt.Color
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
@@ -32,6 +33,8 @@ class TerminalWidgetImpl(private val project: Project,
     get() = view.getTerminalSize()
 
   override val ttyConnectorAccessor: TtyConnectorAccessor = TtyConnectorAccessor()
+
+  override var shellCommand: List<String>? = null
 
   @Volatile
   private var view: TerminalContentView = TerminalPlaceholder()
@@ -52,14 +55,18 @@ class TerminalWidgetImpl(private val project: Project,
   fun initialize(options: ShellStartupOptions): CompletableFuture<TermSize> {
     val oldView = view
     view = if (options.shellIntegration?.withCommandBlocks == true) {
-      val session = TerminalSession(settings, options.shellIntegration)
+      val colorPalette = BlockTerminalColorPalette(EditorColorsManager.getInstance().getGlobalScheme())
+      val session = TerminalSession(settings, colorPalette, options.shellIntegration)
       Disposer.register(this, session)
       BlockTerminalView(project, session, settings, terminalTitle)
     }
     else {
       OldPlainTerminalView(project, settings, terminalTitle)
     }
-    oldView.asSafely<TerminalPlaceholder>()?.moveTerminationCallbacksTo(view)
+    if (oldView is TerminalPlaceholder) {
+      oldView.moveTerminationCallbacksTo(view)
+      oldView.executePostponedShellCommands(view)
+    }
     Disposer.dispose(oldView)
     Disposer.register(this, view)
 
@@ -92,6 +99,10 @@ class TerminalWidgetImpl(private val project: Project,
 
   }
 
+  override fun sendCommandToExecute(shellCommand: String) {
+    view.sendCommandToExecute(shellCommand)
+  }
+
   override fun addTerminationCallback(onTerminated: Runnable, parentDisposable: Disposable) {
     view.addTerminationCallback(onTerminated, parentDisposable)
   }
@@ -105,6 +116,7 @@ class TerminalWidgetImpl(private val project: Project,
   private class TerminalPlaceholder : TerminalContentView {
 
     private val postponedTerminationCallbackInfos: MutableList<Pair<Runnable, Disposable>> = CopyOnWriteArrayList()
+    private val postponedShellCommands: MutableList<String> = CopyOnWriteArrayList()
 
     override val component: JComponent = object : JPanel() {
       override fun getBackground(): Color {
@@ -126,11 +138,22 @@ class TerminalWidgetImpl(private val project: Project,
       postponedTerminationCallbackInfos.add(Pair(onTerminated, parentDisposable))
     }
 
+    override fun sendCommandToExecute(shellCommand: String) {
+      postponedShellCommands.add(shellCommand)
+    }
+
     fun moveTerminationCallbacksTo(destView: TerminalContentView) {
       for (info in postponedTerminationCallbackInfos) {
         destView.addTerminationCallback(info.first, info.second)
       }
       postponedTerminationCallbackInfos.clear()
+    }
+
+    fun executePostponedShellCommands(destView: TerminalContentView) {
+      for (shellCommand in postponedShellCommands) {
+        destView.sendCommandToExecute(shellCommand)
+      }
+      postponedShellCommands.clear()
     }
 
     override fun dispose() {

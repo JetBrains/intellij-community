@@ -6,19 +6,12 @@ import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard
 import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
 import org.jetbrains.idea.maven.server.MavenServerManager
 import java.nio.file.Path
 
 abstract class MavenProjectWizardTestCase : ProjectWizardTestCase<AbstractProjectWizard>() {
   override fun tearDown() {
     try {
-      if (getInstance(myProject).isImportingInProgress()) {
-        PlatformTestUtil.waitForPromise(getInstance(myProject).getImportFinishPromise())
-      }
-      if (createdProject != null && getInstance(createdProject).isImportingInProgress()) {
-        PlatformTestUtil.waitForPromise(getInstance(createdProject).getImportFinishPromise())
-      }
       MavenServerManager.getInstance().shutdown(true)
       JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()
     }

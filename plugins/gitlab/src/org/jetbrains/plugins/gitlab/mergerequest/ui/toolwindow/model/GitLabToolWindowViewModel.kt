@@ -9,12 +9,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.childScope
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -47,12 +46,10 @@ internal class GitLabToolWindowViewModel(
   val selectorVm: StateFlow<GitLabRepositoryAndAccountSelectorViewModel?> = isAvailable.mapScoped {
     val preferences = project.service<GitLabMergeRequestsPreferences>()
     GitLabRepositoryAndAccountSelectorViewModel(
-      cs, projectsManager, accountManager,
+      this, projectsManager, accountManager,
       onSelected = { mapping, account ->
-        withContext(cs.coroutineContext) {
-          connectionManager.openConnection(mapping, account)
-          preferences.selectedRepoAndAccount = mapping to account
-        }
+        connectionManager.openConnection(mapping, account)
+        preferences.selectedRepoAndAccount = mapping to account
       }
     ).apply {
       preferences.selectedRepoAndAccount?.let { (repo, account) ->

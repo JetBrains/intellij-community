@@ -8,6 +8,7 @@
 
       <option name="SELECTION_BACKGROUND" value="5974ab"/>
       <option name="CARET_ROW_COLOR" value="fffae3"/>
+      <option name="GRID_STRIPE_COLOR" value="f5f8fe" />
       <option name="METHOD_SEPARATORS_COLOR" value="c0c0c0"/>
       <option name="WHITESPACES" value="adadad"/>
       <option name="INDENT_GUIDE" value="e6e6e6"/>
@@ -78,6 +79,8 @@
 
       <option name="BLOCK_TERMINAL_DEFAULT_FOREGROUND" value="000000"/>
       <option name="BLOCK_TERMINAL_DEFAULT_BACKGROUND" value="FFFFFF"/>
+      <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_START" value="F0F2F5"/>
+      <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="FAFAFA"/>
 
       <option name="Table.hoverBackground" value="EDF5FC"/>
 
@@ -523,7 +526,14 @@
           <option name="EFFECT_COLOR"/>
         </value>
       </option>
-      
+
+      <option name="INLINE_SUGGESTION">
+        <value>
+          <option name="FOREGROUND" value="808080"/>
+          <option name="FONT_TYPE" value="2"/>
+        </value>
+      </option>
+
       <option name="INLINE_PARAMETER_HINT">
         <value>
           <option name="FOREGROUND" value="7a7a7a"/>
@@ -1507,6 +1517,8 @@
 
       <option name="BLOCK_TERMINAL_DEFAULT_FOREGROUND" value="DFE1E5"/>
       <option name="BLOCK_TERMINAL_DEFAULT_BACKGROUND" value="1E1F22"/>
+      <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_START" value="2B2D30"/>
+      <option name="BLOCK_TERMINAL_BLOCK_BACKGROUND_END" value="212329"/>
 
       <option name="Table.hoverBackground" value="464A4D"/>
 
@@ -2263,6 +2275,11 @@
           <option name="BACKGROUND" value="344134" deuteranopia="32394c" protanopia="32394c"/>
           <option name="ERROR_STRIPE_COLOR" value="036b13" deuteranopia="4b6f99" protanopia="4b6f99"/>
           <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="INLINE_SUGGESTION">
+        <value>
+          <option name="FOREGROUND" value="808080" deuteranopia="7a7a7a" protanopia="7a7a7a"/>
         </value>
       </option>
       <option name="INLINE_PARAMETER_HINT">

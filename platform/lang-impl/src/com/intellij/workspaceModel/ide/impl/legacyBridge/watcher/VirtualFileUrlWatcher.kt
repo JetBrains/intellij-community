@@ -25,6 +25,8 @@ open class VirtualFileUrlWatcher(val project: Project) {
   private val pointers = listOf(
     // Library roots
     LibraryRootFileWatcher(),
+    // Sdk roots
+    SdkRootFileWatcher(),
     // Library excluded roots
     EntityVirtualFileUrlWatcher(
       LibraryEntity::class, LibraryEntity.Builder::class,
@@ -217,6 +219,36 @@ private class LibraryRootFileWatcher : LegacyFileWatcher {
         diff.modifyEntity(entityWithVFU.entity) {
           roots.remove(oldLibraryRoot)
           roots.add(newLibraryRoot)
+        }
+      }
+    }
+  }
+}
+
+/**
+ * It's responsible for updating complex case than [VirtualFileUrl] contains not in the entity itself but in internal data class.
+ * This is about SdkMainEntity -> roots (SdkRoot) -> url (VirtualFileUrl).
+ */
+private class SdkRootFileWatcher : LegacyFileWatcher {
+  private val propertyName = SdkEntity::roots.name
+
+  override fun onVfsChange(oldUrl: String,
+                           newUrl: String,
+                           entitiesWithVFU: List<EntityWithVirtualFileUrl>,
+                           virtualFileManager: VirtualFileUrlManager,
+                           diff: MutableEntityStorage) {
+    entitiesWithVFU.filter { SdkEntity::class.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
+      val oldVFU = entityWithVFU.virtualFileUrl
+      val newVFU = virtualFileManager.fromUrl(newUrl + oldVFU.url.substring(oldUrl.length))
+
+      entityWithVFU.entity as SdkEntity
+      val oldSdkRoots = diff.resolve(entityWithVFU.entity.symbolicId)?.roots?.filter { it.url == oldVFU }
+                            ?: error("Incorrect state of the VFU index")
+      oldSdkRoots.forEach { oldSdkRoot ->
+        val newSdkRoot = SdkRoot(newVFU, oldSdkRoot.type)
+        diff.modifyEntity(entityWithVFU.entity) {
+          roots.remove(oldSdkRoot)
+          roots.add(newSdkRoot)
         }
       }
     }

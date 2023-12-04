@@ -6,7 +6,10 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -42,9 +45,12 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.MavenDisposable;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.jetbrains.idea.maven.indices.IndexChangeProgressListener;
+import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager;
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsNavigatorPanel;
 import org.jetbrains.idea.maven.navigator.structure.MavenProjectsStructure;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.server.MavenIndexUpdateState;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
@@ -241,6 +247,14 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
       }
     });
 
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
+      MavenSystemIndicesManager.TOPIC, new IndexChangeProgressListener() {
+        @Override
+        public void indexStatusChanged(@NotNull MavenIndexUpdateState state) {
+          myStructure.updateRepositoryStatus(state);
+        }
+      });
+
     ProjectRootManagerEx.getInstanceEx(myProject).addProjectJdkListener(() -> {
       MavenWslUtil.checkWslJdkAndShowNotification(myProject);
       MavenWslUtil.restartMavenConnectorsIfJdkIncorrect(myProject);
@@ -262,10 +276,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
   private void initializeToolWindow(ToolWindowManager toolWindowManager) {
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
-    AnAction removeAction = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.RemoveRunConfiguration"));
-    removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree, this);
-    AnAction editSource = EmptyAction.wrap(ActionManager.getInstance().getAction("Maven.EditRunConfiguration"));
-    editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
+    ActionUtil.wrap("Maven.RemoveRunConfiguration").registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree, this);
+    ActionUtil.wrap("Maven.EditRunConfiguration").registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, this);
 
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOL_WINDOW_ID, builder -> {
       builder.icon = MavenIcons.ToolWindowMaven;

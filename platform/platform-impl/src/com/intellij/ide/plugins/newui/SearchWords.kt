@@ -9,7 +9,8 @@ enum class SearchWords(@NonNls val value: String) {
   SORT_BY("/sortBy:"),
   REPOSITORY("/repository:"),
   STAFF_PICKS("/staffPicks"),
-  SUGGESTED("/suggested");
+  SUGGESTED("/suggested"),
+  INTERNAL("/internal");
 
   companion object {
     @JvmStatic

@@ -7,11 +7,12 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.NotNull;
 
 public final class AssertInstanceOfInliner implements CallInliner {
-  private static final CallMatcher ASSERT_INSTANCE_OF = CallMatcher.staticCall("org.junit.jupiter.api.Assertions", "assertInstanceOf");
+  private static final CallMatcher ASSERT_INSTANCE_OF = CallMatcher.staticCall(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assertInstanceOf");
 
   @Override
   public boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call) {

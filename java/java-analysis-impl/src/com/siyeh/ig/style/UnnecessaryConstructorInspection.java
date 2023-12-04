@@ -124,7 +124,7 @@ public class UnnecessaryConstructorInspection extends BaseInspection {
       }
     }
 
-    private boolean isSuperConstructorInvocationWithoutArguments(PsiStatement statement) {
+    private static boolean isSuperConstructorInvocationWithoutArguments(PsiStatement statement) {
       if (!(statement instanceof PsiExpressionStatement expressionStatement)) {
         return false;
       }

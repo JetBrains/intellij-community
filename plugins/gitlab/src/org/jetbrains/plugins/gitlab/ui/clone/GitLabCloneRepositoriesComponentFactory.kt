@@ -155,7 +155,7 @@ internal object GitLabCloneRepositoriesComponentFactory {
     accountsModel: ListModel<GitLabAccount>,
     repositoriesModel: ListModel<GitLabCloneListItem>
   ): ListCellRenderer<GitLabCloneListItem> {
-    return GroupedRenderer(
+    return GroupedRenderer.create(
       baseRenderer = GitLabCloneListRenderer(),
       hasSeparatorAbove = { value, index ->
         when (index) {

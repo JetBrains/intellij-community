@@ -1,5 +1,0 @@
-# <15.4 webPath removed
-fragment ciJob on CiJob {
-  name
-  status
-}

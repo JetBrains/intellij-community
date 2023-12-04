@@ -198,23 +198,30 @@
       }
     },
 
+    "DataSummary.Chart.barColor": "Blue4",
     "PresentationAssistant": {
       "Pale": {
         "Popup": {
-          "background": "Grey14",
-          "foreground": "Grey2"
+          "foreground": "Grey2",
+          "border": "Grey9"
         },
+        "PopupBackground": "Grey14",
         "keymapLabel": "Grey7"
       },
       "Bright": {
         "Popup": {
-          "background": "Grey2",
-          "foreground": "Grey14"
+          "foreground": "Grey14",
+          "border": "Grey2"
         },
+        "PopupBackground": "Grey2",
         "keymapLabel": "Grey9"
       }
     },
 
-    "DataSummary.Chart.background": "Blue4"
+    "DataSummary.Chart.background": "Blue4",
+
+    "ManagedIdeBadgeBorder": "Grey11",
+    "ManagedIdeBadgeBackground": "Grey13",
+    "ManagedIdeBadgeBackgroundHover": "Grey12"
   }
 }

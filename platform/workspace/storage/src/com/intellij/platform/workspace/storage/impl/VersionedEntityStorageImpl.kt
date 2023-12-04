@@ -3,7 +3,13 @@ package com.intellij.platform.workspace.storage.impl
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
 import com.intellij.platform.workspace.storage.*
+import io.opentelemetry.api.metrics.Meter
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 private class ValuesCache {
@@ -12,39 +18,112 @@ private class ValuesCache {
     Caffeine.newBuilder().build()
 
   fun <R> cachedValue(value: CachedValue<R>, storage: EntityStorageSnapshot): R {
-    val o = cachedValues.getIfPresent(value)
+    val start = System.currentTimeMillis()
+    val o: Any? = cachedValues.getIfPresent(value)
+    var valueToReturn: R? = null
+
     // recursive update - loading get cannot be used
     if (o != null) {
       @Suppress("UNCHECKED_CAST")
-      return o as R
+      valueToReturn = o as R
+      cachedValueFromCacheMs.addElapsedTimeMs(start)
     }
     else {
-      val newValue = value.source(storage)!!
-      cachedValues.put(value, newValue)
-      return newValue
+      cachedValueCalculatedMs.addMeasuredTimeMs {
+        valueToReturn = value.source(storage)!!
+        cachedValues.put(value, valueToReturn)
+      }
     }
+
+    return requireNotNull(valueToReturn) { "Cached value must not be null" }
   }
 
   fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P, storage: EntityStorageSnapshot): R {
+    val start = System.currentTimeMillis()
     // recursive update - loading get cannot be used
     val o = cachedValuesWithParameter.getIfPresent(value to parameter)
+    var valueToReturn: R? = null
+
     if (o != null) {
       @Suppress("UNCHECKED_CAST")
-      return o as R
+      valueToReturn = o as R
+      cachedValueWithParametersFromCacheMs.addElapsedTimeMs(start)
     }
     else {
-      val newValue = value.source(storage, parameter)!!
-      cachedValuesWithParameter.put(value to parameter, newValue)
-      return newValue
+      cachedValueWithParametersCalculatedMs.addMeasuredTimeMs {
+        valueToReturn = value.source(storage, parameter)!!
+        cachedValuesWithParameter.put(value to parameter, valueToReturn)
+      }
     }
+
+    return requireNotNull(valueToReturn) { "Cached value with parameter must not be null" }
   }
 
   fun <R> clearCachedValue(value: CachedValue<R>) {
-    cachedValues.invalidate(value)
+    cachedValueClear.addMeasuredTimeMs { cachedValues.invalidate(value) }
   }
 
   fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {
-    cachedValuesWithParameter.invalidate(value to parameter)
+    cachedValueWithParametersClear.addMeasuredTimeMs { cachedValuesWithParameter.invalidate(value to parameter) }
+  }
+
+  companion object {
+    private val cachedValueFromCacheMs: AtomicLong = AtomicLong()
+    private val cachedValueCalculatedMs: AtomicLong = AtomicLong()
+
+    private val cachedValueWithParametersFromCacheMs: AtomicLong = AtomicLong()
+    private val cachedValueWithParametersCalculatedMs: AtomicLong = AtomicLong()
+
+    private val cachedValueClear: AtomicLong = AtomicLong()
+    private val cachedValueWithParametersClear: AtomicLong = AtomicLong()
+
+    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
+      val cachedValueFromCacheGauge = meter.gaugeBuilder("workspaceModel.cachedValue.from.cache.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val cachedValueCalculatedGauge = meter.gaugeBuilder("workspaceModel.cachedValue.calculated.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val cachedValueTotalGauge = meter.gaugeBuilder("workspaceModel.cachedValue.total.get.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val cachedValueWithParametersFromCacheGauge = meter.gaugeBuilder("workspaceModel.cachedValueWithParameters.from.cache.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val cachedValueWithParametersCalculatedGauge = meter.gaugeBuilder("workspaceModel.cachedValueWithParameters.calculated.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val cachedValueWithParametersTotalGauge = meter.gaugeBuilder("workspaceModel.cachedValueWithParameters.total.get.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      val cachedValueClearGauge = meter.gaugeBuilder("workspaceModel.cachedValue.clear.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val cachedValueWithParametersClearGauge = meter.gaugeBuilder("workspaceModel.cachedValueWithParameters.clear.ms")
+        .ofLongs().setDescription("Total time spent in method").buildObserver()
+
+      meter.batchCallback(
+        {
+          cachedValueFromCacheGauge.record(cachedValueFromCacheMs.get())
+          cachedValueCalculatedGauge.record(cachedValueCalculatedMs.get())
+          cachedValueTotalGauge.record(cachedValueFromCacheMs.get().plus(cachedValueCalculatedMs.get()))
+
+          cachedValueWithParametersFromCacheGauge.record(cachedValueWithParametersFromCacheMs.get())
+          cachedValueWithParametersCalculatedGauge.record(cachedValueWithParametersCalculatedMs.get())
+          cachedValueWithParametersTotalGauge.record(
+            cachedValueWithParametersFromCacheMs.get().plus(cachedValueWithParametersCalculatedMs.get())
+          )
+
+          cachedValueClearGauge.record(cachedValueClear.get())
+          cachedValueWithParametersClearGauge.record(cachedValueWithParametersClear.get())
+        },
+        cachedValueFromCacheGauge, cachedValueCalculatedGauge, cachedValueTotalGauge,
+
+        cachedValueWithParametersFromCacheGauge, cachedValueWithParametersCalculatedGauge,
+        cachedValueWithParametersTotalGauge,
+
+        cachedValueClearGauge, cachedValueWithParametersClearGauge
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(WorkspaceModel))
+    }
   }
 }
 
@@ -116,7 +195,7 @@ public class DummyVersionedEntityStorage(private val builder: MutableEntityStora
 
   override fun <R> cachedValue(value: CachedValue<R>): R = value.source(current)
   override fun <P, R> cachedValue(value: CachedValueWithParameter<P, R>, parameter: P): R = value.source(current, parameter)
-  override fun <R> clearCachedValue(value: CachedValue<R>) { }
+  override fun <R> clearCachedValue(value: CachedValue<R>) {}
   override fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {}
 }
 

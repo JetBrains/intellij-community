@@ -2,10 +2,9 @@
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
+import com.intellij.gradle.toolingExtension.impl.util.GradleDependencyArtifactPolicyUtil;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.plugins.ide.idea.IdeaPlugin;
-import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,17 +48,9 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     buildScriptClasspath.setGradleHomeDir(gradleHomeDir);
     buildScriptClasspath.setGradleVersion(GradleVersion.current().getVersion());
 
-    boolean downloadJavadoc = false;
-    boolean downloadSources = true;
-
-    final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class);
-    if (ideaPlugin != null) {
-      final IdeaModule ideaModule = ideaPlugin.getModel().getModule();
-      downloadJavadoc = ideaModule.isDownloadJavadoc();
-      downloadSources = ideaModule.isDownloadSources();
-    }
-    boolean forceDisableSourceDownload = Boolean.parseBoolean(System.getProperty("idea.gradle.download.sources", "true"));
-    downloadSources = downloadSources && forceDisableSourceDownload;
+    final boolean downloadJavadoc = GradleDependencyArtifactPolicyUtil.shouldDownloadJavadoc(project);
+    final boolean downloadSources = GradleDependencyArtifactPolicyUtil.shouldDownloadSources(project);
+    GradleDependencyArtifactPolicyUtil.setPolicy(project, downloadSources, downloadJavadoc);
 
     Project parent = project.getParent();
     if (parent != null) {

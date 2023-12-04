@@ -34,6 +34,9 @@
     <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider" interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.annotationPackageSupport" interface="com.intellij.codeInsight.annoPackages.AnnotationPackageSupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreAnnotationParamSupport" interface="com.intellij.codeInspection.DefaultAnnotationParamInspection$IgnoreAnnotationParamSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreVariableInitializerSupport" interface="com.intellij.codeInspection.defUse.DefUseInspection$IgnoreVariableInitializerSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreVariableInitializedBeforeUsageSupport" interface="com.intellij.codeInsight.daemon.impl.analysis.VariableInitializedBeforeUsageSupport" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.lang.jvm.ignoreMethodCallExpressionNPESupport" interface="com.intellij.codeInspection.dataFlow.MethodCallProduceNPESupport" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.javaLanguageLevelPusherCustomizer" interface="com.intellij.openapi.roots.impl.JavaLanguageLevelPusherCustomizer" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.propertyAccessorDetector" interface="com.intellij.psi.util.PropertyAccessorDetector" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.virtualManifestProvider" interface="com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProvider" dynamic="true"/>
@@ -245,6 +248,9 @@
     <globalInspection groupPath="Java" language="JAVA" shortName="UNUSED_IMPORT" bundle="messages.JavaAnalysisBundle" key="unused.import.display.name"
                       groupBundle="messages.InspectionsBundle" groupKey="group.names.imports"  editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES" enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportInspection"/>
+    <globalInspection groupPath="Java" language="JAVA" shortName="MISSORTED_IMPORTS" bundle="messages.JavaAnalysisBundle" key="missorted.imports.inspection.display.name"
+                      groupBundle="messages.InspectionsBundle" groupKey="group.names.imports"  enabledByDefault="true" level="INFORMATION"
+                      implementationClass="com.intellij.codeInspection.unusedImport.MissortedImportsInspection"/>
     <globalInspection groupPath="Java" language="JAVA" shortName="RedundantThrows" groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                       enabledByDefault="true" level="WARNING"
                       implementationClass="com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationInspection"
@@ -328,5 +334,9 @@
 
     <projectService serviceInterface="com.intellij.java.analysis.OuterModelsModificationTrackerManager"
                     serviceImplementation="com.intellij.lang.OuterModelsModificationTrackerManagerImpl"/>
+    <optionController implementation="com.intellij.codeInspection.ex.EntryPointsManagerBase$Provider"/>
+    <optionController implementation="com.intellij.codeInsight.NullableNotNullManagerImpl$Provider"/>
+
+    <virtualManifestProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.VirtualManifestProviderImpl"/>
   </extensions>
 </idea-plugin>

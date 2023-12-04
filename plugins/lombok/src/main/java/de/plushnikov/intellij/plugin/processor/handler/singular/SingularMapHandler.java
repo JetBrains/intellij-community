@@ -24,21 +24,21 @@ class SingularMapHandler extends AbstractSingularHandler {
   }
 
   @NotNull
-  private static PsiType getKeyType(PsiManager psiManager, PsiType psiFieldType) {
+  protected static PsiType getKeyType(PsiType psiFieldType, PsiManager psiManager) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
   }
 
   @NotNull
-  private static PsiType getValueType(PsiManager psiManager, PsiType psiFieldType) {
+  protected PsiType getValueType(PsiType psiFieldType, PsiManager psiManager) {
     return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
   }
 
   @Override
   public Collection<PsiField> renderBuilderFields(@NotNull BuilderInfo info) {
-    final PsiType keyType = getKeyType(info.getManager(), info.getFieldType());
+    final PsiType keyType = getKeyType(info.getFieldType(), info.getManager());
     final PsiType builderFieldKeyType = getBuilderFieldType(keyType, info.getProject());
 
-    final PsiType valueType = getValueType(info.getManager(), info.getFieldType());
+    final PsiType valueType = getValueType(info.getFieldType(), info.getManager());
     final PsiType builderFieldValueType = getBuilderFieldType(valueType, info.getProject());
 
     return List.of(
@@ -59,13 +59,31 @@ class SingularMapHandler extends AbstractSingularHandler {
     return PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_UTIL_ARRAY_LIST, psiType);
   }
 
+  @NotNull
+  private static PsiType getCollectionType(PsiType info, PsiManager psiManager) {
+    final PsiType keyType = PsiTypeUtil.extractAllElementType(info, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
+    final PsiType valueType = PsiTypeUtil.extractAllElementType(info, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    return PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_UTIL_MAP, keyType, valueType);
+  }
+
+  @Override
+  protected List<PsiType> getOneMethodParameterTypes(@NotNull BuilderInfo info) {
+    return List.of(getKeyType(info.getFieldType(), info.getManager()), getValueType(info.getFieldType(), info.getManager()));
+  }
+
+  @Override
+  protected List<PsiType> getAllMethodParameterTypes(@NotNull BuilderInfo info) {
+    final PsiType collectionType = getCollectionType(info.getFieldType(), info.getManager());
+    return List.of(collectionType);
+  }
+
   @Override
   protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
                                        @NotNull PsiType psiFieldType,
                                        @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
-    final PsiType keyType = getKeyType(psiManager, psiFieldType);
-    final PsiType valueType = getValueType(psiManager, psiFieldType);
+    final PsiType keyType = getKeyType(psiFieldType, psiManager);
+    final PsiType valueType = getValueType(psiFieldType, psiManager);
 
     methodBuilder.withParameter(singularName + KEY, keyType);
     methodBuilder.withParameter(singularName + VALUE, valueType);
@@ -75,11 +93,7 @@ class SingularMapHandler extends AbstractSingularHandler {
   protected void addAllMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder,
                                        @NotNull PsiType psiFieldType,
                                        @NotNull String singularName) {
-    final PsiManager psiManager = methodBuilder.getManager();
-    final PsiType keyType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
-
-    final PsiType collectionType = PsiTypeUtil.createCollectionType(psiManager, CommonClassNames.JAVA_UTIL_MAP, keyType, valueType);
+    final PsiType collectionType = getCollectionType(psiFieldType, methodBuilder.getManager());
 
     methodBuilder.withParameter(singularName, collectionType);
   }
@@ -102,8 +116,8 @@ class SingularMapHandler extends AbstractSingularHandler {
                                      "this.{0}" + LOMBOK_VALUE + ".add({1}" + VALUE + ");\n" +
                                      "return {2};";
 
-    final PsiType keyType = getKeyType(info.getManager(), info.getFieldType());
-    final PsiType valueType = getValueType(info.getManager(), info.getFieldType());
+    final PsiType keyType = getKeyType(info.getFieldType(), info.getManager());
+    final PsiType valueType = getValueType(info.getFieldType(), info.getManager());
 
     return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, info.getBuilderChainResult(),
                                 keyType.getCanonicalText(false), valueType.getCanonicalText(false));
@@ -122,8 +136,8 @@ class SingularMapHandler extends AbstractSingularHandler {
                                      "'}'\n" +
                                      "return {1};";
 
-    final PsiType keyType = getKeyType(info.getManager(), info.getFieldType());
-    final PsiType valueType = getValueType(info.getManager(), info.getFieldType());
+    final PsiType keyType = getKeyType(info.getFieldType(), info.getManager());
+    final PsiType valueType = getValueType(info.getFieldType(), info.getManager());
 
     final PsiType keyIterType =
       PsiTypeUtil.extractAllElementType(info.getFieldType(), info.getManager(), CommonClassNames.JAVA_UTIL_MAP, 0);
@@ -148,8 +162,8 @@ class SingularMapHandler extends AbstractSingularHandler {
   String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType psiFieldType = psiVariable.getType();
-    final PsiType keyType = getKeyType(psiManager, psiFieldType);
-    final PsiType valueType = getValueType(psiManager, psiFieldType);
+    final PsiType keyType = getKeyType(psiFieldType, psiManager);
+    final PsiType valueType = getValueType(psiFieldType, psiManager);
 
     final String selectedFormat;
     if (collectionQualifiedName.equals(SingularCollectionClassNames.JAVA_UTIL_SORTED_MAP)) {
@@ -198,8 +212,8 @@ class SingularMapHandler extends AbstractSingularHandler {
   protected String getEmptyCollectionCall(@NotNull BuilderInfo info) {
     final PsiManager psiManager = info.getManager();
     final PsiType psiFieldType = info.getVariable().getType();
-    final PsiType keyType = getKeyType(psiManager, psiFieldType);
-    final PsiType valueType = getValueType(psiManager, psiFieldType);
+    final PsiType keyType = getKeyType(psiFieldType, psiManager);
+    final PsiType valueType = getValueType(psiFieldType, psiManager);
     final String keyTypeName = keyType.getCanonicalText(false);
     final String valueTypeName = valueType.getCanonicalText(false);
 

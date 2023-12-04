@@ -4,7 +4,7 @@
 package com.intellij.lang.documentation.impl
 
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.lang.documentation.psi.psiDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTargets
 import com.intellij.model.psi.impl.mockEditor
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
@@ -29,5 +29,5 @@ fun documentationTargets(file: PsiFile, offset: Int): List<DocumentationTarget> 
   val documentationManager = DocumentationManager.getInstance(file.project)
   val (targetElement, sourceElement) = documentationManager.findTargetElementAndContext(editor, offset, file)
                                        ?: return emptyList()
-  return listOf(psiDocumentationTarget(targetElement, sourceElement))
+  return psiDocumentationTargets(targetElement, sourceElement)
 }

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.*;
 import com.intellij.psi.*;
@@ -18,6 +19,7 @@ import static java.util.Objects.requireNonNull;
 public class CreateCastExpressionFromInstanceofAction implements ModCommandAction {
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
+    if (!BaseIntentionAction.canModify(context.file())) return null;
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(context.file(), context.offset());
     if (instanceOfExpression == null) return null;
     PsiTypeElement checkType = instanceOfExpression.getCheckType();

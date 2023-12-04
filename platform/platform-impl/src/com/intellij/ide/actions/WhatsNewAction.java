@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -25,7 +26,9 @@ import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Urls;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.system.CpuArch;
+import com.intellij.util.system.OS;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +38,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public final class WhatsNewAction extends AnAction implements DumbAware {
   private static final String ENABLE_NEW_UI_REQUEST = "enable-new-UI";
@@ -69,7 +73,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
 
     var project = e.getProject();
     if (project != null && JBCefApp.isSupported()) {
-      openWhatsNewPage(project, url);
+      openWhatsNewPage(project, url, false);
     }
     else {
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
@@ -77,7 +81,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
   }
 
   @ApiStatus.Internal
-  public static void openWhatsNewPage(@NotNull Project project, @NotNull String url) {
+  public static void openWhatsNewPage(@NotNull Project project, @NotNull String url, boolean onUpgrade) {
     if (!JBCefApp.isSupported()) {
       var name = ApplicationNamesInfo.getInstance().getFullProductName();
       var version = ApplicationInfo.getInstance().getShortVersion();
@@ -89,7 +93,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
         .notify(project);
     }
     else {
-      openWhatsNewPage(project, url, (id, jsRequest, completion) -> {
+      openWhatsNewPage(project, url, onUpgrade, (id, jsRequest, completion) -> {
         if (ENABLE_NEW_UI_REQUEST.equals(jsRequest)) {
           if (!ExperimentalUI.isNewUI()) {
             ApplicationManager.getApplication().invokeLater(() -> {
@@ -108,21 +112,17 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
   }
 
   @ApiStatus.Internal
-  public static void openWhatsNewPage(@NotNull Project project, @NotNull String url, @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
+  @SuppressWarnings("UnusedReturnValue")
+  public static @Nullable FileEditor openWhatsNewPage(@NotNull Project project,
+                                                      @NotNull String url,
+                                                      boolean includePlatformData,
+                                                      @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
     if (!JBCefApp.isSupported()) {
       throw new IllegalStateException("JCEF is not supported on this system");
     }
 
-    var darkTheme = UIUtil.isUnderDarcula();
-
-    var parameters = new HashMap<String, String>();
-    parameters.put("var", "embed");
-    var theme = darkTheme ? "dark" : "light";
-    if (ExperimentalUI.isNewUI()) {
-      theme += "-new-ui";
-    }
-    parameters.put("theme", theme);
-    parameters.put("lang", Locale.getDefault().toLanguageTag().toLowerCase(Locale.ENGLISH));
+    var darkTheme = StartupUiUtil.INSTANCE.isDarkTheme();
+    var parameters = getRequestParameters(includePlatformData);
     var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(parameters).toExternalForm());
 
     try (var stream = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {
@@ -141,6 +141,29 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     request.withQueryHandler(queryHandler);
 
     var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
-    HTMLEditorProvider.openEditor(project, title, request);
+    return HTMLEditorProvider.openEditor(project, title, request);
+  }
+
+  private static Map<String, String> getRequestParameters(boolean includePlatformData) {
+    var parameters = new HashMap<String, String>();
+
+    parameters.put("var", "embed");
+
+    var theme = StartupUiUtil.INSTANCE.isDarkTheme() ? "dark" : "light";
+    if (ExperimentalUI.isNewUI()) theme += "-new-ui";
+    parameters.put("theme", theme);
+
+    parameters.put("lang", Locale.getDefault().toLanguageTag().toLowerCase(Locale.ENGLISH));
+
+    if (includePlatformData) {
+      var os = OS.CURRENT == OS.Windows ? "windows" : OS.CURRENT == OS.macOS ? "mac" : OS.CURRENT == OS.Linux ? "linux" : null;
+      var arch = CpuArch.CURRENT == CpuArch.X86_64 ? "" : CpuArch.CURRENT == CpuArch.ARM64 ? "ARM64" : null;
+      if (os != null && arch != null) {
+        parameters.put("platform", os + arch);
+        parameters.put("product", ApplicationInfo.getInstance().getBuild().getProductCode());
+      }
+    }
+
+    return parameters;
   }
 }

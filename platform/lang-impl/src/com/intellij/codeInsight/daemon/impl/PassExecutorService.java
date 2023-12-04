@@ -26,6 +26,8 @@ import com.intellij.openapi.fileEditor.ClientFileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -364,7 +366,9 @@ final class PassExecutorService implements Disposable {
     public void run() {
       ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> {
         try {
-          doRun();
+          ((FileTypeManagerImpl)FileTypeManager.getInstance()).cacheFileTypesInside(() -> {
+            doRun();
+          });
         }
         catch (ApplicationUtil.CannotRunReadActionException e) {
           myUpdateProgress.cancel();

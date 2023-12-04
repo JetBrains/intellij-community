@@ -243,11 +243,19 @@ internal class WorkspaceModuleImporter(
       else -> ModuleDependencyItem.DependencyScope.COMPILE
     }
 
+  private fun MavenProject.getManifestAttributes(): Map<String,String> {
+    return this.getPluginConfiguration("org.apache.maven.plugins", "maven-jar-plugin")
+      ?.getChild("archive")
+      ?.getChild("manifestEntries")
+      ?.children
+      ?.associate { it.name to it.text } ?: emptyMap()
+  }
 
   private fun importJavaSettings(moduleEntity: ModuleEntity,
                                  importData: MavenModuleImportData,
                                  importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
-    val languageLevel = MavenImportUtil.getLanguageLevel(importData.mavenProject) { importData.moduleData.sourceLanguageLevel }
+    val mavenProject = importData.mavenProject
+    val languageLevel = MavenImportUtil.getLanguageLevel(mavenProject) { importData.moduleData.sourceLanguageLevel }
 
     var inheritCompilerOutput = true
     var compilerOutputUrl: VirtualFileUrl? = null
@@ -265,11 +273,15 @@ internal class WorkspaceModuleImporter(
         compilerOutputUrlForTests = virtualFileUrlManager.fromPath(importFolderHolder.testOutputPath)
       }
     }
+
+    val manifestAttributes = mavenProject.getManifestAttributes()
+
     builder addEntity JavaModuleSettingsEntity(inheritCompilerOutput, false, moduleEntity.entitySource) {
       this.module = moduleEntity
       this.compilerOutput = compilerOutputUrl
       this.compilerOutputForTests = compilerOutputUrlForTests
       this.languageLevelId = languageLevel.name
+      this.manifestAttributes = manifestAttributes
     }
   }
 

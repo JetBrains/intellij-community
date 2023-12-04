@@ -68,6 +68,13 @@ internal class ExpressionTypeFilter(val predicate: KtAnalysisSession.(KtType) ->
     }
 }
 
+internal object NonPackageAndNonImportFilter : (KtExpression) -> Boolean {
+    override fun invoke(expression: KtExpression): Boolean {
+        val parent = expression.parent
+        return parent !is KtPackageDirective && parent !is KtImportDirective
+    }
+}
+
 private fun selector(collector: (PsiFile, Int) -> Sequence<KtExpression>): PostfixTemplateExpressionSelector {
     return object : PostfixTemplateExpressionSelector {
         override fun getExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> {

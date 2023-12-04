@@ -26,17 +26,21 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.openapi.wm.impl.LinuxGlobalMenuEventHandler;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.ImageUtil;
 import com.sun.jna.Callback;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
+import kotlinx.coroutines.flow.MutableStateFlow;
+import kotlinx.coroutines.flow.StateFlowKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
@@ -150,7 +154,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   private static final int STAT_CREATED = 0;
   private static final int STAT_DELETED = 1;
   private static final int STAT_UPDATED = 2;
-  private static boolean isServiceAvailable = false;
+  static final MutableStateFlow<Boolean> isPresentedMutable = StateFlowKt.MutableStateFlow(false);
 
   static {
     ourLib = _loadLibrary();
@@ -177,7 +181,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       };
       updateAllRoots = () -> {
         // exec at glib-thread
-        if (!isServiceAvailable) {
+        if (!isPresentedMutable.getValue()) {
           return;
         }
 
@@ -188,24 +192,18 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       onAppmenuServiceAppeared = () -> {
         // exec at glib-thread
         LOG.info("Appeared dbus-service 'com.canonical.AppMenu.Registrar'");
-        isServiceAvailable = true;
+        isPresentedMutable.setValue(true);
         updateAllRoots.run();
       };
       onAppmenuServiceVanished = () -> {
         // exec at glib-thread
         LOG.info("Closed dbus-service 'com.canonical.AppMenu.Registrar'");
-        isServiceAvailable = false;
-        boolean isMainMenuVisible = UISettings.getInstance().getShowMainMenu();
+        isPresentedMutable.setValue(false);
         for (GlobalMenuLinux menuLinux : instances) {
           menuLinux.windowHandle = null;
-          if (isMainMenuVisible) {
-            EventQueue.invokeLater(() -> {
-              JMenuBar menuBar = getMenuBar(menuLinux.frame);
-              if (menuBar != null) {
-                menuBar.setVisible(true);
-              }
-            });
-          }
+          EventQueue.invokeLater(() -> {
+            setIdeMenuVisible(menuLinux.frame, true);
+          });
         }
       };
 
@@ -215,18 +213,12 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     }
   }
 
-  private static @Nullable JMenuBar getMenuBar(@NotNull JFrame menuBar) {
-    JRootPane rootPane = menuBar.getRootPane();
-    return rootPane == null ? null : rootPane.getJMenuBar();
-  }
-
   private final @NotNull JFrame frame;
   private final GlobalMenuLib.JRunnable onWindowReleased;
   private final EventFilter eventFilter = new EventFilter();
   private final AtomicLong xid = new AtomicLong(0);
   private List<MenuItemInternal> roots;
   private Pointer windowHandle;
-  private boolean isRootsUpdated = false;
   private boolean isEnabled = true;
   private boolean myIsDisposed = false;
   // don't filter a first packet of events (it causes slow reaction of KDE applet)
@@ -390,21 +382,31 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     this.roots = newRoots;
     _trace("set new menu roots, count=%d", size);
-    isRootsUpdated = false;
     ourLib.execOnMainLoop(updateAllRoots);
+  }
+
+  @RequiresEdt
+  private static void setIdeMenuVisible(@NotNull JFrame frame, boolean visible) {
+    ThreadingAssertions.assertEventDispatchThread();
+    JRootPane rootPane = frame.getRootPane();
+
+    boolean mainMenuApplicable = ExperimentalUI.isNewUI()
+                                 ? !IdeRootPane.getHideNativeLinuxTitle() && !IdeRootPane.isMenuButtonInToolbar()
+                                 : UISettings.getInstance().getShowMainMenu();
+    if (rootPane != null && mainMenuApplicable) {
+      rootPane.getJMenuBar().setVisible(visible);
+    }
   }
 
   private void _updateRoots() {
     // exec at glib-thread
-    if (isRootsUpdated || !isEnabled || myIsDisposed) {
+    if (!isEnabled || myIsDisposed) {
       return;
     }
     if (xid.get() == 0) {
       LOG.debug("can´t update roots of frame " + frame + " because xid == 0");
       return;
     }
-
-    isRootsUpdated = true;
 
     if (windowHandle == null) {
       windowHandle = ourLib.registerWindow(xid.get(), this);
@@ -429,10 +431,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     if (!SHOW_SWING_MENU) {
       EventQueue.invokeLater(() -> {
         if (isEnabled) {
-          JMenuBar menuBar = getMenuBar(frame);
-          if (menuBar != null) {
-            menuBar.setVisible(false);
-          }
+          setIdeMenuVisible(frame, false);
         }
       });
     }
@@ -456,7 +455,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     if (enabled) {
       _trace("enable global-menu");
-      isRootsUpdated = false;
       ourLib.execOnMainLoop(updateAllRoots);
     }
     else {
@@ -465,12 +463,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         ourLib.releaseWindowOnMainLoop(windowHandle, onWindowReleased);
       }
 
-      if (UISettings.getInstance().getShowMainMenu()) {
-        JMenuBar frameMenu = getMenuBar(frame);
-        if (frameMenu != null) {
-          frameMenu.setVisible(true);
-        }
-      }
+      setIdeMenuVisible(frame, true);
     }
   }
 
@@ -802,7 +795,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
   // return true when corresponding dbus-service is alive
   public static boolean isPresented() {
-    return ourLib != null && isServiceAvailable;
+    return ourLib != null && isPresentedMutable.getValue();
   }
 
   private static GlobalMenuLib _loadLibrary() {
@@ -1340,7 +1333,6 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
     boolean check(int uid, int eventType, @NotNull MenuItemInternal mi) {
       // exec at glib-main-thread
-      final boolean isFillEvent = _isFillEvent(eventType);
       final long timeMs = System.currentTimeMillis();
 
       if (_isClosed()) {
