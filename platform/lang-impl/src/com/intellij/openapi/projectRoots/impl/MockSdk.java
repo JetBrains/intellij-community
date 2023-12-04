@@ -21,6 +21,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.BuildableRootsChangeRescanningInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -34,6 +35,7 @@ import java.util.function.Supplier;
  */
 @TestOnly
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2024.2")
 public class MockSdk implements Sdk, SdkModificator {
   private String myName;
   private String myHomePath;
