@@ -115,10 +115,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       return super.createSouthPanel();
 
     JPanel panel = new JPanel(new BorderLayout());
+    if (getStyle() == DialogStyle.COMPACT) {
     int inset = isNewWizard() ? 15 : 0;
     panel.setBorder(isNewWizard()
                     ? BorderFactory.createEmptyBorder(4, inset, 4, inset)
                     : BorderFactory.createEmptyBorder(8, inset, 0, inset));
+    }
 
     JPanel buttonPanel = new JPanel();
 
