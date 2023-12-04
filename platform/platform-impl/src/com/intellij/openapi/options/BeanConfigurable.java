@@ -260,7 +260,10 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
    * E.g. text is read from the model and set to the edit box.
    * After the apply, the value from the component is queried via {@code componentGetter} and written back to model via {@code beanSetter}.
    * E.g. text from the edit box is queried and saved back to model bean.
+   *
+   * @deprecated Use {@see com.intellij.openapi.options.BoundConfigurable} and Kotlin UI DSL for complex configurables
    */
+  @Deprecated(forRemoval = true)
   protected <V> void component(@NotNull JComponent component, @NotNull Getter<? extends V> beanGetter, @NotNull Setter<? super V> beanSetter, @NotNull Getter<? extends V> componentGetter, @NotNull Setter<? super V> componentSetter) {
     BeanField<JComponent> field = new BeanField<>(new BeanMethodAccessor<V>(beanGetter, beanSetter)) {
       @NotNull
