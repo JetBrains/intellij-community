@@ -576,16 +576,21 @@ private fun CoroutineScope.loadDescriptorsFromDirs(
     platformPrefixProperty
   }
 
-  val root = loadCoreModules(context = context,
-                             platformPrefix = platformPrefix,
-                             isUnitTestMode = isUnitTestMode,
-                             isInDevServerMode = AppMode.isDevServer(),
-                             isRunningFromSources = isRunningFromSources,
-                             pool = zipFilePool,
-                             classLoader = mainClassLoader)
-  val custom = loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool)
-  val bundled = ProductLoadingStrategy.strategy.loadBundledPluginDescriptors(this, bundledPluginDir, isUnitTestMode, context, zipFilePool)
-  return (root + custom + bundled)
+  val result = mutableListOf<Deferred<IdeaPluginDescriptorImpl?>>()
+  result.addAll(loadCoreModules(context = context,
+                                platformPrefix = platformPrefix,
+                                isUnitTestMode = isUnitTestMode,
+                                isInDevServerMode = AppMode.isDevServer(),
+                                isRunningFromSources = isRunningFromSources,
+                                pool = zipFilePool,
+                                classLoader = mainClassLoader))
+  result.addAll(loadDescriptorsFromDir(dir = customPluginDir, context = context, isBundled = false, pool = zipFilePool))
+  result.addAll(ProductLoadingStrategy.strategy.loadBundledPluginDescriptors(scope = this,
+                                                                             bundledPluginDir = bundledPluginDir,
+                                                                             isUnitTestMode = isUnitTestMode,
+                                                                             context = context,
+                                                                             zipFilePool = zipFilePool))
+  return result
 }
 
 private fun CoroutineScope.loadCoreModules(context: DescriptorListLoadingContext,
@@ -611,7 +616,8 @@ private fun CoroutineScope.loadCoreModules(context: DescriptorListLoadingContext
   }
 
   val fileName = "${platformPrefix}Plugin.xml"
-  var result = listOf(async {
+  val result = mutableListOf<Deferred<IdeaPluginDescriptorImpl?>>()
+  result.add(async {
     loadCoreProductPlugin(path = "${PluginManagerCore.META_INF}$fileName",
                           classLoader = classLoader,
                           context = context,
@@ -622,15 +628,14 @@ private fun CoroutineScope.loadCoreModules(context: DescriptorListLoadingContext
   if (ProductLoadingStrategy.strategy.shouldLoadDescriptorsFromCoreClassPath) {
     val urlToFilename = collectPluginFilesInClassPath(classLoader)
     if (!urlToFilename.isEmpty()) {
-      @Suppress("SuspiciousCollectionReassignment")
-      result += loadDescriptorsFromClassPath(urlToFilename = urlToFilename,
-                                             context = context,
-                                             pathResolver = pathResolver,
-                                             useCoreClassLoader = useCoreClassLoader,
-                                             pool = pool)
+      result.addAll(loadDescriptorsFromClassPath(urlToFilename = urlToFilename,
+                                                 context = context,
+                                                 pathResolver = pathResolver,
+                                                 useCoreClassLoader = useCoreClassLoader,
+                                                 pool = pool)
+      )
     }
   }
-
   return result
 }
 
