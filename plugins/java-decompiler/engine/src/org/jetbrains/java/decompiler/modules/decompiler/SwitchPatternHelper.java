@@ -28,6 +28,9 @@ import static org.jetbrains.java.decompiler.modules.decompiler.exps.ExitExprent.
 import static org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement.IFTYPE_IF;
 import static org.jetbrains.java.decompiler.struct.gen.VarType.*;
 
+/**
+ * The SwitchPatternHelper class provides utility methods to work with switch statement patterns.
+ */
 @SuppressWarnings("SSBasedInspection")
 public final class SwitchPatternHelper {
 
@@ -244,6 +247,13 @@ public final class SwitchPatternHelper {
       return new Initializer(instance, nonNullCheck, initVar2);
     }
 
+    /**
+     * Represents an initializer for a switch statement.
+     *
+     * @param instance     The qualifier which is used to call bootstrap methods.
+     * @param nonNullCheck non-null-check for instance.
+     * @param initVar2     second argument, which represent a type.
+     */
     private record Initializer(Exprent instance, Exprent nonNullCheck, AssignmentExprent initVar2) {
     }
 
@@ -418,7 +428,6 @@ public final class SwitchPatternHelper {
       return false;
     }
 
-    @SuppressWarnings({"SSBasedInspection", "SimplifyStreamApiCallChains"})
     @Nullable
     private static List<FullCase> resortForSwitchBootstrap(@NotNull SwitchStatement statement) {
       for (Statement caseStatement : statement.getCaseStatements()) {
@@ -454,7 +463,7 @@ public final class SwitchPatternHelper {
             .sorted(
               Comparator.<CaseValueWithEdge, Boolean>comparing(o -> o.edge == statement.getDefaultEdge())
                 .thenComparingLong(o -> o.exprent instanceof ConstExprent c ? c.getIntValue() : Long.MIN_VALUE))
-            .collect(Collectors.toList());
+            .toList();
         sortedEdges.add(sorted.stream().map(t -> t.edge).collect(Collectors.toList()));
         sortedCaseValue.add(sorted.stream().map(t -> t.exprent).collect(Collectors.toList()));
       }
@@ -1161,7 +1170,10 @@ public final class SwitchPatternHelper {
     return false;
   }
 
-  @SuppressWarnings("SSBasedInspection")
+  /**
+   * This class represents a reference candidate for switch with reference expression.
+   * It can convert a usual switch statement to switch a statement with patterns.
+   */
   private static class SwitchOnReferenceCandidate implements SwitchOnCandidate {
     @NotNull
     private final SwitchStatement myRootSwitchStatement;
@@ -1247,7 +1259,7 @@ public final class SwitchPatternHelper {
         if (statEdges.size() == 1 && statEdges.get(0) == myRoot.getDefaultEdge()) {
           Statement defaultStatement = myRoot.getCaseStatements().get(i);
           Statement statementWithFirstAssignment = getStatementWithFirstAssignment(defaultStatement);
-          if (statementWithFirstAssignment!=null &&
+          if (statementWithFirstAssignment != null &&
               statementWithFirstAssignment.getExprents() != null &&
               !statementWithFirstAssignment.getExprents().isEmpty() &&
               statementWithFirstAssignment.getExprents().get(0) instanceof AssignmentExprent assignmentExprent &&
@@ -1439,6 +1451,12 @@ public final class SwitchPatternHelper {
       deleteNullCases(switchStatement);
     }
 
+    /**
+     * Deletes null cases from a SwitchStatement if these labels contain var exprent
+     * (it is impossible to have null and pattern named variable at the same time).
+     *
+     * @param statement the SwitchStatement from which to delete null cases
+     */
     private static void deleteNullCases(@NotNull SwitchStatement statement) {
       @NotNull List<List<@Nullable Exprent>> values = statement.getCaseValues();
       for (int i = 0; i < values.size(); i++) {
@@ -1460,6 +1478,15 @@ public final class SwitchPatternHelper {
       }
     }
 
+    /**
+     * Adds guards to the cases of a given switch statement based on a pattern container.
+     * If a case has only one pattern, it replaces the statement with the corresponding pattern statement,
+     * sets the destination of the case edge to the pattern statement,
+     * and adds the guard to the switch statement.
+     *
+     * @param switchStatement  the switch statement to add guards to
+     * @param patternContainer the pattern container containing the patterns to match and add guards for
+     */
     private static void addGuards(@NotNull SwitchStatement switchStatement, @NotNull PatternContainer patternContainer) {
       for (int i = 0; i < switchStatement.getCaseStatements().size(); i++) {
         Statement currentCaseStatement = switchStatement.getCaseStatements().get(i);
@@ -1480,6 +1507,12 @@ public final class SwitchPatternHelper {
       }
     }
 
+    /**
+     * Extend or duplicate the cases of a given switch statement based on a pattern container.
+     *
+     * @param switchStatement the switch statement to extend the cases for
+     * @param patternContainer the pattern container containing the patterns to match and extend the cases
+     */
     private static void extendCases(@NotNull SwitchStatement switchStatement, @NotNull PatternContainer patternContainer) {
       for (Map.Entry<Statement, List<PatternContainer.PatternStatement>> entry : patternContainer.patternsByStatement.entrySet()) {
         if (entry.getValue().size() == 1) {
@@ -1516,6 +1549,13 @@ public final class SwitchPatternHelper {
       }
     }
 
+    /**
+     * Normalizes the labels in the given switch statement by removing labels that are not explicitly labeled
+     * and removing labels that correspond to assignments to temporary variables.
+     *
+     * @param switchStatement      the switch statement to normalize the labels for
+     * @param upperDoStatement     the upper DoStatement to consider during normalization
+     */
     private static void normalizeCaseLabels(@NotNull SwitchStatement switchStatement, @NotNull DoStatement upperDoStatement) {
       @NotNull List<Statement> statements = switchStatement.getCaseStatements();
       for (int i = 0; i < statements.size(); i++) {
@@ -1531,6 +1571,13 @@ public final class SwitchPatternHelper {
       }
     }
 
+    /**
+     * Normalizes the labels in the given switch statement by removing labels that are not explicitly labeled and
+     * removing labels that correspond to assignments to temporary variables.
+     *
+     * @param switchStatement        the switch statement to normalize the labels for
+     * @param tempVarAssignments     the list of temporary variable assignments used in the switch statement
+     */
     private static void normalizeLabels(@NotNull SwitchStatement switchStatement,
                                         @NotNull List<TempVarAssignmentItem> tempVarAssignments) {
       Set<StatEdge> labelsToDelete = new HashSet<>();
@@ -1564,6 +1611,12 @@ public final class SwitchPatternHelper {
       switchStatement.getLabelEdges().removeAll(labelsToDelete);
     }
 
+    /**
+     * Cleans up the default case of the given switch statement if it is possible,
+     * it is included clearing other case values, handling throwing an exception.
+     *
+     * @param statement switch statement to clean up
+     */
     private static void cleanDefault(@NotNull SwitchStatement statement) {
       @NotNull List<List<StatEdge>> caseEdges = statement.getCaseEdges();
       int indexDefault = -1;
@@ -1616,17 +1669,19 @@ public final class SwitchPatternHelper {
       }
     }
 
-    @SuppressWarnings({"SSBasedInspection", "SimplifyStreamApiCallChains"})
     private static void resort(@NotNull SwitchStatement statement, @NotNull List<JavacReferenceFinder.FullCase> cases) {
       statement.getCaseStatements().clear();
-      statement.getCaseStatements().addAll(cases.stream().map(t -> t.statement).collect(Collectors.toList()));
+      statement.getCaseStatements().addAll(cases.stream().map(t -> t.statement).toList());
       statement.getCaseEdges().clear();
-      statement.getCaseEdges().addAll(cases.stream().map(t -> t.edges).collect(Collectors.toList()));
+      statement.getCaseEdges().addAll(cases.stream().map(t -> t.edges).toList());
       statement.getCaseValues().clear();
-      statement.getCaseValues().addAll(cases.stream().map(t -> t.exprents).collect(Collectors.toList()));
+      statement.getCaseValues().addAll(cases.stream().map(t -> t.exprents).toList());
     }
   }
 
+  /**
+   * A container class that holds patterns associated with statements.
+   */
   private static class PatternContainer {
     private final Map<Statement, List<PatternStatement>> patternsByStatement = new HashMap<>();
 
