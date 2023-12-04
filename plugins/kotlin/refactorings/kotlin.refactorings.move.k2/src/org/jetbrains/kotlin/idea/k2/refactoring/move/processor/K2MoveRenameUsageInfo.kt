@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.toLightElements
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.utils.fqname.isImported
 import org.jetbrains.kotlin.idea.references.KtReference
@@ -338,12 +338,16 @@ sealed class K2MoveRenameUsageInfo(
                 usageInfosByFile.forEach { (file, usageInfos) ->
                     // TODO instead of manually handling of qualifiable/non-qualifiable references we should invoke `bindToElement` in bulk
                     val qualifiedElements = usageInfos.mapNotNull { usageInfo ->
-                        val newElement = oldToNewMap[usageInfo.referencedElement] as? KtNamedDeclaration ?: usageInfo.referencedElement
-                        val result = usageInfo.retarget(newElement)
-                        if (usageInfo is Qualifiable && result != null) (result to newElement) else null
-                    }.filter { it.first.isValid }.toMap() // because `bindToElement` invalidates imports after qualifying every reference
-                    if (file !is KtFile) return@forEach
-                    shortenReferences(file, qualifiedElements)
+                        val newDeclaration = oldToNewMap[usageInfo.referencedElement] as? KtNamedDeclaration ?: usageInfo.referencedElement
+                        val qualifiedReference = usageInfo.retarget(newDeclaration)
+                        if (usageInfo is Qualifiable && qualifiedReference != null && qualifiedReference.isValid) { // imports can become invalid
+                            qualifiedReference to newDeclaration
+                        } else null
+                    }.toMap()
+                    if (file is KtFile) {
+                        shortenReferences(file, qualifiedElements)
+                    }
+
                 }
             }
         }
@@ -352,20 +356,12 @@ sealed class K2MoveRenameUsageInfo(
          * Ad-hoc implementation of bulk shortening that should be replaced by some better API in the future.
          */
         private fun shortenReferences(file: KtFile, qualifiedElements: Map<PsiElement, KtNamedDeclaration>) {
-            fun PsiElement.isInsideOf(another: PsiElement): Boolean = another.textRange.contains(textRange)
-
             fun FqName.proximityTo(other: FqName): Int {
-                val segments = pathSegments()
-                val otherSegments = other.pathSegments()
-                var proximity = 0
-                for ((name, otherName) in segments.zip(otherSegments)) {
-                    if (name == otherName) proximity++ else break;
-                }
-                return proximity
+                return pathSegments().zip(other.pathSegments()).takeWhile { (left, right) -> left == right }.size
             }
 
             val nonNestedElems = qualifiedElements.filter { (elem, _) ->
-                qualifiedElements.keys.none { otherElem -> elem != otherElem && elem.isInsideOf(otherElem) }
+                qualifiedElements.keys.none { otherElem -> elem != otherElem && elem.isAncestor(otherElem) }
             }
             val fileFqn = file.packageFqName
             val sortedElements = nonNestedElems.keys.sortedByDescending { ref ->
@@ -374,8 +370,7 @@ sealed class K2MoveRenameUsageInfo(
             }
             sortedElements.forEach { qualifiedElem ->
                 analyze(file) {
-                    val shortening = collectPossibleReferenceShorteningsInElement(qualifiedElem as KtElement)
-                    shortening.invokeShortening()
+                    shortenReferences(qualifiedElem as KtElement)
                 }
             }
         }
