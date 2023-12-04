@@ -42,7 +42,7 @@ import javax.swing.DefaultComboBoxModel
 import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 
-class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
+internal class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(
   MarkdownBundle.message("markdown.settings.name"),
   MarkdownBundle.message("markdown.settings.name"),
   _id = ID
