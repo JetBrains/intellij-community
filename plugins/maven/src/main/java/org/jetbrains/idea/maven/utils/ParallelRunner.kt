@@ -3,15 +3,16 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.namedChildScope
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import java.util.function.Consumer;
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
+import java.util.function.Consumer
 
 @Service(Service.Level.PROJECT)
 class ParallelRunner(val project: Project, val cs: CoroutineScope) {
@@ -21,18 +22,15 @@ class ParallelRunner(val project: Project, val cs: CoroutineScope) {
     val runScope = cs.namedChildScope("ParallelRunner.runInParallel", Dispatchers.IO, true)
     collection.map {
       runScope.async {
-        method(it)
+        blockingContext {
+          method(it)
+        }
       }
     }.awaitAll()
   }
 
   @RequiresBackgroundThread
-  fun <T> runInParallelBlocking(collection: Collection<T>, method: (T) -> Unit) = runBlocking {
-    runInParallel(collection, method)
-  }
-
-  @RequiresBackgroundThread
-  fun <T> runInParallelBlocking(collection: Collection<T>, method: Consumer<T>) = runBlocking {
+  fun <T> runInParallelBlocking(collection: Collection<T>, method: Consumer<T>) = runBlockingMaybeCancellable {
     runInParallel(collection) {
       method.accept(it)
     }
