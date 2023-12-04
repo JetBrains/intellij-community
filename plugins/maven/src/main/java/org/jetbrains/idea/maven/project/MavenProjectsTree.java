@@ -1298,26 +1298,6 @@ public final class MavenProjectsTree {
     }
   }
 
-  public MavenProjectsTree getCopyForReimport() {
-    return withReadLock(() -> {
-      MavenProjectsTree result = new MavenProjectsTree(myProject);
-
-      result.myExplicitProfiles = myExplicitProfiles;
-      result.myRootProjects.addAll(myRootProjects);
-      result.myIgnoredFilesPaths.addAll(myIgnoredFilesPaths);
-      result.myIgnoredFilesPatterns.addAll(myIgnoredFilesPatterns);
-      deepCopyInto(myAggregatorToModuleMapping, result.myAggregatorToModuleMapping);
-      result.myIgnoredFilesPatternsCache = myIgnoredFilesPatternsCache;
-      result.myManagedFilesPaths.addAll(myManagedFilesPaths);
-      result.myMavenIdToProjectMapping.putAll(myMavenIdToProjectMapping);
-      result.myModuleToAggregatorMapping.putAll(myModuleToAggregatorMapping);
-      result.myVirtualFileToProjectMapping.putAll(myVirtualFileToProjectMapping);
-      result.myTimestamps.putAll(myTimestamps);
-      myWorkspaceMap.copyInto(result.myWorkspaceMap);
-      return result;
-    });
-  }
-
   private static <K, V> Map<K, List<V>> deepCopyInto(Map<K, List<V>> from, Map<K, List<V>> to) {
     return deepCopyInto(from, to, Function.identity());
   }

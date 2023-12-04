@@ -3,19 +3,15 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.namedChildScope
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import java.util.function.Consumer
 
 @Service(Service.Level.PROJECT)
 class ParallelRunner(val project: Project, val cs: CoroutineScope) {
-
 
   suspend fun <T> runInParallel(collection: Collection<T>, method: suspend (T) -> Unit) {
     val runScope = cs.namedChildScope("ParallelRunner.runInParallel", Dispatchers.IO, true)
@@ -24,13 +20,6 @@ class ParallelRunner(val project: Project, val cs: CoroutineScope) {
         method(it)
       }
     }.awaitAll()
-  }
-
-  @RequiresBackgroundThread
-  fun <T> runInParallelBlocking(collection: Collection<T>, method: Consumer<T>) = runBlockingMaybeCancellable {
-    runInParallel(collection) {
-      method.accept(it)
-    }
   }
 
   companion object {
