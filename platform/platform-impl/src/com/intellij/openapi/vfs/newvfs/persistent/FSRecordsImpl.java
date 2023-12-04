@@ -112,7 +112,12 @@ public final class FSRecordsImpl implements Closeable {
   private static final String CONTENT_HASH_IMPL = System.getProperty("vfs.content-hash-storage.impl", "over-mmapped-file");
   public static final boolean USE_CONTENT_HASH_STORAGE_OVER_MMAPPED_FILE = "over-mmapped-file".equals(CONTENT_HASH_IMPL);
 
-  public static final int COMPRESS_CONTENT_IF_LARGER_THAN = SystemProperties.getIntProperty("vfs.content-storage.compress-if-larger", 64);
+  /**
+   * Cutoff for VFSContentStorage: file content larger than this threshold store with compression.
+   * Range 4k-8k seems to be optimal, gauged by experiments on IntelliJ source tree:  with such thresholds only
+   * ~7-15% files are actually compressed, but total size is just ~10-20% more than if all files were compressed.
+   */
+  public static final int COMPRESS_CONTENT_IF_LARGER_THAN = SystemProperties.getIntProperty("vfs.content-storage.compress-if-larger", 8000);
 
   /**
    * Reuse fileIds deleted in a previous session.
@@ -738,9 +743,9 @@ public final class FSRecordsImpl implements Closeable {
       // optimization: when converter returned unchanged children (see e.g. PersistentFSImpl.findChildInfo())
       // then do not save them back again unnecessarily
       if (!modifiedChildren.equals(children)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + modifiedChildren);
-        }
+        //if (LOG.isDebugEnabled()) {
+        //  LOG.debug("Update children for " + parent + " (id = " + parentId + "); old = " + children + ", new = " + modifiedChildren);
+        //}
         checkNotClosed();
 
         //TODO RC: why we update symlinks here, under the lock?
