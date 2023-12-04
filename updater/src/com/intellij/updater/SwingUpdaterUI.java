@@ -12,14 +12,23 @@ import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SwingUpdaterUI implements UpdaterUI {
   public static SwingUpdaterUI createUI() {
+    var font = UIManager.get("OptionPane.messageFont");
+    if (font != null && !Objects.equals(font, UIManager.get("Label.font"))) {
+      var keys = UIManager.getDefaults().keys();
+      while (keys.hasMoreElements()) {
+        var key = keys.nextElement();
+        if (UIManager.get(key) instanceof Font) {
+          UIManager.put(key, font);
+        }
+      }
+    }
+
     var result = new AtomicReference<SwingUpdaterUI>();
     invokeAndWait(() -> result.set(new SwingUpdaterUI()));
     return result.get();
