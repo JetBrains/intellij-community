@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -419,7 +420,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase implements DumbA
             if (!isSynthetic(destination)) {
               PsiClass source = findByName(sources, destination.getName());
               if (source == null) {
-                WriteAction.run(() -> destination.delete());
+                destination.delete();
               }
               else {
                 sourceToDestination.put(source, destination);
@@ -429,11 +430,17 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase implements DumbA
 
           for (final Map.Entry<PsiClass, PsiClass> classEntry : sourceToDestination.entrySet()) {
             if (copyClassName != null && sourceToDestination.size() == 1) {
-              PsiClass newClass = dumbService.computeWithAlternativeResolveEnabled(() -> {
-                final PsiClass copy = copy(classEntry.getKey(), copyClassName);
-                return WriteAction.compute(() -> (PsiClass)classEntry.getValue().replace(copy));
-              });
-              oldToNewMap.put(classEntry.getKey(), newClass);
+              try {
+                PsiClass newClass = dumbService.computeWithAlternativeResolveEnabled(() -> {
+                  final PsiClass copy = copy(classEntry.getKey(), copyClassName);
+                  return (PsiClass)classEntry.getValue().replace(copy);
+                });
+                oldToNewMap.put(classEntry.getKey(), newClass);
+              }
+              catch (IndexNotReadyException e) {
+                //proceed with copy if references in one file were not restored
+                LOG.error(e);
+              }
             }
             else {
               oldToNewMap.put(classEntry.getKey(), classEntry.getValue());
