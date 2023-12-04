@@ -85,7 +85,7 @@ public final class SimpleStringPersistentEnumerator implements ScannableDataEnum
       catch (IOException e) {
         LOG.warnWithDebug("Can't read [" + file.toAbsolutePath() + "] content", e);
         //clean the file:
-        Files.write(file, ArrayUtil.EMPTY_BYTE_ARRAY, WRITE, TRUNCATE_EXISTING, CREATE);
+        Files.write(file, ArrayUtilRt.EMPTY_BYTE_ARRAY, WRITE, TRUNCATE_EXISTING, CREATE);
 
         pair = readStorageFromDisk(file, charset, /* fallbackTo: */ Charset.defaultCharset());
       }
