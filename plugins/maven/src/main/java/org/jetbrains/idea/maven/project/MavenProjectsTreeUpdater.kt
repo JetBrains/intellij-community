@@ -1,268 +1,245 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
-import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.utils.MavenLog;
-import org.jetbrains.idea.maven.utils.MavenUtil;
-import org.jetbrains.idea.maven.utils.ParallelRunner;
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.project.MavenProjectChangesBuilder.Companion.merged
+import org.jetbrains.idea.maven.project.MavenProjectsTree.MavenProjectTimestamp
+import org.jetbrains.idea.maven.project.MavenProjectsTree.UpdateContext
+import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
+import org.jetbrains.idea.maven.utils.ParallelRunner.Companion.getInstance
+import java.io.File
+import java.util.concurrent.ConcurrentHashMap
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+@ApiStatus.Internal
+internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
+                                        private val explicitProfiles: MavenExplicitProfiles,
+                                        private val updateContext: UpdateContext,
+                                        private val reader: MavenProjectReader,
+                                        private val generalSettings: MavenGeneralSettings,
+                                        private val process: ProgressIndicator?,
+                                        private val updateModules: Boolean) {
+  private val updated = ConcurrentHashMap<VirtualFile, Boolean>()
+  private val userSettingsFile = generalSettings.effectiveUserSettingsIoFile
+  private val globalSettingsFile = generalSettings.effectiveGlobalSettingsIoFile
 
-class MavenProjectsTreeUpdater {
-  private final MavenProjectsTree tree;
-  private final MavenExplicitProfiles explicitProfiles;
-  private final MavenProjectsTree.UpdateContext updateContext;
-  private final MavenProjectReader reader;
-  private final MavenGeneralSettings generalSettings;
-  private final ProgressIndicator process;
-  private final ConcurrentHashMap<VirtualFile, Boolean> updated = new ConcurrentHashMap<>();
-  private final boolean updateModules;
-  private final @Nullable File userSettingsFile;
-  private final @Nullable File globalSettingsFile;
+  private fun startUpdate(mavenProjectFile: VirtualFile, forceRead: Boolean): Boolean {
+    val projectPath = mavenProjectFile.path
 
-  MavenProjectsTreeUpdater(MavenProjectsTree tree,
-                           MavenExplicitProfiles profiles,
-                           MavenProjectsTree.UpdateContext context,
-                           MavenProjectReader reader,
-                           MavenGeneralSettings settings,
-                           ProgressIndicator process,
-                           boolean updateModules) {
-    this.tree = tree;
-    explicitProfiles = profiles;
-    updateContext = context;
-    this.reader = reader;
-    generalSettings = settings;
-    this.process = process;
-    this.updateModules = updateModules;
-    userSettingsFile = generalSettings.getEffectiveUserSettingsIoFile();
-    globalSettingsFile = generalSettings.getEffectiveGlobalSettingsIoFile();
-  }
+    if (tree.isIgnored(projectPath)) return false
 
-  private boolean startUpdate(VirtualFile mavenProjectFile, boolean forceRead) {
-    String projectPath = mavenProjectFile.getPath();
+    val previousUpdateRef = Ref<Boolean>()
+    updated.compute(mavenProjectFile) { file: VirtualFile?, value: Boolean? ->
+      previousUpdateRef.set(value)
+      java.lang.Boolean.TRUE == value || forceRead
+    }
+    val previousUpdate = previousUpdateRef.get()
 
-    if (tree.isIgnored(projectPath)) return false;
-
-    Ref<Boolean> previousUpdateRef = new Ref<>();
-    updated.compute(mavenProjectFile, (file, value) -> {
-      previousUpdateRef.set(value);
-      return Boolean.TRUE.equals(value) || forceRead;
-    });
-    var previousUpdate = previousUpdateRef.get();
-
-    if ((null != previousUpdate && !forceRead) || Boolean.TRUE.equals(previousUpdate)) {
+    if ((null != previousUpdate && !forceRead) || (java.lang.Boolean.TRUE == previousUpdate)) {
       // we already updated this file
-      MavenLog.LOG.trace("Has already been updated (%s): %s; forceRead: %s".formatted(previousUpdate, mavenProjectFile, forceRead));
-      return false;
+      MavenLog.LOG.trace("Has already been updated ($previousUpdate): $mavenProjectFile; forceRead: $forceRead")
+      return false
     }
     if (null != process) {
-      process.setText(MavenProjectBundle.message("maven.reading.pom", projectPath));
-      process.setText2("");
+      process.text = MavenProjectBundle.message("maven.reading.pom", projectPath)
+      process.text2 = ""
     }
-    return true;
+    return true
   }
 
-  private boolean readPomIfNeeded(@NotNull MavenProject mavenProject, boolean forceRead) {
-    var timestamp = calculateTimestamp(mavenProject);
-    boolean timeStampChanged = !timestamp.equals(tree.getTimeStamp(mavenProject));
-    boolean readPom = forceRead || timeStampChanged;
+  private fun readPomIfNeeded(mavenProject: MavenProject, forceRead: Boolean): Boolean {
+    val timestamp = calculateTimestamp(mavenProject)
+    val timeStampChanged = timestamp != tree.getTimeStamp(mavenProject)
+    val readPom = forceRead || timeStampChanged
 
     if (readPom) {
-      MavenId oldProjectId = mavenProject.isNew() ? null : mavenProject.getMavenId();
-      MavenId oldParentId = mavenProject.getParentId();
-      var readChanges = mavenProject.read(generalSettings, explicitProfiles, reader, tree.getProjectLocator());
-      tree.putVirtualFileToProjectMapping(mavenProject, oldProjectId);
+      val oldProjectId = if (mavenProject.isNew) null else mavenProject.mavenId
+      val oldParentId = mavenProject.parentId
+      val readChanges = mavenProject.read(generalSettings, explicitProfiles, reader, tree.projectLocator)
+      tree.putVirtualFileToProjectMapping(mavenProject, oldProjectId)
 
-      if (Comparing.equal(oldParentId, mavenProject.getParentId())) {
-        tree.putTimestamp(mavenProject, timestamp);
+      if (Comparing.equal(oldParentId, mavenProject.parentId)) {
+        tree.putTimestamp(mavenProject, timestamp)
       }
       else {
         // ensure timestamp reflects actual parent's timestamp
-        var newTimestamp = calculateTimestamp(mavenProject);
-        tree.putTimestamp(mavenProject, newTimestamp);
+        val newTimestamp = calculateTimestamp(mavenProject)
+        tree.putTimestamp(mavenProject, newTimestamp)
       }
 
-      var forcedChanges = forceRead ? MavenProjectChanges.ALL : MavenProjectChanges.NONE;
-      var changes = MavenProjectChangesBuilder.merged(forcedChanges, readChanges);
-      updateContext.updated(mavenProject, changes);
+      val forcedChanges = if (forceRead) MavenProjectChanges.ALL else MavenProjectChanges.NONE
+      val changes = merged(forcedChanges, readChanges)
+      updateContext.updated(mavenProject, changes)
     }
 
-    return readPom;
+    return readPom
   }
 
-  private MavenProjectsTree.MavenProjectTimestamp calculateTimestamp(MavenProject mavenProject) {
-    return ReadAction.compute(() -> {
-      long pomTimestamp = getFileTimestamp(mavenProject.getFile());
-      MavenProject parent = tree.findParent(mavenProject);
-      long parentLastReadStamp = parent == null ? -1 : parent.getLastReadStamp();
-      VirtualFile profilesXmlFile = mavenProject.getProfilesXmlFile();
-      long profilesTimestamp = getFileTimestamp(profilesXmlFile);
-      VirtualFile jvmConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH);
-      long jvmConfigTimestamp = getFileTimestamp(jvmConfigFile);
-      VirtualFile mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
-      long mavenConfigTimestamp = getFileTimestamp(mavenConfigFile);
-      long userSettingsTimestamp = getFileTimestamp(userSettingsFile);
-      long globalSettingsTimestamp = getFileTimestamp(globalSettingsFile);
+  private fun calculateTimestamp(mavenProject: MavenProject): MavenProjectTimestamp {
+    return ReadAction.compute<MavenProjectTimestamp, RuntimeException> {
+      val pomTimestamp = getFileTimestamp(mavenProject.file)
+      val parent = tree.findParent(mavenProject)
+      val parentLastReadStamp = parent?.lastReadStamp ?: -1
+      val profilesXmlFile = mavenProject.profilesXmlFile
+      val profilesTimestamp = getFileTimestamp(profilesXmlFile)
+      val jvmConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.JVM_CONFIG_RELATIVE_PATH)
+      val jvmConfigTimestamp = getFileTimestamp(jvmConfigFile)
+      val mavenConfigFile = MavenUtil.getConfigFile(mavenProject, MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
+      val mavenConfigTimestamp = getFileTimestamp(mavenConfigFile)
+      val userSettingsTimestamp = getFileTimestamp(userSettingsFile)
+      val globalSettingsTimestamp = getFileTimestamp(globalSettingsFile)
 
-      int profilesHashCode = explicitProfiles.hashCode();
-
-      return new MavenProjectsTree.MavenProjectTimestamp(pomTimestamp,
-                                                         parentLastReadStamp,
-                                                         profilesTimestamp,
-                                                         userSettingsTimestamp,
-                                                         globalSettingsTimestamp,
-                                                         profilesHashCode,
-                                                         jvmConfigTimestamp,
-                                                         mavenConfigTimestamp);
-    });
+      val profilesHashCode = explicitProfiles.hashCode()
+      MavenProjectTimestamp(pomTimestamp,
+                            parentLastReadStamp,
+                            profilesTimestamp,
+                            userSettingsTimestamp,
+                            globalSettingsTimestamp,
+                            profilesHashCode.toLong(),
+                            jvmConfigTimestamp,
+                            mavenConfigTimestamp)
+    }
   }
 
-  private static long getFileTimestamp(@Nullable VirtualFile file) {
-    if (file == null || !file.isValid()) return -1;
-    return file.getTimeStamp();
-  }
-
-  private static long getFileTimestamp(@Nullable File file) {
-    return getFileTimestamp(file == null ? null : LocalFileSystem.getInstance().findFileByIoFile(file));
-  }
-
-  private void handleRemovedModules(MavenProject mavenProject, List<MavenProject> prevModules, List<VirtualFile> existingModuleFiles) {
-    var removedModules = ContainerUtil.filter(prevModules, prevModule -> !existingModuleFiles.contains(prevModule.getFile()));
-    for (MavenProject module : removedModules) {
-      VirtualFile moduleFile = module.getFile();
+  private fun handleRemovedModules(mavenProject: MavenProject, prevModules: List<MavenProject>, existingModuleFiles: List<VirtualFile>) {
+    val removedModules = prevModules.filter { !existingModuleFiles.contains(it.file) }
+    for (module in removedModules) {
+      val moduleFile = module.file
       if (tree.isManagedFile(moduleFile)) {
         if (tree.reconnectRoot(module)) {
-          updateContext.updated(module, MavenProjectChanges.NONE);
+          updateContext.updated(module, MavenProjectChanges.NONE)
         }
       }
       else {
-        tree.removeModule(mavenProject, module);
-        tree.doDelete(mavenProject, module, updateContext);
+        tree.removeModule(mavenProject, module)
+        tree.doDelete(mavenProject, module, updateContext)
       }
     }
   }
 
-  private void reconnectModuleFiles(MavenProject mavenProject, List<VirtualFile> modulesFilesToReconnect) {
-    for (var file : modulesFilesToReconnect) {
-      MavenProject module = tree.findProject(file);
+  private fun reconnectModuleFiles(mavenProject: MavenProject, modulesFilesToReconnect: List<VirtualFile>) {
+    for (file in modulesFilesToReconnect) {
+      val module = tree.findProject(file)
       if (null != module) {
         if (tree.reconnect(mavenProject, module)) {
-          updateContext.updated(module, MavenProjectChanges.NONE);
+          updateContext.updated(module, MavenProjectChanges.NONE)
         }
       }
     }
   }
 
-  private List<VirtualFile> collectModuleFilesToReconnect(MavenProject mavenProject, List<VirtualFile> existingModuleFiles) {
-    var modulesFilesToReconnect = new ArrayList<VirtualFile>();
-    for (VirtualFile moduleFile : existingModuleFiles) {
-      MavenProject foundModule = tree.findProject(moduleFile);
-      boolean isNewModule = foundModule == null;
+  private fun collectModuleFilesToReconnect(mavenProject: MavenProject, existingModuleFiles: List<VirtualFile>): List<VirtualFile> {
+    val modulesFilesToReconnect = ArrayList<VirtualFile>()
+    for (moduleFile in existingModuleFiles) {
+      val foundModule = tree.findProject(moduleFile)
+      val isNewModule = foundModule == null
       if (!isNewModule) {
-        MavenProject currentAggregator = tree.findAggregator(foundModule);
-        if (currentAggregator != null && currentAggregator != mavenProject) {
-          MavenLog.LOG.info("Module " + moduleFile + " is already included into " + mavenProject.getFile());
-          continue;
+        val currentAggregator = tree.findAggregator(foundModule)
+        if (currentAggregator != null && currentAggregator !== mavenProject) {
+          MavenLog.LOG.info("Module $moduleFile is already included into ${mavenProject.file}")
+          continue
         }
       }
 
-      modulesFilesToReconnect.add(moduleFile);
+      modulesFilesToReconnect.add(moduleFile)
     }
-    return modulesFilesToReconnect;
+    return modulesFilesToReconnect
   }
 
-  private List<VirtualFile> collectModuleFilesToUpdate(List<VirtualFile> moduleFilesToReconnect, boolean updateExistingModules) {
+  private fun collectModuleFilesToUpdate(moduleFilesToReconnect: List<VirtualFile>, updateExistingModules: Boolean): List<VirtualFile> {
     if (updateExistingModules) {
-      return moduleFilesToReconnect;
+      return moduleFilesToReconnect
     }
 
     // update only new modules
-    return ContainerUtil.filter(moduleFilesToReconnect, moduleFile -> null == tree.findProject(moduleFile));
+    return moduleFilesToReconnect.filter { null == tree.findProject(it) }
   }
 
-  private List<VirtualFile> collectChildFilesToUpdate(MavenProject mavenProject, Collection<MavenProject> prevChildren) {
-    var children = new HashSet<>(prevChildren);
-    children.removeAll(updateContext.getDeletedProjects());
-    children.addAll(tree.findInheritors(mavenProject));
-    return ContainerUtil.map(children, child -> child.getFile());
+  private fun collectChildFilesToUpdate(mavenProject: MavenProject, prevChildren: Collection<MavenProject>): List<VirtualFile> {
+    val children = HashSet(prevChildren)
+    children.removeAll(updateContext.deletedProjects.toSet())
+    children.addAll(tree.findInheritors(mavenProject))
+    return children.map { it.file }
   }
 
-  private MavenProject findOrCreateProject(VirtualFile f) {
-    var mavenProject = tree.findProject(f);
-    return null == mavenProject ? new MavenProject(f) : mavenProject;
+  private fun findOrCreateProject(f: VirtualFile): MavenProject {
+    val mavenProject = tree.findProject(f)
+    return mavenProject ?: MavenProject(f)
   }
 
-  private void update(final VirtualFile mavenProjectFile, final boolean forceRead) {
+  private fun update(mavenProjectFile: VirtualFile, forceRead: Boolean) {
     // if the file has already been updated, skip subsequent updates
-    if (!startUpdate(mavenProjectFile, forceRead)) return;
+    if (!startUpdate(mavenProjectFile, forceRead)) return
 
-    var mavenProject = findOrCreateProject(mavenProjectFile);
+    val mavenProject = findOrCreateProject(mavenProjectFile)
 
     // we will compare modules and children before and after reading the pom.xml file
-    var prevModules = tree.getModules(mavenProject);
-    var prevChildren = tree.findInheritors(mavenProject);
+    val prevModules = tree.getModules(mavenProject)
+    val prevChildren = tree.findInheritors(mavenProject)
 
     // read pom.xml if something has changed since the last reading or reading is forced
-    boolean readPom = readPomIfNeeded(mavenProject, forceRead);
+    val readPom = readPomIfNeeded(mavenProject, forceRead)
 
-    var existingModuleFiles = mavenProject.getExistingModuleFiles();
+    val existingModuleFiles = mavenProject.existingModuleFiles
 
     // some modules might have been removed
-    handleRemovedModules(mavenProject, prevModules, existingModuleFiles);
+    handleRemovedModules(mavenProject, prevModules, existingModuleFiles)
 
     // collect new and existing modules to reconnect to the tree
-    var modulesFilesToReconnect = collectModuleFilesToReconnect(mavenProject, existingModuleFiles);
-    boolean updateExistingModules = readPom || updateModules;
+    val modulesFilesToReconnect = collectModuleFilesToReconnect(mavenProject, existingModuleFiles)
+    val updateExistingModules = readPom || updateModules
 
     // collect modules to update recursively
-    var modulesFilesToUpdate = collectModuleFilesToUpdate(modulesFilesToReconnect, updateExistingModules);
+    val modulesFilesToUpdate = collectModuleFilesToUpdate(modulesFilesToReconnect, updateExistingModules)
 
     // do not force update modules if only this project was requested to be updated
-    var forceReadModules = updateModules && forceRead;
-    var moduleUpdates = ContainerUtil.map(modulesFilesToUpdate, moduleFile ->
-      new UpdateSpec(
-        moduleFile,
+    val forceReadModules = updateModules && forceRead
+    val moduleUpdates = modulesFilesToUpdate.map {
+      UpdateSpec(
+        it,
         forceReadModules
-      ));
-    updateProjects(moduleUpdates);
-    reconnectModuleFiles(mavenProject, modulesFilesToReconnect);
+      )
+    }
+    updateProjects(moduleUpdates)
+    reconnectModuleFiles(mavenProject, modulesFilesToReconnect)
 
     // collect children (inheritors) to update recursively
-    var childFilesToUpdate = collectChildFilesToUpdate(mavenProject, prevChildren);
-    var childUpdates = ContainerUtil.map(childFilesToUpdate, childFile ->
-      new UpdateSpec(
-        childFile,
+    val childFilesToUpdate = collectChildFilesToUpdate(mavenProject, prevChildren)
+    val childUpdates = childFilesToUpdate.map {
+      UpdateSpec(
+        it,
         readPom // if parent was read, force read children
-      ));
-    updateProjects(childUpdates);
+      )
+    }
+    updateProjects(childUpdates)
   }
 
-  public void updateProjects(@NotNull List<UpdateSpec> specs) {
-    if (specs.isEmpty()) return;
+  fun updateProjects(specs: List<UpdateSpec>) {
+    if (specs.isEmpty()) return
 
-    ParallelRunner.getInstance(tree.getProject()).runInParallelBlocking(specs, spec -> {
-      update(spec.mavenProjectFile(), spec.forceRead());
-    });
+    getInstance(tree.project).runInParallelBlocking(specs) { spec: UpdateSpec ->
+      update(spec.mavenProjectFile, spec.forceRead)
+    }
+  }
+
+  private fun getFileTimestamp(file: VirtualFile?): Long {
+    if (file == null || !file.isValid) return -1
+    return file.timeStamp
+  }
+
+  private fun getFileTimestamp(file: File?): Long {
+    return getFileTimestamp(if (file == null) null else LocalFileSystem.getInstance().findFileByIoFile(file))
   }
 
   @ApiStatus.Internal
-  record UpdateSpec(VirtualFile mavenProjectFile, boolean forceRead) {
-  }
+  @JvmRecord
+  internal data class UpdateSpec(val mavenProjectFile: VirtualFile, val forceRead: Boolean)
 }
