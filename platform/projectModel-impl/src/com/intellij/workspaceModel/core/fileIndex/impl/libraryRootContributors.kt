@@ -26,8 +26,6 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
   override val entityClass: Class<LibraryEntity> get() = LibraryEntity::class.java
 
   override fun registerFileSets(entity: LibraryEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    val start = System.currentTimeMillis()
-
     if (entity.symbolicId.tableId is LibraryTableId.GlobalLibraryTableId) return
     val projectLibraryId = entity.symbolicId.takeIf { it.tableId == LibraryTableId.ProjectLibraryTableId }
     val compiledRootsData = LibraryRootFileSetData(projectLibraryId, "")
@@ -52,8 +50,6 @@ class LibraryRootFileIndexContributor : WorkspaceFileIndexContributor<LibraryEnt
         ARCHIVES_UNDER_ROOT_RECURSIVELY -> registerArchivesUnderRootRecursively(root.url, registrar, data, kind, entity)
       }
     }
-
-    WorkspaceFileIndexContributor.registerFileSetsTimeMs.addElapsedTimeMs(start)
   }
 
   private fun registerArchivesUnderRoot(root: VirtualFileUrl,

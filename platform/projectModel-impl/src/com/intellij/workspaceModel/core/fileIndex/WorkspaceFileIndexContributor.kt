@@ -49,26 +49,6 @@ interface WorkspaceFileIndexContributor<E : WorkspaceEntity> {
    */
   val storageKind: EntityStorageKind
     get() = EntityStorageKind.MAIN
-
-  companion object {
-    val registerFileSetsTimeMs: AtomicLong = AtomicLong()
-
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
-      val registerFileSetsMsGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexContributor.registerFileSets.ms")
-        .ofLongs().buildObserver()
-
-      meter.batchCallback(
-        {
-          registerFileSetsMsGauge.record(registerFileSetsTimeMs.get())
-        },
-        registerFileSetsMsGauge,
-      )
-    }
-
-    init {
-      setupOpenTelemetryReporting(TelemetryManager.getMeter(WorkspaceModel))
-    }
-  }
 }
 
 enum class EntityStorageKind {

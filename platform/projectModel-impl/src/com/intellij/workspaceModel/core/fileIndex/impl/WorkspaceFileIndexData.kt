@@ -3,8 +3,6 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntityReference
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
@@ -12,8 +10,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.Query
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
-import io.opentelemetry.api.metrics.Meter
-import java.util.concurrent.atomic.AtomicLong
 
 /**
  * Represents computed information about workspace file sets.
@@ -76,62 +72,4 @@ interface WorkspaceFileIndexData {
   fun onLowMemory()
   fun clearPackageDirectoryCache()
   fun resetFileCache()
-
-  companion object {
-    internal val instancesCounter: AtomicLong = AtomicLong()
-    internal val initTimeMs: AtomicLong = AtomicLong()
-    internal val getFileInfoTimeMs: AtomicLong = AtomicLong()
-    internal val visitFileSetsTimeMs: AtomicLong = AtomicLong()
-    internal val processFileSetsTimeMs: AtomicLong = AtomicLong()
-    internal val markDirtyTimeMs: AtomicLong = AtomicLong()
-    internal val updateDirtyEntitiesTimeMs: AtomicLong = AtomicLong()
-    internal val onEntitiesChangedTimeMs: AtomicLong = AtomicLong()
-    internal val getPackageNameTimeMs: AtomicLong = AtomicLong()
-    internal val getDirectoriesByPackageNameTimeMs: AtomicLong = AtomicLong()
-
-    private fun setupOpenTelemetryReporting(meter: Meter): Unit {
-      val instancesCountGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.instances.count")
-        .ofLongs().buildObserver()
-      val initTimeGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.init.ms")
-        .ofLongs().buildObserver()
-      val getFileInfoTimeGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.getFileInfo.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val visitFileSetsGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.visitFileSets.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val processFileSetsGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.processFileSets.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val markDirtyGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.markDirty.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val updateDirtyEntitiesGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.updateDirtyEntities.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val onEntitiesChangedGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.onEntitiesChanged.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val getPackageNameGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.getPackageName.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val getDirectoriesByPackageNameGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.getDirectoriesByPackageName.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      meter.batchCallback(
-        {
-          instancesCountGauge.record(instancesCounter.get())
-          initTimeGauge.record(initTimeMs.get())
-          getFileInfoTimeGauge.record(getFileInfoTimeMs.get())
-          visitFileSetsGauge.record(visitFileSetsTimeMs.get())
-          processFileSetsGauge.record(processFileSetsTimeMs.get())
-          markDirtyGauge.record(markDirtyTimeMs.get())
-          updateDirtyEntitiesGauge.record(updateDirtyEntitiesTimeMs.get())
-          onEntitiesChangedGauge.record(onEntitiesChangedTimeMs.get())
-          getPackageNameGauge.record(getPackageNameTimeMs.get())
-          getDirectoriesByPackageNameGauge.record(getDirectoriesByPackageNameTimeMs.get())
-        },
-        instancesCountGauge, initTimeGauge, getFileInfoTimeGauge, visitFileSetsGauge,
-        processFileSetsGauge, markDirtyGauge, updateDirtyEntitiesGauge, onEntitiesChangedGauge,
-        getPackageNameGauge, getDirectoriesByPackageNameGauge
-      )
-    }
-
-    init {
-      setupOpenTelemetryReporting(TelemetryManager.getMeter(WorkspaceModel))
-    }
-  }
 }

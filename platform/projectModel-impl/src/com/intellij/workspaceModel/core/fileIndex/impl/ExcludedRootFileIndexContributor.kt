@@ -14,9 +14,7 @@ class ExcludedRootFileIndexContributor : WorkspaceFileIndexContributor<ExcludeUr
     get() = ExcludeUrlEntity::class.java
 
   override fun registerFileSets(entity: ExcludeUrlEntity, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
-    WorkspaceFileIndexContributor.registerFileSetsTimeMs.addMeasuredTimeMs {
-      val kind = if (entity.library != null) WorkspaceFileKind.EXTERNAL else WorkspaceFileKind.CONTENT
-      registrar.registerExcludedRoot(entity.url, kind, entity)
-    }
+    val kind = if (entity.library != null) WorkspaceFileKind.EXTERNAL else WorkspaceFileKind.CONTENT
+    registrar.registerExcludedRoot(entity.url, kind, entity)
   }
 }
