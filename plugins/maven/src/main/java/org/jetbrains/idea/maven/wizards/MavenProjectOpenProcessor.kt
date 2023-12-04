@@ -11,10 +11,10 @@ internal class MavenProjectOpenProcessor : ProjectOpenProcessor() {
   private val importProvider = MavenOpenProjectProvider()
 
   override val name: String
-    get() = importProvider.builder.name
+    get() = importProvider.getName()
 
   override val icon: Icon?
-    get() = importProvider.builder.icon
+    get() = importProvider.getIcon()
 
   override fun canOpenProject(file: VirtualFile): Boolean = importProvider.canOpenProject(file)
 

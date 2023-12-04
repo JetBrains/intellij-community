@@ -37,7 +37,7 @@ import org.jetbrains.idea.maven.server.MavenWrapperSupport.Companion.getWrapperD
 import org.jetbrains.idea.maven.utils.*
 import java.nio.file.Path
 
-internal class MavenProjectAsyncBuilder {
+class MavenProjectAsyncBuilder {
   fun commitSync(project: Project, projectFile: VirtualFile, modelsProvider: IdeModifiableModelsProvider?): List<Module> {
     if (ApplicationManager.getApplication().isDispatchThread) {
       return runWithModalProgressBlocking(project, MavenProjectBundle.message("maven.reading")) {
@@ -49,6 +49,10 @@ internal class MavenProjectAsyncBuilder {
         commit(project, projectFile, modelsProvider)
       }
     }
+  }
+
+  suspend fun commit(project: Project, projectFile: VirtualFile) {
+    commit(project, projectFile, null)
   }
 
   suspend fun commit(project: Project,
