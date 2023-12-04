@@ -26,11 +26,14 @@ import com.intellij.refactoring.classMembers.MemberInfoTooltipManager;
 import com.intellij.refactoring.ui.AbstractMemberSelectionPanel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 import org.jetbrains.java.generate.template.TemplateResource;
@@ -342,7 +345,6 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       final JLabel templateChooserLabel = new JLabel(JavaBundle.message("generate.equals.hashcode.template"));
       templateChooserPanel.add(templateChooserLabel, BorderLayout.WEST);
 
-
       final ComboBox<String> comboBox = new ComboBox<>();
       comboBox.setSwingPopup(false);
       final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
@@ -364,18 +366,32 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       templateChooserPanel.add(comboBoxWithBrowseButton, BorderLayout.CENTER);
       myPanel.add(templateChooserPanel);
 
-      final JCheckBox checkbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.accept.sublcasses"));
-      final boolean isAbstract = myClass.hasModifierProperty(PsiModifier.ABSTRACT);
-      checkbox.setSelected(isAbstract || CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER);
-      checkbox.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(@NotNull ActionEvent e) {
-          CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = checkbox.isSelected();
-        }
-      });
-      myPanel.add(checkbox);
+      boolean useInstanceof = CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER;
+      JPanel panel = new JPanel();
+      panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
+      JLabel label = new JLabel(JavaBundle.message("generate.equals.hashcode.type.comparison.label"));
+      label.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
+      panel.add(label);
+      ContextHelpLabel contextHelp = ContextHelpLabel.create(JavaBundle.message("generate.equals.hashcode.comparison.table"));
+      contextHelp.setBorder(JBUI.Borders.empty(UIUtil.LARGE_VGAP, 2, 0, 0));
+      panel.add(contextHelp);
+      JRadioButton instanceofButton =
+        new JRadioButton(JavaBundle.message("generate.equals.hashcode.instanceof.type.comparison"), useInstanceof);
+      instanceofButton.setBorder(JBUI.Borders.emptyLeft(16));
+      JRadioButton getClassButton =
+        new JRadioButton(JavaBundle.message("generate.equals.hashcode.getclass.type.comparison"), !useInstanceof);
+      getClassButton.setBorder(JBUI.Borders.emptyLeft(16));
+      ButtonGroup group = new ButtonGroup();
+      group.add(instanceofButton);
+      group.add(getClassButton);
+      instanceofButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = true);
+      getClassButton.addActionListener(e -> CodeInsightSettings.getInstance().USE_INSTANCEOF_ON_EQUALS_PARAMETER = false);
+      myPanel.add(panel);
+      myPanel.add(instanceofButton);
+      myPanel.add(getClassButton);
 
       final JCheckBox gettersCheckbox = new NonFocusableCheckBox(JavaBundle.message("generate.equals.hashcode.use.getters"));
+      gettersCheckbox.setBorder(JBUI.Borders.emptyTop(UIUtil.LARGE_VGAP));
       gettersCheckbox.setSelected(CodeInsightSettings.getInstance().USE_ACCESSORS_IN_EQUALS_HASHCODE);
       gettersCheckbox.addActionListener(new ActionListener() {
         @Override
