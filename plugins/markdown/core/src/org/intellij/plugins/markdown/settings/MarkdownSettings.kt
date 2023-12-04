@@ -56,14 +56,6 @@ class MarkdownSettings(internal val project: Project): SimplePersistentStateComp
     get() = state.isFileGroupingEnabled
     set(value) { state.isFileGroupingEnabled = value }
 
-  var fontSize
-    get() = state.fontSize
-    set(value) { state.fontSize = value }
-
-  var fontFamily
-    get() = state.fontFamily
-    set(value) { state.fontFamily = value }
-
   override fun noStateLoaded() {
     super.noStateLoaded()
     loadState(MarkdownSettingsState())
