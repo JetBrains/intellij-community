@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.checkCancelled
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import com.intellij.openapi.project.DumbService.Companion.getInstance
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
@@ -502,10 +501,8 @@ internal class ActionUpdater @JvmOverloads constructor(
   }
 
   private suspend fun iterateGroupChildren(group: ActionGroup): Flow<AnAction> {
-    val isDumb = project != null && getInstance(project).isDumb
     val tree: suspend (AnAction) -> List<AnAction>? = tree@ { o ->
       if (o === group) return@tree null
-      if (isDumb && !o.isDumbAware()) return@tree null
       // in all clients the next call is `update`
       // let's update both actions and groups
       val presentation = updateAction(o)
@@ -535,7 +532,6 @@ internal class ActionUpdater @JvmOverloads constructor(
         else children.reversed().forEach(queue::addFirst)
       }
     }
-      .filter { !isDumb || it.isDumbAware()  }
   }
 
   suspend fun presentation(action: AnAction): Presentation {
