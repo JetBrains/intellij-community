@@ -16,8 +16,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SwingUpdaterUI implements UpdaterUI {
+  public static SwingUpdaterUI createUI() {
+    var result = new AtomicReference<SwingUpdaterUI>();
+    invokeAndWait(() -> result.set(new SwingUpdaterUI()));
+    return result.get();
+  }
+
   private static final EmptyBorder FRAME_BORDER = new EmptyBorder(8, 8, 8, 8);
   private static final EmptyBorder LABEL_BORDER = new EmptyBorder(0, 0, 8, 0);
   private static final EmptyBorder BUTTONS_BORDER = new EmptyBorder(5, 0, 0, 0);
@@ -34,7 +41,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   private volatile boolean myCancelled = false;
   private volatile boolean myPaused = false;
 
-  public SwingUpdaterUI() {
+  private SwingUpdaterUI() {
     myProcessTitle = new JLabel(" ");
     myProcessProgress = new JProgressBar(0, 100);
     myProcessStatus = new JLabel(" ");
@@ -74,8 +81,6 @@ public class SwingUpdaterUI implements UpdaterUI {
     myFrame.pack();
     myFrame.setLocationRelativeTo(null);
     myFrame.setVisible(true);
-
-    invokeAndWait(() -> {});
   }
 
   private void doCancel() {

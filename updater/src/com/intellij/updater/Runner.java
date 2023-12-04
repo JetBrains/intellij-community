@@ -184,7 +184,7 @@ public final class Runner {
 
       LOG.info("destination: " + destPath + " (" + destDirectory + "), case-sensitive: " + ourCaseSensitiveFs);
 
-      var ui = "apply".equals(args[0]) ? new ConsoleUpdaterUI(hasArgument(args, "force-replace")) : new SwingUpdaterUI();
+      var ui = "apply".equals(args[0]) ? new ConsoleUpdaterUI(hasArgument(args, "force-replace")) : SwingUpdaterUI.createUI();
 
       boolean backup = !hasArgument(args, "no-backup");
       boolean success;
