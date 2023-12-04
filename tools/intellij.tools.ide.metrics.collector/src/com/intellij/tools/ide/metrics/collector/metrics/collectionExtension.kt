@@ -3,7 +3,8 @@ package com.intellij.tools.ide.metrics.collector.metrics
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-/** Returns median (NOT an average) value of a collection */
+
+/** @see medianValue */
 fun Iterable<Long>.median(): Long {
   val size = this.count()
   require(size > 0) { "Cannot calculate median value because collection is empty" }
@@ -19,7 +20,7 @@ fun Iterable<Long>.median(): Long {
   }
 }
 
-/** @see median */
+/** Returns median (NOT an average) value of a collection */
 fun Iterable<PerformanceMetrics.Metric>.medianValue(): Long = this.map { it.value }.median()
 
 /**
@@ -36,13 +37,12 @@ fun <T : Number> Iterable<T>.standardDeviation(): Long {
 /** @see standardDeviation */
 fun Iterable<PerformanceMetrics.Metric>.standardDeviationValue(): Long = this.map { it.value }.standardDeviation()
 
-
-/** Difference between the smallest and the largest values */
+/** @see rangeValue */
 fun Iterable<Long>.range(): Long {
   val sorted = this.sorted()
   return sorted.last() - sorted.first()
 }
 
-/** @see range */
+/** Difference between the smallest and the largest values */
 fun Iterable<PerformanceMetrics.Metric>.rangeValue(): Long = this.map { it.value }.range()
 
