@@ -2,8 +2,15 @@
 package com.intellij.util.indexing.projectFilter
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ContentIterator
+import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.util.indexing.FileBasedIndex
+import com.intellij.util.indexing.FileBasedIndexImpl
 import com.intellij.util.indexing.IdFilter
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 internal abstract class ProjectIndexableFilesFilter : IdFilter() {
@@ -36,9 +43,71 @@ internal abstract class ProjectIndexableFilesFilter : IdFilter() {
 
   abstract fun runHealthCheck(project: Project): List<HealthCheckError>
 
+  protected fun runHealthCheck(project: Project, checkAllExpectedIndexableFiles: Boolean, fileStatuses: Sequence<Pair<Int, Boolean>>): List<HealthCheckError> {
+    val errors = mutableListOf<HealthCheckError>()
+
+    val shouldBeIndexable = getFilesThatShouldBeIndexable(project)
+
+    for ((fileId, indexable) in fileStatuses) {
+      if (shouldBeIndexable[fileId]) {
+        if (!indexable) {
+          errors.add(MissingFileIdInFilterError(fileId, this))
+        }
+        if (checkAllExpectedIndexableFiles) shouldBeIndexable[fileId] = false
+      }
+      else if (indexable && !shouldBeIndexable[fileId]) {
+        errors.add(NotIndexableFileIsInFilterError(fileId, this))
+      }
+    }
+
+    if (checkAllExpectedIndexableFiles) {
+      for (fileId in 0 until shouldBeIndexable.size()) {
+        if (shouldBeIndexable[fileId]) {
+          errors.add(MissingFileIdInFilterError(fileId, this))
+        }
+      }
+    }
+
+    return errors
+  }
+
+  private fun getFilesThatShouldBeIndexable(project: Project): BitSet {
+    val index = FileBasedIndex.getInstance() as FileBasedIndexImpl
+    val filesThatShouldBeIndexable = BitSet()
+    index.iterateIndexableFiles(ContentIterator {
+      if (it is VirtualFileWithId) {
+        filesThatShouldBeIndexable[it.id] = true
+      }
+      true
+    }, project, ProgressManager.getInstance().progressIndicator)
+    return filesThatShouldBeIndexable
+  }
+
   interface HealthCheckError {
     val presentableText: String
     fun fix()
+  }
+
+  class MissingFileIdInFilterError(private val fileId: Int,
+                                   private val filter: ProjectIndexableFilesFilter): HealthCheckError {
+    override val presentableText: String
+      get() = "file name=${PersistentFS.getInstance().findFileById(fileId)?.name} id=$fileId NOT found in filter"
+
+    override fun fix() {
+      filter.ensureFileIdPresent(fileId) { true }
+    }
+  }
+
+  class NotIndexableFileIsInFilterError(private val fileId: Int,
+                                        private val filter: ProjectIndexableFilesFilter) : HealthCheckError {
+    override val presentableText: String
+      get() = "file name=${
+        PersistentFS.getInstance().findFileById(fileId)?.name
+      } id=$fileId is found in filter even though it's NOT indexable"
+
+    override fun fix() {
+      filter.removeFileId(fileId)
+    }
   }
 }
 

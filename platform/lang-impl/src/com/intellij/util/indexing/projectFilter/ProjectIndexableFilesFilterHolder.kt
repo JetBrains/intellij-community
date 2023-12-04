@@ -118,8 +118,7 @@ internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFi
         val message = StringUtil.first(errors!!.take(100).joinToString(", ") { ReadAction.nonBlocking(Callable { it.presentableText }).executeSynchronously() },
           300,
           true)
-        FileBasedIndexImpl.LOG.error("Project indexable filter health check found ${errors!!.size} errors: $message")
-
+        FileBasedIndexImpl.LOG.error("${filter.javaClass.simpleName} health check found ${errors!!.size} errors in project ${project.name}: $message")
       }
     }
     catch (_: ProcessCanceledException) {
