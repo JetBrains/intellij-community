@@ -311,16 +311,21 @@ public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, Sd
 
   @Override
   public void commitChanges() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
+    applyChanges();
+  }
+
+  @Override
+  public void applyChangesWithoutWriteAction() {
+    applyChanges();
+  }
+
+  private void applyChanges() {
     LOG.assertTrue(isWritable());
 
     copyTo(myOrigin);
     myOrigin = null;
     Disposer.dispose(this);
-  }
-
-  @Override
-  public void applyChangesWithoutWriteAction() {
-    commitChanges();
   }
 
   @Override
