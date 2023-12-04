@@ -7,6 +7,7 @@ import com.intellij.gradle.toolingExtension.impl.util.GradleDependencyArtifactPo
 import com.intellij.gradle.toolingExtension.impl.util.GradleObjectUtil
 import com.intellij.gradle.toolingExtension.impl.util.collectionUtil.GradleCollectionVisitor
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil
+import com.intellij.gradle.toolingExtension.util.GradleNegotiationUtil
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import groovy.transform.CompileDynamic
 import org.codehaus.groovy.runtime.DefaultGroovyMethods
@@ -19,7 +20,6 @@ import org.gradle.api.tasks.SourceSetOutput
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
-import org.gradle.internal.metaobject.AbstractDynamicObject
 import org.gradle.jvm.toolchain.internal.JavaToolchain
 import org.gradle.plugins.ide.idea.IdeaPlugin
 import org.gradle.util.GradleVersion
@@ -44,7 +44,6 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   private static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
-  private static final boolean is49OrBetter = gradleBaseVersion >= GradleVersion.version("4.9")
   private static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
   private static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   private static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
@@ -619,11 +618,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   }
 
   private static boolean isJarDescendant(Jar task) {
-    if (is49OrBetter) {
-      return task.getTaskIdentity().type != Jar
-    } else {
-      return (task.asDynamicObject as AbstractDynamicObject).publicType != Jar
-    }
+    return GradleNegotiationUtil.getTaskIdentityType(task) != Jar
   }
 
   /**
