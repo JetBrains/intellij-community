@@ -22,7 +22,7 @@ import com.intellij.platform.backend.workspace.useNewWorkspaceModelApi
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.diagnostic.telemetry.Compiler
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.query.entities
 import com.intellij.platform.workspace.storage.query.flatMap
@@ -47,7 +47,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
     }
   }
 
-  private fun filePathChanged(oldPath: String, newPath: String) = filePathChangedMs.addMeasuredTimeMs {
+  private fun filePathChanged(oldPath: String, newPath: String) = filePathChangedMs.addMeasuredTimeMillis {
     val artifactEntities = if (useNewWorkspaceModelApi()) {
       val refs = parentPathToArtifactReferences[oldPath]?.asSequence() ?: return
       val storage = project.workspaceModel.entityStorage.current
@@ -88,7 +88,7 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
   private val parentPathToArtifacts: Map<String, List<ArtifactEntity>>
     get() = getInstance(project).entityStorage.cachedValue(parentPathsToArtifacts)
 
-  private fun propertyChanged(event: VFilePropertyChangeEvent) = propertyChangedMs.addMeasuredTimeMs {
+  private fun propertyChanged(event: VFilePropertyChangeEvent) = propertyChangedMs.addMeasuredTimeMillis {
     if (VirtualFile.PROP_NAME == event.propertyName) {
       val parent = event.file.parent
       if (parent != null) {

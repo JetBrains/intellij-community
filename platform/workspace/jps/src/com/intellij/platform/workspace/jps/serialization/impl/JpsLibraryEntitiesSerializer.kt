@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
@@ -154,7 +154,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
       libs.firstOrNull { it.isFailure }?.exceptionOrNull(),
     )
 
-    loadEntitiesTimeMs.addElapsedTimeMs(start)
+    loadEntitiesTimeMs.addElapsedTimeMillis(start)
     return loadingResult
   }
 
@@ -196,7 +196,7 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
       componentTag.addContent(saveLibrary(it, externalSystemId, isExternalStorage))
     }
     writer.saveComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
-    saveEntitiesTimeMs.addElapsedTimeMs(start)
+    saveEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"

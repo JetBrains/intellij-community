@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.core.script.dependencies
 
 import com.intellij.java.workspace.fileIndex.JvmPackageRootData
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind

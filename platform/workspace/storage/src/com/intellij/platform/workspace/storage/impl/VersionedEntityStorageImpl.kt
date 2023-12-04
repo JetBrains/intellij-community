@@ -5,8 +5,8 @@ import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
 import io.opentelemetry.api.metrics.Meter
 import java.util.concurrent.atomic.AtomicLong
@@ -26,10 +26,10 @@ private class ValuesCache {
     if (o != null) {
       @Suppress("UNCHECKED_CAST")
       valueToReturn = o as R
-      cachedValueFromCacheMs.addElapsedTimeMs(start)
+      cachedValueFromCacheMs.addElapsedTimeMillis(start)
     }
     else {
-      cachedValueCalculatedMs.addMeasuredTimeMs {
+      cachedValueCalculatedMs.addMeasuredTimeMillis {
         valueToReturn = value.source(storage)!!
         cachedValues.put(value, valueToReturn)
       }
@@ -47,10 +47,10 @@ private class ValuesCache {
     if (o != null) {
       @Suppress("UNCHECKED_CAST")
       valueToReturn = o as R
-      cachedValueWithParametersFromCacheMs.addElapsedTimeMs(start)
+      cachedValueWithParametersFromCacheMs.addElapsedTimeMillis(start)
     }
     else {
-      cachedValueWithParametersCalculatedMs.addMeasuredTimeMs {
+      cachedValueWithParametersCalculatedMs.addMeasuredTimeMillis {
         valueToReturn = value.source(storage, parameter)!!
         cachedValuesWithParameter.put(value to parameter, valueToReturn)
       }
@@ -60,11 +60,11 @@ private class ValuesCache {
   }
 
   fun <R> clearCachedValue(value: CachedValue<R>) {
-    cachedValueClear.addMeasuredTimeMs { cachedValues.invalidate(value) }
+    cachedValueClear.addMeasuredTimeMillis { cachedValues.invalidate(value) }
   }
 
   fun <P, R> clearCachedValue(value: CachedValueWithParameter<P, R>, parameter: P) {
-    cachedValueWithParametersClear.addMeasuredTimeMs { cachedValuesWithParameter.invalidate(value to parameter) }
+    cachedValueWithParametersClear.addMeasuredTimeMillis { cachedValuesWithParameter.invalidate(value to parameter) }
   }
 
   companion object {

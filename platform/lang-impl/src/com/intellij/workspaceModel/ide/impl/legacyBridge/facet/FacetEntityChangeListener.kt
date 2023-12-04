@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -64,7 +64,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       }
     }
 
-    initializeFacetBridgeTimeMs.addElapsedTimeMs(start)
+    initializeFacetBridgeTimeMs.addElapsedTimeMillis(start)
   }
 
   class WorkspaceModelListener(project: Project) : WorkspaceModelChangeListener {
@@ -112,7 +112,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
         }
       }
 
-    processBeforeChangeEventsMs.addElapsedTimeMs(start)
+    processBeforeChangeEventsMs.addElapsedTimeMillis(start)
   }
 
   private fun processChangeEvents(event: VersionedStorageChange, workspaceFacetContributor: WorkspaceFacetContributor<ModuleSettingsBase>) {
@@ -235,7 +235,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
       }
     }
 
-    processChangeEventsMs.addElapsedTimeMs(start)
+    processChangeEventsMs.addElapsedTimeMillis(start)
   }
 
   private fun getFacetManager(entity: ModuleEntity): FacetManagerBridge? {

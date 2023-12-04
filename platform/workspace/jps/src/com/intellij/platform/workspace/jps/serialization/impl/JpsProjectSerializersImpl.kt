@@ -5,7 +5,7 @@ import com.intellij.java.workspace.entities.ArtifactEntity
 import com.intellij.java.workspace.entities.ArtifactId
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
@@ -270,7 +270,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
     orphanageBuilder.addDiff(squash(buildersWithLoadedState.map { it.orphanage }))
 
-    loadEntitiesTimeMs.addElapsedTimeMs(start)
+    loadEntitiesTimeMs.addElapsedTimeMillis(start)
     return sourcesToUpdate
   }
 
@@ -602,7 +602,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       saveEntitiesBySerializer(it.key, it.value.mapValues { entitiesMapEntry -> entitiesMapEntry.value.toList() }, storage, writer)
     }
 
-    saveEntitiesTimeMs.addElapsedTimeMs(start)
+    saveEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   private fun saveEntities(affectedSources: Set<EntitySource>,

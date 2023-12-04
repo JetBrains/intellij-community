@@ -13,8 +13,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -189,11 +189,11 @@ class GlobalWorkspaceModel : Disposable {
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
 
-    applyStateToProjectTimeMs.addElapsedTimeMs(start)
+    applyStateToProjectTimeMs.addElapsedTimeMillis(start)
   }
 
   fun applyStateToProjectBuilder(project: Project, targetBuilder: MutableEntityStorage) {
-    applyStateToProjectBuilderTimeMs.addMeasuredTimeMs {
+    applyStateToProjectBuilderTimeMs.addMeasuredTimeMillis {
       LOG.info("Sync global entities with mutable entity storage")
       targetBuilder.replaceBySource(globalEntitiesFilter,
                                     copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
@@ -212,7 +212,7 @@ class GlobalWorkspaceModel : Disposable {
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
     filteredProject = null
-    syncEntitiesWithProjectTimeMs.addElapsedTimeMs(start)
+    syncEntitiesWithProjectTimeMs.addElapsedTimeMillis(start)
   }
 
   private fun copyEntitiesToEmptyStorage(storage: EntityStorage, vfuManager: VirtualFileUrlManager): MutableEntityStorage {

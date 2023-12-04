@@ -18,8 +18,8 @@ import com.intellij.openapi.roots.TestModuleProperties
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.entities.ModuleCustomImlDataEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -87,7 +87,7 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    moduleBridgeBeforeChangedTimeMs.addElapsedTimeMs(start)
+    moduleBridgeBeforeChangedTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
@@ -129,7 +129,7 @@ internal class ModuleBridgeImpl(
   }
 
   override fun initFacets() {
-    facetsInitializationTimeMs.addMeasuredTimeMs {
+    facetsInitializationTimeMs.addMeasuredTimeMillis {
       FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
     }
   }
@@ -207,7 +207,7 @@ internal class ModuleBridgeImpl(
       }
     }
 
-    updateOptionTimeMs.addElapsedTimeMs(start)
+    updateOptionTimeMs.addElapsedTimeMillis(start)
     return
   }
 

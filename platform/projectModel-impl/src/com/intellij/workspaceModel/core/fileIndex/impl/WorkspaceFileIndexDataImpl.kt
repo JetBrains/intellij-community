@@ -10,8 +10,8 @@ import com.intellij.openapi.roots.impl.RootFileSupplier
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.CollectionQuery
@@ -51,11 +51,11 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     registerAllEntities(EntityStorageKind.MAIN)
     registerAllEntities(EntityStorageKind.UNLOADED)
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMs {
+    WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
       librariesAndSdkContributors.registerFileSets()
     }
 
-    WorkspaceFileIndexDataMetrics.initTimeMs.addElapsedTimeMs(start)
+    WorkspaceFileIndexDataMetrics.initTimeMs.addElapsedTimeMillis(start)
   }
 
   private fun registerAllEntities(storageKind: EntityStorageKind) {
@@ -65,7 +65,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
     val registrar = StoreFileSetsRegistrarImpl(storageKind)
 
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMs {
+    WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
       contributors.keys.forEach { entityClass ->
         storage.entities(entityClass).forEach {
           registerFileSets(it, entityClass, storage, storageKind, registrar)
@@ -79,7 +79,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
                            includeContentSets: Boolean,
                            includeExternalSets: Boolean,
                            includeExternalSourceSets: Boolean,
-                           includeCustomKindSets: Boolean): WorkspaceFileInternalInfo = WorkspaceFileIndexDataMetrics.getFileInfoTimeMs.addMeasuredTimeMs {
+                           includeCustomKindSets: Boolean): WorkspaceFileInternalInfo = WorkspaceFileIndexDataMetrics.getFileInfoTimeMs.addMeasuredTimeMillis {
     if (!file.isValid) return WorkspaceFileInternalInfo.NonWorkspace.INVALID
     if (file.fileSystem is NonPhysicalFileSystem && file.parent == null) {
       return WorkspaceFileInternalInfo.NonWorkspace.NOT_UNDER_ROOTS
@@ -163,10 +163,10 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
       value.forEach(action)
     }
 
-    WorkspaceFileIndexDataMetrics.visitFileSetsTimeMs.addElapsedTimeMs(start)
+    WorkspaceFileIndexDataMetrics.visitFileSetsTimeMs.addElapsedTimeMillis(start)
   }
 
-  fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) = WorkspaceFileIndexDataMetrics.processFileSetsTimeMs.addMeasuredTimeMs {
+  fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) = WorkspaceFileIndexDataMetrics.processFileSetsTimeMs.addMeasuredTimeMillis {
     fileSets[virtualFile]?.forEach(action)
   }
   
@@ -183,7 +183,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   private fun <E : WorkspaceEntity> registerFileSets(entity: E, entityClass: Class<out E>, storage: EntityStorage, 
                                                      storageKind: EntityStorageKind, registrar: WorkspaceFileSetRegistrar) {
     getContributors(entityClass, storageKind).forEach { contributor ->
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMs {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
         contributor.registerFileSets(entity, registrar, storage)
       }
     }
@@ -210,13 +210,13 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
 
     val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind)
     for (removed in removedEntities) {
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMs {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
         contributor.registerFileSets(removed, removeRegistrar, event.storageBefore)
       }
     }
     val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind)
     for (added in addedEntities) {
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMs {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
         contributor.registerFileSets(added, storeRegistrar, event.storageAfter)
       }
     }
@@ -252,14 +252,14 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     resetFileCache()
   }
 
-  override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) = WorkspaceFileIndexDataMetrics.markDirtyTimeMs.addMeasuredTimeMs {
+  override fun markDirty(entityReferences: Collection<EntityReference<WorkspaceEntity>>, filesToInvalidate: Collection<VirtualFile>) = WorkspaceFileIndexDataMetrics.markDirtyTimeMs.addMeasuredTimeMillis {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     dirtyEntities.addAll(entityReferences)
     dirtyFiles.addAll(filesToInvalidate)
     hasDirtyEntities = dirtyEntities.isNotEmpty()
   }
 
-  override fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeMs.addMeasuredTimeMs {
+  override fun onEntitiesChanged(event: VersionedStorageChange, storageKind: EntityStorageKind) = WorkspaceFileIndexDataMetrics.onEntitiesChangedTimeMs.addMeasuredTimeMillis {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     contributorList.filter { it.storageKind == storageKind }.forEach { 
       processChangesByContributor(it, storageKind, event)
@@ -282,7 +282,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN)
     for (reference in dirtyEntities) {
       val entity = reference.resolve(storage) ?: continue
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMs {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
         registerFileSets(entity, entity.getEntityInterface(), storage, EntityStorageKind.MAIN, removeRegistrar)
         registerFileSets(entity, entity.getEntityInterface(), storage, EntityStorageKind.MAIN, storeRegistrar)
       }
@@ -292,7 +292,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     resetFileCache()
     hasDirtyEntities = false
 
-    WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeMs.addElapsedTimeMs(start)
+    WorkspaceFileIndexDataMetrics.updateDirtyEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun resetFileCache() {
@@ -317,7 +317,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
   }
 
-  override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeMs.addMeasuredTimeMs {
+  override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeMs.addMeasuredTimeMillis {
     if (!dir.isDirectory) return null
 
     val fileSet = when (val info = getFileInfo(dir, true, true, true, true, true)) {
@@ -336,7 +336,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
   }
 
-  override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> = WorkspaceFileIndexDataMetrics.getDirectoriesByPackageNameTimeMs.addMeasuredTimeMs {
+  override fun getDirectoriesByPackageName(packageName: String, includeLibrarySources: Boolean): Query<VirtualFile> = WorkspaceFileIndexDataMetrics.getDirectoriesByPackageNameTimeMs.addMeasuredTimeMillis {
     val query = CollectionQuery(packageDirectoryCache.getDirectoriesByPackageName(packageName))
     if (includeLibrarySources) return query
     return query.filtering {

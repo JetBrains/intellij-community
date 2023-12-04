@@ -14,7 +14,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -111,7 +111,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         (project.serviceAsync<WorkspaceFileIndex>() as WorkspaceFileIndexEx).initialize()
       }
 
-      moduleLoadingTimeMs.addElapsedTimeMs(start)
+      moduleLoadingTimeMs.addElapsedTimeMillis(start)
     }
     WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
   }

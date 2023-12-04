@@ -8,7 +8,7 @@ import kotlin.system.measureTimeMillis
  * Add now-startTime in ms to the current value
  * [startTimeMs] - start time of measurement in milliseconds
  */
-fun AtomicLong.addElapsedTimeMs(startTimeMs: Long) {
+fun AtomicLong.addElapsedTimeMillis(startTimeMs: Long): Unit {
   this.addAndGet(System.currentTimeMillis() - startTimeMs)
 }
 
@@ -16,7 +16,7 @@ fun AtomicLong.addElapsedTimeMs(startTimeMs: Long) {
  * Measure time of the [block] in milliseconds and add it to current value.
  * @return Value [T], calculated by the [block]
  */
-inline fun <T> AtomicLong.addMeasuredTimeMs(block: () -> T): T {
+inline fun <T> AtomicLong.addMeasuredTimeMillis(block: () -> T): T {
   val value: T
   this.addAndGet(measureTimeMillis { value = block() })
   return value

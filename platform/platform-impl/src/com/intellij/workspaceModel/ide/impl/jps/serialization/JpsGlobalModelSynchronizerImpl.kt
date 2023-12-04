@@ -5,7 +5,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.*
@@ -67,7 +67,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
       loadGlobalEntitiesToEmptyStorage(mutableStorage, initialEntityStorage, initializeBridges = true)
     }
 
-    jpsLoadInitialStateMs.addElapsedTimeMs(start)
+    jpsLoadInitialStateMs.addElapsedTimeMillis(start)
     return callback
   }
 

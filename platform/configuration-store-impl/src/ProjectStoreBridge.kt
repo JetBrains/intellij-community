@@ -19,7 +19,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
+import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.isExternalModuleFile
@@ -151,7 +151,7 @@ internal class StorageJpsConfigurationReader(private val project: Project,
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val start = System.currentTimeMillis()
 
-    fun stopMeasure() = loadComponentTimeMs.addElapsedTimeMs(start)
+    fun stopMeasure() = loadComponentTimeMs.addElapsedTimeMillis(start)
 
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (ProjectUtil.isRemotePath(FileUtilRt.toSystemDependentName(filePath)) && !project.isTrusted()) {
