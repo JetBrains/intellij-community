@@ -953,6 +953,11 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/renameKotlinFunctionSameNameAsFilename/renameKotlinFunctionSameNameAsFilename.test");
     }
 
+    @TestMetadata("renameKotlinFunctionWithJavaBase/renameKotlinFunctionWithJavaBase.test")
+    public void testRenameKotlinFunctionWithJavaBase_RenameKotlinFunctionWithJavaBase() throws Exception {
+        runTest("testData/refactoring/rename/renameKotlinFunctionWithJavaBase/renameKotlinFunctionWithJavaBase.test");
+    }
+
     @TestMetadata("renameKotlinMethodWithEscapedName/renameKotlinMethodWithEscapedName.test")
     public void testRenameKotlinMethodWithEscapedName_RenameKotlinMethodWithEscapedName() throws Exception {
         runTest("testData/refactoring/rename/renameKotlinMethodWithEscapedName/renameKotlinMethodWithEscapedName.test");
