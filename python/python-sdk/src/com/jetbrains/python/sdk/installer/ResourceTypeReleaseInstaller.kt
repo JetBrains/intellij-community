@@ -42,7 +42,6 @@ abstract class ResourceTypeReleaseInstaller(private val resourceType: ResourceTy
 
   @Throws(ProcessException::class)
   override fun process(release: Release, resourcePaths: Map<Resource, Path>, indicator: ProgressIndicator) {
-    indicator.isIndeterminate = true
     resourcePaths.forEach { (resource, path) ->
       processResource(resource, path, indicator)
     }
@@ -50,7 +49,9 @@ abstract class ResourceTypeReleaseInstaller(private val resourceType: ResourceTy
 
   @Throws(ProcessException::class)
   private fun processResource(resource: Resource, path: Path, indicator: ProgressIndicator) {
-    indicator.text2 = PySdkBundle.message("python.sdk.running", resource.fileName)
+    indicator.isIndeterminate = true
+    indicator.text = PySdkBundle.message("python.sdk.running.progress.text", resource.fileName)
+    indicator.text2 = PySdkBundle.message("python.sdk.running.one.minute.progress.details")
 
     val commandLine = buildCommandLine(resource, path)
     LOGGER.info("Running ${commandLine.commandLineString}")
