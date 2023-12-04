@@ -11,12 +11,9 @@ class A {
         if (!(o instanceof A)) return false;
 
         final A a = (A) o;
-
-        if (value != a.value) return false;
-        if (!Arrays.equals(values, a.values)) return false;
-        if (!Arrays.deepEquals(valueses, a.valueses)) return false;
-
-        return true;
+        return value == a.value &&
+                Arrays.equals(values, a.values) &&
+                Arrays.deepEquals(valueses, a.valueses);
     }
 
     @Override

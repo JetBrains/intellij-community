@@ -7,10 +7,7 @@ class Simple {
         if (p_o_r == null || getClass() != p_o_r.getClass()) return false;
 
         final Simple l_that_v = (Simple) p_o_r;
-
-        if (simple != l_that_v.simple) return false;
-
-        return true;
+        return simple == l_that_v.simple;
     }
 
     @Override

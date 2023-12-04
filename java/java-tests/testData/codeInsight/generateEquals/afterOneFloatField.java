@@ -6,10 +6,7 @@ class Test {
         if (o == null || getClass() != o.getClass()) return false;
 
         final Test test = (Test) o;
-
-        if (Float.compare(d, test.d) != 0) return false;
-
-        return true;
+        return Float.compare(d, test.d) == 0;
     }
 
     public int hashCode() {

@@ -24,22 +24,19 @@ class A {
         if (o == null || getClass() != o.getClass()) return false;
 
         final A a = (A) o;
-
-        if (a7 != a.a7) return false;
-        if (a8 != a.a8) return false;
-        if (a9 != a.a9) return false;
-        if (a10 != a.a10) return false;
-        if (Float.compare(a11, a.a11) != 0) return false;
-        if (!Arrays.equals(a1, a.a1)) return false;
-        if (!Arrays.deepEquals(a2, a.a2)) return false;
-        if (!Arrays.equals(a3, a.a3)) return false;
-        if (!Arrays.deepEquals(a4, a.a4)) return false;
-        if (!Arrays.equals(a5, a.a5)) return false;
-        if (!Arrays.deepEquals(a6, a.a6)) return false;
-        if (!a13.equals(a.a13)) return false;
-        if (!a14.equals(a.a14)) return false;
-
-        return true;
+        return a7 == a.a7 &&
+                a8 == a.a8 &&
+                a9 == a.a9 &&
+                a10 == a.a10 &&
+                Float.compare(a11, a.a11) == 0 &&
+                Arrays.equals(a1, a.a1) &&
+                Arrays.deepEquals(a2, a.a2) &&
+                Arrays.equals(a3, a.a3) &&
+                Arrays.deepEquals(a4, a.a4) &&
+                Arrays.equals(a5, a.a5) &&
+                Arrays.deepEquals(a6, a.a6) &&
+                a13.equals(a.a13) &&
+                a14.equals(a.a14);
     }
 
     @Override

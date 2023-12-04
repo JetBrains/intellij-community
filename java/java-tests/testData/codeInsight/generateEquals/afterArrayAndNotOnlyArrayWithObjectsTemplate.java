@@ -12,7 +12,10 @@ class A {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final A a = (A) o;
-        return i == a.i && Objects.equals(s, a.s) && Objects.deepEquals(a1, a.a1) && Objects.deepEquals(a2, a.a2);
+        return i == a.i &&
+                Objects.equals(s, a.s) &&
+                Objects.deepEquals(a1, a.a1) &&
+                Objects.deepEquals(a2, a.a2);
     }
 
     @Override

@@ -12,16 +12,13 @@ public class X {
         if (o == null || getClass() != o.getClass()) return false;
 
         final X x = (X) o;
-
-        if (l != x.l) return false;
-        if (b != x.b) return false;
-        if (v != x.v) return false;
-        if (s != x.s) return false;
-        if (i != x.i) return false;
-        if (Float.compare(f, x.f) != 0) return false;
-        if (Double.compare(d, x.d) != 0) return false;
-
-        return true;
+        return l == x.l &&
+                b == x.b &&
+                v == x.v &&
+                s == x.s &&
+                i == x.i &&
+                Float.compare(f, x.f) == 0 &&
+                Double.compare(d, x.d) == 0;
     }
 
     public int hashCode() {

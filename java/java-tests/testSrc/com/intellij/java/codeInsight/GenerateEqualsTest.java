@@ -1,14 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.generation.GenerateEqualsHelper;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
@@ -208,6 +212,8 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
                         boolean useAccessors,
                         boolean useInstanceofToCheckParameterType) {
     configureByFile("/codeInsight/generateEquals/before" + getTestName(false) + ".java");
+    CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(getProject());
+    codeStyleSettings.getCommonSettings(JavaLanguage.INSTANCE).BINARY_OPERATION_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = true;
     JavaCodeStyleSettings.getInstance(getProject()).INSERT_OVERRIDE_ANNOTATION = insertOverride;
     PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset());

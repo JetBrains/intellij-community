@@ -12,8 +12,13 @@ Object $paramName){
 #if ($fields.size() > 0)
 
   #addClassInstance()
-
+  return ##
+  #set($i = 0)
   #foreach($field in $fields)
+    #if ($i > 0)
+    && ##
+    #end
+    #set($i = $i + 1)
     #if ($field.array)
       #addArrayEquals($field)
     #elseif ($field.primitive)
@@ -28,39 +33,42 @@ Object $paramName){
       #addFieldComparison($field)
     #end
   #end
-#end
-
+  ;
+#else
   return true;
+#end
 }
 ##
 #macro(addPrimitiveFieldComparison $field)
-  if($field.accessor != ${classInstanceName}.$field.accessor) return false;
+  $field.accessor == ${classInstanceName}.$field.accessor##
 #end
 ##
 #macro(addDoubleFieldComparison $field)
   #if ($field.double)
-    if(java.lang.Double.compare($field.accessor, ${classInstanceName}.$field.accessor) != 0)return false;
+    java.lang.Double.compare($field.accessor, ${classInstanceName}.$field.accessor) == 0##
   #else
-    if(java.lang.Float.compare($field.accessor, ${classInstanceName}.$field.accessor) != 0)return false;
+    java.lang.Float.compare($field.accessor, ${classInstanceName}.$field.accessor) == 0##
   #end
 #end
 ##
 #macro(addFieldComparison $field)
   #if ($field.notNull)
-    if(!${field.accessor}.equals(${classInstanceName}.$field.accessor))return false;
+    ${field.accessor}.equals(${classInstanceName}.$field.accessor)##
+  #elseif ($java_version < 7)
+    ($field.accessor == null ? ${classInstanceName}.$field.accessor == null : ${field.accessor}.equals(${classInstanceName}.$field.accessor))##
   #else
-    if($field.accessor != null ? !${field.accessor}.equals(${classInstanceName}.$field.accessor) : ${classInstanceName}.$field.accessor != null)return false;
+    java.util.Objects.equals($field.accessor,${classInstanceName}.$field.accessor)##
   #end
 #end
 ##
 #macro(addArrayEquals $field) 
   #if ($field.nestedArray)
     #if ($java_version > 4)
-      if(!java.util.Arrays.deepEquals($field.accessor, ${classInstanceName}.$field.accessor)) return false;
+      java.util.Arrays.deepEquals($field.accessor, ${classInstanceName}.$field.accessor)##
     #else
       // Compare nested arrays - values of $field.name here
     #end
     #break;
   #end
-  if(!java.util.Arrays.equals($field.accessor, ${classInstanceName}.$field.accessor)) return false;
+  java.util.Arrays.equals($field.accessor, ${classInstanceName}.$field.accessor)##
 #end

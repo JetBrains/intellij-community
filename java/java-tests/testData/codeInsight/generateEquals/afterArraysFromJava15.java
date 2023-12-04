@@ -10,12 +10,9 @@ class Test {
         if (o == null || getClass() != o.getClass()) return false;
 
         final Test test = (Test) o;
-
-        if (!Arrays.equals(myOs, test.myOs)) return false;
-        if (!Arrays.deepEquals(myIIs, test.myIIs)) return false;
-        if (!Arrays.equals(myIs, test.myIs)) return false;
-
-        return true;
+        return Arrays.equals(myOs, test.myOs) &&
+                Arrays.deepEquals(myIIs, test.myIIs) &&
+                Arrays.equals(myIs, test.myIs);
     }
 
     public int hashCode() {

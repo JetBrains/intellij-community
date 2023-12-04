@@ -138,6 +138,8 @@ public int hashCode() {
   #set($name = $field.accessor)
   #if ($field.notNull)#adjustHashCodeToArrays($field)
   #elseif ($field.array && $java_version > 4)#adjustHashCodeToArrays($field)
+  #elseif ($java_version >= 7)
+    java.util.Objects.hashCode($field.accessor) ##
   #else
     #if ($brace)(##
     #end
