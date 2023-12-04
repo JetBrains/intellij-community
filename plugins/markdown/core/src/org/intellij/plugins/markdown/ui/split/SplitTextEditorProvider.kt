@@ -10,11 +10,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.application
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 
 private const val FIRST_EDITOR = "first_editor"
 private const val SECOND_EDITOR = "second_editor"
 private const val SPLIT_LAYOUT = "split_layout"
 
+@ApiStatus.Internal
 abstract class SplitTextEditorProvider(
   private val firstProvider: FileEditorProvider,
   private val secondProvider: FileEditorProvider
