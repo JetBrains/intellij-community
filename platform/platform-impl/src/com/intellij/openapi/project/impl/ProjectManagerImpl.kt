@@ -1190,11 +1190,11 @@ private suspend fun initProject(file: Path,
   try {
     coroutineContext.ensureActive()
 
-    val registerComponentActivity = createActivity(project) { "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}" }
-
-    if (!PROJECT_PATH.isIn(project)) {
-      PROJECT_PATH.set(project, file)
+    val registerComponentActivity = createActivity(project) {
+      "project ${StartUpMeasurer.Activities.REGISTER_COMPONENTS_SUFFIX}"
     }
+
+    project.putUserDataIfAbsent(PROJECT_PATH, file)
     project.registerComponents()
     registerComponentActivity?.end()
 
