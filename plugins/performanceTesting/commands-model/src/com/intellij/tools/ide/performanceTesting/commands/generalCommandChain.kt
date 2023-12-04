@@ -822,3 +822,10 @@ fun <T : CommandChain> T.captureMemoryMetrics(suffix: String): T = apply {
 fun <T : CommandChain> T.sleep(timeOut: Long, unit: TimeUnit = TimeUnit.MILLISECONDS): T = apply {
   addCommand("${CMD_PREFIX}sleep ${unit.toMillis(timeOut)}")
 }
+
+
+fun <T : CommandChain> T.repeatCommand(times: Int, commandChain: (CommandChain) -> Unit): T = apply {
+  repeat(times) {
+    commandChain.invoke(this)
+  }
+}
