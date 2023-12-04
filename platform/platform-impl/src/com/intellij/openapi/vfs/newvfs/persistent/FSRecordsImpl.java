@@ -1138,14 +1138,14 @@ public final class FSRecordsImpl implements Closeable {
                          int parentId,
                          @NotNull FileAttributes attributes,
                          @NotNull String name,
-                         boolean overwriteMissed) {
+                         boolean cleanAttributeRef) {
     int nameId = getNameId(name);
     long timestamp = attributes.lastModified;
     long length = attributes.isDirectory() ? -1L : attributes.length;
     int flags = PersistentFSImpl.fileAttributesToFlags(attributes);
 
     try {
-      fillRecord(fileId, timestamp, length, flags, nameId, parentId, overwriteMissed);
+      fillRecord(fileId, timestamp, length, flags, nameId, parentId, cleanAttributeRef);
     }
     catch (IOException e) {
       throw handleError(e);

@@ -463,7 +463,7 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                          final int flags,
                          final int nameId,
                          final int parentId,
-                         final boolean overwriteAttrRef) throws IOException {
+                         final boolean cleanAttributeRef) throws IOException {
     checkParentIdIsValid(parentId);
 
     final long recordOffsetInFile = recordOffsetInFile(recordId);
@@ -473,10 +473,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
     setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.PARENT_REF_OFFSET, parentId);
     setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.NAME_REF_OFFSET, nameId);
     setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.FLAGS_OFFSET, flags);
-    if (overwriteAttrRef) {
+    if (cleanAttributeRef) {
       setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.ATTR_REF_OFFSET, 0);
     }
-    //FIXME RC: why not set contentId?
+    //TODO RC: why not set contentId?
     setLongVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.TIMESTAMP_OFFSET, timestamp);
     setLongVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.LENGTH_OFFSET, length);
 

@@ -487,29 +487,42 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return vfsPeer.getPersistentModCount();
   }
 
-  // returns `nameId` > 0 if write successful, -1 if not
-  private int writeAttributesToRecord(int id,
-                                      int parentId,
-                                      @NotNull CharSequence name,
-                                      boolean cs,
-                                      @NotNull FileAttributes attributes,
-                                      boolean overwriteMissed) {
-    assert id > 0 : id;
-    assert parentId >= 0 : parentId; // 0 means there's no parent
+  /** @return `nameId` > 0 */
+  private int writeRecordFields(int fileId,
+                                int parentId,
+                                @NotNull CharSequence name,
+                                boolean caseSensitive,
+                                @NotNull FileAttributes attributes) {
+    assert fileId > 0 : fileId;
+    assert parentId > 0 : parentId; // 0 means it's root => should use .writeRootFields() instead
+    return vfsPeer.updateRecordFields(fileId, parentId, attributes, name.toString(), /* cleanAttributeRef: */ true);
+  }
+
+  /** @return `nameId` > 0 if write was actually done, -1 if write was bypassed */
+  private int writeRootFields(int rootId,
+                              @NotNull String name,
+                              boolean caseSensitive,
+                              @NotNull FileAttributes attributes) {
+    assert rootId > 0 : rootId;
     //RC: why we reject the changes in those 2 cases -- what is special with loaded children or
     //    same-name?
-    //    Maybe: we call it from findRoot() always, even if the root was already existed in
-    //    persistence, but  we don't want to really overwrite root fields every time -- so
-    //    we skip it here by comparing names?
+    //    A guess: we call the method from findRoot() -- always, even if the root already exists in
+    //    persistence -- but we don't want to really overwrite root fields every time -- so we skip
+    //    the write here by comparing names?
     if (!name.isEmpty()) {
-      if (Comparing.equal(name, vfsPeer.getName(id), cs)) return -1; // TODO: Handle root attributes change.
+      if (Comparing.equal(name, vfsPeer.getName(rootId), caseSensitive)) {
+        return -1; // TODO: Handle root attributes change.
+      }
     }
     else {
-      if (areChildrenLoaded(id)) return -1; // TODO: hack
+      if (areChildrenLoaded(rootId)) {
+        return -1; // TODO: hack
+      }
     }
 
-    return vfsPeer.updateRecordFields(id, parentId, attributes, name.toString(), overwriteMissed);
+    return vfsPeer.updateRecordFields(rootId, FSRecords.NULL_FILE_ID, attributes, name, /* cleanAttributeRef: */ false);
   }
+
 
   @Override
   public @Attributes int getFileAttributes(int id) {
@@ -1638,7 +1651,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
 
     int rootNameId = vfsPeer.getNameId(rootName);
-    boolean mark;
+    boolean markModified;
     VirtualFileSystemEntry newRoot;
     synchronized (myRoots) {
       root = myRoots.get(rootUrl);
@@ -1662,13 +1675,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           " path='" + path + "'; fs=" + fs + "; rootUrl='" + rootUrl + "'", e);
       }
       incStructuralModificationCount();
-      mark = writeAttributesToRecord(rootId, FSRecords.NULL_FILE_ID, rootName, fs.isCaseSensitive(), attributes, false) != -1;
+      markModified = writeRootFields(rootId, rootName, fs.isCaseSensitive(), attributes) != -1;
 
       myRoots.put(rootUrl, newRoot);
       myIdToDirCache.cacheDir(newRoot);
     }
 
-    if (!mark && attributes.lastModified != vfsPeer.getTimestamp(rootId)) {
+    if (!markModified && attributes.lastModified != vfsPeer.getTimestamp(rootId)) {
       newRoot.markDirtyRecursively();
     }
 
@@ -2121,10 +2134,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     FileAttributes attributes = childData.first;
 
     int childId = vfsPeer.createRecord();
-    int nameId = writeAttributesToRecord(childId, parentId, name, parentFile.isCaseSensitive(), attributes, true);
-    if (nameId < 0) {
-      throw new AssertionError("writeAttributesToRecord(" + childId + ", " + parentId + ", '" + name + "',...) returns -1");
-    }
+    int nameId = writeRecordFields(childId, parentId, name, parentFile.isCaseSensitive(), attributes);
 
     if (attributes.isDirectory()) {
       FSRecords.loadDirectoryData(childId, parentFile, name, fs);
