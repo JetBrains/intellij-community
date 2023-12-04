@@ -42,7 +42,6 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
@@ -494,7 +493,7 @@ public final class MavenProjectsTree {
                                                MavenProjectReader projectReader,
                                                MavenGeneralSettings generalSettings,
                                                ProgressIndicator process) {
-    UpdateContext updateContext = new UpdateContext();
+    MavenProjectsTreeUpdateContext updateContext = new MavenProjectsTreeUpdateContext(this);
 
     var updater =
       new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, updateModules);
@@ -574,7 +573,7 @@ public final class MavenProjectsTree {
                                                MavenExplicitProfiles explicitProfiles,
                                                MavenGeneralSettings generalSettings,
                                                ProgressIndicator process) {
-    UpdateContext updateContext = new UpdateContext();
+    MavenProjectsTreeUpdateContext updateContext = new MavenProjectsTreeUpdateContext(this);
 
     Set<MavenProject> inheritorsToUpdate = new HashSet<>();
     for (VirtualFile each : files) {
@@ -605,7 +604,7 @@ public final class MavenProjectsTree {
   }
 
   @ApiStatus.Internal
-  void doDelete(MavenProject aggregator, MavenProject project, UpdateContext updateContext) {
+  void doDelete(MavenProject aggregator, MavenProject project, MavenProjectsTreeUpdateContext updateContext) {
     for (MavenProject each : getModules(project)) {
       if (isManagedFile(each.getPath())) {
         if (reconnectRoot(each)) {
@@ -1078,50 +1077,6 @@ public final class MavenProjectsTree {
   void fireArtifactsDownloaded(@NotNull MavenProject project) {
     for (Listener each : myListeners) {
       each.artifactsDownloaded(project);
-    }
-  }
-
-  @ApiStatus.Internal
-  class UpdateContext {
-    private final Map<MavenProject, MavenProjectChanges> updatedProjectsWithChanges = new ConcurrentHashMap<>();
-    private final Set<MavenProject> deletedProjects = ConcurrentHashMap.newKeySet();
-
-    public void updated(MavenProject project, @NotNull MavenProjectChanges changes) {
-      deletedProjects.remove(project);
-      updatedProjectsWithChanges.compute(project, (__, previousChanges) ->
-        previousChanges == null ? changes : MavenProjectChangesBuilder.merged(changes, previousChanges)
-      );
-    }
-
-    public void deleted(MavenProject project) {
-      updatedProjectsWithChanges.remove(project);
-      deletedProjects.add(project);
-    }
-
-    public MavenProjectsTreeUpdateResult toUpdateResult() {
-      return new MavenProjectsTreeUpdateResult(mapToListWithPairs(), new ArrayList<>(deletedProjects));
-    }
-
-    public void fireUpdatedIfNecessary() {
-      if (updatedProjectsWithChanges.isEmpty() && deletedProjects.isEmpty()) {
-        return;
-      }
-      List<Pair<MavenProject, MavenProjectChanges>> updated = mapToListWithPairs();
-      List<MavenProject> deleted = new ArrayList<>(deletedProjects);
-      fireProjectsUpdated(updated, deleted);
-    }
-
-    private @NotNull List<Pair<MavenProject, MavenProjectChanges>> mapToListWithPairs() {
-      ArrayList<Pair<MavenProject, MavenProjectChanges>> result = new ArrayList<>(updatedProjectsWithChanges.size());
-      for (Map.Entry<MavenProject, MavenProjectChanges> entry : updatedProjectsWithChanges.entrySet()) {
-        entry.getKey().getProblems(); // need for fill problem cache
-        result.add(Pair.create(entry.getKey(), entry.getValue()));
-      }
-      return result;
-    }
-
-    public Collection<MavenProject> getDeletedProjects() {
-      return deletedProjects;
     }
   }
 

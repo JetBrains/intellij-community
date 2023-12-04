@@ -14,7 +14,6 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectChangesBuilder.Companion.merged
 import org.jetbrains.idea.maven.project.MavenProjectsTree.MavenProjectTimestamp
-import org.jetbrains.idea.maven.project.MavenProjectsTree.UpdateContext
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.ParallelRunner
@@ -24,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
                                         private val explicitProfiles: MavenExplicitProfiles,
-                                        private val updateContext: UpdateContext,
+                                        private val updateContext: MavenProjectsTreeUpdateContext,
                                         private val reader: MavenProjectReader,
                                         private val generalSettings: MavenGeneralSettings,
                                         private val process: ProgressIndicator?,
