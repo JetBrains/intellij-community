@@ -1004,25 +1004,6 @@ public final class MavenProjectsTree {
     });
   }
 
-  public <Result> Result visit(Visitor<Result> visitor) {
-    for (MavenProject each : getRootProjects()) {
-      if (visitor.isDone()) break;
-      doVisit(each, visitor);
-    }
-    return visitor.getResult();
-  }
-
-  private <Result> void doVisit(MavenProject project, Visitor<Result> visitor) {
-    if (!visitor.isDone() && visitor.shouldVisit(project)) {
-      visitor.visit(project);
-      for (MavenProject each : getModules(project)) {
-        if (visitor.isDone()) break;
-        doVisit(each, visitor);
-      }
-      visitor.leave(project);
-    }
-  }
-
   public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
     if (!myListeners.contains(l)) {
       myListeners.add(l, disposable);
@@ -1077,31 +1058,6 @@ public final class MavenProjectsTree {
   void fireArtifactsDownloaded(@NotNull MavenProject project) {
     for (Listener each : myListeners) {
       each.artifactsDownloaded(project);
-    }
-  }
-
-  public abstract static class Visitor<Result> {
-    private Result result;
-
-    public boolean shouldVisit(MavenProject project) {
-      return true;
-    }
-
-    public abstract void visit(MavenProject project);
-
-    public void leave(MavenProject node) {
-    }
-
-    public void setResult(Result result) {
-      this.result = result;
-    }
-
-    public Result getResult() {
-      return result;
-    }
-
-    public boolean isDone() {
-      return result != null;
     }
   }
 
@@ -1251,10 +1207,6 @@ public final class MavenProjectsTree {
              && Objects.equals(o1.getVersion(), o2.getVersion())
              && Objects.equals(o1.getGroupId(), o2.getGroupId());
     }
-  }
-
-  private static <K, V> Map<K, List<V>> deepCopyInto(Map<K, List<V>> from, Map<K, List<V>> to) {
-    return deepCopyInto(from, to, Function.identity());
   }
 
   private static <K, V> Map<K, List<V>> deepCopyInto(Map<K, List<V>> from, Map<K, List<V>> to, Function<V, V> copyFunc) {
