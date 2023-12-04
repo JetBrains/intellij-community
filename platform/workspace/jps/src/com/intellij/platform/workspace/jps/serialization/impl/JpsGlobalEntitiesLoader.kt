@@ -11,7 +11,7 @@ object JpsGlobalEntitiesSerializers {
   const val SDK_FILE_NAME: String = "jdk.table"
   const val GLOBAL_LIBRARIES_FILE_NAME: String = "applicationLibraries"
 
-  private val isSdkBridgeEnabled: Boolean = Registry.`is`("workspace.model.global.sdk.bridge", true)
+  private val isSdkBridgeEnabled: Boolean = Registry.`is`("workspace.model.global.sdk.bridge", false)
 
   fun createApplicationSerializers(virtualFileUrlManager: VirtualFileUrlManager,
                                    sortedRootTypes: List<String>,
