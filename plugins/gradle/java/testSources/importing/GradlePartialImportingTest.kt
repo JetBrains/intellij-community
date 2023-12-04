@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.project.*
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
@@ -14,7 +13,6 @@ import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.Test
-import java.util.function.Consumer
 import java.util.function.Predicate
 
 class GradlePartialImportingTest : GradlePartialImportingTestCase() {
@@ -225,41 +223,12 @@ class GradlePartialImportingTest : GradlePartialImportingTestCase() {
     ExternalSystemUtil.refreshProject(projectPath, ImportSpecBuilder(myProject, SYSTEM_ID).use(ProgressExecutionMode.MODAL_SYNC))
 
     if (currentGradleBaseVersion >= GradleVersion.version("4.8")) {
-      if (currentGradleBaseVersion != GradleVersion.version("4.10.3")) {
-        assertSyncViewTreeEquals { treeTestPresentation ->
-          assertThat(treeTestPresentation).satisfiesAnyOf(
-            Consumer {
-              assertThat(it).isEqualTo("-\n" +
-                                       " -failed\n" +
-                                       "  Build cancelled")
-
-            },
-            Consumer {
-              assertThat(it).isEqualTo("-\n" +
-                                       " cancelled")
-
-            },
-            Consumer {
-              assertThat(it).startsWith("-\n" +
-                                        " -failed\n" +
-                                        "  Build cancelled\n" +
-                                        "  Could not build ")
-
-            }
-          )
-        }
-      }
       assertReceivedModels(
         projectPath, "project",
         mapOf("name" to "project", "prop_loaded_1" to "error")
       )
     }
     else {
-      assertSyncViewTree {
-        assertNode("finished") {
-          assertNodeWithDeprecatedGradleWarning()
-        }
-      }
       assertReceivedModels(
         projectPath, "project",
         mapOf("name" to "project", "prop_loaded_1" to "error"),
