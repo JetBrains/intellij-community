@@ -106,8 +106,8 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     }?.iid
   }
 
-  override val commits: SharedFlow<Result<List<VcsCommitMetadata>>?> = branchState.transformLatest { model ->
-    if (model == null) {
+  override val commits: SharedFlow<Result<List<VcsCommitMetadata>>?> = branchState.transformLatest { state ->
+    if (state == null) {
       emit(Result.success(emptyList()))
       return@transformLatest
     }
@@ -117,8 +117,8 @@ internal class GitLabMergeRequestCreateViewModelImpl(
       runCatchingUser {
         GitLogUtil.collectMetadata(
           project,
-          model.headRepo.gitRepository.root,
-          "${model.baseBranch.name}..${model.headBranch.name}"
+          state.headRepo.gitRepository.root,
+          "${state.baseBranch.name}..${state.headBranch.name}"
         ).commits
       }
     }
