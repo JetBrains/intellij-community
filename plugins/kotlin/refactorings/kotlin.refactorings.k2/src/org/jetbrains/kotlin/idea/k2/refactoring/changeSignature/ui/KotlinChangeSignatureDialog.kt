@@ -54,6 +54,10 @@ internal class KotlinChangeSignatureDialog(
         }
     }
 
+    override fun validateButtons() {
+        validateButtonsAsync()
+    }
+
     override fun createParametersInfoModel(method: KotlinMethodDescriptor): KotlinCallableParameterTableModel<KotlinParameterInfo, Visibility> {
         fun createRowItemInner(
             parameterInfo: KotlinParameterInfo?,
