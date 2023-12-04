@@ -40,6 +40,8 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.issueChecker" interface="org.jetbrains.plugins.gradle.issue.GradleIssueChecker"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.gradleJvmResolver" interface="org.jetbrains.plugins.gradle.resolvers.GradleJvmResolver"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.gradle.targetEnvironmentAware" interface="org.jetbrains.plugins.gradle.execution.target.GradleTargetEnvironmentAware"
                     dynamic="true"/>
     <extensionPoint qualifiedName= "org.jetbrains.plugins.gradle.taskResultListener" interface="org.jetbrains.plugins.gradle.service.task.GradleTaskResultListener"
@@ -70,6 +72,8 @@
       implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$WrapperConfigCollector"/>
     <autoReloadSettingsCollector
       implementation="org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware$GradleScriptCollector"/>
+    <gradleJvmResolver implementation="org.jetbrains.plugins.gradle.resolvers.GradleJvmGradlePropertiesResolver"/>
+    <gradleJvmResolver implementation="org.jetbrains.plugins.gradle.resolvers.GradleJvmGradleLocalJavaHomeResolver"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
