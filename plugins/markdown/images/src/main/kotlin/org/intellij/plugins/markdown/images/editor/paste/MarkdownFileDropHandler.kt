@@ -6,6 +6,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -18,6 +19,7 @@ import org.intellij.images.fileTypes.impl.SvgFileType
 import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 import org.intellij.plugins.markdown.images.editor.ImageUtils
+import org.intellij.plugins.markdown.lang.hasMarkdownType
 import org.intellij.plugins.markdown.lang.isMarkdownLanguage
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import java.awt.datatransfer.Transferable
@@ -36,9 +38,8 @@ internal class MarkdownFileDropHandler: CustomFileDropHandler() {
     if (!MarkdownCodeInsightSettings.getInstance().state.enableFileDrop) {
       return false
     }
-    val project = editor.project ?: return false
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-    return file != null && file.language.isMarkdownLanguage()
+    val virtualFile = FileDocumentManager.getInstance().getFile(editor.document)
+    return virtualFile?.hasMarkdownType() == true
   }
 
   override fun handleDrop(transferable: Transferable, editor: Editor?, project: Project?): Boolean {
