@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.namedChildScope
@@ -18,13 +17,11 @@ import java.util.function.Consumer
 class ParallelRunner(val project: Project, val cs: CoroutineScope) {
 
 
-  suspend fun <T> runInParallel(collection: Collection<T>, method: (T) -> Unit) {
+  suspend fun <T> runInParallel(collection: Collection<T>, method: suspend (T) -> Unit) {
     val runScope = cs.namedChildScope("ParallelRunner.runInParallel", Dispatchers.IO, true)
     collection.map {
       runScope.async {
-        blockingContext {
-          method(it)
-        }
+        method(it)
       }
     }.awaitAll()
   }

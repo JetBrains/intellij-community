@@ -3,6 +3,8 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -15,7 +17,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsTree.MavenProjectTimestamp
 import org.jetbrains.idea.maven.project.MavenProjectsTree.UpdateContext
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
-import org.jetbrains.idea.maven.utils.ParallelRunner.Companion.getInstance
+import org.jetbrains.idea.maven.utils.ParallelRunner
 import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
@@ -55,7 +57,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     return true
   }
 
-  private fun readPomIfNeeded(mavenProject: MavenProject, forceRead: Boolean): Boolean {
+  private suspend fun readPomIfNeeded(mavenProject: MavenProject, forceRead: Boolean): Boolean {
     val timestamp = calculateTimestamp(mavenProject)
     val timeStampChanged = timestamp != tree.getTimeStamp(mavenProject)
     val readPom = forceRead || timeStampChanged
@@ -63,7 +65,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     if (readPom) {
       val oldProjectId = if (mavenProject.isNew) null else mavenProject.mavenId
       val oldParentId = mavenProject.parentId
-      val readChanges = mavenProject.read(generalSettings, explicitProfiles, reader, tree.projectLocator)
+      val readChanges = blockingContext { mavenProject.read(generalSettings, explicitProfiles, reader, tree.projectLocator) }
       tree.putVirtualFileToProjectMapping(mavenProject, oldProjectId)
 
       if (Comparing.equal(oldParentId, mavenProject.parentId)) {
@@ -175,7 +177,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     return mavenProject ?: MavenProject(f)
   }
 
-  private fun update(mavenProjectFile: VirtualFile, forceRead: Boolean) {
+  private suspend fun update(mavenProjectFile: VirtualFile, forceRead: Boolean) {
     // if the file has already been updated, skip subsequent updates
     if (!startUpdate(mavenProjectFile, forceRead)) return
 
@@ -222,11 +224,16 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
     updateProjects(childUpdates)
   }
 
-  fun updateProjects(specs: List<UpdateSpec>) {
+  @Deprecated("Use {@link #updateProjects(List<UpdateSpec>)}}", ReplaceWith("updateProjects(List<UpdateSpec>)"))
+  fun updateProjectsBlocking(specs: List<UpdateSpec>) = runBlockingMaybeCancellable {
+    updateProjects(specs)
+  }
+
+  suspend fun updateProjects(specs: List<UpdateSpec>) {
     if (specs.isEmpty()) return
 
-    getInstance(tree.project).runInParallelBlocking(specs) { spec: UpdateSpec ->
-      update(spec.mavenProjectFile, spec.forceRead)
+    ParallelRunner.getInstance(tree.project).runInParallel(specs) {
+      update(it.mavenProjectFile, it.forceRead)
     }
   }
 

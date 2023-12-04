@@ -458,7 +458,7 @@ public final class MavenProjectsTree {
   }
 
   /**
-   * @deprecated use {@link MavenProjectsManager#updateAllMavenProjectsSync(MavenImportSpec)} instead
+   * @deprecated use {@link MavenProjectsManager#updateAllMavenProjects(MavenImportSpec)} instead
    */
   @Deprecated
   public void updateAll(boolean force, MavenGeneralSettings generalSettings, MavenProgressIndicator process) {
@@ -503,7 +503,7 @@ public final class MavenProjectsTree {
       if (null == findProject(file)) {
         filesToAddModules.add(file);
       }
-      updater.updateProjects(List.of(new MavenProjectsTreeUpdater.UpdateSpec(file, forceRead)));
+      updater.updateProjectsBlocking(List.of(new MavenProjectsTreeUpdater.UpdateSpec(file, forceRead)));
     }
 
     for (MavenProject aggregator : getProjects()) {
@@ -591,7 +591,7 @@ public final class MavenProjectsTree {
     for (MavenProject mavenProject : inheritorsToUpdate) {
       updateSpecs.add(new MavenProjectsTreeUpdater.UpdateSpec(mavenProject.getFile(), false));
     }
-    updater.updateProjects(updateSpecs);
+    updater.updateProjectsBlocking(updateSpecs);
 
     for (MavenProject mavenProject : inheritorsToUpdate) {
       if (reconnectRoot(mavenProject)) {
