@@ -25,6 +25,8 @@ import static org.jetbrains.kotlin.config.IncrementalCompilation.INCREMENTAL_COM
 @TestRoot("jps/graphImplementationTests/testData/incremental")
 public class IncrementalK2JvmJpsTestGenerated extends AbstractIncrementalK2JvmJpsTest {
     static void setUpTests() {
+        System.setProperty("kotlin.jps.workaround.tests", "true");
+
         // Use custom compiler for tests
         //File distJar = KotlinArtifactsDownloader.INSTANCE.downloadArtifactForIdeFromSources(
         //        "kotlin-dist-for-ide",

@@ -39,7 +39,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 // not final - used by Gosu plugin
-public final class Mappings {
+public class Mappings {
   private static final Logger LOG = Logger.getInstance(Mappings.class);
   private boolean myProcessConstantsIncrementally = true;
   private static final boolean USE_NATURAL_INT_MULTIMAP_IMPLEMENTATION = Boolean.parseBoolean(System.getProperty("jps.mappings.natural.int.multimap.impl", "true"));
@@ -126,6 +126,20 @@ public final class Mappings {
     myInitName = myContext.get("<init>");
     myEmptyName = myContext.get("");
     myObjectClassName = myContext.get("java/lang/Object");
+  }
+
+  public Mappings() {
+    myLock = new Object();
+    myIsDelta = false;
+    myChangedClasses = null;
+    myChangedFiles = null;
+    myDeletedClasses = null;
+    myAddedClasses = null;
+    myRootDir = null;
+    myRelativizer = null;
+    myInitName = 1;
+    myEmptyName = 0;
+    myObjectClassName = -1;
   }
 
   private void createImplementation() throws IOException {
