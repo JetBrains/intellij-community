@@ -260,7 +260,10 @@ class ConfigureDialogWithModulesAndVersion(
             if (kotlinCompilerVersion.isRelease && !versions.contains(kotlinArtifactVersion)) {
                 versions.add(0, kotlinArtifactVersion)
             }
-            return versions
+            return versions.mapNotNull {
+                val ideVersion = IdeKotlinVersion.parse(it).getOrNull() ?: return@mapNotNull null
+                ideVersion.rawVersion.takeIf { ideVersion.isRelease && !it.contains("-") }
+            }
         }
     }
 }
