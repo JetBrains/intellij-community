@@ -355,14 +355,25 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       globalInstance.dropHistoryInTests();
     }
 
-    if (project != null && !project.isDisposed()) {
-      ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
-      ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
+    ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest();
 
-      ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
-    }
+    cleanupProjectDependentCaches(project);
 
     TestApplicationKt.cleanupApplicationCaches(app);
+  }
+
+  public static void cleanupProjectDependentCaches(@Nullable Project project) {
+    Application app = ApplicationManager.getApplication();
+    if (app == null) {
+      return;
+    }
+
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+
+    if (project != null && !project.isDisposed()) {
+      ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests();
+      ((PsiManagerImpl)PsiManager.getInstance(project)).cleanupForNextTest();
+    }
   }
 
   private static @NotNull Set<VirtualFile> eternallyLivingFiles() {
