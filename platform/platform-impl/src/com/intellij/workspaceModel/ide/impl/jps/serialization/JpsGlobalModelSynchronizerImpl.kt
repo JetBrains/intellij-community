@@ -5,7 +5,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.*
@@ -52,9 +52,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     get() = !forceEnableLoading && ApplicationManager.getApplication().isUnitTestMode
 
   override fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage,
-                                loadedFromCache: Boolean): () -> Unit {
-    val start = System.currentTimeMillis()
-
+                                loadedFromCache: Boolean): () -> Unit = jpsLoadInitialStateMs.addMeasuredTimeMillis {
     val callback = if (loadedFromCache) {
       val callback = bridgesInitializationCallback(mutableStorage, initialEntityStorage)
       coroutineScope.launch {
@@ -67,23 +65,19 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
       loadGlobalEntitiesToEmptyStorage(mutableStorage, initialEntityStorage, initializeBridges = true)
     }
 
-    jpsLoadInitialStateMs.addElapsedTimeMillis(start)
-    return callback
+    return@addMeasuredTimeMillis callback
   }
 
-  suspend fun saveGlobalEntities() {
-    jpsSaveGlobalEntitiesMs.addAndGet(
-      measureTimeMillis {
-        val serializers = createSerializers()
-        val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
-        val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
-        serializers.forEach { serializer ->
-          val entities = entityStorage.entities(serializer.mainEntityClass).toList()
-          LOG.info("Saving global entities ${serializer.mainEntityClass.name} to files")
-          serializer.saveEntities(entities, emptyMap(), entityStorage, contentWriter)
-        }
-        contentWriter.saveSession()
-      })
+  suspend fun saveGlobalEntities() = jpsSaveGlobalEntitiesMs.addMeasuredTimeMillis {
+    val serializers = createSerializers()
+    val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
+    val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
+    serializers.forEach { serializer ->
+      val entities = entityStorage.entities(serializer.mainEntityClass).toList()
+      LOG.info("Saving global entities ${serializer.mainEntityClass.name} to files")
+      serializer.saveEntities(entities, emptyMap(), entityStorage, contentWriter)
+    }
+    contentWriter.saveSession()
   }
 
   private suspend fun delayLoadGlobalWorkspaceModel() {
@@ -164,18 +158,15 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     private val jpsSaveGlobalEntitiesMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
-      val jpsLoadInitialStateGauge = meter.gaugeBuilder("jps.load.initial.state.ms")
-        .ofLongs().setDescription("Total time spent in loadInitialState").buildObserver()
-
-      val jpsSaveGlobalEntitiesGauge = meter.gaugeBuilder("jps.save.global.entities.ms")
-        .ofLongs().setDescription("Total time spent on jps saving global entities").buildObserver()
+      val jpsLoadInitialStateCounter = meter.counterBuilder("jps.load.initial.state.ms").buildObserver()
+      val jpsSaveGlobalEntitiesCounter = meter.counterBuilder("jps.save.global.entities.ms").buildObserver()
 
       meter.batchCallback(
         {
-          jpsLoadInitialStateGauge.record(jpsLoadInitialStateMs.get())
-          jpsSaveGlobalEntitiesGauge.record(jpsSaveGlobalEntitiesMs.get())
+          jpsLoadInitialStateCounter.record(jpsLoadInitialStateMs.get())
+          jpsSaveGlobalEntitiesCounter.record(jpsSaveGlobalEntitiesMs.get())
         },
-        jpsLoadInitialStateGauge, jpsSaveGlobalEntitiesGauge
+        jpsLoadInitialStateCounter, jpsSaveGlobalEntitiesCounter
       )
     }
 

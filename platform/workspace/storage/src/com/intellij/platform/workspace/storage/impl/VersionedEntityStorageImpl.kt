@@ -78,46 +78,38 @@ private class ValuesCache {
     private val cachedValueWithParametersClear: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
-      val cachedValueFromCacheGauge = meter.gaugeBuilder("workspaceModel.cachedValue.from.cache.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val cachedValueCalculatedGauge = meter.gaugeBuilder("workspaceModel.cachedValue.calculated.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val cachedValueTotalGauge = meter.gaugeBuilder("workspaceModel.cachedValue.total.get.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val cachedValueFromCacheCounter = meter.counterBuilder("workspaceModel.cachedValue.from.cache.ms").buildObserver()
+      val cachedValueCalculatedCounter = meter.counterBuilder("workspaceModel.cachedValue.calculated.ms").buildObserver()
+      val cachedValueTotalCounter = meter.counterBuilder("workspaceModel.cachedValue.total.get.ms").buildObserver()
 
-      val cachedValueWithParametersFromCacheGauge = meter.gaugeBuilder("workspaceModel.cachedValueWithParameters.from.cache.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val cachedValueWithParametersCalculatedGauge = meter.gaugeBuilder("workspaceModel.cachedValueWithParameters.calculated.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val cachedValueWithParametersTotalGauge = meter.gaugeBuilder("workspaceModel.cachedValueWithParameters.total.get.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val cachedValueWithParametersFromCacheCounter = meter.counterBuilder("workspaceModel.cachedValueWithParameters.from.cache.ms").buildObserver()
+      val cachedValueWithParametersCalculatedCounter = meter.counterBuilder("workspaceModel.cachedValueWithParameters.calculated.ms").buildObserver()
+      val cachedValueWithParametersTotalCounter = meter.counterBuilder("workspaceModel.cachedValueWithParameters.total.get.ms").buildObserver()
 
-      val cachedValueClearGauge = meter.gaugeBuilder("workspaceModel.cachedValue.clear.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val cachedValueWithParametersClearGauge = meter.gaugeBuilder("workspaceModel.cachedValueWithParameters.clear.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val cachedValueClearCounter = meter.counterBuilder("workspaceModel.cachedValue.clear.ms").buildObserver()
+      val cachedValueWithParametersClearCounter = meter.counterBuilder("workspaceModel.cachedValueWithParameters.clear.ms").buildObserver()
 
       meter.batchCallback(
         {
-          cachedValueFromCacheGauge.record(cachedValueFromCacheMs.get())
-          cachedValueCalculatedGauge.record(cachedValueCalculatedMs.get())
-          cachedValueTotalGauge.record(cachedValueFromCacheMs.get().plus(cachedValueCalculatedMs.get()))
+          cachedValueFromCacheCounter.record(cachedValueFromCacheMs.get())
+          cachedValueCalculatedCounter.record(cachedValueCalculatedMs.get())
+          cachedValueTotalCounter.record(cachedValueFromCacheMs.get().plus(cachedValueCalculatedMs.get()))
 
-          cachedValueWithParametersFromCacheGauge.record(cachedValueWithParametersFromCacheMs.get())
-          cachedValueWithParametersCalculatedGauge.record(cachedValueWithParametersCalculatedMs.get())
-          cachedValueWithParametersTotalGauge.record(
+          cachedValueWithParametersFromCacheCounter.record(cachedValueWithParametersFromCacheMs.get())
+          cachedValueWithParametersCalculatedCounter.record(cachedValueWithParametersCalculatedMs.get())
+          cachedValueWithParametersTotalCounter.record(
             cachedValueWithParametersFromCacheMs.get().plus(cachedValueWithParametersCalculatedMs.get())
           )
 
-          cachedValueClearGauge.record(cachedValueClear.get())
-          cachedValueWithParametersClearGauge.record(cachedValueWithParametersClear.get())
+          cachedValueClearCounter.record(cachedValueClear.get())
+          cachedValueWithParametersClearCounter.record(cachedValueWithParametersClear.get())
         },
-        cachedValueFromCacheGauge, cachedValueCalculatedGauge, cachedValueTotalGauge,
+        cachedValueFromCacheCounter, cachedValueCalculatedCounter, cachedValueTotalCounter,
 
-        cachedValueWithParametersFromCacheGauge, cachedValueWithParametersCalculatedGauge,
-        cachedValueWithParametersTotalGauge,
+        cachedValueWithParametersFromCacheCounter, cachedValueWithParametersCalculatedCounter,
+        cachedValueWithParametersTotalCounter,
 
-        cachedValueClearGauge, cachedValueWithParametersClearGauge
+        cachedValueClearCounter, cachedValueWithParametersClearCounter
       )
     }
 

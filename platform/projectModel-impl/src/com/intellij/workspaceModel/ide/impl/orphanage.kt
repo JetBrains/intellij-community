@@ -113,10 +113,9 @@ class OrphanListener(private val project: Project) : WorkspaceModelChangeListene
     private val updateOrphanTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val updateOrphanTimeGauge = meter.gaugeBuilder("workspaceModel.orphan.listener.update.ms")
-        .ofLongs().buildObserver()
+      val updateOrphanTimeCounter = meter.counterBuilder("workspaceModel.orphan.listener.update.ms").buildObserver()
 
-      meter.batchCallback({ updateOrphanTimeGauge.record(updateOrphanTimeMs.get()) }, updateOrphanTimeGauge)
+      meter.batchCallback({ updateOrphanTimeCounter.record(updateOrphanTimeMs.get()) }, updateOrphanTimeCounter)
     }
 
     init {

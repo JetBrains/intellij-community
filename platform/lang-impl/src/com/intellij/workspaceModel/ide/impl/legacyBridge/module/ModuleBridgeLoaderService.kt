@@ -39,14 +39,13 @@ private val LOG: Logger
 private val moduleLoadingTimeMs = AtomicLong().also { setupOpenTelemetryReporting(jpsMetrics.meter) }
 
 private fun setupOpenTelemetryReporting(meter: Meter) {
-  val modulesLoadingTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms")
-    .ofLongs().setDescription("Total time spent in method").buildObserver()
+  val modulesLoadingTimeCounter = meter.counterBuilder("workspaceModel.moduleBridgeLoader.loading.modules.ms").buildObserver()
 
   meter.batchCallback(
     {
-      modulesLoadingTimeGauge.record(moduleLoadingTimeMs.get())
+      modulesLoadingTimeCounter.record(moduleLoadingTimeMs.get())
     },
-    modulesLoadingTimeGauge
+    modulesLoadingTimeCounter
   )
 }
 

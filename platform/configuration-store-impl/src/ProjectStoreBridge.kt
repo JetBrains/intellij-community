@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.isExternalModuleFile
@@ -148,11 +149,7 @@ internal class StorageJpsConfigurationReader(private val project: Project,
   private var fileContentCachingReader: CachingJpsFileContentReader? = null
   private val externalConfigurationDir = lazy { project.getExternalConfigurationDir() }
 
-  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
-    val start = System.currentTimeMillis()
-
-    fun stopMeasure() = loadComponentTimeMs.addElapsedTimeMillis(start)
-
+  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? = loadComponentTimeMs.addMeasuredTimeMillis {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (ProjectUtil.isRemotePath(FileUtilRt.toSystemDependentName(filePath)) && !project.isTrusted()) {
       throw IOException(ConfigurationStoreBundle.message("error.message.details.configuration.files.from.remote.locations.in.safe.mode"))
@@ -161,21 +158,18 @@ internal class StorageJpsConfigurationReader(private val project: Project,
       //this is currently used for loading Eclipse project configuration from .classpath file
       val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl)
       val component = file?.inputStream?.use { JDOMUtil.load(it) }
-      stopMeasure()
-      return component
+      return@addMeasuredTimeMillis component
     }
     if (isExternalMiscFile(filePath)) {
       // this is a workaround to make a working scenario when the whole .idea is moved to external configuration dir
       // see com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.isExternalStorageEnabled
       val component = getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
-      stopMeasure()
-      return component
+      return@addMeasuredTimeMillis component
     }
     if (FileUtilRt.extensionEquals(filePath, "iml") || isExternalModuleFile(filePath)) {
       //todo fetch data from ModuleStore (https://jetbrains.team/p/wm/issues/51)
       val component = getCachingReader().loadComponent(fileUrl, componentName, customModuleFilePath)
-      stopMeasure()
-      return component
+      return@addMeasuredTimeMillis component
     }
     else {
       val storage = getProjectStateStorage(filePath, project.stateStore, project)
@@ -192,8 +186,8 @@ internal class StorageJpsConfigurationReader(private val project: Project,
       else {
         stateMap.getElement(componentName)
       }
-      stopMeasure()
-      return component
+
+      return@addMeasuredTimeMillis component
     }
   }
 
@@ -227,10 +221,9 @@ internal class StorageJpsConfigurationReader(private val project: Project,
     private val loadComponentTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val loadComponentTimeGauge = meter.gaugeBuilder("jps.storage.jps.conf.reader.load.component.ms")
-        .ofLongs().buildObserver()
+      val loadComponentTimeCounter = meter.counterBuilder("jps.storage.jps.conf.reader.load.component.ms").buildObserver()
 
-      meter.batchCallback({ loadComponentTimeGauge.record(loadComponentTimeMs.get()) }, loadComponentTimeGauge)
+      meter.batchCallback({ loadComponentTimeCounter.record(loadComponentTimeMs.get()) }, loadComponentTimeCounter)
     }
 
     init {

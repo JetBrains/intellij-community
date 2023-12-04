@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
@@ -130,16 +131,16 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   override val mainEntityClass: Class<LibraryEntity>
     get() = LibraryEntity::class.java
 
-  override fun loadEntities(reader: JpsFileContentReader,
-                            errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
-    val start = System.currentTimeMillis()
-
+  override fun loadEntities(
+    reader: JpsFileContentReader,
+    errorReporter: ErrorReporter,
+    virtualFileManager: VirtualFileUrlManager
+  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = loadEntitiesTimeMs.addMeasuredTimeMillis {
     val libraryTableTag = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME) }
-                            .onFailure { return LoadingResult(emptyMap(), null) }
-                            .getOrThrow() ?: return LoadingResult(emptyMap(), null)
+                            .onFailure { return@addMeasuredTimeMillis LoadingResult(emptyMap(), null) }
+                            .getOrThrow() ?: return@addMeasuredTimeMillis LoadingResult(emptyMap(), null)
     val libs = runCatchingXmlIssues { libraryTableTag.getChildren(LIBRARY_TAG) }
-      .onFailure { return LoadingResult(emptyMap(), null) }
+      .onFailure { return@addMeasuredTimeMillis LoadingResult(emptyMap(), null) }
       .getOrThrow()
       .mapNotNull { libraryTag ->
         runCatchingXmlIssues {
@@ -149,13 +150,10 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
         }
       }
 
-    val loadingResult: LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = LoadingResult(
+    return@addMeasuredTimeMillis LoadingResult(
       mapOf(LibraryEntity::class.java to libs.mapNotNull { it.getOrNull() }),
       libs.firstOrNull { it.isFailure }?.exceptionOrNull(),
     )
-
-    loadEntitiesTimeMs.addElapsedTimeMillis(start)
-    return loadingResult
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -186,9 +184,8 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
   override fun saveEntities(mainEntities: Collection<LibraryEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             storage: EntityStorage,
-                            writer: JpsFileContentWriter) {
-    val start = System.currentTimeMillis()
-    if (mainEntities.isEmpty()) return
+                            writer: JpsFileContentWriter) = saveEntitiesTimeMs.addMeasuredTimeMillis {
+    if (mainEntities.isEmpty()) return@addMeasuredTimeMillis
 
     val componentTag = JDomSerializationUtil.createComponentElement(LIBRARY_TABLE_COMPONENT_NAME)
     mainEntities.sortedBy { it.name }.forEach {
@@ -196,7 +193,6 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
       componentTag.addContent(saveLibrary(it, externalSystemId, isExternalStorage))
     }
     writer.saveComponent(fileUrl.url, LIBRARY_TABLE_COMPONENT_NAME, componentTag)
-    saveEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
@@ -206,18 +202,15 @@ internal open class JpsLibraryEntitiesSerializer(override val fileUrl: VirtualFi
     private val saveEntitiesTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val loadEntitiesTimeGauge = meter.gaugeBuilder("jps.library.entities.serializer.load.entities.ms")
-        .ofLongs().buildObserver()
-
-      val saveEntitiesTimeGauge = meter.gaugeBuilder("jps.library.entities.serializer.save.entities.ms")
-        .ofLongs().buildObserver()
+      val loadEntitiesTimeCounter = meter.counterBuilder("jps.library.entities.serializer.load.entities.ms").buildObserver()
+      val saveEntitiesTimeCounter = meter.counterBuilder("jps.library.entities.serializer.save.entities.ms").buildObserver()
 
       meter.batchCallback(
         {
-          loadEntitiesTimeGauge.record(loadEntitiesTimeMs.get())
-          saveEntitiesTimeGauge.record(saveEntitiesTimeMs.get())
+          loadEntitiesTimeCounter.record(loadEntitiesTimeMs.get())
+          saveEntitiesTimeCounter.record(saveEntitiesTimeMs.get())
         },
-        loadEntitiesTimeGauge, saveEntitiesTimeGauge
+        loadEntitiesTimeCounter, saveEntitiesTimeCounter
       )
     }
 

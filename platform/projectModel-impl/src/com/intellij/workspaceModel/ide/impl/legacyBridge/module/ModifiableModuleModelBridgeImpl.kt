@@ -14,7 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
@@ -73,9 +73,7 @@ internal class ModifiableModuleModelBridgeImpl(
     return module
   }
 
-  override fun newModule(filePath: String, moduleTypeId: String): Module {
-    val start = System.currentTimeMillis()
-
+  override fun newModule(filePath: String, moduleTypeId: String): Module = newModuleTimeMs.addMeasuredTimeMillis {
     // TODO Handle filePath, add correct iml source with a path
 
     // TODO Must be in sync with module loading. It is not now
@@ -83,7 +81,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
     val existingModule = getModuleByFilePath(canonicalPath)
     if (existingModule != null) {
-      return existingModule
+      return@addMeasuredTimeMillis existingModule
     }
 
     val moduleName = ModulePath.getModuleNameByFilePath(canonicalPath)
@@ -104,9 +102,7 @@ internal class ModifiableModuleModelBridgeImpl(
       type = moduleTypeId
     }
 
-    val moduleInstance = createModuleInstance(moduleEntity, true)
-    newModuleTimeMs.addElapsedTimeMillis(start)
-    return moduleInstance
+    return@addMeasuredTimeMillis createModuleInstance(moduleEntity, true)
   }
 
   private fun resolveShortWindowsName(filePath: String): String {
@@ -150,19 +146,14 @@ internal class ModifiableModuleModelBridgeImpl(
 
   override fun loadModule(file: Path) = loadModule(file.systemIndependentPath)
 
-  override fun loadModule(filePath: String): Module {
-    val start = System.currentTimeMillis()
-
+  override fun loadModule(filePath: String): Module = loadModuleTimeMs.addMeasuredTimeMillis {
     val moduleName = ModulePath.getModuleNameByFilePath(filePath)
     if (findModuleByName(moduleName) != null) {
       error("Module name '$moduleName' already exists. Trying to load module: $filePath")
     }
 
     val moduleEntity = moduleManager.loadModuleToBuilder(moduleName, filePath, diff)
-    val moduleInstance = createModuleInstance(moduleEntity, false)
-
-    loadModuleTimeMs.addElapsedTimeMillis(start)
-    return moduleInstance
+    return@addMeasuredTimeMillis createModuleInstance(moduleEntity, false)
   }
 
   override fun disposeModule(module: Module) {
@@ -215,8 +206,7 @@ internal class ModifiableModuleModelBridgeImpl(
     return moduleManager.findModuleByName(name)
   }
 
-  override fun dispose() {
-    val start = System.currentTimeMillis()
+  override fun dispose() = disposingTimeMs.addMeasuredTimeMillis {
 
     assertModelIsLive()
 
@@ -232,8 +222,6 @@ internal class ModifiableModuleModelBridgeImpl(
     modulesToAdd.clear()
     modulesToDispose.clear()
     newNameToModule.clear()
-
-    disposingTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun isChanged(): Boolean =
@@ -260,9 +248,7 @@ internal class ModifiableModuleModelBridgeImpl(
     return diff
   }
 
-  override fun renameModule(module: Module, newName: String) {
-    val start = System.currentTimeMillis()
-
+  override fun renameModule(module: Module, newName: String) = moduleRenamingTimeMs.addMeasuredTimeMillis {
     module as ModuleBridge
 
     val oldModule = findModuleByName(newName)
@@ -290,8 +276,6 @@ internal class ModifiableModuleModelBridgeImpl(
     if (oldModule != null) {
       throw ModuleWithNameAlreadyExists(ProjectModelBundle.message("module.already.exists.error", newName), newName)
     }
-
-    moduleRenamingTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun getModuleToBeRenamed(newName: String): Module? = newNameToModule[newName]
@@ -339,26 +323,19 @@ internal class ModifiableModuleModelBridgeImpl(
     private val newModuleTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val moduleRenamingTimeGauge = meter.gaugeBuilder("jps.modifiable.module.model.bridge.renaming.ms")
-        .ofLongs().buildObserver()
-
-      val disposingTimeGauge = meter.gaugeBuilder("jps.modifiable.module.model.bridge.disposing.ms")
-        .ofLongs().buildObserver()
-
-      val loadModuleTimeGauge = meter.gaugeBuilder("jps.modifiable.module.model.bridge.load.module.ms")
-        .ofLongs().buildObserver()
-
-      val newModuleTimeGauge = meter.gaugeBuilder("jps.modifiable.module.model.bridge.new.module.ms")
-        .ofLongs().buildObserver()
+      val moduleRenamingTimeCounter = meter.counterBuilder("jps.modifiable.module.model.bridge.renaming.ms").buildObserver()
+      val disposingTimeCounter = meter.counterBuilder("jps.modifiable.module.model.bridge.disposing.ms").buildObserver()
+      val loadModuleTimeCounter = meter.counterBuilder("jps.modifiable.module.model.bridge.load.module.ms").buildObserver()
+      val newModuleTimeCounter = meter.counterBuilder("jps.modifiable.module.model.bridge.new.module.ms").buildObserver()
 
       meter.batchCallback(
         {
-          moduleRenamingTimeGauge.record(moduleRenamingTimeMs.get())
-          disposingTimeGauge.record(disposingTimeMs.get())
-          loadModuleTimeGauge.record(loadModuleTimeMs.get())
-          newModuleTimeGauge.record(newModuleTimeMs.get())
+          moduleRenamingTimeCounter.record(moduleRenamingTimeMs.get())
+          disposingTimeCounter.record(disposingTimeMs.get())
+          loadModuleTimeCounter.record(loadModuleTimeMs.get())
+          newModuleTimeCounter.record(newModuleTimeMs.get())
         },
-        moduleRenamingTimeGauge, disposingTimeGauge, loadModuleTimeGauge, newModuleTimeGauge
+        moduleRenamingTimeCounter, disposingTimeCounter, loadModuleTimeCounter, newModuleTimeCounter
       )
     }
 

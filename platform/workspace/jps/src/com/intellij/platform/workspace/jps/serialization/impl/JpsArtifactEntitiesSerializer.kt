@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -149,19 +150,19 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
-  override fun loadEntities(reader: JpsFileContentReader,
-                            errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
-    val start = System.currentTimeMillis()
-
+  override fun loadEntities(
+    reader: JpsFileContentReader,
+    errorReporter: ErrorReporter,
+    virtualFileManager: VirtualFileUrlManager
+  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = loadEntitiesTimeMs.addMeasuredTimeMillis {
     val artifactListElement = runCatchingXmlIssues { reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME) }
-      .onFailure { return LoadingResult(emptyMap(), it) }
+      .onFailure { return@addMeasuredTimeMillis LoadingResult(emptyMap(), it) }
       .getOrThrow()
-    if (artifactListElement == null) return LoadingResult(emptyMap(), null)
+    if (artifactListElement == null) return@addMeasuredTimeMillis LoadingResult(emptyMap(), null)
 
     val orderOfItems = ArrayList<String>()
     val artifactEntities = runCatchingXmlIssues { artifactListElement.getChildren("artifact") }
-      .onFailure { return LoadingResult(emptyMap(), it) }
+      .onFailure { return@addMeasuredTimeMillis LoadingResult(emptyMap(), it) }
       .getOrThrow()
       .mapNotNull { artifactElement ->
         runCatchingXmlIssues {
@@ -184,15 +185,12 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
         }
       }
 
-    val loadingResult: LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = LoadingResult(
+    return@addMeasuredTimeMillis LoadingResult(
       mapOf(
         ArtifactsOrderEntity::class.java to listOf(ArtifactsOrderEntity(orderOfItems, internalEntitySource)),
         ArtifactEntity::class.java to artifactEntities.mapNotNull { it.getOrNull() },
       ),
       artifactEntities.firstOrNull { it.isFailure }?.exceptionOrNull())
-
-    loadEntitiesTimeMs.addElapsedTimeMillis(start)
-    return loadingResult
   }
 
   override fun checkAndAddToBuilder(builder: MutableEntityStorage,
@@ -288,9 +286,8 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
   override fun saveEntities(mainEntities: Collection<ArtifactEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             storage: EntityStorage,
-                            writer: JpsFileContentWriter) {
-    val start = System.currentTimeMillis()
-    if (mainEntities.isEmpty()) return
+                            writer: JpsFileContentWriter) = saveEntitiesTimeMs.addMeasuredTimeMillis {
+    if (mainEntities.isEmpty()) return@addMeasuredTimeMillis
 
     val componentTag = JDomSerializationUtil.createComponentElement(ARTIFACT_MANAGER_COMPONENT_NAME)
     val orderOfItems = if (preserveOrder) (entities[ArtifactsOrderEntity::class.java]?.firstOrNull() as? ArtifactsOrderEntity?)?.orderOfArtifacts else null
@@ -299,7 +296,6 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       componentTag.addContent(saveArtifact(it))
     }
     writer.saveComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME, componentTag)
-    saveEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   private fun saveArtifact(artifact: ArtifactEntity): Element {
@@ -414,19 +410,15 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     private val saveEntitiesTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val loadEntitiesTimeGauge = meter.gaugeBuilder("jps.artifact.entities.serializer.load.entities.ms")
-        .ofLongs().buildObserver()
-
-      val saveEntitiesTimeGauge = meter.gaugeBuilder("jps.artifact.entities.serializer.save.entities.ms")
-        .ofLongs().buildObserver()
-
+      val loadEntitiesTimeCounter = meter.counterBuilder("jps.artifact.entities.serializer.load.entities.ms").buildObserver()
+      val saveEntitiesTimeCounter = meter.counterBuilder("jps.artifact.entities.serializer.save.entities.ms").buildObserver()
 
       meter.batchCallback(
         {
-          loadEntitiesTimeGauge.record(loadEntitiesTimeMs.get())
-          saveEntitiesTimeGauge.record(saveEntitiesTimeMs.get())
+          loadEntitiesTimeCounter.record(loadEntitiesTimeMs.get())
+          saveEntitiesTimeCounter.record(saveEntitiesTimeMs.get())
         },
-        loadEntitiesTimeGauge, saveEntitiesTimeGauge
+        loadEntitiesTimeCounter, saveEntitiesTimeCounter
       )
     }
 

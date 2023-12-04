@@ -5,6 +5,7 @@ import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
@@ -61,10 +62,11 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
 
   override fun hashCode() = modulePath.hashCode()
 
-  override fun loadEntities(reader: JpsFileContentReader,
-                            errorReporter: ErrorReporter,
-                            virtualFileManager: VirtualFileUrlManager): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> {
-    val start = System.currentTimeMillis()
+  override fun loadEntities(
+    reader: JpsFileContentReader,
+    errorReporter: ErrorReporter,
+    virtualFileManager: VirtualFileUrlManager
+  ): LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = loadEntitiesTimeMs.addMeasuredTimeMillis {
 
     val moduleLibrariesCollector: MutableMap<LibraryId, LibraryEntity> = HashMap()
     val newModuleEntity: ModuleEntity?
@@ -134,16 +136,13 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       else newModuleEntity = null
     }
 
-    val loadingResult: LoadingResult<Map<Class<out WorkspaceEntity>, Collection<WorkspaceEntity>>> = LoadingResult(
+    return@addMeasuredTimeMillis LoadingResult(
       mapOf(
         ModuleEntity::class.java to listOfNotNull(newModuleEntity),
         LibraryEntity::class.java to moduleLibrariesCollector.values,
       ),
       exceptionsCollector.firstOrNull(),
     )
-
-    loadEntitiesTimeMs.addElapsedTimeMillis(start)
-    return loadingResult
   }
 
   private fun loadAdditionalContents(
@@ -606,8 +605,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   override fun saveEntities(mainEntities: Collection<ModuleEntity>,
                             entities: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>,
                             storage: EntityStorage,
-                            writer: JpsFileContentWriter) {
-    val start = System.currentTimeMillis()
+                            writer: JpsFileContentWriter) = saveEntitiesTimeMs.addMeasuredTimeMillis {
 
     val module = mainEntities.singleOrNull()
     if (module != null && acceptsSource(module.entitySource)) {
@@ -681,8 +679,6 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     createFacetSerializer().saveFacetEntities(module, entities, writer, this::acceptsSource)
-
-    saveEntitiesTimeMs.addElapsedTimeMillis(start)
   }
 
   protected open fun createFacetSerializer(): FacetsSerializer {
@@ -964,19 +960,15 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     private val saveEntitiesTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val loadEntitiesTimeGauge = meter.gaugeBuilder("jps.module.iml.entities.serializer.load.entities.ms")
-        .ofLongs().buildObserver()
-
-      val saveEntitiesTimeGauge = meter.gaugeBuilder("jps.module.iml.entities.serializer.save.entities.ms")
-        .ofLongs().buildObserver()
-
+      val loadEntitiesTimeCounter = meter.counterBuilder("jps.module.iml.entities.serializer.load.entities.ms").buildObserver()
+      val saveEntitiesTimeCounter = meter.counterBuilder("jps.module.iml.entities.serializer.save.entities.ms").buildObserver()
 
       meter.batchCallback(
         {
-          loadEntitiesTimeGauge.record(loadEntitiesTimeMs.get())
-          saveEntitiesTimeGauge.record(saveEntitiesTimeMs.get())
+          loadEntitiesTimeCounter.record(loadEntitiesTimeMs.get())
+          saveEntitiesTimeCounter.record(saveEntitiesTimeMs.get())
         },
-        loadEntitiesTimeGauge, saveEntitiesTimeGauge
+        loadEntitiesTimeCounter, saveEntitiesTimeCounter
       )
     }
 

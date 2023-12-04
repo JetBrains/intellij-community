@@ -46,13 +46,11 @@ public class EntityStorageSerializerImpl(
     private val loadCacheMetadataFromFileTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val loadCacheMetadataFromFileTimeGauge = meter.gaugeBuilder("workspaceModel.load.cache.metadata.from.file.ms")
-        .ofLongs().setDescription("Total time spent on metadata deserialization").buildObserver()
+      val loadCacheMetadataFromFileTimeCounter = meter.counterBuilder("workspaceModel.load.cache.metadata.from.file.ms").buildObserver()
 
-      meter.batchCallback({
-          loadCacheMetadataFromFileTimeGauge.record(loadCacheMetadataFromFileTimeMs.get())
-        },
-        loadCacheMetadataFromFileTimeGauge
+      meter.batchCallback(
+        { loadCacheMetadataFromFileTimeCounter.record(loadCacheMetadataFromFileTimeMs.get()) },
+        loadCacheMetadataFromFileTimeCounter
       )
     }
 

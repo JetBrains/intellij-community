@@ -6,6 +6,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.serialization.impl.JpsAppFileContentWriter
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.util.PathUtil
@@ -17,9 +18,7 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 
 internal class AppStorageContentReader : JpsFileContentReader {
-  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
-    val start = System.currentTimeMillis()
-
+  override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? = loadComponentTimeMs.addMeasuredTimeMillis {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     val element: Element? = if (isApplicationLevelFile(filePath)) {
       val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
@@ -32,8 +31,7 @@ internal class AppStorageContentReader : JpsFileContentReader {
     else {
       null
     }
-    loadComponentTimeMs.addElapsedTimeMillis(start)
-    return element
+    return@addMeasuredTimeMillis element
   }
 
   override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
@@ -48,10 +46,9 @@ internal class AppStorageContentReader : JpsFileContentReader {
     private val loadComponentTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val loadComponentTimeGauge = meter.gaugeBuilder("jps.app.storage.content.reader.load.component.ms")
-        .ofLongs().buildObserver()
+      val loadComponentTimeCounter = meter.counterBuilder("jps.app.storage.content.reader.load.component.ms").buildObserver()
 
-      meter.batchCallback({ loadComponentTimeGauge.record(loadComponentTimeMs.get()) }, loadComponentTimeGauge)
+      meter.batchCallback({ loadComponentTimeCounter.record(loadComponentTimeMs.get()) }, loadComponentTimeCounter)
     }
 
     init {
@@ -61,9 +58,7 @@ internal class AppStorageContentReader : JpsFileContentReader {
 }
 
 internal class AppStorageContentWriter(private val session: SaveSessionProducerManager) : JpsAppFileContentWriter {
-  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) {
-    val start = System.currentTimeMillis()
-
+  override fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?) = saveComponentTimeMs.addMeasuredTimeMillis {
     val filePath = JpsPathUtil.urlToPath(fileUrl)
     if (isApplicationLevelFile(filePath)) {
       val storageSpec = FileStorageAnnotation(PathUtil.getFileName(filePath), false, StateSplitterEx::class.java)
@@ -72,8 +67,6 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
       val storage = ApplicationManager.getApplication().stateStore.storageManager.getStateStorage(storageSpec) as StateStorageBase<StateMap>
       session.getProducer(storage)?.setState(null, componentName, componentTag)
     }
-
-    saveComponentTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun getReplacePathMacroMap(fileUrl: String): PathMacroMap {
@@ -92,10 +85,9 @@ internal class AppStorageContentWriter(private val session: SaveSessionProducerM
     private val saveComponentTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val saveComponentTimeGauge = meter.gaugeBuilder("jps.app.storage.content.writer.save.component.ms")
-        .ofLongs().buildObserver()
+      val saveComponentTimeCounter = meter.counterBuilder("jps.app.storage.content.writer.save.component.ms").buildObserver()
 
-      meter.batchCallback({ saveComponentTimeGauge.record(saveComponentTimeMs.get()) }, saveComponentTimeGauge)
+      meter.batchCallback({ saveComponentTimeCounter.record(saveComponentTimeMs.get()) }, saveComponentTimeCounter)
     }
 
     init {

@@ -63,10 +63,9 @@ class DelayedProjectSynchronizer : ProjectActivity {
     private val syncTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val syncTimeGauge = meter.gaugeBuilder("workspaceModel.delayed.project.synchronizer.sync.ms")
-        .ofLongs().buildObserver()
+      val syncTimeCounter = meter.counterBuilder("workspaceModel.delayed.project.synchronizer.sync.ms").buildObserver()
 
-      meter.batchCallback({ syncTimeGauge.record(syncTimeMs.get()) }, syncTimeGauge)
+      meter.batchCallback({ syncTimeCounter.record(syncTimeMs.get()) }, syncTimeCounter)
     }
   }
 }

@@ -245,9 +245,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     }
   }
 
-  private fun checkRecursiveUpdate() {
-    val start = System.currentTimeMillis()
-
+  private fun checkRecursiveUpdate() = checkRecursiveUpdateTimeMs.addMeasuredTimeMillis {
     val stackStraceIterator = RuntimeException().stackTrace.iterator()
     // Skip two methods of the current update
     repeat(2) { stackStraceIterator.next() }
@@ -259,10 +257,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       }
       else if (frame.methodName == onChangedMethodName && frame.className == WorkspaceModelImpl::class.qualifiedName) {
         // It's fine to update the project method in "after update" listeners
-        return
+        return@addMeasuredTimeMillis
       }
     }
-    checkRecursiveUpdateTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun updateUnloadedEntities(description: @NonNls String, updater: (MutableEntityStorage) -> Unit) {
@@ -426,68 +423,43 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
      * https://github.com/airbytehq/airbyte-platform/pull/213/files
      */
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val loadingTotalGauge = meter.gaugeBuilder("workspaceModel.loading.total.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val loadingFromCacheGauge = meter.gaugeBuilder("workspaceModel.loading.from.cache.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val updatesGauge = meter.gaugeBuilder("workspaceModel.updates.count")
-        .ofLongs().setDescription("How many times workspace model was updated").buildObserver()
-
-      val updateTimePreciseGauge = meter.gaugeBuilder("workspaceModel.updates.precise.ms")
-        .ofLongs().setDescription("Total time spent on workspace model updates").buildObserver()
-
-      val preHandlersTimeGauge = meter.gaugeBuilder("workspaceModel.pre.handlers.ms")
-        .ofLongs().setDescription("Total time spent on workspace model updates").buildObserver()
-
-      val collectChangesTimeGauge = meter.gaugeBuilder("workspaceModel.collect.changes.ms")
-        .ofLongs().setDescription("Total time spent on workspace model updates").buildObserver()
-
-      val initializingTimeGauge = meter.gaugeBuilder("workspaceModel.initializing.ms")
-        .ofLongs().setDescription("Total time spent on workspace model updates").buildObserver()
-
-      val toSnapshotTimeGauge = meter.gaugeBuilder("workspaceModel.to.snapshot.ms")
-        .ofLongs().setDescription("Total time spent on workspace model updates").buildObserver()
-
-      val totalUpdatesTimeGauge = meter.gaugeBuilder("workspaceModel.updates.ms")
-        .ofLongs().setDescription("Total time spent on workspace model updates").buildObserver()
-
-      val checkRecursiveUpdateTimeGauge = meter.gaugeBuilder("workspaceModel.check.recursive.update.ms")
-        .ofLongs().setDescription("Total time spent in checkRecursiveUpdate").buildObserver()
-
-      val updateUnloadedEntitiesTimeGauge = meter.gaugeBuilder("workspaceModel.update.unloaded.entities.ms")
-        .ofLongs().setDescription("Total time spent in updateUnloadedEntities").buildObserver()
-
-      val replaceProjectModelTimeGauge = meter.gaugeBuilder("workspaceModel.replace.project.model.ms")
-        .ofLongs().setDescription("Total time spent in replaceProjectModel").buildObserver()
-
-      val initializeBridgesTimeGauge = meter.gaugeBuilder("workspaceModel.init.bridges.ms")
-        .ofLongs().setDescription("Total time spent on initializeBridges").buildObserver()
+      val loadingTotalCounter = meter.counterBuilder("workspaceModel.loading.total.ms").buildObserver()
+      val loadingFromCacheCounter = meter.counterBuilder("workspaceModel.loading.from.cache.ms").buildObserver()
+      val updatesTimesCounter = meter.counterBuilder("workspaceModel.updates.count").buildObserver()
+      val updateTimePreciseCounter = meter.counterBuilder("workspaceModel.updates.precise.ms").buildObserver()
+      val preHandlersTimeCounter = meter.counterBuilder("workspaceModel.pre.handlers.ms").buildObserver()
+      val collectChangesTimeCounter = meter.counterBuilder("workspaceModel.collect.changes.ms").buildObserver()
+      val initializingTimeCounter = meter.counterBuilder("workspaceModel.initializing.ms").buildObserver()
+      val toSnapshotTimeCounter = meter.counterBuilder("workspaceModel.to.snapshot.ms").buildObserver()
+      val totalUpdatesTimeCounter = meter.counterBuilder("workspaceModel.updates.ms").buildObserver()
+      val checkRecursiveUpdateTimeCounter = meter.counterBuilder("workspaceModel.check.recursive.update.ms").buildObserver()
+      val updateUnloadedEntitiesTimeCounter = meter.counterBuilder("workspaceModel.update.unloaded.entities.ms").buildObserver()
+      val replaceProjectModelTimeCounter = meter.counterBuilder("workspaceModel.replace.project.model.ms").buildObserver()
+      val initializeBridgesTimeCounter = meter.counterBuilder("workspaceModel.init.bridges.ms").buildObserver()
 
       meter.batchCallback(
         {
-          loadingTotalGauge.record(loadingTotalTimeMs.get())
-          loadingFromCacheGauge.record(loadingFromCacheTimeMs.get())
-          updatesGauge.record(updatesCounter.get())
+          loadingTotalCounter.record(loadingTotalTimeMs.get())
+          loadingFromCacheCounter.record(loadingFromCacheTimeMs.get())
+          updatesTimesCounter.record(updatesCounter.get())
 
-          updateTimePreciseGauge.record(updateTimePreciseMs.get())
-          preHandlersTimeGauge.record(preHandlersTimeMs.get())
-          collectChangesTimeGauge.record(collectChangesTimeMs.get())
-          initializingTimeGauge.record(initializingTimeMs.get())
-          toSnapshotTimeGauge.record(toSnapshotTimeMs.get())
-          totalUpdatesTimeGauge.record(totalUpdatesTimeMs.get())
+          updateTimePreciseCounter.record(updateTimePreciseMs.get())
+          preHandlersTimeCounter.record(preHandlersTimeMs.get())
+          collectChangesTimeCounter.record(collectChangesTimeMs.get())
+          initializingTimeCounter.record(initializingTimeMs.get())
+          toSnapshotTimeCounter.record(toSnapshotTimeMs.get())
+          totalUpdatesTimeCounter.record(totalUpdatesTimeMs.get())
 
-          checkRecursiveUpdateTimeGauge.record(checkRecursiveUpdateTimeMs.get())
-          updateUnloadedEntitiesTimeGauge.record(updateUnloadedEntitiesTimeMs.get())
-          replaceProjectModelTimeGauge.record(replaceProjectModelTimeMs.get())
-          initializeBridgesTimeGauge.record(initializeBridgesTimeMs.get())
+          checkRecursiveUpdateTimeCounter.record(checkRecursiveUpdateTimeMs.get())
+          updateUnloadedEntitiesTimeCounter.record(updateUnloadedEntitiesTimeMs.get())
+          replaceProjectModelTimeCounter.record(replaceProjectModelTimeMs.get())
+          initializeBridgesTimeCounter.record(initializeBridgesTimeMs.get())
         },
-        loadingTotalGauge, loadingFromCacheGauge, updatesGauge,
-        updateTimePreciseGauge, preHandlersTimeGauge, collectChangesTimeGauge,
-        initializingTimeGauge, toSnapshotTimeGauge, totalUpdatesTimeGauge,
-        checkRecursiveUpdateTimeGauge, updateUnloadedEntitiesTimeGauge,
-        replaceProjectModelTimeGauge, initializeBridgesTimeGauge
+        loadingTotalCounter, loadingFromCacheCounter, updatesTimesCounter,
+        updateTimePreciseCounter, preHandlersTimeCounter, collectChangesTimeCounter,
+        initializingTimeCounter, toSnapshotTimeCounter, totalUpdatesTimeCounter,
+        checkRecursiveUpdateTimeCounter, updateUnloadedEntitiesTimeCounter,
+        replaceProjectModelTimeCounter, initializeBridgesTimeCounter
       )
     }
 

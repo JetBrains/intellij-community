@@ -174,12 +174,11 @@ class GlobalWorkspaceModel : Disposable {
   }
 
   @RequiresWriteLock
-  fun applyStateToProject(targetProject: Project) {
+  fun applyStateToProject(targetProject: Project) = applyStateToProjectTimeMs.addMeasuredTimeMillis {
     ThreadingAssertions.assertWriteAccess()
 
-    val start = System.currentTimeMillis()
     if (targetProject === filteredProject) {
-      return
+      return@addMeasuredTimeMillis
     }
 
     val workspaceModel = WorkspaceModel.getInstance(targetProject)
@@ -188,23 +187,19 @@ class GlobalWorkspaceModel : Disposable {
     workspaceModel.updateProjectModel("Sync global entities with project: ${targetProject.name}") { builder ->
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
-
-    applyStateToProjectTimeMs.addElapsedTimeMillis(start)
   }
 
-  fun applyStateToProjectBuilder(project: Project, targetBuilder: MutableEntityStorage) {
-    applyStateToProjectBuilderTimeMs.addMeasuredTimeMillis {
-      LOG.info("Sync global entities with mutable entity storage")
-      targetBuilder.replaceBySource(globalEntitiesFilter,
-                                    copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
-    }
+  fun applyStateToProjectBuilder(project: Project,
+                                 targetBuilder: MutableEntityStorage) = applyStateToProjectBuilderTimeMs.addMeasuredTimeMillis {
+    LOG.info("Sync global entities with mutable entity storage")
+    targetBuilder.replaceBySource(globalEntitiesFilter,
+                                  copyEntitiesToEmptyStorage(entityStorage.current, VirtualFileUrlManager.getInstance(project)))
   }
 
   @RequiresWriteLock
-  fun syncEntitiesWithProject(sourceProject: Project) {
+  fun syncEntitiesWithProject(sourceProject: Project) = syncEntitiesWithProjectTimeMs.addMeasuredTimeMillis {
     ThreadingAssertions.assertWriteAccess()
 
-    val start = System.currentTimeMillis()
     filteredProject = sourceProject
     val entitiesCopyAtBuilder = copyEntitiesToEmptyStorage(WorkspaceModel.getInstance(sourceProject).currentSnapshot,
                                                            VirtualFileUrlManager.getGlobalInstance())
@@ -212,7 +207,6 @@ class GlobalWorkspaceModel : Disposable {
       builder.replaceBySource(globalEntitiesFilter, entitiesCopyAtBuilder)
     }
     filteredProject = null
-    syncEntitiesWithProjectTimeMs.addElapsedTimeMillis(start)
   }
 
   private fun copyEntitiesToEmptyStorage(storage: EntityStorage, vfuManager: VirtualFileUrlManager): MutableEntityStorage {
@@ -283,31 +277,22 @@ class GlobalWorkspaceModel : Disposable {
     private val syncEntitiesWithProjectTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
-      val updatesGauge = meter.gaugeBuilder("workspaceModel.global.updates.count")
-        .ofLongs().setDescription("How many times global workspace model was updated").buildObserver()
-
-      val totalUpdatesTimeGauge = meter.gaugeBuilder("workspaceModel.global.updates.ms")
-        .ofLongs().setDescription("Total time spent on global workspace model updates").buildObserver()
-
-      val applyStateToProjectTimeGauge = meter.gaugeBuilder("workspaceModel.global.apply.state.to.project.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val applyStateToProjectBuilderTimeGauge = meter.gaugeBuilder("workspaceModel.global.apply.state.to.project.builder.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val syncEntitiesWithProjectTimeGauge = meter.gaugeBuilder("workspaceModel.sync.entities.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val updateTimesCounter = meter.counterBuilder("workspaceModel.global.updates.count").buildObserver()
+      val totalUpdatesTimeCounter = meter.counterBuilder("workspaceModel.global.updates.ms").buildObserver()
+      val applyStateToProjectTimeCounter = meter.counterBuilder("workspaceModel.global.apply.state.to.project.ms").buildObserver()
+      val applyStateToProjectBuilderTimeCounter = meter.counterBuilder("workspaceModel.global.apply.state.to.project.builder.ms").buildObserver()
+      val syncEntitiesWithProjectTimeCounter = meter.counterBuilder("workspaceModel.sync.entities.ms").buildObserver()
 
       meter.batchCallback(
         {
-          updatesGauge.record(updatesCounter.get())
-          totalUpdatesTimeGauge.record(totalUpdatesTimeMs.get())
-          applyStateToProjectTimeGauge.record(applyStateToProjectTimeMs.get())
-          applyStateToProjectBuilderTimeGauge.record(applyStateToProjectBuilderTimeMs.get())
-          syncEntitiesWithProjectTimeGauge.record(syncEntitiesWithProjectTimeMs.get())
+          updateTimesCounter.record(updatesCounter.get())
+          totalUpdatesTimeCounter.record(totalUpdatesTimeMs.get())
+          applyStateToProjectTimeCounter.record(applyStateToProjectTimeMs.get())
+          applyStateToProjectBuilderTimeCounter.record(applyStateToProjectBuilderTimeMs.get())
+          syncEntitiesWithProjectTimeCounter.record(syncEntitiesWithProjectTimeMs.get())
         },
-        updatesGauge, totalUpdatesTimeGauge, applyStateToProjectTimeGauge,
-        applyStateToProjectBuilderTimeGauge, syncEntitiesWithProjectTimeGauge
+        updateTimesCounter, totalUpdatesTimeCounter, applyStateToProjectTimeCounter,
+        applyStateToProjectBuilderTimeCounter, syncEntitiesWithProjectTimeCounter
       )
     }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.backend.workspace.WorkspaceModelCacheVersion
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
@@ -35,16 +36,18 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
       urlRelativizer
     )
 
-  internal fun loadCacheFromFile(file: Path, invalidateGlobalCachesMarkerFile: Path, invalidateCachesMarkerFile: Path): MutableEntityStorage? {
+  internal fun loadCacheFromFile(file: Path,
+                                 invalidateGlobalCachesMarkerFile: Path,
+                                 invalidateCachesMarkerFile: Path): MutableEntityStorage? = loadCacheFromFileTimeMs.addMeasuredTimeMillis {
     val start = System.currentTimeMillis()
-    val cacheFileAttributes = file.basicAttributesIfExists() ?: return null
+    val cacheFileAttributes = file.basicAttributesIfExists() ?: return@addMeasuredTimeMillis null
 
     val invalidateCachesMarkerFileAttributes = invalidateGlobalCachesMarkerFile.basicAttributesIfExists()
     if ((invalidateCachesMarkerFileAttributes != null && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFileAttributes.lastModifiedTime()) ||
         invalidateCachesMarkerFile.exists() && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFile.getLastModifiedTime()) {
       LOG.info("Skipping cache loading since '${invalidateGlobalCachesMarkerFile}' is present and newer than cache file '$file'")
       runCatching { Files.deleteIfExists(file) }
-      return null
+      return@addMeasuredTimeMillis null
     }
 
     LOG.debug("Loading cache from $file")
@@ -60,12 +63,13 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
       }
       .getOrNull()
 
-    loadCacheFromFileTimeMs.addElapsedTimeMillis(start)
-    return cache
+    return@addMeasuredTimeMillis cache
   }
 
   // Serialize and atomically replace cacheFile. Delete temporary file in any cache to avoid junk in cache folder
-  internal fun saveCacheToFile(storage: EntityStorageSnapshot, file: Path, userPreProcessor: Boolean = false): SaveInfo {
+  internal fun saveCacheToFile(storage: EntityStorageSnapshot,
+                               file: Path,
+                               userPreProcessor: Boolean = false): SaveInfo = saveCacheToFileTimeMs.addMeasuredTimeMillis {
     val start = System.currentTimeMillis()
 
     LOG.debug("Saving Workspace model cache to $file")
@@ -91,10 +95,11 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     finally {
       Files.deleteIfExists(tmpFile)
     }
-    saveCacheToFileTimeMs.addElapsedTimeMillis(start)
-    return SaveInfo(System.currentTimeMillis() - start, cacheSize)
+
+    return@addMeasuredTimeMillis SaveInfo(System.currentTimeMillis() - start, cacheSize)
   }
 
+  // Looks like https://opentelemetry.io/docs/specs/otel/metrics/api/#histogram
   data class SaveInfo(
     val loadingTime: Long,
     val loadedSize: Long?,
@@ -147,18 +152,15 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
     private val saveCacheToFileTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val loadCacheFromFileTimeGauge = meter.gaugeBuilder("workspaceModel.load.cache.from.file.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val saveCacheToFileTimeGauge = meter.gaugeBuilder("workspaceModel.save.cache.to.file.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val loadCacheFromFileTimeCounter = meter.counterBuilder("workspaceModel.load.cache.from.file.ms").buildObserver()
+      val saveCacheToFileTimeCounter = meter.counterBuilder("workspaceModel.save.cache.to.file.ms").buildObserver()
 
       meter.batchCallback(
         {
-          loadCacheFromFileTimeGauge.record(loadCacheFromFileTimeMs.get())
-          saveCacheToFileTimeGauge.record(saveCacheToFileTimeMs.get())
+          loadCacheFromFileTimeCounter.record(loadCacheFromFileTimeMs.get())
+          saveCacheToFileTimeCounter.record(saveCacheToFileTimeMs.get())
         },
-        loadCacheFromFileTimeGauge, saveCacheToFileTimeGauge
+        loadCacheFromFileTimeCounter, saveCacheToFileTimeCounter
       )
     }
 

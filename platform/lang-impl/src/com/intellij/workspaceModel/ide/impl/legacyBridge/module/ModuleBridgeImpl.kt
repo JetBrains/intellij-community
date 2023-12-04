@@ -70,9 +70,7 @@ internal class ModuleBridgeImpl(
     }
   }
 
-  override fun beforeChanged(event: VersionedStorageChange) {
-    val start = System.currentTimeMillis()
-
+  override fun beforeChanged(event: VersionedStorageChange) = moduleBridgeBeforeChangedTimeMs.addMeasuredTimeMillis {
     event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
       if (it.entity.symbolicId != moduleEntityId) return@forEach
 
@@ -86,8 +84,6 @@ internal class ModuleBridgeImpl(
         "Cannot resolve module $moduleEntityId. Current store: $currentStore"
       }
     }
-
-    moduleBridgeBeforeChangedTimeMs.addElapsedTimeMillis(start)
   }
 
   override fun rename(newName: String, newModuleFileUrl: VirtualFileUrl?, notifyStorage: Boolean) {
@@ -128,10 +124,8 @@ internal class ModuleBridgeImpl(
     createComponentsNonBlocking()
   }
 
-  override fun initFacets() {
-    facetsInitializationTimeMs.addMeasuredTimeMillis {
-      FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
-    }
+  override fun initFacets() = facetsInitializationTimeMs.addMeasuredTimeMillis {
+    FacetManager.getInstance(this).allFacets.forEach(Facet<*>::initFacet)
   }
 
   override fun registerComponents(corePlugin: IdeaPluginDescriptor?,
@@ -217,20 +211,17 @@ internal class ModuleBridgeImpl(
     private val updateOptionTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val moduleBridgeBeforeChangedTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.before.changed.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val facetsInitializationTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.facet.initialization.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val updateOptionTimeGauge = meter.gaugeBuilder("workspaceModel.moduleBridge.update.option.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val moduleBridgeBeforeChangedTimeCounter = meter.counterBuilder("workspaceModel.moduleBridge.before.changed.ms").buildObserver()
+      val facetsInitializationTimeCounter = meter.counterBuilder("workspaceModel.moduleBridge.facet.initialization.ms").buildObserver()
+      val updateOptionTimeCounter = meter.counterBuilder("workspaceModel.moduleBridge.update.option.ms").buildObserver()
 
       meter.batchCallback(
         {
-          moduleBridgeBeforeChangedTimeGauge.record(moduleBridgeBeforeChangedTimeMs.get())
-          facetsInitializationTimeGauge.record(facetsInitializationTimeMs.get())
-          updateOptionTimeGauge.record(updateOptionTimeMs.get())
+          moduleBridgeBeforeChangedTimeCounter.record(moduleBridgeBeforeChangedTimeMs.get())
+          facetsInitializationTimeCounter.record(facetsInitializationTimeMs.get())
+          updateOptionTimeCounter.record(updateOptionTimeMs.get())
         },
-        moduleBridgeBeforeChangedTimeGauge, facetsInitializationTimeGauge, updateOptionTimeGauge
+        moduleBridgeBeforeChangedTimeCounter, facetsInitializationTimeCounter, updateOptionTimeCounter
       )
     }
 

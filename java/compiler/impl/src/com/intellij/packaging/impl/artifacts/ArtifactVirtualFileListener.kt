@@ -49,12 +49,12 @@ internal class ArtifactVirtualFileListener(private val project: Project) : BulkF
 
   private fun filePathChanged(oldPath: String, newPath: String) = filePathChangedMs.addMeasuredTimeMillis {
     val artifactEntities = if (useNewWorkspaceModelApi()) {
-      val refs = parentPathToArtifactReferences[oldPath]?.asSequence() ?: return
+      val refs = parentPathToArtifactReferences[oldPath]?.asSequence() ?: return@addMeasuredTimeMillis
       val storage = project.workspaceModel.entityStorage.current
       refs.map { it.resolve(storage)!! }
     }
     else {
-      parentPathToArtifacts[oldPath]?.asSequence() ?: return
+      parentPathToArtifacts[oldPath]?.asSequence() ?: return@addMeasuredTimeMillis
     }
     val artifactManager = ArtifactManager.getInstance(project)
 

@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.BridgeInitializer
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryId
 import com.intellij.platform.workspace.jps.entities.LibraryTableId
@@ -33,9 +34,10 @@ import java.util.concurrent.atomic.AtomicLong
 class GlobalLibraryTableBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = GlobalLibraryTableBridge.isEnabled()
 
-  override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
-    val start = System.currentTimeMillis()
-
+  override fun initializeBridges(project: Project,
+                                 changes: Map<Class<*>,
+                                   List<EntityChange<*>>>,
+                                 builder: MutableEntityStorage) = initializeLibraryBridgesTimeMs.addMeasuredTimeMillis {
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
 
     @Suppress("UNCHECKED_CAST")
@@ -54,16 +56,16 @@ class GlobalLibraryTableBridgeInitializer : BridgeInitializer {
         )
       }
     }
-    initializeLibraryBridgesTimeMs.addElapsedTimeMillis(start)
   }
 }
 
 class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
   private val dispatcher = EventDispatcher.create(LibraryTable.Listener::class.java)
 
-  override fun initializeLibraryBridges(changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
-    val start = System.currentTimeMillis()
-
+  override fun initializeLibraryBridges(
+    changes: Map<Class<*>,
+    List<EntityChange<*>>>,
+    builder: MutableEntityStorage) = initializeLibraryBridgesTimeMs.addMeasuredTimeMillis {
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
 
     @Suppress("UNCHECKED_CAST")
@@ -82,12 +84,12 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         )
       }
     }
-    initializeLibraryBridgesTimeMs.addElapsedTimeMillis(start)
   }
 
-  override fun initializeLibraryBridgesAfterLoading(mutableStorage: MutableEntityStorage,
-                                                    initialEntityStorage: VersionedEntityStorage): () -> Unit {
-    val start = System.currentTimeMillis()
+  override fun initializeLibraryBridgesAfterLoading(
+    mutableStorage: MutableEntityStorage,
+    initialEntityStorage: VersionedEntityStorage
+  ): () -> Unit = initializeLibraryBridgesAfterLoadingTimeMs.addMeasuredTimeMillis {
 
     val libraries = mutableStorage
       .entities(LibraryEntity::class.java)
@@ -105,7 +107,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       .toList()
     LOG.debug("Initial load of application-level libraries")
     if (libraries.isEmpty()) {
-      return {}
+      return@addMeasuredTimeMillis {}
     }
 
     for ((entity, library) in libraries) {
@@ -130,17 +132,13 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         }
       }
     }
-
-    initializeLibraryBridgesAfterLoadingTimeMs.addElapsedTimeMillis(start)
-    return action
+    return@addMeasuredTimeMillis action
   }
 
-  override fun handleBeforeChangeEvents(event: VersionedStorageChange) {
-    val start = System.currentTimeMillis()
-
+  override fun handleBeforeChangeEvents(event: VersionedStorageChange) = handleBeforeChangeEventsTimeMs.addMeasuredTimeMillis {
     val removeChanges = event.getChanges(LibraryEntity::class.java).filterGlobalLibraryChanges()
       .filterIsInstance<EntityChange.Removed<LibraryEntity>>()
-    if (removeChanges.isEmpty()) return
+    if (removeChanges.isEmpty()) return@addMeasuredTimeMillis
 
     for (change in removeChanges) {
       val library = event.storageBefore.libraryMap.getDataByEntity(change.entity)
@@ -149,17 +147,14 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         dispatcher.multicaster.beforeLibraryRemoved(library)
       }
     }
-    handleBeforeChangeEventsTimeMs.addElapsedTimeMillis(start)
   }
 
-  override fun handleChangedEvents(event: VersionedStorageChange) {
-    val start = System.currentTimeMillis()
-
+  override fun handleChangedEvents(event: VersionedStorageChange) = handleChangedEventsTimeMs.addMeasuredTimeMillis {
     val changes = event.getChanges(LibraryEntity::class.java)
       .filterGlobalLibraryChanges()
       // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
       .orderToRemoveReplaceAdd()
-    if (changes.isEmpty()) return
+    if (changes.isEmpty()) return@addMeasuredTimeMillis
 
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
     for (change in changes) {
@@ -196,17 +191,13 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
         }
       }
     }
-
-    handleChangedEventsTimeMs.addElapsedTimeMillis(start)
   }
 
   fun fireRootSetChanged(libraryEntity: LibraryEntity, entityStorage: EntityStorage) {
     (entityStorage.libraryMap.getDataByEntity(libraryEntity) as? LibraryBridgeImpl)?.fireRootSetChanged()
   }
 
-  override fun getLibraries(): Array<Library> {
-    val start = System.currentTimeMillis()
-
+  override fun getLibraries(): Array<Library> = getLibrariesTimeMs.addMeasuredTimeMillis {
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
     val storage = entityStorage.current
     val libraryEntitySequence = storage.entities(
@@ -215,17 +206,14 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       .mapNotNull { storage.libraryMap.getDataByEntity(it) }
       .toList().toTypedArray()
 
-    getLibrariesTimeMs.addElapsedTimeMillis(start)
-    return libs
+    return@addMeasuredTimeMillis libs
   }
 
   override fun createLibrary(): Library {
     return createLibrary(null)
   }
 
-  override fun createLibrary(name: String?): Library {
-    val start = System.currentTimeMillis()
-
+  override fun createLibrary(name: String?): Library = createLibraryTimeMs.addMeasuredTimeMillis {
     if (name == null) error("Creating unnamed global libraries is unsupported")
 
     if (getLibraryByName(name) != null) {
@@ -241,8 +229,7 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
       error("Library $name was not created")
     }
 
-    createLibraryTimeMs.addElapsedTimeMillis(start)
-    return newLibrary
+    return@addMeasuredTimeMillis newLibrary
   }
 
   override fun removeLibrary(library: Library) {
@@ -255,17 +242,14 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
     return libraries.iterator()
   }
 
-  override fun getLibraryByName(name: String): Library? {
-    val start = System.currentTimeMillis()
-
+  override fun getLibraryByName(name: String): Library? = getLibraryByNameTimeMs.addMeasuredTimeMillis {
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
     val libraryId = LibraryId(name, LibraryTableId.GlobalLibraryTableId(LibraryTablesRegistrar.APPLICATION_LEVEL))
     val library = entityStorage.current.resolve(libraryId)?.let { entity ->
       entityStorage.current.libraryMap.getDataByEntity(entity)
     }
 
-    getLibraryByNameTimeMs.addElapsedTimeMillis(start)
-    return library
+    return@addMeasuredTimeMillis library
   }
 
   override fun getTableLevel(): String = LibraryTablesRegistrar.APPLICATION_LEVEL
@@ -311,39 +295,26 @@ class GlobalLibraryTableBridgeImpl : GlobalLibraryTableBridge, Disposable {
     private val getLibraryByNameTimeMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter) {
-      val initializeLibraryBridgesTimeGauge = meter.gaugeBuilder("jps.global.initialize.library.bridges.ms")
-        .ofLongs().setDescription("How many time spent in method").buildObserver()
-
-      val initializeLibraryBridgesAfterLoadingTimeGauge = meter.gaugeBuilder("jps.global.initialize.library.bridges.after.loading.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val handleBeforeChangeEventsTimeGauge = meter.gaugeBuilder("jps.global.handle.before.change.events.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val handleChangedEventsTimeGauge = meter.gaugeBuilder("jps.global.handle.changed.events.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val getLibrariesTimeGauge = meter.gaugeBuilder("jps.global.get.libraries.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val createLibraryTimeGauge = meter.gaugeBuilder("jps.global.get.library.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-
-      val getLibraryByNameTimeGauge = meter.gaugeBuilder("jps.global.get.library.by.name.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val initializeLibraryBridgesTimeCounter = meter.counterBuilder("jps.global.initialize.library.bridges.ms").buildObserver()
+      val initializeLibraryBridgesAfterLoadingTimeCounter = meter.counterBuilder("jps.global.initialize.library.bridges.after.loading.ms").buildObserver()
+      val handleBeforeChangeEventsTimeCounter = meter.counterBuilder("jps.global.handle.before.change.events.ms").buildObserver()
+      val handleChangedEventsTimeCounter = meter.counterBuilder("jps.global.handle.changed.events.ms").buildObserver()
+      val getLibrariesTimeCounter = meter.counterBuilder("jps.global.get.libraries.ms").buildObserver()
+      val createLibraryTimeCounter = meter.counterBuilder("jps.global.get.library.ms").buildObserver()
+      val getLibraryByNameTimeCounter = meter.counterBuilder("jps.global.get.library.by.name.ms").buildObserver()
 
       meter.batchCallback(
         {
-          initializeLibraryBridgesTimeGauge.record(initializeLibraryBridgesTimeMs.get())
-          initializeLibraryBridgesAfterLoadingTimeGauge.record(initializeLibraryBridgesAfterLoadingTimeMs.get())
-          handleBeforeChangeEventsTimeGauge.record(handleBeforeChangeEventsTimeMs.get())
-          handleChangedEventsTimeGauge.record(handleChangedEventsTimeMs.get())
-          getLibrariesTimeGauge.record(getLibrariesTimeMs.get())
-          createLibraryTimeGauge.record(createLibraryTimeMs.get())
-          getLibraryByNameTimeGauge.record(getLibraryByNameTimeMs.get())
+          initializeLibraryBridgesTimeCounter.record(initializeLibraryBridgesTimeMs.get())
+          initializeLibraryBridgesAfterLoadingTimeCounter.record(initializeLibraryBridgesAfterLoadingTimeMs.get())
+          handleBeforeChangeEventsTimeCounter.record(handleBeforeChangeEventsTimeMs.get())
+          handleChangedEventsTimeCounter.record(handleChangedEventsTimeMs.get())
+          getLibrariesTimeCounter.record(getLibrariesTimeMs.get())
+          createLibraryTimeCounter.record(createLibraryTimeMs.get())
+          getLibraryByNameTimeCounter.record(getLibraryByNameTimeMs.get())
         },
-        initializeLibraryBridgesTimeGauge, initializeLibraryBridgesAfterLoadingTimeGauge, handleBeforeChangeEventsTimeGauge,
-        handleChangedEventsTimeGauge, getLibrariesTimeGauge, createLibraryTimeGauge, getLibraryByNameTimeGauge
+        initializeLibraryBridgesTimeCounter, initializeLibraryBridgesAfterLoadingTimeCounter, handleBeforeChangeEventsTimeCounter,
+        handleChangedEventsTimeCounter, getLibrariesTimeCounter, createLibraryTimeCounter, getLibraryByNameTimeCounter
       )
     }
 

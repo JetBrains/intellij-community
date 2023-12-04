@@ -23,48 +23,37 @@ object WorkspaceFileIndexDataMetrics {
 
 
   private fun setupOpenTelemetryReporting(meter: Meter): Unit {
-    val instancesCountGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.instances.count")
-      .ofLongs().buildObserver()
-    val initTimeGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.init.ms")
-      .ofLongs().buildObserver()
-    val getFileInfoTimeGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.getFileInfo.ms")
-      .ofLongs().setDescription("Total time spent in method").buildObserver()
-    val visitFileSetsGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.visitFileSets.ms")
-      .ofLongs().setDescription("Total time spent in method").buildObserver()
-    val processFileSetsGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.processFileSets.ms")
-      .ofLongs().setDescription("Total time spent in method").buildObserver()
-    val markDirtyGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.markDirty.ms")
-      .ofLongs().setDescription("Total time spent in method").buildObserver()
-    val updateDirtyEntitiesGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.updateDirtyEntities.ms")
-      .ofLongs().setDescription("Total time spent in method").buildObserver()
-    val onEntitiesChangedGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.onEntitiesChanged.ms")
-      .ofLongs().setDescription("Total time spent in method").buildObserver()
-    val getPackageNameGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.getPackageName.ms")
-      .ofLongs().setDescription("Total time spent in method").buildObserver()
-    val getDirectoriesByPackageNameGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexData.getDirectoriesByPackageName.ms")
-      .ofLongs().setDescription("Total time spent in method").buildObserver()
+    val instancesCountCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.instances.count").buildObserver()
+    val initTimeCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.init.ms").buildObserver()
+    val getFileInfoTimeCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.getFileInfo.ms").buildObserver()
+    val visitFileSetsCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.visitFileSets.ms").buildObserver()
+    val processFileSetsCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.processFileSets.ms").buildObserver()
+    val markDirtyCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.markDirty.ms").buildObserver()
+    val updateDirtyEntitiesCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.updateDirtyEntities.ms").buildObserver()
+    val onEntitiesChangedCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.onEntitiesChanged.ms").buildObserver()
+    val getPackageNameCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.getPackageName.ms").buildObserver()
+    val getDirectoriesByPackageNameCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexData.getDirectoriesByPackageName.ms").buildObserver()
 
-    val registerFileSetsMsGauge = meter.gaugeBuilder("workspaceModel.workspaceFileIndexContributor.registerFileSets.ms")
-      .ofLongs().buildObserver()
+    val registerFileSetsMsCounter = meter.counterBuilder("workspaceModel.workspaceFileIndexContributor.registerFileSets.ms").buildObserver()
 
     meter.batchCallback(
       {
-        instancesCountGauge.record(instancesCounter.get())
-        initTimeGauge.record(initTimeMs.get())
-        getFileInfoTimeGauge.record(getFileInfoTimeMs.get())
-        visitFileSetsGauge.record(visitFileSetsTimeMs.get())
-        processFileSetsGauge.record(processFileSetsTimeMs.get())
-        markDirtyGauge.record(markDirtyTimeMs.get())
-        updateDirtyEntitiesGauge.record(updateDirtyEntitiesTimeMs.get())
-        onEntitiesChangedGauge.record(onEntitiesChangedTimeMs.get())
-        getPackageNameGauge.record(getPackageNameTimeNanosec.fromNanosecToMillis())
-        getDirectoriesByPackageNameGauge.record(getDirectoriesByPackageNameTimeMs.get())
+        instancesCountCounter.record(instancesCounter.get())
+        initTimeCounter.record(initTimeMs.get())
+        getFileInfoTimeCounter.record(getFileInfoTimeMs.get())
+        visitFileSetsCounter.record(visitFileSetsTimeMs.get())
+        processFileSetsCounter.record(processFileSetsTimeMs.get())
+        markDirtyCounter.record(markDirtyTimeMs.get())
+        updateDirtyEntitiesCounter.record(updateDirtyEntitiesTimeMs.get())
+        onEntitiesChangedCounter.record(onEntitiesChangedTimeMs.get())
+        getPackageNameCounter.record(getPackageNameTimeNanosec.fromNanosecToMillis())
+        getDirectoriesByPackageNameCounter.record(getDirectoriesByPackageNameTimeMs.get())
 
-        registerFileSetsMsGauge.record(registerFileSetsTimeNanosec.fromNanosecToMillis())
+        registerFileSetsMsCounter.record(registerFileSetsTimeNanosec.fromNanosecToMillis())
       },
-      instancesCountGauge, initTimeGauge, getFileInfoTimeGauge, visitFileSetsGauge,
-      processFileSetsGauge, markDirtyGauge, updateDirtyEntitiesGauge, onEntitiesChangedGauge,
-      getPackageNameGauge, getDirectoriesByPackageNameGauge, registerFileSetsMsGauge
+      instancesCountCounter, initTimeCounter, getFileInfoTimeCounter, visitFileSetsCounter,
+      processFileSetsCounter, markDirtyCounter, updateDirtyEntitiesCounter, onEntitiesChangedCounter,
+      getPackageNameCounter, getDirectoriesByPackageNameCounter, registerFileSetsMsCounter
     )
   }
 
