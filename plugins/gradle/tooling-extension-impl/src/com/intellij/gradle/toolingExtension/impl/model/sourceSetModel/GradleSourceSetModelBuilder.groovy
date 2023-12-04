@@ -44,7 +44,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   private static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
-  private static final boolean is44OrBetter = gradleBaseVersion >= GradleVersion.version("4.4")
+  private static final boolean is49OrBetter = gradleBaseVersion >= GradleVersion.version("4.9")
   private static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
   private static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   private static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
@@ -619,7 +619,7 @@ class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
   }
 
   private static boolean isJarDescendant(Jar task) {
-    if (is44OrBetter) {
+    if (is49OrBetter) {
       return task.getTaskIdentity().type != Jar
     } else {
       return (task.asDynamicObject as AbstractDynamicObject).publicType != Jar
