@@ -24,13 +24,11 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -84,8 +82,8 @@ public class NewProjectWizard extends AbstractProjectWizard {
   }
 
   @Override
-  protected @Nullable Border createContentPaneBorder() {
-    return isNewWizard() ? JBUI.Borders.empty() : super.createContentPaneBorder();
+  protected @NotNull DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
   }
 
   @Nullable
