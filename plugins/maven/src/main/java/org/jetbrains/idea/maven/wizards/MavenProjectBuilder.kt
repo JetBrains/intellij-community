@@ -105,7 +105,7 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
   private fun commitWithAsyncBuilder(project: Project,
                                      model: ModifiableModuleModel?,
                                      modulesProvider: ModulesProvider,
-                                     artifactModel: ModifiableArtifactModel): List<Module> {
+                                     artifactModel: ModifiableArtifactModel?): List<Module> {
     val projectFile = projectFileToImport
     if (null == projectFile) {
       LOG.warn("Project file missing")
@@ -122,9 +122,9 @@ class MavenProjectBuilder : ProjectImportBuilder<MavenProject>(), DeprecatedProj
 
 
   override fun commit(project: Project,
-                      model: ModifiableModuleModel,
+                      model: ModifiableModuleModel?,
                       modulesProvider: ModulesProvider,
-                      artifactModel: ModifiableArtifactModel): List<Module> {
+                      artifactModel: ModifiableArtifactModel?): List<Module> {
     return commitWithAsyncBuilder(project, model, modulesProvider, artifactModel)
   }
 

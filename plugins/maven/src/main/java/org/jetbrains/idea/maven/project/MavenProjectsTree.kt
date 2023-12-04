@@ -1,1205 +1,1174 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.project;
+package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ArrayListSet;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.DisposableWrapperList;
-import com.intellij.util.containers.FileCollectionFactory;
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
-import one.util.streamex.MoreCollectors;
-import one.util.streamex.StreamEx;
-import org.jdom.Element;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider;
-import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
-import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
-import org.jetbrains.idea.maven.utils.*;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.containers.ArrayListSet
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.DisposableWrapperList
+import com.intellij.util.containers.FileCollectionFactory
+import it.unimi.dsi.fastutil.Hash
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
+import org.jdom.output.Format
+import org.jdom.output.XMLOutputter
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
+import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider
+import org.jetbrains.idea.maven.model.*
+import org.jetbrains.idea.maven.project.MavenProjectsTree.ThrowableCallable
+import org.jetbrains.idea.maven.project.MavenProjectsTreeUpdater.UpdateSpec
+import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
+import org.jetbrains.idea.maven.utils.*
+import java.io.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.*
+import java.util.concurrent.locks.Lock
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import java.util.function.Consumer
+import java.util.regex.Pattern
+import java.util.zip.CRC32
+import kotlin.concurrent.Volatile
 
-import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.zip.CRC32;
-
-public final class MavenProjectsTree {
-  private static final Logger LOG = Logger.getInstance(MavenProjectsTree.class);
-
-  private static final String STORAGE_VERSION = MavenProjectsTree.class.getSimpleName() + ".8";
-
-  private final Object myStateLock = new Object();
-  private final ReentrantReadWriteLock myStructureLock = new ReentrantReadWriteLock();
-  private final Lock myStructureReadLock = myStructureLock.readLock();
-  private final Lock myStructureWriteLock = myStructureLock.writeLock();
+class MavenProjectsTree(val project: Project) {
+  private val myStateLock = Any()
+  private val myStructureLock = ReentrantReadWriteLock()
+  private val myStructureReadLock: Lock = myStructureLock.readLock()
+  private val myStructureWriteLock: Lock = myStructureLock.writeLock()
 
   // TODO replace with sets
-  private volatile Set<String> myManagedFilesPaths = new LinkedHashSet<>();
-  private volatile List<String> myIgnoredFilesPaths = new ArrayList<>();
-  private volatile List<String> myIgnoredFilesPatterns = new ArrayList<>();
-  private volatile Pattern myIgnoredFilesPatternsCache;
+  @Volatile
+  private var myManagedFilesPaths: MutableSet<String> = LinkedHashSet()
 
-  private MavenExplicitProfiles myExplicitProfiles = MavenExplicitProfiles.NONE;
-  private final MavenExplicitProfiles myTemporarilyRemovedExplicitProfiles =
-    new MavenExplicitProfiles(new HashSet<>(), new HashSet<>());
+  @Volatile
+  private var myIgnoredFilesPaths: MutableList<String> = ArrayList()
 
-  private final List<MavenProject> myRootProjects = new ArrayList<>();
+  @Volatile
+  private var myIgnoredFilesPatterns: List<String> = ArrayList()
 
-  private final Map<VirtualFile, MavenProjectTimestamp> myTimestamps = new HashMap<>();
-  private final MavenWorkspaceMap myWorkspaceMap = new MavenWorkspaceMap();
-  private final Map<MavenId, MavenProject> myMavenIdToProjectMapping = new HashMap<>();
-  private final Map<VirtualFile, MavenProject> myVirtualFileToProjectMapping = new HashMap<>();
-  private final Map<MavenProject, List<MavenProject>> myAggregatorToModuleMapping = new HashMap<>();
-  private final Map<MavenProject, MavenProject> myModuleToAggregatorMapping = new HashMap<>();
+  @Volatile
+  private var myIgnoredFilesPatternsCache: Pattern? = null
 
-  private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
-  private final @NotNull Project myProject;
+  private var myExplicitProfiles: MavenExplicitProfiles = MavenExplicitProfiles.NONE
+  private val myTemporarilyRemovedExplicitProfiles = MavenExplicitProfiles(HashSet(), HashSet())
+
+  private val myRootProjects: MutableList<MavenProject> = ArrayList()
+
+  private val myTimestamps: MutableMap<VirtualFile, MavenProjectTimestamp> = HashMap()
+  private val myWorkspaceMap = MavenWorkspaceMap()
+  private val myMavenIdToProjectMapping: MutableMap<MavenId?, MavenProject> = HashMap()
+  private val myVirtualFileToProjectMapping: MutableMap<VirtualFile, MavenProject> = HashMap()
+  private val myAggregatorToModuleMapping: MutableMap<MavenProject, MutableList<MavenProject>> = HashMap()
+  private val myModuleToAggregatorMapping: MutableMap<MavenProject, MavenProject> = HashMap()
+
+  private val myListeners = DisposableWrapperList<Listener>()
 
 
-  private final MavenProjectReaderProjectLocator myProjectLocator = new MavenProjectReaderProjectLocator() {
-    @Override
-    public VirtualFile findProjectFile(MavenId coordinates) {
-      MavenProject project = findProject(coordinates);
-      return project == null ? null : project.getFile();
-    }
-  };
-
-  public MavenProjectsTree(@NotNull Project project) {
-    myProject = project;
+  val projectLocator: MavenProjectReaderProjectLocator = MavenProjectReaderProjectLocator { coordinates ->
+    val project = findProject(coordinates)
+    project?.file
   }
 
   @ApiStatus.Internal
-  MavenProjectTimestamp getTimeStamp(@NotNull MavenProject mavenProject) {
-    return myTimestamps.get(mavenProject.getFile());
+  internal fun getTimeStamp(mavenProject: MavenProject): MavenProjectTimestamp? {
+    return myTimestamps[mavenProject.file]
   }
 
   @ApiStatus.Internal
-  void putVirtualFileToProjectMapping(@NotNull MavenProject mavenProject, @Nullable MavenId oldProjectId) {
-    withWriteLock(() -> {
-      clearIDMaps(oldProjectId);
-      myVirtualFileToProjectMapping.put(mavenProject.getFile(), mavenProject);
-      fillIDMaps(mavenProject);
-    });
+  fun putVirtualFileToProjectMapping(mavenProject: MavenProject, oldProjectId: MavenId?) {
+    withWriteLock<RuntimeException> {
+      clearIDMaps(oldProjectId)
+      myVirtualFileToProjectMapping[mavenProject.file] = mavenProject
+      fillIDMaps(mavenProject)
+    }
   }
 
   @ApiStatus.Internal
-  void putTimestamp(@NotNull MavenProject mavenProject, @NotNull MavenProjectTimestamp timestamp) {
-    myTimestamps.put(mavenProject.getFile(), timestamp);
+  internal fun putTimestamp(mavenProject: MavenProject, timestamp: MavenProjectTimestamp) {
+    myTimestamps[mavenProject.file] = timestamp
   }
 
-  @NotNull
-  Project getProject() {
-    return myProject;
-  }
-
-  public MavenProjectReaderProjectLocator getProjectLocator() {
-    return myProjectLocator;
-  }
-
-  public static @Nullable MavenProjectsTree read(Project project, Path file) throws IOException {
-    MavenProjectsTree result = new MavenProjectsTree(project);
-
-    try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(file)))) {
-      try {
-        if (!STORAGE_VERSION.equals(in.readUTF())) return null;
-        result.myManagedFilesPaths = readCollection(in, new LinkedHashSet<>());
-        result.myIgnoredFilesPaths = readCollection(in, new ArrayList<>());
-        result.myIgnoredFilesPatterns = readCollection(in, new ArrayList<>());
-        result.myExplicitProfiles = new MavenExplicitProfiles(readCollection(in, new HashSet<>()),
-                                                              readCollection(in, new HashSet<>()));
-        result.myRootProjects.addAll(readProjectsRecursively(in, result));
-      }
-      catch (IOException e) {
-        in.close();
-        Files.delete(file);
-        throw e;
-      }
-      catch (Throwable e) {
-        throw new IOException(e);
-      }
-    }
-    return result;
-  }
-
-  private static <T extends Collection<String>> T readCollection(DataInputStream in, T result) throws IOException {
-    int count = in.readInt();
-    while (count-- > 0) {
-      result.add(in.readUTF());
-    }
-    return result;
-  }
-
-  private static void writeCollection(DataOutputStream out, Collection<String> list) throws IOException {
-    out.writeInt(list.size());
-    for (String each : list) {
-      out.writeUTF(each);
-    }
-  }
-
-  private static List<MavenProject> readProjectsRecursively(DataInputStream in,
-                                                            MavenProjectsTree tree) throws IOException {
-    int count = in.readInt();
-    List<MavenProject> result = new ArrayList<>(count);
-    while (count-- > 0) {
-      MavenProject project = MavenProject.read(in);
-      MavenProjectTimestamp timestamp = MavenProjectTimestamp.read(in);
-      List<MavenProject> modules = readProjectsRecursively(in, tree);
-      if (project != null) {
-        result.add(project);
-        tree.myTimestamps.put(project.getFile(), timestamp);
-        tree.myVirtualFileToProjectMapping.put(project.getFile(), project);
-        tree.fillIDMaps(project);
-        if (!modules.isEmpty()) {
-          tree.myAggregatorToModuleMapping.put(project, modules);
-          for (MavenProject eachModule : modules) {
-            tree.myModuleToAggregatorMapping.put(eachModule, project);
-          }
+  @Throws(IOException::class)
+  fun save(file: Path) {
+    synchronized(myStateLock) {
+      withReadLock<IOException> {
+        DataOutputStream(BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file)))).use { out ->
+          out.writeUTF(STORAGE_VERSION)
+          writeCollection(out, myManagedFilesPaths)
+          writeCollection(out, myIgnoredFilesPaths)
+          writeCollection(out, myIgnoredFilesPatterns)
+          writeCollection(out, myExplicitProfiles.enabledProfiles)
+          writeCollection(out, myExplicitProfiles.disabledProfiles)
+          writeProjectsRecursively(out, myRootProjects)
         }
       }
     }
-    return result;
   }
 
-  public void save(@NotNull Path file) throws IOException {
-    synchronized (myStateLock) {
-      withReadLock(() -> {
-        try (var out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file))))) {
-          out.writeUTF(STORAGE_VERSION);
-          writeCollection(out, myManagedFilesPaths);
-          writeCollection(out, myIgnoredFilesPaths);
-          writeCollection(out, myIgnoredFilesPatterns);
-          writeCollection(out, myExplicitProfiles.getEnabledProfiles());
-          writeCollection(out, myExplicitProfiles.getDisabledProfiles());
-          writeProjectsRecursively(out, myRootProjects);
-        }
-      });
+  @Throws(IOException::class)
+  private fun writeProjectsRecursively(out: DataOutputStream, mavenProjects: List<MavenProject>) {
+    out.writeInt(mavenProjects.size)
+    for (mavenProject in mavenProjects) {
+      mavenProject.write(out)
+      val timestamp = myTimestamps.getOrDefault(mavenProject.file, MavenProjectTimestamp.NULL)
+      timestamp.write(out)
+      writeProjectsRecursively(out, getModules(mavenProject))
     }
   }
 
-  private void writeProjectsRecursively(DataOutputStream out, List<MavenProject> mavenProjects) throws IOException {
-    out.writeInt(mavenProjects.size());
-    for (var mavenProject : mavenProjects) {
-      mavenProject.write(out);
-      var timestamp = myTimestamps.getOrDefault(mavenProject.getFile(), MavenProjectTimestamp.NULL);
-      timestamp.write(out);
-      writeProjectsRecursively(out, getModules(mavenProject));
+  val managedFilesPaths: List<String>
+    get() {
+      synchronized(myStateLock) {
+        return ArrayList(myManagedFilesPaths)
+      }
     }
-  }
 
-  public @NotNull List<String> getManagedFilesPaths() {
-    synchronized (myStateLock) {
-      return new ArrayList<>(myManagedFilesPaths);
+  fun resetManagedFilesPathsAndProfiles(paths: List<String>, profiles: MavenExplicitProfiles) {
+    synchronized(myStateLock) {
+      myManagedFilesPaths = LinkedHashSet(paths)
     }
-  }
-
-  public void resetManagedFilesPathsAndProfiles(List<String> paths, MavenExplicitProfiles profiles) {
-    synchronized (myStateLock) {
-      myManagedFilesPaths = new LinkedHashSet<>(paths);
-    }
-    setExplicitProfiles(profiles);
+    explicitProfiles = profiles
   }
 
   @TestOnly
-  public void resetManagedFilesAndProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles) {
-    resetManagedFilesPathsAndProfiles(MavenUtil.collectPaths(files), profiles);
+  fun resetManagedFilesAndProfiles(files: List<VirtualFile?>?, profiles: MavenExplicitProfiles) {
+    resetManagedFilesPathsAndProfiles(MavenUtil.collectPaths(files), profiles)
   }
 
-  public void addManagedFilesWithProfiles(List<VirtualFile> files, MavenExplicitProfiles profiles) {
-    List<String> newFiles;
-    MavenExplicitProfiles newProfiles;
-    synchronized (myStateLock) {
-      newFiles = new ArrayList<>(myManagedFilesPaths);
-      newFiles.addAll(MavenUtil.collectPaths(files));
+  fun addManagedFilesWithProfiles(files: List<VirtualFile?>?, profiles: MavenExplicitProfiles) {
+    var newFiles: MutableList<String>
+    var newProfiles: MavenExplicitProfiles
+    synchronized(myStateLock) {
+      newFiles = ArrayList(myManagedFilesPaths)
+      newFiles.addAll(MavenUtil.collectPaths(files))
 
-      newProfiles = myExplicitProfiles.clone();
-      newProfiles.getEnabledProfiles().addAll(profiles.getEnabledProfiles());
-      newProfiles.getDisabledProfiles().addAll(profiles.getDisabledProfiles());
+      newProfiles = myExplicitProfiles.clone()
+      newProfiles.enabledProfiles.addAll(profiles.enabledProfiles)
+      newProfiles.disabledProfiles.addAll(profiles.disabledProfiles)
     }
 
-    resetManagedFilesPathsAndProfiles(newFiles, newProfiles);
+    resetManagedFilesPathsAndProfiles(newFiles, newProfiles)
   }
 
-  public void removeManagedFiles(List<VirtualFile> files) {
-    synchronized (myStateLock) {
-      myManagedFilesPaths.removeAll(MavenUtil.collectPaths(files));
-    }
-  }
-
-  public List<VirtualFile> getExistingManagedFiles() {
-    List<VirtualFile> result = new ArrayList<>();
-    for (String path : getManagedFilesPaths()) {
-      VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);
-      if (f != null && f.exists()) result.add(f);
-    }
-    return result;
-  }
-
-  public List<String> getIgnoredFilesPaths() {
-    synchronized (myStateLock) {
-      return new ArrayList<>(myIgnoredFilesPaths);
+  fun removeManagedFiles(files: List<VirtualFile?>?) {
+    synchronized(myStateLock) {
+      myManagedFilesPaths.removeAll(MavenUtil.collectPaths(files))
     }
   }
 
-  public void setIgnoredFilesPaths(final List<String> paths) {
-    doChangeIgnoreStatus(() -> myIgnoredFilesPaths = new ArrayList<>(paths));
-  }
-
-  public void removeIgnoredFilesPaths(final Collection<String> paths) {
-    doChangeIgnoreStatus(() -> myIgnoredFilesPaths.removeAll(paths));
-  }
-
-  public boolean getIgnoredState(MavenProject project) {
-    synchronized (myStateLock) {
-      return myIgnoredFilesPaths.contains(project.getPath());
-    }
-  }
-
-  public void setIgnoredState(List<MavenProject> projects, boolean ignored) {
-    setIgnoredState(projects, ignored, false);
-  }
-
-  public void setIgnoredState(List<MavenProject> projects, boolean ignored, boolean fromImport) {
-    final List<String> pomPaths = ContainerUtil.map(projects, project -> project.getPath());
-    setIgnoredStateForPoms(pomPaths, ignored, fromImport);
-  }
-
-  @ApiStatus.Internal
-  public void setIgnoredStateForPoms(List<String> pomPaths, boolean ignored) {
-    doSetIgnoredState(pomPaths, ignored, false);
-  }
-
-  @ApiStatus.Internal
-  public void setIgnoredStateForPoms(List<String> pomPaths, boolean ignored, boolean fromImport) {
-    doSetIgnoredState(pomPaths, ignored, fromImport);
-  }
-
-  private void doSetIgnoredState(List<String> pomPaths, final boolean ignored, boolean fromImport) {
-    doChangeIgnoreStatus(() -> {
-      if (ignored) {
-        myIgnoredFilesPaths.addAll(pomPaths);
+  val existingManagedFiles: List<VirtualFile>
+    get() {
+      val result: MutableList<VirtualFile> = ArrayList()
+      for (path in managedFilesPaths) {
+        val f = LocalFileSystem.getInstance().findFileByPath(path)
+        if (f != null && f.exists()) result.add(f)
       }
-      else {
-        myIgnoredFilesPaths.removeAll(pomPaths);
+      return result
+    }
+
+  var ignoredFilesPaths: List<String>
+    get() {
+      synchronized(myStateLock) {
+        return ArrayList(myIgnoredFilesPaths)
       }
-    }, fromImport);
+    }
+    set(paths) {
+      doChangeIgnoreStatus({ myIgnoredFilesPaths = ArrayList(paths) })
+    }
+
+  fun removeIgnoredFilesPaths(paths: Collection<String>?) {
+    doChangeIgnoreStatus({ myIgnoredFilesPaths.removeAll(paths!!) })
   }
 
-  public List<String> getIgnoredFilesPatterns() {
-    synchronized (myStateLock) {
-      return new ArrayList<>(myIgnoredFilesPatterns);
+  fun getIgnoredState(project: MavenProject): Boolean {
+    synchronized(myStateLock) {
+      return myIgnoredFilesPaths.contains(project.path)
     }
   }
 
-  public void setIgnoredFilesPatterns(final List<String> patterns) {
-    doChangeIgnoreStatus(() -> {
-      myIgnoredFilesPatternsCache = null;
-      myIgnoredFilesPatterns = new ArrayList<>(patterns);
-    });
+  fun setIgnoredState(projects: List<MavenProject>, ignored: Boolean) {
+    setIgnoredState(projects, ignored, false)
   }
 
-  private void doChangeIgnoreStatus(Runnable runnable) {
-    doChangeIgnoreStatus(runnable, false);
-  }
-
-  private void doChangeIgnoreStatus(Runnable runnable, boolean fromImport) {
-    List<MavenProject> ignoredBefore;
-    List<MavenProject> ignoredAfter;
-
-    synchronized (myStateLock) {
-      ignoredBefore = getIgnoredProjects();
-      runnable.run();
-      ignoredAfter = getIgnoredProjects();
-    }
-
-    List<MavenProject> ignored = new ArrayList<>(ignoredAfter);
-    ignored.removeAll(ignoredBefore);
-
-    List<MavenProject> unignored = new ArrayList<>(ignoredBefore);
-    unignored.removeAll(ignoredAfter);
-
-    if (ignored.isEmpty() && unignored.isEmpty()) return;
-
-    fireProjectsIgnoredStateChanged(ignored, unignored, fromImport);
-  }
-
-  private List<MavenProject> getIgnoredProjects() {
-    List<MavenProject> result = new ArrayList<>();
-    for (MavenProject each : getProjects()) {
-      if (isIgnored(each)) result.add(each);
-    }
-    return result;
-  }
-
-  public boolean isIgnored(@NotNull MavenProject project) {
-    String path = project.getPath();
-    return isIgnored(path);
+  fun setIgnoredState(projects: List<MavenProject>, ignored: Boolean, fromImport: Boolean) {
+    val pomPaths = projects.map { it.path }
+    setIgnoredStateForPoms(pomPaths, ignored, fromImport)
   }
 
   @ApiStatus.Internal
-  boolean isIgnored(String projectPath) {
-    synchronized (myStateLock) {
-      return myIgnoredFilesPaths.contains(projectPath) || matchesIgnoredFilesPatterns(projectPath);
+  fun setIgnoredStateForPoms(pomPaths: List<String>, ignored: Boolean) {
+    doSetIgnoredState(pomPaths, ignored, false)
+  }
+
+  @ApiStatus.Internal
+  fun setIgnoredStateForPoms(pomPaths: List<String>, ignored: Boolean, fromImport: Boolean) {
+    doSetIgnoredState(pomPaths, ignored, fromImport)
+  }
+
+  private fun doSetIgnoredState(pomPaths: List<String>, ignored: Boolean, fromImport: Boolean) {
+    doChangeIgnoreStatus({
+                           if (ignored) {
+                             myIgnoredFilesPaths.addAll(pomPaths)
+                           }
+                           else {
+                             myIgnoredFilesPaths.removeAll(pomPaths)
+                           }
+                         }, fromImport)
+  }
+
+  var ignoredFilesPatterns: List<String>
+    get() {
+      synchronized(myStateLock) {
+        return ArrayList(myIgnoredFilesPatterns)
+      }
+    }
+    set(patterns) {
+      doChangeIgnoreStatus({
+                             myIgnoredFilesPatternsCache = null
+                             myIgnoredFilesPatterns = ArrayList(patterns)
+                           })
+    }
+
+  private fun doChangeIgnoreStatus(runnable: Runnable, fromImport: Boolean = false) {
+    var ignoredBefore: List<MavenProject>
+    var ignoredAfter: List<MavenProject>
+
+    synchronized(myStateLock) {
+      ignoredBefore = ignoredProjects
+      runnable.run()
+      ignoredAfter = ignoredProjects
+    }
+
+    val ignored: MutableList<MavenProject> = ArrayList(ignoredAfter)
+    ignored.removeAll(ignoredBefore)
+
+    val unignored: MutableList<MavenProject> = ArrayList(ignoredBefore)
+    unignored.removeAll(ignoredAfter)
+
+    if (ignored.isEmpty() && unignored.isEmpty()) return
+
+    fireProjectsIgnoredStateChanged(ignored, unignored, fromImport)
+  }
+
+  private val ignoredProjects: List<MavenProject>
+    get() {
+      val result: MutableList<MavenProject> = ArrayList()
+      for (each in projects) {
+        if (isIgnored(each)) result.add(each)
+      }
+      return result
+    }
+
+  fun isIgnored(project: MavenProject): Boolean {
+    val path = project.path
+    return isIgnored(path)
+  }
+
+  @ApiStatus.Internal
+  fun isIgnored(projectPath: String): Boolean {
+    synchronized(myStateLock) {
+      return myIgnoredFilesPaths.contains(projectPath) || matchesIgnoredFilesPatterns(projectPath)
     }
   }
 
-  private boolean matchesIgnoredFilesPatterns(String path) {
-    synchronized (myStateLock) {
+  private fun matchesIgnoredFilesPatterns(path: String): Boolean {
+    synchronized(myStateLock) {
       if (myIgnoredFilesPatternsCache == null) {
-        myIgnoredFilesPatternsCache = Pattern.compile(Strings.translateMasks(myIgnoredFilesPatterns));
+        myIgnoredFilesPatternsCache = Pattern.compile(Strings.translateMasks(myIgnoredFilesPatterns))
       }
-      return myIgnoredFilesPatternsCache.matcher(path).matches();
+      return myIgnoredFilesPatternsCache!!.matcher(path).matches()
     }
   }
 
-  public MavenExplicitProfiles getExplicitProfiles() {
-    synchronized (myStateLock) {
-      return myExplicitProfiles.clone();
-    }
-  }
-
-  public void setExplicitProfiles(MavenExplicitProfiles explicitProfiles) {
-    synchronized (myStateLock) {
-      myExplicitProfiles = explicitProfiles.clone();
-    }
-    fireProfilesChanged();
-  }
-
-  private void updateExplicitProfiles() {
-    Collection<String> available = getAvailableProfiles();
-
-    synchronized (myStateLock) {
-      updateExplicitProfiles(myExplicitProfiles.getEnabledProfiles(), myTemporarilyRemovedExplicitProfiles.getEnabledProfiles(),
-                             available);
-      updateExplicitProfiles(myExplicitProfiles.getDisabledProfiles(), myTemporarilyRemovedExplicitProfiles.getDisabledProfiles(),
-                             available);
-    }
-  }
-
-  private static void updateExplicitProfiles(Collection<String> explicitProfiles, Collection<String> temporarilyRemovedExplicitProfiles,
-                                             Collection<String> available) {
-    Collection<String> removedProfiles = new HashSet<>(explicitProfiles);
-    removedProfiles.removeAll(available);
-    temporarilyRemovedExplicitProfiles.addAll(removedProfiles);
-
-    Collection<String> restoredProfiles = new HashSet<>(temporarilyRemovedExplicitProfiles);
-    restoredProfiles.retainAll(available);
-    temporarilyRemovedExplicitProfiles.removeAll(restoredProfiles);
-
-    explicitProfiles.removeAll(removedProfiles);
-    explicitProfiles.addAll(restoredProfiles);
-  }
-
-  public Collection<String> getAvailableProfiles() {
-    Collection<String> res = new HashSet<>();
-
-    for (MavenProject each : getProjects()) {
-      res.addAll(each.getProfilesIds());
-    }
-
-    return res;
-  }
-
-  public Collection<Pair<String, MavenProfileKind>> getProfilesWithStates() {
-    Collection<Pair<String, MavenProfileKind>> result = new ArrayListSet<>();
-
-    Collection<String> available = new HashSet<>();
-    Collection<String> active = new HashSet<>();
-    for (MavenProject each : getProjects()) {
-      available.addAll(each.getProfilesIds());
-      active.addAll(each.getActivatedProfilesIds().getEnabledProfiles());
-    }
-
-    Collection<String> enabledProfiles = getExplicitProfiles().getEnabledProfiles();
-    Collection<String> disabledProfiles = getExplicitProfiles().getDisabledProfiles();
-
-    for (String each : available) {
-      MavenProfileKind state;
-      if (disabledProfiles.contains(each)) {
-        state = MavenProfileKind.NONE;
+  var explicitProfiles: MavenExplicitProfiles
+    get() {
+      synchronized(myStateLock) {
+        return myExplicitProfiles.clone()
       }
-      else if (enabledProfiles.contains(each)) {
-        state = MavenProfileKind.EXPLICIT;
-      }
-      else if (active.contains(each)) {
-        state = MavenProfileKind.IMPLICIT;
-      }
-      else {
-        state = MavenProfileKind.NONE;
-      }
-      result.add(Pair.create(each, state));
     }
-    return result;
+    set(explicitProfiles) {
+      synchronized(myStateLock) {
+        myExplicitProfiles = explicitProfiles.clone()
+      }
+      fireProfilesChanged()
+    }
+
+  private fun updateExplicitProfiles() {
+    val available = availableProfiles
+
+    synchronized(myStateLock) {
+      updateExplicitProfiles(myExplicitProfiles.enabledProfiles, myTemporarilyRemovedExplicitProfiles.enabledProfiles,
+                             available)
+      updateExplicitProfiles(myExplicitProfiles.disabledProfiles, myTemporarilyRemovedExplicitProfiles.disabledProfiles,
+                             available)
+    }
   }
 
-  /**
-   * @deprecated use {@link MavenProjectsManager#updateAllMavenProjects(MavenImportSpec)} instead
-   */
-  @Deprecated
-  public void updateAll(boolean force, MavenGeneralSettings generalSettings, MavenProgressIndicator process) {
-    updateAll(force, generalSettings, process.getIndicator());
+  val availableProfiles: Collection<String>
+    get() {
+      val res: MutableCollection<String> = HashSet()
+
+      for (each in projects) {
+        res.addAll(each.profilesIds)
+      }
+
+      return res
+    }
+
+  val profilesWithStates: Collection<Pair<String, MavenProfileKind>>
+    get() {
+      val result: MutableCollection<Pair<String, MavenProfileKind>> = ArrayListSet()
+
+      val available: MutableCollection<String> = HashSet()
+      val active: MutableCollection<String> = HashSet()
+      for (each in projects) {
+        available.addAll(each.profilesIds)
+        active.addAll(each.activatedProfilesIds.enabledProfiles)
+      }
+
+      val enabledProfiles = explicitProfiles.enabledProfiles
+      val disabledProfiles = explicitProfiles.disabledProfiles
+
+      for (each in available) {
+        val state = if (disabledProfiles.contains(each)) {
+          MavenProfileKind.NONE
+        }
+        else if (enabledProfiles.contains(each)) {
+          MavenProfileKind.EXPLICIT
+        }
+        else if (active.contains(each)) {
+          MavenProfileKind.IMPLICIT
+        }
+        else {
+          MavenProfileKind.NONE
+        }
+        result.add(Pair.create(each, state))
+      }
+      return result
+    }
+
+
+  @Deprecated("use {@link MavenProjectsManager#updateAllMavenProjects(MavenImportSpec)} instead")
+  fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings?, process: MavenProgressIndicator) {
+    updateAll(force, generalSettings, process.indicator)
   }
 
   @ApiStatus.Internal
-  public MavenProjectsTreeUpdateResult updateAll(boolean force, MavenGeneralSettings generalSettings, ProgressIndicator process) {
-    List<VirtualFile> managedFiles = getExistingManagedFiles();
-    MavenExplicitProfiles explicitProfiles = getExplicitProfiles();
+  fun updateAll(force: Boolean, generalSettings: MavenGeneralSettings?, process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+    val managedFiles = existingManagedFiles
+    val explicitProfiles = explicitProfiles
 
-    MavenProjectReader projectReader = new MavenProjectReader(myProject);
-    var updated = update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process);
+    val projectReader = MavenProjectReader(project)
+    val updated = update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, process)
 
-    Collection<VirtualFile> obsoleteFiles = ContainerUtil.subtract(getRootProjectsFiles(), managedFiles);
-    var deleted = delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process);
+    val obsoleteFiles = ContainerUtil.subtract(
+      rootProjectsFiles, managedFiles)
+    val deleted = delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, process)
 
-    return updated.plus(deleted);
+    return updated.plus(deleted)
   }
 
   @ApiStatus.Internal
-  public MavenProjectsTreeUpdateResult update(Collection<VirtualFile> files,
-                                              boolean force,
-                                              MavenGeneralSettings generalSettings,
-                                              ProgressIndicator process) {
-    return update(files, false, force, getExplicitProfiles(), new MavenProjectReader(myProject), generalSettings, process);
+  fun update(files: Collection<VirtualFile>,
+             force: Boolean,
+             generalSettings: MavenGeneralSettings?,
+             process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+    return update(files, false, force, explicitProfiles, MavenProjectReader(project), generalSettings, process)
   }
 
-  private MavenProjectsTreeUpdateResult update(Collection<VirtualFile> files,
-                                               boolean updateModules,
-                                               boolean forceRead,
-                                               MavenExplicitProfiles explicitProfiles,
-                                               MavenProjectReader projectReader,
-                                               MavenGeneralSettings generalSettings,
-                                               ProgressIndicator process) {
-    MavenProjectsTreeUpdateContext updateContext = new MavenProjectsTreeUpdateContext(this);
+  private fun update(files: Collection<VirtualFile>,
+                     updateModules: Boolean,
+                     forceRead: Boolean,
+                     explicitProfiles: MavenExplicitProfiles,
+                     projectReader: MavenProjectReader,
+                     generalSettings: MavenGeneralSettings?,
+                     process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+    val updateContext = MavenProjectsTreeUpdateContext(this)
 
-    var updater =
-      new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, updateModules);
-    var filesToAddModules = new HashSet<VirtualFile>();
-    for (VirtualFile file : files) {
+    val updater =
+      MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings!!, process, updateModules)
+    val filesToAddModules = HashSet<VirtualFile>()
+    for (file in files) {
       if (null == findProject(file)) {
-        filesToAddModules.add(file);
+        filesToAddModules.add(file)
       }
-      updater.updateProjectsBlocking(List.of(new MavenProjectsTreeUpdater.UpdateSpec(file, forceRead)));
+      updater.updateProjectsBlocking(java.util.List.of(UpdateSpec(file, forceRead)))
     }
 
-    for (MavenProject aggregator : getProjects()) {
-      for (VirtualFile moduleFile : aggregator.getExistingModuleFiles()) {
+    for (aggregator in projects) {
+      for (moduleFile in aggregator.existingModuleFiles) {
         if (filesToAddModules.contains(moduleFile)) {
-          filesToAddModules.remove(moduleFile);
-          var mavenProject = findProject(moduleFile);
+          filesToAddModules.remove(moduleFile)
+          val mavenProject = findProject(moduleFile)
           if (null != mavenProject) {
             if (reconnect(aggregator, mavenProject)) {
-              updateContext.updated(mavenProject, MavenProjectChanges.NONE);
+              updateContext.updated(mavenProject, MavenProjectChanges.NONE)
             }
           }
         }
       }
     }
 
-    for (VirtualFile file : filesToAddModules) {
-      var mavenProject = findProject(file);
+    for (file in filesToAddModules) {
+      val mavenProject = findProject(file)
       if (null != mavenProject) {
-        addRootModule(mavenProject);
+        addRootModule(mavenProject)
       }
     }
 
-    updateExplicitProfiles();
-    updateContext.fireUpdatedIfNecessary();
+    updateExplicitProfiles()
+    updateContext.fireUpdatedIfNecessary()
 
-    return updateContext.toUpdateResult();
+    return updateContext.toUpdateResult()
   }
 
-  @Override
-  public String toString() {
+  override fun toString(): String {
     return "MavenProjectsTree{" +
            "myRootProjects=" + myRootProjects +
-           ", myProject=" + myProject +
-           '}';
+           ", myProject=" + project +
+           '}'
   }
 
-  public boolean isManagedFile(VirtualFile moduleFile) {
-    return isManagedFile(moduleFile.getPath());
+  fun isManagedFile(moduleFile: VirtualFile): Boolean {
+    return isManagedFile(moduleFile.path)
   }
 
-  public boolean isManagedFile(String path) {
-    synchronized (myStateLock) {
-      for (String each : myManagedFilesPaths) {
-        if (FileUtil.pathsEqual(each, path)) return true;
+  fun isManagedFile(path: String?): Boolean {
+    synchronized(myStateLock) {
+      for (each in myManagedFilesPaths) {
+        if (FileUtil.pathsEqual(each, path)) return true
       }
-      return false;
+      return false
     }
   }
 
-  public boolean isPotentialProject(String path) {
-    if (isManagedFile(path)) return true;
+  fun isPotentialProject(path: String?): Boolean {
+    if (isManagedFile(path)) return true
 
-    for (MavenProject each : getProjects()) {
-      if (VfsUtilCore.pathEqualsTo(each.getFile(), path)) return true;
-      if (each.getModulePaths().contains(path)) return true;
+    for (each in projects) {
+      if (VfsUtilCore.pathEqualsTo(each.file, path!!)) return true
+      if (each.modulePaths.contains(path)) return true
     }
-    return false;
+    return false
   }
 
   @ApiStatus.Internal
-  public MavenProjectsTreeUpdateResult delete(List<VirtualFile> files, MavenGeneralSettings generalSettings, ProgressIndicator process) {
-    return delete(new MavenProjectReader(myProject), files, getExplicitProfiles(), generalSettings, process);
+  fun delete(files: List<VirtualFile>, generalSettings: MavenGeneralSettings?, process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+    return delete(MavenProjectReader(project), files, explicitProfiles, generalSettings, process)
   }
 
-  private MavenProjectsTreeUpdateResult delete(MavenProjectReader projectReader,
-                                               Collection<VirtualFile> files,
-                                               MavenExplicitProfiles explicitProfiles,
-                                               MavenGeneralSettings generalSettings,
-                                               ProgressIndicator process) {
-    MavenProjectsTreeUpdateContext updateContext = new MavenProjectsTreeUpdateContext(this);
+  private fun delete(projectReader: MavenProjectReader,
+                     files: Collection<VirtualFile>,
+                     explicitProfiles: MavenExplicitProfiles,
+                     generalSettings: MavenGeneralSettings?,
+                     process: ProgressIndicator): MavenProjectsTreeUpdateResult {
+    val updateContext = MavenProjectsTreeUpdateContext(this)
 
-    Set<MavenProject> inheritorsToUpdate = new HashSet<>();
-    for (VirtualFile each : files) {
-      MavenProject mavenProject = findProject(each);
-      if (mavenProject == null) continue;
+    val inheritorsToUpdate: MutableSet<MavenProject> = HashSet()
+    for (each in files) {
+      val mavenProject = findProject(each)
+      if (mavenProject == null) continue
 
-      inheritorsToUpdate.addAll(findInheritors(mavenProject));
-      doDelete(findAggregator(mavenProject), mavenProject, updateContext);
+      inheritorsToUpdate.addAll(findInheritors(mavenProject))
+      doDelete(findAggregator(mavenProject), mavenProject, updateContext)
     }
-    inheritorsToUpdate.removeAll(updateContext.getDeletedProjects());
+    inheritorsToUpdate.removeAll(updateContext.deletedProjects)
 
-    var updater = new MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings, process, false);
-    var updateSpecs = new ArrayList<MavenProjectsTreeUpdater.UpdateSpec>();
-    for (MavenProject mavenProject : inheritorsToUpdate) {
-      updateSpecs.add(new MavenProjectsTreeUpdater.UpdateSpec(mavenProject.getFile(), false));
+    val updater = MavenProjectsTreeUpdater(this, explicitProfiles, updateContext, projectReader, generalSettings!!, process, false)
+    val updateSpecs = ArrayList<UpdateSpec>()
+    for (mavenProject in inheritorsToUpdate) {
+      updateSpecs.add(UpdateSpec(mavenProject.file, false))
     }
-    updater.updateProjectsBlocking(updateSpecs);
+    updater.updateProjectsBlocking(updateSpecs)
 
-    for (MavenProject mavenProject : inheritorsToUpdate) {
+    for (mavenProject in inheritorsToUpdate) {
       if (reconnectRoot(mavenProject)) {
-        updateContext.updated(mavenProject, MavenProjectChanges.NONE);
+        updateContext.updated(mavenProject, MavenProjectChanges.NONE)
       }
     }
-    updateExplicitProfiles();
-    updateContext.fireUpdatedIfNecessary();
+    updateExplicitProfiles()
+    updateContext.fireUpdatedIfNecessary()
 
-    return updateContext.toUpdateResult();
+    return updateContext.toUpdateResult()
   }
 
   @ApiStatus.Internal
-  void doDelete(MavenProject aggregator, MavenProject project, MavenProjectsTreeUpdateContext updateContext) {
-    for (MavenProject each : getModules(project)) {
-      if (isManagedFile(each.getPath())) {
+  internal fun doDelete(aggregator: MavenProject?, project: MavenProject, updateContext: MavenProjectsTreeUpdateContext) {
+    for (each in getModules(project)) {
+      if (isManagedFile(each.path)) {
         if (reconnectRoot(each)) {
-          updateContext.updated(each, MavenProjectChanges.NONE);
+          updateContext.updated(each, MavenProjectChanges.NONE)
         }
       }
       else {
-        doDelete(project, each, updateContext);
+        doDelete(project, each, updateContext)
       }
     }
 
-    withWriteLock(() -> {
+    withWriteLock<RuntimeException> {
       if (aggregator != null) {
-        removeModule(aggregator, project);
+        removeModule(aggregator, project)
       }
       else {
-        myRootProjects.remove(project);
+        myRootProjects.remove(project)
       }
-      myTimestamps.remove(project.getFile());
-      myVirtualFileToProjectMapping.remove(project.getFile());
-      clearIDMaps(project.getMavenId());
-      myAggregatorToModuleMapping.remove(project);
-      myModuleToAggregatorMapping.remove(project);
-    });
-    updateContext.deleted(project);
+      myTimestamps.remove(project.file)
+      myVirtualFileToProjectMapping.remove(project.file)
+      clearIDMaps(project.mavenId)
+      myAggregatorToModuleMapping.remove(project)
+      myModuleToAggregatorMapping.remove(project)
+    }
+    updateContext.deleted(project)
   }
 
-  private void fillIDMaps(MavenProject mavenProject) {
-    MavenId id = mavenProject.getMavenId();
-    myWorkspaceMap.register(id, new File(mavenProject.getFile().getPath()));
-    myMavenIdToProjectMapping.put(id, mavenProject);
+  private fun fillIDMaps(mavenProject: MavenProject) {
+    val id = mavenProject.mavenId
+    myWorkspaceMap.register(id, File(mavenProject.file.path))
+    myMavenIdToProjectMapping[id] = mavenProject
   }
 
-  private void clearIDMaps(MavenId mavenId) {
-    if (null == mavenId) return;
+  private fun clearIDMaps(mavenId: MavenId?) {
+    if (null == mavenId) return
 
-    myWorkspaceMap.unregister(mavenId);
-    myMavenIdToProjectMapping.remove(mavenId);
+    myWorkspaceMap.unregister(mavenId)
+    myMavenIdToProjectMapping.remove(mavenId)
   }
 
-  private static Path mavenProjectToNioPath(@NotNull MavenProject mavenProject) {
-    return Path.of(mavenProject.getFile().getParent().getPath());
-  }
-
-  private void addRootModule(@NotNull MavenProject project) {
-    withWriteLock(() -> {
-      myRootProjects.add(project);
-      myRootProjects.sort(Comparator.comparing(MavenProjectsTree::mavenProjectToNioPath));
-    });
+  private fun addRootModule(project: MavenProject) {
+    withWriteLock<RuntimeException> {
+      myRootProjects.add(project)
+      myRootProjects.sortWith(Comparator.comparing { mavenProject: MavenProject -> mavenProjectToNioPath(mavenProject) })
+    }
   }
 
   @ApiStatus.Internal
-  boolean reconnect(@NotNull MavenProject newAggregator, @NotNull MavenProject project) {
-    MavenProject prevAggregator = findAggregator(project);
+  fun reconnect(newAggregator: MavenProject, project: MavenProject): Boolean {
+    val prevAggregator = findAggregator(project)
 
-    if (prevAggregator == newAggregator) return false;
+    if (prevAggregator === newAggregator) return false
 
-    withWriteLock(() -> {
+    withWriteLock<RuntimeException> {
       if (prevAggregator != null) {
-        removeModule(prevAggregator, project);
+        removeModule(prevAggregator, project)
       }
       else {
-        myRootProjects.remove(project);
+        myRootProjects.remove(project)
       }
+      addModule(newAggregator, project)
+    }
 
-      addModule(newAggregator, project);
-    });
-
-    return true;
+    return true
   }
 
   @ApiStatus.Internal
-  boolean reconnectRoot(@NotNull MavenProject project) {
-    MavenProject prevAggregator = findAggregator(project);
+  fun reconnectRoot(project: MavenProject): Boolean {
+    val prevAggregator = findAggregator(project)
 
-    if (prevAggregator == null) return false;
+    if (prevAggregator == null) return false
 
-    withWriteLock(() -> {
-      removeModule(prevAggregator, project);
-      addRootModule(project);
-    });
-
-    return true;
-  }
-
-  public boolean hasProjects() {
-    return withReadLock(() -> !myRootProjects.isEmpty());
-  }
-
-  public List<MavenProject> getRootProjects() {
-    return withReadLock(() -> new ArrayList<>(myRootProjects));
-  }
-
-  private static void updateCrc(CRC32 crc, int x) {
-    crc.update(x & 0xFF);
-    x >>>= 8;
-    crc.update(x & 0xFF);
-    x >>>= 8;
-    crc.update(x & 0xFF);
-    x >>>= 8;
-    crc.update(x);
-  }
-
-  private static void updateCrc(CRC32 crc, long l) {
-    updateCrc(crc, (int)l);
-    updateCrc(crc, (int)(l >>> 32));
-  }
-
-  private static void updateCrc(CRC32 crc, @Nullable String s) {
-    if (s == null) {
-      crc.update(111);
+    withWriteLock<RuntimeException> {
+      removeModule(prevAggregator, project)
+      addRootModule(project)
     }
-    else {
-      updateCrc(crc, s.hashCode());
-      crc.update(s.length() & 0xFF);
-    }
+
+    return true
   }
 
-  public static @NotNull Collection<String> getFilterExclusions(MavenProject mavenProject) {
-    Element config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
-    if (config == null) {
-      return Collections.emptySet();
-    }
-    final List<String> customNonFilteredExtensions =
-      MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension");
-    if (customNonFilteredExtensions.isEmpty()) {
-      return Collections.emptySet();
-    }
-    return Collections.unmodifiableList(customNonFilteredExtensions);
+  fun hasProjects(): Boolean {
+    return withReadLock<RuntimeException, Boolean> { !myRootProjects.isEmpty() }
   }
 
-  public int getFilterConfigCrc(@NotNull ProjectFileIndex fileIndex) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  val rootProjects: List<MavenProject>
+    get() = withReadLock<RuntimeException, ArrayList<MavenProject>> { ArrayList(myRootProjects) }
 
-    return withReadLock(() -> {
-      final CRC32 crc = new CRC32();
+  fun getFilterConfigCrc(fileIndex: ProjectFileIndex): Int {
+    ApplicationManager.getApplication().assertReadAccessAllowed()
 
-      MavenExplicitProfiles profiles = myExplicitProfiles;
-      if (profiles != null) {
-        updateCrc(crc, profiles.hashCode());
-      }
+    return withReadLock<RuntimeException, Int> {
+      val crc = CRC32()
+      val profiles = myExplicitProfiles
+      updateCrc(crc, profiles.hashCode())
 
-      Collection<MavenProject> allProjects = myVirtualFileToProjectMapping.values();
+      val allProjects: Collection<MavenProject> = myVirtualFileToProjectMapping.values
 
-      crc.update(allProjects.size() & 0xFF);
-      for (MavenProject mavenProject : allProjects) {
-        VirtualFile pomFile = mavenProject.getFile();
-        Module module = fileIndex.getModuleForFile(pomFile);
-        if (module == null) continue;
+      crc.update(allProjects.size and 0xFF)
+      for (mavenProject in allProjects) {
+        val pomFile = mavenProject.file
+        val module = fileIndex.getModuleForFile(pomFile)
+        if (module == null) continue
 
-        if (!Comparing.equal(fileIndex.getContentRootForFile(pomFile), pomFile.getParent())) continue;
+        if (!Comparing.equal(fileIndex.getContentRootForFile(pomFile), pomFile.parent)) continue
 
-        updateCrc(crc, module.getName());
+        updateCrc(crc, module.name)
 
-        MavenId mavenId = mavenProject.getMavenId();
-        updateCrc(crc, mavenId.getGroupId());
-        updateCrc(crc, mavenId.getArtifactId());
-        updateCrc(crc, mavenId.getVersion());
+        val mavenId = mavenProject.mavenId
+        updateCrc(crc, mavenId.groupId)
+        updateCrc(crc, mavenId.artifactId)
+        updateCrc(crc, mavenId.version)
 
-        MavenId parentId = mavenProject.getParentId();
+        val parentId = mavenProject.parentId
         if (parentId != null) {
-          updateCrc(crc, parentId.getGroupId());
-          updateCrc(crc, parentId.getArtifactId());
-          updateCrc(crc, parentId.getVersion());
+          updateCrc(crc, parentId.groupId)
+          updateCrc(crc, parentId.artifactId)
+          updateCrc(crc, parentId.version)
         }
 
+        updateCrc(crc, mavenProject.directory)
+        updateCrc(crc, MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern())
+        updateCrc(crc, mavenProject.modelMap.hashCode())
+        updateCrc(crc, mavenProject.resources.hashCode())
+        updateCrc(crc, mavenProject.testResources.hashCode())
+        updateCrc(crc, getFilterExclusions(mavenProject).hashCode())
+        updateCrc(crc, mavenProject.properties.hashCode())
 
-        updateCrc(crc, mavenProject.getDirectory());
-        updateCrc(crc, MavenFilteredPropertyPsiReferenceProvider.getDelimitersPattern(mavenProject).pattern());
-        updateCrc(crc, mavenProject.getModelMap().hashCode());
-        updateCrc(crc, mavenProject.getResources().hashCode());
-        updateCrc(crc, mavenProject.getTestResources().hashCode());
-        updateCrc(crc, getFilterExclusions(mavenProject).hashCode());
-        updateCrc(crc, mavenProject.getProperties().hashCode());
-
-        for (String each : mavenProject.getFilterPropertiesFiles()) {
-          File file = new File(each);
-          updateCrc(crc, file.lastModified());
+        for (each in mavenProject.filterPropertiesFiles) {
+          val file = File(each)
+          updateCrc(crc, file.lastModified())
         }
 
-        XMLOutputter outputter = new XMLOutputter(Format.getCompactFormat());
+        val outputter = XMLOutputter(Format.getCompactFormat())
 
-        Writer crcWriter = new Writer() {
-          @Override
-          public void write(char[] cbuf, int off, int len) {
-            for (int i = off, end = off + len; i < end; i++) {
-              crc.update(cbuf[i]);
+        val crcWriter: Writer = object : Writer() {
+          override fun write(cbuf: CharArray, off: Int, len: Int) {
+            var i = off
+            val end = off + len
+            while (i < end) {
+              crc.update(cbuf[i].code)
+              i++
             }
           }
 
-          @Override
-          public void flush() {
+          override fun flush() {
           }
 
-          @Override
-          public void close() {
+          override fun close() {
           }
-        };
+        }
 
         try {
-          Element resourcePluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin");
+          val resourcePluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin")
           if (resourcePluginCfg != null) {
-            outputter.output(resourcePluginCfg, crcWriter);
+            outputter.output(resourcePluginCfg, crcWriter)
           }
 
-          Element warPluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin");
+          val warPluginCfg = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-war-plugin")
           if (warPluginCfg != null) {
-            outputter.output(warPluginCfg, crcWriter);
+            outputter.output(warPluginCfg, crcWriter)
           }
         }
-        catch (IOException e) {
-          LOG.error(e);
+        catch (e: IOException) {
+          LOG.error(e)
         }
       }
-
-      return (int)crc.getValue();
-    });
+      crc.value.toInt()
+    }
   }
 
-  public List<VirtualFile> getRootProjectsFiles() {
-    return MavenUtil.collectFiles(getRootProjects());
-  }
+  val rootProjectsFiles: List<VirtualFile>
+    get() = MavenUtil.collectFiles(rootProjects)
 
-  public List<MavenProject> getProjects() {
-    return withReadLock(() -> new ArrayList<>(myVirtualFileToProjectMapping.values()));
-  }
+  val projects: List<MavenProject>
+    get() = withReadLock<RuntimeException, ArrayList<MavenProject>> { ArrayList(myVirtualFileToProjectMapping.values) }
 
-  public List<MavenProject> getNonIgnoredProjects() {
-    return withReadLock(() -> {
-      List<MavenProject> result = new ArrayList<>();
-      for (MavenProject each : myVirtualFileToProjectMapping.values()) {
-        if (!isIgnored(each)) result.add(each);
+  val nonIgnoredProjects: List<MavenProject>
+    get() = withReadLock<RuntimeException, List<MavenProject>> {
+      val result: MutableList<MavenProject> = ArrayList()
+      for (each in myVirtualFileToProjectMapping.values) {
+        if (!isIgnored(each)) result.add(each)
       }
-      return result;
-    });
+      result
+    }
+
+  val projectsFiles: List<VirtualFile>
+    get() = withReadLock<RuntimeException, ArrayList<VirtualFile>> { ArrayList(myVirtualFileToProjectMapping.keys) }
+
+  fun findProject(f: VirtualFile): MavenProject? {
+    return withReadLock<RuntimeException, MavenProject?> { myVirtualFileToProjectMapping[f] }
   }
 
-  public List<VirtualFile> getProjectsFiles() {
-    return withReadLock(() -> new ArrayList<>(myVirtualFileToProjectMapping.keySet()));
+  fun findProject(id: MavenId?): MavenProject? {
+    return withReadLock<RuntimeException, MavenProject?> { myMavenIdToProjectMapping[id] }
   }
 
-  public @Nullable MavenProject findProject(VirtualFile f) {
-    return withReadLock(() -> myVirtualFileToProjectMapping.get(f));
+  fun findProject(artifact: MavenArtifact): MavenProject? {
+    return findProject(artifact.mavenId)
   }
 
-  public @Nullable MavenProject findProject(MavenId id) {
-    return withReadLock(() -> myMavenIdToProjectMapping.get(id));
+  fun findSingleProjectInReactor(id: MavenId): MavenProject? {
+    return withReadLock<RuntimeException, MavenProject?> {
+      myMavenIdToProjectMapping.values.firstOrNull {
+        StringUtil.equals(it.mavenId.artifactId, id.artifactId) &&
+        StringUtil.equals(it.mavenId.groupId, id.groupId)
+      }
+    }
   }
 
-  public @Nullable MavenProject findProject(MavenArtifact artifact) {
-    return findProject(artifact.getMavenId());
+  val workspaceMap: MavenWorkspaceMap
+    get() = withReadLock<RuntimeException, MavenWorkspaceMap> { myWorkspaceMap.copy() }
+
+  fun findAggregator(project: MavenProject): MavenProject? {
+    return withReadLock<RuntimeException, MavenProject?> { myModuleToAggregatorMapping[project] }
   }
 
-  public MavenProject findSingleProjectInReactor(MavenId id) {
-    return withReadLock(() -> StreamEx.ofValues(myMavenIdToProjectMapping)
-      .collect(MoreCollectors.onlyOne(it -> StringUtil.equals(it.getMavenId().getArtifactId(), id.getArtifactId()) &&
-                                            StringUtil.equals(it.getMavenId().getGroupId(), id.getGroupId())))
-      .orElse(null));
-  }
-
-  MavenWorkspaceMap getWorkspaceMap() {
-    return withReadLock(() -> myWorkspaceMap.copy());
-  }
-
-  public MavenProject findAggregator(MavenProject project) {
-    return withReadLock(() -> myModuleToAggregatorMapping.get(project));
-  }
-
-  @NotNull
-  public Collection<MavenProject> collectAggregators(@NotNull Collection<MavenProject> mavenProjects) {
-    var mavenProjectsToSkip = new HashSet<MavenProject>();
-    for (var mavenProject : mavenProjects) {
-      var aggregator = mavenProject;
-      while ((aggregator = findAggregator(aggregator)) != null) {
+  fun collectAggregators(mavenProjects: Collection<MavenProject>): Collection<MavenProject> {
+    val mavenProjectsToSkip = HashSet<MavenProject>()
+    for (mavenProject in mavenProjects) {
+      var aggregator: MavenProject? = mavenProject
+      while ((findAggregator(aggregator!!).also { aggregator = it }) != null) {
         if (mavenProjects.contains(aggregator)) {
-          mavenProjectsToSkip.add(mavenProject);
-          break;
+          mavenProjectsToSkip.add(mavenProject)
+          break
         }
       }
     }
-    return mavenProjects.stream().filter(mavenProject -> !mavenProjectsToSkip.contains(mavenProject)).toList();
+    return mavenProjects.filter { !mavenProjectsToSkip.contains(it) }
   }
 
-  public @NotNull MavenProject findRootProject(@NotNull MavenProject project) {
-    return withReadLock(() -> {
-      MavenProject rootProject = project;
-      while (true) {
-        MavenProject aggregator = myModuleToAggregatorMapping.get(rootProject);
-        if (aggregator == null) {
-          return rootProject;
-        }
-        rootProject = aggregator;
+  fun findRootProject(project: MavenProject): MavenProject {
+    return withReadLock(
+      ThrowableCallable<RuntimeException, MavenProject> {
+        return@ThrowableCallable doFindRootProject(project)
+      })
+  }
+
+  private fun doFindRootProject(project: MavenProject): MavenProject {
+    var rootProject = project
+    while (true) {
+      val aggregator = myModuleToAggregatorMapping[rootProject]
+      if (aggregator == null) {
+        return rootProject
       }
-    });
+      rootProject = aggregator
+    }
   }
 
-  public List<MavenProject> getModules(MavenProject aggregator) {
-    return withReadLock(() -> {
-      List<MavenProject> modules = myAggregatorToModuleMapping.get(aggregator);
-      return modules == null
-             ? Collections.emptyList()
-             : new ArrayList<>(modules);
-    });
+  fun getModules(aggregator: MavenProject): List<MavenProject> {
+    return withReadLock<RuntimeException, List<MavenProject>> {
+      val modules: List<MavenProject>? = myAggregatorToModuleMapping[aggregator]
+      if (modules == null) emptyList() else ArrayList(modules)
+    }
   }
 
-  private void addModule(@NotNull MavenProject aggregator, @NotNull MavenProject module) {
-    withWriteLock(() -> {
-      List<MavenProject> modules = myAggregatorToModuleMapping.get(aggregator);
+  private fun addModule(aggregator: MavenProject, module: MavenProject) {
+    withWriteLock<RuntimeException> {
+      var modules = myAggregatorToModuleMapping[aggregator]
       if (modules == null) {
-        modules = new ArrayList<>();
-        myAggregatorToModuleMapping.put(aggregator, modules);
+        modules = ArrayList()
+        myAggregatorToModuleMapping[aggregator] = modules
       }
-      modules.add(module);
-
-      myModuleToAggregatorMapping.put(module, aggregator);
-    });
+      modules.add(module)
+      myModuleToAggregatorMapping[module] = aggregator
+    }
   }
 
   @ApiStatus.Internal
-  void removeModule(MavenProject aggregator, MavenProject module) {
-    withWriteLock(() -> {
-      List<MavenProject> modules = myAggregatorToModuleMapping.get(aggregator);
-      if (modules == null) return;
-      modules.remove(module);
+  fun removeModule(aggregator: MavenProject, module: MavenProject) {
+    withWriteLock<RuntimeException> {
+      val modules = myAggregatorToModuleMapping[aggregator]
+      if (modules == null) return@withWriteLock
+      modules.remove(module)
       if (modules.isEmpty()) {
-        myAggregatorToModuleMapping.remove(aggregator);
+        myAggregatorToModuleMapping.remove(aggregator)
       }
-      myModuleToAggregatorMapping.remove(module);
-    });
+      myModuleToAggregatorMapping.remove(module)
+    }
   }
 
   @ApiStatus.Internal
-  MavenProject findParent(MavenProject project) {
-    return findProject(project.getParentId());
+  fun findParent(project: MavenProject): MavenProject? {
+    return findProject(project.parentId)
   }
 
-  public Collection<MavenProject> findInheritors(MavenProject project) {
-    if (project.isNew()) return List.of();
+  fun findInheritors(project: MavenProject): Collection<MavenProject> {
+    if (project.isNew) return listOf()
 
-    return withReadLock(() -> {
-      List<MavenProject> result = null;
-      MavenId id = project.getMavenId();
+    return withReadLock(
+      ThrowableCallable<RuntimeException, List<MavenProject>> {
+        var result: MutableList<MavenProject>? = null
+        val id = project.mavenId
 
-      for (MavenProject each : myVirtualFileToProjectMapping.values()) {
-        if (each == project) continue;
-        if (id.equals(each.getParentId())) {
-          if (result == null) result = new ArrayList<>();
-          result.add(each);
-        }
-      }
-
-      return result == null ? List.of() : result;
-    });
-  }
-
-  public List<MavenProject> getDependentProjects(Collection<MavenProject> projects) {
-    return withReadLock(() -> {
-      List<MavenProject> result = null;
-
-      Set<MavenCoordinate> projectIds = new ObjectOpenCustomHashSet<>(projects.size(), new MavenCoordinateHashCodeStrategy());
-      for (MavenProject project : projects) {
-        projectIds.add(project.getMavenId());
-      }
-
-      Set<File> projectPaths = FileCollectionFactory.createCanonicalFileSet();
-      for (MavenProject project : projects) {
-        projectPaths.add(new File(project.getFile().getPath()));
-      }
-
-      for (MavenProject project : myVirtualFileToProjectMapping.values()) {
-        boolean isDependent = false;
-
-        Set<String> pathsInStack = project.getModulePaths();
-        for (final String path : pathsInStack) {
-          if (projectPaths.contains(new File(path))) {
-            isDependent = true;
-            break;
+        for (each in myVirtualFileToProjectMapping.values) {
+          if (each === project) continue
+          if (id == each.parentId) {
+            if (result == null) result = ArrayList()
+            result.add(each)
           }
         }
+        result ?: listOf()
+      })
+  }
 
-        if (!isDependent) {
-          for (MavenArtifact dep : project.getDependencies()) {
-            if (projectIds.contains(dep)) {
-              isDependent = true;
-              break;
+  fun getDependentProjects(projects: Collection<MavenProject>): List<MavenProject> {
+    return withReadLock(
+      ThrowableCallable<RuntimeException, List<MavenProject>> {
+        var result: MutableList<MavenProject>? = null
+        val projectIds: MutableSet<MavenCoordinate> = ObjectOpenCustomHashSet(projects.size, MavenCoordinateHashCodeStrategy())
+        for (project in projects) {
+          projectIds.add(project.mavenId)
+        }
+
+        val projectPaths = FileCollectionFactory.createCanonicalFileSet()
+        for (project in projects) {
+          projectPaths.add(File(project.file.path))
+        }
+
+        for (project in myVirtualFileToProjectMapping.values) {
+          var isDependent = false
+
+          val pathsInStack = project.modulePaths
+          for (path in pathsInStack) {
+            if (projectPaths.contains(File(path))) {
+              isDependent = true
+              break
+            }
+          }
+
+          if (!isDependent) {
+            for (dep in project.dependencies) {
+              if (projectIds.contains(dep)) {
+                isDependent = true
+                break
+              }
+            }
+          }
+
+          if (isDependent) {
+            if (result == null) result = ArrayList()
+            result.add(project)
+          }
+        }
+        result ?: emptyList()
+      })
+  }
+
+  fun addListener(l: Listener, disposable: Disposable) {
+    if (!myListeners.contains(l)) {
+      myListeners.add(l, disposable)
+    }
+    else {
+      MavenLog.LOG.warn("Trying to add the same listener twice")
+    }
+  }
+
+  @ApiStatus.Internal
+  fun addListenersFrom(other: MavenProjectsTree) {
+    myListeners.addAll(other.myListeners)
+  }
+
+  fun fireProfilesChanged() {
+    for (each in myListeners) {
+      each.profilesChanged()
+    }
+  }
+
+  private fun fireProjectsIgnoredStateChanged(ignored: List<MavenProject>, unignored: List<MavenProject>, fromImport: Boolean) {
+    for (each in myListeners) {
+      each.projectsIgnoredStateChanged(ignored, unignored, fromImport)
+    }
+  }
+
+  @ApiStatus.Internal
+  fun fireProjectsUpdated(updated: List<Pair<MavenProject, MavenProjectChanges>>, deleted: List<MavenProject>) {
+    for (each in myListeners) {
+      each.projectsUpdated(updated, deleted)
+    }
+  }
+
+  fun fireProjectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
+                          nativeMavenProject: NativeMavenProjectHolder?) {
+    for (each in myListeners) {
+      each.projectResolved(projectWithChanges, nativeMavenProject)
+    }
+  }
+
+  fun firePluginsResolved(project: MavenProject) {
+    for (each in myListeners) {
+      each.pluginsResolved(project)
+    }
+  }
+
+  fun fireFoldersResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
+    for (each in myListeners) {
+      each.foldersResolved(projectWithChanges)
+    }
+  }
+
+  fun fireArtifactsDownloaded(project: MavenProject) {
+    for (each in myListeners) {
+      each.artifactsDownloaded(project)
+    }
+  }
+
+  interface Listener : EventListener {
+    fun profilesChanged() {
+    }
+
+    fun projectsIgnoredStateChanged(ignored: List<MavenProject>,
+                                    unignored: List<MavenProject>,
+                                    fromImport: Boolean) {
+    }
+
+    fun projectsUpdated(updated: List<Pair<MavenProject, MavenProjectChanges>>, deleted: List<MavenProject>) {
+    }
+
+    fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
+                        nativeMavenProject: NativeMavenProjectHolder?) {
+    }
+
+    fun pluginsResolved(project: MavenProject) {
+    }
+
+    fun foldersResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
+    }
+
+    fun artifactsDownloaded(project: MavenProject) {
+    }
+  }
+
+  @ApiStatus.Internal
+  class MavenCoordinateHashCodeStrategy : Hash.Strategy<MavenCoordinate> {
+    override fun hashCode(other: MavenCoordinate?): Int {
+      val artifactId = other?.artifactId
+      return artifactId?.hashCode() ?: 0
+    }
+
+    override fun equals(o1: MavenCoordinate?, o2: MavenCoordinate?): Boolean {
+      if (o1 === o2) {
+        return true
+      }
+      if (o1 == null || o2 == null) {
+        return false
+      }
+
+      return o1.artifactId == o2.artifactId && o1.version == o2.version && o1.groupId == o2.groupId
+    }
+  }
+
+  private fun <T : Throwable?> withReadLock(runnable: ThrowableRunnable<T>) {
+    myStructureReadLock.lock()
+    try {
+      runnable.run()
+    }
+    finally {
+      myStructureReadLock.unlock()
+    }
+  }
+
+  private fun interface ThrowableCallable<T : Throwable?, V> {
+    fun call(): V
+  }
+
+  private fun <T : Throwable?, V> withReadLock(callable: ThrowableCallable<T, V>): V {
+    myStructureReadLock.lock()
+    try {
+      return callable.call()
+    }
+    finally {
+      myStructureReadLock.unlock()
+    }
+  }
+
+  private fun <T : Throwable?> withWriteLock(runnable: ThrowableRunnable<T>) {
+    myStructureWriteLock.lock()
+    try {
+      runnable.run()
+    }
+    finally {
+      myStructureWriteLock.unlock()
+    }
+  }
+
+  fun updater(): Updater {
+    return Updater()
+  }
+
+  inner class Updater {
+    fun setManagedFiles(paths: List<String>): Updater {
+      myManagedFilesPaths.clear()
+      myManagedFilesPaths.addAll(paths)
+      return this
+    }
+
+    fun setRootProjects(roots: List<MavenProject>): Updater {
+      myRootProjects.clear()
+      myRootProjects.addAll(roots)
+      roots.forEach(
+        Consumer { root: MavenProject ->
+          myVirtualFileToProjectMapping[root.file] = root
+        })
+
+      return this
+    }
+
+    fun setAggregatorMappings(map: Map<MavenProject, List<MavenProject>>): Updater {
+      myAggregatorToModuleMapping.clear()
+      myModuleToAggregatorMapping.clear()
+
+      for ((key, value) in map) {
+        val result: MutableList<MavenProject> = ArrayList(value)
+        myAggregatorToModuleMapping[key] = result
+        for (c in result) {
+          myModuleToAggregatorMapping[c] = key
+          myVirtualFileToProjectMapping[c.file] = c
+        }
+      }
+
+      return this
+    }
+
+    fun setMavenIdMappings(projects: List<MavenProject>): Updater {
+      projects.forEach(
+        Consumer { it: MavenProject ->
+          myMavenIdToProjectMapping[it.mavenId] = it
+        })
+      return this
+    }
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(MavenProjectsTree::class.java)
+
+    private val STORAGE_VERSION = MavenProjectsTree::class.java.simpleName + ".8"
+
+    @JvmStatic
+    @Throws(IOException::class)
+    fun read(project: Project, file: Path): MavenProjectsTree? {
+      val result = MavenProjectsTree(project)
+
+      DataInputStream(BufferedInputStream(Files.newInputStream(file))).use { inputStream ->
+        try {
+          if (STORAGE_VERSION != inputStream.readUTF()) return null
+          result.myManagedFilesPaths = readCollection(inputStream, LinkedHashSet())
+          result.myIgnoredFilesPaths = readCollection(inputStream, ArrayList())
+          result.myIgnoredFilesPatterns = readCollection(inputStream, ArrayList())
+          result.myExplicitProfiles = MavenExplicitProfiles(readCollection(inputStream, HashSet()),
+                                                            readCollection(inputStream, HashSet()))
+          result.myRootProjects.addAll(readProjectsRecursively(inputStream, result))
+        }
+        catch (e: IOException) {
+          inputStream.close()
+          Files.delete(file)
+          throw e
+        }
+        catch (e: Throwable) {
+          throw IOException(e)
+        }
+      }
+      return result
+    }
+
+    @Throws(IOException::class)
+    private fun <T : MutableCollection<String>> readCollection(inputStream: DataInputStream, result: T): T {
+      var count = inputStream.readInt()
+      while (count-- > 0) {
+        result.add(inputStream.readUTF())
+      }
+      return result
+    }
+
+    @Throws(IOException::class)
+    private fun writeCollection(out: DataOutputStream, list: Collection<String>) {
+      out.writeInt(list.size)
+      for (each in list) {
+        out.writeUTF(each)
+      }
+    }
+
+    @Throws(IOException::class)
+    private fun readProjectsRecursively(inputStream: DataInputStream,
+                                        tree: MavenProjectsTree): MutableList<MavenProject> {
+      var count = inputStream.readInt()
+      val result: MutableList<MavenProject> = ArrayList(count)
+      while (count-- > 0) {
+        val project = MavenProject.read(inputStream)
+        val timestamp = MavenProjectTimestamp.read(inputStream)
+        val modules = readProjectsRecursively(inputStream, tree)
+        if (project != null) {
+          result.add(project)
+          tree.myTimestamps[project.file] = timestamp
+          tree.myVirtualFileToProjectMapping[project.file] = project
+          tree.fillIDMaps(project)
+          if (!modules.isEmpty()) {
+            tree.myAggregatorToModuleMapping[project] = modules
+            for (eachModule in modules) {
+              tree.myModuleToAggregatorMapping[eachModule] = project
             }
           }
         }
-
-        if (isDependent) {
-          if (result == null) result = new ArrayList<>();
-          result.add(project);
-        }
       }
-
-      return result == null ? Collections.emptyList() : result;
-    });
-  }
-
-  public void addListener(@NotNull Listener l, @NotNull Disposable disposable) {
-    if (!myListeners.contains(l)) {
-      myListeners.add(l, disposable);
-    }
-    else {
-      MavenLog.LOG.warn("Trying to add the same listener twice");
-    }
-  }
-
-  @ApiStatus.Internal
-  void addListenersFrom(MavenProjectsTree other) {
-    myListeners.addAll(other.myListeners);
-  }
-
-  void fireProfilesChanged() {
-    for (Listener each : myListeners) {
-      each.profilesChanged();
-    }
-  }
-
-  void fireProjectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
-    for (Listener each : myListeners) {
-      each.projectsIgnoredStateChanged(ignored, unignored, fromImport);
-    }
-  }
-
-  void fireProjectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-    for (Listener each : myListeners) {
-      each.projectsUpdated(updated, deleted);
-    }
-  }
-
-  void fireProjectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                           @Nullable NativeMavenProjectHolder nativeMavenProject) {
-    for (Listener each : myListeners) {
-      each.projectResolved(projectWithChanges, nativeMavenProject);
-    }
-  }
-
-  void firePluginsResolved(@NotNull MavenProject project) {
-    for (Listener each : myListeners) {
-      each.pluginsResolved(project);
-    }
-  }
-
-  void fireFoldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-    for (Listener each : myListeners) {
-      each.foldersResolved(projectWithChanges);
-    }
-  }
-
-  void fireArtifactsDownloaded(@NotNull MavenProject project) {
-    for (Listener each : myListeners) {
-      each.artifactsDownloaded(project);
-    }
-  }
-
-  public interface Listener extends EventListener {
-    default void profilesChanged() {
+      return result
     }
 
-    default void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored,
-                                             @NotNull List<MavenProject> unignored,
-                                             boolean fromImport) {
+    private fun updateExplicitProfiles(explicitProfiles: MutableCollection<String>,
+                                       temporarilyRemovedExplicitProfiles: MutableCollection<String>,
+                                       available: Collection<String>) {
+      val removedProfiles: MutableCollection<String> = HashSet(explicitProfiles)
+      removedProfiles.removeAll(available)
+      temporarilyRemovedExplicitProfiles.addAll(removedProfiles)
+
+      val restoredProfiles: MutableCollection<String> = HashSet(temporarilyRemovedExplicitProfiles)
+      restoredProfiles.retainAll(available)
+      temporarilyRemovedExplicitProfiles.removeAll(restoredProfiles)
+
+      explicitProfiles.removeAll(removedProfiles)
+      explicitProfiles.addAll(restoredProfiles)
     }
 
-    default void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+    private fun mavenProjectToNioPath(mavenProject: MavenProject): Path {
+      return Path.of(mavenProject.file.parent.path)
     }
 
-    default void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                 @Nullable NativeMavenProjectHolder nativeMavenProject) {
+    private fun updateCrc(crc: CRC32, xInt: Int) {
+      var x = xInt
+      crc.update(x and 0xFF)
+      x = x ushr 8
+      crc.update(x and 0xFF)
+      x = x ushr 8
+      crc.update(x and 0xFF)
+      x = x ushr 8
+      crc.update(x)
     }
 
-    default void pluginsResolved(@NotNull MavenProject project) {
+    private fun updateCrc(crc: CRC32, l: Long) {
+      updateCrc(crc, l.toInt())
+      updateCrc(crc, (l ushr 32).toInt())
     }
 
-    default void foldersResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
-    }
-
-    default void artifactsDownloaded(@NotNull MavenProject project) {
-    }
-  }
-
-  @ApiStatus.Internal
-  public static final class MavenCoordinateHashCodeStrategy implements Hash.Strategy<MavenCoordinate> {
-    @Override
-    public int hashCode(MavenCoordinate object) {
-      String artifactId = object == null ? null : object.getArtifactId();
-      return artifactId == null ? 0 : artifactId.hashCode();
-    }
-
-    @Override
-    public boolean equals(MavenCoordinate o1, MavenCoordinate o2) {
-      if (o1 == o2) {
-        return true;
+    private fun updateCrc(crc: CRC32, s: String?) {
+      if (s == null) {
+        crc.update(111)
       }
-      if (o1 == null || o2 == null) {
-        return false;
+      else {
+        updateCrc(crc, s.hashCode())
+        crc.update(s.length and 0xFF)
       }
-
-      return Objects.equals(o1.getArtifactId(), o2.getArtifactId())
-             && Objects.equals(o1.getVersion(), o2.getVersion())
-             && Objects.equals(o1.getGroupId(), o2.getGroupId());
     }
-  }
 
-  private static <K, V> Map<K, List<V>> deepCopyInto(Map<K, List<V>> from, Map<K, List<V>> to, Function<V, V> copyFunc) {
-    for (Map.Entry<K, List<V>> entry : from.entrySet()) {
-      List<V> newVal = new ArrayList<>(entry.getValue().size());
-      for (V v : entry.getValue()) {
-        newVal.add(copyFunc.apply(v));
+    @JvmStatic
+    fun getFilterExclusions(mavenProject: MavenProject): Collection<String> {
+      val config = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-resources-plugin")
+      if (config == null) {
+        return emptySet()
       }
-      to.put(entry.getKey(), newVal);
-    }
-    return to;
-  }
-
-  private <T extends Throwable> void withReadLock(@NotNull ThrowableRunnable<T> runnable) throws T {
-    myStructureReadLock.lock();
-    try {
-      runnable.run();
-    }
-    finally {
-      myStructureReadLock.unlock();
-    }
-  }
-
-  @FunctionalInterface
-  private interface ThrowableCallable<T extends Throwable, V> {
-    V call() throws T;
-  }
-
-
-  private <T extends Throwable, V> V withReadLock(@NotNull ThrowableCallable<T, V> callable) throws T {
-    myStructureReadLock.lock();
-    try {
-      return callable.call();
-    }
-    finally {
-      myStructureReadLock.unlock();
-    }
-  }
-
-  private <T extends Throwable> void withWriteLock(@NotNull ThrowableRunnable<T> runnable) throws T {
-    myStructureWriteLock.lock();
-    try {
-      runnable.run();
-    }
-    finally {
-      myStructureWriteLock.unlock();
-    }
-  }
-
-
-  public Updater updater() {
-    return new Updater();
-  }
-
-  public class Updater {
-    public Updater setManagedFiles(@NotNull List<String> paths) {
-      myManagedFilesPaths.clear();
-      myManagedFilesPaths.addAll(paths);
-      return this;
-    }
-
-    public Updater setRootProjects(List<MavenProject> roots) {
-      myRootProjects.clear();
-      myRootProjects.addAll(roots);
-      roots.forEach(root -> {
-        myVirtualFileToProjectMapping.put(root.getFile(), root);
-      });
-
-      return this;
-    }
-
-    public Updater setAggregatorMappings(Map<MavenProject, List<MavenProject>> map) {
-      myAggregatorToModuleMapping.clear();
-      myModuleToAggregatorMapping.clear();
-
-      for (Map.Entry<MavenProject, List<MavenProject>> entry : map.entrySet()) {
-        List<MavenProject> result = new ArrayList<>(entry.getValue());
-        myAggregatorToModuleMapping.put(entry.getKey(), result);
-        for (MavenProject c : result) {
-          myModuleToAggregatorMapping.put(c, entry.getKey());
-          myVirtualFileToProjectMapping.put(c.getFile(), c);
-        }
+      val customNonFilteredExtensions =
+        MavenJDOMUtil.findChildrenValuesByPath(config, "nonFilteredFileExtensions", "nonFilteredFileExtension")
+      if (customNonFilteredExtensions.isEmpty()) {
+        return emptySet()
       }
-
-      return this;
-    }
-
-    public Updater setMavenIdMappings(@NotNull List<MavenProject> projects) {
-      projects.forEach(it -> {
-        myMavenIdToProjectMapping.put(it.getMavenId(), it);
-      });
-      return this;
+      return Collections.unmodifiableList(customNonFilteredExtensions)
     }
   }
 }

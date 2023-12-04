@@ -142,7 +142,7 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
       val foundModule = tree.findProject(moduleFile)
       val isNewModule = foundModule == null
       if (!isNewModule) {
-        val currentAggregator = tree.findAggregator(foundModule)
+        val currentAggregator = tree.findAggregator(foundModule!!)
         if (currentAggregator != null && currentAggregator !== mavenProject) {
           MavenLog.LOG.info("Module $moduleFile is already included into ${mavenProject.file}")
           continue

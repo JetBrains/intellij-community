@@ -147,7 +147,7 @@ public final class MavenIndicesManager implements Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       MavenProjectsManager.getInstance(myProject).addProjectsTreeListener(new MavenProjectsTree.Listener() {
         @Override
-        public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+        public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
           DependencySearchService.getInstance(myProject).clearCache();
         }
 

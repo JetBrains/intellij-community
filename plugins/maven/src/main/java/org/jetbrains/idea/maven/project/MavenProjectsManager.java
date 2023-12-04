@@ -289,7 +289,7 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
     addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
+      public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
         updateTabName(MavenUtil.collectFirsts(updated), myProject);
       }
     });

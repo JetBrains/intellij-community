@@ -65,6 +65,7 @@ import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 import javax.swing.tree.TreeSelectionModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -459,8 +460,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
 
   private final class MyProjectsListener implements MavenProjectsTree.Listener {
     @Override
-    public void projectsIgnoredStateChanged(@NotNull final List<MavenProject> ignored,
-                                            @NotNull final List<MavenProject> unignored,
+    public void projectsIgnoredStateChanged(final List<? extends MavenProject> ignored,
+                                            final List<? extends MavenProject> unignored,
                                             boolean fromImport) {
       scheduleStructureRequest(() -> myStructure.updateIgnored(ContainerUtil.concat(ignored, unignored)));
     }
@@ -471,8 +472,8 @@ public final class MavenProjectsNavigator extends MavenSimpleProjectComponent
     }
 
     @Override
-    public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-      scheduleUpdateProjects(MavenUtil.collectFirsts(updated), deleted);
+    public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
+      scheduleUpdateProjects(MavenUtil.collectFirsts(updated), new ArrayList<>(deleted));
     }
 
     @Override
