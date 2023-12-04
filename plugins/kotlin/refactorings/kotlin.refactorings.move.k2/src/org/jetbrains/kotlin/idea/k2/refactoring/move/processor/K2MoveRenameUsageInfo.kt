@@ -361,7 +361,7 @@ sealed class K2MoveRenameUsageInfo(
             }
 
             val nonNestedElems = qualifiedElements.filter { (elem, _) ->
-                qualifiedElements.keys.none { otherElem -> elem != otherElem && elem.isAncestor(otherElem) }
+                qualifiedElements.keys.none { otherElem -> elem != otherElem && otherElem.isAncestor(elem) }
             }
             val fileFqn = file.packageFqName
             val sortedElements = nonNestedElems.keys.sortedByDescending { ref ->
