@@ -52,7 +52,7 @@ internal class ShellCommandOutputScraper(private val session: TerminalSession,
 
   fun scrapeOutput(): StyledCommandOutput {
     session.model.withContentLock {
-      val outputBuilder = OutputBuilder(textBuffer.width)
+      val outputBuilder = OutputBuilder()
       if (!textBuffer.isUsingAlternateBuffer) {
         outputBuilder.addLines(textBuffer.historyBuffer)
       }
@@ -62,11 +62,10 @@ internal class ShellCommandOutputScraper(private val session: TerminalSession,
   }
 }
 
-private class OutputBuilder(private val columns: Int) {
+private class OutputBuilder {
   private val output: StringBuilder = StringBuilder()
   private val styles: MutableList<StyleRange> = mutableListOf()
   private var pendingNewLines: Int = 0
-  private var pendingNuls: Int = 0
 
   fun addLines(linesBuffer: LinesBuffer) {
     for (i in 0 until linesBuffer.lineCount) {
@@ -75,26 +74,13 @@ private class OutputBuilder(private val columns: Int) {
   }
 
   private fun addLine(line: TerminalLine) {
-    var addedLength = 0
     line.forEachEntry { entry ->
-      val charBuffer: CharBuffer = entry.text
-      val length = charBuffer.length
-      addedLength += length
-      if (length > 0) {
-        if (entry.isNul) {
-          pendingNuls += length
-        }
-        else {
-          addTextChunk(charBuffer.normalize(), entry.style)
-        }
+      if (entry.text.isNotEmpty() && !entry.isNul) {
+        addTextChunk(entry.text.normalize(), entry.style)
       }
     }
-    if (line.isWrapped) {
-      pendingNuls += (columns - addedLength).coerceAtLeast(0)
-    }
-    else {
+    if (!line.isWrapped) {
       pendingNewLines++
-      pendingNuls = 0
     }
   }
 
@@ -109,10 +95,6 @@ private class OutputBuilder(private val columns: Int) {
         output.append("\n")
       }
       pendingNewLines = 0
-      repeat(pendingNuls) {
-        output.append(' ')
-      }
-      pendingNuls = 0
       val startOffset = output.length
       output.append(text)
       if (style != TextStyle.EMPTY) {

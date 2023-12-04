@@ -11,6 +11,7 @@ import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.RuleChain
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.*
+import org.jetbrains.plugins.terminal.block.testApps.MoveCursorToLineEndAndPrint
 import org.jetbrains.plugins.terminal.block.testApps.SimpleTextRepeater
 import org.jetbrains.plugins.terminal.exp.*
 import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
@@ -116,6 +117,39 @@ class BlockTerminalTest(private val shellPath: String) {
                        SimpleTextRepeater.Item.NEW_LINE /* finish with a new line to get rid of trailing '%' in zsh */)
     session.sendCommandToExecuteWithoutAddingToHistory(SimpleTextRepeater.Helper.generateCommandLine(items))
     assertCommandResult(0, SimpleTextRepeater.Helper.getExpectedOutput(items), outputFuture)
+  }
+
+  @Test
+  fun `mix of empty area and text #1`() {
+    val termSize = TermSize(10, 10)
+    val session = startBlockTerminalSession(termSize)
+    val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+    val textsToPrint = listOf("foo")
+    session.sendCommandToExecuteWithoutAddingToHistory(MoveCursorToLineEndAndPrint.Helper.generateCommandLine(textsToPrint))
+    assertCommandResult(0, MoveCursorToLineEndAndPrint.Helper.getExpectedOutput(termSize, textsToPrint), outputFuture)
+  }
+
+  @Test
+  fun `mix of empty area and text #2`() {
+    val termSize = TermSize(10, 10)
+    val session = startBlockTerminalSession(termSize)
+    val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+    val textsToPrint = listOf("foo", "a".repeat(termSize.columns  + 1), "b")
+    session.sendCommandToExecuteWithoutAddingToHistory(MoveCursorToLineEndAndPrint.Helper.generateCommandLine(textsToPrint))
+    assertCommandResult(0, MoveCursorToLineEndAndPrint.Helper.getExpectedOutput(termSize, textsToPrint), outputFuture)
+  }
+
+  @Test
+  fun `mix of empty area and text #3`() {
+    val termSize = TermSize(15, 15)
+    val session = startBlockTerminalSession(termSize)
+    val outputFuture: CompletableFuture<CommandResult> = getCommandResultFuture(session)
+    val textsToPrint = ('a'..'z').map {
+      val cnt = it - 'a'
+      it.toString().repeat(cnt) + cnt.toString()
+    }
+    session.sendCommandToExecuteWithoutAddingToHistory(MoveCursorToLineEndAndPrint.Helper.generateCommandLine(textsToPrint))
+    assertCommandResult(0, MoveCursorToLineEndAndPrint.Helper.getExpectedOutput(termSize, textsToPrint), outputFuture)
   }
 
   private fun createCommandSentDeferred(session: TerminalSession): CompletableDeferred<Unit> {
