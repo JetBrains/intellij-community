@@ -132,7 +132,7 @@ class KotlinChangeInfo(
     }
 
     override fun isParameterTypesChanged(): Boolean {
-        return false
+        return true
     }
 
     override fun isParameterNamesChanged(): Boolean {

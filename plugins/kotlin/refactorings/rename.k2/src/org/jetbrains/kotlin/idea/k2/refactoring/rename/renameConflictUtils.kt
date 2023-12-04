@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.conflicts.filterCandidates
 import org.jetbrains.kotlin.idea.refactoring.conflicts.findSiblingsByName
 import org.jetbrains.kotlin.idea.refactoring.conflicts.renderDescription
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
@@ -343,7 +344,7 @@ private fun retargetExternalDeclarations(declaration: KtNamedDeclaration, name: 
 
     val nameAsName = Name.identifier(name)
     fun KtScope.processScope(containingSymbol: KtDeclarationSymbol?) {
-        findSiblingsByName(declarationSymbol, nameAsName, containingSymbol).forEach(retargetJob)
+        findSiblingsByName(declarationSymbol, nameAsName, containingSymbol).filter { filterCandidates(declarationSymbol, it) }.forEach(retargetJob)
     }
 
     var classOrObjectSymbol = declarationSymbol.getContainingSymbol()

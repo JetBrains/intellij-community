@@ -730,6 +730,14 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         clearParameters()
     }
 
+    fun testParameterConflictAlreadyExists() = doTestConflict {
+        removeParameter(0)
+    }
+
+    fun testParameterConflictAlreadyExistsInSuper() = doTestConflict {
+        removeParameter(0)
+    }
+
     fun testRemoveParameterBeforeLambda() = doTest { removeParameter(1) }
 
     fun testRemoveParameterKeepFormat1() = doTest { removeParameter(0) }
@@ -985,6 +993,9 @@ abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P
         newParameters[0].setType("Int")
     }
 
+    fun testParameterInConstructorConflictAlreadyExists() = doTestConflict {
+        newParameters[0].setType("Int")
+    }
 
     fun testMakePrimaryConstructorPrivateNoParams() = doTest { setNewVisibility(Private) }
 

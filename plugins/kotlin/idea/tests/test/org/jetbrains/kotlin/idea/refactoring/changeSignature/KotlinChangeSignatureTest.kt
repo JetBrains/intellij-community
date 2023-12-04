@@ -19,10 +19,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
-import org.junit.internal.runners.JUnit38ClassRunner
-import org.junit.runner.RunWith
 
-@RunWith(JUnit38ClassRunner::class)
 class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo, KotlinParameterInfo, KotlinTypeInfo, DescriptorVisibility, KotlinMutableMethodDescriptor>() {
     protected  fun findTargetDescriptor(handler: KotlinChangeSignatureHandler): DeclarationDescriptor {
         val element = findTargetElement() as KtElement
@@ -167,6 +164,10 @@ class KotlinChangeSignatureTest : BaseKotlinChangeSignatureTest<KotlinChangeInfo
         val functionTest = KotlinTopLevelFunctionFqnNameIndex.get("test", project, project.allScope()).first()
 
         primaryPropagationTargets = listOf(functionBar, functionTest)
+    }
+
+    override fun getIgnoreDirective(): String? {
+        return "// IGNORE_K1"
     }
 }
 
