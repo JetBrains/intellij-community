@@ -12,7 +12,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Provides access to an IJent process running on some machine. An instance of this interface gives ability to run commands
  * on a local or a remote machine. Every instance corresponds to a single machine, i.e. unlike Run Targets, if IJent is launched
- * in a Docker container, every call to [executeProcess] runs a command in the same Docker container.
+ * in a Docker container, every call to execute a process (see [IjentExecApi]) runs a command in the same Docker container.
  *
  * Usually, [IjentSessionProvider] creates instances of [IjentApi].
  */
@@ -43,36 +43,10 @@ interface IjentApi : AutoCloseable {
     // The javadoc of the method doesn't clarify if the method supposed to wait for the resource destruction.
   }
 
+  /** Docs: [IjentExecApi] */
+  val exec: IjentExecApi
+
   val fs: IjentFileSystemApi
-
-  /**
-   * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
-   * stdin, stdout and stderr of the process are always forwarded, if there are.
-   *
-   * Every successfully started process MUST be destroyed later with [IjentChildProcess.close].
-   * Otherwise, it can cause memory leaks on the remote side.
-   *
-   * Beware that processes with [pty] don't have stderr.
-   *
-   * By default, environment is always inherited from the running IJent instance, which may be unwanted. [env] allows to alter
-   * some environment variables, it doesn't clear the variables from the parent. When the process should be started in an environment like
-   * in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [env].
-   *
-   * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
-   * [workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
-   */
-  suspend fun executeProcess(
-    exe: String,
-    vararg args: String,
-    env: Map<String, String> = emptyMap(),
-    pty: Pty? = null,
-    workingDirectory: String? = null,
-  ): ExecuteProcessResult
-
-  /**
-   * Gets the same environment variables on the remote machine as the user would get if they run the shell.
-   */
-  suspend fun fetchLoginShellEnvVariables(): Map<String, String>
 
   /**
    * Creates a remote UNIX socket forwarding, i.e. IJent listens waits for a connection on the remote machine, and when the connection
@@ -119,18 +93,10 @@ interface IjentApi : AutoCloseable {
     val rx: ReceiveChannel<ByteArray>,
   )
 
-  sealed interface ExecuteProcessResult {
-    class Success(val process: IjentChildProcess) : ExecuteProcessResult
-    data class Failure(val errno: Int, val message: String) : ExecuteProcessResult
-  }
-
   sealed interface CreateFilePath {
     data class Fixed(val path: String) : CreateFilePath
 
     /** When [directory] is empty, the usual tmpdir is used. */
     data class MkTemp(val directory: String = "", val prefix: String = "", val suffix: String = "") : CreateFilePath
   }
-
-  /** [echo] must be true in general and must be false when the user is asked for a password. */
-  data class Pty(val columns: Int, val rows: Int, val echo: Boolean)
 }

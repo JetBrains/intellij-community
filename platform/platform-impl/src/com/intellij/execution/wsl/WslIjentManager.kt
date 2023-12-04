@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentChildProcess
+import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentSessionProvider
 import com.intellij.util.SuspendingLazy
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -62,7 +63,7 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
   @RequiresBlockingContext
   fun fetchLoginShellEnv(wslDistribution: WSLDistribution, project: Project?, rootUser: Boolean): Map<String, String> {
     return runBlocking {
-      getIjentApi(wslDistribution, project, rootUser).fetchLoginShellEnvVariables()
+      getIjentApi(wslDistribution, project, rootUser).exec.fetchLoginShellEnvVariables()
     }
   }
 
@@ -87,22 +88,22 @@ class WslIjentManager private constructor(private val scope: CoroutineScope) {
     wslDistribution: WSLDistribution,
     project: Project?,
     processBuilder: ProcessBuilder,
-    pty: IjentApi.Pty?,
+    pty: IjentExecApi.Pty?,
     isSudo: Boolean,
   ): Process {
     return runBlocking {
       val command = processBuilder.command()
 
       val ijentApi = getIjentApi(wslDistribution, project, isSudo)
-      when (val processResult = ijentApi.executeProcess(
+      when (val processResult = ijentApi.exec.executeProcess(
         exe = FileUtil.toSystemIndependentName(command.first()),
         args = command.toList().drop(1).toTypedArray(),
         env = processBuilder.environment(),
         pty = pty,
         workingDirectory = processBuilder.directory()?.let { wslDistribution.getWslPath(it.toPath()) }
       )) {
-        is IjentApi.ExecuteProcessResult.Success -> processResult.process.toProcess(ijentApi.coroutineScope, pty != null)
-        is IjentApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
+        is IjentExecApi.ExecuteProcessResult.Success -> processResult.process.toProcess(ijentApi.coroutineScope, pty != null)
+        is IjentExecApi.ExecuteProcessResult.Failure -> throw IOException(processResult.message)
       }
     }
   }

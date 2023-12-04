@@ -22,7 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.impl.wsl.WslConstants;
-import com.intellij.platform.ijent.IjentApi;
+import com.intellij.platform.ijent.IjentExecApi;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
@@ -231,7 +231,7 @@ public class WSLDistribution implements AbstractWslDistribution {
       if (commandLine instanceof PtyCommandLine) {
         commandLine.setProcessCreator((processBuilder) -> {
           var ptyOptions = ((PtyCommandLine)commandLine).getPtyOptions();
-          var ijentPty = new IjentApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
+          var ijentPty = new IjentExecApi.Pty(ptyOptions.getInitialColumns(), ptyOptions.getInitialRows(), !ptyOptions.getConsoleMode());
 
           return WslIjentManager.getInstance().runProcessBlocking(this, project, processBuilder, ijentPty, options.isSudo());
         });

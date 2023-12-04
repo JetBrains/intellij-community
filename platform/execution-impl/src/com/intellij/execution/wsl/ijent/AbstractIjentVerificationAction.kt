@@ -17,6 +17,7 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.ijent.IjentApi
+import com.intellij.platform.ijent.IjentExecApi
 import com.intellij.platform.ijent.IjentMissingBinary
 import com.intellij.platform.ijent.fs.nio.asNioFileSystem
 import com.intellij.platform.util.coroutines.childScope
@@ -58,9 +59,9 @@ abstract class AbstractIjentVerificationAction : DumbAwareAction() {
 
               coroutineScope {
                 launch {
-                  val process = when (val p = ijent.executeProcess("uname", "-a")) {
-                    is IjentApi.ExecuteProcessResult.Failure -> error(p)
-                    is IjentApi.ExecuteProcessResult.Success -> p.process
+                  val process = when (val p = ijent.exec.executeProcess("uname", "-a")) {
+                    is IjentExecApi.ExecuteProcessResult.Failure -> error(p)
+                    is IjentExecApi.ExecuteProcessResult.Success -> p.process
                   }
                   val stdout = ByteArrayOutputStream()
                   process.stdout.consumeEach(stdout::write)
