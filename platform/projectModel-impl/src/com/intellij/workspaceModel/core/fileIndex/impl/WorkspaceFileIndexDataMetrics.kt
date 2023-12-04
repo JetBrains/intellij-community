@@ -15,10 +15,10 @@ object WorkspaceFileIndexDataMetrics {
   internal val markDirtyTimeMs: AtomicLong = AtomicLong()
   internal val updateDirtyEntitiesTimeMs: AtomicLong = AtomicLong()
   internal val onEntitiesChangedTimeMs: AtomicLong = AtomicLong()
-  internal val getPackageNameTimeMs: AtomicLong = AtomicLong()
+  internal val getPackageNameTimeNanosec: AtomicLong = AtomicLong()
   internal val getDirectoriesByPackageNameTimeMs: AtomicLong = AtomicLong()
 
-  internal val registerFileSetsTimeMs: AtomicLong = AtomicLong()
+  internal val registerFileSetsTimeNanosec: AtomicLong = AtomicLong()
 
 
   private fun setupOpenTelemetryReporting(meter: Meter): Unit {
@@ -56,10 +56,10 @@ object WorkspaceFileIndexDataMetrics {
         markDirtyGauge.record(markDirtyTimeMs.get())
         updateDirtyEntitiesGauge.record(updateDirtyEntitiesTimeMs.get())
         onEntitiesChangedGauge.record(onEntitiesChangedTimeMs.get())
-        getPackageNameGauge.record(getPackageNameTimeMs.get())
+        getPackageNameGauge.record(getPackageNameTimeNanosec.get() / 1000)
         getDirectoriesByPackageNameGauge.record(getDirectoriesByPackageNameTimeMs.get())
 
-        registerFileSetsMsGauge.record(registerFileSetsTimeMs.get())
+        registerFileSetsMsGauge.record(registerFileSetsTimeNanosec.get() / 1000)
       },
       instancesCountGauge, initTimeGauge, getFileInfoTimeGauge, visitFileSetsGauge,
       processFileSetsGauge, markDirtyGauge, updateDirtyEntitiesGauge, onEntitiesChangedGauge,

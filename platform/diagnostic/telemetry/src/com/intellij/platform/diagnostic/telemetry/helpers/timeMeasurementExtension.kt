@@ -2,6 +2,7 @@
 package com.intellij.platform.diagnostic.telemetry.helpers
 
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
 
 /**
@@ -19,5 +20,15 @@ fun AtomicLong.addElapsedTimeMillis(startTimeMs: Long): Unit {
 inline fun <T> AtomicLong.addMeasuredTimeMillis(block: () -> T): T {
   val value: T
   this.addAndGet(measureTimeMillis { value = block() })
+  return value
+}
+
+/**
+ * Measure time of the [block] in nanoseconds and add it to current value.
+ * @return Value [T], calculated by the [block]
+ */
+inline fun <T> AtomicLong.addMeasuredTimeNanosec(block: () -> T): T {
+  val value: T
+  this.addAndGet(measureNanoTime { value = block() })
   return value
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMillis
 import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeMillis
+import com.intellij.platform.diagnostic.telemetry.helpers.addMeasuredTimeNanosec
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.CollectionQuery
@@ -51,7 +52,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     packageDirectoryCache = PackageDirectoryCacheImpl(::fillPackageDirectories, ::isPackageDirectory)
     registerAllEntities(EntityStorageKind.MAIN)
     registerAllEntities(EntityStorageKind.UNLOADED)
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
+    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
       librariesAndSdkContributors.registerFileSets()
     }
 
@@ -65,7 +66,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
     val registrar = StoreFileSetsRegistrarImpl(storageKind)
 
-    WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
+    WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
       contributors.keys.forEach { entityClass ->
         storage.entities(entityClass).forEach {
           registerFileSets(it, entityClass, storage, storageKind, registrar)
@@ -183,7 +184,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
   private fun <E : WorkspaceEntity> registerFileSets(entity: E, entityClass: Class<out E>, storage: EntityStorage, 
                                                      storageKind: EntityStorageKind, registrar: WorkspaceFileSetRegistrar) {
     getContributors(entityClass, storageKind).forEach { contributor ->
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
         contributor.registerFileSets(entity, registrar, storage)
       }
     }
@@ -210,13 +211,13 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
 
     val removeRegistrar = RemoveFileSetsRegistrarImpl(storageKind)
     for (removed in removedEntities) {
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
         contributor.registerFileSets(removed, removeRegistrar, event.storageBefore)
       }
     }
     val storeRegistrar = StoreFileSetsRegistrarImpl(storageKind)
     for (added in addedEntities) {
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
         contributor.registerFileSets(added, storeRegistrar, event.storageAfter)
       }
     }
@@ -282,7 +283,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     val storeRegistrar = StoreFileSetsRegistrarImpl(EntityStorageKind.MAIN)
     for (reference in dirtyEntities) {
       val entity = reference.resolve(storage) ?: continue
-      WorkspaceFileIndexDataMetrics.registerFileSetsTimeMs.addMeasuredTimeMillis {
+      WorkspaceFileIndexDataMetrics.registerFileSetsTimeNanosec.addMeasuredTimeNanosec {
         registerFileSets(entity, entity.getEntityInterface(), storage, EntityStorageKind.MAIN, removeRegistrar)
         registerFileSets(entity, entity.getEntityInterface(), storage, EntityStorageKind.MAIN, storeRegistrar)
       }
@@ -317,7 +318,7 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     }
   }
 
-  override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeMs.addMeasuredTimeMillis {
+  override fun getPackageName(dir: VirtualFile): String? = WorkspaceFileIndexDataMetrics.getPackageNameTimeNanosec.addMeasuredTimeMillis {
     if (!dir.isDirectory) return null
 
     val fileSet = when (val info = getFileInfo(dir, true, true, true, true, true)) {
