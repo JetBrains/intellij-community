@@ -31,6 +31,10 @@ abstract class WebSymbolsMockQueryExecutorTestBase : UsefulTestCase() {
       "com.intellij.webSymbols.webTypes.impl.WebSymbolsFilterEP",
       ExtensionPoint.Kind.BEAN_CLASS, true)
     application.extensionArea.registerExtensionPoint(
+      "com.intellij.webSymbols.webTypes.symbolFactory",
+      "com.intellij.webSymbols.webTypes.impl.WebTypesSymbolFactoryEP",
+      ExtensionPoint.Kind.BEAN_CLASS, true)
+    application.extensionArea.registerExtensionPoint(
       "com.intellij.webSymbols.defaultIconProvider",
       "com.intellij.webSymbols.query.WebSymbolDefaultIconProvider",
       ExtensionPoint.Kind.INTERFACE, true)
