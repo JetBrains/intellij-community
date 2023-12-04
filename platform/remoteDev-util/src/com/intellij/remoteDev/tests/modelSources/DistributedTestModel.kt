@@ -62,7 +62,7 @@ object DistributedTestModel : Ext(TestRoot) {
     signal("showNotification", string)
     call("closeProject", void, bool).async
     call("closeProjectIfOpened", void, bool).async
-    call("runNextAction", void, string.nullable).async
+    call("runNextAction", string, string.nullable).async
     call("requestFocus", string, bool).async
     call("makeScreenshot", string, bool).async
     call("isResponding", void, bool).async
