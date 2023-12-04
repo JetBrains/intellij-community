@@ -30,7 +30,9 @@ class WslNetworkTest {
 
   @Test
   fun testWslIp() {
-    MatcherAssert.assertThat("Wrong WSL IP", wslRule.wsl.wslIpAddress.address[0], isIn(wslIpPrefix))
+    Registry.get("wsl.proxy.connect.localhost").withValue(false) {
+      MatcherAssert.assertThat("Wrong WSL IP", wslRule.wsl.wslIpAddress.address[0], isIn(wslIpPrefix))
+    }
   }
 
   @Test
