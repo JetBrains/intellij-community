@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.switcher.QuickActionProvider
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.flow.*
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -38,14 +39,9 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
 
   fun processActions(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation, pattern: String,
                      ids: Set<String>, consumer: suspend (MatchedValue) -> Boolean) {
-
-    val matchedActionsFlowDeferred = scope.async { matchedActionsAndStubsFlow(pattern, ids, presentationProvider) }
-    val unmatchedStubsFlowDeferred = scope.async { unmatchedStubsFlow(pattern, ids, presentationProvider) }
-
-    scope.launch {
-      sendResults(matchedActionsFlowDeferred.await(), consumer)
-      sendResults(unmatchedStubsFlowDeferred.await(), consumer)
-    }
+    scope.flowCollector(matchedActionsAndStubsFlow(pattern, ids, presentationProvider))
+      .then(unmatchedStubsFlow(pattern, ids, presentationProvider))
+      .collect(consumer)
   }
 
   fun filterElements(scope: CoroutineScope, presentationProvider: suspend (AnAction) -> Presentation,
@@ -57,55 +53,25 @@ class ActionAsyncProvider(private val myModel: GotoActionModel) {
     val actionIds = (myActionManager as ActionManagerImpl).actionIds
 
     val comparator: Comparator<MatchedValue> = Comparator { o1, o2 -> o1.compareWeights(o2) }
-    val abbreviationsPromise = scope.async { abbreviationsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-    val matchedActionsFlowDeferred = scope.async { matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider) }
-    val unmatchedStubsFlowDeferred = scope.async { unmatchedStubsFlow(pattern, actionIds, presentationProvider) }
-    val topHitsPromise = scope.async { topHitsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-    val intentionsPromise = scope.async { intentionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
-    val optionsPromise = scope.async { optionsFlow(pattern, presentationProvider).let { collectAndSort(it, comparator) } }
 
-    scope.launch {
-      sendResults(abbreviationsPromise.await(), consumer, "abbreviations")
-      sendResults(matchedActionsFlowDeferred.await(), consumer)
-      sendResults(unmatchedStubsFlowDeferred.await(), consumer)
-      sendResults(topHitsPromise.await(), consumer, "topHits")
-      sendResults(intentionsPromise.await(), consumer, "intentions")
-      sendResults(optionsPromise.await(), consumer, "options")
+    scope.flowCollector(abbreviationsFlow(pattern, presentationProvider).sorted(comparator))
+      .then(matchedActionsAndStubsFlow(pattern, actionIds, presentationProvider))
+      .then(unmatchedStubsFlow(pattern, actionIds, presentationProvider))
+      .then(topHitsFlow(pattern, presentationProvider).sorted(comparator))
+      .then(intentionsFlow(pattern, presentationProvider).sorted(comparator))
+      .then(optionsFlow(pattern, presentationProvider).sorted(comparator))
+      .collect(consumer)
+  }
+
+  private fun <T> Flow<T>.sorted(comparator: Comparator<in T>): Flow<T> {
+    val sourceFlow = this
+    return flow {
+      val list = sourceFlow.catch { e -> LOG.error("Error while collecting actions.", e) }
+        .toSet()
+        .toMutableList()
+      list.sortWith(comparator)
+      list.forEach { emit(it) }
     }
-  }
-
-  private suspend fun <T> collectAndSort(flow: Flow<T>, comparator: Comparator<in T>): List<T> {
-    val list = flow
-      .catch { e -> LOG.error("Error while collecting actions.", e) }
-      .toSet()
-      .toMutableList()
-    list.sortWith(comparator)
-    return list
-  }
-
-  private suspend fun CoroutineScope.sendResults(list: List<MatchedValue>, consumer: suspend (MatchedValue) -> Boolean, name: String) {
-    LOG.debug("Sending results ($name)")
-    for (value in list) {
-      if (!isActive) {
-        LOG.debug("Sending results: coroutine is not active any more")
-        return
-      }
-
-      if (!consumer(value)) {
-        LOG.debug("Sending results: consumer returned false")
-        throw SearchFinishedException()
-      }
-    }
-    LOG.debug("Sending results ($name) - done")
-  }
-
-  private suspend fun sendResults(flow: Flow<MatchedValue>, consumer: suspend (MatchedValue) -> Boolean) {
-    flow.onEach {
-      if (!consumer(it)) {
-        LOG.debug("Sending results: consumer returned false")
-        throw SearchFinishedException()
-      }
-    }.collect()
   }
 
   private fun abbreviationsFlow(pattern: String, presentationProvider: suspend (AnAction) -> Presentation): Flow<MatchedValue> {
@@ -367,5 +333,41 @@ private fun abbreviationMatchedValue(wrapper: ActionWrapper, pattern: String, de
 
 private data class MatchedAction(val action: AnAction, val mode: MatchMode, val weight: Int?)
 
-class SearchFinishedException : Exception("Found items limit reached")
+private fun <I> CoroutineScope.flowCollector(flow: Flow<I>): FlowsSequenceCollector<I> = FlowsSequenceCollector<I>(this).apply { then(flow) }
 
+private class FlowsSequenceCollector<I>(private val scope: CoroutineScope) {
+
+  private val flows = mutableListOf<Flow<I>>()
+
+  fun then(flow: Flow<I>): FlowsSequenceCollector<I> {
+    flows.add(flow)
+    return this
+  }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  fun collect(collector: suspend (I) -> Boolean) {
+    scope.launch {
+      val channel = scope.produce {
+        var prevJob: Job? = null
+        for (flow in flows) {
+          val waitForJob = prevJob
+          prevJob = launch {
+            flow.collect {
+              waitForJob?.join()
+              send(it)
+            }
+          }
+        }
+      }
+
+      try {
+        for (i in channel) {
+          if (!collector(i)) return@launch
+        }
+      }
+      finally {
+        channel.cancel()
+      }
+    }
+  }
+}
