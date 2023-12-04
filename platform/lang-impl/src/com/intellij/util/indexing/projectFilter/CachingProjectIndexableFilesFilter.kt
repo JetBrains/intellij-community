@@ -21,10 +21,7 @@ internal class CachingProjectIndexableFilesFilter(private val project: Project) 
     while (true) {
       _fileIds[fileId]?.let { return it }
       val file = ManagingFS.getInstance().findFileById(fileId)
-      if (file == null) {
-        return false
-      }
-      val isIndexable = IndexableFilesIndex.getInstance(project).shouldBeIndexed(file)
+      val isIndexable = file == null || IndexableFilesIndex.getInstance(project).shouldBeIndexed(file)
       if (_fileIds.compareAndSet(fileId, null, isIndexable)) {
         return isIndexable
       }
