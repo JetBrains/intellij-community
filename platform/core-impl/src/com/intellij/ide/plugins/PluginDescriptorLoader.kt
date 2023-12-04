@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.Decompressor
@@ -21,7 +22,6 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.xml.dom.createNonCoalescingXmlStreamReader
 import kotlinx.coroutines.*
 import org.codehaus.stax2.XMLStreamReader2
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -35,7 +35,6 @@ import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.time.LocalDate
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
@@ -483,30 +482,11 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
   }
 }
 
-@Internal
-@ApiStatus.ScheduledForRemoval
-@Deprecated("do not use")
-fun loadDescriptorsForDeprecatedWizard(): PluginLoadingResult {
-  return runBlocking {
-    val isUnitTestMode = PluginManagerCore.isUnitTestMode
-    val isRunningFromSources = PluginManagerCore.isRunningFromSources()
-    DescriptorListLoadingContext(
-      isMissingSubDescriptorIgnored = true,
-      isMissingIncludeIgnored = isUnitTestMode,
-      checkOptionalConfigFileUniqueness = isUnitTestMode || isRunningFromSources,
-    ).use { context ->
-      loadDescriptors(context = context, isUnitTestMode = isUnitTestMode, isRunningFromSources = isRunningFromSources,
-                      mainClassLoaderDeferred = CompletableDeferred(DescriptorListLoadingContext::class.java.classLoader))
-    }
-  }
-}
-
 /**
  * Think twice before use and get approve from the core team.
  *
  * Returns enabled plugins only.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
 @Internal
 suspend fun loadDescriptors(
   context: DescriptorListLoadingContext,
@@ -620,36 +600,38 @@ private fun CoroutineScope.loadCoreModules(context: DescriptorListLoadingContext
                            platformPrefix.startsWith("CodeServer") ||
                            java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
   // should be the only plugin in lib (only for Ultimate and WebStorm for now)
-  val rootModuleDescriptors = if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
-                                  (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
-    Collections.singletonList(async {
+  if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
+      (isInDevServerMode || (!isUnitTestMode && !isRunningFromSources))) {
+    return Java11Shim.INSTANCE.listOf(async {
       loadCoreProductPlugin(PluginManagerCore.PLUGIN_XML_PATH, classLoader,
                             context = context,
                             pathResolver = pathResolver,
                             useCoreClassLoader = useCoreClassLoader)!!
     })
   }
-  else {
-    val fileName = "${platformPrefix}Plugin.xml"
-    var result = listOf(async {
-      loadCoreProductPlugin("${PluginManagerCore.META_INF}$fileName", classLoader, context, pathResolver, useCoreClassLoader)
-    })
 
-    if (ProductLoadingStrategy.strategy.shouldLoadDescriptorsFromCoreClassPath) {
-      val urlToFilename = collectPluginFilesInClassPath(classLoader)
-      if (!urlToFilename.isEmpty()) {
-        @Suppress("SuspiciousCollectionReassignment")
-        result += loadDescriptorsFromClassPath(urlToFilename = urlToFilename,
-                                               context = context,
-                                               pathResolver = pathResolver,
-                                               useCoreClassLoader = useCoreClassLoader,
-                                               pool = pool)
-      }
+  val fileName = "${platformPrefix}Plugin.xml"
+  var result = listOf(async {
+    loadCoreProductPlugin(path = "${PluginManagerCore.META_INF}$fileName",
+                          classLoader = classLoader,
+                          context = context,
+                          pathResolver = pathResolver,
+                          useCoreClassLoader = useCoreClassLoader)
+  })
+
+  if (ProductLoadingStrategy.strategy.shouldLoadDescriptorsFromCoreClassPath) {
+    val urlToFilename = collectPluginFilesInClassPath(classLoader)
+    if (!urlToFilename.isEmpty()) {
+      @Suppress("SuspiciousCollectionReassignment")
+      result += loadDescriptorsFromClassPath(urlToFilename = urlToFilename,
+                                             context = context,
+                                             pathResolver = pathResolver,
+                                             useCoreClassLoader = useCoreClassLoader,
+                                             pool = pool)
     }
-
-    result
   }
-  return rootModuleDescriptors
+
+  return result
 }
 
 private fun getResourceReader(path: String, classLoader: ClassLoader): XMLStreamReader2? {
