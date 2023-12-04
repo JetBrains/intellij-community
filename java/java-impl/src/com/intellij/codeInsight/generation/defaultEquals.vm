@@ -1,5 +1,9 @@
 #parse("equalsHelper.vm")
-public boolean equals(##
+public ##
+#if ($checkParameterWithInstanceof)
+  final ##
+#end
+boolean equals(##
 #if ($settings.generateFinalParameters)
   final ##
 #end

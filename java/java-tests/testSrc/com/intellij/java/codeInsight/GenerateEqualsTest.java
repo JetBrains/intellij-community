@@ -15,10 +15,14 @@ import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.Function;
 
 public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
+
+  public void testInstanceof() {
+    doTest(Function.identity(), Function.identity(), x -> PsiField.EMPTY_ARRAY, true, false, true);
+  }
 
   public void testNoBaseEquals() {
     doTest(new int[0], new int[0], new int[0], false);
@@ -98,7 +102,7 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testDifferentTypesGetters() {
-    doTest(Function.identity(), Function.identity(), fields -> PsiField.EMPTY_ARRAY, true, true);
+    doTest(Function.identity(), Function.identity(), fields -> PsiField.EMPTY_ARRAY, true, true, false);
   }
 
   public void testDifferentTypesAllNotNull() {
@@ -190,44 +194,35 @@ public class GenerateEqualsTest extends LightJavaCodeInsightTestCase {
     doTest(fields -> getIndexed(fields, equals), fields -> getIndexed(fields, hashCode), fields -> getIndexed(fields, nonNull), insertOverride);
   }
 
-  protected void doTest(Function<PsiField[], PsiField[]> eqFunction,
-                        Function<PsiField[], PsiField[]> hFunction,
-                        Function<PsiField[], PsiField[]> nnFunction,
+  protected void doTest(Function<PsiField[], PsiField[]> equals,
+                        Function<PsiField[], PsiField[]> hashCode,
+                        Function<PsiField[], PsiField[]> nonNull,
                         boolean insertOverride) {
-    doTest(eqFunction, hFunction, nnFunction, insertOverride, false);
+    doTest(equals, hashCode, nonNull, insertOverride, false, false);
   }
 
-  protected void doTest(Function<PsiField[], PsiField[]> eqFunction,
-                        Function<PsiField[], PsiField[]> hFunction,
-                        Function<PsiField[], PsiField[]> nnFunction,
-                        boolean insertOverride, boolean useAccessors) {
+  protected void doTest(Function<PsiField[], PsiField[]> equals,
+                        Function<PsiField[], PsiField[]> hashCode,
+                        Function<PsiField[], PsiField[]> nonNull,
+                        boolean insertOverride,
+                        boolean useAccessors,
+                        boolean useInstanceofToCheckParameterType) {
     configureByFile("/codeInsight/generateEquals/before" + getTestName(false) + ".java");
-    performTest(eqFunction, hFunction, nnFunction, insertOverride, useAccessors);
-    checkResultByFile("/codeInsight/generateEquals/after" + getTestName(false) + ".java");
-  }
-
-  private void performTest(Function<PsiField[], PsiField[]> equals,
-                           Function<PsiField[], PsiField[]> hashCode,
-                           Function<PsiField[], PsiField[]> nonNull,
-                           boolean insertOverride,
-                           boolean useAccessors) {
     JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = true;
     JavaCodeStyleSettings.getInstance(getProject()).INSERT_OVERRIDE_ANNOTATION = insertOverride;
     PsiElement element = getFile().findElementAt(getEditor().getCaretModel().getOffset());
-    if (element == null) return;
+    assert element != null;
     PsiClass aClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (aClass == null) return;
+    assert aClass != null;
     PsiField[] fields = aClass.getFields();
-    new GenerateEqualsHelper(getProject(), aClass, equals.apply(fields), hashCode.apply(fields), nonNull.apply(fields), false, useAccessors).invoke();
+    new GenerateEqualsHelper(getProject(), aClass, equals.apply(fields), hashCode.apply(fields), nonNull.apply(fields),
+                             useInstanceofToCheckParameterType, useAccessors).invoke();
     FileDocumentManager.getInstance().saveAllDocuments();
+    checkResultByFile("/codeInsight/generateEquals/after" + getTestName(false) + ".java");
   }
 
   private static PsiField[] getIndexed(PsiField[] fields, int[] indices) {
-    ArrayList<PsiField> result = new ArrayList<>();
-    for (int index : indices) {
-      result.add(fields[index]);
-    }
-    return result.toArray(PsiField.EMPTY_ARRAY);
+    return Arrays.stream(indices).mapToObj(index -> fields[index]).toArray(PsiField[]::new);
   }
 
   @Override
