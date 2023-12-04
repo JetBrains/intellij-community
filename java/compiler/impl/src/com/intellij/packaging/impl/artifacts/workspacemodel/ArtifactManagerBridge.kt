@@ -328,35 +328,35 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
     private val dropMappingsMs: AtomicLong = AtomicLong()
 
     private fun setupOpenTelemetryReporting(meter: Meter): Unit {
-      val getArtifactsGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.getArtifacts.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val findArtifactGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.findArtifact.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val getArtifactsByTypeGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.getArtifactsByType.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val addArtifactGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.addArtifact.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val getArtifactsCounter = meter.counterBuilder("compiler.ArtifactManagerBridge.getArtifacts.ms")
+        .setDescription("Total time spent in method").buildObserver()
+      val findArtifactCounter = meter.counterBuilder("compiler.ArtifactManagerBridge.findArtifact.ms")
+        .setDescription("Total time spent in method").buildObserver()
+      val getArtifactsByTypeCounter = meter.counterBuilder("compiler.ArtifactManagerBridge.getArtifactsByType.ms")
+        .setDescription("Total time spent in method").buildObserver()
+      val addArtifactCounter = meter.counterBuilder("compiler.ArtifactManagerBridge.addArtifact.ms")
+        .setDescription("Total time spent in method").buildObserver()
 
-      val initBridgesGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.initBridges.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val commitGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.commit.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
-      val dropMappingsGauge = meter.gaugeBuilder("compiler.ArtifactManagerBridge.dropMappings.ms")
-        .ofLongs().setDescription("Total time spent in method").buildObserver()
+      val initBridgesCounter = meter.counterBuilder("compiler.ArtifactManagerBridge.initBridges.ms")
+        .setDescription("Total time spent in method").buildObserver()
+      val commitDurationCounter = meter.counterBuilder("compiler.ArtifactManagerBridge.commit.ms")
+        .setDescription("Total time spent in method").buildObserver()
+      val dropMappingsCounter = meter.counterBuilder("compiler.ArtifactManagerBridge.dropMappings.ms")
+        .setDescription("Total time spent in method").buildObserver()
 
       meter.batchCallback(
         {
-          getArtifactsGauge.record(getArtifactsMs.get())
-          findArtifactGauge.record(findArtifactMs.get())
-          getArtifactsByTypeGauge.record(getArtifactsByTypeMs.get())
-          addArtifactGauge.record(addArtifactMs.get())
+          getArtifactsCounter.record(getArtifactsMs.get())
+          findArtifactCounter.record(findArtifactMs.get())
+          getArtifactsByTypeCounter.record(getArtifactsByTypeMs.get())
+          addArtifactCounter.record(addArtifactMs.get())
 
-          initBridgesGauge.record(initBridgesMs.get())
-          commitGauge.record(commitMs.get())
-          dropMappingsGauge.record(dropMappingsMs.get())
+          initBridgesCounter.record(initBridgesMs.get())
+          commitDurationCounter.record(commitMs.get())
+          dropMappingsCounter.record(dropMappingsMs.get())
         },
-        getArtifactsGauge, findArtifactGauge, getArtifactsByTypeGauge, addArtifactGauge,
-        initBridgesGauge, commitGauge, dropMappingsGauge
+        getArtifactsCounter, findArtifactCounter, getArtifactsByTypeCounter, addArtifactCounter,
+        initBridgesCounter, commitDurationCounter, dropMappingsCounter
       )
     }
 
@@ -370,9 +370,7 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
   }
 
   @RequiresWriteLock
-  fun dropMappings(selector: (ArtifactEntity) -> Boolean) {
-    val start = System.currentTimeMillis()
-
+  fun dropMappings(selector: (ArtifactEntity) -> Boolean) = dropMappingsMs.addMeasuredTimeMillis {
     // XXX @RequiresWriteLock annotation doesn't work for kt now
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     (project.workspaceModel as WorkspaceModelImpl).updateProjectModelSilent("Drop artifact mappings") {
@@ -381,7 +379,5 @@ class ArtifactManagerBridge(private val project: Project) : ArtifactManager(), D
         map.removeMapping(artifact)
       }
     }
-
-    dropMappingsMs.addElapsedTimeMillis(start)
   }
 }
