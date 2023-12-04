@@ -50,7 +50,6 @@ class AntiFlickeringPanel(layout: LayoutManager?) : JPanel(layout) {
   override fun paint(g: Graphics) {
     val image = savedSelfieImage
     if (image != null) {
-      System.err.println("image")
       UIUtil.drawImage(g, image, 0, 0, null)
       return
     }
