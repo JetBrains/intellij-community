@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectChangesBuilder.Companion.merged
-import org.jetbrains.idea.maven.project.MavenProjectsTree.MavenProjectTimestamp
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.ParallelRunner
@@ -100,13 +99,13 @@ internal class MavenProjectsTreeUpdater(private val tree: MavenProjectsTree,
 
       val profilesHashCode = explicitProfiles.hashCode()
       MavenProjectTimestamp(pomTimestamp,
-                            parentLastReadStamp,
-                            profilesTimestamp,
-                            userSettingsTimestamp,
-                            globalSettingsTimestamp,
-                            profilesHashCode.toLong(),
-                            jvmConfigTimestamp,
-                            mavenConfigTimestamp)
+                                                                                parentLastReadStamp,
+                                                                                profilesTimestamp,
+                                                                                userSettingsTimestamp,
+                                                                                globalSettingsTimestamp,
+                                                                                profilesHashCode.toLong(),
+                                                                                jvmConfigTimestamp,
+                                                                                mavenConfigTimestamp)
     }
   }
 
