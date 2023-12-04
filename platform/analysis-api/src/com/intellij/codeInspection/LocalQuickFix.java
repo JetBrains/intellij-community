@@ -93,6 +93,18 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
     return List.of();
   }
 
+  /**
+   * Called to apply the fix. It's expected that before this method is called, PSI and document for all the files
+   * are synchronized, because the quick fix is free to modify either PSI or document.
+   * <p>
+   * Please call {@link com.intellij.profile.codeInspection.ProjectInspectionProfileManager#fireProfileChanged()}
+   * if inspection profile is changed as result of fix.
+   *
+   * @param project    {@link Project}
+   * @param descriptor problem reported by the tool which provided this quick fix action
+   */
+  @Override
+  void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor);
 
   /**
    * @return an array with a single element {@code fix} or an empty array if the argument is null
