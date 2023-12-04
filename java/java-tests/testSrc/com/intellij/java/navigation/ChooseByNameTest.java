@@ -180,9 +180,10 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void test_sort_same_named_items_by_path() {
     List<PsiFile> files = new ArrayList<>();
-    for (int i = 10; i <= 30; i++) {
+    for (int i = 30; i >= 10; i--) {
       files.add(myFixture.addFileToProject("foo" + i + "/index.html", "foo" + i));
     }
+    Collections.reverse(files);
     assertOrderedEquals(gotoFile("index"), files);
   }
 

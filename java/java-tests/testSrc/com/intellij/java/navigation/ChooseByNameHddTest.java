@@ -65,14 +65,9 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(resultModules.get(0), "mod2");
   }
 
-  public void test_paths_relative_to_topmost_module() {
-    try {
-      PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "m1", myFixture.getTempDirFixture().findOrCreateDir("foo"));
-      PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "m2", myFixture.getTempDirFixture().findOrCreateDir("foo/bar"));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public void test_paths_relative_to_topmost_module() throws IOException {
+    PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "m1", myFixture.getTempDirFixture().findOrCreateDir("foo"));
+    PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "m2", myFixture.getTempDirFixture().findOrCreateDir("foo/bar"));
 
     PsiFile file = myFixture.addFileToProject("foo/bar/goo/doo.txt", "");
     SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable(), file);
@@ -82,37 +77,32 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, "foo/bar/goo/doo"), Arrays.asList(file));
   }
 
-  public void test_source_test_resources_priority() {
-    try {
-      final VirtualFile srcDir = myFixture.getTempDirFixture().findOrCreateDir("src");
-      final VirtualFile resourcesDir = myFixture.getTempDirFixture().findOrCreateDir("resources");
-      final VirtualFile testSrcDir = myFixture.getTempDirFixture().findOrCreateDir("test");
+  public void test_source_test_resources_priority() throws IOException {
+    final VirtualFile srcDir = myFixture.getTempDirFixture().findOrCreateDir("src");
+    final VirtualFile resourcesDir = myFixture.getTempDirFixture().findOrCreateDir("resources");
+    final VirtualFile testSrcDir = myFixture.getTempDirFixture().findOrCreateDir("test");
 
-      PsiTestUtil.addSourceRoot(getModule(), srcDir, JavaSourceRootType.SOURCE);
-      PsiTestUtil.addSourceRoot(getModule(), testSrcDir, JavaSourceRootType.TEST_SOURCE);
-      PsiTestUtil.addSourceRoot(getModule(), resourcesDir, JavaResourceRootType.RESOURCE);
-      PsiTestUtil.removeSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir(""));
+    PsiTestUtil.addSourceRoot(getModule(), srcDir, JavaSourceRootType.SOURCE);
+    PsiTestUtil.addSourceRoot(getModule(), testSrcDir, JavaSourceRootType.TEST_SOURCE);
+    PsiTestUtil.addSourceRoot(getModule(), resourcesDir, JavaResourceRootType.RESOURCE);
+    PsiTestUtil.removeSourceRoot(getModule(), myFixture.getTempDirFixture().findOrCreateDir(""));
 
-      PsiFile testSrcFile1 = myFixture.addFileToProject(testSrcDir.getName() + "/fileForSearch.txt", "");
-      PsiFile testSrcFile2 = myFixture.addFileToProject(testSrcDir.getName() + "/sub/fileForSearch.txt", "");
-      PsiFile srcFile1 = myFixture.addFileToProject(srcDir.getName() + "/sub/fileForSearch.txt", "");
-      PsiFile srcFile2 = myFixture.addFileToProject(srcDir.getName() + "/sub/sub/fileForSearch.txt", "");
-      PsiFile resourcesFile = myFixture.addFileToProject(resourcesDir.getName() + "/fileForSearch.txt", "");
+    PsiFile testSrcFile1 = myFixture.addFileToProject(testSrcDir.getName() + "/fileForSearch.txt", "");
+    PsiFile testSrcFile2 = myFixture.addFileToProject(testSrcDir.getName() + "/sub/fileForSearch.txt", "");
+    PsiFile srcFile1 = myFixture.addFileToProject(srcDir.getName() + "/sub/fileForSearch.txt", "");
+    PsiFile srcFile2 = myFixture.addFileToProject(srcDir.getName() + "/sub/sub/fileForSearch.txt", "");
+    PsiFile resourcesFile = myFixture.addFileToProject(resourcesDir.getName() + "/fileForSearch.txt", "");
 
-      PsiFile contextFile = myFixture.addFileToProject("context.txt", "");
-      PsiFile contextFile2 = myFixture.addFileToProject(testSrcDir.getName() + "/context.txt", "");
+    PsiFile contextFile = myFixture.addFileToProject("context.txt", "");
+    PsiFile contextFile2 = myFixture.addFileToProject(testSrcDir.getName() + "/context.txt", "");
 
-      //tests have low priority because of com.intellij.psi.util.proximity.InResolveScopeWeigher
-      assertOrderedEquals(gotoFile("fileForSearch.txt", false, contextFile),
-                          Arrays.asList(srcFile1, srcFile2, resourcesFile, testSrcFile1, testSrcFile2));
+    //tests have low priority because of com.intellij.psi.util.proximity.InResolveScopeWeigher
+    assertOrderedEquals(gotoFile("fileForSearch.txt", false, contextFile),
+                        Arrays.asList(srcFile1, srcFile2, resourcesFile, testSrcFile1, testSrcFile2));
 
-      //tests have high priority because of search from same root
-      assertOrderedEquals(gotoFile("fileForSearch.txt", false, contextFile2),
-                          Arrays.asList(testSrcFile1, testSrcFile2, srcFile1, srcFile2, resourcesFile));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    //tests have high priority because of search from same root
+    assertOrderedEquals(gotoFile("fileForSearch.txt", false, contextFile2),
+                        Arrays.asList(testSrcFile1, testSrcFile2, srcFile1, srcFile2, resourcesFile));
   }
 
   @SuppressWarnings("unchecked")
