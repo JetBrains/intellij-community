@@ -19,16 +19,16 @@ import java.io.IOException;
  * Adapter for different attributes storage implementations: adapts them to the same interface
  * used by {@link PersistentFSAttributeAccessor}
  */
-//TODO RC: rename to VFSAttributesStorage
 @ApiStatus.Internal
-public interface AbstractAttributesStorage extends Forceable, Closeable {
+public interface VFSAttributesStorage extends Forceable, Closeable {
 
   /**
    * Upper limit on the single attribute size.
    * I set a restrictive limit here because VFS file attributes are designed to be a small chunk of data attached to
    * a file, not blobs of 100s Kb -- such blobs could compromise the performance of VFS for nothing.
-   * Actual implementations could have larger restrictions ({@linkplain AttributesStorageOverBlobStorage}: ~1Mb),
-   * or not have any restrictions ({@link AttributesStorageOld}).
+   * Implementations could have larger restrictions ({@linkplain AttributesStorageOverBlobStorage}: ~1Mb),
+   * or not have any restrictions ({@link AttributesStorageOld}) -- but limit is stricter, to have
+   * some margins
    */
   int MAX_ATTRIBUTE_VALUE_SIZE = SystemProperties.getIntProperty("vfs.file-attribute-size-max", 800 * IOUtil.KiB);
 
@@ -36,46 +36,43 @@ public interface AbstractAttributesStorage extends Forceable, Closeable {
   int WARN_ATTRIBUTE_VALUE_SIZE = SystemProperties.getIntProperty("vfs.file-attribute-size-warn", 100 * IOUtil.KiB);
 
   /**
-   * Limit the total number of attributes. It seems to have too many different attributes is not a good idea,
-   * looks more like an ab-use of the attribute API.
+   * Limit the total number of attributes. To have too many different attributes is not a good idea, it's an
+   * ab-use of the attribute API.
    * <p>
-   * Actual limit value is kind of arbitrary: the actual implementation limits may be wider, or not have limit
-   * at all.
-   * <p>
-   * I.e. the {@link AttributesStorageOverBlobStorage} binary format allows for 16k attributeId, see {@link AttributesStorageOverBlobStorage#MAX_SUPPORTED_ATTRIBUTE_ID},
-   * while {@link AttributesStorageOld} has MAX_INT as a limit.
+   * Current limit value is a bit arbitrary: the actual implementations limits' are wider (i.e. the
+   * {@link AttributesStorageOverBlobStorage} binary format allows for 16k attributeId, see
+   * {@link AttributesStorageOverBlobStorage#MAX_SUPPORTED_ATTRIBUTE_ID}, while {@link AttributesStorageOld}
+   * has MAX_INT as a limit) -- but stricter limit allows to have a reserve capacity.
    */
   int MAX_ATTRIBUTE_ID = SystemProperties.getIntProperty("vfs.file-attribute-max-id", 8 * 1024);
 
-  /**
-   * Exclusive upper bound for inline attribute size: attribute is inlined if its size < this value
-   */
+  /** Exclusive upper bound for inline attribute size: attribute is inlined if its size < this value */
   int INLINE_ATTRIBUTE_SMALLER_THAN = 64;
 
-  int NON_EXISTENT_ATTR_RECORD_ID = 0;
+  int NON_EXISTENT_ATTRIBUTE_RECORD_ID = 0;
 
   int getVersion() throws IOException;
 
-  void setVersion(final int version) throws IOException;
+  void setVersion(int version) throws IOException;
 
-  @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
-                                               final int fileId,
-                                               final @NotNull FileAttribute attribute) throws IOException;
+  @Nullable AttributeInputStream readAttribute(@NotNull PersistentFSConnection connection,
+                                               int fileId,
+                                               @NotNull FileAttribute attribute) throws IOException;
 
 
-  boolean hasAttributePage(final @NotNull PersistentFSConnection connection,
-                           final int fileId,
-                           final @NotNull FileAttribute attribute) throws IOException;
+  boolean hasAttributePage(@NotNull PersistentFSConnection connection,
+                           int fileId,
+                           @NotNull FileAttribute attribute) throws IOException;
 
   /**
    * Opens given attribute of given file for writing
    */
-  @NotNull AttributeOutputStream writeAttribute(final @NotNull PersistentFSConnection connection,
-                                                final int fileId,
-                                                final @NotNull FileAttribute attribute);
+  @NotNull AttributeOutputStream writeAttribute(@NotNull PersistentFSConnection connection,
+                                                int fileId,
+                                                @NotNull FileAttribute attribute);
 
-  void deleteAttributes(final @NotNull PersistentFSConnection connection,
-                        final int fileId) throws IOException;
+  void deleteAttributes(@NotNull PersistentFSConnection connection,
+                        int fileId) throws IOException;
 
   boolean isEmpty() throws IOException;
 

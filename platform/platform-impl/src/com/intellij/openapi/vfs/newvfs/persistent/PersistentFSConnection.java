@@ -96,7 +96,7 @@ public final class PersistentFSConnection {
 
   private final @NotNull PersistentFSPaths persistentFSPaths;
 
-  private final @NotNull AbstractAttributesStorage attributesStorage;
+  private final @NotNull VFSAttributesStorage attributesStorage;
   private final @NotNull VFSContentStorage contentStorage;
 
   private final @NotNull PersistentFSRecordsStorage records;
@@ -122,7 +122,7 @@ public final class PersistentFSConnection {
   PersistentFSConnection(@NotNull PersistentFSPaths paths,
                          @NotNull PersistentFSRecordsStorage records,
                          @NotNull ScannableDataEnumeratorEx<String> names,
-                         @NotNull AbstractAttributesStorage attributes,
+                         @NotNull VFSAttributesStorage attributes,
                          @NotNull VFSContentStorage contents,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @Nullable VfsLogEx vfsLog,
@@ -157,7 +157,7 @@ public final class PersistentFSConnection {
     return InterceptorInjection.INSTANCE.injectInContents(contents, contentInterceptors);
   }
 
-  private static AbstractAttributesStorage wrapAttributes(AbstractAttributesStorage attributes, List<ConnectionInterceptor> interceptors) {
+  private static VFSAttributesStorage wrapAttributes(VFSAttributesStorage attributes, List<ConnectionInterceptor> interceptors) {
     var attributesInterceptors = interceptors.stream()
       .filter(AttributesInterceptor.class::isInstance)
       .map(AttributesInterceptor.class::cast)
@@ -184,7 +184,7 @@ public final class PersistentFSConnection {
     return contentStorage;
   }
 
-  @NotNull AbstractAttributesStorage getAttributes() {
+  @NotNull VFSAttributesStorage getAttributes() {
     return attributesStorage;
   }
 
@@ -308,7 +308,7 @@ public final class PersistentFSConnection {
 
   static void closeStorages(@Nullable PersistentFSRecordsStorage records,
                             @Nullable ScannableDataEnumeratorEx<String> names,
-                            @Nullable AbstractAttributesStorage attributes,
+                            @Nullable VFSAttributesStorage attributes,
                             @Nullable VFSContentStorage contents,
                             @Nullable VfsLogEx vfsLog) throws IOException {
     if (names instanceof Closeable) {//implies != null
@@ -334,10 +334,10 @@ public final class PersistentFSConnection {
 
   int getAttributeId(@NotNull String attributeId) {
     int enumeratedAttributeId = enumeratedAttributes.enumerate(attributeId);
-    if (enumeratedAttributeId > AbstractAttributesStorage.MAX_ATTRIBUTE_ID) {
+    if (enumeratedAttributeId > VFSAttributesStorage.MAX_ATTRIBUTE_ID) {
       throw new IllegalStateException(
         "attribute[" + attributeId + "] assigned id[" + enumeratedAttributeId + "] which is above max " +
-        AbstractAttributesStorage.MAX_ATTRIBUTE_ID +
+        VFSAttributesStorage.MAX_ATTRIBUTE_ID +
         ". Current list of attributes: " + enumeratedAttributes.dumpToString()
       );
     }

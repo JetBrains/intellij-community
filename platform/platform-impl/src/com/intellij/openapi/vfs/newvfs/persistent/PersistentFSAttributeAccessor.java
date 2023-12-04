@@ -17,7 +17,7 @@ import java.io.IOException;
 public final class PersistentFSAttributeAccessor {
 
   private final @NotNull PersistentFSConnection connection;
-  private final @NotNull AbstractAttributesStorage attributesStorage;
+  private final @NotNull VFSAttributesStorage attributesStorage;
 
   PersistentFSAttributeAccessor(final @NotNull PersistentFSConnection connection) {
     this.connection = connection;

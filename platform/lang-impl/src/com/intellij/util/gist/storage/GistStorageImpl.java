@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
@@ -54,7 +54,7 @@ public final class GistStorageImpl extends GistStorage {
   /**
    * If  > 0: only store in VFS attributes gists <= this size. Store larger gists in dedicated files.
    * If == 0: store all gists in VFS attributes.
-   * Value should be < {@link AbstractAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
+   * Value should be < {@link VFSAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
    */
   @VisibleForTesting
   public static final int MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES = getIntProperty("idea.gist.max-size-to-store-in-attributes", 50 * KiB);
@@ -86,12 +86,12 @@ public final class GistStorageImpl extends GistStorage {
 
   public GistStorageImpl() {
     // Gist uses up to 6 bytes for its header, in addition to payload:
-    if (MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES > AbstractAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + 6) {
+    if (MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES > VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + 6) {
       throw new AssertionError(
         "Configuration mismatch: " +
         "MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES(=" + MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES + ")" +
         " > " +
-        "AbstractAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE(=" + AbstractAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + ") + 6");
+        "VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE(=" + VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE + ") + 6");
     }
 
     //Setup cleanup task for old Gists:

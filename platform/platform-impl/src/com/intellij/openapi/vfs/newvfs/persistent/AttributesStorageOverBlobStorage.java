@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.checkAttributeValueSize;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.checkAttributeValueSize;
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.LOG;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 
@@ -29,7 +29,7 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
  * Attribute storage implemented on the top of {@link StreamlinedBlobStorage}
  */
 @ApiStatus.Internal
-public final class AttributesStorageOverBlobStorage implements AbstractAttributesStorage, CleanableStorage {
+public final class AttributesStorageOverBlobStorage implements VFSAttributesStorage, CleanableStorage {
   public static final int MAX_SUPPORTED_ATTRIBUTE_ID = 1 << AttributeEntry.BIG_ENTRY_ATTR_ID_BITS;
 
   /**
@@ -86,10 +86,10 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     lock.readLock().lock();
     try {
       int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
-      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         return null;
       }
-      else if (attributeRecordId < NON_EXISTENT_ATTR_RECORD_ID) {
+      else if (attributeRecordId < NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
       }
       int encodedAttributeId = connection.getAttributeId(attribute.getId());
@@ -120,7 +120,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     lock.readLock().lock();
     try {
       int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
-      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         return null;
       }
       if (attributeRecordId < 0) {
@@ -148,7 +148,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
     lock.readLock().lock();
     try {
       int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
-      if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         return false;
       }
       int encodedAttributeId = connection.getAttributeId(attribute.getId());
@@ -181,7 +181,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
       int attributeRecordId = records.getAttributeRecordId(fileId);
       deleteAttributes(attributeRecordId, fileId);
 
-      records.setAttributeRecordId(fileId, NON_EXISTENT_ATTR_RECORD_ID);
+      records.setAttributeRecordId(fileId, NON_EXISTENT_ATTRIBUTE_RECORD_ID);
     }
     finally {
       lock.writeLock().unlock();
@@ -191,7 +191,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   @Override
   public void checkAttributeRecordSanity(int fileId,
                                          int attributeRecordId) throws IOException {
-    if (attributeRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+    if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
       return;
     }
 
@@ -858,7 +858,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
                                                       int newValueSize) throws IOException {
     assert newValueSize < INLINE_ATTRIBUTE_SMALLER_THAN : "Only small values could be stored in directory record";
 
-    if (attributesRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+    if (attributesRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
       //no directory record yet -> create new one:
       int directoryRecordSize = AttributesRecord.RECORD_HEADER_SIZE
                                 + AttributeEntry.entrySizeForInlineValueSize(attributeId, newValueSize);
@@ -874,7 +874,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
       }, directoryRecordSize);
     }
     else {//modify already existing directory record:
-      IntRef recordToDelete = new IntRef(NON_EXISTENT_ATTR_RECORD_ID);
+      IntRef recordToDelete = new IntRef(NON_EXISTENT_ATTRIBUTE_RECORD_ID);
       int updatedAttributeRecordId = storage.writeToRecord(attributesRecordId, buffer -> {
 
         AttributesRecord record = new AttributesRecord(buffer);
@@ -910,7 +910,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
         }
       });
 
-      if (recordToDelete.get() != NON_EXISTENT_ATTR_RECORD_ID) {
+      if (recordToDelete.get() != NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
         deleteRecordInStorage(recordToDelete.get());
       }
 
@@ -942,7 +942,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
         //Put attribute value into dedicated record:
         int dedicatedValueRecordId = writeDedicatedAttributeRecord(
-          NON_EXISTENT_ATTR_RECORD_ID,
+          NON_EXISTENT_ATTRIBUTE_RECORD_ID,
           fileId, attributeId,
           newValueBytes, newValueSize
         );
@@ -963,7 +963,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
 
         //Put/update attribute value into dedicated record:
         int dedicatedValueRecordId = entry.isValueInlined() ?
-                                     NON_EXISTENT_ATTR_RECORD_ID :
+                                     NON_EXISTENT_ATTRIBUTE_RECORD_ID :
                                      entry.dedicatedValueRecordId();
         int updatedDedicatedValueRecordId = writeDedicatedAttributeRecord(
           dedicatedValueRecordId,
@@ -1085,7 +1085,7 @@ public final class AttributesStorageOverBlobStorage implements AbstractAttribute
   @VisibleForTesting
   boolean deleteAttributes(int attributesRecordId,
                            int fileId) throws IOException {
-    if (attributesRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
+    if (attributesRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
       return false;
     }
 

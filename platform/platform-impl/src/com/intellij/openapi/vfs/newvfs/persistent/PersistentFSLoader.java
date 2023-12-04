@@ -120,7 +120,7 @@ public final class PersistentFSLoader {
   private @Nullable VfsLogEx vfsLog = null;
   private PersistentFSRecordsStorage recordsStorage = null;
   private ScannableDataEnumeratorEx<String> namesStorage = null;
-  private AbstractAttributesStorage attributesStorage = null;
+  private VFSAttributesStorage attributesStorage = null;
   private VFSContentStorage contentsStorage = null;
   private SimpleStringPersistentEnumerator attributesEnumerator = null;
 
@@ -188,7 +188,7 @@ public final class PersistentFSLoader {
 
     CompletableFuture<ScannableDataEnumeratorEx<String>> namesStorageFuture =
       executorService.async(() -> createFileNamesEnumerator(namesFile));
-    CompletableFuture<AbstractAttributesStorage> attributesStorageFuture =
+    CompletableFuture<VFSAttributesStorage> attributesStorageFuture =
       executorService.async(() -> createAttributesStorage(attributesFile));
     CompletableFuture<VFSContentStorage> contentsStorageFuture =
       executorService.async(() -> createContentStorage(contentsHashesFile, contentsFile));
@@ -543,7 +543,7 @@ public final class PersistentFSLoader {
 
   private boolean attributeRecordIsValid(int fileId) throws IOException {
     int attributeRecordId = recordsStorage.getAttributeRecordId(fileId);
-    if (attributeRecordId == AbstractAttributesStorage.NON_EXISTENT_ATTR_RECORD_ID) {
+    if (attributeRecordId == VFSAttributesStorage.NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
       return true;
     }
 
@@ -583,8 +583,8 @@ public final class PersistentFSLoader {
   }
 
 
-  public @NotNull AbstractAttributesStorage createAttributesStorage(@NotNull Path attributesFile) throws IOException {
-    AbstractAttributesStorage storage = createAttributesStorage_makeStorage(attributesFile);
+  public @NotNull VFSAttributesStorage createAttributesStorage(@NotNull Path attributesFile) throws IOException {
+    VFSAttributesStorage storage = createAttributesStorage_makeStorage(attributesFile);
     if (vfsLog != null) {
       var attributesInterceptors = vfsLog.getConnectionInterceptors().stream()
         .filter(AttributesInterceptor.class::isInstance)
@@ -595,7 +595,7 @@ public final class PersistentFSLoader {
     return storage;
   }
 
-  private static @NotNull AbstractAttributesStorage createAttributesStorage_makeStorage(@NotNull Path attributesFile) throws IOException {
+  private static @NotNull VFSAttributesStorage createAttributesStorage_makeStorage(@NotNull Path attributesFile) throws IOException {
     if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
       final SpaceAllocationStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(
@@ -765,7 +765,7 @@ public final class PersistentFSLoader {
 
   /** @return common version of all 3 storages, or -1, if their versions are different (i.e. inconsistent) */
   private static int commonVersionIfExists(@NotNull PersistentFSRecordsStorage records,
-                                           @NotNull AbstractAttributesStorage attributes,
+                                           @NotNull VFSAttributesStorage attributes,
                                            @NotNull VFSContentStorage contents) throws IOException {
     final int recordsVersion = records.getVersion();
     final int attributesVersion = attributes.getVersion();
@@ -782,7 +782,7 @@ public final class PersistentFSLoader {
   }
 
   private static void setCurrentVersion(@NotNull PersistentFSRecordsStorage records,
-                                        @NotNull AbstractAttributesStorage attributes,
+                                        @NotNull VFSAttributesStorage attributes,
                                         @NotNull VFSContentStorage contents,
                                         int version) throws IOException {
     records.setVersion(version);
@@ -827,7 +827,7 @@ public final class PersistentFSLoader {
     return namesStorage;
   }
 
-  public AbstractAttributesStorage attributesStorage() {
+  public VFSAttributesStorage attributesStorage() {
     return attributesStorage;
   }
 
@@ -852,7 +852,7 @@ public final class PersistentFSLoader {
     this.namesStorage = namesStorage;
   }
 
-  public void setAttributesStorage(AbstractAttributesStorage attributesStorage) {
+  public void setAttributesStorage(VFSAttributesStorage attributesStorage) {
     this.attributesStorage = attributesStorage;
   }
 

@@ -41,7 +41,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
     PersistentFSRecordsStorage records = loader.recordsStorage();
     ScannableDataEnumeratorEx<String> namesEnumerator = loader.namesStorage();
     VFSContentStorage contentStorage = loader.contentsStorage();
-    AbstractAttributesStorage attributesStorage = loader.attributesStorage();
+    VFSAttributesStorage attributesStorage = loader.attributesStorage();
     try {
       int accumulatedErrors = records.getErrorsAccumulated();
       if (accumulatedErrors > 0) {
@@ -135,7 +135,7 @@ public class NotClosedProperlyRecoverer implements VFSRecoverer {
 
   private static boolean attributeRecordIsValid(int fileId,
                                                 int attributeRecordId,
-                                                @NotNull AbstractAttributesStorage attributesStorage) {
+                                                @NotNull VFSAttributesStorage attributesStorage) {
     try {
       attributesStorage.checkAttributeRecordSanity(fileId, attributeRecordId);
       return true;

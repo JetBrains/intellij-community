@@ -3,7 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.intercept
 
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream
 import com.intellij.openapi.vfs.newvfs.FileAttribute
-import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage
+import com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage
 import com.intellij.util.io.storage.VFSContentStorage
@@ -52,8 +52,8 @@ object InterceptorInjection {
     }
   }
 
-  fun injectInAttributes(storage: AbstractAttributesStorage,
-                         interceptors: List<AttributesInterceptor>): AbstractAttributesStorage = interceptors.run {
+  fun injectInAttributes(storage: VFSAttributesStorage,
+                         interceptors: List<AttributesInterceptor>): VFSAttributesStorage = interceptors.run {
     if (isEmpty()) {
       return storage
     }
@@ -62,7 +62,7 @@ object InterceptorInjection {
     val deleteAttributes = intercept(storage::deleteAttributes, AttributesInterceptor::onDeleteAttributes)
     val setVersion = intercept(storage::setVersion, AttributesInterceptor::onSetVersion)
 
-    object : AbstractAttributesStorage by storage {
+    object : VFSAttributesStorage by storage {
       override fun deleteAttributes(connection: PersistentFSConnection, fileId: Int) = deleteAttributes(connection, fileId)
 
       override fun writeAttribute(connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute): AttributeOutputStream =
