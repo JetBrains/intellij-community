@@ -19,10 +19,14 @@ import org.jetbrains.plugins.gitlab.util.GitLabBundle
 internal class GitLabNotificationService(private val project: Project, parentCs: CoroutineScope) {
   private val serviceScope = parentCs.childScope(CoroutineName("GitLab notification service scope"))
 
-  fun showReviewCreationNotification() {
+  fun showReviewCreationNotification(targetBranch: String) {
     serviceScope.launch {
       val toolWindowVm = project.serviceAsync<GitLabToolWindowViewModel>()
       val projectVm = toolWindowVm.projectVm.filterNotNull().first()
+
+      val defaultBranch = projectVm.defaultBranch.await()
+      if (targetBranch.endsWith(defaultBranch)) return@launch
+
       val mergeRequest = projectVm.mergeRequestOnCurrentBranch.first()
       if (mergeRequest == null) {
         notifyReviewCreation(project)

@@ -40,6 +40,7 @@ class GHPRToolWindowProjectViewModel internal constructor(
   private val cs = parentCs.childScope()
 
   internal val dataContext: GHPRDataContext = connection.dataContext
+  val defaultBranch: String? = dataContext.repositoryDataService.defaultBranchName
 
   private val allRepos = project.service<GHHostedRepositoriesManager>().knownRepositories.map(GHGitRepositoryMapping::repository)
   val repository: GHRepositoryCoordinates = dataContext.repositoryDataService.repositoryCoordinates

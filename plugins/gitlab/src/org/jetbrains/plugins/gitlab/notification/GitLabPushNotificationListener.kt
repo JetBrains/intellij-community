@@ -13,7 +13,7 @@ internal class GitLabPushNotificationListener(private val project: Project) : Gi
       GitPushRepoResult.Type.SUCCESS,
       GitPushRepoResult.Type.NEW_BRANCH,
       GitPushRepoResult.Type.FORCED -> {
-        project.service<GitLabNotificationService>().showReviewCreationNotification()
+        project.service<GitLabNotificationService>().showReviewCreationNotification(pushResult.targetBranch)
       }
       else -> {}
     }

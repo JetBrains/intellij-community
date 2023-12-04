@@ -25,6 +25,10 @@ internal class GHNotificationService(private val project: Project, parentCs: Cor
     serviceScope.launch {
       val toolWindowVm = project.serviceAsync<GHPRToolWindowViewModel>()
       val projectVm = toolWindowVm.projectVm.filterNotNull().first()
+
+      val defaultBranch = projectVm.defaultBranch
+      if (defaultBranch != null && pushResult.targetBranch.endsWith(defaultBranch)) return@launch
+
       val existingPullRequest = projectVm.isExistingPullRequest(pushResult) ?: return@launch
       if (!existingPullRequest) {
         notifyReviewCreation(project)

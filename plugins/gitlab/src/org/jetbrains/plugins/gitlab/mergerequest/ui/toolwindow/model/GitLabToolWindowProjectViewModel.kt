@@ -17,6 +17,7 @@ import git4idea.remote.hosting.changesSignalFlow
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -30,6 +31,7 @@ import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModel
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountViewModelImpl
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestDetails
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesControllerImpl
@@ -61,12 +63,13 @@ private constructor(parentCs: CoroutineScope,
   val connectionId: String = connection.id
   override val projectName: @Nls String = connection.repo.repository.projectPath.name
 
+  val defaultBranch: Deferred<String> = connection.projectData.defaultBranch
+
   private val mergeRequestsVms = Caffeine.newBuilder().build<String, SharedFlow<Result<GitLabMergeRequestViewModels>>> { iid ->
-    val projectData = connection.projectData
-    projectData.mergeRequests.getShared(iid)
+    connection.projectData.mergeRequests.getShared(iid)
       .transformConsecutiveSuccesses {
         mapScoped {
-          GitLabMergeRequestViewModels(project, this, projectData, it, this@GitLabToolWindowProjectViewModel, connection.currentUser)
+          GitLabMergeRequestViewModels(project, this, connection.projectData, it, this@GitLabToolWindowProjectViewModel, connection.currentUser)
         }
       }
       .shareIn(cs, SharingStarted.WhileSubscribed(0, 0), 1)
