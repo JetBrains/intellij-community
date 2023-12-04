@@ -49,6 +49,13 @@ internal class GitLabMergeRequestDiffService(private val project: Project, paren
       projectVm.getDiffViewModel(mergeRequestIid).collectLatest {
         val diffVm = it.getOrNull() ?: return@collectLatest
         processor.putContextUserData(GitLabMergeRequestDiffViewModel.KEY, diffVm)
+
+        launch {
+          diffVm.submittableReview.collectLatest {
+            processor.toolbar.updateActionsAsync()
+          }
+        }
+
         try {
           handleChanges(diffVm, processor)
           awaitCancellation()
