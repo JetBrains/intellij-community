@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
@@ -232,6 +233,9 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
       project = project,
       fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("css")
     )
+    field.applyToComponent {
+      disposable?.let { Disposer.register(it, this@applyToComponent) }
+    }
     return field.validationOnInput(::validateCustomStylesheetPath).validationOnApply(::validateCustomStylesheetPath)
   }
 
@@ -251,6 +255,9 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
             onApply { component.apply() }
             onIsModified { component.isModified() }
             onReset { component.reset() }
+          }
+          .applyToComponent {
+            disposable?.let { Disposer.register(it, this@applyToComponent) }
           }
       }
     }
