@@ -2141,7 +2141,32 @@ public class Py3TypeTest extends PyTestCase {
              expr = Y(a, 1)
              """);
   }
-  
+
+  // PY-64474
+  public void testTupleElementAccessedWithNegativeIndex() {
+    doTest("bool",
+           """
+             xs = (1, True, "foo")
+             expr = xs[-2]
+             """);
+  }
+
+  // PY-64474
+  public void testTupleElementAccessedWithOutOfBoundIndex() {
+    doTest("tuple[Any, Any]",
+           """
+             xs = (1, True, "foo")
+             expr = xs[-10], xs[10]
+             """);
+  }
+
+  public void testHomogenousTupleElementAccessedWithOutOfBoundIndex() {
+    doTest("tuple[str, str]",
+           """
+             xs: tuple[str, ...] = tuple(['foo'])
+             expr = xs[-10], xs[10]
+             """);
+  }
 
   private void doTest(final String expectedType, final String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
