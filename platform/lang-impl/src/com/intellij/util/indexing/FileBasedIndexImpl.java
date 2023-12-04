@@ -1515,13 +1515,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  void updateSingleIndex(@NotNull ID<?, ?> indexId,
+  boolean updateSingleIndex(@NotNull ID<?, ?> indexId,
                          @NotNull VirtualFile file,
                          int inputId,
                          @NotNull FileContent currentFC) {
     SingleIndexValueApplier<?> applier = createSingleIndexValueApplier(indexId, file, inputId, currentFC);
     if (applier != null) {
-      applier.apply();
+      return applier.apply();
+    }
+    else {
+      return true;
     }
   }
 
@@ -1789,7 +1792,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean contentChange) {
+  public void scheduleFileForIndexing(int fileId, @NotNull VirtualFile file, boolean onlyContentChanged) {
     if (!ensureFileBelongsToIndexableFilter(fileId, file)) {
       doInvalidateIndicesForFile(fileId, file);
       return;
@@ -1824,29 +1827,25 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     else {
       FileTypeManagerEx.getInstanceEx().freezeFileTypeTemporarilyIn(file, () -> {
-        List<ID<?, ?>> candidates = getRequiredIndexes(indexedFile);
-        // TODO-ank: delete not needed indexed data now? (will be deleted during indexing)
+        FileContent fileContent = new IndexedFileWrapper(indexedFile); // constructor is very light-weight, no need to burden with "lazy"
 
-        boolean scheduleForUpdate = false;
-        FileContent fileContent = null;
-
-        for (int i = 0, size = candidates.size(); i < size; ++i) {
-          final ID<?, ?> indexId = candidates.get(i);
-          if (needsFileContentLoading(indexId)) {
-            getIndex(indexId).invalidateIndexedStateForFile(fileId);
-            scheduleForUpdate = true;
+        // TODO-ank (IJPL-412): use UnindexedFilesFinder.getFileStatus instead
+        Set<ID<?,?>> indexesToInvalidate = new HashSet<>(nontrivialFileIndexedStates);
+        for (ID<?, ?> indexId : getRequiredIndexes(indexedFile)) {
+          if (tryIndexWithoutContent(indexId, file, fileId, fileContent, onlyContentChanged)) {
+            indexesToInvalidate.remove(indexId); // IndexingStamp has been updated by applier just now
           }
-          else if (!contentChange || indexId == FileTypeIndex.NAME){
-            // TODO-ank: quite a strange condition. Mostly to preserve old behavior
-            //  and please the test com.intellij.util.indexing.RequestedToRebuildIndexTest
-            if (fileContent == null) {
-              fileContent = new IndexedFileWrapper(indexedFile);
-            }
-            updateSingleIndex(indexId, file, fileId, fileContent);
+          else {
+            indexesToInvalidate.add(indexId);
           }
         }
 
-        if (scheduleForUpdate) {
+        if (!indexesToInvalidate.isEmpty()) {
+          for (ID<?, ?> indexId : indexesToInvalidate) {
+            // TODO-ank: delete not needed indexed data now? (will be deleted during indexing)
+            getIndex(indexId).invalidateIndexedStateForFile(fileId);
+          }
+
           IndexingStamp.flushCache(fileId);
           getChangedFilesCollector().scheduleForUpdate(file);
         }
@@ -1854,6 +1853,27 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           IndexingFlag.setFileIndexed(file, indexingStamp);
         }
       });
+    }
+  }
+
+  // TODO-ank (IJPL-412): use UnindexedFilesFinder.tryIndexWithoutContent instead
+  private boolean tryIndexWithoutContent(@NotNull ID<?, ?> indexId,
+                                         @NotNull VirtualFile file,
+                                         int fileId,
+                                         @NotNull FileContent fileContent,
+                                         boolean onlyContentChanged) {
+    if (needsFileContentLoading(indexId)) {
+      return false;
+    }
+    else if (!onlyContentChanged || indexId == FileTypeIndex.NAME){
+      // Mostly to preserve old behavior and to please the test com.intellij.util.indexing.RequestedToRebuildIndexTest. Rationale:
+      //   1. Don't update content-independent indexes if only content has changed - indexes didn't change.
+      //   2. FileTypeIndex actually depends on content, but pretends to be content-independent. Update it as well.
+      // The test fails because scheduleFileForIndexing is invoked twice from ChangedFilesCollector.processFilesToUpdateInReadAction for
+      //   files in state CONTENT_CHANGED+ADDED (once with onlyContentChanged=true, and then with onlyContentChanged=false)
+      return updateSingleIndex(indexId, file, fileId, fileContent);
+    } else {
+      return true; // no update needed
     }
   }
 
