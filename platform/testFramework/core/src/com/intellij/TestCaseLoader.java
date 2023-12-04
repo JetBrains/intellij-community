@@ -604,7 +604,7 @@ public class TestCaseLoader {
 
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createClassNameFilter`
   @SuppressWarnings("unused")
-  public static boolean isClassIncluded(String className) {
+  public static boolean isClassNameIncluded(String className) {
     if (!INCLUDE_UNCONVENTIONALLY_NAMED_TESTS &&
         !className.endsWith("Test")) {
       return false;
@@ -626,9 +626,18 @@ public class TestCaseLoader {
       System.out.println("Initialized tests filter: " + ourFilter);
     }
     return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
-           // no need to calculate bucket matching (especially that may break fair bucketing), if the test does not match the filter
-           ourFilter.matches(className) &&
-           matchesCurrentBucket(className);
+           ourFilter.matches(className);
+  }
+
+  // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createPostDiscoveryFilter`
+  @SuppressWarnings("unused")
+  public static boolean isClassIncluded(String className) {
+    // no need to calculate bucket matching (especially that may break fair bucketing), if the test does not match the filter
+    if (!isClassNameIncluded(className)) {
+      return false;
+    }
+
+    return matchesCurrentBucket(className);
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {
