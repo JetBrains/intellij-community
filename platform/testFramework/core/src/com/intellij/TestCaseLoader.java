@@ -16,6 +16,7 @@ import com.intellij.util.containers.MultiMap;
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
+import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -227,6 +228,15 @@ public class TestCaseLoader {
 
   private static List<String> getTestGroups() {
     return StringUtil.split(System.getProperty("intellij.build.test.groups", System.getProperty("idea.test.group", "")).trim(), ";");
+  }
+
+  private boolean isPotentiallyTestCase(String className, String moduleName) {
+    String classNameWithoutPackage = StringsKt.substringAfterLast(className, '.', className);
+    if (!myForceLoadPerformanceTests && !shouldIncludePerformanceTestCase(classNameWithoutPackage)) return false;
+    if (!myTestClassesFilter.matches(className, moduleName)) return false;
+    if (myFirstTestClass != null && className.equals(myFirstTestClass.getName())) return false;
+    if (myLastTestClass != null && className.equals(myLastTestClass.getName())) return false;
+    return true;
   }
 
   private boolean isClassTestCase(Class<?> testCaseClass, String moduleName) {
@@ -462,6 +472,9 @@ public class TestCaseLoader {
 
   public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
     for (String className : classNamesIterator) {
+      if (!isPotentiallyTestCase(className, moduleName)) {
+        continue;
+      }
       try {
         Class<?> candidateClass = Class.forName(className, false, getClassLoader());
         if (isClassTestCase(candidateClass, moduleName)) {
