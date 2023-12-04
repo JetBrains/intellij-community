@@ -2,6 +2,7 @@
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.io.Unmappable;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -352,7 +353,12 @@ public abstract class VFSContentStorageTestBase<T extends VFSContentStorage> {
   protected abstract @NotNull T openStorage(@NotNull Path storagePath) throws IOException;
 
   protected final void reopenStorage() throws IOException {
-    storage.close();
+    if (storage instanceof Unmappable unmappable) {
+      unmappable.closeAndUnsafelyUnmap();
+    }
+    else {
+      storage.close();
+    }
     storage = openStorage(storagePath);
   }
 
