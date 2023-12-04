@@ -700,8 +700,8 @@ public final class PersistentFSLoader {
   private static @NotNull VFSContentStorage createContentStorage_makeStorage(@NotNull Path contentsHashesFile,
                                                                              @NotNull Path contentsFile) throws IOException {
     if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_MMAPPED_FILE) {
-      LOG.info("VFS uses content storage over memory-mapped file");
-      return new VFSContentStorageOverMMappedFile(contentsFile);
+      LOG.info("VFS uses content storage over memory-mapped file (compress if > " + FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN + "b)");
+      return new VFSContentStorageOverMMappedFile(contentsFile, FSRecordsImpl.COMPRESS_CONTENT_IF_LARGER_THAN);
     }
 
     RefCountingContentStorage contentStorage;

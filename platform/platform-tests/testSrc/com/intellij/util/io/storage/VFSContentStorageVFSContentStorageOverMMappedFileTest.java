@@ -10,6 +10,6 @@ import java.nio.file.Path;
 public class VFSContentStorageVFSContentStorageOverMMappedFileTest extends VFSContentStorageTestBase<VFSContentStorageOverMMappedFile> {
   @Override
   protected @NotNull VFSContentStorageOverMMappedFile openStorage(@NotNull Path storagePath) throws IOException {
-    return new VFSContentStorageOverMMappedFile(storagePath);
+    return new VFSContentStorageOverMMappedFile(storagePath, 64);
   }
 }

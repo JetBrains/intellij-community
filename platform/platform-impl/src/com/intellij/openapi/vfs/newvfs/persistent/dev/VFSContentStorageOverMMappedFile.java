@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog.AppendOnlyLogOverMMappedFile;
@@ -11,10 +12,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehas
 import com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.CorruptedException;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.Unmappable;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.util.io.*;
 import com.intellij.util.io.dev.appendonlylog.AppendOnlyLog;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.VFSContentStorage;
@@ -28,6 +26,9 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.intmultimaps.extendiblehashmap.ExtendibleMapFactory.NotClosedProperlyAction.DROP_AND_CREATE_EMPTY_MAP;
 
@@ -44,11 +45,9 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
   private static final int CONTENT_HASH_LENGTH = ContentHashEnumerator.SIGNATURE_LENGTH;
 
+
   //TODO/MAYBE RC:
-  //           1. Compression: current implementation doesn't use compression, while legacy storage implementation does use
-  //              built-in jdk Inflater. Compression ratio is high for text files, but compression/decompression cost is
-  //              quite visible on CPU profiles, so maybe it is not worth to pay it?
-  //           2. Check multithreading semantics: it seems like hashToContentRecordIdMap being lock-protected, and
+  //           1. Check multithreading semantics: it seems like hashToContentRecordIdMap being lock-protected, and
   //              contentStorage being non-blocking give us thread-safety -- but needs to check more carefully
 
 
@@ -63,10 +62,30 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
   private final AppendOnlyLogOverMMappedFile contentStorage;
 
-  public VFSContentStorageOverMMappedFile(Path storagePath) throws IOException {
+  /**
+   * Compress (use jdk {@link java.util.zip}) content if > compressContentLargerThan.
+   * There is usually no reason to compress small content, but large content compression could
+   * win a lot in both disk/memory space, and IO time.
+   */
+  private final int compressContentLargerThan;
+
+  public VFSContentStorageOverMMappedFile(Path storagePath,
+                                          int compressContentLargerThan) throws IOException {
     this.storagePath = storagePath;
+    this.compressContentLargerThan = compressContentLargerThan;
+
+    //Use larger pages: content storage is usually quite big.
+    int pageSize = 64 * IOUtil.MiB;
+    if (pageSize <= FileUtilRt.LARGE_FOR_CONTENT_LOADING) {
+      //pageSize is an upper limit on record size for AppendOnlyLogOverMMappedFile:
+      throw new IllegalStateException(
+        "PageSize(=" + pageSize + ") must be > FileUtilRt.LARGE_FOR_CONTENT_LOADING(=" + FileUtilRt.LARGE_FOR_CONTENT_LOADING + "b), " +
+        "otherwise large content can't fit"
+      );
+    }
+
     contentStorage = AppendOnlyLogFactory.withDefaults()
-      .pageSize(64 * IOUtil.MiB)//use larger pages: content storage is usually quite big
+      .pageSize(pageSize)
       .failFileIfIncompatible()
       .failIfDataFormatVersionNotMatch(STORAGE_FORMAT_VERSION)
       .open(storagePath);
@@ -115,21 +134,35 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
         return recordHasSameCryptoHash;
       },
       _hash -> {
-        //TODO RC: implement compression?
+        ByteArraySequence bytesToStore;
+        int uncompressedSize;
+        if (shouldCompress(bytes)) {
+          bytesToStore = compress(bytes);
+          uncompressedSize = -bytes.length();//sign bit indicates 'compressed data'
+        }
+        else {
+          bytesToStore = bytes;
+          uncompressedSize = bytes.length();
+        }
 
-        //record: cryptoHash[CONTENT_HASH_LENGTH], contentSize(int32), contentBytes[contentSize]
-        // (contentSize is reserved for future when 'compressing' is implemented -- to know size of the buffer to decompress to)
+        //record: cryptoHash[CONTENT_HASH_LENGTH], uncompressedSize(int32), contentBytes[...]
+        //  uncompressedSize >= 0 => not compressed data, size=uncompressedSize
+        //  uncompressedSize < 0  => compressed data, uncompressed size = -uncompressedSize
+        int totalSize = cryptoHash.length + Integer.BYTES + bytesToStore.length();
 
-        int totalSize = cryptoHash.length + Integer.BYTES + bytes.length();
         long storageId = contentStorage.append(
           buffer -> buffer.put(cryptoHash)
-            .putInt(bytes.length())
-            .put(bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength()),
+            .putInt(uncompressedSize)
+            .put(bytesToStore.getInternalBuffer(), bytesToStore.getOffset(), bytesToStore.length()),
           totalSize
         );
         return storageIdToContentId(storageId);
       }
     );
+  }
+
+  private boolean shouldCompress(@NotNull ByteArraySequence contentBytes) {
+    return contentBytes.length() > compressContentLargerThan;
   }
 
   @Override
@@ -145,21 +178,25 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
           "record[" + recordId + "].length(" + recordSize + "b) < headerSize(" + recordHeaderSize + "b) => record is corrupted");
       }
       int uncompressedSize = buffer.getInt(CONTENT_HASH_LENGTH);
-      if (uncompressedSize < 0) {
-        throw new CorruptedException("record[" + recordId + "].uncompressedSize(" + uncompressedSize + "b) < 0 => record is corrupted");
-      }
 
       if (!fastCheck) {
         //check content bytes also: recalculate crypto-hash and compare with the stored one
-
         byte[] cryptoHashStored = new byte[CONTENT_HASH_LENGTH];
-        buffer.get(cryptoHashStored);
+        buffer.get(0, cryptoHashStored);
 
-        int contentSize = recordSize - recordHeaderSize;
-        byte[] contentBytes = new byte[contentSize];
-        buffer.position(CONTENT_HASH_LENGTH + Integer.BYTES)
-          .get(contentBytes);
-        byte[] cryptoHashCalculated = PersistentFSContentAccessor.calculateHash(contentBytes, 0, contentSize);
+        buffer.position(CONTENT_HASH_LENGTH + Integer.BYTES);
+        byte[] contentBytes;
+        if (uncompressedSize >= 0) {
+          int contentSize = recordSize - recordHeaderSize;
+          contentBytes = new byte[contentSize];
+          buffer.get(contentBytes);
+        }
+        else {
+          int actualUncompressedSize = -uncompressedSize;
+          contentBytes = decompress(buffer, actualUncompressedSize);
+        }
+
+        byte[] cryptoHashCalculated = PersistentFSContentAccessor.calculateHash(contentBytes, 0, contentBytes.length);
 
 
         if (!Arrays.equals(cryptoHashStored, cryptoHashCalculated)) {
@@ -189,18 +226,23 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   public InputStream readStream(int recordId) throws IOException {
     long storageId = contentIdToStorageId(recordId);
     byte[] bytes = contentStorage.read(storageId, buffer -> {
-      //TODO RC: Inflater could work with ByteBuffer as input! So there is no need to copy data from
-      //         buffer into byte[], and then un-compress to another byte[] -- instead we could un-compress
-      //         straight from the page cache buffer, skipping 1 memcopy and byte[] allocation
-
       //record: cryptoHash[CONTENT_HASH_LENGTH], contentSize(int32), contentBytes[contentSize]
-      int recordSize = buffer.remaining();
-      int contentSize = recordSize - CONTENT_HASH_LENGTH - Integer.BYTES;
-      byte[] contentBytes = new byte[contentSize];
-      buffer.position(CONTENT_HASH_LENGTH + Integer.BYTES)
-        .get(contentBytes);
-      return contentBytes;
+      buffer.position(CONTENT_HASH_LENGTH);//skip crypto-hash
+      int uncompressedSize = buffer.getInt();
+      if (uncompressedSize >= 0) { //not compressed data
+        int contentSize = buffer.remaining();
+        byte[] contentBytes = new byte[contentSize];
+        buffer.get(contentBytes);
+        return contentBytes;
+      }
+      else {// [uncompressedSize<0] => compressed data
+        int actualUncompressedSize = -uncompressedSize;
+        return decompress(buffer, actualUncompressedSize);
+      }
     });
+
+    //MAYBE RC: introduce 'VIGILANT' option there we always check crypto-hash of read/decompressed data
+    //          against crypto-has stored?
     return new UnsyncByteArrayInputStream(bytes);
   }
 
@@ -288,6 +330,56 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
   //===================== implementation infrastructure: ================================
 
+  private static @NotNull ByteArraySequence compress(@NotNull ByteArraySequence bytes) {
+    Deflater deflater = new Deflater();
+    try {
+      deflater.setInput(bytes.getInternalBuffer(), bytes.getOffset(), bytes.length());
+      deflater.finish();
+      UnsyncByteArrayOutputStream compressedBytesStream = new UnsyncByteArrayOutputStream(bytes.length() / 2);
+      byte[] buffer = new byte[1024];
+      while (!deflater.finished()) {
+        int bytesDeflated = deflater.deflate(buffer);
+        compressedBytesStream.write(buffer, 0, bytesDeflated);
+      }
+      return compressedBytesStream.toByteArraySequence();
+    }
+    finally {
+      deflater.end();
+    }
+  }
+
+  private static byte[] decompress(@NotNull ByteBuffer buffer,
+                                   int uncompressedSize) throws IOException {
+    byte[] bufferForDecompression = new byte[uncompressedSize];
+    int contentSize = buffer.remaining();
+
+    Inflater inflater = new Inflater();
+    try {
+      inflater.setInput(buffer);
+      int bytesInflated = inflater.inflate(bufferForDecompression);
+      if (bytesInflated != bufferForDecompression.length) {
+        throw new IOException("Decompressed bytes[" + bytesInflated + "b out of " + contentSize + "b] " +
+                              "!= compressed bytes[" + bufferForDecompression.length + "] " +
+                              "=> storage is likely corrupted"
+        );
+      }
+      if (!inflater.finished()) {
+        throw new IOException("Decompressed bytes[" + bytesInflated + "b out of " + contentSize + "b] " +
+                              "but compressed stream is not finished yet " +
+                              "=> storage is likely corrupted"
+        );
+      }
+      return bufferForDecompression;
+    }
+    catch (DataFormatException e) {
+      throw new IOException("Decompression [" + contentSize + "b] was failed => storage is likely corrupted", e);
+    }
+    finally {
+      inflater.end();
+    }
+  }
+
+
   private static int storageIdToContentId(long storageId) throws IOException {
     if (((storageId - 1) & 0b11) != 0) {
       //rely on AppendOnlyLogOverMMappedFile impl detail: records are int32-aligned
@@ -303,7 +395,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   }
 
   private static long contentIdToStorageId(int recordId) {
-    return (((long)recordId - 1 ) << 2) + 1;
+    return (((long)recordId - 1) << 2) + 1;
   }
 
   private static int hashCodeOf(byte[] contentHash) {
