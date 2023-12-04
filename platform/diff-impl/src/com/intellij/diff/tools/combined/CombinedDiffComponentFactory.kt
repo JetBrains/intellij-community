@@ -5,6 +5,7 @@ import com.intellij.diff.*
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffSettingsHolder
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.tools.ErrorDiffTool
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
@@ -128,7 +129,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
         .filter { it.canShow(context, request) }
         .toList()
         .let(DiffUtil::filterSuppressedTools)
-        .firstOrNull()
+        .firstOrNull() ?: ErrorDiffTool.INSTANCE
 
       val childViewer = diffTool
                           ?.let { findSubstitutor(it, context, request) }
