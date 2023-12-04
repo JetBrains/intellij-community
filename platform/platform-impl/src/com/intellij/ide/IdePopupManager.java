@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.jcef.JBCefBrowserBase;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,6 +47,20 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         LOG.warn("Skipped " + e);
         return false;
       }
+
+      if (StartupUiUtil.isWaylandToolkit()) {
+        // Reasons for skipping 'focus lost'-like events on Wayland:
+        // - When a new popup window appears, the main frame looses focus, but the "opposite window"
+        //   for that event is null (because Wayland); this can be solved by waiting a bit
+        //   (several hundreds ms) for
+        //   KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow()
+        //   to become non-null.
+        // - When a (popup) window is dragged, it also looses focus (because Wayland); this one is
+        //   not solvable because there's no guarantee that the focus will get back, nor is there
+        //   a notification that the drag is actually happening.
+        return false;
+      }
+
       if (!isPopupActive()) return false;
 
       Window sourceWindow = ((WindowEvent)e).getWindow();
@@ -57,36 +72,9 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         return false;
       }
 
-      Window focused = ((WindowEvent)e).getOppositeWindow();
-      if (focused == null) {
-        focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-        if (focused == null) {
-          // Check if any browser is in focus (java focus can be in the process of transfer).
-          JBCefBrowserBase browser = JBCefBrowserBase.getFocusedBrowser();
-          if (browser != null && browser.getComponent() != null) {
-            focused = SwingUtilities.getWindowAncestor(browser.getComponent());
-          }
-        }
-      }
-
-      Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
-      Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
-
-      boolean shouldCloseAllPopup = false;
-      if (ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
-        shouldCloseAllPopup = true;
-      }
-
-      if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrame ultimateParentWindowForEvent) {
-        if (ultimateParentWindowForEvent.isInFullScreen()
-            && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
-          shouldCloseAllPopup = true;
-        }
-      }
-
-      if (shouldCloseAllPopup) {
-        closeAllPopups();
-      }
+      Window focusedWindow = ((WindowEvent)e).getOppositeWindow();
+      maybeCloseAllPopups(focusedWindow, sourceWindow);
+      return false;
     }
     else if (e instanceof KeyEvent keyEvent) {
       // the following is copied from IdeKeyEventDispatcher
@@ -114,6 +102,38 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
     }
 
     return false;
+  }
+
+  private void maybeCloseAllPopups(Window focused, Window sourceWindow) {
+    if (focused == null) {
+      focused = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      if (focused == null) {
+        // Check if any browser is in focus (java focus can be in the process of transfer).
+        JBCefBrowserBase browser = JBCefBrowserBase.getFocusedBrowser();
+        if (browser != null && browser.getComponent() != null) {
+          focused = SwingUtilities.getWindowAncestor(browser.getComponent());
+        }
+      }
+    }
+
+    Component ultimateParentForFocusedComponent = UIUtil.findUltimateParent(focused);
+    Component ultimateParentForEventWindow = UIUtil.findUltimateParent(sourceWindow);
+
+    boolean shouldCloseAllPopup = false;
+    if (ultimateParentForEventWindow == null || ultimateParentForFocusedComponent == null) {
+      shouldCloseAllPopup = true;
+    }
+
+    if (!shouldCloseAllPopup && ultimateParentForEventWindow instanceof IdeFrame ultimateParentWindowForEvent) {
+      if (ultimateParentWindowForEvent.isInFullScreen()
+          && !ultimateParentForFocusedComponent.equals(ultimateParentForEventWindow)) {
+        shouldCloseAllPopup = true;
+      }
+    }
+
+    if (shouldCloseAllPopup) {
+      closeAllPopups();
+    }
   }
 
   public void push(IdePopupEventDispatcher dispatcher) {

@@ -2,6 +2,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
 import org.intellij.lang.annotations.JdkConstants;
@@ -210,8 +211,12 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   protected void notifyResized() {}
 
   private static boolean jbrMoveSupported(Component component) {
-    // The JBR team states that isWindowMoveSupported works only for Frame/Dialog
-    return (component instanceof Frame || component instanceof Dialog)
-           && JBR.isWindowMoveSupported();
+    if (StartupUiUtil.isWaylandToolkit()) {
+      return (component instanceof Window window) && window.getType() != Window.Type.POPUP;
+    } else {
+      // The JBR team states that isWindowMoveSupported works only for Frame/Dialog
+      return (component instanceof Frame || component instanceof Dialog)
+             && JBR.isWindowMoveSupported();
+    }
   }
 }
