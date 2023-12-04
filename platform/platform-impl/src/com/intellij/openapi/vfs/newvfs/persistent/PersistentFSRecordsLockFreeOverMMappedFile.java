@@ -464,6 +464,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
                          final int nameId,
                          final int parentId,
                          final boolean overwriteAttrRef) throws IOException {
+    checkParentIdIsValid(parentId);
+
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     final Page page = storage.pageByOffset(recordOffsetInFile);
