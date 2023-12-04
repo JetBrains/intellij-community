@@ -2,11 +2,13 @@
 package com.intellij.psi;
 
 import com.intellij.lang.FileASTNode;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,6 +91,25 @@ public interface PsiFile extends PsiFileSystemItem {
 
   @NotNull
   FileViewProvider getViewProvider();
+
+  /**
+   * Returns the document corresponding to this file. Note that the document content could be out of sync
+   * with the {@link PsiFile}. It's a caller responsibility to synchronize the document and the {@code PsiFile}
+   * using {@link PsiDocumentManager#commitDocument(Document)} and 
+   * {@link PsiDocumentManager#doPostponedOperationsAndUnblockDocument(Document)}.
+   * 
+   * @return the document corresponding to this file
+   * @throws UnsupportedOperationException if the document is not associated with this type of file
+   * (for example, if the file is binary).
+   */
+  @ApiStatus.NonExtendable
+  default @NotNull Document getFileDocument() {
+    Document document = getViewProvider().getDocument();
+    if (document == null) {
+      throw new UnsupportedOperationException("No document is available for file " + getClass());
+    }
+    return document;
+  }
 
   @Override
   FileASTNode getNode();

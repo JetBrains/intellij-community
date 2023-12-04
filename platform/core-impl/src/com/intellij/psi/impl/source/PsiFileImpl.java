@@ -511,6 +511,11 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return myViewProvider;
   }
 
+  @Override
+  public final @NotNull Document getFileDocument() {
+    return PsiFileEx.super.getFileDocument();
+  }
+
   public void setTreeElementPointer(@Nullable FileElement element) {
     updateTrees(FileTrees.noStub(element, this));
   }
