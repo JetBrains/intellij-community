@@ -12,7 +12,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
@@ -36,22 +35,6 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_FOR_EACH_PARAMETER = true;
 
   public static final String SHORT_NAME = "UnusedAssignment";
-
-  /**
-   * Allows skipping 'redundant initializer inspection' for specific PsiVariable
-   */
-  public interface IgnoreVariableInitializerSupport {
-    ExtensionPointName<IgnoreVariableInitializerSupport> EP_NAME =
-      ExtensionPointName.create("com.intellij.lang.jvm.ignoreVariableInitializerSupport");
-
-    /**
-     * @param psiVariable field to be checked to ignore variable initializer
-     * @return true to skip inspection for {@code psiVariable}
-     */
-    default boolean ignoreVariableInitializer(@NotNull PsiVariable psiVariable) {
-      return false;
-    }
-  }
 
   @Override
   public void writeSettings(@NotNull Element node) {
@@ -194,9 +177,6 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
     if (field.hasModifierProperty(PsiModifier.FINAL)) return;
     final PsiClass psiClass = field.getContainingClass();
     if (psiClass == null) return;
-    if (ContainerUtil.exists(IgnoreVariableInitializerSupport.EP_NAME.getExtensionList(), ext -> ext.ignoreVariableInitializer(field))) {
-      return;
-    }
     final PsiClassInitializer[] classInitializers = psiClass.getInitializers();
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
     final PsiMethod[] constructors = !isStatic ? psiClass.getConstructors() : PsiMethod.EMPTY_ARRAY;
