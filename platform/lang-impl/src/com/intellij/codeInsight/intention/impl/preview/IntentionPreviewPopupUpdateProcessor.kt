@@ -36,6 +36,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
@@ -132,6 +133,11 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       val previousDimension = PopupImplUtil.getPopupSize(popup)
       val bounds: Rectangle = positionAdjuster.adjustBounds(previousDimension, arrayOf(RIGHT, LEFT))
       val popupSize = popup.size
+      val screen = ScreenUtil.getScreenRectangle(bounds.x, bounds.y)
+      val targetBounds = Rectangle(Point(bounds.x, bounds.y), popup.content.preferredSize);
+      if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
+        hide()
+      }
       if (checkResizing && popupSize != null && bounds.width < MIN_WIDTH) {
         hide()
       }
