@@ -99,6 +99,7 @@ public class TestCaseLoader {
   private Class<?> myLastTestClass;
   private final TestClassesFilter myTestClassesFilter;
   private final boolean myForceLoadPerformanceTests;
+  private boolean myGetClassesCalled = false;
 
   private static final ThreadLocal<Boolean> ourBucketingSchemeInitRecursionLock = new ThreadLocal<>();
   private static final Lazy<BucketingScheme> ourBucketingScheme = LazyKt.lazy(() -> {
@@ -129,34 +130,46 @@ public class TestCaseLoader {
     return scheme;
   });
 
+  /**
+   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).build();` instead
+   */
+  @Deprecated
   public TestCaseLoader(String classFilterName) {
     this(classFilterName, false);
   }
 
+  /**
+   * @deprecated use `TestCaseLoader.Builder.defaults().withTestGroupsResourcePath(classFilterName).withForceLoadPerformanceTests(flag).build();` instead
+   */
+  @Deprecated
   public TestCaseLoader(String classFilterName, boolean forceLoadPerformanceTests) {
-    myForceLoadPerformanceTests = forceLoadPerformanceTests;
-
-    TestClassesFilter testClassesFilter = calcTestClassFilter(classFilterName);
-    TestClassesFilter affectedTestsFilter = affectedTestsFilter();
-    if (affectedTestsFilter != null) {
-      testClassesFilter = new TestClassesFilter.And(testClassesFilter, affectedTestsFilter);
-    }
-    TestClassesFilter explicitTestsFilter = explicitTestsFilter();
-    if (explicitTestsFilter != null) {
-      testClassesFilter = new TestClassesFilter.And(testClassesFilter, explicitTestsFilter);
-    }
-    myTestClassesFilter = testClassesFilter;
-    System.out.println(myTestClassesFilter);
+    this(getFilter(getTestPatterns(), classFilterName, getTestGroups(), false), forceLoadPerformanceTests);
   }
 
-  private static TestClassesFilter calcTestClassFilter(String classFilterName) {
-    String patterns = getTestPatterns();
+  private TestCaseLoader(TestClassesFilter filter, boolean forceLoadPerformanceTests) {
+    myForceLoadPerformanceTests = forceLoadPerformanceTests;
+    myTestClassesFilter = filter;
+    System.out.println("Using tests filter: " + myTestClassesFilter);
+  }
+
+  private static TestClassesFilter wrapAsCompositeTestClassesFilter(TestClassesFilter filter) {
+    final TestClassesFilter affectedTestsFilter = affectedTestsFilter();
+    if (affectedTestsFilter != null) {
+      filter = new TestClassesFilter.And(filter, affectedTestsFilter);
+    }
+    final TestClassesFilter explicitTestsFilter = explicitTestsFilter();
+    if (explicitTestsFilter != null) {
+      filter = new TestClassesFilter.And(filter, explicitTestsFilter);
+    }
+    return filter;
+  }
+
+  private static TestClassesFilter calcTestClassFilter(String patterns, List<String> testGroupNames, String classFilterName) {
     if (!StringUtil.isEmpty(patterns)) {
       System.out.println("Using patterns: [" + patterns + "]");
       return new PatternListTestClassFilter(StringUtil.split(patterns, ";"));
     }
 
-    List<String> testGroupNames = getTestGroups();
     if (testGroupNames.contains(ALL_TESTS_GROUP)) {
       System.out.println("Using all classes");
       return TestClassesFilter.ALL_CLASSES;
@@ -288,15 +301,8 @@ public class TestCaseLoader {
 
   @ApiStatus.Internal
   public static List<Class<?>> loadClassesForWarmup() {
-    var groupsTestCaseLoader = new TestCaseLoader(COMMON_TEST_GROUPS_RESOURCE_NAME);
-
-    for (Path classesRoot : TestAll.getClassRoots()) {
-      ClassFinder classFinder = new ClassFinder(classesRoot, "", INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-
-      Collection<String> foundTestClasses = classFinder.getClasses();
-      groupsTestCaseLoader.loadTestCases(classesRoot.getFileName().toString(), foundTestClasses, true);
-    }
-
+    var groupsTestCaseLoader = TestCaseLoader.Builder.fromDefaults().forWarmup().build();
+    groupsTestCaseLoader.fillTestCases("", TestAll.getClassRoots(), true);
     var testCaseClasses = groupsTestCaseLoader.getClasses(false);
 
     System.out.printf("Finishing warmup initialization. Found %s classes%n", testCaseClasses.size());
@@ -387,10 +393,6 @@ public class TestCaseLoader {
     return RUN_WITH_TEST_DISCOVERY && getAnnotationInHierarchy(c, ExcludeFromTestDiscovery.class) != null;
   }
 
-  public void loadTestCases(final String moduleName, final Collection<String> classNamesIterator) {
-    loadTestCases(moduleName, classNamesIterator, false);
-  }
-
   private void loadTestCases(final String moduleName, final Collection<String> classNamesIterator, boolean initialization) {
     for (String className : classNamesIterator) {
       if (!isPotentiallyTestCase(className, moduleName)) {
@@ -463,6 +465,7 @@ public class TestCaseLoader {
   }
 
   List<Class<?>> getClasses(boolean includeFirstAndLast) {
+    myGetClassesCalled = true;
     List<Class<?>> result = new ArrayList<>(myClassSet.size() + (includeFirstAndLast ? 2 : 0));
 
     if (includeFirstAndLast && myFirstTestClass != null) {
@@ -538,7 +541,33 @@ public class TestCaseLoader {
     return TestFrameworkUtil.isPerformanceTest(methodName, className);
   }
 
-  private static TestClassesFilter ourFilter;
+  // We assume that getPatterns and getTestGroups won't change during execution
+  record TestClassesFilterArgs(
+    @Nullable String patterns, @NotNull List<@NotNull String> testGroupNames, @Nullable String testGroupsResourcePath
+  ) {
+  }
+
+  private static final Lazy<TestClassesFilterArgs> ourCommonTestClassesFilterArgs =
+    LazyKt.lazy(() -> {
+      return new TestClassesFilterArgs(getTestPatterns(), getTestGroups(), COMMON_TEST_GROUPS_RESOURCE_NAME);
+    });
+
+  private static final Lazy<TestClassesFilter> ourCommonTestClassesFilter =
+    LazyKt.lazy(() -> {
+      TestClassesFilterArgs args = ourCommonTestClassesFilterArgs.getValue();
+      TestClassesFilter filter = calcTestClassFilter(args.patterns, args.testGroupNames, args.testGroupsResourcePath);
+      System.out.println("Initialized tests filter: " + filter);
+      return filter;
+    });
+
+  // We assume that getPatterns and getTestGroups won't change during execution
+  private static final Lazy<TestClassesFilter> ourCommonCompositeTestClassesFilter =
+    LazyKt.lazy(() -> {
+      TestClassesFilter filter = wrapAsCompositeTestClassesFilter(ourCommonTestClassesFilter.getValue());
+      System.out.println("Initialized composite tests filter: " + filter);
+      return filter;
+    });
+
 
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createClassNameFilter`
   @SuppressWarnings("unused")
@@ -550,20 +579,8 @@ public class TestCaseLoader {
       return false;
     }
 
-    if (ourFilter == null) {
-      ourFilter = calcTestClassFilter(COMMON_TEST_GROUPS_RESOURCE_NAME);
-      TestClassesFilter affectedTestsFilter = affectedTestsFilter();
-      if (affectedTestsFilter != null) {
-        ourFilter = new TestClassesFilter.And(ourFilter, affectedTestsFilter);
-      }
-      TestClassesFilter explicitTestsFilter = explicitTestsFilter();
-      if (explicitTestsFilter != null) {
-        ourFilter = new TestClassesFilter.And(ourFilter, explicitTestsFilter);
-      }
-      System.out.println("Initialized tests filter: " + ourFilter);
-    }
     return (isIncludingPerformanceTestsRun() || isPerformanceTestsRun() == isPerformanceTest(null, className)) &&
-           ourFilter.matches(className);
+           ourCommonCompositeTestClassesFilter.getValue().matches(className);
   }
 
   // called reflectively from `JUnit5TeamCityRunnerForTestsOnClasspath#createPostDiscoveryFilter`
@@ -576,12 +593,19 @@ public class TestCaseLoader {
   }
 
   public void fillTestCases(String rootPackage, List<? extends Path> classesRoots) {
+    fillTestCases(rootPackage, classesRoots, false);
+  }
+
+  private void fillTestCases(String rootPackage, List<? extends Path> classesRoots, boolean warmUpPhase) {
+    if (myGetClassesCalled) {
+      throw new IllegalStateException("Cannot fill more classes after 'getClasses' was already called");
+    }
     long t = System.nanoTime();
 
     for (Path classesRoot : classesRoots) {
       int count = getClassesCount();
       ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
-      loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses());
+      loadTestCases(classesRoot.getFileName().toString(), classFinder.getClasses(), warmUpPhase);
       count = getClassesCount() - count;
       if (count > 0) {
         System.out.println("Loaded " + count + " classes from class root " + classesRoot);
@@ -595,7 +619,7 @@ public class TestCaseLoader {
     t = (System.nanoTime() - t) / 1_000_000;
     System.out.println("Loaded " + getClassesCount() + " classes in " + t + " ms");
 
-    if (!RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
+    if (!warmUpPhase && !RUN_ONLY_AFFECTED_TESTS && getClassesCount() == 0 && !Boolean.getBoolean("idea.tests.ignoreJUnit3EmptySuite")) {
       // Specially formatted error message will fail the build
       // See https://www.jetbrains.com/help/teamcity/build-script-interaction-with-teamcity.html#BuildScriptInteractionwithTeamCity-ReportingMessagesForBuildLog
       System.out.println(
@@ -613,5 +637,87 @@ public class TestCaseLoader {
       current = current.getSuperclass();
     }
     return null;
+  }
+
+  @ApiStatus.Experimental
+  public static class Builder {
+    private String myTestGroupsResourcePath;
+    private String myPatterns;
+    private List<String> myTestGroups;
+    private boolean myForceLoadPerformanceTests = false;
+    private boolean myWarmup = false;
+
+    private Builder() {
+    }
+
+    public static Builder fromEmpty() {
+      return new Builder();
+    }
+
+    public static Builder fromDefaults() {
+      return new Builder().withDefaults();
+    }
+
+    private Builder withDefaults() {
+      myPatterns = getTestPatterns();
+      myTestGroups = getTestGroups();
+      myTestGroupsResourcePath = COMMON_TEST_GROUPS_RESOURCE_NAME;
+      return this;
+    }
+
+    public Builder withTestGroups(List<String> groups) {
+      myTestGroups = groups;
+      return this;
+    }
+
+    public Builder withTestGroupsResourcePath(String resourcePath) {
+      myTestGroupsResourcePath = resourcePath;
+      return this;
+    }
+
+    public Builder withPatterns(String patterns) {
+      myPatterns = patterns;
+      return this;
+    }
+
+    public Builder withForceLoadPerformanceTests(boolean flag) {
+      myForceLoadPerformanceTests = flag;
+      return this;
+    }
+
+    Builder forWarmup() {
+      myWarmup = true;
+      return this;
+    }
+
+    public TestCaseLoader build() {
+      if (myPatterns == null && myTestGroups == null) {
+        throw new IllegalStateException("Either withPatterns, withTestGroups, or fromDefault should be called");
+      }
+      TestClassesFilter filter = getFilter(myPatterns, myTestGroupsResourcePath, myTestGroups, myWarmup);
+      return new TestCaseLoader(filter, myForceLoadPerformanceTests);
+    }
+  }
+
+  private static TestClassesFilter getFilter(String patterns,
+                                             String testGroupsResourcePath,
+                                             List<String> testGroups,
+                                             boolean warmup) {
+    TestClassesFilter filter;
+    if (ourCommonTestClassesFilterArgs.getValue().equals(new TestClassesFilterArgs(patterns, testGroups, testGroupsResourcePath))) {
+      if (warmup) {
+        filter = ourCommonTestClassesFilter.getValue();
+      }
+      else {
+        filter = ourCommonCompositeTestClassesFilter.getValue();
+      }
+    }
+    else {
+      filter = calcTestClassFilter(patterns, testGroups, testGroupsResourcePath);
+      if (!warmup) {
+        filter = wrapAsCompositeTestClassesFilter(filter);
+      }
+    }
+    return filter;
   }
 }

@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.TestAll;
 import com.intellij.TestCaseLoader;
 import com.intellij.java.codeInsight.completion.ml.JavaCompletionFeaturesTest;
-import com.intellij.java.codeInsight.template.postfix.templates.*;
+import com.intellij.java.codeInsight.template.postfix.templates.PostfixTemplateTestCase;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.TestIndexingModeSupporter;
 import junit.framework.Test;
@@ -32,8 +32,10 @@ public class JavaCompletionTestSuite extends TestSuite {
       return suite;
     }
     suite.setName("Java completion tests suite");
-    System.setProperty("intellij.build.test.groups", "JAVA_TESTS");
-    TestCaseLoader myTestCaseLoader = new TestCaseLoader(TestCaseLoader.COMMON_TEST_GROUPS_RESOURCE_NAME);
+    TestCaseLoader myTestCaseLoader = TestCaseLoader.Builder.fromEmpty()
+      .withTestGroupsResourcePath(TestCaseLoader.COMMON_TEST_GROUPS_RESOURCE_NAME)
+      .withTestGroups(List.of("JAVA_TESTS"))
+      .build();
     myTestCaseLoader.fillTestCases("", TestAll.getClassRoots());
     List<Class<?>> classes = myTestCaseLoader.getClasses();
     for (Class<?> aClass : classes) {
