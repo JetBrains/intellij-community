@@ -144,8 +144,13 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     final ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
     final ContentEntry[] contentEntries = modifiableRootModel.getContentEntries();
     final Map<String, ContentEntry> contentEntriesMap = new HashMap<>();
+    final Map<String, ContentEntry> filePathToContentEntryMap = new HashMap<>();
     for (ContentEntry contentEntry : contentEntries) {
       contentEntriesMap.put(contentEntry.getUrl(), contentEntry);
+      VirtualFile file = contentEntry.getFile();
+      if (file != null) {
+        filePathToContentEntryMap.put(ExternalSystemApiUtil.getLocalFileSystemPath(file), contentEntry);
+      }
     }
 
     sourceFolderManager.removeSourceFolders(module);
@@ -154,7 +159,7 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
     for (final DataNode<ContentRootData> node : data) {
       final ContentRootData contentRoot = node.getData();
 
-      final ContentEntry contentEntry = findOrCreateContentRoot(modifiableRootModel, contentRoot);
+      final ContentEntry contentEntry = findOrCreateContentRoot(modifiableRootModel, contentRoot, filePathToContentEntryMap);
       if (!importedContentEntries.contains(contentEntry)) {
         removeSourceFoldersIfAbsent(contentEntry, contentRoot);
         removeImportedExcludeFolders(contentEntry, modelsProvider, owner, project);
@@ -233,18 +238,10 @@ public final class ContentRootDataService extends AbstractProjectDataService<Con
   }
 
   @NotNull
-  private static ContentEntry findOrCreateContentRoot(@NotNull ModifiableRootModel model, @NotNull ContentRootData contentRootData) {
+  private static ContentEntry findOrCreateContentRoot(@NotNull ModifiableRootModel model, @NotNull ContentRootData contentRootData, @NotNull Map<String, ContentEntry> contentEntryMap) {
     String path = contentRootData.getRootPath();
-    ContentEntry[] entries = model.getContentEntries();
-
-    for (ContentEntry entry : entries) {
-      VirtualFile file = entry.getFile();
-      if (file == null) {
-        continue;
-      }
-      if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(path)) {
-        return entry;
-      }
+    if (contentEntryMap.containsKey(path)) {
+      return contentEntryMap.get(path);
     }
     return model.addContentEntry(pathToUrl(path), ExternalSystemApiUtil.toExternalSource(contentRootData.getOwner()));
   }
