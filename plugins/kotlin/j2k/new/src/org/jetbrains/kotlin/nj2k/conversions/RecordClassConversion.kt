@@ -39,11 +39,10 @@ class RecordClassConversion(context: NewJ2kConverterContext) : RecursiveApplicab
     }
 
     private fun JKClass.registerAccessorsForExternalProcessing() {
-        recordComponents.forEach { component ->
-            component.psi<PsiRecordComponent>()?.let { psiRecordComponent ->
-                val accessor = getAccessorForRecordComponent(psiRecordComponent) ?: return@forEach
-                context.externalCodeProcessor.addMember(JKLightMethodData(accessor))
-            }
+        for (component in recordComponents) {
+            val psiRecordComponent = component.psi<PsiRecordComponent>() ?: continue
+            val accessor = getAccessorForRecordComponent(psiRecordComponent) ?: continue
+            context.externalCodeProcessor.addMember(JKLightMethodData(accessor))
         }
     }
 
