@@ -26,8 +26,8 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.backend.documentation.impl.DocumentationRequest
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.platform.ide.documentation.DOCUMENTATION_BROWSER
+import com.intellij.platform.util.coroutines.flow.collectLatestUndispatched
 import com.intellij.ui.PopupHandler
-import com.intellij.util.flow.collectLatestUndispatched
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil

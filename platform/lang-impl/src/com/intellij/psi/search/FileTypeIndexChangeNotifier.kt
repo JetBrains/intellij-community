@@ -3,7 +3,7 @@ package com.intellij.psi.search
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.util.flow.throttle
+import com.intellij.platform.util.coroutines.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow

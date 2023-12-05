@@ -30,11 +30,11 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.progress.*
+import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.asContextElement
 import com.intellij.platform.util.progress.impl.ProgressState
 import com.intellij.platform.util.progress.impl.TextDetailsProgressReporter
 import com.intellij.util.awaitCancellationAndInvoke
-import com.intellij.util.flow.throttle
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal

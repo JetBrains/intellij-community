@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.reference.SoftReference
 import com.intellij.ui.*
 import com.intellij.ui.AnimatedIcon
@@ -49,7 +50,6 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.UnmodifiableHashMap
-import com.intellij.util.flow.throttle
 import com.intellij.util.ui.*
 import com.intellij.util.ui.StartupUiUtil.getCenterPoint
 import it.unimi.dsi.fastutil.ints.IntArrays
