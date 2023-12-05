@@ -1,14 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.presentationAssistant
 
-import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
+import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -219,8 +220,9 @@ class PresentationAssistant(private val coroutineScope: CoroutineScope) : Persis
   }
 }
 
-private class PresentationAssistantListenerRegistrar : AppLifecycleListener {
-  override fun appFrameCreated(commandLineArgs: MutableList<String>) {
-    service<PresentationAssistant>().initialize()
+private class PresentationAssistantListenerRegistrar : ActionConfigurationCustomizer,
+                                                       ActionConfigurationCustomizer.AsyncLightCustomizeStrategy {
+  override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
+    serviceAsync<PresentationAssistant>().initialize()
   }
 }

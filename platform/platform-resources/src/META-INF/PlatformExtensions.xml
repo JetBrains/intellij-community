@@ -1733,6 +1733,8 @@
     <registryKey key="rdct.new.async.actions"
                  defaultValue="false"
                  description="Turns on the new async action system"/>
+
+    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"/>
   </extensions>
 
   <applicationListeners>
@@ -1784,8 +1786,6 @@
     <listener class="com.intellij.ide.ProjectWindowCustomizerListener"
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="com.intellij.ui.MacCustomAppIconStartupService" topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantListenerRegistrar"
-              topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.openapi.editor.actions.ResetFontSizeAppInitListener" topic="com.intellij.ide.AppLifecycleListener"/>
 
     <listener class="com.intellij.ide.ui.laf.LafAndEditorColorSchemeDynamicPluginListener"
