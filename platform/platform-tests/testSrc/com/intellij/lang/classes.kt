@@ -1,57 +1,38 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.lang;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.lang
 
-import org.jetbrains.annotations.NotNull;
+internal interface TestLangExtension
 
-interface TestLangExtension {
-}
+internal class MyTestExtension : TestLangExtension
 
-class MyTestExtension implements TestLangExtension {
-}
+internal class MyMetaExtension : TestLangExtension
 
-class MyMetaExtension implements TestLangExtension {
-}
+internal class MyBaseExtension : TestLangExtension
 
-class MyBaseExtension implements TestLangExtension {
-}
-
-class MyBaseLanguage extends Language {
-
-  public static final Language INSTANCE = new MyBaseLanguage();
-
-  MyBaseLanguage() {
-    super("LB");
+internal class MyBaseLanguage : Language("LB") {
+  companion object {
+    val INSTANCE: Language = MyBaseLanguage()
   }
 }
 
-final class MyTestLanguage extends Language {
-
-  public static final Language INSTANCE = new MyTestLanguage();
-
-  private MyTestLanguage() {
-    super(MyBaseLanguage.INSTANCE, "L1");
+internal class MyTestLanguage : Language(MyBaseLanguage.INSTANCE, "L1") {
+  companion object {
+    val INSTANCE: Language = MyTestLanguage()
   }
 }
 
-final class MyTestLanguage2 extends Language {
-
-  public static final Language INSTANCE = new MyTestLanguage2();
-
-  private MyTestLanguage2() {
-    super(MyTestLanguage.INSTANCE, "L2");
+internal class MyTestLanguage2 : Language(MyTestLanguage.INSTANCE, "L2") {
+  companion object {
+    val INSTANCE: Language = MyTestLanguage2()
   }
 }
 
-final class MyMetaLanguage extends MetaLanguage {
-
-  public static final MetaLanguage INSTANCE = new MyMetaLanguage();
-
-  private MyMetaLanguage() {
-    super("M1");
+internal class MyMetaLanguage : MetaLanguage("M1") {
+  companion object {
+    val INSTANCE: MetaLanguage = MyMetaLanguage()
   }
 
-  @Override
-  public boolean matchesLanguage(@NotNull Language language) {
-    return language == MyTestLanguage.INSTANCE;
+  override fun matchesLanguage(language: Language): Boolean {
+    return language === MyTestLanguage.INSTANCE
   }
 }
