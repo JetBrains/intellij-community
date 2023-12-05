@@ -373,7 +373,7 @@ private fun registerOnFinishRunnables(future: CompletableFuture<*>, mustExitOnFa
     .thenRun { LOG.info("Execution of the script has been finished successfully") }
     .exceptionally(Function { e ->
       ApplicationManager.getApplication().executeOnPooledThread {
-        if (SystemProperties.getBooleanProperty("startup.performance.framework", false)) {
+        if (ApplicationManagerEx.isInIntegrationTest()) {
           storeFailureToFile(e.message)
         }
         runBlocking {
