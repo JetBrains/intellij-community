@@ -52,11 +52,13 @@ fun ObjClass<*>.implWsDataClassCode(): String {
       }
 
       // --- createEntity
-      sectionNl("override fun createEntity(snapshot: $EntityStorage): $javaFullName") {
-        section("return getCached(snapshot)") {
+      line("@OptIn($EntityStorageInstrumentationApi::class)")
+      sectionNl("override fun createEntity(snapshot: $EntityStorageInstrumentation): $javaFullName") {
+        line("val entityId = createEntityId()")
+        section("return snapshot.initializeEntity(entityId)") {
           line("val entity = $javaImplName(this)")
           line("entity.snapshot = snapshot")
-          line("entity.id = createEntityId()")
+          line("entity.id = entityId")
           line("entity")
         }
       }

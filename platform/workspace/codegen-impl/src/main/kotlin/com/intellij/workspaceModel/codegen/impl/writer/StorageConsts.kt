@@ -9,6 +9,7 @@ private const val workspaceStorageImplPackageName = "$workspaceBasePackageName.s
 private const val workspaceStorageIndicesPackageName = "$workspaceBasePackageName.storage.impl.indices"
 private const val workspaceStorageAnnotationsPackageName = "$workspaceBasePackageName.storage.annotations"
 private const val workspaceStorageContainersPackageName = "$workspaceBasePackageName.storage.impl.containers"
+private const val workspaceStorageInstrumentationPackageName = "$workspaceBasePackageName.storage.instrumentation"
 
 private const val workspaceStorageMetadataPackageName = "$workspaceBasePackageName.storage.metadata"
 private const val workspaceStorageMetamodelPackageName = "$workspaceStorageMetadataPackageName.model"
@@ -43,6 +44,8 @@ internal object EntityStorage {
   }
 }
 internal val MutableEntityStorage = fqn(workspaceStoragePackageName, "MutableEntityStorage")
+internal val EntityStorageInstrumentation = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentation")
+internal val EntityStorageInstrumentationApi = fqn(workspaceStorageInstrumentationPackageName, "EntityStorageInstrumentationApi")
 
 
 internal val EntityType = fqn(workspaceStoragePackageName, "EntityType")
