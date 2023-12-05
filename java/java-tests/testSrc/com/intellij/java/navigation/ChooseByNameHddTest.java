@@ -37,18 +37,13 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, path + ":0"), new ArrayList<>(Arrays.asList(psiFile)));
   }
 
-  public void test_prefer_same_named_classes_visible_in_current_module() {
+  public void test_prefer_same_named_classes_visible_in_current_module() throws IOException {
     int moduleCount = 10;
 
     List<Module> modules = new ArrayList<>();
-    try {
-      for (int i = 0; i < moduleCount; i++) {
-        modules.add(
-          PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod" + i, myFixture.getTempDirFixture().findOrCreateDir("mod" + i)));
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    for (int i = 0; i < moduleCount; i++) {
+      modules.add(
+        PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "mod" + i, myFixture.getTempDirFixture().findOrCreateDir("mod" + i)));
     }
     ModuleRootModificationUtil.addDependency(myFixture.getModule(), modules.get(2));
 
