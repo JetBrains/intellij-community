@@ -14,10 +14,7 @@ interface IjentExecApi {
    * Starts a process on a remote machine. Right now, the child process may outlive the instance of IJent.
    * stdin, stdout and stderr of the process are always forwarded, if there are.
    *
-   * Every successfully started process MUST be destroyed later with [IjentChildProcess.close].
-   * Otherwise, it can cause memory leaks on the remote side.
-   *
-   * Beware that processes with [pty] don't have stderr.
+   * Beware that processes with [pty] usually don't have stderr. The [IjentChildProcess.stderr] must be an empty stream in such case.
    *
    * By default, environment is always inherited from the running IJent instance, which may be unwanted. [env] allows to alter
    * some environment variables, it doesn't clear the variables from the parent. When the process should be started in an environment like
