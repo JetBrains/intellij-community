@@ -38,7 +38,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="logsPreprocessor"
-                    interface="com.intellij.ide.logsUploader.LogsPreprocessor"
+                    interface="com.intellij.ide.logsUploader.LogProvider"
                     dynamic="true"/>
 
     <extensionPoint name="fileType"

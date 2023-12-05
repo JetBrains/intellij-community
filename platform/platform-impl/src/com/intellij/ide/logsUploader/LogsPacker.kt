@@ -8,7 +8,7 @@ import com.google.gson.reflect.TypeToken
 import com.intellij.diagnostic.PerformanceWatcher.Companion.getInstance
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.CollectZippedLogsAction
-import com.intellij.ide.logsUploader.LogsPreprocessor.*
+import com.intellij.ide.logsUploader.LogProvider.*
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector
 import com.intellij.ide.troubleshooting.collectDimensionServiceDiagnosticsData
 import com.intellij.idea.LoggerFactory
@@ -26,12 +26,13 @@ import com.intellij.troubleshooting.TroubleInfoCollector
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.addFile
+import com.intellij.util.io.addFolder
 import com.intellij.util.io.jackson.obj
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -41,6 +42,7 @@ import java.nio.file.Path
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.exists
 import kotlin.io.path.fileSize
 import kotlin.io.path.inputStream
 import kotlin.io.path.name
@@ -67,7 +69,7 @@ object LogsPacker {
     val archive = Files.createTempFile("$productName-logs-$date", ".zip")
 
     try {
-      val additionalFiles = LogsPreprocessor.EP.extensionList.flatMap { it.getLogsEntries(project) }
+      val additionalFiles = LogProvider.EP.extensionList.flatMap { it.getAdditionalLogFiles(project) }
       ZipOutputStream(FileOutputStream(archive.toFile())).use { zip ->
         ProgressManager.checkCanceled()
         val logs = PathManager.getLogDir()
@@ -99,7 +101,7 @@ object LogsPacker {
             val name = path.fileName.toString()
             if ((name.startsWith("java_error_in") || name.startsWith("jbr_err_pid")) && !name.endsWith("hprof") && Files.isRegularFile(
                 path)) {
-              zip.addFile(name, path.toFile())
+              zip.addFolder(name, path)
             }
           }
         }
@@ -188,12 +190,7 @@ object LogsPacker {
       for (file in additionalFiles.files) {
         if (file.exists()) {
           val entryName = buildEntryName(additionalFiles.entryName, file)
-          if (file.isDirectory) {
-            zip.addFolder(file, entryName)
-          }
-          else {
-            zip.addFile(entryName, file)
-          }
+          zip.addFolder(entryName, file)
         }
       }
     }
@@ -202,7 +199,7 @@ object LogsPacker {
   /**
    * @return entry name. Empty name is expected for platform logs
    */
-  private fun buildEntryName(prefix: String?, file: File): String {
+  private fun buildEntryName(prefix: String?, file: Path): String {
     return if (!prefix.isNullOrEmpty()) "$prefix/${file.name}" else ""
   }
 }

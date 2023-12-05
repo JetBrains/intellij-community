@@ -4,23 +4,25 @@ package com.intellij.ide.logsUploader
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.project.Project
-import java.io.File
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 /**
- * Extension point for defining the way to pack logs when Collect logs action is called
+ * Extension point that allows packer to know which additional files it should pack at which path when the Collect logs action is called
  */
-interface LogsPreprocessor {
+@ApiStatus.Internal
+interface LogProvider {
   companion object {
-    val EP: ExtensionPointName<LogsPreprocessor> = create("com.intellij.logsPreprocessor")
+    val EP: ExtensionPointName<LogProvider> = create("com.intellij.logsPreprocessor")
   }
 
-  fun getLogsEntries(project: Project?): List<LogsEntry>
+  fun getAdditionalLogFiles(project: Project?): List<LogsEntry>
 
   /**
    * Class defines the folder name and the files added to it
    */
   data class LogsEntry(
     val entryName: String,
-    val files: List<File>
+    val files: List<Path>
   )
 }

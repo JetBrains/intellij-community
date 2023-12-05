@@ -4,8 +4,8 @@ package com.intellij.ide.logsUploader
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 
-class DefaultLogsProcessor: LogsPreprocessor {
-  override fun getLogsEntries(project: Project?): List<LogsPreprocessor.LogsEntry> {
-    return listOf(LogsPreprocessor.LogsEntry("", listOf(PathManager.getLogDir().toFile())))
+class DefaultLogsProcessor: LogProvider {
+  override fun getAdditionalLogFiles(project: Project?): List<LogProvider.LogsEntry> {
+    return listOf(LogProvider.LogsEntry("", listOf(PathManager.getLogDir())))
   }
 }
