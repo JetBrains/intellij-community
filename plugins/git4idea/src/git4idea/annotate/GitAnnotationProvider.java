@@ -196,10 +196,18 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
                                                 @NotNull FilePath filePath,
                                                 @Nullable VcsRevisionNumber revision,
                                                 @NotNull VirtualFile file) throws VcsException {
+    GitAnnotationPerformanceListener.getEP_NAME().getExtensionList().forEach(
+      it -> it.onAnnotationStarted(myProject, filePath, revision)
+    );
+
     GitRawAnnotationProvider another = myProject.getService(GitRawAnnotationProvider.class);
     if (another != null) {
       GitFileAnnotation res = another.annotate(myProject, root, filePath, revision, file);
       if (res != null) {
+        GitAnnotationPerformanceListener.getEP_NAME().getExtensionList().forEach(
+          it -> it.onAnnotationFinished(myProject, filePath, revision, another.getClass().getSimpleName())
+        );
+
         return res;
       }
     }
@@ -236,7 +244,13 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
     h.addRelativePaths(filePath);
     String output = new String(h.run(), StandardCharsets.UTF_8);
 
-    return parseAnnotations(revision, file, root, output);
+    GitFileAnnotation annotation = parseAnnotations(revision, file, root, output);
+
+    GitAnnotationPerformanceListener.getEP_NAME().getExtensionList().forEach(
+      it -> it.onAnnotationFinished(myProject, filePath, revision, "default")
+    );
+
+    return annotation;
   }
 
   /**
