@@ -2,6 +2,7 @@
 package com.intellij.testFramework.extensions.ignore
 
 import com.intellij.idea.IJIgnore
+import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import org.junit.Test
 
 
@@ -11,11 +12,13 @@ import org.junit.Test
 @IJIgnore(issue = "IJI-1434")
 class IJIgnoreJUnit4ClassTest {
   /**
-   * A test which should never be executed.
+   * A test which should never be executed under TeamCity.
    * If executed, the test will immediately fail.
    */
   @Test
   fun testShouldNotBeExecuted() {
-    error("Test should not be executed")
+    if (IS_UNDER_TEAMCITY) {
+      error("Test should not be executed under TeamCity")
+    }
   }
 }
