@@ -197,7 +197,6 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       schemeManager.addScheme(scheme)
     }
 
-    hideIntellijLightSchemeIfNeeded()
   }
 
   private fun resolveLinksToBundledSchemes() {
@@ -435,6 +434,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   override fun loadState(state: State) {
+    hideIntellijLightSchemeIfNeeded(state)
     this.state = state
     val colorSchemeName = state.colorScheme
     var colorScheme = colorSchemeName?.let { getScheme(it) }
@@ -494,19 +494,28 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   //IDEA-331405 Hide IntelliJ Light from new UI
-  private fun hideIntellijLightSchemeIfNeeded() {
+  private fun hideIntellijLightSchemeIfNeeded(state: State) {
     if (!ExperimentalUI.isNewUI()) return
     val themeName = "IntelliJ Light"
-    val intellijLightThemes = schemeManager.allSchemes.filter { it.name.contains(themeName) }
-    val customTheme = intellijLightThemes.find { it.name.startsWith(Scheme.EDITABLE_COPY_PREFIX) }
-    if (customTheme != null) {
-      val defaultScheme = schemeManager.findSchemeByName(themeName)
-      val isSchemeCustomized = (customTheme as? AbstractColorsScheme)?.settingsEqual(defaultScheme, null, true) != true
-      if (isSchemeCustomized) {
-        return
+    val intellijLightScheme = schemeManager.findSchemeByName(themeName) ?: return
+    var noIntellijLightCustomThemes = true
+    schemeManager.allSchemes.filter {
+      it.metaProperties.any { property ->
+        property.key == "originalScheme" && property.value == themeName
       }
+    }.forEach { theme ->
+      val isSchemeCustomized = (theme as? AbstractColorsScheme)?.settingsEqual(intellijLightScheme, null, true) != true
+      if (isSchemeCustomized) {
+        noIntellijLightCustomThemes = false
+        return@forEach
+      }
+      if (state.colorScheme == theme.name) state.colorScheme = "Light"
+      schemeManager.removeScheme(theme)
     }
-    intellijLightThemes.forEach { schemeManager.removeScheme(it) }
+    if (noIntellijLightCustomThemes) {
+      if (state.colorScheme == themeName) state.colorScheme = "Light"
+      schemeManager.removeScheme(themeName)
+    }
   }
 
   override fun isDefaultScheme(scheme: EditorColorsScheme): Boolean = scheme is DefaultColorsScheme
@@ -582,6 +591,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       }
       initEditableDefaultSchemesCopies()
       initEditableBundledSchemesCopies()
+      hideIntellijLightSchemeIfNeeded(state)
       ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorColorsManagerListener.TOPIC).schemesReloaded()
     }
   }

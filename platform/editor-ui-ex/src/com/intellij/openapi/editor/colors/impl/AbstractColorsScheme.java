@@ -74,7 +74,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private static final @NonNls String META_INFO_MODIFIED_TIME = "modified";
   private static final @NonNls String META_INFO_IDE = "ide";
   private static final @NonNls String META_INFO_IDE_VERSION = "ideVersion";
-  private static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
+  public static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
   private final ValueElementReader myValueReader = new TextAttributesReader();
   //region Meta info-related fields
