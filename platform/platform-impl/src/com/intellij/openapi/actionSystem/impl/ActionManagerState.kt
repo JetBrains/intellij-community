@@ -15,7 +15,6 @@ internal class ActionManagerState {
 
   @JvmField val idToDescriptor: MutableMap<String, ActionManagerStateActionItemDescriptor> = HashMap()
 
-  @JvmField val pluginToId: MutableMap<PluginId, MutableList<String>> = HashMap()
   @JvmField var registeredActionCount: Int = 0
 
   @JvmField val baseActions: MutableMap<String, AnAction> = HashMap()
@@ -23,11 +22,21 @@ internal class ActionManagerState {
   @JvmField val lock: Any = Any()
 
   fun getGroupIdListById(groupId: String): List<String> = idToDescriptor.get(groupId)?.groupIds ?: java.util.List.of()
+
+  fun getPluginActions(pluginId: PluginId): List<String> {
+    synchronized(lock) {
+      return idToDescriptor.asSequence()
+        .filter { it.value.pluginId == pluginId }
+        .map { it.key }
+        .toList()
+    }
+  }
 }
 
 internal data class ActionManagerStateActionItemDescriptor(
   @JvmField var index: Int = -1,
 ) {
+  @JvmField var pluginId: PluginId? = null
   @JvmField var groupIds: List<String> = java.util.List.of()
 
   fun addGroupMapping(groupId: String) {

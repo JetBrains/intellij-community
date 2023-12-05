@@ -671,11 +671,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                                                classLoader = classLoader)
               if (action != null) {
                 addToGroup(group = group,
-                                                                  action = action,
-                                                                  constraints = Constraints.LAST,
-                                                                  module = module,
-                                                                  state = actionRegistrar.state,
-                                                                  secondary = false)
+                           action = action,
+                           constraints = Constraints.LAST,
+                           module = module,
+                           state = actionRegistrar.state,
+                           secondary = false)
               }
             }
           }
@@ -690,11 +690,11 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
             val action = processReferenceElement(element = child, module = module, actionRegistrar = actionRegistrar)
             if (action != null) {
               addToGroup(group = group,
-                                                                action = action,
-                                                                constraints = Constraints.LAST,
-                                                                module = module,
-                                                                state = actionRegistrar.state,
-                                                                secondary = isSecondary(child))
+                         action = action,
+                         constraints = Constraints.LAST,
+                         module = module,
+                         state = actionRegistrar.state,
+                         secondary = isSecondary(child))
             }
           }
           OVERRIDE_TEXT_ELEMENT_NAME -> processOverrideTextNode(action = group, id = id, element = child, module = module, bundle = bundle)
@@ -996,7 +996,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
   override fun getPluginActions(pluginId: PluginId): Array<String> {
-    return ArrayUtilRt.toStringArray(actionPostInitRegistrar.state.pluginToId.get(pluginId))
+    return actionPostInitRegistrar.state.getPluginActions(pluginId).toTypedArray()
   }
 
   fun addActionPopup(menu: Any) {
@@ -1899,10 +1899,10 @@ private class PreInitActionRuntimeRegistrar(
 
   override fun registerAction(actionId: String, action: AnAction) {
     registerAction(actionId = actionId,
-                                                          action = action,
-                                                          pluginId = null,
-                                                          projectType = null,
-                                                          actionRegistrar = actionRegistrar)
+                   action = action,
+                   pluginId = null,
+                   projectType = null,
+                   actionRegistrar = actionRegistrar)
   }
 }
 
@@ -2016,13 +2016,8 @@ private fun reportActionIdCollision(actionId: String,
                                     action: AnAction,
                                     pluginId: PluginId?,
                                     oldAction: AnAction?,
-                                    pluginToId: Map<PluginId, List<String>>) {
-  val oldPluginInfo = pluginToId
-    .asSequence()
-    .filter { it.value.contains(actionId) }
-    .map { it.key }
-    .map { getPluginInfo(it) }
-    .joinToString(separator = ",")
+                                    idToDescriptor: MutableMap<String, ActionManagerStateActionItemDescriptor>) {
+  val oldPluginInfo = idToDescriptor.get(actionId)?.pluginId?.let { getPluginInfo(it) }
   val message = "ID '$actionId' is already taken by action ${actionToString(oldAction)} $oldPluginInfo. " +
                 "Action ${actionToString(action)} cannot use the same ID"
   if (pluginId == null) {
@@ -2110,7 +2105,7 @@ private fun registerAction(actionId: String,
                             action = action,
                             pluginId = pluginId,
                             oldAction = actionRegistrar.getAction(actionId),
-                            pluginToId = state.pluginToId)
+                            idToDescriptor = state.idToDescriptor)
     return
   }
 
@@ -2129,10 +2124,10 @@ private fun registerAction(actionId: String,
   }
 
   action.registerCustomShortcutSet(ProxyShortcutSet(actionId), null)
-  state.idToDescriptor
-    .computeIfAbsent(actionId) { ActionManagerStateActionItemDescriptor() }.index = if (oldIndex >= 0) oldIndex else state.registeredActionCount++
+  val descriptor = state.idToDescriptor.computeIfAbsent(actionId) { ActionManagerStateActionItemDescriptor() }
+  descriptor.index = if (oldIndex >= 0) oldIndex else state.registeredActionCount++
   if (pluginId != null) {
-    state.pluginToId.computeIfAbsent(pluginId) { mutableListOf() }.add(actionId)
+    descriptor.pluginId = pluginId
   }
 
   actionRegistrar.actionRegistered(actionId, action)
@@ -2176,9 +2171,6 @@ private fun unregisterAction(actionId: String, actionRegistrar: ActionRegistrar,
   val state = actionRegistrar.state
   state.actionToId.remove(actionToRemove)
   state.idToDescriptor.remove(actionId)
-  for (value in state.pluginToId.values) {
-    value.remove(actionId)
-  }
 
   if (removeFromGroups) {
     val customActionSchema = serviceIfCreated<CustomActionsSchema>()
