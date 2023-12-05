@@ -150,6 +150,22 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
     getState().setShowRecentBranches(value);
   }
 
+  public boolean filterByActionInPopup() {
+    return getState().getFilterByActionInPopup();
+  }
+
+  public void setFilterByActionInPopup(boolean value) {
+    getState().setFilterByActionInPopup(value);
+  }
+
+  public boolean filterByRepositoryInPopup() {
+    return getState().getFilterByRepositoryInPopup();
+  }
+
+  public void setFilterByRepositoryInPopup(boolean value) {
+    getState().setFilterByRepositoryInPopup(value);
+  }
+
   public boolean warnAboutCrlf() {
     return getState().getWarnAboutCrlf();
   }

@@ -1,11 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.tree
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.getCommonCurrentBranch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.ui.SeparatorWithText
+import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.tree.TreePathUtil
 import com.intellij.util.containers.headTail
 import com.intellij.util.containers.init
@@ -14,11 +17,13 @@ import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction
+import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
 import javax.swing.tree.TreePath
 
 private typealias PathAndBranch = Pair<List<String>, GitBranch>
 
-internal class BranchesMatchResult(val matchedBranches: Collection<GitBranch>, val topMatch: GitBranch?)
+internal class MatchResult<Node>(val matchedNodes: Collection<Node>, val topMatch: Node?)
 
 internal val GitRepository.localBranchesOrCurrent get() = branches.localBranches.ifEmpty { currentBranch?.let(::setOf) ?: emptySet() }
 internal val GitRepository.recentCheckoutBranches
@@ -85,6 +90,16 @@ private fun Map<String, Any>.mapToNodes(branchType: BranchType, path: List<Strin
 
 internal fun createTreePathFor(model: GitBranchesTreeModel, value: Any): TreePath? {
   val root = model.root
+  val action = value as? PopupFactoryImpl.ActionItem
+  if (action != null) {
+    return TreePathUtil.convertCollectionToTreePath(listOf(root, action))
+  }
+
+  val topRepository = value as? GitBranchesTreeModel.TopLevelRepository
+  if (topRepository != null) {
+    return TreePathUtil.convertCollectionToTreePath(listOf(root, topRepository))
+  }
+
   val repository = value as? GitRepository
   if (repository != null) {
     return TreePathUtil.convertCollectionToTreePath(listOf(root, repository))
@@ -188,25 +203,76 @@ internal fun matchBranches(
   matcher: MinusculeMatcher?,
   branches: Collection<GitBranch>,
   exceptBranchFilter: (GitBranch) -> Boolean = { false }
-): BranchesMatchResult {
-  if (branches.isEmpty() || matcher == null) return BranchesMatchResult(branches, null)
+): MatchResult<GitBranch> {
+  return match(matcher, branches, GitBranch::getName, exceptBranchFilter)
+}
 
-  val result = mutableListOf<GitBranch>()
-  var topMatch: Pair<GitBranch, Int>? = null
+internal fun <N> match(
+  matcher: MinusculeMatcher?,
+  nodes: Collection<N>,
+  nodeNameSupplier: (N) -> String = { it.toString() },
+  exceptFilter: (N) -> Boolean = { false }
+): MatchResult<N> {
+  if (nodes.isEmpty() || matcher == null) return MatchResult(nodes, null)
 
-  for (branch in branches) {
-    if (exceptBranchFilter(branch)) continue
+  val result = mutableListOf<N>()
+  var topMatch: Pair<N, Int>? = null
+  for (node in nodes) {
+    if (exceptFilter(node)) continue
 
-    val matchingFragments = matcher.matchingFragments(branch.name)
+    val name = nodeNameSupplier(node)
+    val matchingFragments = matcher.matchingFragments(name)
     if (matchingFragments == null) continue
-    result.add(branch)
-    val matchingDegree = matcher.matchingDegree(branch.name, false, matchingFragments)
+
+    result.add(node)
+    val matchingDegree = matcher.matchingDegree(name, false, matchingFragments)
     if (topMatch == null || topMatch.second < matchingDegree) {
-      topMatch = branch to matchingDegree
+      topMatch = node to matchingDegree
     }
   }
 
-  return BranchesMatchResult(result, topMatch?.first)
+  return MatchResult(result, topMatch?.first)
+}
+
+internal fun addSeparatorIfNeeded(nodes: Collection<Any>, separator: SeparatorWithText): MutableCollection<Any> {
+  val result = (nodes as? MutableCollection<Any>) ?: nodes.toMutableList()
+  if (nodes.isNotEmpty() && nodes.last() !is SeparatorWithText) {
+    result.add(separator)
+  }
+  return result
+}
+
+internal open class LazyRepositoryHolder(project: Project,
+                                         repositories: List<GitRepository>, matcher: MinusculeMatcher?) :
+  LazyHolder<GitRepository>(repositories, matcher, nodeNameSupplier = DvcsUtil::getShortRepositoryName,
+                            needFilter = { GitBranchesTreePopupFilterByRepository.isSelected(project) })
+
+internal class LazyActionsHolder(project: Project, actions: List<Any>, matcher: MinusculeMatcher?) :
+  LazyHolder<Any>(actions, matcher,
+                  exceptFilter = { it is SeparatorWithText },
+                  nodeNameSupplier = { (it as? PopupFactoryImpl.ActionItem)?.text ?: it.toString() },
+                  needFilter = { GitBranchesTreePopupFilterByAction.isSelected(project) })
+
+internal open class LazyHolder<N>(nodes: List<N>,
+                                  matcher: MinusculeMatcher?,
+                                  exceptFilter: (N) -> Boolean = { false },
+                                  nodeNameSupplier: (N) -> String = { it.toString() },
+                                  private val needFilter: () -> Boolean = { matcher != null }) {
+
+  private val initiallyEmpty = nodes.isEmpty()
+
+  private val matchingResult: MatchResult<N> by lazy {
+    match(if (needFilter()) matcher else null,
+          nodes, nodeNameSupplier, exceptFilter)
+  }
+
+  val topMatch: N?
+    get() = matchingResult.topMatch
+
+  val match: Collection<N>
+    get() = matchingResult.matchedNodes
+
+  fun isEmpty() = initiallyEmpty || !needFilter() || match.isEmpty()
 }
 
 internal class LazyBranchesSubtreeHolder(
@@ -225,14 +291,14 @@ internal class LazyBranchesSubtreeHolder(
 
   val branches by lazy { unsortedBranches.sortedWith(branchComparatorGetter()) }
 
-  fun isEmpty() = initiallyEmpty || matchingResult.matchedBranches.isEmpty()
+  fun isEmpty() = initiallyEmpty || matchingResult.matchedNodes.isEmpty()
 
-  private val matchingResult: BranchesMatchResult by lazy {
+  private val matchingResult: MatchResult<GitBranch> by lazy {
     matchBranches(matcher, branches, exceptBranchFilter)
   }
 
   val tree: Map<String, Any> by lazy {
-    val branchesList = matchingResult.matchedBranches
+    val branchesList = matchingResult.matchedNodes
     buildSubTree(branchesList.map { (if (isPrefixGrouping()) it.name.split('/') else listOf(it.name)) to it })
   }
 
