@@ -150,15 +150,15 @@ class ActionAsyncProvider(private val model: GotoActionModel) {
     val matcher = buildMatcher(pattern)
 
     val mainActions: List<AnAction> = allIds.mapNotNull {
-      val action = myActionManager.getActionOrStub(it) ?: return@mapNotNull null
+      val action = actionManager.getActionOrStub(it) ?: return@mapNotNull null
       if (action is ActionGroup && !action.isSearchable) return@mapNotNull null
 
       return@mapNotNull action
     }
-    val extendedActions: List<AnAction> = myModel.dataContext.getData(QuickActionProvider.KEY)?.getActions(true) ?: emptyList<AnAction>()
+    val extendedActions: List<AnAction> = model.dataContext.getData(QuickActionProvider.KEY)?.getActions(true) ?: emptyList<AnAction>()
     val actions = (mainActions + extendedActions).mapNotNull {
       runCatching {
-        val mode = myModel.actionMatches(pattern, matcher, it)
+        val mode = model.actionMatches(pattern, matcher, it)
         if (mode != MatchMode.NONE) {
           val weight = calcElementWeight(it, pattern, weightMatcher)
           return@runCatching(MatchedAction(it, mode, weight))

@@ -457,7 +457,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       }
     }
     else if (SystemInfoRt.isUnix && !SystemInfoRt.isMac) {
-      toolbar?.isVisible = isToolbarVisible { computeMainActionGroups(CustomActionsSchema.getInstance()) }
+      toolbar?.isVisible = isToolbarVisible { blockingComputeMainActionGroups(CustomActionsSchema.getInstance()) }
     }
 
     updateMainMenuVisibility()
