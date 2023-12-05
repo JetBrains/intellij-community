@@ -12,10 +12,4 @@ final class SyntaxHighlighterFactoryEP extends LanguageExtensionPoint<SyntaxHigh
   @Deprecated
   @Attribute("key")
   public String key;
-
-  @Override
-  public @NotNull String getKey() {
-    String result = super.getKey();
-    return result == null ? key : result;
-  }
 }
