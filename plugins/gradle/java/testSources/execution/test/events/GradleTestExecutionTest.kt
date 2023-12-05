@@ -48,7 +48,7 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |}
       """.trimMargin())
 
-      executeTasks(":test :additionalTest", isRunAsTest = true)
+      executeTasks(":test :additionalTest --continue", isRunAsTest = true)
       assertTestViewTree {
         assertNode("AppTest") {
           assertNode("test")
