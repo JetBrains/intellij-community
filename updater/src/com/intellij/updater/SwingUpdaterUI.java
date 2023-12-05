@@ -20,6 +20,7 @@ public class SwingUpdaterUI implements UpdaterUI {
   public static SwingUpdaterUI createUI() {
     var font = UIManager.get("OptionPane.messageFont");
     if (font != null && !Objects.equals(font, UIManager.get("Label.font"))) {
+      Runner.LOG.info("using " + font + " instead of " + UIManager.get("Label.font"));
       var keys = UIManager.getDefaults().keys();
       while (keys.hasMoreElements()) {
         var key = keys.nextElement();
