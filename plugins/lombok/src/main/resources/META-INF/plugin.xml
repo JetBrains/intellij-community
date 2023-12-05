@@ -53,8 +53,6 @@
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <lang.jvm.annotationPackageSupport implementation="de.plushnikov.intellij.plugin.provider.LombokAnnotationSupport"/>
     <lang.jvm.ignoreAnnotationParamSupport implementation="de.plushnikov.intellij.plugin.provider.LombokDefaultAnnotationParamSupport"/>
-    <lang.jvm.ignoreVariableInitializedBeforeUsageSupport implementation="de.plushnikov.intellij.plugin.provider.LombokVariableInitializedBeforeUsageSupport"/>
-    <lang.jvm.ignoreMethodCallExpressionNPESupport implementation="de.plushnikov.intellij.plugin.provider.LombokMethodCallExpressionNPESupport"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <projectConfigurable groupId="language"
                          key="plugin.settings.title" bundle="messages.LombokBundle"

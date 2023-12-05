@@ -5,6 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.PsiExtensionMethod;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
+import com.siyeh.ig.psiutils.InitializationUtils;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import de.plushnikov.intellij.plugin.processor.LombokProcessorManager;
 import de.plushnikov.intellij.plugin.processor.Processor;
@@ -12,6 +13,7 @@ import de.plushnikov.intellij.plugin.processor.ValProcessor;
 import de.plushnikov.intellij.plugin.processor.method.ExtensionMethodsHelper;
 import de.plushnikov.intellij.plugin.processor.modifier.ModifierProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,13 +63,40 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
   /*
    * The final fields that are marked with Builder.Default contains only possible value
    * because user can set another value during the creation of the object.
+   *
+   * The fields marked with Getter(lazy=true) contains a value that will be calculated only at first access to the getter-Method
    */
   //see de.plushnikov.intellij.plugin.inspection.DataFlowInspectionTest.testDefaultBuilderFinalValueInspectionIsAlwaysThat
   //see de.plushnikov.intellij.plugin.inspection.PointlessBooleanExpressionInspectionTest.testPointlessBooleanExpressionBuilderDefault
   //see com.intellij.java.lomboktest.LombokHighlightingTest.testBuilderWithDefaultRedundantInitializer
+  //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyInvocationProduceNPE
+  //see com.intellij.java.lomboktest.LombokHighlightingTest.testGetterLazyVariableNotInitialized
   @Override
   protected boolean fieldInitializerMightBeChanged(@NotNull PsiField field) {
-    return PsiAnnotationSearchUtil.isAnnotatedWith(field, LombokClassNames.BUILDER_DEFAULT);
+    if (field.hasAnnotation(LombokClassNames.BUILDER_DEFAULT)) {
+      return true;
+    }
+
+    final PsiAnnotation getterAnnotation = PsiAnnotationSearchUtil.findAnnotation(field, LombokClassNames.GETTER);
+    final boolean isLazyGetter = null != getterAnnotation &&
+                                 PsiAnnotationUtil.getBooleanAnnotationValue(getterAnnotation, "lazy", false);
+
+    if (isLazyGetter) {
+      final PsiExpression fieldInitializer = field.getInitializer();
+      if (fieldInitializer instanceof PsiMethodCallExpression methodCallExpression) {
+        final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
+        if (qualifierExpression instanceof PsiReferenceExpression qualifierReferenceExpression) {
+          final PsiElement referencedElement = qualifierReferenceExpression.resolve();
+          if (referencedElement instanceof PsiField referencedField) {
+            final PsiClass containingClass = referencedField.getContainingClass();
+            if (containingClass != null) {
+              return InitializationUtils.isInitializedInConstructors(referencedField, containingClass);
+            }
+          }
+        }
+      }
+    }
+    return isLazyGetter;
   }
 
   @Nullable
@@ -91,11 +120,11 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     final List<Psi> emptyResult = Collections.emptyList();
     if ((type != PsiClass.class && type != PsiField.class && type != PsiMethod.class) || !(element instanceof PsiExtensibleClass)
         || (element instanceof PsiCompiledElement) // skip compiled classes
-        ) {
+    ) {
       return emptyResult;
     }
 
-    final PsiClass psiClass = (PsiClass) element;
+    final PsiClass psiClass = (PsiClass)element;
     if (!psiClass.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return emptyResult;
     }
@@ -120,7 +149,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     for (Processor processor : LombokProcessorManager.getProcessors(type)) {
       final List<? super PsiElement> generatedElements = processor.process(psiClass, nameHint);
       for (Object psiElement : generatedElements) {
-        result.add((Psi) psiElement);
+        result.add((Psi)psiElement);
       }
     }
     return result;

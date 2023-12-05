@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.psi.search.LocalSearchScope;
@@ -318,10 +319,6 @@ public final class HighlightControlFlowUtil {
                                                                           boolean ignoreFinality) {
     if (variable instanceof ImplicitVariable) return null;
     if (!PsiUtil.isAccessedForReading(expression)) return null;
-    if (ContainerUtil.exists(VariableInitializedBeforeUsageSupport.EP_NAME.getExtensionList(),
-                             ext -> ext.ignoreVariableExpression(expression, variable))) {
-      return null;
-    }
     int startOffset = expression.getTextRange().getStartOffset();
     PsiElement topBlock;
     if (variable.hasInitializer()) {
@@ -392,6 +389,9 @@ public final class HighlightControlFlowUtil {
           }
           if (anotherField != null && !anotherField.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.STATIC) &&
               isFieldInitializedInClassInitializer(field, true, aClass.getInitializers())) {
+            return null;
+          }
+          if(anotherField!=null && anotherField.hasInitializer() && !PsiAugmentProvider.canTrustFieldInitializer(anotherField)) {
             return null;
           }
 

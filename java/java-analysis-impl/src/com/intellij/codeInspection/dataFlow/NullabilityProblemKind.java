@@ -181,10 +181,6 @@ public final class NullabilityProblemKind<T extends PsiElement> {
         if (parameter != null) {
           return getParameterProblem(parameter, expression, context);
         }
-        if (ContainerUtil.exists(MethodCallProduceNPESupport.EP_NAME.getExtensionList(),
-                                 ext -> ext.ignoreMethodCallExpression(expression))) {
-          return null;
-        }
         return callNPE.problem((PsiMethodCallExpression)grandParent, expression);
       }
       return fieldAccessNPE.problem(context, expression);
