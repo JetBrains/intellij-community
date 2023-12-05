@@ -104,7 +104,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   @NotNull VfsData getVfsData() {
-    VfsData data = getSegment().vfsData;
+    VfsData data = getSegment().ownerVfsData;
     PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
     if (fs != null && !fs.isOwnData(data)) {
       throw new AssertionError("Alien file! id: " + myId + ", parent: " + myParent);
@@ -124,7 +124,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     while (segment.replacement != null) {
       segment = segment.replacement;
     }
-    VirtualDirectoryImpl changedParent = segment.vfsData.getChangedParent(myId);
+    VirtualDirectoryImpl changedParent = segment.ownerVfsData.getChangedParent(myId);
     if (changedParent != null) {
       myParent = changedParent;
     }
@@ -410,7 +410,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public @NonNls String toString() {
     PersistentFSImpl persistentFs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
-    if (persistentFs != null && !persistentFs.isOwnData(getSegment().vfsData)) {
+    if (persistentFs != null && !persistentFs.isOwnData(getSegment().ownerVfsData)) {
       return "Alien file!";
     }
     if (persistentFs == null || exists()) {

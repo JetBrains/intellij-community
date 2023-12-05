@@ -60,10 +60,13 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * </ol>
  */
 public final class VfsData {
+  private static final Logger LOG = Logger.getInstance(VfsData.class);
+
   @TestOnly
   public static final Key<Boolean> ENABLE_IS_INDEXED_FLAG_KEY = new Key<>("is_indexed_flag_enabled");
-  private static final Logger LOG = Logger.getInstance(VfsData.class);
+
   private static volatile Boolean isIsIndexedFlagDisabled = null;
+
   private static final int SEGMENT_BITS = 9;
   private static final int SEGMENT_SIZE = 1 << SEGMENT_BITS;
   private static final int OFFSET_MASK = SEGMENT_SIZE - 1;
@@ -127,6 +130,7 @@ public final class VfsData {
 
   @Nullable
   VirtualFileSystemEntry getFileById(int id, @NotNull VirtualDirectoryImpl parent, boolean putToMemoryCache) {
+    //TODO RC: assign pfs in ctor, so instance is always the same, and the access is faster?
     PersistentFSImpl persistentFS = (PersistentFSImpl)PersistentFS.getInstance();
     VirtualFileSystemEntry dir = persistentFS.getCachedDir(id);
     if (dir != null) return dir;
@@ -238,39 +242,42 @@ public final class VfsData {
     }
   }
 
+  /** Caches info about SEGMENT_SIZE consequent files, indexed by fileId */
   static final class Segment {
-    // user data for files, DirectoryData for folders
+    final @NotNull VfsData ownerVfsData;
+
+
+    /** user data for files, DirectoryData for folders */
     private final AtomicReferenceArray<Object> myObjectArray;
 
-    // <nameId, flags> pairs, "flags" part containing flags per se and modification stamp
+    /** [nameId, flags, indexedStamps] fields triplet per fileId */
     private final AtomicIntegerArray myIntArray;
 
-    final @NotNull VfsData vfsData;
 
-    // the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result
+    /** the reference is synchronized by read-write lock; clients outside read-action deserve to get outdated result */
     @Nullable Segment replacement;
 
-    Segment(@NotNull VfsData vfsData) {
-      this(vfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * 3));
+    Segment(@NotNull VfsData ownerVfsData) {
+      this(ownerVfsData, new AtomicReferenceArray<>(SEGMENT_SIZE), new AtomicIntegerArray(SEGMENT_SIZE * 3));
     }
 
-    private Segment(@NotNull VfsData vfsData,
+    private Segment(@NotNull VfsData ownerVfsData,
                     @NotNull AtomicReferenceArray<Object> objectArray,
                     @NotNull AtomicIntegerArray intArray) {
       myObjectArray = objectArray;
       myIntArray = intArray;
-      this.vfsData = vfsData;
+      this.ownerVfsData = ownerVfsData;
     }
 
     int getIndexedStamp(int fileId) {
-      if (isIsIndexedFlagDisabled(vfsData.app)) {
+      if (isIsIndexedFlagDisabled(ownerVfsData.app)) {
         return 0;
       }
       return myIntArray.get(getOffset(fileId) * 3 + 2);
     }
 
     void setIndexedStamp(int fileId, int stamp) {
-      if (isIsIndexedFlagDisabled(vfsData.app)) {
+      if (isIsIndexedFlagDisabled(ownerVfsData.app)) {
         return;
       }
       if (fileId <= 0) throw new IllegalArgumentException("invalid arguments id: " + fileId);
@@ -339,11 +346,11 @@ public final class VfsData {
 
     void changeParent(int fileId, VirtualDirectoryImpl directory) {
       assert replacement == null;
-      replacement = new Segment(vfsData, myObjectArray, myIntArray);
+      replacement = new Segment(ownerVfsData, myObjectArray, myIntArray);
       int key = fileId >>> SEGMENT_BITS;
-      boolean replaced = vfsData.mySegments.replace(key, this, replacement);
+      boolean replaced = ownerVfsData.mySegments.replace(key, this, replacement);
       assert replaced;
-      vfsData.changeParent(fileId, directory);
+      ownerVfsData.changeParent(fileId, directory);
     }
   }
 
