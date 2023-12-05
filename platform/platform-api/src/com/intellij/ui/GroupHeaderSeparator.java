@@ -34,6 +34,10 @@ public class GroupHeaderSeparator extends SeparatorWithText {
     myHideLine = hideLine;
   }
 
+  public boolean isHideLine() {
+    return myHideLine;
+  }
+
   @Override
   protected Dimension getPreferredElementSize() {
     Dimension size;
