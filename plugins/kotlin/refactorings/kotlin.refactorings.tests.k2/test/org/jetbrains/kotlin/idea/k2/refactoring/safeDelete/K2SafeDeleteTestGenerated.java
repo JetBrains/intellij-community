@@ -853,6 +853,31 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/namedParam2.kt");
         }
 
+        @TestMetadata("primaryConstructorParameterInDelegationCall.kt")
+        public void testPrimaryConstructorParameterInDelegationCall() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInDelegationCall.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterInInstanceCreation.kt")
+        public void testPrimaryConstructorParameterInInstanceCreation() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInInstanceCreation.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterInSuperTypeList.kt")
+        public void testPrimaryConstructorParameterInSuperTypeList() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInSuperTypeList.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterInTheMiddle.kt")
+        public void testPrimaryConstructorParameterInTheMiddle() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterInTheMiddle.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterWithNamedArgument.kt")
+        public void testPrimaryConstructorParameterWithNamedArgument() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/primaryConstructorParameterWithNamedArgument.kt");
+        }
+
         @TestMetadata("propertyParam1.kt")
         public void testPropertyParam1() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/propertyParam1.kt");
@@ -886,6 +911,31 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("safeUsagesExt2.kt")
         public void testSafeUsagesExt2() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/safeUsagesExt2.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterInDelegationCall.kt")
+        public void testSecondaryConstructorParameterInDelegationCall() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInDelegationCall.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterInInstanceCreation.kt")
+        public void testSecondaryConstructorParameterInInstanceCreation() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInInstanceCreation.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterInSuperTypeList.kt")
+        public void testSecondaryConstructorParameterInSuperTypeList() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInSuperTypeList.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterInTheMiddle.kt")
+        public void testSecondaryConstructorParameterInTheMiddle() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterInTheMiddle.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterWithNamedArgument.kt")
+        public void testSecondaryConstructorParameterWithNamedArgument() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameter/secondaryConstructorParameterWithNamedArgument.kt");
         }
 
         @TestMetadata("setter.kt")
@@ -1006,6 +1056,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/mixedHierarchyWithUnsafeUsages3.kt");
         }
 
+        @TestMetadata("primaryConstructorParameterInDelegationCall.kt")
+        public void testPrimaryConstructorParameterInDelegationCall() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/primaryConstructorParameterInDelegationCall.kt");
+        }
+
         @TestMetadata("propertyParam1.kt")
         public void testPropertyParam1() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/propertyParam1.kt");
@@ -1039,6 +1094,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("safeUsagesExt2.kt")
         public void testSafeUsagesExt2() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsagesExt2.kt");
+        }
+
+        @TestMetadata("secondaryConstructorParameterInDelegationCall.kt")
+        public void testSecondaryConstructorParameterInDelegationCall() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/secondaryConstructorParameterInDelegationCall.kt");
         }
     }
 
