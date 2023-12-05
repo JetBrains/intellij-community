@@ -187,7 +187,7 @@ internal class MacToolbarFrameHeader(private val coroutineScope: CoroutineScope,
     }
     else {
       // customTitleBar left inset is pre-scaled, and it's considered inside ToolbarHeaderView
-      view.updateBorders(customTitleBar?.leftInset?.toInt() ?: 0, 0)
+      view.updateBorders(customTitleBar?.leftInset?.toInt()?.takeIf { it > 0 } ?: GAP_FOR_BUTTONS, 0)
     }
   }
 
