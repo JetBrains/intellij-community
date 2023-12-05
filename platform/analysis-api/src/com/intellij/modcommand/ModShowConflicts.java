@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * Shows UI that displays conflicts and requires user confirmation to proceed. Not executed in batch; skipped in preview.
@@ -19,6 +20,13 @@ public record ModShowConflicts(@NotNull Map<@NotNull PsiElement, @NotNull Confli
    * @param messages list of user-readable messages that describe the problem
    */
   public record Conflict(@NotNull List<@NotNull @Nls String> messages) {
+    /**
+     * @param conflict another set of conflicts
+     * @return merged set of conflicts that contains information from this and supplied conflict collections
+     */
+    public @NotNull Conflict merge(@NotNull Conflict conflict) {
+      return new Conflict(Stream.concat(messages.stream(), conflict.messages.stream()).distinct().toList());
+    }
   }
 
   @Override

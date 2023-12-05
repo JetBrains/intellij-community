@@ -380,7 +380,7 @@ public sealed interface ModCommand
    * @param conflicts conflicts to show
    */
   static @NotNull ModCommand showConflicts(@NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> conflicts) {
-    return new ModShowConflicts(conflicts);
+    return conflicts.isEmpty() ? nop() : new ModShowConflicts(conflicts);
   }
 
   /**

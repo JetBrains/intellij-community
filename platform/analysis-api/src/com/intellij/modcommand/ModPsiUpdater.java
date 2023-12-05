@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -117,6 +118,22 @@ public interface ModPsiUpdater extends ModPsiNavigator {
    * @param errorMessage the error message to display
    */
   void cancel(@NotNull @NlsContexts.Tooltip String errorMessage);
+
+  /**
+   * Records conflicts. All the recorded conflicts will be shown before any other modifications.
+   * If user cancels the conflict view, then no actual modification will be done.
+   * <p>
+   *   Subsequent calls of this method add new conflicts instead of replacing the old ones.
+   * </p>
+   * <p>
+   *   The PSI elements in the map must be physical elements or their writable copies obtained by
+   *   previous {@link #getWritable(PsiElement)} call. No actual PSI modifications should be done prior to
+   *   this call.
+   * </p>
+   *
+   * @param conflicts conflicts to show.
+   */
+  void showConflicts(@NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> conflicts);
 
   /**
    * Display message
