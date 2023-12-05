@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.api.request
 import com.intellij.collaboration.api.json.loadJsonValue
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.collaboration.util.withQuery
-import com.intellij.util.Url
 import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabDiffPositionInput
